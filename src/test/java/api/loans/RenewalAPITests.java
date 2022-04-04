@@ -56,6 +56,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -1167,6 +1168,45 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));
+  }
+
+  @Test
+  void canRenewWhenSystemDateFallsWithinSecondLimitingDueDateSchedule() {
+    ZonedDateTime firstScheduleStart = atStartOfDay(getZonedDateTime().minusDays(10).withZoneSameLocal(UTC));
+    ZonedDateTime firstScheduleEndAndDueDate = atStartOfDay(getZonedDateTime().minusDays(3).withZoneSameLocal(UTC));
+    ZonedDateTime secondScheduleStart = atStartOfDay(getZonedDateTime().minusDays(2).withZoneSameLocal(UTC));
+    ZonedDateTime secondScheduleEndAndDueDate = atStartOfDay(getZonedDateTime().plusDays(5).withZoneSameLocal(UTC));
+
+    FixedDueDateSchedulesBuilder fixedDueDateSchedules = new FixedDueDateSchedulesBuilder()
+      .withName("Fixed Due Date Schedule")
+      .addSchedule(new FixedDueDateSchedule(firstScheduleStart, firstScheduleEndAndDueDate, firstScheduleEndAndDueDate))
+      .addSchedule(new FixedDueDateSchedule(secondScheduleStart, secondScheduleEndAndDueDate, secondScheduleEndAndDueDate));
+
+    UUID fixedDueDateSchedulesId = loanPoliciesFixture.createSchedule(fixedDueDateSchedules).getId();
+
+    LoanPolicyBuilder currentDueDateRollingPolicy = new LoanPolicyBuilder()
+      .withName("System Date Rolling Policy")
+      .rolling(Period.days(56))
+      .limitedBySchedule(fixedDueDateSchedulesId)
+      .renewWith(Period.days(7))
+      .renewFromSystemDate();
+
+    loanPoliciesFixture.create(currentDueDateRollingPolicy).getId();
+    use(currentDueDateRollingPolicy);
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource jessica = usersFixture.jessica();
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      getZonedDateTime().minusDays(5).withZoneSameLocal(UTC));
+    UUID loanId = loan.getId();
+
+    JsonObject renewedLoan = renew(smallAngryPlanet, jessica).getJson();
+
+    assertThat(renewedLoan.getString("id"), is(loanId.toString()));
+    assertThat("due date should be as per second fixed schedule",
+      renewedLoan.getString("dueDate"),
+      isEquivalentTo(secondScheduleEndAndDueDate));
   }
 
   @Test
