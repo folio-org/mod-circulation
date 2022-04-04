@@ -77,13 +77,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   @NonNull private final Item item;
   private final User user;
   private final User proxy;
-
   private final ServicePoint checkinServicePoint;
   private final ServicePoint checkoutServicePoint;
-
   private final ZonedDateTime originalDueDate;
-  private ZonedDateTime previousDueDate;
-
+  private final ZonedDateTime previousDueDate;
   private final Policies policies;
   private final Collection<Account> accounts;
 
@@ -121,63 +118,68 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan setDueDateChangedByRecall() {
-    write(representation, "dueDateChangedByRecall", TRUE);
-
-    return this;
+    return setDueDateChangedByRecall(TRUE);
   }
 
   public Loan unsetDueDateChangedByRecall() {
-    write(representation, "dueDateChangedByRecall", FALSE);
+    return setDueDateChangedByRecall(FALSE);
+  }
+
+  public Loan setDueDateChangedByRecall(Boolean value) {
+    write(representation, "dueDateChangedByRecall", value);
 
     return this;
   }
 
-  private void changeReturnDate(ZonedDateTime returnDate) {
+  private Loan changeReturnDate(ZonedDateTime returnDate) {
     write(representation, RETURN_DATE, returnDate);
+
+    return this;
   }
 
-  private void changeSystemReturnDate(ZonedDateTime systemReturnDate) {
+  private Loan changeSystemReturnDate(ZonedDateTime systemReturnDate) {
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
+
+    return this;
   }
 
-  public void changeAction(LoanAction action) {
-    changeAction(action.getValue());
-  }
+  public Loan changeAction(LoanAction action) {
+    write(representation, LoanProperties.ACTION, action.getValue());
 
-  public void changeAction(String action) {
-    write(representation, LoanProperties.ACTION, action);
+    return this;
   }
 
   public String getAction() {
     return getProperty(representation, ACTION);
   }
 
-  private void changeCheckInServicePointId(UUID servicePointId) {
+  private Loan changeCheckInServicePointId(UUID servicePointId) {
     write(representation, "checkinServicePointId", servicePointId);
-  }
-
-  public Loan changeItemStatusForItemAndLoan(ItemStatusName itemStatus) {
-    item.changeStatus(itemStatus);
-    changeItemStatus(itemStatus.getName());
 
     return this;
   }
 
-  private void changeStatus(LoanStatus status) {
-    representation.put(STATUS, new JsonObject().put("name", status.getValue()));
+  public Loan changeItemStatusForItemAndLoan(ItemStatusName itemStatus) {
+    return changeItemStatus(itemStatus.getName())
+      .withItem(item.changeStatus(itemStatus));
   }
 
   public Loan changeItemEffectiveLocationIdAtCheckOut(String locationId) {
     representation.put(ITEM_LOCATION_ID_AT_CHECKOUT, locationId);
+
     return this;
   }
 
-  public void changeActionComment(String comment) {
+  public Loan changeActionComment(String comment) {
     representation.put(ACTION_COMMENT, comment);
+
+    return this;
   }
 
-  public void removeActionComment() {
+  public Loan removeActionComment() {
     representation.remove(ACTION_COMMENT);
+
+    return this;
   }
 
   public String getActionComment() {
@@ -306,6 +308,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       write(representation, LoanProperties.PATRON_GROUP_AT_CHECKOUT,
         patronGroupAtCheckout);
     }
+
     return this;
   }
 
@@ -387,10 +390,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return policies.getLostItemPolicy();
   }
 
-  private void setLoanPolicyId(String newLoanPolicyId) {
+  private Loan setLoanPolicyId(String newLoanPolicyId) {
     if (newLoanPolicyId != null) {
       representation.put("loanPolicyId", newLoanPolicyId);
     }
+
+    return this;
   }
 
   public ServicePoint getCheckinServicePoint() {
@@ -406,36 +411,30 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan renew(ZonedDateTime dueDate, String basedUponLoanPolicyId) {
-    changeAction(RENEWED);
-    removeActionComment();
-    setLoanPolicyId(basedUponLoanPolicyId);
-    changeDueDate(dueDate);
-    incrementRenewalCount();
-
-    return this;
+    return changeAction(RENEWED)
+      .removeActionComment()
+      .setLoanPolicyId(basedUponLoanPolicyId)
+      .changeDueDate(dueDate)
+      .incrementRenewalCount();
   }
 
-  public Loan overrideRenewal(ZonedDateTime dueDate,
-                              String basedUponLoanPolicyId,
-                              String actionComment) {
-    changeAction(RENEWED_THROUGH_OVERRIDE);
-    setLoanPolicyId(basedUponLoanPolicyId);
-    changeDueDate(dueDate);
-    incrementRenewalCount();
-    changeActionComment(actionComment);
+  public Loan overrideRenewal(ZonedDateTime dueDate, String basedUponLoanPolicyId,
+    String actionComment) {
 
-    return this;
+    return changeAction(RENEWED_THROUGH_OVERRIDE)
+      .setLoanPolicyId(basedUponLoanPolicyId)
+      .changeDueDate(dueDate)
+      .incrementRenewalCount()
+      .changeActionComment(actionComment);
   }
 
   private Loan checkIn(LoanAction action, ZonedDateTime returnDateTime,
     ZonedDateTime systemReturnDateTime, UUID servicePointId) {
 
-    closeLoan(action);
-    changeReturnDate(returnDateTime);
-    changeSystemReturnDate(systemReturnDateTime);
-    changeCheckInServicePointId(servicePointId);
-
-    return this;
+    return closeLoan(action)
+      .changeReturnDate(returnDateTime)
+      .changeSystemReturnDate(systemReturnDateTime)
+      .changeCheckInServicePointId(servicePointId);
   }
 
   Loan checkIn(ZonedDateTime returnDateTime, ZonedDateTime systemReturnDateTime, UUID servicePointId) {
@@ -444,18 +443,18 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   Loan resolveClaimedReturned(LoanAction resolveAction,
-    ZonedDateTime returnDateTime, ZonedDateTime systemReturnDateTime, UUID servicePointId) {
+    ZonedDateTime returnDateTime, ZonedDateTime systemReturnDateTime,
+    UUID servicePointId) {
 
     return checkIn(resolveAction, returnDateTime, systemReturnDateTime, servicePointId);
   }
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
-    changeAction(DECLARED_LOST);
-    changeActionComment(comment);
-    changeItemStatusForItemAndLoan(ItemStatusName.DECLARED_LOST);
-    changeDeclaredLostDateTime(dateTime);
-    return this;
+    return changeAction(DECLARED_LOST)
+      .changeActionComment(comment)
+      .changeItemStatusForItemAndLoan(ItemStatusName.DECLARED_LOST)
+      .changeDeclaredLostDateTime(dateTime);
   }
 
   public boolean isDeclaredLost() {
@@ -491,8 +490,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return Stream.of(itemStatuses).anyMatch(item::isInStatus);
   }
 
-  private void incrementRenewalCount() {
+  private Loan incrementRenewalCount() {
     write(representation, "renewalCount", getRenewalCount() + 1);
+
+    return this;
   }
 
   public Integer getRenewalCount() {
@@ -533,12 +534,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation, RETURN_DATE);
   }
 
-  public void changeItemStatus(String itemStatus) {
+  public Loan changeItemStatus(String itemStatus) {
     representation.put(LoanProperties.ITEM_STATUS, itemStatus);
+
+    return this;
   }
 
-  public void changeDeclaredLostDateTime(ZonedDateTime dateTime) {
+  public Loan changeDeclaredLostDateTime(ZonedDateTime dateTime) {
     write(representation, DECLARED_LOST_DATE, dateTime);
+
+    return this;
   }
 
   public ZonedDateTime getDeclareLostDateTime() {
@@ -562,43 +567,44 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
-    changeAction(LoanAction.CLAIMED_RETURNED);
-    if (StringUtils.isNotBlank(comment)) {
-      changeActionComment(comment);
-    }
+    final Loan newLoan = StringUtils.isNotBlank(comment)
+      ? changeActionComment(comment)
+      : this;
 
-    changeItemStatusForItemAndLoan(ItemStatusName.CLAIMED_RETURNED);
-    changeClaimedReturnedDate(claimedReturnedDate);
-
-    return this;
+    return newLoan
+      .changeAction(LoanAction.CLAIMED_RETURNED)
+      .changeItemStatusForItemAndLoan(ItemStatusName.CLAIMED_RETURNED)
+      .changeClaimedReturnedDate(claimedReturnedDate);
   }
 
-  private void changeClaimedReturnedDate(ZonedDateTime claimedReturnedDate) {
+  private Loan changeClaimedReturnedDate(ZonedDateTime claimedReturnedDate) {
     write(representation, CLAIMED_RETURNED_DATE, claimedReturnedDate);
+
+    return this;
   }
 
   public Loan closeLoan(LoanAction action) {
-    changeStatus(LoanStatus.CLOSED);
-
-    changeAction(action);
-    removeActionComment();
-
-    return this;
+    return closeLoan()
+      .changeAction(action)
+      .removeActionComment();
   }
 
   public Loan closeLoan(LoanAction action, String comment) {
-    changeStatus(LoanStatus.CLOSED);
+    return closeLoan()
+      .changeAction(action)
+      .changeActionComment(comment);
+  }
 
-    changeAction(action);
-    changeActionComment(comment);
+  private Loan closeLoan() {
+    representation.put(STATUS,
+      new JsonObject().put("name", LoanStatus.CLOSED.getValue()));
 
     return this;
   }
 
   public Loan markItemMissing(String comment) {
-    changeItemStatusForItemAndLoan(ItemStatusName.MISSING);
-
-    return closeLoan(MISSING, comment);
+    return changeItemStatusForItemAndLoan(ItemStatusName.MISSING)
+      .closeLoan(MISSING, comment);
   }
 
   public FeeAmount getRemainingFeeFineAmount() {
@@ -613,24 +619,23 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       .orElse(noFeeAmount());
   }
 
-  public void closeLoanAsLostAndPaid() {
-    closeLoan(CLOSED_LOAN);
-    changeItemStatusForItemAndLoan(ItemStatusName.LOST_AND_PAID);
+  public Loan closeLoanAsLostAndPaid() {
+    return closeLoan(CLOSED_LOAN)
+      .changeItemStatusForItemAndLoan(ItemStatusName.LOST_AND_PAID);
   }
 
   public Loan copy() {
     final JsonObject representationCopy = representation.copy();
+
     return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public Loan ageOverdueItemToLost(ZonedDateTime ageToLostDate) {
-    changeAction(ITEM_AGED_TO_LOST);
-    removeActionComment();
-    changeItemStatusForItemAndLoan(ItemStatusName.AGED_TO_LOST);
-    setAgedToLostDate(ageToLostDate);
-
-    return this;
+    return changeAction(ITEM_AGED_TO_LOST)
+      .removeActionComment()
+      .changeItemStatusForItemAndLoan(ItemStatusName.AGED_TO_LOST)
+      .setAgedToLostDate(ageToLostDate);
   }
 
   public void setAgedToLostDelayedBilling(boolean hasBeenBilled, ZonedDateTime whenToBill) {
@@ -647,21 +652,26 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public void removeAgedToLostBillingInfo() {
+  public Loan removeAgedToLostBillingInfo() {
     final JsonObject billingInfo = representation
       .getJsonObject(AGED_TO_LOST_DELAYED_BILLING);
 
     remove(billingInfo, LOST_ITEM_HAS_BEEN_BILLED);
     remove(billingInfo, DATE_LOST_ITEM_SHOULD_BE_BILLED);
+
+    return this;
   }
 
-  private void setAgedToLostDate(ZonedDateTime agedToLostDate) {
+  private Loan setAgedToLostDate(ZonedDateTime agedToLostDate) {
     writeByPath(representation, agedToLostDate, AGED_TO_LOST_DELAYED_BILLING,
       AGED_TO_LOST_DATE);
+
+    return this;
   }
 
   public Loan removePreviousAction() {
     representation.put(LoanProperties.ACTION, "");
+
     return this;
   }
 
@@ -673,13 +683,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getNestedStringProperty(representation, METADATA, UPDATED_BY_USER_ID);
   }
 
-  public ZonedDateTime getOriginalDueDate() {
-    return originalDueDate;
-  }
-
-  public Loan setPreviousDueDate(ZonedDateTime previousDateTime) {
-    this.previousDueDate = previousDateTime;
-    return this;
+  public Loan setPreviousDueDate(ZonedDateTime previousDueDate) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
   public ZonedDateTime getPreviousDueDate() {

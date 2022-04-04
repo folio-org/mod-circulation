@@ -164,8 +164,7 @@ public class LostItemFeeChargingService {
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {
-    loan.closeLoanAsLostAndPaid();
-    return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+    return storeLoanAndItem.updateLoanAndItemInStorage(loan.closeLoanAsLostAndPaid());
   }
 
   private boolean shouldCloseLoan(LostItemPolicy policy) {

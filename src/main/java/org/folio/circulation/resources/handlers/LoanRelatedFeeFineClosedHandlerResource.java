@@ -112,9 +112,12 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     }
 
     boolean wasLoanOpen = loan.isOpen();
-    loan.closeLoanAsLostAndPaid();
 
-    return new StoreLoanAndItem(loanRepository, itemRepository).updateLoanAndItemInStorage(loan)
+    final var changedLoan = loan.closeLoanAsLostAndPaid();
+
+    final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+
+    return storeLoanAndItem.updateLoanAndItemInStorage(changedLoan)
       .thenCompose(r -> r.after(l -> publishLoanClosedEvent(l, wasLoanOpen, eventPublisher)));
   }
 

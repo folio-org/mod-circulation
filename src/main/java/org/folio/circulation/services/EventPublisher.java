@@ -190,10 +190,11 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
-    if (records.getRecalledLoanPreviousDueDate() != null) {
-      loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
-    }
-    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
+    final var loanWithPreviousDueDate = records.getRecalledLoanPreviousDueDate() != null
+      ? loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate())
+      : loan;
+
+    return publishDueDateChangedEvent(loanWithPreviousDueDate, records.getRequest().getRequester(), false);
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {

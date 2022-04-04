@@ -462,11 +462,11 @@ public abstract class RenewalResource extends Resource {
   }
 
   private Loan overrideRenewLoan(ZonedDateTime dueDate, Loan loan, String comment) {
-    if (loan.isAgedToLost()) {
-      loan.removeAgedToLostBillingInfo();
-    }
+    final Loan changedLoan = loan.isAgedToLost()
+      ? loan.removeAgedToLostBillingInfo()
+      : loan;
 
-    return loan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment)
+    return changedLoan.overrideRenewal(dueDate, loan.getLoanPolicyId(), comment)
       .changeItemStatusForItemAndLoan(CHECKED_OUT);
   }
 
