@@ -113,10 +113,6 @@ public class Item {
     return getStatus().is(status);
   }
 
-  public boolean isNotInStatus(ItemStatus status) {
-    return !getStatus().equals(status);
-  }
-
   public boolean isNotInStatus(ItemStatusName status) {
     return !getStatus().is(status);
   }

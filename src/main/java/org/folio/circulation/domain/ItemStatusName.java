@@ -29,7 +29,7 @@ public enum ItemStatusName {
 
   public static ItemStatusName from(String value) {
     return Arrays.stream(values())
-      .filter(status -> status.valueMatches(value))
+      .filter(status -> equalsIgnoreCase(status.name, value))
       .findFirst()
       .orElse(NONE);
   }
@@ -42,10 +42,6 @@ public enum ItemStatusName {
 
   public String getName() {
     return name;
-  }
-
-  private boolean valueMatches(String value) {
-    return equalsIgnoreCase(getName(), value);
   }
 
   public boolean isLostNotResolved() {
