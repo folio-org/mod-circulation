@@ -291,7 +291,7 @@ public class Item {
 
     //TODO: Remove this hack to remove destination service point
     // needs refactoring of how in transit for pickup is done
-    if(!isInTransit()) {
+    if (newStatus == IN_TRANSIT) {
       return removeDestination();
     }
     else {
