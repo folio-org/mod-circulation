@@ -38,7 +38,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.UserResource;
-import api.support.matchers.RequestMatchers;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestsAPICreationTests extends APITests {
@@ -890,8 +889,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
-    IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-      holdings.getId(), locationsResource.getId());
+
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     JsonObject requestBody = createInstanceRequestObject(instance.getId(),

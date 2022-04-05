@@ -33,6 +33,8 @@ import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
@@ -59,6 +61,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final Instance instance;
 
+  @With
+  private final Collection<Item> instanceItems;
+
   private final Item item;
 
   @With
@@ -84,7 +89,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
-    return new Request(null, null, representation, null, null, null, null, null,
+    return new Request(null, null, representation, null, null, new ArrayList<>(), null, null, null,
       null, null, null, false, null, false);
   }
 
@@ -92,7 +97,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
-      null, null, null, null, null, null, false, null, false);
+      new ArrayList<>(), null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -105,6 +110,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   
   public boolean isPage() {
     return getRequestType() == RequestType.PAGE;
+  }
+
+  public boolean isHold() {
+    return getRequestType() == RequestType.HOLD;
   }
 
   public boolean isOpen() {
@@ -180,7 +189,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Request(tlrSettingsConfiguration, operation, requestRepresentation,
-      cancellationReasonRepresentation, instance, newItem, requester, proxy, addressType,
+      cancellationReasonRepresentation, instance, instanceItems, newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
       previousPosition, changedStatus);
   }

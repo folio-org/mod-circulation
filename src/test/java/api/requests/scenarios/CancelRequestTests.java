@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
@@ -313,7 +314,8 @@ class CancelRequestTests extends APITests {
     IndividualResource request = requestsFixture.place(buildTitleLevelRequest());
     verifyNumberOfSentNotices(0);
     requestsFixture.cancelRequest(request);
-    verifyNumberOfSentNotices(1);
+    var notices = verifyNumberOfSentNotices(1);
+    assertThatPublishedNoticeLogRecordEventsAreValid(notices.get(0));
   }
 
   @ParameterizedTest

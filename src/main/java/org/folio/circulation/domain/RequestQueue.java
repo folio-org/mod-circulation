@@ -86,8 +86,8 @@ public class RequestQueue {
     return false;
   }
 
-  boolean containsRequestOfType(RequestType type) {
-    return requests.stream().anyMatch(request -> request.getRequestType() == type);
+  boolean containsRequestOfTypeForItem(RequestType type, Item item) {
+    return requests.stream().anyMatch(request -> request.getRequestType() == type && request.isFor(item));
   }
 
   public boolean hasOpenRecalls() {
