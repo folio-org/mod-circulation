@@ -150,8 +150,7 @@ public class LostItemFeeChargingService {
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndPublishEvent(Loan loan) {
     return closeLoanAsLostAndPaidAndUpdateInStorage(loan)
-    .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
-    .thenApply(r -> r.map(v -> loan));
+    .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
   }
 
   private Boolean isOpenLostItemFee(Account account) {
@@ -160,7 +159,7 @@ public class LostItemFeeChargingService {
   }
 
   private Boolean hasLostItemFees(Loan loan) {
-    return loan.getAccounts().stream().anyMatch(account -> isOpenLostItemFee(account));
+    return loan.getAccounts().stream().anyMatch(this::isOpenLostItemFee);
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {

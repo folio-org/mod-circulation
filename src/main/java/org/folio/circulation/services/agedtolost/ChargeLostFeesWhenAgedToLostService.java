@@ -129,13 +129,13 @@ public class ChargeLostFeesWhenAgedToLostService {
       .thenApply(Result::mapEmpty);
   }
 
-  private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
+  private CompletableFuture<Result<Loan>> processLoan(LoanToChargeFees loan) {
     return loan.shouldCloseLoanWhenActualCostUsed()
-      ? closeLoanAsLostAndPaid(loan).thenApply(Result::mapEmpty)
+      ? closeLoanAsLostAndPaid(loan)
       : chargeLostFees(loan);
   }
 
-  private CompletableFuture<Result<Void>> chargeLostFees(
+  private CompletableFuture<Result<Loan>> chargeLostFees(
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
@@ -146,7 +146,7 @@ public class ChargeLostFeesWhenAgedToLostService {
       .exceptionally(t -> handleFailure(loanToChargeFees, t.getMessage()));
   }
 
-  private static Result<Void> handleFailure(LoanToChargeFees loan, String errorMessage) {
+  private static Result<Loan> handleFailure(LoanToChargeFees loan, String errorMessage) {
     log.error("Failed to charge lost item fee(s) for loan {}: {}", loan.getLoanId(), errorMessage);
     return succeeded(null);
   }
