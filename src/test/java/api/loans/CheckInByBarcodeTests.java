@@ -1389,6 +1389,28 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
+  void afterCheckInAgedToLostItemHasPaymentStatusCancelledItemReturnedWithZeroRemaining() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    UUID loadId = UUID.fromString(loansClient.getAll().get(0).getString("id"));
+    feeFineAccountFixture.payLostItemFee(loadId);
+    feeFineAccountFixture.payLostItemProcessingFee(loadId);
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loadId);
+
+    checkInFixture.checkInByBarcode(item);
+
+    accountsClient.getAll().forEach(account -> {
+      assertThat(account.getDouble("remaining"), is(0.0));
+      assertThat(account.getJsonObject("status").getString("name"), is("Closed"));
+      assertThat(account.getJsonObject("paymentStatus").getString("name"), is("Cancelled item returned"));
+    });
+  }
+
+  @Test
   void canCheckInAgedToLostItem() {
     val ageToLostResult = ageToLostFixture.createAgedToLostLoan();
 

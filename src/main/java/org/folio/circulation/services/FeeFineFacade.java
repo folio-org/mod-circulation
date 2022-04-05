@@ -103,9 +103,11 @@ public class FeeFineFacade {
 
     final Account account = command.getAccount();
 
-    if (!account.getRemaining().hasAmount()) {
-      log.info("Nothing to cancel for account {}", account.getId());
-      return ofAsync(() -> null);
+    if (!account.getPaymentStatus().equals("Paid fully")) {
+      if (!account.getRemaining().hasAmount()) {
+        log.info("Nothing to cancel for account {}", account.getId());
+        return ofAsync(() -> null);
+      }
     }
 
     log.info("Initiating cancel for account {}", account.getId());

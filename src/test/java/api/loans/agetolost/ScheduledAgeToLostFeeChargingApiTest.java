@@ -18,8 +18,6 @@ import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanHistoryMatcher.hasLoanHistoryInOrder;
 import static api.support.matchers.LoanMatchers.isClosed;
-import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
-import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
