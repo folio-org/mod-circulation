@@ -1,5 +1,9 @@
 package org.folio.circulation.support.logging;
 
+import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+
+import io.vertx.ext.web.RoutingContext;
 import java.lang.invoke.MethodHandles;
 
 import org.folio.circulation.support.http.client.Response;
@@ -12,6 +16,20 @@ public class LogHelper {
 
   private LogHelper() {
     throw new UnsupportedOperationException("Do not instantiate");
+  }
+
+  private static String null2empty(String s) {
+    return (s == null) ? "" : s;
+  }
+
+  public static void logRequest(RoutingContext rc, Logger logger) {
+    if (logger.isInfoEnabled()) {
+      logger.info("[{}] [{}] {} {}",
+          null2empty(rc.request().getHeader(REQUEST_ID)),
+          null2empty(rc.request().getHeader(TENANT)),
+          rc.request().method(), rc.request().path());
+    }
+    rc.next();
   }
 
   public static void logResponse(Result<Response> result, Throwable error, int expectedStatus,
