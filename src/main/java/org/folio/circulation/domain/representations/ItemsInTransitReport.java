@@ -91,7 +91,7 @@ public class ItemsInTransitReport {
     write(entry, "callNumber", item.getCallNumber());
     write(entry, "enumeration", item.getEnumeration());
     write(entry, "volume", item.getVolume());
-    write(entry, "yearCaption", new JsonArray(item.getYearCaption()));
+    write(entry, "yearCaption", item.getYearCaption());
     writeNamedObject(entry, "status", ofNullable(item.getStatus())
       .map(ItemStatus::getValue).orElse(null));
     write(entry, "inTransitDestinationServicePointId",

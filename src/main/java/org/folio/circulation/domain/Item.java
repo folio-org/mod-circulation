@@ -11,14 +11,11 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.storage.mappers.ItemMapper;
@@ -46,6 +43,7 @@ public class Item {
   private final String enumeration;
   private final String temporaryLoanTypeId;
   private final String permanentLoanTypeId;
+  @NonNull private final ItemDescription description;
 
   public static Item from(JsonObject representation) {
     return new ItemMapper().toDomain(representation);
@@ -56,7 +54,7 @@ public class Item {
     boolean changed, Holdings holdings, Instance instance,
     MaterialType materialType, LoanType loanType, String barcode,
     String copyNumber, String enumeration, String temporaryLoanTypeId,
-    String permanentLoanTypeId) {
+    String permanentLoanTypeId, ItemDescription description) {
 
     this.id = id;
     this.itemRepresentation = itemRepresentation;
@@ -75,6 +73,7 @@ public class Item {
     this.enumeration = enumeration;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
+    this.description = description;
   }
 
   public boolean isCheckedOut() {
@@ -239,24 +238,23 @@ public class Item {
   }
 
   public String getVolume() {
-    return getProperty(itemRepresentation, "volume");
+    return description.getVolume();
   }
 
   public String getChronology() {
-    return getProperty(itemRepresentation, "chronology");
+    return description.getChronology();
   }
 
   public String getNumberOfPieces() {
-    return getProperty(itemRepresentation, "numberOfPieces");
+    return description.getNumberOfPieces();
   }
 
   public String getDescriptionOfPieces() {
-    return getProperty(itemRepresentation, "descriptionOfPieces");
+    return description.getDescriptionOfPieces();
   }
 
-  public List<String> getYearCaption() {
-    return toStream(itemRepresentation, "yearCaption")
-      .collect(Collectors.toList());
+  public Collection<String> getYearCaption() {
+    return description.getYearCaption();
   }
 
   private ServicePoint getPrimaryServicePoint() {
@@ -347,7 +345,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId);
+      this.permanentLoanTypeId, description);
   }
 
   public Item withMaterialType(@NonNull MaterialType materialType) {
@@ -356,7 +354,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId);
+      this.permanentLoanTypeId, description);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
@@ -365,7 +363,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId);
+      this.permanentLoanTypeId, description);
   }
 
   public Item withInstance(@NonNull Instance instance) {
@@ -373,7 +371,8 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       instance, this.materialType, this.loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
+      description);
   }
 
   public Item withLoanType(@NonNull LoanType loanType) {
@@ -381,7 +380,8 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
+      description);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
@@ -390,7 +390,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId);
+      this.permanentLoanTypeId, description);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
@@ -399,7 +399,7 @@ public class Item {
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.barcode,
       this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId);
+      this.permanentLoanTypeId, description);
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
@@ -407,6 +407,7 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       servicePoint, this.changed, this.holdings, this.instance,
       this.materialType, this.loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId);
+      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
+      description);
   }
 }

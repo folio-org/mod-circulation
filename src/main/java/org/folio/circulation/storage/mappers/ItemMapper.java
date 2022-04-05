@@ -1,11 +1,15 @@
 package org.folio.circulation.storage.mappers;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
+
+import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemDescription;
 import org.folio.circulation.domain.LastCheckIn;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
@@ -27,7 +31,17 @@ public class ItemMapper {
       LoanType.unknown(), getProperty(representation, "barcode"), getProperty(representation,
       "copyNumber"), getProperty(representation, "enumeration"),
       getProperty(representation, "temporaryLoanTypeId"),
-      getProperty(representation, "permanentLoanTypeId"));
+      getProperty(representation, "permanentLoanTypeId"),
+      getDescription(representation));
+  }
+
+  private ItemDescription getDescription(JsonObject itemRepresentation) {
+    return new ItemDescription(getProperty(itemRepresentation, "volume"),
+      getProperty(itemRepresentation, "chronology"),
+      getProperty(itemRepresentation, "numberOfPieces"),
+      getProperty(itemRepresentation, "descriptionOfPieces"),
+      toStream(itemRepresentation, "yearCaption")
+        .collect(Collectors.toList()));
   }
 
   private ServicePoint getInTransitServicePoint(JsonObject representation) {
