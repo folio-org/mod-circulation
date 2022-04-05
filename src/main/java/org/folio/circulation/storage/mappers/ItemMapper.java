@@ -1,5 +1,6 @@
 package org.folio.circulation.storage.mappers;
 
+import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
@@ -27,10 +28,9 @@ public class ItemMapper {
       Location.unknown(getProperty(representation, "permanentLocationId")),
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
-      Instance.unknown(), MaterialType.unknown(getProperty(representation, "materialTypeId")),
-      LoanType.unknown(), getProperty(representation, "temporaryLoanTypeId"),
-      getProperty(representation, "permanentLoanTypeId"),
-      getDescription(representation));
+      Instance.unknown(),
+      MaterialType.unknown(getProperty(representation, "materialTypeId")),
+      LoanType.unknown(getLoanTypeId(representation)), getDescription(representation));
   }
 
   private ItemDescription getDescription(JsonObject representation) {
@@ -56,5 +56,11 @@ public class ItemMapper {
     else {
       return ServicePoint.unknown(inTransitDestinationServicePointId);
     }
+  }
+
+  public String getLoanTypeId(JsonObject representation) {
+    return firstNonBlank(
+      getProperty(representation, "temporaryLoanTypeId"),
+      getProperty(representation, "permanentLoanTypeId"));
   }
 }
