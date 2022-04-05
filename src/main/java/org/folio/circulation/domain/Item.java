@@ -38,9 +38,6 @@ public class Item {
   @NonNull private final Instance instance;
   @NonNull private final MaterialType materialType;
   @NonNull private final LoanType loanType;
-  private final String barcode;
-  private final String copyNumber;
-  private final String enumeration;
   private final String temporaryLoanTypeId;
   private final String permanentLoanTypeId;
   @NonNull private final ItemDescription description;
@@ -52,8 +49,7 @@ public class Item {
     LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
     Location permanentLocation, ServicePoint inTransitDestinationServicePoint,
     boolean changed, Holdings holdings, Instance instance,
-    MaterialType materialType, LoanType loanType, String barcode,
-    String copyNumber, String enumeration, String temporaryLoanTypeId,
+    MaterialType materialType, LoanType loanType, String temporaryLoanTypeId,
     String permanentLoanTypeId, ItemDescription description) {
 
     this.id = id;
@@ -68,9 +64,6 @@ public class Item {
     this.instance = instance;
     this.materialType = materialType;
     this.loanType = loanType;
-    this.barcode = barcode;
-    this.copyNumber = copyNumber;
-    this.enumeration = enumeration;
     this.temporaryLoanTypeId = temporaryLoanTypeId;
     this.permanentLoanTypeId = permanentLoanTypeId;
     this.description = description;
@@ -141,7 +134,7 @@ public class Item {
   }
 
   public String getBarcode() {
-    return barcode;
+    return description.getBarcode();
   }
 
   public String getItemId() {
@@ -209,7 +202,7 @@ public class Item {
   }
 
   public String getCopyNumber() {
-    return firstNonBlank(copyNumber, holdings.getCopyNumber());
+    return firstNonBlank(description.getCopyNumber(), holdings.getCopyNumber());
   }
 
   public String getMaterialTypeId() {
@@ -221,7 +214,7 @@ public class Item {
   }
 
   public String getEnumeration() {
-    return enumeration;
+    return description.getEnumeration();
   }
 
   public String getInTransitDestinationServicePointId() {
@@ -343,8 +336,7 @@ public class Item {
     return new Item(this.id, this.itemRepresentation, newLocation,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, this.loanType, this.barcode,
-      this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
+      this.instance, this.materialType, this.loanType, this.temporaryLoanTypeId,
       this.permanentLoanTypeId, description);
   }
 
@@ -352,62 +344,55 @@ public class Item {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, materialType, this.loanType, this.barcode,
-      this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, description);
+      this.instance, materialType, this.loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, holdings,
-      this.instance, this.materialType, this.loanType, this.barcode,
-      this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, description);
+      this.instance, this.materialType, this.loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 
   public Item withInstance(@NonNull Instance instance) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      instance, this.materialType, this.loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
-      description);
+      instance, this.materialType, this.loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 
   public Item withLoanType(@NonNull LoanType loanType) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
-      description);
+      this.instance, this.materialType, loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
     return new Item(this.id, this.itemRepresentation, this.location,
       lastCheckIn, this.callNumberComponents, this.permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, this.loanType, this.barcode,
-      this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, description);
+      this.instance, this.materialType, this.loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, permanentLocation,
       this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, this.loanType, this.barcode,
-      this.copyNumber, this.enumeration, this.temporaryLoanTypeId,
-      this.permanentLoanTypeId, description);
+      this.instance, this.materialType, this.loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
       servicePoint, this.changed, this.holdings, this.instance,
-      this.materialType, this.loanType, this.barcode, this.copyNumber,
-      this.enumeration, this.temporaryLoanTypeId, this.permanentLoanTypeId,
-      description);
+      this.materialType, this.loanType, this.temporaryLoanTypeId,
+      this.permanentLoanTypeId, this.description);
   }
 }

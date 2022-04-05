@@ -28,19 +28,21 @@ public class ItemMapper {
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
       Instance.unknown(), MaterialType.unknown(getProperty(representation, "materialTypeId")),
-      LoanType.unknown(), getProperty(representation, "barcode"), getProperty(representation,
-      "copyNumber"), getProperty(representation, "enumeration"),
-      getProperty(representation, "temporaryLoanTypeId"),
+      LoanType.unknown(), getProperty(representation, "temporaryLoanTypeId"),
       getProperty(representation, "permanentLoanTypeId"),
       getDescription(representation));
   }
 
-  private ItemDescription getDescription(JsonObject itemRepresentation) {
-    return new ItemDescription(getProperty(itemRepresentation, "volume"),
-      getProperty(itemRepresentation, "chronology"),
-      getProperty(itemRepresentation, "numberOfPieces"),
-      getProperty(itemRepresentation, "descriptionOfPieces"),
-      toStream(itemRepresentation, "yearCaption")
+  private ItemDescription getDescription(JsonObject representation) {
+    return new ItemDescription(
+      getProperty(representation, "barcode"),
+      getProperty(representation, "enumeration"),
+      getProperty(representation, "copyNumber"),
+      getProperty(representation, "volume"),
+      getProperty(representation, "chronology"),
+      getProperty(representation, "numberOfPieces"),
+      getProperty(representation, "descriptionOfPieces"),
+      toStream(representation, "yearCaption")
         .collect(Collectors.toList()));
   }
 

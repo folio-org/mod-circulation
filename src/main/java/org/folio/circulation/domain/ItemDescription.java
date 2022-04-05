@@ -9,9 +9,12 @@ import lombok.Value;
 @Value
 public class ItemDescription {
   public static ItemDescription unknown() {
-    return new ItemDescription(null, null, null, null, List.of());
+    return new ItemDescription(null, null, null, null, null, null, null, List.of());
   }
 
+  String barcode;
+  String enumeration;
+  String copyNumber;
   String volume;
   String chronology;
   String numberOfPieces;
