@@ -24,7 +24,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemMapper {
   public Item toDomain(JsonObject representation) {
-    return new Item(getProperty(representation, "id"), representation,
+    return new Item(getProperty(representation, "id"),
       Location.unknown(getProperty(representation, "effectiveLocationId")),
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
