@@ -4,6 +4,10 @@ import lombok.Value;
 
 @Value
 public class ItemStatus {
+  public static ItemStatus unknown() {
+    return new ItemStatus(ItemStatusName.NONE, null);
+  }
+
   ItemStatusName name;
   String date;
 

@@ -5,7 +5,6 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
-import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -93,7 +92,7 @@ public class ItemRepository {
 
     final var updatedItemRepresentation = identityMap.get(item.getItemId());
 
-    write(updatedItemRepresentation, STATUS_PROPERTY,
+    write(updatedItemRepresentation, "status",
       new JsonObject().put("name", item.getStatus().getValue()));
 
     remove(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
