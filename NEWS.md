@@ -1,3 +1,7 @@
+## 23.0.3 2022-04-05
+
+* Publish LOAN_CLOSED event when last Lost Item Fee for loan is closed (CIRC-1474)
+
 ## 23.0.2 2022-04-04
 
 * Fix changing item status for POST /circulation/requests without request date (CIRC-1371)
