@@ -1,19 +1,19 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.domain.policy.RequestPolicy;
-import org.folio.circulation.support.http.server.ValidationError;
-import org.folio.circulation.support.results.Result;
+import static java.lang.String.format;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import static java.lang.String.format;
-import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
-import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.results.Result.succeeded;
+import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 
 public class RequestServiceUtility {
   private static final String INSTANCE_ID = "instanceId";
@@ -21,8 +21,7 @@ public class RequestServiceUtility {
   private static final String REQUESTER_ID = "requesterId";
   private static final String REQUEST_ID = "requestId";
 
-  private RequestServiceUtility() {
-  }
+  private RequestServiceUtility() { }
 
   static Result<RequestAndRelatedRecords> refuseWhenInstanceDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
@@ -143,12 +142,13 @@ public class RequestServiceUtility {
       isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
     } else {
       isAlreadyRequested = req -> {
-        if (req.isTitleLevel()) {
-          return (request.getInstanceId().equals(req.getInstanceId()));
-        } else {
+        if (req.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
+          return (request.getInstanceId().equals(req.getInstanceId()))
+            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+        } else if (!req.isTitleLevel()){
           return (requestAndRelatedRecords.getItemId().equals(req.getItemId())
             && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen());
-        }
+        } else return false;
       };
     }
 
@@ -157,7 +157,6 @@ public class RequestServiceUtility {
       .findFirst()
       .map(existingRequest -> alreadyRequestedFailure(requestAndRelatedRecords, existingRequest))
       .orElse(of(() -> requestAndRelatedRecords));
-
   }
 
   private static Result<RequestAndRelatedRecords> alreadyRequestedFailure(
