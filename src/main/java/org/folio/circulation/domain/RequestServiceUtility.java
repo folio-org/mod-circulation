@@ -139,17 +139,11 @@ public class RequestServiceUtility {
     Predicate<Request> isAlreadyRequested;
 
     if (requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req)
+        && req.isOpen() && request.getInstanceId().equals(req.getInstanceId());
     } else {
-      isAlreadyRequested = req -> {
-        if (req.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
-          return (request.getInstanceId().equals(req.getInstanceId()))
-            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
-        } else if (!req.isTitleLevel()){
-          return (requestAndRelatedRecords.getItemId().equals(req.getItemId())
-            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen());
-        } else return false;
-      };
+      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req)
+        && req.isOpen() && requestAndRelatedRecords.getItemId().equals(req.getItemId());
     }
 
     return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
