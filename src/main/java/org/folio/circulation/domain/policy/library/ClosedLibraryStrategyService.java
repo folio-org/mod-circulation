@@ -84,7 +84,6 @@ public class ClosedLibraryStrategyService {
         loanPolicy, timeZone)));
   }
 
-
   private Result<ZonedDateTime> applyStrategy(
     Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, ZoneId timeZone,
     boolean isRecall) {
@@ -137,6 +136,6 @@ public class ClosedLibraryStrategyService {
     ClosedLibraryStrategy strategy =
       ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
         loanPolicy, currentDateTime, timeZone);
-    return strategy.calculateDueDate(currentDateTime, openingDays);
+    return strategy.calculateDueDate(dueDateLimit, openingDays);
   }
 }
