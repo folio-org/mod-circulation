@@ -265,7 +265,7 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), item2.getId(), RequestType.HOLD);
+      instance.getId(), item2.getId(), RequestType.RECALL);
   }
 
   @Test
@@ -408,7 +408,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
@@ -458,7 +458,7 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), item.getId(), RequestType.HOLD);
+      instance.getId(), item.getId(), RequestType.RECALL);
   }
 
   @Test
@@ -511,7 +511,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     //Item2 should have been chosen because Jessica already requested item1
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), item2.getId(), RequestType.HOLD);
+      instance.getId(), item2.getId(), RequestType.RECALL);
   }
 
   @Test
@@ -560,7 +560,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
@@ -619,7 +619,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     assertEquals(item2.getId().toString(), representation.getString("itemId"));
@@ -689,7 +689,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     assertEquals(item2.getId().toString(), representation.getString("itemId"));
@@ -741,7 +741,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       pickupServicePointId,
       instanceMultipleCopies.getId(),
       item2.getId(),
-      RequestType.HOLD);
+      RequestType.RECALL);
   }
 
   @Test
@@ -782,7 +782,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       pickupServicePointId,
       instanceMultipleCopies.getId(),
       item2.getId(),
-      RequestType.HOLD);
+      RequestType.RECALL);
   }
 
   @Test
