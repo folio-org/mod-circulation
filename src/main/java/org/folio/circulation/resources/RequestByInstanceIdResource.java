@@ -91,7 +91,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class RequestByInstanceIdResource extends Resource {
 
-  private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(HOLD, RECALL, PAGE);
+  private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(RECALL, HOLD, PAGE);
   private static final RequestFulfilmentPreference DEFAULT_FULFILMENT_PREFERENCE = HOLD_SHELF;
 
   private final Logger log;
