@@ -121,7 +121,8 @@ public class ClosedLibraryStrategyService {
     ZoneId timeZone, boolean isRecall){
 
     Optional<ZonedDateTime> optionalDueDateLimit =
-      loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal, currentDateTime);
+      loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,
+        currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {
       return succeeded(dueDate);
     }

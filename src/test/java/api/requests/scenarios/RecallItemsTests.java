@@ -11,10 +11,8 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAccessor;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -26,7 +24,6 @@ import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
-import api.support.http.UserResource;
 import lombok.val;
 
 class RecallItemsTests extends APITests {
@@ -61,15 +58,16 @@ class RecallItemsTests extends APITests {
 
   @Test
   void whenPolicyHasTwoDifferentFixedSchedulesRecallShouldApplyToTheScheduleForTheDueDateAfterRenew() {
+    ZoneId londonZoneId = ZoneId.of("Europe/London");
     ZonedDateTime fromFirst = ZonedDateTime.of(2022, 1, 2, 10, 2, 3, 0,
-      ZoneId.of("Europe/London"));
+      londonZoneId);
 
     ZonedDateTime toFirst = fromFirst.plusDays(2);
 
     ZonedDateTime dueFirst = toFirst.plusDays(5);
 
     ZonedDateTime fromSecond = ZonedDateTime.of(2022, 1, 17, 10, 2, 3, 0,
-      ZoneId.of("Europe/London"));
+      londonZoneId);
 
     ZonedDateTime toSecond = fromSecond.plusDays(3);
 
@@ -91,17 +89,17 @@ class RecallItemsTests extends APITests {
     val jessica = usersFixture.jessica();
     ZonedDateTime loanDate = fromFirst.plusDays(2);
     val loan = checkOutFixture.checkOutByBarcode(item, james, loanDate);
-    assertThat(loan.getJson().getInstant("dueDate").atZone(ZoneId.of("Europe/London")),
+    assertThat(loan.getJson().getInstant("dueDate").atZone(londonZoneId),
       is(dueFirst));
 
-    ClockUtil.setClock(Clock.fixed(toSecond.minusHours(3).toInstant(), ZoneId.of("Europe/London")));
+    ClockUtil.setClock(Clock.fixed(toSecond.minusHours(3).toInstant(), londonZoneId));
 
     assertThat(loansFixture.renewLoan(item, james).getJson()
-      .getInstant("dueDate").atZone(ZoneId.of("Europe/London")), is(dueSecond));
+      .getInstant("dueDate").atZone(londonZoneId), is(dueSecond));
 
     requestsFixture.recallItem(item, jessica);
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson().getInstant("dueDate")
-      .atZone(ZoneId.of("Europe/London")), is(recallInterval.plusDate(ClockUtil.getZonedDateTime())));
+      .atZone(londonZoneId), is(recallInterval.plusDate(ClockUtil.getZonedDateTime())));
   }
 }
