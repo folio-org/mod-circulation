@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
@@ -13,6 +14,7 @@ import static java.time.Clock.offset;
 import static java.time.Duration.ofDays;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CURRENT_DUE_DATE;
+import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.folio.circulation.support.utils.ClockUtil.getClock;
 import static org.folio.circulation.support.utils.ClockUtil.getInstant;
 import static org.folio.circulation.support.utils.ClockUtil.getZoneId;
@@ -20,6 +22,7 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -53,6 +56,7 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
@@ -318,7 +322,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     "-100,Months,1,Months,the duration \"-100\" in \"minimumGuaranteedLoanPeriod\" is invalid",
     "1,Months,-100,Months,the duration \"-100\" in \"recallReturnInterval\" is invalid"
   }, nullValues={"null"})
-  public void loanPolicyWithInvalidMGDOrRDPeriodValuesReturnsErrorOnRecallCreation(
+  void loanPolicyWithInvalidMGDOrRDPeriodValuesReturnsErrorOnRecallCreation(
       Integer mgdDuration,
       String mgdInterval,
       Integer rdDuration,
@@ -859,6 +863,15 @@ class LoanDueDatesAfterRecallTests extends APITests {
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     assertThat(storedLoan.getString("dueDate"), withinSecondsBefore(30, expectedLoanDueDate));
+    // Verify published loan event type description
+    var publishedLoanEvents = FakePubSub.getPublishedEventsAsList(byLogEventType(LOAN));
+    var expectedDescription = String.format("New due date: %s (from %s)",
+      formatDateTimeOptional(expectedLoanDueDate), loan.getJson().getString("dueDate"));
+    var actualDescription = new JsonObject(publishedLoanEvents.get(0).getString("eventPayload"))
+      .getJsonObject("payload")
+      .getString("description");
+
+    assertThat(actualDescription, is(expectedDescription));
   }
 
   public void shouldExtendLoanDueDateByRecallReturnIntervalForOverdueLoansIsRecalledAndAlternateRecallReturnIntervalForOverdueLoansIsEmpty() {
