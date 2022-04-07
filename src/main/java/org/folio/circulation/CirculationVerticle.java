@@ -37,6 +37,7 @@ import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
+import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
 
 import io.vertx.core.AbstractVerticle;
@@ -60,9 +61,11 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
+    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
 
     this.server = vertx.createHttpServer();
+
+    router.route().handler(rc -> LogHelper.logRequest(rc, log));
 
     new TenantActivationResource().register(router);
 
