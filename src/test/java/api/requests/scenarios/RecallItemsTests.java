@@ -59,18 +59,14 @@ class RecallItemsTests extends APITests {
   @Test
   void whenPolicyHasTwoDifferentFixedSchedulesRecallShouldApplyToTheScheduleForTheDueDateAfterRenew() {
     ZoneId londonZoneId = ZoneId.of("Europe/London");
+
     ZonedDateTime fromFirst = ZonedDateTime.of(2022, 1, 2, 10, 2, 3, 0,
       londonZoneId);
-
     ZonedDateTime toFirst = fromFirst.plusDays(2);
-
     ZonedDateTime dueFirst = toFirst.plusDays(5);
-
     ZonedDateTime fromSecond = ZonedDateTime.of(2022, 1, 17, 10, 2, 3, 0,
       londonZoneId);
-
     ZonedDateTime toSecond = fromSecond.plusDays(3);
-
     ZonedDateTime dueSecond = toSecond.plusDays(7);
 
     FixedDueDateSchedulesBuilder builder = new FixedDueDateSchedulesBuilder()
@@ -79,7 +75,7 @@ class RecallItemsTests extends APITests {
     IndividualResource fixedDueDateSchedules = fixedDueDateScheduleClient.create(builder);
     Period recallInterval = Period.days(2);
     use(new LoanPolicyBuilder().fixed(fixedDueDateSchedules.getId())
-      .limitedRenewals(2)
+      .limitedRenewals(1)
       .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
       .withRecallsRecallReturnInterval(recallInterval)
       .withRenewable(true));
