@@ -52,9 +52,9 @@ public class RequestByInstanceIdResourceTests {
     for (JsonObject itemRequestJson: requestRepresentations) {
       assertEquals(item.getItemId(), itemRequestJson.getString("itemId"));
       if (i == 0)
-        assertEquals(RequestType.HOLD.getValue(), itemRequestJson.getString("requestType"));
-      if (i == 1)
         assertEquals(RequestType.RECALL.getValue(), itemRequestJson.getString("requestType"));
+      if (i == 1)
+        assertEquals(RequestType.HOLD.getValue(), itemRequestJson.getString("requestType"));
       if (i == 2)
         assertEquals(RequestType.PAGE.getValue(), itemRequestJson.getString("requestType"));
       i++;
