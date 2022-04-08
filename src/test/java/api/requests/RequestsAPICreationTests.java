@@ -1409,6 +1409,24 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void cannnotCreateTwoTitleLevelRequestsForSameInstance() {
+    UUID userId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    buildItem(instanceId, "111");
+    buildItem(instanceId, "222");
+    requestsClient.create(buildPageTitleLevelRequest(userId,
+      pickupServicePointId, instanceId));
+    assertThat(requestsClient.getAll(), hasSize(1));
+    Response response = requestsClient.attemptCreate(buildPageTitleLevelRequest(
+      userId, pickupServicePointId, instanceId));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(requestsClient.getAll(), hasSize(1));
+  }
+
+  @Test
   void cannotCreatePagedRequestWhenItemStatusIsCheckedOut() {
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
