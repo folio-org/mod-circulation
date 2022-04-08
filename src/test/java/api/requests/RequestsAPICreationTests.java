@@ -35,6 +35,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
+import static org.folio.HttpStatus.HTTP_ACCEPTED;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -1345,6 +1346,105 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(json.getJsonObject("item")
       .getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+  }
+
+  @Test
+  void cannotCreateItemLevelRequestIfTitleLevelRequestForInstanceAlreadyCreated() {
+    UUID patronId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    buildItem(instanceId, "111");
+    requestsClient.create(buildPageTitleLevelRequest(patronId, pickupServicePointId, instanceId));
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    ItemResource secondItem = buildItem(instanceId, "222");
+    Response response = requestsClient.attemptCreate(buildItemLevelRequest(
+      patronId, pickupServicePointId, instanceId, secondItem));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "This requester already has an open request for this item")));
+  }
+
+  @Test
+  void cannotCreateTitleLevelRequestIfItemLevelRequestAlreadyCreated() {
+    UUID patronId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    buildItem(instanceId, "111");
+    ItemResource secondItem = buildItem(instanceId, "222");
+    requestsClient.create(buildItemLevelRequest(patronId, pickupServicePointId,
+      instanceId, secondItem));
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    Response response = requestsClient.attemptCreate(buildPageTitleLevelRequest(
+      patronId, pickupServicePointId, instanceId));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "This requester already has an open request for one of the instance's items")));
+  }
+
+  @Test
+  void canCreateItemLevelRequestAndTitleLevelRequestForDifferentInstances() {
+    UUID patronId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId= UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    buildItem(instanceId, "111");
+    requestsClient.create(buildPageTitleLevelRequest(patronId, pickupServicePointId,
+      instanceId));
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    ItemResource secondItem = itemsFixture.basedUponDunkirk();
+    Response response = requestsClient.attemptCreate(buildItemLevelRequest(
+      patronId, pickupServicePointId, secondItem.getInstanceId(), secondItem));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(requestsClient.getAll(), hasSize(2));
+  }
+
+  @Test
+  void cannotCreateTwoTitleLevelRequestsForSameInstance() {
+    UUID userId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    buildItem(instanceId, "111");
+    buildItem(instanceId, "222");
+    requestsClient.create(buildPageTitleLevelRequest(userId,
+      pickupServicePointId, instanceId));
+    assertThat(requestsClient.getAll(), hasSize(1));
+    Response response = requestsClient.attemptCreate(buildPageTitleLevelRequest(
+      userId, pickupServicePointId, instanceId));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "This requester already has an open request for this instance")));
+    assertThat(requestsClient.getAll(), hasSize(1));
+  }
+
+  @Test
+  void cannotCreateTwoItemLevelRequestsForSameItem() {
+    UUID userId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    ItemResource item = buildItem(instanceId, "111");
+    requestsClient.create(buildItemLevelRequest(userId, pickupServicePointId,
+      instanceId, item));
+    assertThat(requestsClient.getAll(), hasSize(1));
+    Response response = requestsClient.attemptCreate(buildItemLevelRequest(userId,
+      pickupServicePointId, instanceId, item));
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "This requester already has an open request for this item")));
+    assertThat(requestsClient.getAll(), hasSize(1));
   }
 
   @Test
@@ -3303,6 +3403,18 @@ public class RequestsAPICreationTests extends APITests {
       .withInstanceId(instanceId)
       .withNoItemId()
       .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId);
+  }
+
+  private RequestBuilder buildItemLevelRequest(UUID patronId, UUID pickupServicePointId,
+    UUID instanceId, ItemResource secondItem) {
+
+    return new RequestBuilder()
+      .page()
+      .itemRequestLevel()
+      .withInstanceId(instanceId)
+      .withItemId(secondItem.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId);
   }
