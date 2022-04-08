@@ -1389,6 +1389,26 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void canCreateItemLevelRequestAndTitleLevelRequestForDifferentInstances() {
+    UUID patronId = usersFixture.charlotte().getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId= UUID.randomUUID();
+    configurationsFixture.enableTlrFeature();
+
+    buildItem(instanceId, "111");
+    requestsClient.create(buildPageTitleLevelRequest(patronId, pickupServicePointId,
+      instanceId));
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    ItemResource secondItem = itemsFixture.basedUponDunkirk();
+    Response response = requestsClient.attemptCreate(buildItemLevelRequest(
+      patronId, pickupServicePointId, secondItem.getInstanceId(), secondItem));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(requestsClient.getAll(), hasSize(2));
+  }
+
+  @Test
   void cannotCreatePagedRequestWhenItemStatusIsCheckedOut() {
     //Set up the item's initial status to be CHECKED OUT
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
