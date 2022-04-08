@@ -1423,6 +1423,8 @@ public class RequestsAPICreationTests extends APITests {
     Response response = requestsClient.attemptCreate(buildPageTitleLevelRequest(
       userId, pickupServicePointId, instanceId));
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "This requester already has an open request for this instance")));
     assertThat(requestsClient.getAll(), hasSize(1));
   }
 
@@ -1440,6 +1442,8 @@ public class RequestsAPICreationTests extends APITests {
     Response response = requestsClient.attemptCreate(buildItemLevelRequest(userId,
       pickupServicePointId, instanceId, item));
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "This requester already has an open request for this item")));
     assertThat(requestsClient.getAll(), hasSize(1));
   }
 
