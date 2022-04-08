@@ -150,11 +150,11 @@ public class RequestServiceUtility {
     } else {
       return req -> {
         if (req.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
-          return (request.getInstanceId().equals(req.getInstanceId()))
+          return request.getInstanceId().equals(req.getInstanceId())
             && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
         } else if (!req.isTitleLevel()) {
-          return (requestAndRelatedRecords.getItemId().equals(req.getItemId())
-            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen());
+          return requestAndRelatedRecords.getItemId().equals(req.getItemId())
+            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
         }
         return false;
       };

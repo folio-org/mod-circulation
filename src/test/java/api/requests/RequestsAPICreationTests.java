@@ -1409,7 +1409,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void cannnotCreateTwoTitleLevelRequestsForSameInstance() {
+  void cannotCreateTwoTitleLevelRequestsForSameInstance() {
     UUID userId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
