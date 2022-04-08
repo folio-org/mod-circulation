@@ -3108,8 +3108,6 @@ public class RequestsAPICreationTests extends APITests {
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
 
-
-
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
     JsonObject itemJsonObject = new JsonObject(noticeLogContextItem.getString("eventPayload"))
       .getJsonObject("payload")
