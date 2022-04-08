@@ -269,7 +269,7 @@ public class RequestByInstanceIdResource extends Resource {
     JsonObject requestBody, ItemByInstanceIdFinder itemFinder,
     LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
 
-    return RequestByInstanceIdRequest.from(requestBody)
+    return RequestByInstanceIdRequest.from(requestBody.put(REQUEST_LEVEL, RequestLevel.ITEM.getValue()))
       .map(InstanceRequestRelatedRecords::new)
       .after(instanceRequest -> getPotentialItems(itemFinder, instanceRequest,
         loanRepository, requestQueueRepository))

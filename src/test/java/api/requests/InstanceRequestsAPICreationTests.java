@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -76,6 +77,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       instanceMultipleCopies.getId(), item2.getId(), RequestType.PAGE);
 
     assertThat(representation, hasJsonPath("patronComments", "I need the book"));
+    assertThat(representation, hasJsonPath("requestLevel", RequestLevel.ITEM.getValue()));
   }
 
   @Test
