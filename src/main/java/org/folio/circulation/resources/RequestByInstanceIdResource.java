@@ -269,11 +269,12 @@ public class RequestByInstanceIdResource extends Resource {
     JsonObject requestBody, ItemByInstanceIdFinder itemFinder,
     LoanRepository loanRepository, RequestQueueRepository requestQueueRepository) {
 
-    return RequestByInstanceIdRequest.from(requestBody)
+    return succeeded(requestBody.put(REQUEST_LEVEL, "Item"))
+      .after(body -> RequestByInstanceIdRequest.from(body)
       .map(InstanceRequestRelatedRecords::new)
       .after(instanceRequest -> getPotentialItems(itemFinder, instanceRequest,
         loanRepository, requestQueueRepository))
-      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests));
+      .thenApply( r -> r.next(RequestByInstanceIdResource::instanceToItemRequests)));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
