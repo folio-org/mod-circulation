@@ -136,27 +136,24 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
-      .filter(isAlreadyRequested(requestAndRelatedRecords, requestAndRelatedRecords.getRequest()))
+      .filter(isAlreadyRequested(requestAndRelatedRecords))
       .findFirst()
       .map(existingRequest -> alreadyRequestedFailure(requestAndRelatedRecords, existingRequest))
       .orElse(of(() -> requestAndRelatedRecords));
   }
 
-  private static Predicate<Request> isAlreadyRequested(
-    RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
-
-    if (request.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
-      return req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+  private static Predicate<Request> isAlreadyRequested(RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
+    if (records.isTlrFeatureEnabled() && request.isTitleLevel()) {
+      return req -> isTheSameRequester(records, req) && req.isOpen();
     } else {
       return req -> {
-        if (req.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
+        if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
           return request.getInstanceId().equals(req.getInstanceId())
-            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
-        } else if (!req.isTitleLevel()) {
-          return requestAndRelatedRecords.getItemId().equals(req.getItemId())
-            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+            && isTheSameRequester(records, req) && req.isOpen();
         }
-        return false;
+        return records.getItemId().equals(req.getItemId())
+            && isTheSameRequester(records, req) && req.isOpen();
       };
     }
   }
