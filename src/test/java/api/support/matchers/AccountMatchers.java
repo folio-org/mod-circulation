@@ -27,6 +27,30 @@ public final class AccountMatchers {
       hasJsonPath("paymentStatus.name", "Refunded fully"));
   }
 
+  public static Matcher<JsonObject> isRefundedPartially(double amount, double remaining) {
+    return allOf(
+      hasJsonPath("amount", amount),
+      hasJsonPath("remaining", remaining),
+      hasJsonPath("status.name", "Open"),
+      hasJsonPath("paymentStatus.name", "Refunded partially"));
+  }
+
+  public static Matcher<JsonObject> isCancelledItemReturned(double amount) {
+    return allOf(
+      hasJsonPath("amount", amount),
+      hasJsonPath("remaining", 0.0),
+      hasJsonPath("status.name", "Closed"),
+      hasJsonPath("paymentStatus.name", "Cancelled item returned"));
+  }
+
+  public static Matcher<JsonObject> isCancelledItemRenewed(double amount) {
+    return allOf(
+      hasJsonPath("amount", amount),
+      hasJsonPath("remaining", 0.0),
+      hasJsonPath("status.name", "Closed"),
+      hasJsonPath("paymentStatus.name", "Cancelled item renewed"));
+  }
+
   public static Matcher<JsonObject> isClosedCancelled(String cancellationReason, double amount) {
     return allOf(
       hasJsonPath("amount", amount),

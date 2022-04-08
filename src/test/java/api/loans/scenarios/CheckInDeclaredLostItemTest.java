@@ -1,10 +1,11 @@
 package api.loans.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.matchers.AccountMatchers.isCancelledItemReturned;
 import static api.support.matchers.AccountMatchers.isOpen;
-import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -61,7 +62,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
-    assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
+    assertThat(loan, hasLostItemFee(isCancelledItemReturned(secondFee)));
 
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
@@ -119,7 +120,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
         .at(servicePointsFixture.cd1()));
 
     assertThat(response.getLoan(), nullValue());
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFee(isCancelledItemReturned(setCostFee)));
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
@@ -133,5 +134,82 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
+  }
+
+  @Test
+  void shouldRefundFeesAtAnyPointWhenNoMaximumRefundPeriod() {
+    final double setCostFee = 10.55;
+    final double processingFee = 12.99;
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Test check in")
+        .chargeProcessingFeeWhenDeclaredLost(processingFee)
+        .withSetCost(setCostFee)
+        .withNoFeeRefundInterval()).getId());
+
+    declareItemLost();
+
+    feeFineAccountFixture.transferLostItemFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+
+    performActionThatRequiresRefund();
+
+    assertThat(loan, hasLostItemFee(isCancelledItemReturned(setCostFee)));
+    assertThat(loan, hasLostItemProcessingFee(isCancelledItemReturned(processingFee)));
+  }
+
+  @Test
+  void shouldRefundPaidAndTransferredFee() {
+    final double transferAmount = 6.0;
+    final double paymentAmount = 4.0;
+    final double setCostFee = transferAmount + paymentAmount;
+    final double processingFee = 5.00;
+
+    useChargeableRefundableLostItemFee(setCostFee, processingFee);
+
+    declareItemLost();
+
+    feeFineAccountFixture.transferLostItemFee(loan.getId(), transferAmount);
+    feeFineAccountFixture.payLostItemFee(loan.getId(), paymentAmount);
+
+    performActionThatRequiresRefund();
+
+    assertThat(loan, hasLostItemFee(isCancelledItemReturned(setCostFee)));
+    assertThat(loan, hasLostItemProcessingFee(isCancelledItemReturned(processingFee)));
+  }
+
+  @Test
+  void shouldRefundTransferredFee() {
+    final double setCostFee = 10.89;
+    final double processingFee = 5.00;
+
+    useChargeableRefundableLostItemFee(setCostFee, processingFee);
+
+    declareItemLost();
+
+    feeFineAccountFixture.transferLostItemFee(loan.getId());
+
+    performActionThatRequiresRefund();
+
+    assertThat(loan, hasLostItemFee(isCancelledItemReturned(setCostFee)));
+    assertThat(loan, hasLostItemProcessingFee(isCancelledItemReturned(processingFee)));
+  }
+
+  @Test
+  void shouldRefundPaidFee() {
+    final double setCostFee = 9.99;
+    final double processingFee = 5.00;
+
+    useChargeableRefundableLostItemFee(setCostFee, processingFee);
+
+    declareItemLost();
+
+    feeFineAccountFixture.payLostItemFee(loan.getId());
+
+    performActionThatRequiresRefund();
+
+    assertThat(loan, hasLostItemFee(isCancelledItemReturned(setCostFee)));
+    assertThat(loan, hasLostItemProcessingFee(isCancelledItemReturned(processingFee)));
   }
 }

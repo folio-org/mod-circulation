@@ -139,12 +139,13 @@ public class LostItemFeeRefundService {
     RefundAndCancelAccountCommand command, User user) {
 
     return feeFineFacade.refundAccountIfNeeded(command, user)
-      .thenApply(r -> r.next(response -> schedulePatronNotices(context, response)))
-      .thenCompose(r -> r.after(notUsed -> feeFineFacade.cancelAccountIfNeeded(command, user)))
-      .thenApply(r -> r.next(response -> schedulePatronNotices(context, response)));
+      .thenCompose(r -> r.after(response -> schedulePatronNotices(context, response)))
+      .thenCompose(r -> r.after(resp -> feeFineFacade.cancelAccountIfNeeded(command, user, resp)))
+      .thenCompose(r -> r.after(response -> schedulePatronNotices(context, response)))
+      .thenApply(r -> r.next(response -> succeeded(null)));
   }
 
-  private Result<Void> schedulePatronNotices(LostItemFeeRefundContext context,
+  private CompletableFuture<Result<AccountActionResponse>> schedulePatronNotices(LostItemFeeRefundContext context,
     AccountActionResponse response) {
 
     if (shouldSchedulePatronNotices(context, response)) {
@@ -154,7 +155,7 @@ public class LostItemFeeRefundService {
         .forEach(ffa -> scheduledNoticeService.scheduleAgedToLostReturnedNotices(context, ffa));
     }
 
-    return succeeded(null);
+    return completedFuture(succeeded(response));
   }
 
   private static boolean shouldSchedulePatronNotices(LostItemFeeRefundContext context,

@@ -99,15 +99,12 @@ public class FeeFineFacade {
   }
 
   CompletableFuture<Result<AccountActionResponse>> cancelAccountIfNeeded(
-    RefundAndCancelAccountCommand command, User user) {
+    RefundAndCancelAccountCommand command, User user, AccountActionResponse response) {
 
     final Account account = command.getAccount();
-
-    if (!account.getPaymentStatus().equals("Paid fully")) {
-      if (!account.getRemaining().hasAmount()) {
-        log.info("Nothing to cancel for account {}", account.getId());
-        return ofAsync(() -> null);
-      }
+    if (response != null && getBalanceFrom(response) < account.getAmount().toDouble()) {
+      log.info("Nothing to cancel for account {}", account.getId());
+      return ofAsync(() -> null);
     }
 
     log.info("Initiating cancel for account {}", account.getId());
@@ -120,6 +117,13 @@ public class FeeFineFacade {
       .build();
 
     return feeFineService.cancelAccount(cancelCommand);
+  }
+
+  private Double getBalanceFrom(AccountActionResponse response) {
+    int size = response.getFeeFineActions().size();
+    return size == 0
+      ? 0.
+      : response.getFeeFineActions().get(size - 1).getBalance().toDouble();
   }
 
   private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedBy(
