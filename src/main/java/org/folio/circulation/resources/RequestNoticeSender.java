@@ -86,9 +86,7 @@ public class RequestNoticeSender {
   }
 
   protected void sendLogEvent(Loan loan) {
-    runAsync(() -> loanRepository.getById(loan.getId())
-      .thenAccept(existingLoan -> existingLoan.map(l -> loan.setPreviousDueDate(l.getDueDate())))
-      .thenApply(vVoid -> eventPublisher.publishRecallRequestedEvent(loan)));
+    runAsync(() -> eventPublisher.publishRecallRequestedEvent(loan));
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(

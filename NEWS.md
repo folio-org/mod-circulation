@@ -1,3 +1,7 @@
+## 23.0.4 2022-04-08
+
+* Extend due date of a loan after recall (CIRC-1476)
+
 ## 23.0.3 2022-04-05
 
 * Publish LOAN_CLOSED event when last Lost Item Fee for loan is closed (CIRC-1474)
