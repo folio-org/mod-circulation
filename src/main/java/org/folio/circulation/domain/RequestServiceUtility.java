@@ -135,22 +135,30 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenAlreadyRequested(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    Request request = requestAndRelatedRecords.getRequest();
-    Predicate<Request> isAlreadyRequested;
-
-    if (requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req)
-        && req.isOpen() && request.getInstanceId().equals(req.getInstanceId());
-    } else {
-      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req)
-        && req.isOpen() && requestAndRelatedRecords.getItemId().equals(req.getItemId());
-    }
-
     return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
-      .filter(isAlreadyRequested)
+      .filter(isAlreadyRequested(requestAndRelatedRecords, requestAndRelatedRecords.getRequest()))
       .findFirst()
       .map(existingRequest -> alreadyRequestedFailure(requestAndRelatedRecords, existingRequest))
       .orElse(of(() -> requestAndRelatedRecords));
+  }
+
+  private static Predicate<Request> isAlreadyRequested(
+    RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
+
+    if (request.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
+      return req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+    } else {
+      return req -> {
+        if (req.isTitleLevel() && requestAndRelatedRecords.isTlrFeatureEnabled()) {
+          return (request.getInstanceId().equals(req.getInstanceId()))
+            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
+        } else if (!req.isTitleLevel()) {
+          return (requestAndRelatedRecords.getItemId().equals(req.getItemId())
+            && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen());
+        }
+        return false;
+      };
+    }
   }
 
   private static Result<RequestAndRelatedRecords> alreadyRequestedFailure(
