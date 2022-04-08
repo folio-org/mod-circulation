@@ -8,13 +8,21 @@ import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissio
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
+
+import java.time.Clock;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.FixedDueDateSchedule;
+import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.OkapiHeaders;
 import lombok.val;
 
@@ -46,5 +54,48 @@ class RecallItemsTests extends APITests {
       hasJsonPath("loan.action", "recallrequested"),
       hasNoJsonPath("loan.actionComment")
     )));
+  }
+
+  @Test
+  void whenPolicyHasTwoDifferentFixedSchedulesRecallShouldApplyToTheScheduleForTheDueDateAfterRenew() {
+    ZoneId londonZoneId = ZoneId.of("Europe/London");
+
+    ZonedDateTime fromFirst = ZonedDateTime.of(2022, 1, 2, 10, 2, 3, 0,
+      londonZoneId);
+    ZonedDateTime toFirst = fromFirst.plusDays(2);
+    ZonedDateTime dueFirst = toFirst.plusDays(5);
+    ZonedDateTime fromSecond = ZonedDateTime.of(2022, 1, 17, 10, 2, 3, 0,
+      londonZoneId);
+    ZonedDateTime toSecond = fromSecond.plusDays(3);
+    ZonedDateTime dueSecond = toSecond.plusDays(7);
+
+    FixedDueDateSchedulesBuilder builder = new FixedDueDateSchedulesBuilder()
+      .addSchedule(new FixedDueDateSchedule(fromFirst, toFirst, dueFirst))
+      .addSchedule(new FixedDueDateSchedule(fromSecond, toSecond, dueSecond));
+    IndividualResource fixedDueDateSchedules = fixedDueDateScheduleClient.create(builder);
+    Period recallInterval = Period.days(2);
+    use(new LoanPolicyBuilder().fixed(fixedDueDateSchedules.getId())
+      .limitedRenewals(1)
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(recallInterval)
+      .withRenewable(true));
+
+    val item = itemsFixture.basedUponNod();
+    val james = usersFixture.james();
+    val jessica = usersFixture.jessica();
+    ZonedDateTime loanDate = fromFirst.plusDays(2);
+    val loan = checkOutFixture.checkOutByBarcode(item, james, loanDate);
+    assertThat(loan.getJson().getInstant("dueDate").atZone(londonZoneId),
+      is(dueFirst));
+
+    ClockUtil.setClock(Clock.fixed(toSecond.minusHours(3).toInstant(), londonZoneId));
+
+    assertThat(loansFixture.renewLoan(item, james).getJson()
+      .getInstant("dueDate").atZone(londonZoneId), is(dueSecond));
+
+    requestsFixture.recallItem(item, jessica);
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson().getInstant("dueDate")
+      .atZone(londonZoneId), is(recallInterval.plusDate(ClockUtil.getZonedDateTime())));
   }
 }
