@@ -69,6 +69,8 @@ import io.vertx.core.json.JsonObject;
  */
 class LoanDueDatesAfterRecallTests extends APITests {
 
+  public static final String DUE_DATE = "dueDate";
+
   public LoanDueDatesAfterRecallTests() {
     super(true, true);
   }
@@ -757,7 +759,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final String originalDueDate = loan.getJson().getString("dueDate");
 
-    JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+    JsonObject storedLoan;
 
     final IndividualResource request = requestsFixture.placeItemLevelHoldShelfRequest(
         smallAngryPlanet, james, getZonedDateTime(),
@@ -774,8 +776,6 @@ class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource renewal = loansFixture.renewLoan(smallAngryPlanet, jessica);
 
     final String renewalDueDate = renewal.getJson().getString("dueDate");
-
-    storedLoan = loansStorageClient.getById(renewal.getId()).getJson();
 
     requestsFixture.placeItemLevelHoldShelfRequest(smallAngryPlanet, charlotte,
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
@@ -862,12 +862,21 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat(storedLoan.getString("dueDate"), withinSecondsBefore(30, expectedLoanDueDate));
+    assertThat(storedLoan.getString(DUE_DATE), withinSecondsBefore(30, expectedLoanDueDate));
     // Verify published loan event type description
-    var publishedLoanEvents = FakePubSub.getPublishedEventsAsList(byLogEventType(LOAN));
+    var publishedLoanLogEvents = FakePubSub.getPublishedEventsAsList(byLogEventType(LOAN));
+
+    assertThat(publishedLoanLogEvents.size(), is(2));
+    verifyPublishedLogEventDescription(publishedLoanLogEvents.get(0), loan, expectedLoanDueDate);
+    verifyPublishedLogEventDescription(publishedLoanLogEvents.get(1), loan, expectedLoanDueDate);
+  }
+
+  private void verifyPublishedLogEventDescription(JsonObject eventLogJsonObject,
+    IndividualResource loan, ZonedDateTime expectedLoanDueDate) {
+
     var expectedDescription = String.format("New due date: %s (from %s)",
-      formatDateTimeOptional(expectedLoanDueDate), loan.getJson().getString("dueDate"));
-    var actualDescription = new JsonObject(publishedLoanEvents.get(0).getString("eventPayload"))
+      formatDateTimeOptional(expectedLoanDueDate), loan.getJson().getString(DUE_DATE));
+    var actualDescription = new JsonObject(eventLogJsonObject.getString("eventPayload"))
       .getJsonObject("payload")
       .getString("description");
 
