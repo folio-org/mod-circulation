@@ -21,7 +21,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     RequestQueue requestQueue,
     RequestPolicy requestPolicy,
     MoveRequestRecord moveRequestRecord,
-    ZoneId timeZone, ZonedDateTime recalledLoanPreviousDueDate) {
+    ZoneId timeZone,
+    ZonedDateTime recalledLoanPreviousDueDate) {
 
     this.request = request;
     this.originalRequest = request.copy();

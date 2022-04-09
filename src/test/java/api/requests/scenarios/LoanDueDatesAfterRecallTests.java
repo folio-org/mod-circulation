@@ -867,11 +867,11 @@ class LoanDueDatesAfterRecallTests extends APITests {
     var publishedLoanLogEvents = FakePubSub.getPublishedEventsAsList(byLogEventType(LOAN));
 
     assertThat(publishedLoanLogEvents.size(), is(2));
-    verifyPublishedLogEventDescription(publishedLoanLogEvents.get(0), loan, expectedLoanDueDate);
-    verifyPublishedLogEventDescription(publishedLoanLogEvents.get(1), loan, expectedLoanDueDate);
+    verifyLogEventDueDateChangedMessage(publishedLoanLogEvents.get(0), loan, expectedLoanDueDate);
+    verifyLogEventDueDateChangedMessage(publishedLoanLogEvents.get(1), loan, expectedLoanDueDate);
   }
 
-  private void verifyPublishedLogEventDescription(JsonObject eventLogJsonObject,
+  private void verifyLogEventDueDateChangedMessage(JsonObject eventLogJsonObject,
     IndividualResource loan, ZonedDateTime expectedLoanDueDate) {
 
     var expectedDescription = String.format("New due date: %s (from %s)",

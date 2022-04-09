@@ -181,7 +181,9 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
-    loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
+    if (records.getRecalledLoanPreviousDueDate() != null) {
+      loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
+    }
     return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
   }
 
@@ -270,21 +272,21 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
-      .withDescription(getLoanDescription(loan)).asJson(), LOAN);
+      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
-      .withDescription(getLoanDescription(loan)).asJson(), LOAN);
+      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
-      .withDescription(getLoanDescription(loan)).asJson(), LOAN);
+      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
-  private String getLoanDescription(Loan loan) {
+  private String getLoanDueDateChangeLogMessage(Loan loan) {
     return String.format(NEW_DUE_DATE_FROM_PREVIOUS_DUE_DATE, formatDateTimeOptional(loan.getDueDate()),
       formatDateTimeOptional(loan.getPreviousDueDate()));
   }
