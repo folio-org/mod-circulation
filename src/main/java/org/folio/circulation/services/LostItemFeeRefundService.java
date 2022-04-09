@@ -12,6 +12,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -128,23 +129,24 @@ public class LostItemFeeRefundService {
       .thenApply(r -> r.map(notUsed -> context));
   }
 
-  private CompletableFuture<Result<Void>> refundAndCloseAccount(LostItemFeeRefundContext context,
-    RefundAndCancelAccountCommand command) {
+  private CompletableFuture<Result<AccountActionResponse>> refundAndCloseAccount(
+    LostItemFeeRefundContext context, RefundAndCancelAccountCommand command) {
 
     return userRepository.getUser(command.getStaffUserId())
       .thenCompose(r -> r.after(user -> processAccount(context, command, user)));
   }
 
-  private CompletableFuture<Result<Void>> processAccount(LostItemFeeRefundContext context,
-    RefundAndCancelAccountCommand command, User user) {
+  private CompletableFuture<Result<AccountActionResponse>> processAccount(
+    LostItemFeeRefundContext context, RefundAndCancelAccountCommand command, User user) {
 
-    return feeFineFacade.refundAccountIfNeeded(command, user)
-      .thenApply(r -> r.next(response -> schedulePatronNotices(context, response)))
-      .thenCompose(r -> r.after(notUsed -> feeFineFacade.cancelAccountIfNeeded(command, user)))
-      .thenApply(r -> r.next(response -> schedulePatronNotices(context, response)));
+    return fromFutureResult(feeFineFacade.refundAccountIfNeeded(command, user))
+      .onSuccess(refundResponse -> schedulePatronNotices(context, refundResponse))
+      .flatMapFuture(refundResponse -> feeFineFacade.cancelAccountIfNeeded(command, user, refundResponse))
+      .onSuccess(cancelResponse -> schedulePatronNotices(context, cancelResponse))
+      .toCompletableFuture();
   }
 
-  private Result<Void> schedulePatronNotices(LostItemFeeRefundContext context,
+  private void schedulePatronNotices(LostItemFeeRefundContext context,
     AccountActionResponse response) {
 
     if (shouldSchedulePatronNotices(context, response)) {
@@ -153,8 +155,6 @@ public class LostItemFeeRefundService {
         .filter(not(FeeFineAction::isCredited))
         .forEach(ffa -> scheduledNoticeService.scheduleAgedToLostReturnedNotices(context, ffa));
     }
-
-    return succeeded(null);
   }
 
   private static boolean shouldSchedulePatronNotices(LostItemFeeRefundContext context,

@@ -1,5 +1,6 @@
 package api.loans.scenarios;
 
+import static api.support.matchers.AccountMatchers.isClosedCancelled;
 import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
@@ -58,7 +59,7 @@ class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
     final var response = checkInFixture.checkInByBarcode(result.getItem());
 
     assertThat(response.getLoan(), nullValue());
-    assertThat(result.getLoan(), hasLostItemFee(isRefundedFully(itemFee)));
-    assertThat(result.getLoan(), hasLostItemProcessingFee(isRefundedFully(processingFee)));
+    assertThat(result.getLoan(), hasLostItemFee(isClosedCancelled(cancellationReason, itemFee)));
+    assertThat(result.getLoan(), hasLostItemProcessingFee(isClosedCancelled(cancellationReason, processingFee)));
   }
 }
