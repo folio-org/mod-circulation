@@ -46,11 +46,11 @@ public class UpdateLoan {
     Loan loan = request.getLoan();
 
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
-      final var finalRequestAndRelatedRecords
-        = requestAndRelatedRecords.withRecalledLoanPreviousDueDate(loan.getDueDate());
+      RequestAndRelatedRecords records = requestAndRelatedRecords
+        .withRecalledLoanPreviousDueDate(loan.getDueDate());
 
       return loanRepository.getById(loan.getId())
-          .thenComposeAsync(r -> r.after(l -> recall(l, finalRequestAndRelatedRecords, request)));
+        .thenComposeAsync(r -> r.after(l -> recall(l, records, request)));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
