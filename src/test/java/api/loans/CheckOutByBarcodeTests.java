@@ -91,6 +91,7 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -2211,6 +2212,7 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
+  @Disabled //TODO remove when TLR feature is enabled
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
@@ -2235,10 +2237,10 @@ class CheckOutByBarcodeTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({
-    "Item, Item",
-    "Item, Title",
-    "Title, Item",
-    "Title, Title"
+    "Item, Item"
+//    "Item, Title", //TODO remove when TLR feature is enabled
+//    "Title, Item",
+//    "Title, Title"
   })
   void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
     configurationsFixture.enableTlrFeature();
@@ -2302,6 +2304,7 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(fetchRequestJson(holdRequest), isClosedFilled());
   }
 
+  @Disabled //TODO remove when TLR feature is enabled
   @Test
   void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
     configurationsFixture.enableTlrFeature();
@@ -2327,10 +2330,10 @@ class CheckOutByBarcodeTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({
-    "Item, Item",
-    "Item, Title",
-    "Title, Item",
-    "Title, Title"
+    "Item, Item"
+//    "Item, Title",  //TODO remove when TLR feature is enabled
+//    "Title, Item",
+//    "Title, Title"
   })
   void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(
     String firstRequestLevel, String secondRequestLevel) {
