@@ -465,36 +465,48 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loanId);
     assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
 
-    // check-in should refund both fees, no cancellations since both were paid/transferred fully
+    // check-in should refund both fees
     checkInFixture.checkInByBarcode(agedToLostLoan.getItem());
     assertThat(itemsFixture.getById(agedToLostLoan.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
 
-    // 2 charges + 1 payment + 1 transfer + 2 credits + 2 refunds
-    assertThat(feeFineActionsClient.getAll(), hasSize(8));
+    // 2 charges + 1 payment + 1 transfer + 2 credits + 2 refunds + 2 cancelled
+    assertThat(feeFineActionsClient.getAll(), hasSize(10));
 
     final JsonObject lostItemFeeRefundAction =
       findFeeFineAction(ACTION_TYPE_REFUNDED_FULLY, LOST_ITEM_FEE_AMOUNT);
     final JsonObject processingFeeRefundAction =
       findFeeFineAction(ACTION_TYPE_REFUNDED_FULLY, PROCESSING_FEE_AMOUNT);
+    final JsonObject lostItemFeeCancellationAction =
+      findFeeFineAction(ACTION_TYPE_CANCELLED, LOST_ITEM_FEE_AMOUNT);
+    final JsonObject processingFeeCancellationAction =
+      findFeeFineAction(ACTION_TYPE_CANCELLED, PROCESSING_FEE_AMOUNT);
 
     final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
     final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
+    final UUID cancellationLostItemActionId = getId(lostItemFeeCancellationAction);
+    final UUID cancellationProcessingFeeActionId = getId(processingFeeCancellationAction);
 
     final ZonedDateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
     final ZonedDateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
+    final ZonedDateTime cancellationLostItemActionDate = getActionDate(lostItemFeeCancellationAction);
+    final ZonedDateTime cancellationProcessingFeeActionDate = getActionDate(processingFeeCancellationAction);
 
     verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
-      iterableWithSize(2),
+      iterableWithSize(4),
       hasItems(
         hasScheduledFeeFineNotice(refundLostItemFeeActionId, loanId, userId,
           UPON_AT_TEMPLATE_ID, AGED_TO_LOST_RETURNED, refundLostItemFeeActionDate,
           UPON_AT, null, true),
         hasScheduledFeeFineNotice(refundProcessingFeeActionId, loanId, userId,
           UPON_AT_TEMPLATE_ID, AGED_TO_LOST_RETURNED, refundProcessingFeeActionDate,
-          UPON_AT, null, true)
-      )));
+          UPON_AT, null, true),
+        hasScheduledFeeFineNotice(cancellationLostItemActionId, loanId, userId, UPON_AT_TEMPLATE_ID,
+          AGED_TO_LOST_RETURNED, cancellationLostItemActionDate, UPON_AT, null, true),
+        hasScheduledFeeFineNotice(cancellationProcessingFeeActionId, loanId, userId, UPON_AT_TEMPLATE_ID,
+          AGED_TO_LOST_RETURNED, cancellationProcessingFeeActionDate, UPON_AT, null, true)
+        )));
 
     ZonedDateTime maxActionDate = Stream.of(refundLostItemFeeActionDate, refundProcessingFeeActionDate)
       .max(ZonedDateTime::compareTo)
@@ -504,11 +516,13 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     checkSentFeeFineNotices(agedToLostLoan, Map.of(
       lostItemFeeRefundAction, UPON_AT_TEMPLATE_ID,
-      processingFeeRefundAction, UPON_AT_TEMPLATE_ID
+      processingFeeRefundAction, UPON_AT_TEMPLATE_ID,
+      lostItemFeeCancellationAction, UPON_AT_TEMPLATE_ID,
+      processingFeeCancellationAction, UPON_AT_TEMPLATE_ID
     ));
 
     verifyNumberOfScheduledNotices(0);
-    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE, 4);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
