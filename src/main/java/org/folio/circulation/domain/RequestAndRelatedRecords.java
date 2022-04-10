@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
@@ -13,13 +14,15 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   private final RequestPolicy requestPolicy;
   private final ZoneId timeZone;
   private final MoveRequestRecord moveRequestRecord;
+  private final ZonedDateTime recalledLoanPreviousDueDate;
 
   private RequestAndRelatedRecords(
     Request request,
     RequestQueue requestQueue,
     RequestPolicy requestPolicy,
     MoveRequestRecord moveRequestRecord,
-    ZoneId timeZone) {
+    ZoneId timeZone,
+    ZonedDateTime recalledLoanPreviousDueDate) {
 
     this.request = request;
     this.originalRequest = request.copy();
@@ -27,10 +30,11 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     this.requestPolicy = requestPolicy;
     this.timeZone = timeZone;
     this.moveRequestRecord = moveRequestRecord;
+    this.recalledLoanPreviousDueDate = recalledLoanPreviousDueDate;
   }
 
   public RequestAndRelatedRecords(Request request) {
-    this(request, null, null, null, ZoneOffset.UTC);
+    this(request, null, null, null, ZoneOffset.UTC, null);
   }
 
   public boolean isTlrFeatureEnabled() {
@@ -45,7 +49,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       null,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
@@ -55,7 +60,19 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       newRequestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
+    );
+  }
+
+  public RequestAndRelatedRecords withRecalledLoanPreviousDueDate(ZonedDateTime recalledLoanPreviousDueDate) {
+    return new RequestAndRelatedRecords(
+      this.request,
+      requestQueue,
+      this.requestPolicy,
+      this.moveRequestRecord,
+      this.timeZone,
+      recalledLoanPreviousDueDate
     );
   }
 
@@ -65,7 +82,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       newRequestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
@@ -75,7 +93,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
@@ -85,7 +104,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
@@ -95,7 +115,8 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
@@ -105,13 +126,14 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.requestQueue,
       this.requestPolicy,
       this.moveRequestRecord,
-      this.timeZone
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
   RequestAndRelatedRecords withTimeZone(ZoneId newTimeZone) {
     return new RequestAndRelatedRecords(request, requestQueue, requestPolicy,
-      moveRequestRecord, newTimeZone);
+      moveRequestRecord, newTimeZone, recalledLoanPreviousDueDate);
   }
 
   public RequestAndRelatedRecords asMove(String originalItemId, String destinationItemId) {
@@ -119,7 +141,9 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
       this.request,
       this.requestQueue,
       this.requestPolicy,
-      MoveRequestRecord.with(originalItemId, destinationItemId), timeZone
+      MoveRequestRecord.with(originalItemId, destinationItemId),
+      this.timeZone,
+      this.recalledLoanPreviousDueDate
     );
   }
 
@@ -139,6 +163,10 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   String getDestinationItemId() {
     return moveRequestRecord != null ? moveRequestRecord.getDestinationItemId() : null;
+  }
+
+  public ZonedDateTime getRecalledLoanPreviousDueDate() {
+    return recalledLoanPreviousDueDate;
   }
 
   @Override
