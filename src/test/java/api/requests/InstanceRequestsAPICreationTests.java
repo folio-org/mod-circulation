@@ -31,6 +31,7 @@ import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -878,6 +879,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       hasParameter("holdingsRecords", "null"))));
   }
 
+  @Disabled //TODO remove when TLR feature is enabled
   @Test
   void tlrRequestCreatedWhenTlrFeatureEnabled() {
     UUID confirmationTemplateId = UUID.randomUUID();

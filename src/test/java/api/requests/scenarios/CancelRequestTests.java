@@ -27,6 +27,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -305,6 +306,7 @@ class CancelRequestTests extends APITests {
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
   }
 
+  @Disabled //TODO remove when TLR feature is enabled
   @Test
   void titleLevelRequestCancellationNoticeShouldBeSentWithEnabledTlr() {
     UUID templateId = UUID.randomUUID();
@@ -318,6 +320,7 @@ class CancelRequestTests extends APITests {
     assertThatPublishedNoticeLogRecordEventsAreValid(notices.get(0));
   }
 
+  @Disabled //TODO remove when TLR feature is enabled
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestCancellationNoticeShouldNotBeSentWithDisabledTlr(
@@ -338,6 +341,7 @@ class CancelRequestTests extends APITests {
     verifyNumberOfSentNotices(0);
   }
 
+  @Disabled //TODO remove when TLR feature is enabled
   @Test
   void titleLevelRequestCancellationNoticeShouldNotBeSentWithoutConfiguredTemplate() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
