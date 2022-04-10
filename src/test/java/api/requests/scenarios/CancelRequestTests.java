@@ -306,7 +306,7 @@ class CancelRequestTests extends APITests {
     assertThat(secondRequest.getString("status"), is(CLOSED_CANCELLED.getValue()));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestCancellationNoticeShouldBeSentWithEnabledTlr() {
     UUID templateId = UUID.randomUUID();
@@ -320,7 +320,7 @@ class CancelRequestTests extends APITests {
     assertThatPublishedNoticeLogRecordEventsAreValid(notices.get(0));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestCancellationNoticeShouldNotBeSentWithDisabledTlr(
@@ -341,7 +341,7 @@ class CancelRequestTests extends APITests {
     verifyNumberOfSentNotices(0);
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestCancellationNoticeShouldNotBeSentWithoutConfiguredTemplate() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);

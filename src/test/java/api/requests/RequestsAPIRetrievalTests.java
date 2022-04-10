@@ -243,7 +243,7 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestRetrievalById() {
     configurationsFixture.enableTlrFeature();

@@ -206,7 +206,7 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
@@ -226,7 +226,7 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();

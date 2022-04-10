@@ -2212,7 +2212,7 @@ class CheckOutByBarcodeTests extends APITests {
       is(ZonedDateTime.of(MONDAY_DATE, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
@@ -2304,7 +2304,7 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(fetchRequestJson(holdRequest), isClosedFilled());
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
     configurationsFixture.enableTlrFeature();

@@ -879,7 +879,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       hasParameter("holdingsRecords", "null"))));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void tlrRequestCreatedWhenTlrFeatureEnabled() {
     UUID confirmationTemplateId = UUID.randomUUID();

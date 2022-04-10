@@ -396,7 +396,7 @@ class ChangeDueDateAPITests extends APITests {
       dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void dueDateChangeShouldNotUnsetRenewalFlagValueWhenTlrFeatureEnabled() {
     IndividualResource loanPolicy = loanPoliciesFixture.create(
@@ -453,7 +453,7 @@ class ChangeDueDateAPITests extends APITests {
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(true));
   }
 
-  @Disabled //TODO remove when TLR feature is enabled
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void dueDateChangeShouldUnsetRenewalFlagValueWhenTlrFeatureDisabledOrNotConfigured(TlrFeatureStatus tlrFeatureStatus) {
