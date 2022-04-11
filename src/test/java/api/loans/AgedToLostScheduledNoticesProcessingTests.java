@@ -470,7 +470,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     assertThat(itemsFixture.getById(agedToLostLoan.getItemId()).getJson(), isAvailable());
     assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
 
-    // 2 charges + 1 payment + 1 transfer + 2 credits + 2 refunds + 2 cancelled
+    // 2 charges + 1 payment + 1 transfer + 2 credits + 2 refunds + 2 cancellations
     assertThat(feeFineActionsClient.getAll(), hasSize(10));
 
     final JsonObject lostItemFeeRefundAction =
@@ -484,13 +484,13 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
     final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
-    final UUID cancellationLostItemActionId = getId(lostItemFeeCancellationAction);
-    final UUID cancellationProcessingFeeActionId = getId(processingFeeCancellationAction);
+    final UUID cancelLostItemActionId = getId(lostItemFeeCancellationAction);
+    final UUID cancelProcessingFeeActionId = getId(processingFeeCancellationAction);
 
     final ZonedDateTime refundLostItemFeeActionDate = getActionDate(lostItemFeeRefundAction);
     final ZonedDateTime refundProcessingFeeActionDate = getActionDate(processingFeeRefundAction);
-    final ZonedDateTime cancellationLostItemActionDate = getActionDate(lostItemFeeCancellationAction);
-    final ZonedDateTime cancellationProcessingFeeActionDate = getActionDate(processingFeeCancellationAction);
+    final ZonedDateTime cancelLostItemActionDate = getActionDate(lostItemFeeCancellationAction);
+    final ZonedDateTime cancelProcessingFeeActionDate = getActionDate(processingFeeCancellationAction);
 
     verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
@@ -502,10 +502,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
         hasScheduledFeeFineNotice(refundProcessingFeeActionId, loanId, userId,
           UPON_AT_TEMPLATE_ID, AGED_TO_LOST_RETURNED, refundProcessingFeeActionDate,
           UPON_AT, null, true),
-        hasScheduledFeeFineNotice(cancellationLostItemActionId, loanId, userId, UPON_AT_TEMPLATE_ID,
-          AGED_TO_LOST_RETURNED, cancellationLostItemActionDate, UPON_AT, null, true),
-        hasScheduledFeeFineNotice(cancellationProcessingFeeActionId, loanId, userId, UPON_AT_TEMPLATE_ID,
-          AGED_TO_LOST_RETURNED, cancellationProcessingFeeActionDate, UPON_AT, null, true)
+        hasScheduledFeeFineNotice(cancelLostItemActionId, loanId, userId, UPON_AT_TEMPLATE_ID,
+          AGED_TO_LOST_RETURNED, cancelLostItemActionDate, UPON_AT, null, true),
+        hasScheduledFeeFineNotice(cancelProcessingFeeActionId, loanId, userId, UPON_AT_TEMPLATE_ID,
+          AGED_TO_LOST_RETURNED, cancelProcessingFeeActionDate, UPON_AT, null, true)
         )));
 
     ZonedDateTime maxActionDate = Stream.of(refundLostItemFeeActionDate, refundProcessingFeeActionDate)
