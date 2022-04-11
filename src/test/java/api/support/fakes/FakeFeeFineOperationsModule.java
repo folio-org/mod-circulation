@@ -56,7 +56,7 @@ public class FakeFeeFineOperationsModule {
     String actionTypeForCredit = isFullRefund ? "Credited fully" : "Credited partially";
 
     JsonObject creditFeeFineAction = createFeeFineAction(context, account, actionTypeForCredit,
-      actionAmount, accountRemainingAmount - actionAmount);
+      actionAmount, accountRemainingAmount);
 
     JsonObject refundFeeFineAction = createFeeFineAction(context, account, paymentStatus,
       actionAmount, accountRemainingAmount + actionAmount);
@@ -64,6 +64,7 @@ public class FakeFeeFineOperationsModule {
     final JsonObject fakeRefundResponseJson = new JsonObject()
       .put("accountId", accountId)
       .put("amount", String.valueOf(accountAmount))
+      .put("remainingAmount", refundFeeFineAction.getString("balance"))
       .put("feefineactions", new JsonArray()
         .add(creditFeeFineAction)
         .add(refundFeeFineAction)
