@@ -17,10 +17,12 @@ import java.time.ZonedDateTime;
 
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.matchers.AccountMatchers;
 import io.vertx.core.json.JsonObject;
 
 class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
@@ -61,7 +63,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     checkInFixture.checkInByBarcode(item);
 
     assertThat(firstLoan, hasLostItemFee(isOpen(firstFee)));
-    assertThat(loan, hasLostItemFee(isRefundedFully(secondFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(secondFee)));
 
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
@@ -119,7 +121,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
         .at(servicePointsFixture.cd1()));
 
     assertThat(response.getLoan(), nullValue());
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(setCostFee)));
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(loan.getId()).getJson());
   }
 
@@ -134,4 +136,5 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
+
 }
