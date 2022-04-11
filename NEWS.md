@@ -1,3 +1,11 @@
+## 23.0.5 2022-04-11
+
+* Disable TLR feature, disable tests (CIRC-1510)
+* Cancel aged to lost and declared lost fees that are paid/transferred in full when item is returned (CIRC-1496)
+* Display correct previous date in circulation log when item is recalled (CIRC-1505)
+* Fix instance level request endpoint, create ILRs when TLR feature is disabled (CIRC-1507)
+* Set due dates of loans with fixed due date loan policies using the correct loan period (CIRC-1497)
+
 ## 23.0.4 2022-04-08
 
 * Extend due date of a loan after recall (CIRC-1476)
