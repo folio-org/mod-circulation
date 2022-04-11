@@ -30,6 +30,7 @@ import java.util.stream.IntStream;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -81,6 +82,7 @@ class HoldShelfFulfillmentTests extends APITests {
       is(false));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @ValueSource(ints = {1, 2})
   void tlrRequestIsPositionedCorrectlyInUnifiedQueue(int checkedInItemNumber) {
@@ -220,6 +222,7 @@ class HoldShelfFulfillmentTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canBeCheckedOutToPatronRequestingTitleWhenReadyForPickup() {
     configurationsFixture.enableTlrFeature();
@@ -286,6 +289,7 @@ class HoldShelfFulfillmentTests extends APITests {
       destinationServicePoint, is(pickupServicePoint.getId()));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void checkInItemWithTlrRequestAtDifferentServicePointPlacesItemInTransit() {
     configurationsFixture.enableTlrFeature();
@@ -361,6 +365,7 @@ class HoldShelfFulfillmentTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(CHECKED_OUT));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canCheckoutItemForTitleLevelRequestWhenInTransit() {
     configurationsFixture.enableTlrFeature();
@@ -428,6 +433,7 @@ class HoldShelfFulfillmentTests extends APITests {
       is(false));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void itemWithTlrRequestIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit() {
     configurationsFixture.enableTlrFeature();
@@ -506,6 +512,7 @@ class HoldShelfFulfillmentTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(AWAITING_PICKUP));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCheckOutToOtherPatronWhenTlrRequestIsAwaitingPickup() {
     configurationsFixture.enableTlrFeature();
@@ -578,6 +585,7 @@ class HoldShelfFulfillmentTests extends APITests {
     assertThat(smallAngryPlanet, hasItemStatus(IN_TRANSIT));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCheckOutToOtherPatronWhenTlrRequestIsInTransitForPickup() {
     configurationsFixture.enableTlrFeature();

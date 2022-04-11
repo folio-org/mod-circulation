@@ -35,7 +35,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static org.folio.HttpStatus.HTTP_ACCEPTED;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -94,6 +93,7 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -399,9 +399,9 @@ public class RequestsAPICreationTests extends APITests {
     "DISABLED, Page",
     "DISABLED, Hold",
     "DISABLED, Recall",
-    "ENABLED, Page",
-    "ENABLED, Hold",
-    "ENABLED, Recall"
+//    "ENABLED, Page", //TODO remove when TLR feature is enabled
+//    "ENABLED, Hold",
+//    "ENABLED, Recall"
   })
   void cannotCreateItemLevelRequestForUnknownInstance(String tlrFeatureStatus,
     String requestType) {
@@ -423,6 +423,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrorWith(hasMessage("Instance does not exist")));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @CsvSource({"Page", "Hold", "Recall"})
   void cannotCreateTitleLevelRequestForUnknownInstance(String requestType) {
@@ -535,6 +536,7 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("requestLevel", "invalid"))));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canCreateTitleLevelRequestWhenTlrEnabled() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -557,6 +559,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(request.getString("requestLevel"), is("Title"));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -580,6 +583,7 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("requestLevel", "invalid"))));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTlrRequestWhenUserHasLoanForSomeItemsOfInstance() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -613,6 +617,7 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("userId", usersFixture.jessica().getId().toString()))));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTlrWhenUserAlreadyRequestedTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -634,6 +639,7 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("instanceId", instanceId.toString()))));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTlrWhenUserAlreadyRequestedAnItemFromTheSameTitle() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -664,6 +670,7 @@ public class RequestsAPICreationTests extends APITests {
       hasParameter("instanceId", item1.getInstanceId().toString()))));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
   void cannotCreateHoldTlrWhenAvailableItemForInstance(RequestType requestType) {
@@ -1293,6 +1300,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTitleLevelPagedRequestIfThereAreNoAvailableItems() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -1319,6 +1327,7 @@ public class RequestsAPICreationTests extends APITests {
       instanceId.toString())));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canCreateTitleLevelPagedRequest() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -1348,6 +1357,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateItemLevelRequestIfTitleLevelRequestForInstanceAlreadyCreated() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -1368,6 +1378,7 @@ public class RequestsAPICreationTests extends APITests {
       "This requester already has an open request for this item")));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTitleLevelRequestIfItemLevelRequestAlreadyCreated() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -1388,6 +1399,7 @@ public class RequestsAPICreationTests extends APITests {
       "This requester already has an open request for one of the instance's items")));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canCreateItemLevelRequestAndTitleLevelRequestForDifferentInstances() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -1408,6 +1420,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestsClient.getAll(), hasSize(2));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTwoTitleLevelRequestsForSameInstance() {
     UUID userId = usersFixture.charlotte().getId();
@@ -1547,6 +1560,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -2835,6 +2849,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasNoJsonPath("requestProcessingParameters"));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestConfirmationNoticeShouldBeSentWithEnabledTlr() {
     UUID templateId = UUID.randomUUID();
@@ -2865,6 +2880,7 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestConfirmationNoticeShouldNotBeSentWithoutConfiguredNoticeTemplate() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
@@ -2897,6 +2913,7 @@ public class RequestsAPICreationTests extends APITests {
     )));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void cannotCreateTitleLevelRequestWithoutInstanceId() {
     configurationsFixture.enableTlrFeature();
@@ -2935,6 +2952,7 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("Cannot create an item level request with no item ID")));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
   void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
@@ -2954,6 +2972,7 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("Cannot create a request with item ID but no holdings record ID")));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void recallTlrRequestShouldBeAppliedToLoanWithClosestDueDate() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -3007,6 +3026,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestJson.getString("pickupServicePointId"), is(pickupServicePointId.toString()));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void statusOfTlrRequestShouldBeChangedIfAssociatedItemCheckedIn() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -3090,6 +3110,7 @@ public class RequestsAPICreationTests extends APITests {
       is(AVAILABLE.getValue()));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void itemCheckOutShouldNotAffectRequestAssociatedWithAnotherItemOfInstance() {
     UUID instanceId = UUID.randomUUID();
