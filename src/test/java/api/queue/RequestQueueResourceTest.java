@@ -32,6 +32,7 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -78,6 +79,7 @@ class RequestQueueResourceTest extends APITests {
     charlotte = usersFixture.charlotte();
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void validationErrorWhenTlrEnabledAndReorderingQueueForItem() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -124,6 +126,7 @@ class RequestQueueResourceTest extends APITests {
       .matches("Item record with ID .+ cannot be found"));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void notFoundErrorWhenInstanceDoesNotExists() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -155,6 +158,7 @@ class RequestQueueResourceTest extends APITests {
       is("Page requests can not be displaced from position 1."));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void movePageRequestFromOneOfTheTopPositionsWhenTlrEnabled() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -200,6 +204,7 @@ class RequestQueueResourceTest extends APITests {
       is("Requests can not be displaced from position 1 when fulfillment begun."));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void refuseAttemptToMoveRequestBeingFulfilledFromOneOfTheTopPositionsWhenTlrEnabled() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -301,6 +306,7 @@ class RequestQueueResourceTest extends APITests {
     assertThat(pickupServicePoint.fieldNames(), contains("name", "code", "discoveryDisplayName", "description" ,"shelvingLagTime", "pickupLocation"));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void shouldGetRequestQueueForInstanceSuccessfully() {
     configurationsFixture.enableTlrFeature();
@@ -335,7 +341,8 @@ class RequestQueueResourceTest extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(TlrFeatureStatus.class)
+//  @EnumSource(TlrFeatureStatus.class)
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"}) //TODO remove when TLR feature is enabled
   void refuseAttemptToTryingToAddRequestToQueueDuringReorder(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
@@ -365,7 +372,8 @@ class RequestQueueResourceTest extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(TlrFeatureStatus.class)
+//  @EnumSource(TlrFeatureStatus.class)
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})//TODO remove when TLR feature is enabled
   void refuseWhenNotAllRequestsProvidedInReorderedQueue(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
@@ -395,13 +403,13 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @CsvSource(value = {
-    "ENABLED, 1, 2, 5, 4",
-    "ENABLED, 0, 2, 3, 4",
-    "ENABLED, 6, 2, 3, 1",
-    "ENABLED, 70, 0, 10, 2",
-    "ENABLED, 1, 3, 4, 5",
-    "ENABLED, 1, 2, 4, 5",
-    "ENABLED, 1, 2, 3, 5",
+//    "ENABLED, 1, 2, 5, 4", //TODO remove when TLR feature is enabled
+//    "ENABLED, 0, 2, 3, 4",
+//    "ENABLED, 6, 2, 3, 1",
+//    "ENABLED, 70, 0, 10, 2",
+//    "ENABLED, 1, 3, 4, 5",
+//    "ENABLED, 1, 2, 4, 5",
+//    "ENABLED, 1, 2, 3, 5",
     "DISABLED, 1, 2, 5, 4",
     "DISABLED, 0, 2, 3, 4",
     "DISABLED, 6, 2, 3, 1",
@@ -451,7 +459,8 @@ class RequestQueueResourceTest extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(TlrFeatureStatus.class)
+//  @EnumSource(TlrFeatureStatus.class)
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})//TODO remove when TLR feature is enabled
   void refuseAttemptToReorderRequestsWithDuplicatedPositions(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
@@ -480,14 +489,14 @@ class RequestQueueResourceTest extends APITests {
 
   @ParameterizedTest
   @CsvSource(value = {
-    "ENABLED, 1, 2, 3, 4",
-    "ENABLED, 1, 2, 4, 3",
-    "ENABLED, 2, 1, 3, 4",
-    "ENABLED, 2, 1, 4, 3",
-    "ENABLED, 4, 3, 2, 1",
-    "ENABLED, 4, 3, 1, 2",
-    "ENABLED, 3, 4, 2, 1",
-    "ENABLED, 3, 4, 1, 2",
+//    "ENABLED, 1, 2, 3, 4", //TODO remove when TLR feature is enabled
+//    "ENABLED, 1, 2, 4, 3",
+//    "ENABLED, 2, 1, 3, 4",
+//    "ENABLED, 2, 1, 4, 3",
+//    "ENABLED, 4, 3, 2, 1",
+//    "ENABLED, 4, 3, 1, 2",
+//    "ENABLED, 3, 4, 2, 1",
+//    "ENABLED, 3, 4, 1, 2",
     "DISABLED, 1, 2, 3, 4",
     "DISABLED, 1, 2, 4, 3",
     "DISABLED, 2, 1, 3, 4",
@@ -538,6 +547,7 @@ class RequestQueueResourceTest extends APITests {
     verifyQueueUpdatedForItem(reorderQueueBody, response);
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @CsvSource(value = {
     "1, 2, 3, 4",
@@ -578,7 +588,8 @@ class RequestQueueResourceTest extends APITests {
 
 
   @ParameterizedTest
-  @EnumSource(TlrFeatureStatus.class)
+//  @EnumSource(TlrFeatureStatus.class)
+  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})//TODO remove when TLR feature is enabled
   void logRecordEventIsPublished(TlrFeatureStatus tlrFeatureStatus) {
     reconfigureTlrFeature(tlrFeatureStatus);
 
@@ -672,6 +683,7 @@ class RequestQueueResourceTest extends APITests {
     verifyQueueUpdatedForItem(subsequentReorder, subsequentReorderResponse);
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @ArgumentsSource(ReorderQueueTestDataSource.class)
   void canReorderUnifiedQueueTwice(Integer[] initialState, Integer[] targetState) {

@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
@@ -99,11 +100,15 @@ public class FeeFineFacade {
   }
 
   CompletableFuture<Result<AccountActionResponse>> cancelAccountIfNeeded(
-    RefundAndCancelAccountCommand command, User user) {
+    RefundAndCancelAccountCommand command, User user, AccountActionResponse refundResponse) {
 
     final Account account = command.getAccount();
 
-    if (!account.getRemaining().hasAmount()) {
+    FeeAmount currentRemainingAmount = refundResponse != null
+      ? refundResponse.getRemainingAmount()
+      : account.getRemaining();
+
+    if (!currentRemainingAmount.hasAmount()) {
       log.info("Nothing to cancel for account {}", account.getId());
       return ofAsync(() -> null);
     }

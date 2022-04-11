@@ -34,7 +34,7 @@ import lombok.val;
  * for {@code Declared lost} items.
  */
 public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
-  private final String cancellationReason;
+  protected final String cancellationReason;
 
   protected RefundAgedToLostFeesTestBase(String cancellationReason) {
     this.cancellationReason = cancellationReason;
@@ -69,7 +69,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     performActionThatRequiresRefund(result);
 
     final IndividualResource loan = result.getLoan();
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(cancellationReason, setCostFee)));
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, processingFee)));
 
     assertThatBillingInformationRemoved(loan);
@@ -93,7 +93,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
 
     final IndividualResource loan = result.getLoan();
-    assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, processingFee)));
     assertThat(loan, hasOverdueFine());
 
     assertThatBillingInformationRemoved(loan);
@@ -167,7 +167,7 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
     performActionThatRequiresRefund(result);
 
     final IndividualResource loan = result.getLoan();
-    assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, processingFee)));
 
     // Run the charging process again
     ageToLostFixture.chargeFees();
