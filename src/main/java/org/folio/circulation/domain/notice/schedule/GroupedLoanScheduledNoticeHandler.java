@@ -15,6 +15,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
@@ -25,11 +27,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GroupedLoanScheduledNoticeHandler {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
   private final ScheduledPatronNoticeService patronNoticeService;

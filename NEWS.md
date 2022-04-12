@@ -1,3 +1,7 @@
+## 23.0.6 2022-04-12
+
+* Replace deprecated logger for overnight notices (CIRC-1516)
+
 ## 23.0.5 2022-04-11
 
 * Disable TLR feature, disable tests (CIRC-1510)
