@@ -27,9 +27,11 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -76,6 +78,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       instanceMultipleCopies.getId(), item2.getId(), RequestType.PAGE);
 
     assertThat(representation, hasJsonPath("patronComments", "I need the book"));
+    assertThat(representation, hasJsonPath("requestLevel", RequestLevel.ITEM.getValue()));
   }
 
   @Test
@@ -876,6 +879,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       hasParameter("holdingsRecords", "null"))));
   }
 
+  @Disabled("remove when TLR feature is enabled")
   @Test
   void tlrRequestCreatedWhenTlrFeatureEnabled() {
     UUID confirmationTemplateId = UUID.randomUUID();

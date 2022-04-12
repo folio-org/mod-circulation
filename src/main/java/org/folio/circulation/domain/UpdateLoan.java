@@ -46,8 +46,11 @@ public class UpdateLoan {
     Loan loan = request.getLoan();
 
     if (request.getRequestType() == RequestType.RECALL && loan != null) {
+      RequestAndRelatedRecords records = requestAndRelatedRecords
+        .withRecalledLoanPreviousDueDate(loan.getDueDate());
+
       return loanRepository.getById(loan.getId())
-          .thenComposeAsync(r -> r.after(l -> recall(l, requestAndRelatedRecords, request)));
+        .thenComposeAsync(r -> r.after(l -> recall(l, records, request)));
     } else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
@@ -77,7 +80,8 @@ public class UpdateLoan {
           .after(loanPolicyRepository::lookupLoanPolicy)
           .thenApply(r -> r.next(this::recall))
           .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
-          .thenComposeAsync(r -> r.after(closedLibraryStrategyService::applyClosedLibraryDueDateManagement))
+          .thenComposeAsync(r -> r.after(records ->
+            closedLibraryStrategyService.applyClosedLibraryDueDateManagement(records, true)))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));

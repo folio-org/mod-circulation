@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 
 public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   protected final IndividualResource item = itemsFixture.basedUponNod();
-  private final String cancellationReason;
+  protected final String cancellationReason;
   protected IndividualResource loan;
 
   public RefundDeclaredLostFeesTestBase(String cancellationReason) {
@@ -136,8 +136,8 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
-    assertThat(loan, hasLostItemProcessingFee(isRefundedFully(processingFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(setCostFee)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
   }
 
   @Test
@@ -166,7 +166,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(setCostFee)));
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
   }
 
@@ -183,7 +183,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(setCostFee)));
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
   }
 
@@ -203,7 +203,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
     performActionThatRequiresRefund();
 
-    assertThat(loan, hasLostItemFee(isRefundedFully(setCostFee)));
+    assertThat(loan, hasLostItemFee(isClosedCancelled(setCostFee)));
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(processingFee)));
   }
 
@@ -351,7 +351,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
         .refundFeesWithinMinutes(1)).getId());
   }
 
-  private Matcher<JsonObject> isClosedCancelled(double amount) {
+  protected Matcher<JsonObject> isClosedCancelled(double amount) {
     return AccountMatchers.isClosedCancelled(cancellationReason, amount);
   }
 }

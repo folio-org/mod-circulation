@@ -2,6 +2,9 @@ package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.time.ZoneId;
 import java.util.Collection;
@@ -53,7 +56,12 @@ public class ConfigurationRepository {
     Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
       "SETTINGS", "TLR");
 
-    return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
+//    TODO uncomment to enable TLR feature
+//    return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
+
+    return ofAsync(() -> TlrSettingsConfiguration.from(new JsonObject()
+      .put("titleLevelRequestsFeatureEnabled", false)
+      .put("createTitleLevelRequestsByDefault", false)));
   }
 
   /**

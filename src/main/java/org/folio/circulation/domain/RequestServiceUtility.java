@@ -135,21 +135,27 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenAlreadyRequested(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    Request request = requestAndRelatedRecords.getRequest();
-    Predicate<Request> isAlreadyRequested;
-
-    if (requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      isAlreadyRequested = req -> isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
-    } else {
-      isAlreadyRequested = req -> requestAndRelatedRecords.getItemId().equals(req.getItemId())
-        && isTheSameRequester(requestAndRelatedRecords, req) && req.isOpen();
-    }
-
     return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
-      .filter(isAlreadyRequested)
+      .filter(isAlreadyRequested(requestAndRelatedRecords))
       .findFirst()
       .map(existingRequest -> alreadyRequestedFailure(requestAndRelatedRecords, existingRequest))
       .orElse(of(() -> requestAndRelatedRecords));
+  }
+
+  private static Predicate<Request> isAlreadyRequested(RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
+    if (records.isTlrFeatureEnabled() && request.isTitleLevel()) {
+      return req -> isTheSameRequester(records, req) && req.isOpen();
+    } else {
+      return req -> {
+        if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
+          return request.getInstanceId().equals(req.getInstanceId())
+            && isTheSameRequester(records, req) && req.isOpen();
+        }
+        return records.getItemId().equals(req.getItemId())
+            && isTheSameRequester(records, req) && req.isOpen();
+      };
+    }
   }
 
   private static Result<RequestAndRelatedRecords> alreadyRequestedFailure(

@@ -44,11 +44,16 @@ public class ClosedLibraryStrategyService {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
     LoanAndRelatedRecords relatedRecords) {
+    return applyClosedLibraryDueDateManagement(relatedRecords, false);
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
+    LoanAndRelatedRecords relatedRecords, boolean isRecall) {
 
     final Loan loan = relatedRecords.getLoan();
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
-      relatedRecords.getTimeZone())
+      relatedRecords.getTimeZone(), isRecall)
       .thenApply(mapResult(loan::changeDueDate))
       .thenApply(mapResult(relatedRecords::withLoan));
   }
@@ -65,21 +70,27 @@ public class ClosedLibraryStrategyService {
 
   private CompletableFuture<Result<ZonedDateTime>> applyClosedLibraryDueDateManagement(
     Loan loan, LoanPolicy loanPolicy, ZoneId timeZone) {
+    return applyClosedLibraryDueDateManagement(loan, loanPolicy, timeZone, false);
+  }
+
+  private CompletableFuture<Result<ZonedDateTime>> applyClosedLibraryDueDateManagement(
+    Loan loan, LoanPolicy loanPolicy, ZoneId timeZone, boolean isRecall) {
 
     LocalDate requestedDate = loan.getDueDate().withZoneSameInstant(timeZone).toLocalDate();
 
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
-      .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone)))
+      .thenApply(r -> r.next(openingDays -> applyStrategy(loan, loanPolicy, openingDays, timeZone, isRecall)))
       .thenCompose(r -> r.after(dueDate -> truncateDueDateIfPatronExpiresEarlier(dueDate, loan,
         loanPolicy, timeZone)));
   }
 
   private Result<ZonedDateTime> applyStrategy(
-    Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, ZoneId timeZone) {
+    Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, ZoneId timeZone,
+    boolean isRecall) {
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
-      .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone));
+      .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone, isRecall));
   }
 
   private CompletableFuture<Result<ZonedDateTime>> truncateDueDateIfPatronExpiresEarlier(
@@ -107,10 +118,11 @@ public class ClosedLibraryStrategyService {
 
   private Result<ZonedDateTime> applyFixedDueDateLimit(
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays,
-    ZoneId timeZone) {
+    ZoneId timeZone, boolean isRecall){
 
     Optional<ZonedDateTime> optionalDueDateLimit =
-      loanPolicy.getScheduleLimit(loan.getLoanDate(), isRenewal, currentDateTime);
+      loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,
+        currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {
       return succeeded(dueDate);
     }
