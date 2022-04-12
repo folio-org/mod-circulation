@@ -56,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -1381,16 +1382,13 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
         .withName("1 minute policy")
         .withDescription("Can circulate item")
         .rolling(Period.minutes(1))
-        .withGracePeriod(Period.zeroDurationPeriod())
-        .unlimitedRenewals()
-        .renewFromSystemDate()).getId(),
+        .unlimitedRenewals()).getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
       overdueFinePoliciesFixture.create(new OverdueFinePolicyBuilder()
         .withId(UUID.randomUUID())
         .withName("One per minute overdue fine and overdue recall fine policy")
         .withCountClosed(true)
-        .withGracePeriodRecall(false)
         .withOverdueFine(
           new JsonObject()
             .put("quantity", 1.0)
@@ -1407,9 +1405,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     final IndividualResource nod = itemsFixture.basedUponNod(item ->
       item.withPermanentLocation(homeLocation.getId()));
 
-    ZonedDateTime checkOutDate = ZonedDateTime.of(2020, 1, 18, 18, 0, 0, 0, UTC);
-    ZonedDateTime requestDate = ZonedDateTime.of(2020, 1, 19, 18, 0, 0, 0, UTC);
-    ZonedDateTime checkInDate = ZonedDateTime.of(2020, 1, 22, 15, 30, 0, 0, UTC);
+    LocalDate date = LocalDate.of(2020, 1, 18);
+    LocalTime time = LocalTime.of(18, 0, 0, 0);
+    ZonedDateTime checkOutDate = ZonedDateTime.of(date, time, UTC);
+    ZonedDateTime requestDate = ZonedDateTime.of(date.plusDays(1), time, UTC);
+    ZonedDateTime checkInDate = ZonedDateTime.of(date.plusDays(4), time, UTC);
 
     checkOutFixture.checkOutByBarcode(nod, usersFixture.james(), checkOutDate);
     requestsFixture.placeItemLevelHoldShelfRequest(
@@ -1420,8 +1420,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       .withId(ownerId)
       .withOwner("fee-fine-owner")
       .withServicePointOwner(Collections.singletonList(new JsonObject()
-        .put("value", homeLocation.getJson().getString("primaryServicePoint"))
-        .put("label", "label"))));
+        .put("value", homeLocation.getJson().getString("primaryServicePoint")))));
 
     UUID feeFineId = UUID.randomUUID();
     feeFinesClient.create(new FeeFineBuilder()
