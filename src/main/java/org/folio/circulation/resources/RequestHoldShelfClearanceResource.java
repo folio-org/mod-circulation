@@ -40,6 +40,8 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
+import com.google.common.collect.Iterators;
+
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -195,26 +197,34 @@ public class RequestHoldShelfClearanceResource extends Resource {
   }
 
   /**
-   * Find for each item ids requests sorted by awaitingPickupRequestClosedDate
+   * Finds requests sorted by awaitingPickupRequestClosedDate. Splits items into batches, only
+   * first request from each batch is included in the result (should be enough because we only need
+   * first request later)
    */
-  private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(GetManyRecordsClient client,
-                                                                                List<String> itemIds) {
-    return itemIds.stream()
-      .filter(Objects::nonNull)
-      .map(itemId -> {
-        final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemId);
-        final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
-        final Result<CqlQuery> statusQuery = exactMatchAny(STATUS_KEY,
-          Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
+  private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(
+    GetManyRecordsClient client, List<String> itemIds) {
 
-        Result<CqlQuery> cqlQueryResult = itemIdQuery
-          .combine(statusQuery, CqlQuery::and)
-          .combine(notEmptyDateQuery, CqlQuery::and)
-          .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
-
-        return findRequestsByCqlQuery(client, cqlQueryResult, limit(PAGE_REQUEST_LIMIT));
-      }).map(CompletableFuture::join)
+    return splitIds(itemIds)
+      .stream()
+      .map(batch -> findRequestsSortedByClosedDateForSingleBatch(client, itemIds))
+      .map(CompletableFuture::join)
       .collect(Collectors.toList());
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDateForSingleBatch(
+    GetManyRecordsClient client, List<String> itemIds) {
+
+    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID_KEY, itemIds);
+    final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
+    final Result<CqlQuery> statusQuery = exactMatchAny(STATUS_KEY,
+      Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
+
+    Result<CqlQuery> cqlQueryResult = itemIdQuery
+      .combine(statusQuery, CqlQuery::and)
+      .combine(notEmptyDateQuery, CqlQuery::and)
+      .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
+
+    return findRequestsByCqlQuery(client, cqlQueryResult, limit(PAGE_REQUEST_LIMIT));
   }
 
   private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsList) {
