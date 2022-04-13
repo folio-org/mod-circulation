@@ -33,7 +33,6 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -243,7 +242,6 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestRetrievalById() {
     configurationsFixture.enableTlrFeature();

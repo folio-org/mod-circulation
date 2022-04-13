@@ -502,7 +502,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void scheduledNoticesShouldNotBeSentWhenTemplateWasNotFound() {
     prepareNotice();
@@ -588,7 +587,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestExpirationNoticeShouldBeSentAndDeletedWithEnabledTlr() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, TEMPLATE_ID);
@@ -630,7 +628,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(0);
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void titleLevelRequestExpirationNoticeShouldNotBeCreatedIfEnabledTlrButNoTemplateId() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
@@ -644,7 +641,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"}) //TODO remove when TLR feature is enabled
+  @EnumSource(TlrFeatureStatus.class)
   void itemLevelRequestExpirationNoticeShouldBeCreatedAndSentRegardlessTlrSettings(
     TlrFeatureStatus tlrFeatureStatus) {
 
@@ -677,7 +674,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void itemLevelRequestExpirationNoticeAndTitleLevelRequestExpirationShouldBeCreatedAndSent() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, TEMPLATE_ID);
