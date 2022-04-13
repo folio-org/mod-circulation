@@ -51,7 +51,7 @@ class UpdateRequestQueueTest {
     requestRepository = mock(RequestRepository.class);
 
     updateRequestQueue =
-      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null);
+      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null, null);
   }
 
   @Test
