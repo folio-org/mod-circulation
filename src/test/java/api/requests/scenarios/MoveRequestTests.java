@@ -50,7 +50,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -206,7 +205,6 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(firstItem), hasItemStatus(PAGED));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
@@ -226,7 +224,6 @@ class MoveRequestTests extends APITests {
     assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
     configurationsFixture.enableTlrFeature();
