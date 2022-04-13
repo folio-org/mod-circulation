@@ -21,7 +21,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
@@ -235,8 +234,6 @@ public abstract class ScheduledNoticeHandler {
     private Request request;
     private String patronNoticePolicyId;
     private boolean lostItemFeesForAgedToLostNoticeExist;
-    private JsonObject loanNoticeContext;
-    private NoticeLogContextItem noticeLogContextItem;
   }
 
 }
