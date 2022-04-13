@@ -74,7 +74,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -1486,7 +1485,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       getUserContextMatchers(updatedRequesterJson)));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void linkItemToHoldTLRWithHoldShelfWhenCheckedInItemThenFulfilledWithSuccess(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
@@ -1515,7 +1513,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void linkItemToHoldTLRWithDeliveryWhenCheckedInThenFulfilledWithSuccess(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
@@ -1543,7 +1540,6 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting delivery"));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void requestsShouldChangePositionWhenTheyGoInFulfillmentOnCheckIn() {
     configurationsFixture.enableTlrFeature();
