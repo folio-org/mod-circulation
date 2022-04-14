@@ -532,19 +532,16 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     );
 
     ZonedDateTime loanDate = ZonedDateTime.of(2019, 8, 23, 10, 30, 59, 123, ZoneOffset.UTC);
-
     IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(
-      itemsFixture.basedUponNod(), usersFixture.james(), loanDate);
-
-    IndividualResource secondLoan = checkOutFixture.checkOutByBarcode(
       itemsFixture.basedUponTemeraire(), usersFixture.james(), loanDate);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.james(), loanDate);
 
     verifyNumberOfScheduledNotices(2);
 
     loansFixture.replaceLoan(firstLoan.getId(),
       firstLoan.getJson().put("loanDate", loanDate.toLocalDateTime().toString())); // remove time zone
 
-    ZonedDateTime dueDate = parseDateTime(firstLoan.getJson().getString("dueDate"));;
+    ZonedDateTime dueDate = parseDateTime(firstLoan.getJson().getString("dueDate"));
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
 

@@ -144,10 +144,10 @@ public class GroupedLoanScheduledNoticeHandler {
     log.info("Attempting to send a grouped notice for {} scheduled notices", relevantContexts.size());
 
     return patronNoticeService.sendNotice(
-      contextSample.getNotice().getConfiguration(),
-      user.getId(),
-      createMultiLoanNoticeContext(user, noticeLoanContexts),
-      buildNoticeLogContext(relevantContexts, user))
+        contextSample.getNotice().getConfiguration(),
+        user.getId(),
+        createMultiLoanNoticeContext(user, noticeLoanContexts),
+        buildNoticeLogContext(relevantContexts, user))
       .thenApply(mapResult(v -> contexts));
   }
 
