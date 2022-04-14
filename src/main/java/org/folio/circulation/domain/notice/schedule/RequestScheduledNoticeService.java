@@ -78,6 +78,9 @@ public class RequestScheduledNoticeService {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> rescheduleRequestNotices(LoanAndRelatedRecords relatedRecords) {
     Request request = relatedRecords.getClosedFilledRequest();
+    if (request == null) {
+      return completedFuture(succeeded(relatedRecords));
+    }
     scheduledNoticesRepository.deleteByRequestId(request.getId())
       .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
 
