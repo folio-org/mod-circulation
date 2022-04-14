@@ -120,7 +120,7 @@ public class RequestCollectionResource extends CollectionResource {
       representation))
       .flatMapFuture(createRequestService::createRequest)
       .onSuccess(scheduledNoticeService::scheduleRequestNotices)
-      .onSuccess(records -> publishDueDateChangedEvent(records, loanRepository, eventPublisher))
+      .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, loanRepository))
       .map(RequestAndRelatedRecords::getRequest)
       .map(new RequestRepresentation()::extendedRepresentation)
       .map(JsonHttpResponse::created)
@@ -344,12 +344,12 @@ public class RequestCollectionResource extends CollectionResource {
     return new ItemLevelRequestNoticeSender(clients);
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
-    RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository,
-    EventPublisher eventPublisher) {
-
-    return loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
-      .thenCompose(r -> r.after(loan -> eventPublisher.publishDueDateChangedEvent(
-        requestAndRelatedRecords, loan)));
-  }
+//  private CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
+//    RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository,
+//    EventPublisher eventPublisher) {
+//
+//    return loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
+//      .thenCompose(r -> r.after(loan -> eventPublisher.publishDueDateChangedEvent(
+//        requestAndRelatedRecords, loan)));
+//  }
 }
