@@ -518,6 +518,40 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void noticeIsDeletedWhenLoanDateTimeZoneIsMissing() {
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    use(new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig))
+    );
+
+    ZonedDateTime loanDate = ZonedDateTime.of(2019, 8, 23, 10, 30, 59, 123, ZoneOffset.UTC);
+    IndividualResource firstLoan = checkOutFixture.checkOutByBarcode(
+      itemsFixture.basedUponTemeraire(), usersFixture.james(), loanDate);
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.james(), loanDate);
+
+    verifyNumberOfScheduledNotices(2);
+
+    loansFixture.replaceLoan(firstLoan.getId(),
+      firstLoan.getJson().put("loanDate", loanDate.toLocalDateTime().toString())); // remove time zone
+
+    ZonedDateTime dueDate = parseDateTime(firstLoan.getJson().getString("dueDate"));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
