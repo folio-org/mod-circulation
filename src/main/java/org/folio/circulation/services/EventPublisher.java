@@ -240,6 +240,16 @@ public class EventPublisher {
     return completedFuture(succeeded(requestAndRelatedRecords));
   }
 
+  public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
+    RequestAndRelatedRecords requestAndRelatedRecords, Loan loan) {
+
+    if (loan != null) {
+      publishDueDateChangedEvent(loan, requestAndRelatedRecords);
+    }
+
+    return completedFuture(succeeded(requestAndRelatedRecords));
+  }
+
   public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withDescription(String.format("Due date: %s", formatDateTimeOptional(loan.getAgedToLostDateTime()))).asJson(), LOAN)
