@@ -9,8 +9,6 @@ import static org.folio.circulation.support.results.AsynchronousResult.fromFutur
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.folio.circulation.domain.CreateRequestRepositories;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
@@ -50,7 +48,6 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -343,13 +340,4 @@ public class RequestCollectionResource extends CollectionResource {
     }
     return new ItemLevelRequestNoticeSender(clients);
   }
-
-//  private CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
-//    RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository,
-//    EventPublisher eventPublisher) {
-//
-//    return loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
-//      .thenCompose(r -> r.after(loan -> eventPublisher.publishDueDateChangedEvent(
-//        requestAndRelatedRecords, loan)));
-//  }
 }
