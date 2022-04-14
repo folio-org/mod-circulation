@@ -23,6 +23,7 @@ import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -118,6 +119,8 @@ public class CheckOutByBarcodeResource extends Resource {
         PatronActionSessionRepository.using(clients, loanRepository,
           userRepository));
 
+    final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
+
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
@@ -149,6 +152,7 @@ public class CheckOutByBarcodeResource extends Resource {
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
+      .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
       .thenComposeAsync(r -> r.after(l -> updateItem(l, itemRepository)))

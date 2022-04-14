@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
@@ -11,10 +12,12 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
@@ -73,6 +76,14 @@ public class RequestScheduledNoticeService {
     return succeeded(relatedRecords);
   }
 
+  public CompletableFuture<Result<LoanAndRelatedRecords>> rescheduleRequestNotices(LoanAndRelatedRecords relatedRecords) {
+    Request request = relatedRecords.getClosedFilledRequest();
+    scheduledNoticesRepository.deleteByRequestId(request.getId())
+      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
+
+    return completedFuture(succeeded(relatedRecords));
+  }
+
   public Result<CheckInContext> rescheduleRequestNotices(CheckInContext context) {
     Optional.ofNullable(context.getHighestPriorityFulfillableRequest())
       .ifPresent(this::rescheduleRequestNotices);
@@ -80,7 +91,7 @@ public class RequestScheduledNoticeService {
     return succeeded(context);
   }
 
-  public void rescheduleRequestNotices(Request request) {
+  private void rescheduleRequestNotices(Request request) {
     scheduledNoticesRepository.deleteByRequestId(request.getId())
       .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
   }

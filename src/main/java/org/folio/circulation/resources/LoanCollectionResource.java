@@ -23,6 +23,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ChangeDueDateValidator;
 import org.folio.circulation.domain.validation.ItemNotFoundValidator;
@@ -105,6 +106,8 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
 
+    final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
+
     completedFuture(succeeded(new LoanAndRelatedRecords(loan)))
       .thenCompose(larrResult ->
         getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
@@ -121,6 +124,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
+      .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(updateItem::onLoanCreated))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))

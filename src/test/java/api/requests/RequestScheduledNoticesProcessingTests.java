@@ -173,7 +173,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
       .withPickupServicePoint(pickupServicePoint)
       .withRequestExpiration(requestExpiration));
 
-
     verifyNumberOfScheduledNotices(1);
 
     checkOutFixture.checkOutByBarcode(item, requester);
@@ -181,7 +180,6 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     waitAtMost(1, SECONDS)
       .until(() -> requestsClient.get(request.getId()).getJson().getString("status"),
         equalTo(CLOSED_FILLED));
-
 
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
 

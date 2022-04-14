@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -32,20 +31,17 @@ public class UpdateRequestQueue {
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
-  private final RequestScheduledNoticeService requestScheduledNoticeService;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository,
-    RequestScheduledNoticeService requestScheduledNoticeService) {
+    ConfigurationRepository configurationRepository) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
     this.configurationRepository = configurationRepository;
-    this.requestScheduledNoticeService = requestScheduledNoticeService;
   }
 
   public static UpdateRequestQueue using(Clients clients,
@@ -53,8 +49,7 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository) {
 
     return new UpdateRequestQueue(requestQueueRepository,
-      requestRepository, new ServicePointRepository(clients),
-      new ConfigurationRepository(clients), RequestScheduledNoticeService.using(clients));
+      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -172,17 +167,13 @@ public class UpdateRequestQueue {
     return succeeded(request);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
-    LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(LoanAndRelatedRecords relatedRecords) {
+    Item item = relatedRecords.getItem();
+    RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
-    return onCheckOut(relatedRecords.getRequestQueue(), relatedRecords.getItem())
-      .thenApply(result -> result.map(relatedRecords::withRequestQueue));
-  }
-
-  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue, Item item) {
-    Request firstRequest = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
+    Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityRequestFulfillableByItem(item);
     if (firstRequest == null) {
-      return completedFuture(succeeded(requestQueue));
+      return completedFuture(succeeded(relatedRecords));
     }
 
     Request originalRequest = Request.from(firstRequest.asJson());
@@ -200,10 +191,8 @@ public class UpdateRequestQueue {
     return requestRepository.update(firstRequest)
       .thenComposeAsync(r -> r.after(v ->
         requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)))
-      .thenComposeAsync(r -> r.after(v -> {
-        requestScheduledNoticeService.rescheduleRequestNotices(originalRequest);
-        return completedFuture(succeeded(v));
-      }));
+      .thenApply(r -> r.map(relatedRecords::withRequestQueue))
+      .thenApply(r -> r.map(v -> v.withClosedFilledRequest(firstRequest)));
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onCreate(

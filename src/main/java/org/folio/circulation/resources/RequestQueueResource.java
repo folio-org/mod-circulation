@@ -18,7 +18,6 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
-import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
@@ -123,8 +122,7 @@ public class RequestQueueResource extends Resource {
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      configurationRepository, RequestScheduledNoticeService.using(clients));
+      requestQueueRepository, requestRepository, new ServicePointRepository(clients), configurationRepository);
 
     getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 
