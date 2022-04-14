@@ -122,7 +122,8 @@ public class RequestQueueResource extends Resource {
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients), configurationRepository);
+      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
+      configurationRepository);
 
     getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 
