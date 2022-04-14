@@ -3,6 +3,7 @@ package org.folio.circulation.domain.notice.schedule;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createMultiLoanNoticeContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
@@ -17,7 +18,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeHandler.ScheduledNoticeContext;
@@ -27,6 +27,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public class GroupedLoanScheduledNoticeHandler {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -52,27 +54,38 @@ public class GroupedLoanScheduledNoticeHandler {
     List<ScheduledNotice> notices) {
 
     //TODO: user and template are the same for all notices in the group, so they can be fetched only once
-    return allResultsOf(notices, this::fetchData)
-      .thenCompose(this::discardDataFetchingFailures)
+    return allResultsOf(notices, this::buildContext)
+      .thenCompose(this::discardContextBuildingFailures)
       .thenCompose(r -> r.after(this::sendGroupedNotice))
       .thenCompose(r -> r.after(this::updateGroupedNotice))
       .thenCompose(r -> handleResult(r, notices))
       .exceptionally(t -> handleException(t, notices));
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNotice notice) {
+  private CompletableFuture<Result<ScheduledNoticeContext>> buildContext(ScheduledNotice notice) {
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(loanScheduledNoticeHandler::fetchData))
-      .thenCompose(r -> handleDataCollectionFailure(r, notice))
+      .thenApply(r -> r.map(GroupedLoanScheduledNoticeHandler::buildLoanNoticeContext))
+      .thenApply(r -> r.map(GroupedLoanScheduledNoticeHandler::buildNoticeLogContextItem))
+      .thenCompose(r -> handleContextBuildingFailure(r, notice))
       .thenApply(r -> r.mapFailure(f -> loanScheduledNoticeHandler.publishErrorEvent(f, notice)));
   }
 
-  protected CompletableFuture<Result<ScheduledNoticeContext>> handleDataCollectionFailure(
+  private static ScheduledNoticeContext buildLoanNoticeContext(ScheduledNoticeContext context) {
+    return context.withLoanNoticeContext(createLoanNoticeContextWithoutUser(context.getLoan()));
+  }
+
+  private static ScheduledNoticeContext buildNoticeLogContextItem(ScheduledNoticeContext context) {
+    return context.withNoticeLogContextItem(
+      LoanScheduledNoticeHandler.buildNoticeLogContextItem(context));
+  }
+
+  protected CompletableFuture<Result<ScheduledNoticeContext>> handleContextBuildingFailure(
     Result<ScheduledNoticeContext> result, ScheduledNotice notice) {
 
     if (result.failed()) {
       HttpFailure cause = result.cause();
-      log.error("Failed to collect data for scheduled notice: {}.\n{}", cause, notice);
+      log.error("Failed to build context for scheduled notice: {}.\n{}", cause, notice);
 
       return loanScheduledNoticeHandler.deleteNotice(notice, cause.toString())
         .thenApply(r -> r.next(n -> result));
@@ -81,7 +94,7 @@ public class GroupedLoanScheduledNoticeHandler {
     return completedFuture(result);
   }
 
-  private CompletableFuture<Result<List<ScheduledNoticeContext>>> discardDataFetchingFailures(
+  private CompletableFuture<Result<List<ScheduledNoticeContext>>> discardContextBuildingFailures(
     List<Result<ScheduledNoticeContext>> results) {
 
     var failedResults = results.stream()
@@ -89,7 +102,7 @@ public class GroupedLoanScheduledNoticeHandler {
       .collect(toList());
 
     if (!failedResults.isEmpty()) {
-      log.error("Failed to collect data for {} out of {} scheduled notices",
+      log.error("Failed to build context for {} out of {} scheduled notices",
         failedResults.size(), results.size());
 
       results.removeAll(failedResults);
@@ -120,18 +133,17 @@ public class GroupedLoanScheduledNoticeHandler {
     ScheduledNoticeContext contextSample = relevantContexts.get(0);
     User user = contextSample.getLoan().getUser();
 
-    List<Loan> loans = relevantContexts.stream()
-      .map(ScheduledNoticeContext::getLoan)
+    List<JsonObject> noticeLoanContexts = relevantContexts.stream()
+      .map(ScheduledNoticeContext::getLoanNoticeContext)
       .collect(toList());
 
-    log.info("Attempting to send a grouped notice for {} scheduled notices",
-      relevantContexts.size());
+    log.info("Attempting to send a grouped notice for {} scheduled notices", relevantContexts.size());
 
     return patronNoticeService.sendNotice(
-      contextSample.getNotice().getConfiguration(),
-      user.getId(),
-      createMultiLoanNoticeContext(user, loans),
-      buildNoticeLogContext(relevantContexts, user))
+        contextSample.getNotice().getConfiguration(),
+        user.getId(),
+        createMultiLoanNoticeContext(user, noticeLoanContexts),
+        buildNoticeLogContext(relevantContexts, user))
       .thenApply(mapResult(v -> contexts));
   }
 
@@ -139,7 +151,7 @@ public class GroupedLoanScheduledNoticeHandler {
     User user) {
 
     List<NoticeLogContextItem> items = contexts.stream()
-      .map(LoanScheduledNoticeHandler::buildNoticeLogContextItem)
+      .map(ScheduledNoticeContext::getNoticeLogContextItem)
       .collect(toList());
 
     return new NoticeLogContext()
