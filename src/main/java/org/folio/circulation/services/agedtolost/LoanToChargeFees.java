@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
@@ -21,8 +23,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,7 +31,7 @@ import lombok.Getter;
 @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public final class LoanToChargeFees {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final Loan loan;
   private final FeeFineOwner owner;

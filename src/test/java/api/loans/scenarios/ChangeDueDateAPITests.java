@@ -46,7 +46,6 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -396,7 +395,6 @@ class ChangeDueDateAPITests extends APITests {
       dueDateChangedLoan.getString("dueDate"), isEquivalentTo(newDueDate));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @Test
   void dueDateChangeShouldNotUnsetRenewalFlagValueWhenTlrFeatureEnabled() {
     IndividualResource loanPolicy = loanPoliciesFixture.create(
@@ -453,7 +451,6 @@ class ChangeDueDateAPITests extends APITests {
     assertThat(dueDateChangedLoan.getBoolean("dueDateChangedByRecall"), equalTo(true));
   }
 
-  @Disabled("remove when TLR feature is enabled")
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void dueDateChangeShouldUnsetRenewalFlagValueWhenTlrFeatureDisabledOrNotConfigured(TlrFeatureStatus tlrFeatureStatus) {
