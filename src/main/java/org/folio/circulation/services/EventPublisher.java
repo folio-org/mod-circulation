@@ -234,10 +234,13 @@ public class EventPublisher {
   public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
     RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository) {
 
-    loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
-      .thenCompose(r -> r.after(loan -> publishDueDateChangedEvent(loan, requestAndRelatedRecords)));
-
-    return completedFuture(succeeded(requestAndRelatedRecords));
+    return loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
+      .thenCompose(r -> r.after(loan -> {
+        if (loan != null) {
+          publishDueDateChangedEvent(loan, requestAndRelatedRecords);
+        }
+        return completedFuture(succeeded(requestAndRelatedRecords));
+      }));
   }
 
   public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
