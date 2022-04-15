@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,8 +39,6 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
-import com.google.common.collect.Iterators;
-
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -55,11 +52,6 @@ public class RequestHoldShelfClearanceResource extends Resource {
    * of the URI in according to the RFC 2616
    */
   private static final int BATCH_SIZE = 40;
-
-  /**
-   * Default limit value on a query
-   */
-  private static final int PAGE_REQUEST_LIMIT = 1;
 
   /**
    * Temporary solution caused by batch processing of items (fetching requests for a batch
