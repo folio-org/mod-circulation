@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.CLOSED_PICKUP_EXPIRED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -150,6 +151,39 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
 
     verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void uponAtRequestExpirationNoticeShouldNotBeSentWhenRequestIsClosedFilled() {
+    JsonObject noticeConfiguration = buildNoticeConfigurationForItemLevelRequests();
+    setupNoticePolicyWithRequestNotice(noticeConfiguration);
+
+    final LocalDate localDate = getLocalDate().minusDays(1);
+    final var requestExpiration = LocalDate.of(localDate.getYear(),
+      localDate.getMonth(), localDate.getDayOfMonth());
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder().page()
+      .forItem(item)
+      .withRequesterId(requester.getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(pickupServicePoint)
+      .withRequestExpiration(requestExpiration));
+
+    verifyNumberOfScheduledNotices(1);
+
+    checkOutFixture.checkOutByBarcode(item, requester);
+
+    waitAtMost(1, SECONDS)
+      .until(() -> requestsClient.get(request.getId()).getJson().getString("status"),
+        equalTo(CLOSED_FILLED));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(getZonedDateTime().plusMonths(2));
+
+    verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
