@@ -60,6 +60,15 @@ public class RequestHoldShelfClearanceResource extends Resource {
    * Default limit value on a query
    */
   private static final int PAGE_REQUEST_LIMIT = 1;
+
+  /**
+   * Temporary solution caused by batch processing of items (fetching requests for a batch
+   * of 40 items, though we only need first one for each item). Even this limit can be exceeded.
+   * To avoid this issue the whole report should be moved to mod-circulation-storage which can run
+   * DB queries directly.
+   */
+  private static final int EXPIRED_CANCELLED_REQUEST_LIMIT = 10_000;
+
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String ITEM_ID_KEY = "itemId";
   private static final String REQUESTS_KEY = "requests";
@@ -174,7 +183,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
   private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findExpiredOrCancelledRequestByItemIds(GetManyRecordsClient client,
                                                                                                              HoldShelfClearanceRequestContext context) {
-    List<Result<MultipleRecords<Request>>> requestList = findRequestsSortedByClosedDate(client, context.getAwaitingPickupItemIds());
+    List<Result<List<Request>>> requestList = findRequestsSortedByClosedDate(client, context.getAwaitingPickupItemIds());
     List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
     return CompletableFuture.completedFuture(Result.succeeded(context.withExpiredOrCancelledRequests(firstRequestFromList)));
   }
@@ -201,7 +210,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
    * first request from each batch is included in the result (should be enough because we only need
    * first request later)
    */
-  private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(
+  private List<Result<List<Request>>> findRequestsSortedByClosedDate(
     GetManyRecordsClient client, List<String> itemIds) {
 
     return splitIds(itemIds)
@@ -211,7 +220,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .collect(Collectors.toList());
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDateForSingleBatch(
+  private CompletableFuture<Result<List<Request>>> findRequestsSortedByClosedDateForSingleBatch(
     GetManyRecordsClient client, List<String> itemIds) {
 
     final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID_KEY, itemIds);
@@ -224,14 +233,28 @@ public class RequestHoldShelfClearanceResource extends Resource {
       .combine(notEmptyDateQuery, CqlQuery::and)
       .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
 
-    return findRequestsByCqlQuery(client, cqlQueryResult, limit(PAGE_REQUEST_LIMIT));
+    return findRequestsByCqlQuery(client, cqlQueryResult, limit(EXPIRED_CANCELLED_REQUEST_LIMIT))
+      .thenApply(r -> r.map(records -> new ArrayList<>(records.getRecords())));
   }
 
-  private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsList) {
-    return multipleRecordsList.stream()
-      .map(r -> r.value().getRecords().stream().findFirst())
-      .filter(Optional::isPresent)
-      .map(Optional::get)
+  private List<Request> getFirstRequestFromList(List<Result<List<Request>>> requestBatches) {
+    return requestBatches.stream()
+      .map(Result::value)
+      .map(this::getFirstRequestOfEachItemInBatch)
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+  }
+
+  private List<Request> getFirstRequestOfEachItemInBatch(List<Request> requestBatch) {
+    return requestBatch.stream()
+      .map(Request::getItemId)
+      .filter(Objects::nonNull)
+      .distinct()
+      .map(itemId -> requestBatch.stream()
+        .filter(request -> itemId.equals(request.getItemId()))
+        .findFirst()
+        .orElse(null))
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
 
