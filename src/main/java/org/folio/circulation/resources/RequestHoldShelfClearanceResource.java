@@ -207,7 +207,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
     return splitIds(itemIds)
       .stream()
-      .map(batch -> findRequestsSortedByClosedDateForSingleBatch(client, itemIds))
+      .map(batch -> findRequestsSortedByClosedDateForSingleBatch(client, batch))
       .map(CompletableFuture::join)
       .collect(Collectors.toList());
   }
