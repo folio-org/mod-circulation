@@ -116,17 +116,16 @@ public class LocationRepository {
     return multipleRecordsResult.combineAfter(
       locations -> getInstitutions(locations.getRecords()), (locations, institutions) ->
         locations.mapRecords(location -> location.withInstitutionRepresentation(
-          institutions.getOrDefault(location.getInstitutionId(),null))));
+          institutions.getOrDefault(location.getInstitutionId(), null))));
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> loadCampusesForLocations(
     Result<MultipleRecords<Location>> multipleRecordsResult) {
 
-
     return multipleRecordsResult.combineAfter(
       locations -> getCampuses(locations.getRecords()), (locations, campuses) ->
         locations.mapRecords(location -> location.withCampusRepresentation(
-          campuses.getOrDefault(location.getCampusId(),null))));
+          campuses.getOrDefault(location.getCampusId(), null))));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {

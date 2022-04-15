@@ -94,7 +94,6 @@ class PageRequestWorkflowTests extends APITests {
 
   @Test
   void titleLevelRequestConfirmationNoticeWithValidLocationShouldBeSentWithEnabledTlr() {
-
     UUID templateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(templateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
