@@ -80,7 +80,7 @@ public class RequestScheduledNoticeService {
     return succeeded(context);
   }
 
-  private void rescheduleRequestNotices(Request request) {
+  public void rescheduleRequestNotices(Request request) {
     scheduledNoticesRepository.deleteByRequestId(request.getId())
       .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
   }

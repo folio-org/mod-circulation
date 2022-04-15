@@ -201,7 +201,8 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestRepository = RequestRepository.using(clients);
 
     final var updateRequestQueue = new UpdateRequestQueue(RequestQueueRepository.using(clients),
-      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
+      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients),
+      RequestScheduledNoticeService.using(clients));
 
     fromFutureResult(requestRepository.getById(id))
       .flatMapFuture(requestRepository::delete)

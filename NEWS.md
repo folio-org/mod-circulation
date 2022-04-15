@@ -1,5 +1,6 @@
 ## 23.0.7 2022-04-15
 
+* Do not send Request Expiration notices for "Closed - Filled" requests (CIRC-1504)
 * Delete overnight notice when failed to build its template context (CIRC-1515)
 
 ## 23.0.6 2022-04-12
