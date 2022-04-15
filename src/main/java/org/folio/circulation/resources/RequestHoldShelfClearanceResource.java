@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -55,9 +54,13 @@ public class RequestHoldShelfClearanceResource extends Resource {
   private static final int BATCH_SIZE = 40;
 
   /**
-   * Default limit value on a query
+   * Temporary solution caused by batch processing of items (fetching requests for a batch
+   * of 40 items, though we only need first one for each item). Even this limit can be exceeded.
+   * To avoid this issue the whole report should be moved to mod-circulation-storage which can run
+   * DB queries directly.
    */
-  private static final int PAGE_REQUEST_LIMIT = 1;
+  private static final int EXPIRED_CANCELLED_REQUEST_LIMIT = 10_000;
+
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String ITEM_ID_KEY = "itemId";
   private static final String REQUESTS_KEY = "requests";
@@ -172,7 +175,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
   private CompletableFuture<Result<HoldShelfClearanceRequestContext>> findExpiredOrCancelledRequestByItemIds(GetManyRecordsClient client,
                                                                                                              HoldShelfClearanceRequestContext context) {
-    List<Result<MultipleRecords<Request>>> requestList = findRequestsSortedByClosedDate(client, context.getAwaitingPickupItemIds());
+    List<Result<List<Request>>> requestList = findRequestsSortedByClosedDate(client, context.getAwaitingPickupItemIds());
     List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
     return CompletableFuture.completedFuture(Result.succeeded(context.withExpiredOrCancelledRequests(firstRequestFromList)));
   }
@@ -195,33 +198,55 @@ public class RequestHoldShelfClearanceResource extends Resource {
   }
 
   /**
-   * Find for each item ids requests sorted by awaitingPickupRequestClosedDate
+   * Finds requests sorted by awaitingPickupRequestClosedDate. Splits items into batches, only
+   * first request from each batch is included in the result (should be enough because we only need
+   * first request later)
    */
-  private List<Result<MultipleRecords<Request>>> findRequestsSortedByClosedDate(GetManyRecordsClient client,
-                                                                                List<String> itemIds) {
-    return itemIds.stream()
-      .filter(Objects::nonNull)
-      .map(itemId -> {
-        final Result<CqlQuery> itemIdQuery = CqlQuery.exactMatch(ITEM_ID_KEY, itemId);
-        final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
-        final Result<CqlQuery> statusQuery = exactMatchAny(STATUS_KEY,
-          Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
+  private List<Result<List<Request>>> findRequestsSortedByClosedDate(
+    GetManyRecordsClient client, List<String> itemIds) {
 
-        Result<CqlQuery> cqlQueryResult = itemIdQuery
-          .combine(statusQuery, CqlQuery::and)
-          .combine(notEmptyDateQuery, CqlQuery::and)
-          .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
-
-        return findRequestsByCqlQuery(client, cqlQueryResult, limit(PAGE_REQUEST_LIMIT));
-      }).map(CompletableFuture::join)
+    return splitIds(itemIds)
+      .stream()
+      .map(batch -> findRequestsSortedByClosedDateForSingleBatch(client, batch))
+      .map(CompletableFuture::join)
       .collect(Collectors.toList());
   }
 
-  private List<Request> getFirstRequestFromList(List<Result<MultipleRecords<Request>>> multipleRecordsList) {
-    return multipleRecordsList.stream()
-      .map(r -> r.value().getRecords().stream().findFirst())
-      .filter(Optional::isPresent)
-      .map(Optional::get)
+  private CompletableFuture<Result<List<Request>>> findRequestsSortedByClosedDateForSingleBatch(
+    GetManyRecordsClient client, List<String> itemIds) {
+
+    final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID_KEY, itemIds);
+    final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
+    final Result<CqlQuery> statusQuery = exactMatchAny(STATUS_KEY,
+      Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
+
+    Result<CqlQuery> cqlQueryResult = itemIdQuery
+      .combine(statusQuery, CqlQuery::and)
+      .combine(notEmptyDateQuery, CqlQuery::and)
+      .map(q -> q.sortBy(descending(REQUEST_CLOSED_DATE_KEY)));
+
+    return findRequestsByCqlQuery(client, cqlQueryResult, limit(EXPIRED_CANCELLED_REQUEST_LIMIT))
+      .thenApply(r -> r.map(records -> new ArrayList<>(records.getRecords())));
+  }
+
+  private List<Request> getFirstRequestFromList(List<Result<List<Request>>> requestBatches) {
+    return requestBatches.stream()
+      .map(Result::value)
+      .map(this::getFirstRequestOfEachItemInBatch)
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+  }
+
+  private List<Request> getFirstRequestOfEachItemInBatch(List<Request> requestBatch) {
+    return requestBatch.stream()
+      .map(Request::getItemId)
+      .filter(Objects::nonNull)
+      .distinct()
+      .map(itemId -> requestBatch.stream()
+        .filter(request -> itemId.equals(request.getItemId()))
+        .findFirst()
+        .orElse(null))
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
 
