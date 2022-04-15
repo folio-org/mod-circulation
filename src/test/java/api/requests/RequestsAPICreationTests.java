@@ -35,7 +35,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static org.folio.HttpStatus.HTTP_ACCEPTED;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -555,6 +554,11 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject request = requestResource.getJson();
     assertThat(request.getString("requestLevel"), is("Title"));
+
+    var publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(1));
+    assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
   }
 
   @Test
@@ -1691,6 +1695,10 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    var publishedEvents = Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
+    assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(1));
   }
 
   @Test

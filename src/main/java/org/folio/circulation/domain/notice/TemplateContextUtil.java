@@ -2,12 +2,11 @@ package org.folio.circulation.domain.notice;
 
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -50,14 +49,12 @@ public class TemplateContextUtil {
       .put(LOAN, createLoanContext(loan));
   }
 
-  public static JsonObject createMultiLoanNoticeContext(User user, Collection<Loan> loans) {
-    List<JsonObject> loanContexts = loans.stream()
-      .map(TemplateContextUtil::createLoanNoticeContextWithoutUser)
-      .collect(toList());
+  public static JsonObject createMultiLoanNoticeContext(User user,
+    Collection<JsonObject> loanContexts) {
 
     return new JsonObject()
       .put(USER, createUserContext(user))
-      .put(LOANS, new JsonArray(loanContexts));
+      .put(LOANS, new JsonArray(new ArrayList<>(loanContexts)));
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan) {

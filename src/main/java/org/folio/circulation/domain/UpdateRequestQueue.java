@@ -49,8 +49,7 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository) {
 
     return new UpdateRequestQueue(requestQueueRepository,
-      requestRepository, new ServicePointRepository(clients),
-      new ConfigurationRepository(clients));
+      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -168,17 +167,13 @@ public class UpdateRequestQueue {
     return succeeded(request);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
-    LoanAndRelatedRecords relatedRecords) {
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(LoanAndRelatedRecords relatedRecords) {
+    Item item = relatedRecords.getItem();
+    RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
-    return onCheckOut(relatedRecords.getRequestQueue(), relatedRecords.getItem())
-      .thenApply(result -> result.map(relatedRecords::withRequestQueue));
-  }
-
-  private CompletableFuture<Result<RequestQueue>> onCheckOut(RequestQueue requestQueue, Item item) {
-    Request firstRequest = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
+    Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityRequestFulfillableByItem(item);
     if (firstRequest == null) {
-      return completedFuture(succeeded(requestQueue));
+      return completedFuture(succeeded(relatedRecords));
     }
 
     Request originalRequest = Request.from(firstRequest.asJson());
@@ -195,7 +190,9 @@ public class UpdateRequestQueue {
 
     return requestRepository.update(firstRequest)
       .thenComposeAsync(r -> r.after(v ->
-        requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
+        requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)))
+      .thenApply(r -> r.map(relatedRecords::withRequestQueue))
+      .thenApply(r -> r.map(v -> v.withClosedFilledRequest(firstRequest)));
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onCreate(
