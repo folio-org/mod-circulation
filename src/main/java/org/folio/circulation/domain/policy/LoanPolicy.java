@@ -410,7 +410,7 @@ public class LoanPolicy extends Policy {
 
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
-        return getRenewalDueDateLimitSchedules().findDueDateFor(loanDate);
+        return getRenewalDueDateLimitSchedules().findDueDateFor(systemDate);
       }
       else {
         return fixedDueDateSchedules.findDueDateFor(loanDate);

@@ -1,3 +1,7 @@
+## 23.0.8 2022-04-15
+
+* Change due date when item is renewed (CIRC-1463)
+
 ## 23.0.7 2022-04-15
 
 * Do not send Request Expiration notices for "Closed - Filled" requests (CIRC-1504)
