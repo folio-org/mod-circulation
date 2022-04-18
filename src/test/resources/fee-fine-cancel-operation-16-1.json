@@ -28,7 +28,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "comments",
     "notifyPatron",
     "servicePointId",
     "userName"
