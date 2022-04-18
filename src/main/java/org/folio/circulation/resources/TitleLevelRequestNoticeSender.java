@@ -34,8 +34,14 @@ public class TitleLevelRequestNoticeSender extends RequestNoticeSender {
     if (tlrSettings.isTitleLevelRequestsFeatureEnabled()
       && tlrSettings.getConfirmationPatronNoticeTemplateId() != null) {
 
-      PatronNoticeEvent requestCreatedEvent = createPatronNoticeEvent(request, eventType);
-      applyTlrConfirmationNotice(request.getTlrSettingsConfiguration(), requestCreatedEvent);
+      locationRepository.loadCampus(request.getItem().getLocation())
+        .thenCompose(r -> r.after(locationRepository::loadInstitution))
+        .thenApply(r -> r.map(request.getItem()::withLocation))
+        .thenApply(r -> r.map(request::withItem))
+        .thenAccept(r -> r.after(result -> {
+          PatronNoticeEvent requestCreatedEvent = createPatronNoticeEvent(result, eventType);
+          return applyTlrConfirmationNotice(result.getTlrSettingsConfiguration(), requestCreatedEvent);
+        }));
     }
 
     return Result.succeeded(relatedRecords);

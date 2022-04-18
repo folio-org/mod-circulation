@@ -105,27 +105,7 @@ public class LocationRepository {
       Location::from);
 
     return fetcher.findByIds(locationIds)
-      .thenCompose(this::loadLibrariesForLocations)
-      .thenCompose(this::loadCampusesForLocations)
-      .thenCompose(this::loadInstitutionsForLocations);
-  }
-
-  private CompletableFuture<Result<MultipleRecords<Location>>> loadInstitutionsForLocations(
-    Result<MultipleRecords<Location>> multipleRecordsResult) {
-
-    return multipleRecordsResult.combineAfter(
-      locations -> getInstitutions(locations.getRecords()), (locations, institutions) ->
-        locations.mapRecords(location -> location.withInstitutionRepresentation(
-          institutions.getOrDefault(location.getInstitutionId(), null))));
-  }
-
-  private CompletableFuture<Result<MultipleRecords<Location>>> loadCampusesForLocations(
-    Result<MultipleRecords<Location>> multipleRecordsResult) {
-
-    return multipleRecordsResult.combineAfter(
-      locations -> getCampuses(locations.getRecords()), (locations, campuses) ->
-        locations.mapRecords(location -> location.withCampusRepresentation(
-          campuses.getOrDefault(location.getCampusId(), null))));
+      .thenCompose(this::loadLibrariesForLocations);
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
@@ -138,7 +118,7 @@ public class LocationRepository {
       .thenApply(r -> r.map(location::withLibraryRepresentation));
   }
 
-  private CompletableFuture<Result<Location>> loadCampus(Location location) {
+  public CompletableFuture<Result<Location>> loadCampus(Location location) {
     if(isNull(location) || isNull(location.getCampusId())) {
       return ofAsync(() -> null);
     }
@@ -148,7 +128,7 @@ public class LocationRepository {
       .thenApply(r -> r.map(location::withCampusRepresentation));
   }
 
-  private CompletableFuture<Result<Location>> loadInstitution(Location location) {
+  public CompletableFuture<Result<Location>> loadInstitution(Location location) {
     if(isNull(location) || isNull(location.getInstitutionId())) {
       return ofAsync(() -> null);
     }

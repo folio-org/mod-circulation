@@ -33,6 +33,7 @@ import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -55,6 +56,7 @@ public class RequestNoticeSender {
     requestRepository = RequestRepository.using(clients, itemRepository, userRepository, loanRepository);
     servicePointRepository = new ServicePointRepository(clients);
     eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    locationRepository = LocationRepository.using(clients, servicePointRepository);
   }
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -79,6 +81,7 @@ public class RequestNoticeSender {
   private final UserRepository userRepository;
   private final ServicePointRepository servicePointRepository;
   private final EventPublisher eventPublisher;
+  protected final LocationRepository locationRepository;
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords relatedRecords) {
