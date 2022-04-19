@@ -109,14 +109,15 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
-      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
+      .thenApply(r -> r.map(request -> new RequestAndRelatedRecords(request)
+        .withRequestQueue(request.getRequestQueue())))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -138,7 +139,7 @@ class RequestFromRepresentationService {
     return ofAsync(() -> request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(RequestAndRelatedRecords records) {
+  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
@@ -148,29 +149,18 @@ class RequestFromRepresentationService {
       // TODO:  fail if instance doesn't exist
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
-    RequestAndRelatedRecords records) {
-    Request request = records.getRequest();
-    CompletableFuture<Result<Request>> requestFuture;
+  private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
     if (request.isTitleLevel() && request.isPage()) {
-     requestFuture = fetchItemAndLoanForPageTlr(request);
-    } else if (request.isTitleLevel() && request.isRecall()) {
-      requestFuture = fetchItemAndLoanForRecallTlrRequest(request, records.getRequestQueue());
-    } else {
-      requestFuture = fromFutureResult(findItemForRequest(request))
-        .flatMapFuture(this::fetchLoan)
-        .flatMapFuture(this::fetchUserForLoan)
-        .toCompletableFuture();
+      return fetchItemAndLoanForPageTlr(request);
     }
 
-    return toRequestAndRelatedRecordsCompletableFuture(requestFuture, records);
-  }
+    if (request.isTitleLevel() && request.isRecall()) {
+      return fetchItemAndLoanForRecallTlrRequest(request, request.getRequestQueue());
+    }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>>
-  toRequestAndRelatedRecordsCompletableFuture(CompletableFuture<Result<Request>> request,
-    RequestAndRelatedRecords records) {
-    return fromFutureResult(request)
-      .flatMapFuture(req -> completedFuture(succeeded(records.withRequest(req))))
+    return fromFutureResult(findItemForRequest(request))
+      .flatMapFuture(this::fetchLoan)
+      .flatMapFuture(this::fetchUserForLoan)
       .toCompletableFuture();
   }
 

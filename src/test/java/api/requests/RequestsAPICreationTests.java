@@ -1556,14 +1556,14 @@ public class RequestsAPICreationTests extends APITests {
   void tlrRecallShouldPickItemWithLoanWithNextClosestDueDateIfAnotherRecallRequestExists() {
     configurationsFixture.enableTlrFeature();
     var londonZoneId = ZoneId.of("Europe/London");
-    var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     var firstItem = items.get(0);
 
     checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica(),
       ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId));
     var secondLoan = checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.steve(),
       ZonedDateTime.of(2022, 4, 3, 0, 0, 0, 0, londonZoneId));
-    checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.steve(),
+    checkOutFixture.checkOutByBarcode(items.get(2), usersFixture.steve(),
       ZonedDateTime.of(2022, 4, 4, 0, 0, 0, 0, londonZoneId));
 
     requestsFixture.recallItem(firstItem, usersFixture.james());

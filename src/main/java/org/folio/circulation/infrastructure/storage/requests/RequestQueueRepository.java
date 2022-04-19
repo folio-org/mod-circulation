@@ -47,9 +47,13 @@ public class RequestQueueRepository {
   public CompletableFuture<Result<RequestAndRelatedRecords>> get(RequestAndRelatedRecords records) {
     Request request = records.getRequest();
 
-    return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(),
-      request.getItemId())
+    return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(), request.getItemId())
       .thenApply(mapResult(records::withRequestQueue));
+  }
+
+  public CompletableFuture<Result<Request>> get(Request request) {
+    return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(), request.getItemId())
+      .thenApply(mapResult(request::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,

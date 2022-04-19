@@ -78,7 +78,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
 
-  private static final String LOAN_ID = "loanId";
+  private static final String ID = "id";
   private static final String USER_ID = "userId";
 
   public LoanRepository(Clients clients, ItemRepository itemRepository,
@@ -421,7 +421,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     List<String> loanIds) {
     final Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
       .combine(getStatusCQLQuery("Open"), CqlQuery::and)
-      .combine(notEqualMany(LOAN_ID, loanIds), CqlQuery::and)
+      .combine(notEqualMany(ID, loanIds), CqlQuery::and)
       .map(query -> query.sortBy(ascending(DUE_DATE)));
 
     return queryLoanStorage(cqlQuery, one())
