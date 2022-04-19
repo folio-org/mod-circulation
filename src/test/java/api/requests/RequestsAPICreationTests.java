@@ -1559,12 +1559,13 @@ public class RequestsAPICreationTests extends APITests {
     var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     var firstItem = items.get(0);
 
+    ZonedDateTime firstLoanDate = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
     checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica(),
-      ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId));
+      firstLoanDate);
     var secondLoan = checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.steve(),
-      ZonedDateTime.of(2022, 4, 3, 0, 0, 0, 0, londonZoneId));
+      firstLoanDate.plusDays(1));
     checkOutFixture.checkOutByBarcode(items.get(2), usersFixture.steve(),
-      ZonedDateTime.of(2022, 4, 4, 0, 0, 0, 0, londonZoneId));
+      firstLoanDate.plusDays(2));
 
     requestsFixture.recallItem(firstItem, usersFixture.james());
     var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
