@@ -50,6 +50,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -108,14 +109,14 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -137,7 +138,7 @@ class RequestFromRepresentationService {
     return ofAsync(() -> request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
+  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
@@ -147,18 +148,29 @@ class RequestFromRepresentationService {
       // TODO:  fail if instance doesn't exist
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
+    RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
+    CompletableFuture<Result<Request>> requestFuture;
     if (request.isTitleLevel() && request.isPage()) {
-      return fetchItemAndLoanForPageTlr(request);
+     requestFuture = fetchItemAndLoanForPageTlr(request);
+    } else if (request.isTitleLevel() && request.isRecall()) {
+      requestFuture = fetchItemAndLoanForRecallTlrRequest(request, records.getRequestQueue());
+    } else {
+      requestFuture = fromFutureResult(findItemForRequest(request))
+        .flatMapFuture(this::fetchLoan)
+        .flatMapFuture(this::fetchUserForLoan)
+        .toCompletableFuture();
     }
 
-    if (request.isTitleLevel() && request.isRecall()) {
-      return fetchItemAndLoanForRecallTlrRequest(request);
-    }
+    return toRequestAndRelatedRecordsCompletableFuture(requestFuture, records);
+  }
 
-    return fromFutureResult(findItemForRequest(request))
-      .flatMapFuture(this::fetchLoan)
-      .flatMapFuture(this::fetchUserForLoan)
+  private CompletableFuture<Result<RequestAndRelatedRecords>>
+  toRequestAndRelatedRecordsCompletableFuture(CompletableFuture<Result<Request>> request,
+    RequestAndRelatedRecords records) {
+    return fromFutureResult(request)
+      .flatMapFuture(req -> completedFuture(succeeded(records.withRequest(req))))
       .toCompletableFuture();
   }
 
@@ -203,12 +215,23 @@ class RequestFromRepresentationService {
         .findFirst();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request,
+    RequestQueue requestQueue) {
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
       return ofAsync(() -> request);
     }
 
-    return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()))
+    List<String> latestTlrRecallByDueDate = requestQueue.getRecalledLoansIds();
+    CompletableFuture<Result<Loan>> loanFuture;
+    if (latestTlrRecallByDueDate.isEmpty()) {
+      loanFuture = loanRepository.findLoanWithClosestDueDate(
+        mapToItemIds(request.getInstanceItems()));
+    } else {
+      loanFuture = loanRepository.findLoanWithClosestDueDateExcludingLoans(
+        mapToItemIds(request.getInstanceItems()), latestTlrRecallByDueDate);
+    }
+
+    return loanFuture
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))

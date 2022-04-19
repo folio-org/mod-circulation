@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -93,6 +94,15 @@ public class RequestQueue {
   public boolean hasOpenRecalls() {
     return requests.stream()
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
+  }
+
+  public List<String> getRecalledLoansIds() {
+    return requests.stream()
+      .filter(Request::isRecall)
+      .map(Request::getLoan)
+      .filter(Objects::nonNull)
+      .map(Loan::getId)
+      .collect(Collectors.toList());
   }
 
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
