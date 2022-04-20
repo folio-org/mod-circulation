@@ -71,6 +71,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -1568,6 +1569,7 @@ public class RequestsAPICreationTests extends APITests {
       firstLoanDate.plusDays(2));
 
     requestsFixture.recallItem(firstItem, usersFixture.james());
+    requestsFixture.recallItem(items.get(2), usersFixture.james());
     var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
       usersFixture.charlotte(), RECALL).getJson();
     var loanForTlrRecall = loansStorageClient.getAll().stream()
@@ -1575,6 +1577,46 @@ public class RequestsAPICreationTests extends APITests {
       .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
 
     assertThat(loanForTlrRecall.getString("id"), is(secondLoan.getId()));
+  }
+
+  //TODO test if we have no not recalled items and pick the least recalled one
+  @Test
+  void tlrRecallShouldPickRecalledLoanWithClosestDueDateIfThereAreNoNotRecalledRequests() {
+    configurationsFixture.enableTlrFeature();
+    var londonZoneId = ZoneId.of("Europe/London");
+    var items = itemsFixture.createMultipleItemsForTheSameInstance(4);
+    var firstItem = items.get(0);
+    var secondItem = items.get(1);
+    var thirdItem = items.get(2);
+    var forthItem = items.get(3);
+    var jessica = usersFixture.jessica();
+    var james = usersFixture.james();
+    var steve = usersFixture.steve();
+    var charlotte = usersFixture.charlotte();
+
+    var date = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
+    checkOutFixture.checkOutByBarcode(firstItem, james, date);
+    checkOutFixture.checkOutByBarcode(secondItem, james, date.plusDays(1));
+    var thirdItemLoanAfterCheckOut = checkOutFixture.checkOutByBarcode(thirdItem, james, date.plusDays(2));
+    checkOutFixture.checkOutByBarcode(forthItem, james, date.plusDays(3));
+
+    recallItem(firstItem, List.of(jessica, charlotte, steve));
+    recallItem(secondItem, List.of(jessica, charlotte));
+    recallItem(thirdItem, List.of(jessica));
+    recallItem(forthItem, List.of(jessica, charlotte, steve));
+    var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(), usersFixture.rebecca(),
+      RECALL).getJson();
+
+    var loanForTlrRecall = loansStorageClient.getAll().stream()
+      .filter(loan -> loan.getString("itemId").equals(requestJson.getString("itemId")))
+      .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
+
+    assertThat(loanForTlrRecall.getString("id"), is(thirdItemLoanAfterCheckOut.getId()));
+  }
+
+  private void recallItem(ItemResource item, List<UserResource> users) {
+    IntStream.range(0, users.size())
+      .forEach(index -> requestsFixture.recallItem(item, users.get(index)));
   }
 
   @Test

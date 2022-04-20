@@ -32,7 +32,6 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,7 +211,7 @@ class RequestFromRepresentationService {
     }
 
     RequestQueue requestQueue = request.getRequestQueue();
-    List<Loan> recalledLoans = requestQueue.getRecalledLoansSortedByDueDateAsc();
+    List<Loan> recalledLoans = requestQueue.getRecalledLoans();
     CompletableFuture<Result<Loan>> loanFuture;
 
     if (recalledLoans.isEmpty()) {
@@ -224,8 +223,10 @@ class RequestFromRepresentationService {
     }
 
     return loanFuture
-      .thenComposeAsync(r -> r.after(when(this::shouldGetRecalledLoanWithClosestDueDate,
-        ignored -> ofAsync(() -> recalledLoans.get(0)), loan -> ofAsync(() ->  loan))))
+      //Loan is null means that we have no items that haven't been recalled. In this case we
+      //take the loan that has been recalled the least times
+      .thenComposeAsync(r -> r.after(when(this::shouldGetLeastRecalledLoan,
+        ignored -> ofAsync(requestQueue::getLeastRecalledLoan), result -> ofAsync(() ->  result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
@@ -234,10 +235,9 @@ class RequestFromRepresentationService {
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldGetRecalledLoanWithClosestDueDate(Loan loan) {
+  private CompletableFuture<Result<Boolean>> shouldGetLeastRecalledLoan(Loan loan) {
     return ofAsync(() -> loan == null);
   }
-
   private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
     return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
       .thenApply(r -> r.map(request::withInstanceItems));

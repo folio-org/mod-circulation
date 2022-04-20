@@ -1,17 +1,21 @@
 package org.folio.circulation.domain;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.*;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -38,7 +42,7 @@ public class RequestQueue {
   public RequestQueue filter(Predicate<Request> predicate) {
     return new RequestQueue(requests.stream()
       .filter(predicate)
-      .collect(Collectors.toList()));
+      .collect(toList()));
   }
 
   ItemStatus checkedInItemStatus(Item item) {
@@ -96,13 +100,41 @@ public class RequestQueue {
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
-  public List<Loan> getRecalledLoansSortedByDueDateAsc() {
+  public List<Loan> getRecalledLoans() {
     return requests.stream()
-      .filter(request -> request.isRecall() || request.isHold())
+      .filter(Request::isRecall)
       .map(Request::getLoan)
       .filter(Objects::nonNull)
-      .sorted(Comparator.comparing(Loan::getDueDate))
-      .collect(Collectors.toList());
+      //TODO what if the loan has no due date(is broken)????
+      .collect(toList());
+  }
+  public Loan getLeastRecalledLoan() {
+    return requests.stream()
+      .filter(Request::isRecall)
+      .collect(collectingAndThen(groupingBy(Request::getLoan, counting()),
+        loans -> {
+          Map<Long, Loan> m = new LinkedHashMap<>();
+
+          for (Map.Entry<Loan, Long> entry : loans.entrySet()) {
+            m.merge(entry.getValue(), entry.getKey(), (oldValue, newValue) ->
+              isBeforeMillis(oldValue.getDueDate(), newValue.getDueDate()) ? oldValue : newValue);
+          }
+
+          AtomicLong max = new AtomicLong(0);
+
+          m.forEach((k, v) -> {
+            if (max.get() < k)
+              max.set(k);
+          });
+
+          AtomicLong min = new AtomicLong(max.get());
+
+          m.forEach((k, v) -> {
+            if (min.get() > k)
+              min.set(k);
+          });
+          return m.get(min.get());
+        }));
   }
 
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
@@ -115,7 +147,7 @@ public class RequestQueue {
     return requests
       .stream()
       .filter(Request::isFulfillable)
-      .collect(Collectors.toList());
+      .collect(toList());
   }
 
   public void add(Request newRequest) {
@@ -131,7 +163,7 @@ public class RequestQueue {
   public void remove(Request request) {
     requests = requests.stream()
       .filter(r -> !r.getId().equals(request.getId()))
-      .collect(Collectors.toList());
+      .collect(toList());
     request.removePosition();
     reSequenceRequests();
   }
@@ -155,7 +187,7 @@ public class RequestQueue {
       .filter(Request::hasChangedPosition)
       // order by position descending
       .sorted((req1, req2) -> req2.getPosition().compareTo(req1.getPosition()))
-      .collect(Collectors.toList());
+      .collect(toList());
   }
 
   //TODO: Encapsulate this better

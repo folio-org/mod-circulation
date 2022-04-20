@@ -97,7 +97,7 @@ public class CqlQuery implements QueryParameter {
     }
 
     return Result.of(() -> new CqlQuery(
-      format("%s<>(%s)", index, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
+      format("%s<>(%s)", index, join(" and ", wrapValuesInQuotes(filteredValues))), none()));
   }
 
   private CqlQuery(String query, CqlSortBy sortBy) {
