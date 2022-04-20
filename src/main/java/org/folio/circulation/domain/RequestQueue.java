@@ -1,7 +1,12 @@
 package org.folio.circulation.domain;
 
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.groupingByConcurrent;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
@@ -14,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
@@ -108,33 +112,21 @@ public class RequestQueue {
       //TODO what if the loan has no due date(is broken)????
       .collect(toList());
   }
-  public Loan getLeastRecalledLoan() {
+
+  public List<Loan> getLoansSortedByRecallAmount() {
     return requests.stream()
       .filter(Request::isRecall)
-      .collect(collectingAndThen(groupingBy(Request::getLoan, counting()),
-        loans -> {
-          Map<Long, Loan> m = new LinkedHashMap<>();
-
-          for (Map.Entry<Loan, Long> entry : loans.entrySet()) {
-            m.merge(entry.getValue(), entry.getKey(), (oldValue, newValue) ->
-              isBeforeMillis(oldValue.getDueDate(), newValue.getDueDate()) ? oldValue : newValue);
-          }
-
-          AtomicLong max = new AtomicLong(0);
-
-          m.forEach((k, v) -> {
-            if (max.get() < k)
-              max.set(k);
-          });
-
-          AtomicLong min = new AtomicLong(max.get());
-
-          m.forEach((k, v) -> {
-            if (min.get() > k)
-              min.set(k);
-          });
-          return m.get(min.get());
-        }));
+      .collect(collectingAndThen(groupingBy(Request::getLoan, counting()), m -> m.entrySet()
+        .stream()
+        .collect(collectingAndThen(toMap(Map.Entry::getValue, Map.Entry::getKey,
+          (oldValue, newValue) -> isBeforeMillis(oldValue.getDueDate(), newValue.getDueDate()) ? oldValue : newValue,
+            LinkedHashMap::new),
+          res -> res.entrySet()
+            .stream()
+            .sorted(Map.Entry.comparingByKey())
+            .map(Map.Entry::getValue)
+            .collect(toList())
+        ))));
   }
 
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {

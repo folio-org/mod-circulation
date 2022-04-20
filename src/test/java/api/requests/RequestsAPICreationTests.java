@@ -1579,7 +1579,6 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(loanForTlrRecall.getString("id"), is(secondLoan.getId()));
   }
 
-  //TODO test if we have no not recalled items and pick the least recalled one
   @Test
   void tlrRecallShouldPickRecalledLoanWithClosestDueDateIfThereAreNoNotRecalledRequests() {
     configurationsFixture.enableTlrFeature();
