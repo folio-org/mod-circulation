@@ -118,7 +118,7 @@ public class LocationRepository {
       .thenApply(r -> r.map(location::withLibraryRepresentation));
   }
 
-  private CompletableFuture<Result<Location>> loadCampus(Location location) {
+  public CompletableFuture<Result<Location>> loadCampus(Location location) {
     if(isNull(location) || isNull(location.getCampusId())) {
       return ofAsync(() -> null);
     }
@@ -128,7 +128,7 @@ public class LocationRepository {
       .thenApply(r -> r.map(location::withCampusRepresentation));
   }
 
-  private CompletableFuture<Result<Location>> loadInstitution(Location location) {
+  public CompletableFuture<Result<Location>> loadInstitution(Location location) {
     if(isNull(location) || isNull(location.getInstitutionId())) {
       return ofAsync(() -> null);
     }
