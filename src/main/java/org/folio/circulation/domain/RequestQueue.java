@@ -96,12 +96,12 @@ public class RequestQueue {
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
-  public List<String> getRecalledLoansIds() {
+  public List<Loan> getRecalledLoansSortedByDueDateAsc() {
     return requests.stream()
-      .filter(Request::isRecall)
+      .filter(request -> request.isRecall() || request.isHold())
       .map(Request::getLoan)
       .filter(Objects::nonNull)
-      .map(Loan::getId)
+      .sorted(Comparator.comparing(Loan::getDueDate))
       .collect(Collectors.toList());
   }
 

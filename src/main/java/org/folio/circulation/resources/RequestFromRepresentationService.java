@@ -32,6 +32,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +156,7 @@ class RequestFromRepresentationService {
     }
 
     if (request.isTitleLevel() && request.isRecall()) {
-      return fetchItemAndLoanForRecallTlrRequest(request, request.getRequestQueue());
+      return fetchItemAndLoanForRecallTlrRequest(request);
     }
 
     return fromFutureResult(findItemForRequest(request))
@@ -205,29 +206,36 @@ class RequestFromRepresentationService {
         .findFirst();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request,
-    RequestQueue requestQueue) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
       return ofAsync(() -> request);
     }
 
-    List<String> latestTlrRecallByDueDate = requestQueue.getRecalledLoansIds();
+    RequestQueue requestQueue = request.getRequestQueue();
+    List<Loan> recalledLoans = requestQueue.getRecalledLoansSortedByDueDateAsc();
     CompletableFuture<Result<Loan>> loanFuture;
-    if (latestTlrRecallByDueDate.isEmpty()) {
+
+    if (recalledLoans.isEmpty()) {
       loanFuture = loanRepository.findLoanWithClosestDueDate(
         mapToItemIds(request.getInstanceItems()));
     } else {
       loanFuture = loanRepository.findLoanWithClosestDueDateExcludingLoans(
-        mapToItemIds(request.getInstanceItems()), latestTlrRecallByDueDate);
+        mapToItemIds(request.getInstanceItems()), mapToLoanIds(recalledLoans));
     }
 
     return loanFuture
+      .thenComposeAsync(r -> r.after(when(this::shouldGetRecalledLoanWithClosestDueDate,
+        ignored -> ofAsync(() -> recalledLoans.get(0)), loan -> ofAsync(() ->  loan))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldGetRecalledLoanWithClosestDueDate(Loan loan) {
+    return ofAsync(() -> loan == null);
   }
 
   private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
@@ -238,6 +246,12 @@ class RequestFromRepresentationService {
   private List<String> mapToItemIds(Collection<Item> items) {
     return items.stream()
       .map(Item::getItemId)
+      .collect(toList());
+  }
+
+  private List<String> mapToLoanIds(Collection<Loan> loans) {
+    return loans.stream()
+      .map(Loan::getId)
       .collect(toList());
   }
 
