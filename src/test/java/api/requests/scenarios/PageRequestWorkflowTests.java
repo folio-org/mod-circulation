@@ -9,21 +9,28 @@ import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_OK;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import io.vertx.core.json.JsonObject;
 
 class PageRequestWorkflowTests extends APITests {
   @Test
@@ -83,5 +90,32 @@ class PageRequestWorkflowTests extends APITests {
     IndividualResource pagedSmallAngryPlanet = itemsClient.get(smallAngryPlanet);
 
     assertThat(pagedSmallAngryPlanet, hasItemStatus(PAGED));
+  }
+
+  @Test
+  void titleLevelRequestConfirmationNoticeWithValidLocationShouldBeSentWithEnabledTlr() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
+
+    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
+    RequestBuilder requestBuilder = new RequestBuilder()
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(itemResource.getInstanceId())
+      .withRequesterId(usersFixture.charlotte().getId())
+      .withRequestDate(getZonedDateTime())
+      .withStatus(OPEN_NOT_YET_FILLED)
+      .withPickupServicePoint(servicePointsFixture.cd1());
+
+    verifyNumberOfSentNotices(0);
+    requestsFixture.place(requestBuilder);
+    List<JsonObject> notices = verifyNumberOfSentNotices(1);
+    JsonObject item = notices.get(0).getJsonObject("context").getJsonObject("item");
+
+    assertThat(item.getString("effectiveLocationCampus"), notNullValue());
+    assertThat(item.getString("effectiveLocationInstitution"), notNullValue());
   }
 }
