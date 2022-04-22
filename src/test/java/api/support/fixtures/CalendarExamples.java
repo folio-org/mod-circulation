@@ -43,6 +43,8 @@ public class CalendarExamples {
   static final String CASE_START_DATE_MONTHS_AGO_AND_END_DATE_WED = "77777777-2f09-4bc9-8924-3734882d44a3";
   static final String CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS = "88888888-2f09-4bc9-8924-3734882d44a3";
 
+  public static final String CASE_EXCEPTION_PERIOD_ALL_CLOSED_SERVICE_POINT_ID = "19840000-2f09-4bc9-8924-3734882d44a3";
+
   public static final String CASE_CURRENT_IS_OPEN = "7a50ce1e-ce47-4841-a01f-fd771ff3da1b";
   public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = LocalDate.of(2019, 2, 4);
   public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = LocalDate.of(2019, 2, 5);
@@ -73,6 +75,10 @@ public class CalendarExamples {
   public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);
   public static final LocalDate THIRD_DAY_CLOSED = LocalDate.of(2020, 10, 31);
   public static final LocalDate THIRD_DAY_OPEN = LocalDate.of(2020, 10, 31);
+
+  public static final LocalDate PREV_DAY_OF_THE_EXCEPTION_PERIOD_OPEN = LocalDate.of(2022, 2, 24);
+  public static final LocalDate CURRENT_DAY_IN_THE_EXCEPTION_PERIOD_CLOSED = LocalDate.of(2022, 4, 22);
+  public static final LocalDate NEXT_DAY_OF_THE_EXCEPTION_PERIOD_OPEN = LocalDate.of(2022, 5, 4);
 
   private static final String REQUESTED_DATE_PARAM = "requestedDate";
 
@@ -235,6 +241,23 @@ public class CalendarExamples {
             new OpeningHour(START_TIME_SECOND_PERIOD, END_TIME_SECOND_PERIOD)), THIRD_DAY_OPEN,
             false, true)
         )));
+    fakeOpeningPeriods.put(CASE_EXCEPTION_PERIOD_ALL_CLOSED_SERVICE_POINT_ID, new OpeningDayPeriodBuilder(
+      CASE_EXCEPTION_PERIOD_ALL_CLOSED_SERVICE_POINT_ID,
+      // prev day
+      createDayPeriod(
+        createOpeningDay(List.of(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_SECOND_PERIOD)),
+          PREV_DAY_OF_THE_EXCEPTION_PERIOD_OPEN, false, true)
+      ),
+      // current day
+      createDayPeriod(
+        createOpeningDay(new ArrayList<>(), CURRENT_DAY_IN_THE_EXCEPTION_PERIOD_CLOSED,
+          false, false)
+      ),
+      // next day
+      createDayPeriod(
+        createOpeningDay(List.of(new OpeningHour(START_TIME_FIRST_PERIOD, END_TIME_SECOND_PERIOD)),
+          NEXT_DAY_OF_THE_EXCEPTION_PERIOD_OPEN, false, true)
+      )));
   }
 
   private static OpeningDayPeriodBuilder buildAllDayOpenCalenderResponse(LocalDate requestedDate, String servicePointId) {
@@ -286,6 +309,9 @@ public class CalendarExamples {
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
       case CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+
+      case CASE_EXCEPTION_PERIOD_ALL_CLOSED_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
 
       case CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU:

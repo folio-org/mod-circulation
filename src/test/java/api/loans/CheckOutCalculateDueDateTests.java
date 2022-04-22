@@ -3,6 +3,7 @@ package api.loans;
 import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
 import static api.support.ExampleTimeZones.NEW_YORK;
 import static api.support.fixtures.CalendarExamples.CASE_CALENDAR_IS_EMPTY_SERVICE_POINT_ID;
+import static api.support.fixtures.CalendarExamples.CASE_EXCEPTION_PERIOD_ALL_CLOSED_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY;
@@ -10,6 +11,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POI
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_WED_THU_FRI_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.FRIDAY_DATE;
+import static api.support.fixtures.CalendarExamples.NEXT_DAY_OF_THE_EXCEPTION_PERIOD_OPEN;
 import static api.support.fixtures.CalendarExamples.THURSDAY_DATE;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
@@ -235,6 +237,42 @@ class CheckOutCalculateDueDateTests extends APITests {
 
     assertThat(response.getDueDate(),isEquivalentTo(
       atEndOfDay(FRIDAY_DATE, UTC)));
+  }
+
+  /**
+   * Scenario for Long-term loans: When a fixed due date falls on an exception
+   * period (closed) the due date assigned the next open day
+   * Loanable = Y
+   * Loan profile = FIXED
+   * Closed Library Due Date Management = MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY
+   * Calendar config: Feb 24, 2022 - OPEN; Feb 25 - May 03, 2022 - EXCEPTION PERIOD (CLOSE, ALL DAY)
+   * Fixed due date schedule: from: Apr 1, 2022, to: May 3, 2022, dueDate: May 03, 2022
+   */
+  @Test
+  void testMoveToEndOfTheNextOpenDayWhenFixedDueDateFallsOnExceptionPeriod() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+    final UUID checkoutServicePointId = UUID.fromString(CASE_EXCEPTION_PERIOD_ALL_CLOSED_SERVICE_POINT_ID);
+
+    var from = ZonedDateTime.of(2022, 4, 1, 0, 0, 0, 0, UTC);
+    var to = ZonedDateTime.of(2022, 5, 3, 0, 0, 0, 0, UTC);
+    var dueDate = ZonedDateTime.of(2022, 5, 3, 23, 59, 59, 0, UTC);
+    var loanDate = ZonedDateTime.of(2022, 4, 22, 9, 5, 0, 0, UTC);
+
+    UUID fixedScheduleId = loanPoliciesFixture.createFixedDueDateScheduleBy(from, to, dueDate).getId();
+
+    useLoanPolicy(createFixedLoanPolicy(fixedScheduleId,
+      MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue()));
+
+    final var response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(checkoutServicePointId));
+
+    assertThat(response.getDueDate(), isEquivalentTo(
+      atEndOfDay(NEXT_DAY_OF_THE_EXCEPTION_PERIOD_OPEN, UTC)));
   }
 
   /**

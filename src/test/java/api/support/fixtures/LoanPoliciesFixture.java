@@ -58,6 +58,17 @@ public class LoanPoliciesFixture {
     return createSchedule(fixedDueDateSchedule);
   }
 
+  public IndividualResource createFixedDueDateScheduleBy(ZonedDateTime from,
+    ZonedDateTime to, ZonedDateTime dueDate) {
+    FixedDueDateSchedulesBuilder fixedDueDateSchedule =
+      new FixedDueDateSchedulesBuilder()
+        .withName("Example Fixed Due Date Schedule")
+        .withDescription("Example Fixed Due Date Schedule")
+        .addSchedule(new FixedDueDateSchedule(from, to, dueDate));
+
+    return createSchedule(fixedDueDateSchedule);
+  }
+
   public IndividualResource create(LoanPolicyBuilder builder) {
     return loanPolicyRecordCreator.createIfAbsent(builder);
   }
