@@ -120,9 +120,15 @@ public class ClosedLibraryStrategyService {
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays,
     ZoneId timeZone, boolean isRecall){
 
+    ZonedDateTime loanOrDueDate;
+    boolean isCheckOut = !isRecall && !isRenewal;
+    if (isRecall || isCheckOut && loanPolicy.isFixed()) {
+      loanOrDueDate = loan.getDueDate();
+    } else {
+      loanOrDueDate = loan.getLoanDate();
+    }
     Optional<ZonedDateTime> optionalDueDateLimit =
-      loanPolicy.getScheduleLimit(isRecall || !isRenewal ? loan.getDueDate() : loan.getLoanDate(),
-        isRenewal, currentDateTime);
+      loanPolicy.getScheduleLimit(loanOrDueDate, isRenewal, currentDateTime);
     if (optionalDueDateLimit.isEmpty()) {
       return succeeded(dueDate);
     }
