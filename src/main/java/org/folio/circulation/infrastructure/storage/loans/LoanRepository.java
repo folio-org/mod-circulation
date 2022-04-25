@@ -21,7 +21,7 @@ import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailur
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.client.CqlQuery.notEqualMany;
+import static org.folio.circulation.support.http.client.CqlQuery.notIn;
 import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -408,23 +408,15 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
-  public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds) {
-    final Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
-      .combine(getStatusCQLQuery("Open"), CqlQuery::and)
-      .map(cql -> cql.sortBy(ascending(DUE_DATE)));
-
-    return queryLoanStorage(cqlQuery, one())
-      .thenApply(mapResult(MultipleRecords::firstOrNull));
-  }
-
-  public CompletableFuture<Result<Loan>> findLoanWithClosestDueDateExcludingLoans(List<String> itemIds,
+  public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds,
     List<String> loanIds) {
-    final Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
-      .combine(notEqualMany(ID, loanIds), CqlQuery::and)
-      .combine(getStatusCQLQuery("Open"), CqlQuery::and)
-      .map(query -> query.sortBy(ascending(DUE_DATE)));
+    Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
+      .combine(getStatusCQLQuery("Open"), CqlQuery::and);
+    if(!loanIds.isEmpty()) {
+      cqlQuery = cqlQuery.combine(notIn(ID, loanIds), CqlQuery::and);
+    }
 
-    return queryLoanStorage(cqlQuery, one())
+    return queryLoanStorage(cqlQuery.map(query -> query.sortBy(ascending(DUE_DATE))), one())
       .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 

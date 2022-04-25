@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.lang.String.join;
+import static java.util.concurrent.CompletableFuture.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -25,11 +26,13 @@ import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
+import static org.folio.circulation.support.results.AsynchronousResult.successful;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,6 +70,7 @@ import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.results.ResultBinding;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -109,15 +113,14 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
-      .thenApply(r -> r.map(request -> new RequestAndRelatedRecords(request)
-        .withRequestQueue(request.getRequestQueue())))
+      .thenApply(r -> r.map(RequestAndRelatedRecords::new))
+      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, records -> ofAsync(() -> records))))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -139,7 +142,7 @@ class RequestFromRepresentationService {
     return ofAsync(() -> request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
+  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
@@ -149,22 +152,29 @@ class RequestFromRepresentationService {
       // TODO:  fail if instance doesn't exist
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
+    RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
     if (request.isTitleLevel() && request.isPage()) {
-      return fetchItemAndLoanForPageTlr(request);
+      return succeeded(records)
+        .combineAfter(this::fetchItemAndLoanForPageTlr, RequestAndRelatedRecords::withRequest);
     }
 
     if (request.isTitleLevel() && request.isRecall()) {
-      return fetchItemAndLoanForRecallTlrRequest(request);
+      return succeeded(records)
+        .combineAfter(this::fetchItemAndLoanForRecallTlrRequest, RequestAndRelatedRecords::withRequest);
     }
 
     return fromFutureResult(findItemForRequest(request))
       .flatMapFuture(this::fetchLoan)
       .flatMapFuture(this::fetchUserForLoan)
+      .map(records::withRequest)
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
+
     return request.getOperation() == Request.Operation.CREATE
       ? fetchItemAndLoanForPageTlrCreation(request)
       : fetchItemAndLoanForPageTlrReplacement(request);
@@ -205,29 +215,21 @@ class RequestFromRepresentationService {
         .findFirst();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(RequestAndRelatedRecords
+    records) {
+    Request request = records.getRequest();
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
       return ofAsync(() -> request);
     }
 
-    RequestQueue requestQueue = request.getRequestQueue();
-    List<Loan> recalledLoans = requestQueue.getRecalledLoans();
-    CompletableFuture<Result<Loan>> loanFuture;
+    RequestQueue requestQueue = records.getRequestQueue();
 
-    if (recalledLoans.isEmpty()) {
-      loanFuture = loanRepository.findLoanWithClosestDueDate(
-        mapToItemIds(request.getInstanceItems()));
-    } else {
-      loanFuture = loanRepository.findLoanWithClosestDueDateExcludingLoans(
-        mapToItemIds(request.getInstanceItems()), mapToLoanIds(recalledLoans));
-    }
-
-    return loanFuture
+    return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()),
+        requestQueue.getRecalledLoansIds())
       //Loan is null means that we have no items that haven't been recalled. In this case we
       //take the loan that has been recalled the least times
       .thenComposeAsync(r -> r.after(when(loan -> ofAsync(() -> loan == null),
-        ignored -> ofAsync(() -> requestQueue.getLoansSortedByRecallAmount().get(0)),
-        result -> ofAsync(() ->  result))))
+        ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan), result -> ofAsync(() ->  result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
@@ -244,12 +246,6 @@ class RequestFromRepresentationService {
   private List<String> mapToItemIds(Collection<Item> items) {
     return items.stream()
       .map(Item::getItemId)
-      .collect(toList());
-  }
-
-  private List<String> mapToLoanIds(Collection<Loan> loans) {
-    return loans.stream()
-      .map(Loan::getId)
       .collect(toList());
   }
 
@@ -491,4 +487,10 @@ class RequestFromRepresentationService {
     return succeeded(request)
         .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
   }
+/*
+  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchRequest(
+    RequestAndRelatedRecords records) {
+    return succeeded(records.getRequest())
+      .combineAfter(this::fetchItemAndLoanForPageTlr, rec);
+  }*/
 }

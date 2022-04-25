@@ -45,7 +45,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
 
   public RequestAndRelatedRecords withRequest(Request newRequest) {
     return new RequestAndRelatedRecords(
-      newRequest.withItem(request.getItem()),
+      newRequest,
       this.requestQueue,
       null,
       this.moveRequestRecord,

@@ -88,7 +88,7 @@ public class CqlQuery implements QueryParameter {
     return Result.of(() -> new CqlQuery(format("%s<>\"%s\"", index, value), none()));
   }
 
-  public static Result<CqlQuery> notEqualMany(String index, Collection<String> values) {
+  public static Result<CqlQuery> notIn(String index, Collection<String> values) {
     final List<String> filteredValues = filterNullValues(values);
 
     if(filteredValues.isEmpty()) {

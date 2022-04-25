@@ -64,9 +64,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final Collection<Item> instanceItems;
 
-  @With
-  private final RequestQueue requestQueue;
-
   private final Item item;
 
   @With
@@ -92,7 +89,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
-    return new Request(null, null, representation, null, null, new ArrayList<>(), null,null, null, null,
+    return new Request(null, null, representation, null, null, new ArrayList<>(),null, null, null,
       null, null, null, false, null, false);
   }
 
@@ -100,7 +97,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
-      new ArrayList<>(), null, null, null, null, null, null, null, false, null, false);
+      new ArrayList<>(), null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {
@@ -192,7 +189,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Request(tlrSettingsConfiguration, operation, requestRepresentation,
-      cancellationReasonRepresentation, instance, instanceItems, requestQueue, newItem, requester, proxy, addressType,
+      cancellationReasonRepresentation, instance, instanceItems, newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
       previousPosition, changedStatus);
   }

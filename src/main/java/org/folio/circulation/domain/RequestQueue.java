@@ -104,16 +104,17 @@ public class RequestQueue {
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
-  public List<Loan> getRecalledLoans() {
+  public List<String> getRecalledLoansIds() {
     return requests.stream()
       .filter(Request::isRecall)
       .map(Request::getLoan)
       .filter(Objects::nonNull)
-      //TODO what if the loan has no due date(is broken)????
+      .map(Loan::getId)
       .collect(toList());
   }
 
-  public List<Loan> getLoansSortedByRecallAmount() {
+  //TODO return first element
+  public Loan getTheLeastRecalledLoan() {
     return requests.stream()
       .filter(Request::isRecall)
       .collect(collectingAndThen(groupingBy(Request::getLoan, counting()), m -> m.entrySet()
@@ -123,9 +124,9 @@ public class RequestQueue {
             LinkedHashMap::new),
           res -> res.entrySet()
             .stream()
-            .sorted(Map.Entry.comparingByKey())
+            .min(Map.Entry.comparingByKey())
             .map(Map.Entry::getValue)
-            .collect(toList())
+            .orElse(null)
         ))));
   }
 
