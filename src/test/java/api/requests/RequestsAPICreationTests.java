@@ -60,6 +60,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -76,6 +77,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.builders.ServicePointBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
@@ -559,6 +561,43 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(1));
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
+  }
+
+  @Test
+  void canCreatePageTitleLevelRequestBasedOnRequesterLocation() {
+    IndividualResource location = locationsFixture.mainFloor();
+    configurationsFixture.enableTlrFeature();
+
+    // we have to link servicePoint with existing Location
+    UUID pickupServicePointId = servicePointsFixture.create(
+      new ServicePointBuilder("name", "code", "displayName")
+        .withPickupLocation(true)
+        // any of id, libraryId, campusId, institutionId
+        .withId(UUID.fromString(location.getJson().getString("campusId")))
+    ).getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID holdingId = holdingsFixture .defaultWithHoldings(instanceId).getId();
+
+    // link item we are expect to get with necessary location
+    IndividualResource exceptedItem = itemsFixture.createItemWithHoldingsAndLocation(
+      holdingId, location.getId());
+    itemsFixture.createItemWithHoldingsAndLocation(holdingId,
+      locationsFixture.fourthFloor().getId());
+    itemsFixture.createItemWithHoldingsAndLocation(holdingId, UUID.randomUUID());
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(usersFixture.charlotte().getId()));
+
+    JsonObject request = requestResource.getJson();
+
+    assertThat(request.getString("requestLevel"), is("Title"));
+    assertEquals(exceptedItem.getId().toString(), request.getString("itemId"));
   }
 
   @Test
