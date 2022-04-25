@@ -1,3 +1,7 @@
+## 22.1.5 2022-04-25
+
+* Suspend sending notices after a loan is marked as claimed returned (CIRC-1427)
+
 ## 22.1.4 2021-12-16
 
 * Upgrade to Log4j 2.16.0 (CIRC-1387)
