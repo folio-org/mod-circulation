@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.lang.String.join;
-import static java.util.concurrent.CompletableFuture.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -26,13 +25,12 @@ import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
-import static org.folio.circulation.support.results.AsynchronousResult.successful;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.*;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,7 +68,6 @@ import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.results.ResultBinding;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -485,10 +482,4 @@ class RequestFromRepresentationService {
     return succeeded(request)
         .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
   }
-/*
-  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchRequest(
-    RequestAndRelatedRecords records) {
-    return succeeded(records.getRequest())
-      .combineAfter(this::fetchItemAndLoanForPageTlr, rec);
-  }*/
 }
