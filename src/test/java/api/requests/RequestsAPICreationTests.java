@@ -71,7 +71,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -1580,7 +1579,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldPickRecalledLoanWithClosestDueDateIfThereAreNoNotRecalledRequests() {
+  void tlrRecallShouldPickRecalledLoanWithClosestDueDateIfThereAreNoNotRecalledLoansAndSameAmountOfRecalls() {
     configurationsFixture.enableTlrFeature();
     var londonZoneId = ZoneId.of("Europe/London");
     var items = itemsFixture.createMultipleItemsForTheSameInstance(4);
@@ -1595,13 +1594,14 @@ public class RequestsAPICreationTests extends APITests {
 
     var date = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
     checkOutFixture.checkOutByBarcode(firstItem, james, date);
-    checkOutFixture.checkOutByBarcode(secondItem, james, date.plusDays(1));
-    var thirdItemLoanAfterCheckOut = checkOutFixture.checkOutByBarcode(thirdItem, james, date.plusDays(2));
+    var secondItemLoanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem, james,
+      date.plusDays(1));
+    checkOutFixture.checkOutByBarcode(thirdItem, james, date.plusDays(2));
     checkOutFixture.checkOutByBarcode(forthItem, james, date.plusDays(3));
 
     recallItem(firstItem, List.of(jessica, charlotte, steve));
     recallItem(secondItem, List.of(jessica, charlotte));
-    recallItem(thirdItem, List.of(jessica));
+    recallItem(thirdItem, List.of(jessica, charlotte));
     recallItem(forthItem, List.of(jessica, charlotte, steve));
     var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(), usersFixture.rebecca(),
       RECALL).getJson();
@@ -1610,7 +1610,7 @@ public class RequestsAPICreationTests extends APITests {
       .filter(loan -> loan.getString("itemId").equals(requestJson.getString("itemId")))
       .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
 
-    assertThat(loanForTlrRecall.getString("id"), is(thirdItemLoanAfterCheckOut.getId()));
+    assertThat(loanForTlrRecall.getString("id"), is(secondItemLoanAfterCheckOut.getId()));
   }
 
   private void recallItem(ItemResource item, List<UserResource> users) {
