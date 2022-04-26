@@ -203,16 +203,11 @@ class RequestFromRepresentationService {
     List<Item> items = getAvailableItems(request).collect(toList());
     String servicePointId = request.getPickupServicePointId();
 
-    Optional<Item> byLocation = searchItem(items, servicePointId, Location::getId);
-    Optional<Item> byLibrary = searchItem(items, servicePointId, Location::getLibraryId);
-    Optional<Item> byCampus = searchItem(items, servicePointId, Location::getCampusId);
-    Optional<Item> byInstitution = searchItem(items, servicePointId, Location::getInstitutionId);
-
-    return Stream.of(byLocation, byLibrary, byCampus, byInstitution)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .findFirst()
-      .or(() -> getAvailableItems(request).findFirst());
+    return searchItem(items, servicePointId, Location::getId)
+      .or(() -> searchItem(items, servicePointId, Location::getLibraryId))
+      .or(() -> searchItem(items, servicePointId, Location::getCampusId))
+      .or(() -> searchItem(items, servicePointId, Location::getInstitutionId))
+      .or(() -> items.stream().findFirst());
   }
 
   private Stream<Item> getAvailableItems(Request request) {
