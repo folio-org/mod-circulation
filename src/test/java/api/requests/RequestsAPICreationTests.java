@@ -77,7 +77,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.builders.ServicePointBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
@@ -565,22 +564,14 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void canCreatePageTitleLevelRequestBasedOnRequesterLocation() {
-    IndividualResource location = locationsFixture.mainFloor();
     configurationsFixture.enableTlrFeature();
 
-    // we have to link servicePoint with existing Location
-    UUID pickupServicePointId = servicePointsFixture.create(
-      new ServicePointBuilder("name", "code", "displayName")
-        .withPickupLocation(true)
-        // any of id, libraryId, campusId, institutionId
-        .withId(UUID.fromString(location.getJson().getString("campusId")))
-    ).getId();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     UUID holdingId = holdingsFixture .defaultWithHoldings(instanceId).getId();
 
-    // link item we are expect to get with necessary location
     IndividualResource exceptedItem = itemsFixture.createItemWithHoldingsAndLocation(
-      holdingId, location.getId());
+      holdingId, locationsFixture.mainFloor().getId());
     itemsFixture.createItemWithHoldingsAndLocation(holdingId,
       locationsFixture.fourthFloor().getId());
     itemsFixture.createItemWithHoldingsAndLocation(holdingId, UUID.randomUUID());

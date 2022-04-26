@@ -4,7 +4,9 @@ import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.matchAny;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -12,7 +14,10 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -30,6 +35,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -106,6 +112,18 @@ public class LocationRepository {
 
     return fetcher.findByIds(locationIds)
       .thenCompose(this::loadLibrariesForLocations);
+  }
+
+  public CompletableFuture<Result<List<Location>>> fetchLocationsByServicePointId(
+    String servicePointId) {
+
+    Collection<String> servicePointIds = Collections.singletonList(servicePointId);
+    CqlQueryFinder<Location> locations = findWithCqlQuery(
+      locationsStorageClient, "locations", Location::from);
+
+    return locations.findByQuery(matchAny("servicePointIds", servicePointIds))
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenApply(r -> r.map(ArrayList::new));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {

@@ -62,6 +62,7 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
@@ -328,10 +329,11 @@ public class RequestByInstanceIdResource extends Resource {
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
 
+    ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(new InstanceRepository(clients), itemRepository,
         requestQueueRepository, userRepository, loanRepository,
-        new ServicePointRepository(clients),
+        servicePointRepository, LocationRepository.using(clients, servicePointRepository),
         new ConfigurationRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),

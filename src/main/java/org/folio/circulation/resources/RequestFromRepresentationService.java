@@ -42,12 +42,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -61,6 +59,7 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -83,6 +82,7 @@ class RequestFromRepresentationService {
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
+  private final LocationRepository locationRepository;
   private final ConfigurationRepository configurationRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
@@ -172,7 +172,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrCreation(Request request) {
-    return fromFutureResult(completedFuture(findItemForPageTlr(request))
+    return fromFutureResult(findItemForPageTlr(request)
       .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
@@ -190,41 +190,33 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private Result<Request> findItemForPageTlr(Request request) {
-    return getFirstAvailableItemClosestToPickupServicePoint(request)
-      .map(request::withItem)
-      .map(Result::succeeded)
-      .orElseGet(() -> failedValidation(
+  private CompletableFuture<Result<Request>> findItemForPageTlr(Request request) {
+    return getFirstAvailableItem(request)
+      .thenApply(item -> item
+        .map(request::withItem)
+        .map(Result::succeeded)
+        .orElseGet(() -> failedValidation(
         "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
-        request.getInstanceId()));
+          request.getInstanceId())));
   }
 
-  private Optional<Item> getFirstAvailableItemClosestToPickupServicePoint(Request request) {
-    List<Item> items = getAvailableItems(request).collect(toList());
-    String servicePointId = request.getPickupServicePointId();
-
-    return searchItem(items, servicePointId, Location::getId)
-      .or(() -> searchItem(items, servicePointId, Location::getLibraryId))
-      .or(() -> searchItem(items, servicePointId, Location::getCampusId))
-      .or(() -> searchItem(items, servicePointId, Location::getInstitutionId))
-      .or(() -> items.stream().findFirst());
+  private CompletableFuture<Optional<Item>> getFirstAvailableItem(Request request) {
+    List<Item> availableItems = getAvailableItems(request).collect(toList());
+    return availableItems.size() == 1
+      ? completedFuture(Optional.of(availableItems.get(0)))
+      : completedFuture(availableItems)
+      .thenCombine(locationRepository.fetchLocationsByServicePointId(request.getPickupServicePointId()),
+        (items, listResult) -> items.stream()
+          .filter(item -> listResult.value().stream()
+            .anyMatch(location -> location.getId().equals(item.getLocationId())))
+          .findFirst()
+          .or(() -> getAvailableItems(request).findFirst()));
   }
 
   private Stream<Item> getAvailableItems(Request request) {
     return request.getInstanceItems().stream()
       .filter(Objects::nonNull)
       .filter(item -> ItemStatus.AVAILABLE == item.getStatus());
-  }
-
-  private Optional<Item> searchItem(List<Item> items, String servicePointId,
-    Function<Location, String> locationFunction) {
-
-    return items.stream()
-      .filter(item -> {
-        Location location = item.getLocation();
-        return location != null && locationFunction.apply(location).equals(servicePointId);
-      })
-      .findFirst();
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
@@ -315,11 +307,12 @@ class RequestFromRepresentationService {
 
   private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Request request) {
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
-      Optional<Item> itemOptional = getFirstAvailableItemClosestToPickupServicePoint(request);
-      if (itemOptional.isPresent()) {
-        return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
-          Map.of(ITEM_ID, itemOptional.get().getItemId(), INSTANCE_ID, request.getInstanceId()));
-      }
+      return getFirstAvailableItem(request)
+        .thenApply(Optional::get)
+        .<Result<Request>>thenApply(item ->
+          failedValidation("Hold/Recall TLR not allowed: available item found for instance",
+          Map.of(ITEM_ID, item.getItemId(), INSTANCE_ID, request.getInstanceId())))
+        .getNow(succeeded(request));
     }
     return succeeded(request);
   }
