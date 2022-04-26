@@ -97,7 +97,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
-      new ArrayList<>(), null, null, null, null, null, null, false, null, false);
+      new ArrayList<>(),  null, null, null, null, null, null, false, null, false);
   }
 
   public JsonObject asJson() {

@@ -156,13 +156,13 @@ class RequestFromRepresentationService {
     RequestAndRelatedRecords records) {
     Request request = records.getRequest();
     if (request.isTitleLevel() && request.isPage()) {
-      return succeeded(records)
-        .combineAfter(this::fetchItemAndLoanForPageTlr, RequestAndRelatedRecords::withRequest);
+      return fetchItemAndLoanForPageTlr(records.getRequest())
+        .thenApply(mapResult(records::withRequest));
     }
 
     if (request.isTitleLevel() && request.isRecall()) {
-      return succeeded(records)
-        .combineAfter(this::fetchItemAndLoanForRecallTlrRequest, RequestAndRelatedRecords::withRequest);
+      return fetchItemAndLoanForRecallTlrRequest(records)
+        .thenApply(mapResult(records::withRequest));
     }
 
     return fromFutureResult(findItemForRequest(request))
@@ -172,9 +172,7 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(RequestAndRelatedRecords records) {
-    Request request = records.getRequest();
-
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(Request request) {
     return request.getOperation() == Request.Operation.CREATE
       ? fetchItemAndLoanForPageTlrCreation(request)
       : fetchItemAndLoanForPageTlrReplacement(request);

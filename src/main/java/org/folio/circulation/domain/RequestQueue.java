@@ -113,21 +113,16 @@ public class RequestQueue {
       .collect(toList());
   }
 
-  //TODO return first element
   public Loan getTheLeastRecalledLoan() {
     return requests.stream()
       .filter(Request::isRecall)
+      //Counting the amount of recalls for each loan
       .collect(collectingAndThen(groupingBy(Request::getLoan, counting()), m -> m.entrySet()
         .stream()
-        .collect(collectingAndThen(toMap(Map.Entry::getValue, Map.Entry::getKey,
-          (oldValue, newValue) -> isBeforeMillis(oldValue.getDueDate(), newValue.getDueDate()) ? oldValue : newValue,
-            LinkedHashMap::new),
-          res -> res.entrySet()
-            .stream()
-            .min(Map.Entry.comparingByKey())
-            .map(Map.Entry::getValue)
-            .orElse(null)
-        ))));
+        .min(Comparator.comparingLong(Map.Entry<Loan, Long>::getValue)
+          .thenComparing(o -> o.getKey().getDueDate()))
+        .map(Map.Entry::getKey)
+        .orElse(null)));
   }
 
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
