@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -47,6 +49,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ItemsInTransitReportService {
+  private static Logger logger = LogManager.getLogger(ItemsInTransitReportService.class);
   private ItemReportRepository itemReportRepository;
   private LoanRepository loanRepository;
   private LocationRepository locationRepository;
@@ -99,7 +102,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
     ItemsInTransitReportContext context) {
-
+    logger.error("[TRACE] -> fetchHoldingsRecords started");
+    logger.error("[TRACE] -> items map size " + context.getItems().size());
     return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
       .thenApply(mapResult(records -> toMap(records.getRecords(), Holdings::getId)))
@@ -108,7 +112,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
-
+    logger.error("[TRACE] -> fetchInstances started");
+    logger.error("[TRACE] -> holdings map size " + context.getHoldingsRecords().size());
     return instanceRepository.fetchByIds(mapToStrings(context.getItems().values(),
           context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
@@ -117,7 +122,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
     ItemsInTransitReportContext context) {
-
+    logger.error("[TRACE] -> fetchLocations started");
+    logger.error("[TRACE] -> instances map size " + context.getInstances().size());
     return locationRepository
       .getItemLocations(context.getItems().values())
       .thenApply(mapResult(context::withLocations));
