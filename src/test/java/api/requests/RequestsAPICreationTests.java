@@ -563,7 +563,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void canCreatePageTitleLevelRequestBasedOnRequesterLocation() {
+  void canCreatePageTitleLevelRequestBasedOnRequestedPickupServicePoint() {
     configurationsFixture.enableTlrFeature();
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -716,8 +716,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
-      hasParameter("instanceId", item.getInstanceId().toString()),
-      hasParameter("itemId", items.get(1).getId().toString()))));
+      hasParameter("instanceId", item.getInstanceId().toString()))));
   }
 
   @Test
