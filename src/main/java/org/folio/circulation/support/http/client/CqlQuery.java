@@ -88,6 +88,18 @@ public class CqlQuery implements QueryParameter {
     return Result.of(() -> new CqlQuery(format("%s<>\"%s\"", index, value), none()));
   }
 
+  public static Result<CqlQuery> notIn(String index, Collection<String> values) {
+    final List<String> filteredValues = filterNullValues(values);
+
+    if(filteredValues.isEmpty()) {
+      return failedDueToServerError(
+        format("Cannot generate CQL query using index %s matching no values", index));
+    }
+
+    return Result.of(() -> new CqlQuery(
+      format("%s<>(%s)", index, join(" and ", wrapValuesInQuotes(filteredValues))), none()));
+  }
+
   private CqlQuery(String query, CqlSortBy sortBy) {
     this.query = query;
     this.sortBy = sortBy;

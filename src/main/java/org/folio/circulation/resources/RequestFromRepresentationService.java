@@ -30,6 +30,7 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
+import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -108,14 +110,14 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchItemAndLoan, this::fetchItemAndLoan, records -> ofAsync(() -> records))))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -137,7 +139,7 @@ class RequestFromRepresentationService {
     return ofAsync(() -> request.isTitleLevel() && errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(Request request) {
+  private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
@@ -147,18 +149,23 @@ class RequestFromRepresentationService {
       // TODO:  fail if instance doesn't exist
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoan(Request request) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
+    RequestAndRelatedRecords records) {
+    Request request = records.getRequest();
     if (request.isTitleLevel() && request.isPage()) {
-      return fetchItemAndLoanForPageTlr(request);
+      return fetchItemAndLoanForPageTlr(records.getRequest())
+        .thenApply(mapResult(records::withRequest));
     }
 
     if (request.isTitleLevel() && request.isRecall()) {
-      return fetchItemAndLoanForRecallTlrRequest(request);
+      return fetchItemAndLoanForRecallTlrRequest(records)
+        .thenApply(mapResult(records::withRequest));
     }
 
     return fromFutureResult(findItemForRequest(request))
       .flatMapFuture(this::fetchLoan)
       .flatMapFuture(this::fetchUserForLoan)
+      .map(records::withRequest)
       .toCompletableFuture();
   }
 
@@ -203,12 +210,21 @@ class RequestFromRepresentationService {
         .findFirst();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(RequestAndRelatedRecords
+    records) {
+    Request request = records.getRequest();
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
       return ofAsync(() -> request);
     }
 
-    return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()))
+    RequestQueue requestQueue = records.getRequestQueue();
+
+    return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()),
+        requestQueue.getRecalledLoansIds())
+      //Loan is null means that we have no items that haven't been recalled. In this case we
+      //take the loan that has been recalled the least times
+      .thenComposeAsync(r -> r.after(when(loan -> ofAsync(() -> loan == null),
+        ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan), result -> ofAsync(() ->  result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
