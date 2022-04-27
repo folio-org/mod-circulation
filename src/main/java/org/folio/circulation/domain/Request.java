@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
@@ -170,6 +171,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean isTitleLevel() {
     return getRequestLevel() == TITLE;
+  }
+
+  public boolean isItemLevel() {
+    return getRequestLevel() == ITEM;
   }
 
   @Override

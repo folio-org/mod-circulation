@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.lang.String.join;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -36,16 +35,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -191,32 +189,44 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> findItemForPageTlr(Request request) {
-    return getFirstAvailableItem(request)
-      .thenApply(item -> item
-        .map(request::withItem)
-        .map(Result::succeeded)
-        .orElseGet(() -> failedValidation(
+    return getAvailableItemClosestToPickupServicePoint(request)
+      .thenApply(r -> r.next(item -> item != null
+        ? succeeded(request.withItem(item))
+        : failedValidation(
         "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
-          request.getInstanceId())));
+        request.getInstanceId()))
+      );
   }
 
-  private CompletableFuture<Optional<Item>> getFirstAvailableItem(Request request) {
-    List<Item> availableItems = getAvailableItems(request).collect(toList());
-    return availableItems.size() == 1
-      ? completedFuture(Optional.of(availableItems.get(0)))
-      : completedFuture(availableItems)
-      .thenCombine(locationRepository.fetchLocationsByServicePointId(request.getPickupServicePointId()),
-        (items, listResult) -> items.stream()
-          .filter(item -> listResult.value().stream()
-            .anyMatch(location -> location.getId().equals(item.getLocationId())))
-          .findFirst()
-          .or(() -> getAvailableItems(request).findFirst()));
+  private CompletableFuture<Result<Item>> getAvailableItemClosestToPickupServicePoint(Request request) {
+    List<Item> availableItems = getAvailableItems(request);
+
+    if (availableItems.size() <= 1) {
+      return ofAsync(() -> availableItems.stream().findFirst().orElse(null));
+    }
+
+    return locationRepository.fetchLocationsByServicePointId(request.getPickupServicePointId())
+      .thenApply(r -> r.map(locations -> findItemWithMatchingLocationOrAny(availableItems, locations)));
   }
 
-  private Stream<Item> getAvailableItems(Request request) {
+  private static Item findItemWithMatchingLocationOrAny(Collection<Item> items,
+    Collection<Location> locations) {
+
+    List<String> locationIds = locations.stream()
+      .map(Location::getId)
+      .collect(toList());
+
+    return items.stream()
+      .filter(item -> locationIds.contains(item.getLocationId()))
+      .findFirst()
+      .orElseGet(() -> items.stream().findAny().orElse(null));
+  }
+
+  private List<Item> getAvailableItems(Request request) {
     return request.getInstanceItems().stream()
       .filter(Objects::nonNull)
-      .filter(item -> ItemStatus.AVAILABLE == item.getStatus());
+      .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+      .collect(toList());
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(Request request) {
@@ -306,15 +316,14 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Request request) {
-    if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
-      return getFirstAvailableItem(request)
-        .thenApply(Optional::get)
-        .<Result<Request>>thenApply(item ->
-          failedValidation("Hold/Recall TLR not allowed: available item found for instance",
-          Map.of(ITEM_ID, item.getItemId(), INSTANCE_ID, request.getInstanceId())))
-        .getNow(succeeded(request));
+    if (!request.isTitleLevel() || request.isPage()) {
+      return succeeded(request);
     }
-    return succeeded(request);
+
+    return getAvailableItems(request).isEmpty()
+      ? succeeded(request)
+      : failedValidation("Hold/Recall TLR not allowed: available item found for instance",
+      INSTANCE_ID, request.getInstanceId());
   }
 
   private Result<Request> validateRequestLevel(Request request) {

@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
+import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
@@ -14,10 +15,7 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -35,7 +33,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -114,16 +111,12 @@ public class LocationRepository {
       .thenCompose(this::loadLibrariesForLocations);
   }
 
-  public CompletableFuture<Result<List<Location>>> fetchLocationsByServicePointId(
+  public CompletableFuture<Result<Collection<Location>>> fetchLocationsByServicePointId(
     String servicePointId) {
 
-    Collection<String> servicePointIds = Collections.singletonList(servicePointId);
-    CqlQueryFinder<Location> locations = findWithCqlQuery(
-      locationsStorageClient, "locations", Location::from);
-
-    return locations.findByQuery(matchAny("servicePointIds", servicePointIds))
-      .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenApply(r -> r.map(ArrayList::new));
+    return findWithCqlQuery(locationsStorageClient, "locations", Location::from)
+      .findByQuery(matchAny("servicePointIds", singletonList(servicePointId)))
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
