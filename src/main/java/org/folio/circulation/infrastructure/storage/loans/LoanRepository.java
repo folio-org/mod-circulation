@@ -412,7 +412,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     List<String> loanIds) {
     Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
       .combine(getStatusCQLQuery("Open"), CqlQuery::and);
-    if(!loanIds.isEmpty()) {
+    if (!loanIds.isEmpty()) {
       cqlQuery = cqlQuery.combine(notIn(ID, loanIds), CqlQuery::and);
     }
 
