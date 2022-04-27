@@ -29,7 +29,7 @@ public class ClosedRequestValidator {
 
     return requestRepository.getById(requestId)
       .thenApply(r -> r.failWhen(existing -> succeeded(existing.isClosed()),
-        v -> singleValidationError("Cannot edit a closed request", "id", requestId)));
+        v -> singleValidationError("The Request has already been closed", "id", requestId)));
   }
 
 }
