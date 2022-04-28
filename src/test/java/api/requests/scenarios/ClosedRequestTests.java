@@ -86,7 +86,7 @@ class ClosedRequestTests extends APITests {
     assertThat(response.getStatusCode(), is(422));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Cannot edit a closed request"),
+      hasMessage("The Request has already been closed"),
       hasUUIDParameter("id", request.getId()))));
   }
 
@@ -118,7 +118,7 @@ class ClosedRequestTests extends APITests {
     assertThat(response.getStatusCode(), is(422));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Cannot edit a closed request"),
+      hasMessage("The Request has already been closed"),
       hasUUIDParameter("id", request.getId()))));
   }
 
