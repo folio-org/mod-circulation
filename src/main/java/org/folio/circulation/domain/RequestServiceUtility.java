@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import org.folio.circulation.domain.Request.Operation;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -145,7 +146,7 @@ public class RequestServiceUtility {
   private static Predicate<Request> isAlreadyRequested(RequestAndRelatedRecords records) {
     Request request = records.getRequest();
     if (records.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      return req -> isTheSameRequester(records, req) && req.isOpen();
+      return req -> isTheSameRequester(records, req) && req.isOpen() && request.getOperation() != Operation.MOVE;
     } else {
       return req -> {
         if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
