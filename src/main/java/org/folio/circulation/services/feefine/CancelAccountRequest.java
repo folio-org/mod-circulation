@@ -19,7 +19,6 @@ final class CancelAccountRequest {
     write(json, "servicePointId", servicePointId);
     write(json, "userName", userName);
     write(json, "cancellationReason", cancellationReason);
-    write(json, "comments", "-");
 
     return json;
   }
