@@ -64,6 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1549,6 +1550,72 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  @Test
+  void tlrRecallShouldPickItemWithLoanWithNextClosestDueDateIfAnotherRecallRequestExists() {
+    configurationsFixture.enableTlrFeature();
+    var londonZoneId = ZoneId.of("Europe/London");
+    var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    var firstItem = items.get(0);
+
+    ZonedDateTime firstLoanDate = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica(),
+      firstLoanDate);
+    var secondLoan = checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.steve(),
+      firstLoanDate.plusDays(1));
+    checkOutFixture.checkOutByBarcode(items.get(2), usersFixture.steve(),
+      firstLoanDate.plusDays(2));
+
+    requestsFixture.recallItem(firstItem, usersFixture.james());
+    requestsFixture.recallItem(items.get(2), usersFixture.james());
+    var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
+      usersFixture.charlotte(), RECALL).getJson();
+    var loanForTlrRecall = loansStorageClient.getAll().stream()
+      .filter(loan -> loan.getString("itemId").equals(requestJson.getString("itemId")))
+      .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
+
+    assertThat(loanForTlrRecall.getString("id"), is(secondLoan.getId()));
+  }
+
+  @Test
+  void tlrRecallShouldPickRecalledLoanWithClosestDueDateIfThereAreNoNotRecalledLoansAndSameAmountOfRecalls() {
+    configurationsFixture.enableTlrFeature();
+    var londonZoneId = ZoneId.of("Europe/London");
+    var items = itemsFixture.createMultipleItemsForTheSameInstance(4);
+    var firstItem = items.get(0);
+    var secondItem = items.get(1);
+    var thirdItem = items.get(2);
+    var forthItem = items.get(3);
+    var jessica = usersFixture.jessica();
+    var james = usersFixture.james();
+    var steve = usersFixture.steve();
+    var charlotte = usersFixture.charlotte();
+
+    var date = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
+    checkOutFixture.checkOutByBarcode(firstItem, james, date);
+    var secondItemLoanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem, james,
+      date.plusDays(1));
+    checkOutFixture.checkOutByBarcode(thirdItem, james, date.plusDays(2));
+    checkOutFixture.checkOutByBarcode(forthItem, james, date.plusDays(3));
+
+    recallItem(firstItem, List.of(jessica, charlotte, steve));
+    recallItem(secondItem, List.of(jessica, charlotte));
+    recallItem(thirdItem, List.of(jessica, charlotte));
+    recallItem(forthItem, List.of(jessica, charlotte, steve));
+    var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(), usersFixture.rebecca(),
+      RECALL).getJson();
+
+    var loanForTlrRecall = loansStorageClient.getAll().stream()
+      .filter(loan -> loan.getString("itemId").equals(requestJson.getString("itemId")))
+      .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
+
+    assertThat(loanForTlrRecall.getString("id"), is(secondItemLoanAfterCheckOut.getId()));
+  }
+
+  private void recallItem(ItemResource item, List<UserResource> users) {
+    IntStream.range(0, users.size())
+      .forEach(index -> requestsFixture.recallItem(item, users.get(index)));
   }
 
   @Test
