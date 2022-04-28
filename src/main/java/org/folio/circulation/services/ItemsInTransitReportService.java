@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -49,7 +50,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ItemsInTransitReportService {
-  private static Logger logger = LogManager.getLogger(ItemsInTransitReportService.class);
+  private static Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private ItemReportRepository itemReportRepository;
   private LoanRepository loanRepository;
   private LocationRepository locationRepository;
@@ -74,6 +75,7 @@ public class ItemsInTransitReportService {
   }
 
   public CompletableFuture<Result<JsonObject>> buildReport() {
+    logger.info("[TRACE] -> buildReport started");
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(r -> r.after(this::fetchHoldingsRecords))
@@ -89,7 +91,7 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     ItemsInTransitReportContext context) {
-
+    logger.info("[TRACE] -> fetchItems started");
     return itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenApply(r -> r.next(itemsReportFetcher ->
         combineAll(itemsReportFetcher.getResultListOfItems())
@@ -102,8 +104,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
     ItemsInTransitReportContext context) {
-    logger.error("[TRACE] -> fetchHoldingsRecords started");
-    logger.error("[TRACE] -> items map size " + context.getItems().size());
+    logger.info("[TRACE] -> fetchHoldingsRecords started");
+    logger.info("[TRACE] -> items map size " + context.getItems().size());
     return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
       .thenApply(mapResult(records -> toMap(records.getRecords(), Holdings::getId)))
@@ -112,8 +114,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
-    logger.error("[TRACE] -> fetchInstances started");
-    logger.error("[TRACE] -> holdings map size " + context.getHoldingsRecords().size());
+    logger.info("[TRACE] -> fetchInstances started");
+    logger.info("[TRACE] -> holdings map size " + context.getHoldingsRecords().size());
     return instanceRepository.fetchByIds(mapToStrings(context.getItems().values(),
           context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
@@ -122,8 +124,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
     ItemsInTransitReportContext context) {
-    logger.error("[TRACE] -> fetchLocations started");
-    logger.error("[TRACE] -> instances map size " + context.getInstances().size());
+    logger.info("[TRACE] -> fetchLocations started");
+    logger.info("[TRACE] -> instances map size " + context.getInstances().size());
     return locationRepository
       .getItemLocations(context.getItems().values())
       .thenApply(mapResult(context::withLocations));
