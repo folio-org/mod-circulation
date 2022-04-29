@@ -163,7 +163,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       return false;
     }
 
-    log.warn("Due Date notice {} for loan {} is irrelevant: {}", notice.getId(), loanId, logMessages);
+    log.warn("Due Date notice [UPDATED PRINT] {} for loan {} is irrelevant: {}", notice.getId(), loanId, logMessages);
     return true;
   }
 
