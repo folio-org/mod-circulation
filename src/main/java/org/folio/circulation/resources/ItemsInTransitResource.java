@@ -17,7 +17,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class ItemsInTransitResource extends Resource {
   private final String rootPath;
-  private static Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public ItemsInTransitResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
@@ -26,6 +26,7 @@ public class ItemsInTransitResource extends Resource {
   @Override
   public void register(Router router) {
     logger.info("[TRACE] -> register started");
+    logger.warn("[TRACE] -> register started");
     RouteRegistration routeRegistration = new RouteRegistration(rootPath, router);
     routeRegistration.getMany(this::buildReport);
   }

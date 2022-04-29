@@ -50,7 +50,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ItemsInTransitReportService {
-  private static Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private ItemReportRepository itemReportRepository;
   private LoanRepository loanRepository;
   private LocationRepository locationRepository;
@@ -105,7 +105,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
     ItemsInTransitReportContext context) {
     logger.info("[TRACE] -> fetchHoldingsRecords started");
-    logger.info("[TRACE] -> items map size " + context.getItems().size());
+    logger.info("[TRACE] -> items map size {}", context.getItems().size());
     return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
       .thenApply(mapResult(records -> toMap(records.getRecords(), Holdings::getId)))
@@ -115,7 +115,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
     logger.info("[TRACE] -> fetchInstances started");
-    logger.info("[TRACE] -> holdings map size " + context.getHoldingsRecords().size());
+    logger.info("[TRACE] -> holdings map size {}", context.getHoldingsRecords().size());
     return instanceRepository.fetchByIds(mapToStrings(context.getItems().values(),
           context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
@@ -125,7 +125,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
     ItemsInTransitReportContext context) {
     logger.info("[TRACE] -> fetchLocations started");
-    logger.info("[TRACE] -> instances map size " + context.getInstances().size());
+    logger.info("[TRACE] -> instances map size {}", context.getInstances().size());
     return locationRepository
       .getItemLocations(context.getItems().values())
       .thenApply(mapResult(context::withLocations));
