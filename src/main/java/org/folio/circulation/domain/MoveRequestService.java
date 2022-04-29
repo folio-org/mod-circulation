@@ -46,11 +46,12 @@ public class MoveRequestService {
       RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseTlrProcessingWhenFeatureIsDisabled))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenMovedToDifferentInstance))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
-      .thenCompose(r -> r.after(this::validateUpdateRequest))
+      .thenCompose(r -> r.after(records -> validateUpdateRequest(records, originalRequest)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
@@ -80,9 +81,11 @@ public class MoveRequestService {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+      RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
 
     return of(() -> requestAndRelatedRecords)
+      .next(r -> RequestServiceUtility.refuseMovingToOrFromHoldTlr(requestAndRelatedRecords,
+        originalRequest))
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
       .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
       .next(RequestServiceUtility::refuseWhenRequestTypeIsNotAllowedForItem)

@@ -1,10 +1,10 @@
 package api.requests.scenarios;
 
 import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
-import api.support.http.CheckOutResource;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -45,7 +45,6 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
@@ -53,9 +52,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
@@ -64,7 +60,6 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
-import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -232,7 +227,33 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void canMoveATlrRecallRequest() {
+  void canMoveATlrPageToRecall() {
+    configurationsFixture.enableTlrFeature();
+
+    val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
+
+    val pageIlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
+      usersFixture.james());
+
+    ItemResource secondItem = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(firstItem.getInstanceId()),
+      itemBuilder -> itemBuilder
+    );
+
+    val loanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem,
+      usersFixture.jessica());
+
+    requestsFixture.move(new MoveRequestBuilder(pageIlrForFirstItem.getId(),
+      secondItem.getId(), RequestType.RECALL.getValue()));
+    assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
+    val loanAfterRecallJson = loansFixture.getLoanById(loanAfterCheckOut.getId()).getJson();
+    assertThat(loanAfterRecallJson.getString("action"),
+      is("recallrequested"));
+  }
+
+  @Test
+  void canMoveATlrRecallToAnotherItem() {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
@@ -248,7 +269,28 @@ class MoveRequestTests extends APITests {
     requestsFixture.move(new MoveRequestBuilder(recallTlrForFirstItem.getId(),
       secondItem.getId()));
     val secondLoanAfterRecallJson = loansFixture.getLoanById(secondLoanAfterCheckOut.getId()).getJson();
-    assertThat("Action was not updated", secondLoanAfterRecallJson.getString("action"),
+    assertThat(secondLoanAfterRecallJson.getString("action"),
+      is("recallrequested"));
+  }
+
+  @Test
+  void canMoveATlrRecallToPage() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.james());
+    val secondLoanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem,
+      usersFixture.jessica());
+
+    val recallTlrForFirstItem = requestsFixture.placeTitleLevelRecallRequest(
+      firstItem.getInstanceId(), usersFixture.charlotte());
+
+    requestsFixture.move(new MoveRequestBuilder(recallTlrForFirstItem.getId(),
+      secondItem.getId()));
+    val secondLoanAfterRecallJson = loansFixture.getLoanById(secondLoanAfterCheckOut.getId()).getJson();
+    assertThat(secondLoanAfterRecallJson.getString("action"),
       is("recallrequested"));
   }
 
@@ -348,6 +390,58 @@ class MoveRequestTests extends APITests {
       hasMessage("Request can only be moved to an item with the same instance ID"),
       hasParameter("itemId", uprooted.getId().toString()),
       hasParameter("instanceId", uprooted.getInstanceId().toString()))));
+  }
+
+  @Test
+  void cannotMoveToOrFromHoldTlr() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+
+    items.forEach(checkOutFixture::checkOutByBarcode);
+
+    val firstItemHoldTlr = requestsFixture.placeTitleLevelHoldShelfRequest(firstItem.getInstanceId(),
+      usersFixture.james());
+
+    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
+      secondItem.getId()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Moving from/to Hold TLR is disallowed"),
+      hasParameter("requestId", firstItemHoldTlr.getId().toString()))));
+
+    val firstItemRecallTlr = requestsFixture.placeTitleLevelRecallRequest(
+      firstItem.getInstanceId(), usersFixture.charlotte());
+
+    response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemRecallTlr.getId(), secondItem.getId(),
+      RequestType.HOLD.getValue()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Moving from/to Hold TLR is disallowed"),
+      hasParameter("requestId", firstItemRecallTlr.getId().toString()))));
+  }
+
+  //TODO cannot move to/from hold tlr and cannot move tlr when feature is disabled
+  @Test
+  void cannotMoveTlrWhenFeatureIsDisabled() {
+    configurationsFixture.enableTlrFeature();
+
+    val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    val firstItem = items.get(0);
+    val secondItem = items.get(1);
+
+    items.forEach(checkOutFixture::checkOutByBarcode);
+
+    val firstItemHoldTlr = requestsFixture.placeTitleLevelHoldShelfRequest(firstItem.getInstanceId(),
+      usersFixture.james());
+
+    configurationsFixture.disableTlrFeature();
+
+    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
+      secondItem.getId()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Can not process TLR's with TLR feature disabled"),
+      hasParameter("requestId", firstItemHoldTlr.getId().toString()))));
   }
 
   @Test
