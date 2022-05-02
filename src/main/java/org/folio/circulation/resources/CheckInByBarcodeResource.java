@@ -7,6 +7,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -30,6 +31,8 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+
+import java.util.Optional;
 
 public class CheckInByBarcodeResource extends Resource {
   public CheckInByBarcodeResource(HttpClient client) {
@@ -98,8 +101,14 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
         processAdapter::checkInLoan, CheckInContext::withLoan))
-      .thenComposeAsync(r -> r.combineAfter(checkInContext -> scheduledNoticesRepository
-          .deleteByLoanIdAndTriggeringEvent(checkInContext.getLoan().getId(), DUE_DATE),
+      .thenComposeAsync(r -> r.combineAfter(checkInContext -> {
+          String loanId = Optional.ofNullable(checkInContext)
+            .map(CheckInContext::getLoan)
+            .map(Loan::getId)
+            .orElse(null);
+          return scheduledNoticesRepository
+            .deleteByLoanIdAndTriggeringEvent(loanId, DUE_DATE);
+        },
         (checkInContext, response) -> checkInContext))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
