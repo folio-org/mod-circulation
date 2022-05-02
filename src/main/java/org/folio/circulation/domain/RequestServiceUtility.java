@@ -139,7 +139,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     if (!requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
       return failedValidation(
-        new ValidationError("Can not process TLR's with TLR feature disabled",
+        new ValidationError("Can not process TLRs with TLR feature disabled",
           REQUEST_ID, request.getId()));
     }
 
@@ -150,8 +150,7 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
 
     Request request = requestAndRelatedRecords.getRequest();
-    if ((request.isHold() && request.isTitleLevel()) || (originalRequest.isHold() &&
-      originalRequest.isTitleLevel())) {
+    if ((request.isHold() && request.isTitleLevel()) || (originalRequest.isHold())) {
       return failedValidation(
         new ValidationError("Moving from/to Hold TLR is disallowed",
           REQUEST_ID, request.getId()));
@@ -173,7 +172,13 @@ public class RequestServiceUtility {
   private static Predicate<Request> isAlreadyRequested(RequestAndRelatedRecords records) {
     Request request = records.getRequest();
     if (records.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      return req -> isTheSameRequester(records, req) && req.isOpen() && request.getOperation() != Operation.MOVE;
+      return req -> {
+        if (request.getOperation() != Operation.MOVE) {
+          return isTheSameRequester(records, req) && req.isOpen();
+        }
+        return isTheSameRequester(records, req) && req.isOpen() && Objects.equals(req.getItemId(),
+          request.getItemId());
+      };
     } else {
       return req -> {
         if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
@@ -198,7 +203,11 @@ public class RequestServiceUtility {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
-        message = "This requester already has an open request for this instance";
+        if (requestBeingPlaced.getOperation() == Operation.MOVE) {
+          message = "Moving TLR to the same item";
+        } else {
+          message = "This requester already has an open request for this instance";
+        }
       } else {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());

@@ -6,8 +6,6 @@ import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
@@ -19,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.override.BlockOverrides;
 
 import api.support.http.IndividualResource;
@@ -231,17 +228,6 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   public RequestBuilder withNoHoldingsRecordId() {
     return withHoldingsRecordId(null);
-  }
-
-  public RequestBuilder forItemWithRequestLevel(ItemResource item, String requestLevel) {
-    if (RequestLevel.ITEM.nameMatches(requestLevel)) {
-      return forItem(item);
-    }
-
-    return withRequestLevel(requestLevel)
-      .withNoItemId()
-      .withNoHoldingsRecordId()
-      .withInstanceId(item.getInstanceId());
   }
 
   public RequestBuilder forItem(IndividualResource item) {

@@ -421,7 +421,25 @@ class MoveRequestTests extends APITests {
       hasParameter("requestId", firstItemRecallTlr.getId().toString()))));
   }
 
-  //TODO cannot move to/from hold tlr and cannot move tlr when feature is disabled
+  @Test
+  void cannotMoveTlrToTheSameItem() {
+    configurationsFixture.enableTlrFeature();
+
+    val nod = itemsFixture.basedUponNod();
+    val jessica = usersFixture.jessica();
+
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    val nodPage = requestsFixture.placeTitleLevelRecallRequest(nod.getInstanceId(),
+      jessica);
+
+    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), nod.getId()));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Moving TLR to the same item"),
+      hasParameter("requesterId", jessica.getId().toString()),
+      hasParameter("instanceId", nod.getInstanceId().toString()))));
+  }
+
   @Test
   void cannotMoveTlrWhenFeatureIsDisabled() {
     configurationsFixture.enableTlrFeature();
