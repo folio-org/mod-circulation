@@ -150,7 +150,7 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
 
     Request request = requestAndRelatedRecords.getRequest();
-    if ((request.isHold() && request.isTitleLevel()) || (originalRequest.isHold())) {
+    if ((request.isHold() && request.isTitleLevel()) || (originalRequest.isHold() && originalRequest.isTitleLevel())) {
       return failedValidation(
         new ValidationError("Moving from/to Hold TLR is disallowed",
           REQUEST_ID, request.getId()));

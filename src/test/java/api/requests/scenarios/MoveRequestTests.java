@@ -458,7 +458,7 @@ class MoveRequestTests extends APITests {
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
       secondItem.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Can not process TLR's with TLR feature disabled"),
+      hasMessage("Can not process TLRs with TLR feature disabled"),
       hasParameter("requestId", firstItemHoldTlr.getId().toString()))));
   }
 
