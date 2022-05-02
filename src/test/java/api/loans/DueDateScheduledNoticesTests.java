@@ -5,6 +5,8 @@ import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.domain.policy.Period.days;
+import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,42 +42,21 @@ class DueDateScheduledNoticesTests extends APITests {
   @Test
   void allDueDateNoticesShouldBeScheduledOnCheckoutWhenPolicyDefinesDueDateNoticeConfiguration() {
     UUID beforeTemplateId = UUID.randomUUID();
-    Period beforePeriod = Period.days(2);
-    Period beforeRecurringPeriod = Period.hours(6);
+    Period beforePeriod = days(2);
+    Period beforeRecurringPeriod = hours(6);
 
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
-    Period afterPeriod = Period.days(3);
-    Period afterRecurringPeriod = Period.hours(4);
-
-    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(beforeTemplateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
+    Period afterPeriod = days(3);
+    Period afterRecurringPeriod = hours(4);
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        beforeDueDateNoticeConfiguration,
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
+        createBeforeDueDateNoticeConfiguration(beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
+        createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
+        createAfterDueDateNoticeConfiguration(afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
     use(noticePolicy);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -117,7 +98,7 @@ class DueDateScheduledNoticesTests extends APITests {
     UUID firstBeforeTemplateId = UUID.randomUUID();
     Period firstBeforePeriod = Period.weeks(1);
     UUID secondBeforeTemplateId = UUID.randomUUID();
-    Period secondBeforePeriod = Period.hours(12);
+    Period secondBeforePeriod = hours(12);
 
     JsonObject firstBeforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(firstBeforeTemplateId)
@@ -211,14 +192,14 @@ class DueDateScheduledNoticesTests extends APITests {
   @Test
   void noticesShouldBeRescheduledAfterRenewal() {
     UUID beforeTemplateId = UUID.randomUUID();
-    Period beforePeriod = Period.days(2);
-    Period beforeRecurringPeriod = Period.hours(6);
+    Period beforePeriod = days(2);
+    Period beforeRecurringPeriod = hours(6);
 
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
-    Period afterPeriod = Period.days(3);
-    Period afterRecurringPeriod = Period.hours(4);
+    Period afterPeriod = days(3);
+    Period afterRecurringPeriod = hours(4);
 
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)
@@ -286,14 +267,14 @@ class DueDateScheduledNoticesTests extends APITests {
   @Test
   void noticesShouldBeRescheduledAfterRenewalOverride() {
     UUID beforeTemplateId = UUID.randomUUID();
-    Period beforePeriod = Period.days(2);
-    Period beforeRecurringPeriod = Period.hours(6);
+    Period beforePeriod = days(2);
+    Period beforeRecurringPeriod = hours(6);
 
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
-    Period afterPeriod = Period.days(3);
-    Period afterRecurringPeriod = Period.hours(4);
+    Period afterPeriod = days(3);
+    Period afterRecurringPeriod = hours(4);
 
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)
@@ -369,14 +350,14 @@ class DueDateScheduledNoticesTests extends APITests {
   @Test
   void noticesShouldBeRescheduledAfterRecall() {
     UUID beforeTemplateId = UUID.randomUUID();
-    Period beforePeriod = Period.days(2);
-    Period beforeRecurringPeriod = Period.hours(6);
+    Period beforePeriod = days(2);
+    Period beforeRecurringPeriod = hours(6);
 
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
-    Period afterPeriod = Period.days(3);
-    Period afterRecurringPeriod = Period.hours(4);
+    Period afterPeriod = days(3);
+    Period afterRecurringPeriod = hours(4);
 
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)
@@ -454,14 +435,14 @@ class DueDateScheduledNoticesTests extends APITests {
   @Test
   void noticesShouldBeRescheduledAfterManualDueDateChange() {
     UUID beforeTemplateId = UUID.randomUUID();
-    Period beforePeriod = Period.days(2);
-    Period beforeRecurringPeriod = Period.hours(6);
+    Period beforePeriod = days(2);
+    Period beforeRecurringPeriod = hours(6);
 
     UUID uponAtTemplateId = UUID.randomUUID();
 
     UUID afterTemplateId = UUID.randomUUID();
-    Period afterPeriod = Period.days(3);
-    Period afterRecurringPeriod = Period.hours(4);
+    Period afterPeriod = days(3);
+    Period afterRecurringPeriod = hours(4);
 
     JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(beforeTemplateId)
@@ -527,6 +508,60 @@ class DueDateScheduledNoticesTests extends APITests {
       .until(scheduledNoticesClient::getAll, scheduledNoticesAfterRecallMatcher);
 
     verifyNumberOfScheduledNotices(6);
+  }
+
+  @Test
+  void allDueDateNoticesShouldBeDeletedAfternCheckin() {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Arrays.asList(
+        createBeforeDueDateNoticeConfiguration(UUID.randomUUID(), days(2), hours(6), true),
+        createUponAtDueDateNoticeConfiguration(UUID.randomUUID(), false),
+        createAfterDueDateNoticeConfiguration(UUID.randomUUID(), days(3), hours(4), false)));
+
+    useWithNoOverdueFine(noticePolicy);
+
+    checkOutFixture.checkOutByBarcode(
+      smallAngryPlanet,
+      usersFixture.steve());
+
+    verifyNumberOfScheduledNotices(3);
+    checkInFixture.checkInByBarcode(smallAngryPlanet);
+    verifyNumberOfScheduledNotices(0);
+  }
+
+  private JsonObject createBeforeDueDateNoticeConfiguration(UUID templateId, Period beforePeriod,
+    Period beforeRecurringPeriod, boolean realTime) {
+
+    return new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withDueDateEvent()
+      .withBeforeTiming(beforePeriod)
+      .recurring(beforeRecurringPeriod)
+      .sendInRealTime(realTime)
+      .create();
+  }
+
+  private JsonObject createUponAtDueDateNoticeConfiguration(UUID templateId, boolean realTime) {
+    return new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(realTime)
+      .create();
+  }
+
+  private JsonObject createAfterDueDateNoticeConfiguration(UUID templateId, Period afterPeriod,
+    Period afterRecurringPeriod, boolean realTime) {
+
+    return new NoticeConfigurationBuilder()
+      .withTemplateId(templateId)
+      .withDueDateEvent()
+      .withAfterTiming(afterPeriod)
+      .recurring(afterRecurringPeriod)
+      .sendInRealTime(realTime)
+      .create();
   }
 
 }

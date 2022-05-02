@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -14,6 +15,7 @@ import org.folio.circulation.domain.validation.CheckInValidators;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
@@ -65,6 +67,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
+    final ScheduledNoticesRepository scheduledNoticesRepository =
+      ScheduledNoticesRepository.using(clients);
 
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients,
@@ -94,6 +98,9 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
         processAdapter::checkInLoan, CheckInContext::withLoan))
+      .thenComposeAsync(r -> r.combineAfter(checkInContext -> scheduledNoticesRepository
+          .deleteByLoanIdAndTriggeringEvent(checkInContext.getLoan().getId(), DUE_DATE),
+        (checkInContext, response) -> checkInContext))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(

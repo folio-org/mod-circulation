@@ -26,7 +26,6 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRep
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -42,7 +41,6 @@ public class OverdueFineService {
   private final ItemRepository itemRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
   private final FeeFineRepository feeFineRepository;
-  private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final OverduePeriodCalculatorService overduePeriodCalculatorService;
   private final FeeFineFacade feeFineFacade;
 
@@ -208,10 +206,7 @@ public class OverdueFineService {
       .thenCompose(r -> r.after(this::lookupFeeFine))
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
-      .thenCompose(r -> r.after(this::createAccount))
-      .thenCompose(r -> r.after(feeFineAction -> scheduledNoticesRepository
-          .deleteOverdueNotices(loan.getId())
-          .thenApply(rs -> r)));
+      .thenCompose(r -> r.after(this::createAccount));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createAccount(CalculationParameters params) {

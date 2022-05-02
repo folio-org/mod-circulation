@@ -35,7 +35,6 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRep
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
@@ -99,7 +98,6 @@ class OverdueFineServiceTest {
   private FeeFineOwnerRepository feeFineOwnerRepository;
   private FeeFineRepository feeFineRepository;
   private FeeFineActionRepository feeFineActionRepository;
-  private ScheduledNoticesRepository scheduledNoticesRepository;
   private ServicePointRepository servicePointRepository;
 
   @BeforeEach
@@ -112,7 +110,6 @@ class OverdueFineServiceTest {
     overduePeriodCalculatorService = mock(OverduePeriodCalculatorService.class);
     UserRepository userRepository = mock(UserRepository.class);
     feeFineActionRepository = mock(FeeFineActionRepository.class);
-    scheduledNoticesRepository = mock(ScheduledNoticesRepository.class);
     servicePointRepository = mock(ServicePointRepository.class);
     FeeFineService feeFineService = mock(FeeFineService.class);
     FeeFineFacade feeFineFacade = new FeeFineFacade(accountRepository,
@@ -120,10 +117,8 @@ class OverdueFineServiceTest {
       userRepository,
       servicePointRepository, feeFineService);
 
-    overdueFineService = new OverdueFineService(
-      overdueFinePolicyRepository, itemRepository,
-        feeFineOwnerRepository, feeFineRepository, scheduledNoticesRepository,
-      overduePeriodCalculatorService, feeFineFacade);
+    overdueFineService = new OverdueFineService(overdueFinePolicyRepository, itemRepository,
+      feeFineOwnerRepository, feeFineRepository, overduePeriodCalculatorService, feeFineFacade);
 
     when(userRepository.getUser(any(String.class))).thenReturn(
       completedFuture(succeeded(LOGGED_IN_USER)));
@@ -540,8 +535,6 @@ class OverdueFineServiceTest {
     when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount(correctOverdueFine))));
     when(feeFineActionRepository.create(any()))
       .thenReturn(completedFuture(succeeded(createFeeFineAction())));
-    when(scheduledNoticesRepository.deleteOverdueNotices(any()))
-      .thenReturn(completedFuture(succeeded(null)));
     when(servicePointRepository.getServicePointById(CHECK_IN_SERVICE_POINT_ID.toString()))
       .thenReturn(completedFuture(succeeded(createServicePoint())));
 
@@ -557,8 +550,6 @@ class OverdueFineServiceTest {
 
       overdueFineService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
     }
-
-    verify(scheduledNoticesRepository, times(1)).deleteOverdueNotices(any());
   }
 
   private RenewalContext createRenewalContext(Loan loan) {

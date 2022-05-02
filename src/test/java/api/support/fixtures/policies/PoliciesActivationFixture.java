@@ -159,6 +159,20 @@ public final class PoliciesActivationFixture {
       .noticePolicy(noticePoliciesFixture.create(noticePolicy)));
   }
 
+  /**
+   * This method uses notice policy, canCirculateRolling loan policy,
+   * allowAllRequestPolicy request policy,
+   * noOverdueFine overdue fine policy from
+   * the loanPolicyBuilder.
+   *
+   * @param noticePolicy - notice policy.
+   */
+  public void useWithNoOverdueFine(NoticePolicyBuilder noticePolicy) {
+    use(defaultRollingPolicies()
+      .overduePolicy(overdueFinePoliciesFixture.noOverdueFine())
+      .noticePolicy(noticePoliciesFixture.create(noticePolicy)));
+  }
+
   public void useLostItemPolicy(UUID lostItemFeePolicyId) {
     final PoliciesToActivate policies = defaultRollingPolicies().build();
 
