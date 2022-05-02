@@ -104,6 +104,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.combineAfter(checkInContext -> {
           String loanId = Optional.ofNullable(checkInContext)
             .map(CheckInContext::getLoan)
+            .filter(Loan::isClosed)
             .map(Loan::getId)
             .orElse(null);
           return scheduledNoticesRepository
