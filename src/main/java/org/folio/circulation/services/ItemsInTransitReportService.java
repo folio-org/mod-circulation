@@ -133,7 +133,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoans(
     ItemsInTransitReportContext context) {
-
+    logger.info("[TRACE] -> fetchLoans started");
+    logger.info("[TRACE] -> locations map size {}", context.getLocations().isEmpty() ? 0 : context.getLocations().size());
     return succeeded(context.getItems().keySet())
       .after(loanRepository::findByItemIds)
       .thenApply(mapResult(loans -> toMap(loans, Loan::getItemId)))
@@ -142,7 +143,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
     ItemsInTransitReportContext context) {
-
+    logger.info("[TRACE] -> fetchRequests started");
+    logger.info("[TRACE] -> loans map size {}", context.getLoans().isEmpty() ? 0 : context.getLoans().size());
     return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
       .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getItemId)))
       .thenApply(mapResult(context::withRequests));
@@ -150,7 +152,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
     ItemsInTransitReportContext context) {
-
+    logger.info("[TRACE] -> fetchUsers started");
+    logger.info("[TRACE] -> requests map size {}", context.getRequests().isEmpty() ? 0 : context.getRequests().size());
     return userRepository.findUsersByRequests(context.getRequests().values())
       .thenApply(mapResult(userMultipleRecords -> toMap(userMultipleRecords.getRecords(),
         User::getId)))
@@ -159,7 +162,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
     ItemsInTransitReportContext context) {
-
+    logger.info("[TRACE] -> fetchPatronGroups started");
+    logger.info("[TRACE] -> users map size {}", context.getUsers().isEmpty() ? 0 : context.getUsers().size());
     return ofAsync(() -> mapToStrings(context.getUsers().values(), User::getPatronGroupId))
       .thenCompose(r -> r.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(r -> r.map(groups -> toMap(groups, PatronGroup::getId)))
@@ -168,7 +172,8 @@ public class ItemsInTransitReportService {
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchServicePoints(
     ItemsInTransitReportContext context) {
-
+    logger.info("[TRACE] -> fetchServicePoints started");
+    logger.info("[TRACE] -> patronGroups map size {}", context.getPatronGroups().isEmpty() ? 0 : context.getPatronGroups().size());
     Collection<Item> items = context.getItems().values();
     Stream<String> itemInTransitDestinationServicePointIds = items.stream()
       .map(Item::getInTransitDestinationServicePointId);
