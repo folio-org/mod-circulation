@@ -583,14 +583,6 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     checkInFixture.checkInByBarcode(item);
 
-    verifyNumberOfScheduledNotices(5);
-
-    var processingTime = AFTER_RECURRING_PERIOD
-      .plusDate(AFTER_PERIOD.plusDate(dueDate))
-      .plusSeconds(1);
-
-    scheduledNoticeProcessingClient.runLoanNoticesProcessing(processingTime);
-
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
