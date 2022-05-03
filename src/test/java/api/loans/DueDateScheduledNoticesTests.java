@@ -54,9 +54,11 @@ class DueDateScheduledNoticesTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        createBeforeDueDateNoticeConfiguration(beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
-        createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
-        createAfterDueDateNoticeConfiguration(afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
+        configurationsFixture.createBeforeDueDateNoticeConfiguration(
+          beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
+        configurationsFixture.createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
+        configurationsFixture.createAfterDueDateNoticeConfiguration(
+          afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
     use(noticePolicy);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -201,33 +203,14 @@ class DueDateScheduledNoticesTests extends APITests {
     Period afterPeriod = days(3);
     Period afterRecurringPeriod = hours(4);
 
-    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(beforeTemplateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        beforeDueDateNoticeConfiguration,
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
+        configurationsFixture.createBeforeDueDateNoticeConfiguration(
+          beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
+        configurationsFixture.createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
+        configurationsFixture.createAfterDueDateNoticeConfiguration(
+          afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
 
     use(noticePolicy);
 
@@ -276,33 +259,14 @@ class DueDateScheduledNoticesTests extends APITests {
     Period afterPeriod = days(3);
     Period afterRecurringPeriod = hours(4);
 
-    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(beforeTemplateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        beforeDueDateNoticeConfiguration,
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
+        configurationsFixture.createBeforeDueDateNoticeConfiguration(
+          beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
+        configurationsFixture.createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
+        configurationsFixture.createAfterDueDateNoticeConfiguration(
+          afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("Not renewable")
@@ -359,33 +323,14 @@ class DueDateScheduledNoticesTests extends APITests {
     Period afterPeriod = days(3);
     Period afterRecurringPeriod = hours(4);
 
-    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(beforeTemplateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        beforeDueDateNoticeConfiguration,
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
+        configurationsFixture.createBeforeDueDateNoticeConfiguration(
+          beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
+        configurationsFixture.createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
+        configurationsFixture.createAfterDueDateNoticeConfiguration(
+          afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
 
     LoanPolicyBuilder loanPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling for recall")
@@ -444,33 +389,14 @@ class DueDateScheduledNoticesTests extends APITests {
     Period afterPeriod = days(3);
     Period afterRecurringPeriod = hours(4);
 
-    JsonObject beforeDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(beforeTemplateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-    JsonObject uponAtDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(uponAtTemplateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(false)
-      .create();
-    JsonObject afterDueDateNoticeConfiguration = new NoticeConfigurationBuilder()
-      .withTemplateId(afterTemplateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(true)
-      .create();
-
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        beforeDueDateNoticeConfiguration,
-        uponAtDueDateNoticeConfiguration,
-        afterDueDateNoticeConfiguration));
+        configurationsFixture.createBeforeDueDateNoticeConfiguration(
+          beforeTemplateId, beforePeriod, beforeRecurringPeriod, true),
+        configurationsFixture.createUponAtDueDateNoticeConfiguration(uponAtTemplateId, false),
+        configurationsFixture.createAfterDueDateNoticeConfiguration(
+          afterTemplateId, afterPeriod, afterRecurringPeriod, true)));
 
     use(noticePolicy);
 
@@ -516,9 +442,11 @@ class DueDateScheduledNoticesTests extends APITests {
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with due date notices")
       .withLoanNotices(Arrays.asList(
-        createBeforeDueDateNoticeConfiguration(UUID.randomUUID(), days(2), hours(6), true),
-        createUponAtDueDateNoticeConfiguration(UUID.randomUUID(), false),
-        createAfterDueDateNoticeConfiguration(UUID.randomUUID(), days(3), hours(4), false)));
+        configurationsFixture.createBeforeDueDateNoticeConfiguration(
+          UUID.randomUUID(), days(2), hours(6), true),
+        configurationsFixture.createUponAtDueDateNoticeConfiguration(UUID.randomUUID(), false),
+        configurationsFixture.createAfterDueDateNoticeConfiguration(
+          UUID.randomUUID(), days(3), hours(4), false)));
 
     useWithNoOverdueFine(noticePolicy);
 
@@ -530,38 +458,4 @@ class DueDateScheduledNoticesTests extends APITests {
     checkInFixture.checkInByBarcode(smallAngryPlanet);
     verifyNumberOfScheduledNotices(0);
   }
-
-  private JsonObject createBeforeDueDateNoticeConfiguration(UUID templateId, Period beforePeriod,
-    Period beforeRecurringPeriod, boolean realTime) {
-
-    return new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withDueDateEvent()
-      .withBeforeTiming(beforePeriod)
-      .recurring(beforeRecurringPeriod)
-      .sendInRealTime(realTime)
-      .create();
-  }
-
-  private JsonObject createUponAtDueDateNoticeConfiguration(UUID templateId, boolean realTime) {
-    return new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withDueDateEvent()
-      .withUponAtTiming()
-      .sendInRealTime(realTime)
-      .create();
-  }
-
-  private JsonObject createAfterDueDateNoticeConfiguration(UUID templateId, Period afterPeriod,
-    Period afterRecurringPeriod, boolean realTime) {
-
-    return new NoticeConfigurationBuilder()
-      .withTemplateId(templateId)
-      .withDueDateEvent()
-      .withAfterTiming(afterPeriod)
-      .recurring(afterRecurringPeriod)
-      .sendInRealTime(realTime)
-      .create();
-  }
-
 }
