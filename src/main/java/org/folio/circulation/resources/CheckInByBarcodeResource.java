@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_D
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
@@ -101,16 +102,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
         processAdapter::checkInLoan, CheckInContext::withLoan))
-      .thenComposeAsync(r -> r.combineAfter(checkInContext -> {
-          String loanId = Optional.ofNullable(checkInContext)
-            .map(CheckInContext::getLoan)
-            .filter(Loan::isClosed)
-            .map(Loan::getId)
-            .orElse(null);
-          return scheduledNoticesRepository
-            .deleteByLoanIdAndTriggeringEvent(loanId, DUE_DATE);
-        },
-        (checkInContext, response) -> checkInContext))
+      .thenApplyAsync(mapResult(checkInContext ->
+        removeDueDateNoticesForClosedLoan(checkInContext, scheduledNoticesRepository)))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
@@ -150,5 +143,18 @@ public class CheckInByBarcodeResource extends Resource {
         item.getStatusName());
 
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
+  }
+
+  private CheckInContext removeDueDateNoticesForClosedLoan(CheckInContext context,
+    ScheduledNoticesRepository repository) {
+
+    String loanId = Optional.ofNullable(context)
+      .map(CheckInContext::getLoan)
+      .filter(Loan::isClosed)
+      .map(Loan::getId)
+      .orElse(null);
+
+    repository.deleteByLoanIdAndTriggeringEvent(loanId, DUE_DATE);
+    return context;
   }
 }
