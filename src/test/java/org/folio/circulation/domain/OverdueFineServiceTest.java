@@ -511,47 +511,6 @@ class OverdueFineServiceTest {
     verifyNoInteractions(accountRepository);
   }
 
-  @ParameterizedTest
-  @MethodSource("testParameters")
-  void shouldDeleteOverdueNoticesWhenFeeFineRecordCreated(
-      Boolean renewal, Boolean dueDateChangedByRecall, Double overdueFine, String overdueFineInterval,
-      Double maxOverdueFine, Double overdueRecallFine, String overdueRecallFineInterval,
-      Double maxOverdueRecallFine, Integer periodCalculatorResult, Double correctOverdueFine)
-      throws ExecutionException, InterruptedException {
-    Loan loan = createLoan(overdueFine, overdueFineInterval, overdueRecallFine,
-      overdueRecallFineInterval, maxOverdueFine, maxOverdueRecallFine,
-      dueDateChangedByRecall);
-
-    when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
-      .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
-      .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
-    when(itemRepository.fetchItemRelatedRecords(any()))
-      .thenReturn(completedFuture(succeeded(createItem())));
-    when(feeFineOwnerRepository.findOwnerForServicePoint(SERVICE_POINT_ID.toString()))
-      .thenReturn(completedFuture(succeeded(createFeeFineOwner())));
-    when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
-      .thenReturn(completedFuture(succeeded(createFeeFine())));
-    when(accountRepository.create(any())).thenReturn(completedFuture(succeeded(createAccount(correctOverdueFine))));
-    when(feeFineActionRepository.create(any()))
-      .thenReturn(completedFuture(succeeded(createFeeFineAction())));
-    when(servicePointRepository.getServicePointById(CHECK_IN_SERVICE_POINT_ID.toString()))
-      .thenReturn(completedFuture(succeeded(createServicePoint())));
-
-    if (renewal) {
-      RenewalContext context = createRenewalContext(loan);
-
-      overdueFineService.createOverdueFineIfNecessary(context).get();
-    }
-    else {
-      CheckInContext context = new CheckInContext(
-        CheckInByBarcodeRequest.from(createCheckInByBarcodeRequest()).value())
-        .withLoan(loan);
-
-      overdueFineService.createOverdueFineIfNecessary(context, LOGGED_IN_USER_ID).get();
-    }
-  }
-
   private RenewalContext createRenewalContext(Loan loan) {
     return create(loan, new JsonObject(), LOGGED_IN_USER_ID);
   }
