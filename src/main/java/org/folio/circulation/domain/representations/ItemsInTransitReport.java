@@ -8,9 +8,12 @@ import static org.folio.circulation.domain.representations.ContributorsToNamesMa
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedObject;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -29,9 +32,11 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class ItemsInTransitReport {
+  private static final Logger logger = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ItemsInTransitReportContext reportContext;
 
   public JsonObject build() {
+    logger.info("[TRACE] -> build started");
     List<JsonObject> reportEntries = reportContext.getItems().values().stream()
       .sorted(sortByCheckinServicePointComparator())
       .map(this::buildEntry)
@@ -43,6 +48,7 @@ public class ItemsInTransitReport {
   }
 
   private Comparator<Item> sortByCheckinServicePointComparator() {
+    logger.info("[TRACE] -> sortByCheckinServicePointComparator started");
     return comparing(item -> ofNullable(reportContext.getLoans().get(item.getItemId()))
       .map(Loan::getCheckInServicePointId)
       .map(id -> reportContext.getServicePoints().get(id))
@@ -51,7 +57,9 @@ public class ItemsInTransitReport {
   }
 
   private JsonObject buildEntry(Item item) {
+    logger.info("[TRACE] -> buildEntry started");
     if (item == null || item.isNotFound()) {
+      logger.info("[TRACE] -> buildEntry started line 62");
       return new JsonObject();
     }
 
@@ -61,27 +69,31 @@ public class ItemsInTransitReport {
       .map(reportContext.getInstances()::get)
       .map(item::withInstance)
       .orElse(item);
-
+    logger.info("[TRACE] -> buildEntry item built");
     Loan loan = reportContext.getLoans().get(item.getItemId());
+    logger.info("[TRACE] -> buildEntry loan built");
     Request request = reportContext.getRequests().get(item.getItemId());
-
+    logger.info("[TRACE] -> buildEntry request built");
     Location location = reportContext.getLocations().get(item.getLocationId());
+    logger.info("[TRACE] -> buildEntry location built");
     if (location != null) {
       ServicePoint primaryServicePoint = reportContext.getServicePoints()
         .get(location.getPrimaryServicePointId().toString());
       item = item
         .withLocation(location.withPrimaryServicePoint(primaryServicePoint));
+      logger.info("[TRACE] -> buildEntry servicePointPrimary built");
     }
 
     ServicePoint inTransitDestinationServicePoint = reportContext.getServicePoints()
       .get(item.getInTransitDestinationServicePointId());
+    logger.info("[TRACE] -> buildEntry inTransitDestinationServicePoint built");
     ServicePoint lastCheckInServicePoint = reportContext.getServicePoints()
       .get(item.getLastCheckInServicePointId().toString());
-
+    logger.info("[TRACE] -> buildEntry lastCheckInServicePoint built");
     item = item
       .updateLastCheckInServicePoint(lastCheckInServicePoint)
       .updateDestinationServicePoint(inTransitDestinationServicePoint);
-
+    logger.info("[TRACE] -> buildEntry item with servicepoints built");
     final JsonObject entry = new JsonObject();
 
     write(entry, "id", item.getItemId());
@@ -99,13 +111,15 @@ public class ItemsInTransitReport {
     write(entry, "copyNumber", item.getCopyNumber());
     write(entry, "effectiveCallNumberComponents",
       createCallNumberComponents(item.getCallNumberComponents()));
-
+    logger.info("[TRACE] -> buildEntry json built");
     if (inTransitDestinationServicePoint != null) {
       writeServicePoint(entry, inTransitDestinationServicePoint, "inTransitDestinationServicePoint");
+      logger.info("[TRACE] -> buildEntry inTransitDestinationServicePoint != null passed");
     }
 
     if (location != null) {
       writeLocation(entry, location);
+      logger.info("[TRACE] -> buildEntry location != null passed");
     }
 
     if (request != null) {
@@ -121,6 +135,7 @@ public class ItemsInTransitReport {
       request = request.withPickupServicePoint(pickupServicePoint);
 
       writeRequest(request, entry);
+      logger.info("[TRACE] -> buildEntry writeRequest [request != null] passed");
     }
 
     if (loan != null) {
@@ -134,11 +149,13 @@ public class ItemsInTransitReport {
         .withCheckoutServicePoint(checkoutServicePoint);
 
       writeLoan(entry, loan);
+      logger.info("[TRACE] -> buildEntry writeLoan [loan != null] passed");
     }
 
     final LastCheckIn lastCheckIn = item.getLastCheckIn();
     if (lastCheckIn != null) {
       writeLastCheckIn(entry, lastCheckIn);
+      logger.info("[TRACE] -> buildEntry writeLastCheckIn [lastCheckIn != null] passed");
     }
 
     return entry;

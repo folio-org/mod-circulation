@@ -220,6 +220,7 @@ public class ItemsInTransitReportService {
   }
 
   private Result<JsonObject> mapToJsonObject(Result<ItemsInTransitReportContext> context) {
+    logger.info("[TRACE] -> mapToJsonObject started");
     return context.map(ItemsInTransitReport::new)
       .map(ItemsInTransitReport::build);
   }
