@@ -6,38 +6,24 @@ import java.util.Objects;
 import java.util.UUID;
 
 import lombok.NonNull;
+import lombok.Value;
 
+@Value
 public class Location {
-  private final String id;
-  private final String name;
-  private final String code;
-  private final @NonNull Collection<UUID> servicePointIds;
-  private final UUID primaryServicePointId;
-  private final @NonNull Institution institution;
-  private final @NonNull Campus campus;
-  private final @NonNull Library library;
-  private final ServicePoint primaryServicePoint;
+  String id;
+  String name;
+  String code;
+  @NonNull Collection<UUID> servicePointIds;
+  UUID primaryServicePointId;
+  @NonNull Institution institution;
+  @NonNull Campus campus;
+  @NonNull Library library;
+  ServicePoint primaryServicePoint;
 
   public static Location unknown(String id) {
     return new Location(id, null, null, List.of(), null,
       Institution.unknown(null), Campus.unknown(null), Library.unknown(null),
       ServicePoint.unknown());
-  }
-
-  public Location(String id, String name, String code,
-    Collection<UUID> servicePointIds, UUID primaryServicePointId,
-    @NonNull Institution institution, @NonNull Campus campus,
-    @NonNull Library library, ServicePoint primaryServicePoint) {
-
-    this.id = id;
-    this.name = name;
-    this.code = code;
-    this.servicePointIds = servicePointIds;
-    this.primaryServicePointId = primaryServicePointId;
-    this.institution = institution;
-    this.campus = campus;
-    this.library = library;
-    this.primaryServicePoint = primaryServicePoint;
   }
 
   public String getId() {
