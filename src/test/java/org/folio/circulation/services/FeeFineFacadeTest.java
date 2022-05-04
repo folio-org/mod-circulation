@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
@@ -21,17 +22,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.Campus;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Institution;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Library;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.services.feefine.AccountActionResponse;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
-import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -118,7 +123,9 @@ class FeeFineFacadeTest {
 
   private CreateAccountCommand.CreateAccountCommandBuilder createCommandBuilder() {
     final Item item = Item.from(new JsonObject())
-      .withLocation(new LocationMapper().toDomain(new JsonObject().put("name", "Main library")));
+      .withLocation(new Location(null, "Main library", null, emptyList(),
+        null, Institution.unknown(), Campus.unknown(),
+        Library.unknown(), ServicePoint.unknown()));
 
     return CreateAccountCommand.builder()
       .withAmount(new FeeAmount(10.0))

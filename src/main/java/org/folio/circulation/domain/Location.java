@@ -20,6 +20,10 @@ public class Location {
   @NonNull Library library;
   ServicePoint primaryServicePoint;
 
+  public static Location unknown() {
+    return unknown(null);
+  }
+
   public static Location unknown(String id) {
     return new Location(id, null, null, List.of(), null,
       Institution.unknown(null), Campus.unknown(null), Library.unknown(null),

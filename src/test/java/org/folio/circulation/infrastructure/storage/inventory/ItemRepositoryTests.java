@@ -22,8 +22,8 @@ import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemDescription;
 import org.folio.circulation.domain.LoanType;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
-import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
@@ -95,7 +95,7 @@ class ItemRepositoryTests {
     final var loanTypeRepository = mock(LoanTypeRepository.class);
 
     when(locationRepository.getLocation(any()))
-      .thenReturn(ofAsync(() -> new LocationMapper().toDomain(new JsonObject())));
+      .thenReturn(ofAsync(Location::unknown));
 
     when(materialTypeRepository.getFor(any()))
       .thenReturn(ofAsync(MaterialType::unknown));
