@@ -5,7 +5,11 @@ import lombok.Value;
 @Value
 public class MaterialType {
   public static MaterialType unknown() {
-    return new MaterialType(null, null, null);
+    return unknown(null);
+  }
+
+  public static MaterialType unknown(String id) {
+    return new MaterialType(id, null, null);
   }
 
   String id;

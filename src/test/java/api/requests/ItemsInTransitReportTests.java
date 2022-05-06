@@ -606,8 +606,8 @@ class ItemsInTransitReportTests extends APITests {
 
   private ItemResource createSmallAngryPlanetCopy(UUID locationId, String barcode) {
     final ItemBuilder smallAngryPlanetItemBuilder = new ItemBuilder()
-      .withPermanentLoanType(materialTypesFixture.book().getId())
-      .withMaterialType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
       .withBarcode(barcode)
       .withPermanentLocation(locationId)
       .withTemporaryLocation(locationId);

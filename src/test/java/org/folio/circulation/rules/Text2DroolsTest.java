@@ -1,5 +1,6 @@
 package org.folio.circulation.rules;
 
+import static java.util.Collections.emptyList;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.ITEM_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOAN_TYPE_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
@@ -16,15 +17,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Campus;
+import org.folio.circulation.domain.Institution;
+import org.folio.circulation.domain.Library;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.ServicePoint;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
-import api.support.builders.LocationBuilder;
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonArray;
 
@@ -684,11 +687,9 @@ class Text2DroolsTest {
   }
 
   private Location createLocation(String institutionId, String libraryId, String campusId) {
-    return Location.from(new LocationBuilder()
-      .forInstitution(UUID.fromString(institutionId))
-      .forLibrary(UUID.fromString(libraryId))
-      .forCampus(UUID.fromString(campusId))
-      .create());
+    return new Location(null, null, null, emptyList(), null,
+      Institution.unknown(institutionId), Campus.unknown(campusId), Library.unknown(libraryId),
+      ServicePoint.unknown());
   }
 
   private void expectException(String rulesText, Matcher<CirculationRulesException> matches) {

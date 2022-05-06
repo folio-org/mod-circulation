@@ -37,7 +37,7 @@ public final class RulesExecutionParameters {
   }
 
   public static RulesExecutionParameters forItem(Item item, User user) {
-    return new RulesExecutionParameters(item.getLoanTypeId(), item.getLocationId(),
+    return new RulesExecutionParameters(item.getLoanTypeId(), item.getEffectiveLocationId(),
       item.getMaterialTypeId(), user.getPatronGroupId(), item.getLocation());
   }
 

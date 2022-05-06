@@ -30,7 +30,7 @@ class CirculationPolicyRepositoryTest {
   void lookupPolicyIdShouldFailWhenLocationIdIsNullForTheItem() throws ExecutionException, InterruptedException {
     when(item.isNotFound()).thenReturn(false);
     when(user.getPatronGroupId()).thenReturn("1111");
-    when(item.getLocationId()).thenReturn(null);
+    when(item.getEffectiveLocationId()).thenReturn(null);
     var result = repository.lookupPolicyId(item, user).get();
 
     assertEquals("Server error failure, reason: Unable to apply circulation rules to an item with null value as locationId", result.cause().toString());
@@ -40,7 +40,7 @@ class CirculationPolicyRepositoryTest {
   void lookupPolicyIdShouldFailWhenLoanTypeIdIsNullForTheItem() throws ExecutionException, InterruptedException {
     when(item.isNotFound()).thenReturn(false);
     when(user.getPatronGroupId()).thenReturn("1111");
-    when(item.getLocationId()).thenReturn("2222");
+    when(item.getEffectiveLocationId()).thenReturn("2222");
     when(item.getLoanTypeId()).thenReturn(null);
 
     var result = repository.lookupPolicyId(item, user).get();
@@ -52,7 +52,7 @@ class CirculationPolicyRepositoryTest {
   void lookupPolicyIdShouldFailWhenMaterialTypeIdIsNullForTheItem() throws ExecutionException, InterruptedException {
     when(item.isNotFound()).thenReturn(false);
     when(user.getPatronGroupId()).thenReturn("1111");
-    when(item.getLocationId()).thenReturn("2222");
+    when(item.getEffectiveLocationId()).thenReturn("2222");
     when(item.getLoanTypeId()).thenReturn("3333");
     when(item.getMaterialTypeId()).thenReturn(null);
 

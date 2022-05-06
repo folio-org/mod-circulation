@@ -43,7 +43,7 @@ public class CallNumberComponents {
    * @param itemJson - Inventory Item json.
    * @return new instance of CallNumberComponents.
    */
-  static CallNumberComponents fromItemJson(JsonObject itemJson) {
+  public static CallNumberComponents fromItemJson(JsonObject itemJson) {
     if (itemJson == null) {
       return null;
     }

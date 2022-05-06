@@ -83,12 +83,11 @@ public class ItemsFixture {
   }
 
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocation(UUID holdingsId, UUID locationId) {
-
-    JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
+    JsonObject item1 = ItemExamples.basedUponDunkirk(
+        materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId())
       .forHolding(holdingsId)
       .available()
       .withTemporaryLocation(locationId)
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
       .create();
 
     return itemsClient.create(item1);
@@ -108,7 +107,8 @@ public class ItemsFixture {
 
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(UUID holdingsId, UUID locationId) {
 
-    JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
+    JsonObject item1 = ItemExamples.basedUponDunkirk(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId())
       .forHolding(holdingsId)
       .checkOut()
       .withTemporaryLocation(locationId)
@@ -118,7 +118,7 @@ public class ItemsFixture {
   }
   public IndividualResource basedUponDunkirkWithCustomHoldingAndLocationAndStatusInProcess(UUID holdingsId, UUID locationId) {
 
-    JsonObject item1 = ItemExamples.basedUponDunkirk(UUID.randomUUID(), loanTypesFixture.canCirculate().getId())
+    JsonObject item1 = ItemExamples.basedUponDunkirk(materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId())
       .forHolding(holdingsId)
       .inProcess()
       .withTemporaryLocation(locationId)
@@ -399,7 +399,7 @@ public class ItemsFixture {
     return addCallNumberStringComponents("");
   }
 
-  public IndividualResource getById(UUID id) {
-    return new IndividualResource(itemsClient.getById(id));
+  public ItemResource getById(UUID id) {
+    return new ItemResource(new IndividualResource(itemsClient.getById(id)), null, null);
   }
 }

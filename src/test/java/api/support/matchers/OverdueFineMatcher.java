@@ -10,11 +10,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.domain.representations.ItemProperties;
 import org.folio.circulation.domain.representations.LoanProperties;
-import api.support.http.IndividualResource;
 import org.hamcrest.Matcher;
 
+import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFineMatcher {
@@ -34,7 +33,7 @@ public class OverdueFineMatcher {
       hasJsonPath("callNumber", is(item.getJson().getJsonObject("effectiveCallNumberComponents")
         .getString("callNumber"))),
       hasJsonPath("location", is(location)),
-      hasJsonPath("materialTypeId", is(item.getJson().getString(ItemProperties.MATERIAL_TYPE_ID))),
+      hasJsonPath("materialTypeId", is(item.getJson().getString("materialTypeId"))),
       hasJsonPath("materialType", is(loan.getJsonObject("item")
         .getJsonObject("materialType").getString("name"))),
       hasJsonPath("loanId", UUIDMatcher.is(getUUIDProperty(loan, "id"))),

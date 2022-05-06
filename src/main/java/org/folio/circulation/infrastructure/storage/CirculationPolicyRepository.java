@@ -104,7 +104,7 @@ public abstract class CirculationPolicyRepository<T> {
       return completedFuture(failedDueToServerError("Unable to apply circulation rules to a user with null value as patronGroupId"));
     }
 
-    if (item.getLocationId() == null) {
+    if (item.getEffectiveLocationId() == null) {
       log.error("LocationId is null for item {}", item.getItemId());
       return completedFuture(failedDueToServerError("Unable to apply circulation rules to an item with null value as locationId"));
     }

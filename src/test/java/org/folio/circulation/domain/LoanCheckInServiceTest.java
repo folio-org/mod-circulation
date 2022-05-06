@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -12,12 +13,11 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
-import api.support.builders.LocationBuilder;
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 class LoanCheckInServiceTest {
-
-  private LoanCheckInService loanCheckInService = new LoanCheckInService();
+  private final LoanCheckInService loanCheckInService = new LoanCheckInService();
 
   @Test
   void isInHouseUseWhenServicePointIsPrimaryForHomeLocation() {
@@ -26,14 +26,10 @@ class LoanCheckInServiceTest {
       .available()
       .create();
 
-    JsonObject locationRepresentation = new LocationBuilder()
-      .withPrimaryServicePoint(checkInServicePoint)
-      .create();
-
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(locationPrimarilyServing(checkInServicePoint));
 
     assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
@@ -46,15 +42,14 @@ class LoanCheckInServiceTest {
       .available()
       .create();
 
-    JsonObject locationRepresentation = new LocationBuilder()
-      .withPrimaryServicePoint(UUID.randomUUID())
-      .servedBy(checkInServicePoint)
-      .create();
-
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
+    @NonNull UUID homeServicePointId = UUID.randomUUID();
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(new Location(null, null, null,
+        List.of(checkInServicePoint), homeServicePointId, Institution.unknown(),
+        Campus.unknown(), Library.unknown(),
+        ServicePoint.unknown(homeServicePointId.toString())));
 
     assertTrue(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
   }
@@ -66,14 +61,10 @@ class LoanCheckInServiceTest {
       .checkOut()
       .create();
 
-    JsonObject locationRepresentation = new LocationBuilder()
-      .withPrimaryServicePoint(checkInServicePoint)
-      .create();
-
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(locationPrimarilyServing(checkInServicePoint));
 
     assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(),
       checkInRequest));
@@ -86,14 +77,10 @@ class LoanCheckInServiceTest {
       .available()
       .create();
 
-    JsonObject locationRepresentation = new LocationBuilder()
-      .withPrimaryServicePoint(checkInServicePoint)
-      .create();
-
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(checkInServicePoint);
 
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(locationPrimarilyServing(checkInServicePoint));
 
     RequestQueue requestQueue = new RequestQueue(Collections
       .singleton(Request.from(new JsonObject())));
@@ -107,17 +94,21 @@ class LoanCheckInServiceTest {
       .available()
       .create();
 
-    JsonObject locationRepresentation = new LocationBuilder()
-      .withPrimaryServicePoint(UUID.randomUUID())
-      .servedBy(UUID.randomUUID())
-      .create();
-
     CheckInByBarcodeRequest checkInRequest = getCheckInRequest(UUID.randomUUID());
 
+    final var homeServicePointId = UUID.randomUUID();
+
     Item item = Item.from(itemRepresentation)
-      .withLocation(Location.from(locationRepresentation));
+      .withLocation(locationPrimarilyServing(homeServicePointId));
 
     assertFalse(loanCheckInService.isInHouseUse(item, createEmptyQueue(), checkInRequest));
+  }
+
+  private Location locationPrimarilyServing(@NonNull UUID homeServicePointId) {
+    return new Location(null, null, null,
+      List.of(UUID.randomUUID()), homeServicePointId, Institution.unknown(),
+      Campus.unknown(), Library.unknown(),
+      ServicePoint.unknown(homeServicePointId.toString()));
   }
 
   private CheckInByBarcodeRequest getCheckInRequest(UUID checkInServicePoint) {

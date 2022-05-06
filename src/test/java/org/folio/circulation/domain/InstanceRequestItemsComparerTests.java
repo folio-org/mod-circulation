@@ -7,14 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
-import org.junit.jupiter.api.Test
-;
+import org.junit.jupiter.api.Test;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class InstanceRequestItemsComparerTests {
@@ -246,22 +245,17 @@ class InstanceRequestItemsComparerTests {
 
   private static Item createItem(UUID withServicePointId) {
     JsonObject itemRepresentation = new JsonObject();
-    itemRepresentation.put("itemid", UUID.randomUUID().toString());
+    itemRepresentation.put("itemId", UUID.randomUUID().toString());
 
-    Location location = null;
+    Location location = Location.unknown(null);
 
     if (withServicePointId != null) {
-      JsonObject homeLocation = new JsonObject();
-      JsonArray servicePointsArray = new JsonArray();
-
-      servicePointsArray.add(withServicePointId.toString());
-      homeLocation.put("servicePointIds", servicePointsArray);
-
-      location = new Location(homeLocation, null, null, null,
-              null);
+      location = new Location(null, null, null,
+        List.of(withServicePointId), null,
+        Institution.unknown(null), Campus.unknown(null),
+        Library.unknown(null), ServicePoint.unknown(null));
     }
 
-    return Item.from(itemRepresentation)
-      .withLocation(location);
+    return Item.from(itemRepresentation).withLocation(location);
   }
 }
