@@ -139,7 +139,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     if (!requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
       return failedValidation(
-        new ValidationError("Can not process TLRs with TLR feature disabled",
+        new ValidationError("Can not process TLR - TLR feature is disabled",
           REQUEST_ID, request.getId()));
     }
 
@@ -150,10 +150,11 @@ public class RequestServiceUtility {
     RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
 
     Request request = requestAndRelatedRecords.getRequest();
-    if ((request.isHold() && request.isTitleLevel()) || (originalRequest.isHold() && originalRequest.isTitleLevel())) {
-      return failedValidation(
-        new ValidationError("Moving from/to Hold TLR is disallowed",
-          REQUEST_ID, request.getId()));
+    if ((request.isHold() && request.isTitleLevel())
+      || (originalRequest.isHold() && originalRequest.isTitleLevel())) {
+
+      return failedValidation(new ValidationError("Not allowed to move from/to Hold TLR",
+        REQUEST_ID, request.getId()));
     }
 
     return succeeded(requestAndRelatedRecords);
@@ -181,6 +182,7 @@ public class RequestServiceUtility {
       };
     } else {
       return req -> {
+        // TODO: Why do we need this if (considering line 175)?
         if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
           return request.getInstanceId().equals(req.getInstanceId())
             && isTheSameRequester(records, req) && req.isOpen();
@@ -204,7 +206,7 @@ public class RequestServiceUtility {
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
         if (requestBeingPlaced.getOperation() == Operation.MOVE) {
-          message = "Moving TLR to the same item";
+          message = "Not allowed to move TLR to the same item";
         } else {
           message = "This requester already has an open request for this instance";
         }
