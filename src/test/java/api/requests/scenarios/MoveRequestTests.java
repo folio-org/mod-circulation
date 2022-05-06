@@ -206,7 +206,7 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void canMoveATlrPageRequestToAvailableItem() {
+  void canMovePageTlrToAvailableItem() {
     configurationsFixture.enableTlrFeature();
 
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
@@ -227,7 +227,7 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void canMoveATlrPageToRecall() {
+  void canMovePageTlrToRecall() {
     configurationsFixture.enableTlrFeature();
 
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
@@ -253,7 +253,7 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void canMoveATlrRecallToAnotherItem() {
+  void canMoveRecallTlrToAnotherItem() {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
@@ -274,7 +274,7 @@ class MoveRequestTests extends APITests {
   }
 
   @Test
-  void canMoveATlrRecallToPage() {
+  void canMoveRecallTlrToPage() {
     configurationsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
