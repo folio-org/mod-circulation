@@ -23,21 +23,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestLevel;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
@@ -910,6 +916,60 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertThat(sentNotice, hasNoJsonPath("context.item"));
     assertThat(sentNotice, hasEmailNoticeProperties(requesterId, confirmationTemplateId,
       getUserContextMatchers(requester)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"HOLD,PAGE", "PAGE"})
+  void canCreateHoldTitleLevelRequestWithRequestPolicyNotAllowingRecallsOrRecallsAndHolds(String allowedRequestTypes) {
+    UUID confirmationTemplateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
+
+    final String undergradPatronGroupPolicy = patronGroupsFixture.undergrad().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    ArrayList<RequestType> allowedRequestPolicyTypes = new ArrayList<>();
+    Arrays.stream(allowedRequestTypes.split(",")).forEach(type -> allowedRequestPolicyTypes.add(RequestType.from(type)));
+    final String requestPolicy = requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
+      "Request policy name", "Request policy description").getId().toString();
+    final String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy +  "\n",
+      "g " + undergradPatronGroupPolicy + ": l " + anyLoanPolicy + " r " + requestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy
+    );
+    try {
+      circulationRulesFixture.updateCirculationRules(rules);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    final ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UserResource requester = usersFixture.undergradHenry();
+    UUID requesterId = requester.getId();
+    ZonedDateTime requestDate = ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC);
+    JsonObject requestBody = new RequestByInstanceIdRequestBuilder()
+      .withInstanceId(checkedOutItem.getInstanceId())
+      .withRequestDate(requestDate)
+      .withRequesterId(requesterId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequestExpirationDate(requestDate)
+      .create();
+
+    Response requestResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    assertEquals(201, requestResponse.getStatusCode());
+    assertEquals(checkedOutItem.getInstanceId().toString(),
+      requestResponse.getJson().getString("instanceId"));
+    assertThat(requestResponse.getJson().getString("requestType"),
+      is(RequestType.HOLD.getValue()));
+    assertThat(requestResponse.getJson().getString("status"),
+      is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,
