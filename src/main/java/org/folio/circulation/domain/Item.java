@@ -9,58 +9,60 @@ import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
-import static org.folio.circulation.domain.representations.ItemProperties.EFFECTIVE_LOCATION_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.IN_TRANSIT_DESTINATION_SERVICE_POINT_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.ITEM_COPY_NUMBER_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
-import static org.folio.circulation.domain.representations.ItemProperties.MATERIAL_TYPE_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOAN_TYPE_ID;
-import static org.folio.circulation.domain.representations.ItemProperties.PERMANENT_LOCATION_ID;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
-import static org.folio.circulation.domain.representations.ItemProperties.TEMPORARY_LOAN_TYPE_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.storage.mappers.ItemMapper;
+
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-@AllArgsConstructor
 public class Item {
+  private final String id;
   private final JsonObject itemRepresentation;
-  private final Location location;
+  @NonNull private final Location location;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
-  private final Location permanentLocation;
+  @NonNull private final Location permanentLocation;
+  private final ServicePoint inTransitDestinationServicePoint;
 
-  private ServicePoint inTransitDestinationServicePoint;
   private boolean changed;
 
   @NonNull private final Holdings holdings;
   @NonNull private final Instance instance;
   @NonNull private final MaterialType materialType;
   @NonNull private final LoanType loanType;
+  @NonNull private final ItemDescription description;
 
   public static Item from(JsonObject representation) {
-    return new Item(representation, null,
-      LastCheckIn.fromItemJson(representation),
-      CallNumberComponents.fromItemJson(representation),
-      null,
-      null,
-      false,
-      Holdings.unknown(),
-      Instance.unknown(),
-      MaterialType.unknown(),
-      LoanType.unknown());
+    return new ItemMapper().toDomain(representation);
+  }
+  public Item(String id, JsonObject itemRepresentation, Location effectiveLocation,
+    LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
+    Location permanentLocation, ServicePoint inTransitDestinationServicePoint,
+    boolean changed, Holdings holdings, Instance instance,
+    MaterialType materialType, LoanType loanType,
+    ItemDescription description) {
+
+    this.id = id;
+    this.itemRepresentation = itemRepresentation;
+    this.location = effectiveLocation;
+    this.lastCheckIn = lastCheckIn;
+    this.callNumberComponents = callNumberComponents;
+    this.permanentLocation = permanentLocation;
+    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
+    this.changed = changed;
+    this.holdings = holdings;
+    this.instance = instance;
+    this.materialType = materialType;
+    this.loanType = loanType;
+    this.description = description;
   }
 
   public boolean isCheckedOut() {
@@ -128,15 +130,15 @@ public class Item {
   }
 
   public String getBarcode() {
-    return getProperty(itemRepresentation, "barcode");
+    return description.getBarcode();
   }
 
   public String getItemId() {
-    return getProperty(itemRepresentation, "id");
+    return id;
   }
 
   public String getHoldingsRecordId() {
-    return getProperty(itemRepresentation, "holdingsRecordId");
+    return holdings.getId();
   }
 
   public String getInstanceId() {
@@ -145,10 +147,6 @@ public class Item {
 
   public Stream<Publication> getPublication() {
     return instance.getPublication().stream();
-  }
-
-  public Stream<String> getEditions() {
-    return instance.getEditions().stream();
   }
 
   public String getCallNumber() {
@@ -196,67 +194,60 @@ public class Item {
   }
 
   public String getCopyNumber() {
-    return firstNonBlank(
-      getProperty(itemRepresentation, ITEM_COPY_NUMBER_ID),
-      holdings.getCopyNumber());
+    return firstNonBlank(description.getCopyNumber(), holdings.getCopyNumber());
   }
 
   public String getMaterialTypeId() {
-    return getProperty(itemRepresentation, MATERIAL_TYPE_ID);
+    return materialType.getId();
   }
 
-  public String getLocationId() {
-    return getProperty(itemRepresentation, EFFECTIVE_LOCATION_ID);
+  public String getEffectiveLocationId() {
+    return location.getId();
   }
 
   public String getEnumeration() {
-    return getProperty(itemRepresentation, "enumeration");
+    return description.getEnumeration();
   }
 
   public String getInTransitDestinationServicePointId() {
-    return getProperty(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
+    if (inTransitDestinationServicePoint == null) {
+      return null;
+    }
+    else {
+      return inTransitDestinationServicePoint.getId();
+    }
   }
 
   public ServicePoint getInTransitDestinationServicePoint() {
-    if(getInTransitDestinationServicePointId() == null) {
-      return null;
-    }
-
     return inTransitDestinationServicePoint;
   }
 
   public String getVolume() {
-    return getProperty(itemRepresentation, "volume");
+    return description.getVolume();
   }
 
   public String getChronology() {
-    return getProperty(itemRepresentation, "chronology");
+    return description.getChronology();
   }
 
   public String getNumberOfPieces() {
-    return getProperty(itemRepresentation, "numberOfPieces");
+    return description.getNumberOfPieces();
   }
 
   public String getDescriptionOfPieces() {
-    return getProperty(itemRepresentation, "descriptionOfPieces");
+    return description.getDescriptionOfPieces();
   }
 
-  public List<String> getYearCaption() {
-    return toStream(itemRepresentation, "yearCaption")
-      .collect(Collectors.toList());
+  public Collection<String> getYearCaption() {
+    return description.getYearCaption();
   }
 
   private ServicePoint getPrimaryServicePoint() {
-    if (location == null) {
-      return null;
-    }
-
     return location.getPrimaryServicePoint();
   }
 
   public String getLoanTypeId() {
-    return firstNonBlank(getProperty(itemRepresentation, TEMPORARY_LOAN_TYPE_ID),
-      getProperty(itemRepresentation, PERMANENT_LOAN_TYPE_ID));
+    return loanType.getId();
   }
 
   public String getLoanTypeName() {
@@ -289,8 +280,7 @@ public class Item {
 
   Item inTransitToHome() {
     return changeStatus(IN_TRANSIT)
-      .changeDestination(location.getPrimaryServicePointId())
-      .changeInTransitDestinationServicePoint(getPrimaryServicePoint());
+      .withInTransitDestinationServicePoint(getPrimaryServicePoint());
   }
 
   Item inTransitToServicePoint(UUID destinationServicePointId) {
@@ -299,7 +289,7 @@ public class Item {
   }
 
   public Item updateDestinationServicePoint(ServicePoint servicePoint) {
-    return changeInTransitDestinationServicePoint(servicePoint);
+    return withInTransitDestinationServicePoint(servicePoint);
   }
 
   public Item updateLastCheckInServicePoint(ServicePoint servicePoint) {
@@ -309,25 +299,13 @@ public class Item {
     return this;
   }
 
-  private Item changeDestination(UUID destinationServicePointId) {
-    write(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
-      destinationServicePointId);
-
-    return this;
+  private Item changeDestination(@NonNull UUID destinationServicePointId) {
+    return withInTransitDestinationServicePoint(
+      ServicePoint.unknown(destinationServicePointId.toString()));
   }
 
   private Item removeDestination() {
-    remove(itemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
-
-    this.inTransitDestinationServicePoint = null;
-
-    return this;
-  }
-
-  private Item changeInTransitDestinationServicePoint(ServicePoint inTransitDestinationServicePoint) {
-    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
-
-    return this;
+    return withInTransitDestinationServicePoint(null);
   }
 
   public boolean isNotFound() {
@@ -343,93 +321,62 @@ public class Item {
   }
 
   public String getPermanentLocationId() {
-    final String itemLocation = getProperty(itemRepresentation, PERMANENT_LOCATION_ID);
-
-    return firstNonBlank(itemLocation, holdings.getPermanentLocationId());
+    return firstNonBlank(permanentLocation.getId(), holdings.getPermanentLocationId());
   }
 
   public Item withLocation(Location newLocation) {
-    return new Item(
-      this.itemRepresentation,
-      newLocation,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance, this.materialType, loanType);
+    return new Item(this.id, this.itemRepresentation, newLocation,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
+      this.instance, this.materialType, this.loanType, description);
   }
 
-  public Item withMaterialType(MaterialType materialType) {
-    return new Item(
-      this.itemRepresentation,
-      this.location,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance,
-      materialType, loanType);
+  public Item withMaterialType(@NonNull MaterialType materialType) {
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
+      this.instance, materialType, this.loanType, this.description);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
-    return new Item(
-      this.itemRepresentation,
-      this.location,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed,
-      holdings, this.instance, this.materialType, loanType);
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, holdings,
+      this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInstance(@NonNull Instance instance) {
-    return new Item(
-      this.itemRepresentation,
-      this.location,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings,
-      instance, this.materialType, loanType);
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
+      instance, this.materialType, this.loanType, this.description);
   }
 
-  public Item withLoanType(LoanType loanType) {
-    return new Item(
-      this.itemRepresentation,
-      this.location,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance, this.materialType,
-      loanType);
+  public Item withLoanType(@NonNull LoanType loanType) {
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
+      this.instance, this.materialType, loanType, this.description);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
-    final var changedItemRepresentation = itemRepresentation.copy();
-
-    write(changedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
-
-    return new Item(
-      changedItemRepresentation,
-      this.location,
-      lastCheckIn,
-      this.callNumberComponents,
-      this.permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance, this.materialType, loanType);
+    return new Item(this.id, this.itemRepresentation, this.location,
+      lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
+      this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
-    return new Item(
-      this.itemRepresentation,
-      this.location,
-      this.lastCheckIn,
-      this.callNumberComponents,
-      permanentLocation,
-      this.inTransitDestinationServicePoint,
-      this.changed, holdings, this.instance, this.materialType, loanType);
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, permanentLocation,
+      this.inTransitDestinationServicePoint, this.changed, this.holdings,
+      this.instance, this.materialType, this.loanType, this.description);
+  }
+
+  public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
+      servicePoint, this.changed, this.holdings, this.instance,
+      this.materialType, this.loanType, this.description);
   }
 }

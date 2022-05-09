@@ -52,7 +52,6 @@ import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.builders.LocationBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
@@ -611,13 +610,11 @@ class OverdueFineServiceTest {
       new Contributor("Contributor 2", false));
 
     return Item.from(item)
-      .withLocation(
-        Location.from(new LocationBuilder()
-          .withName(LOCATION_NAME)
-          .withPrimaryServicePoint(SERVICE_POINT_ID)
-          .create()))
+      .withLocation(new Location(null, LOCATION_NAME, null, emptyList(),
+        SERVICE_POINT_ID, Institution.unknown(), Campus.unknown(), Library.unknown(),
+        ServicePoint.unknown()))
       .withInstance(new Instance(UUID.randomUUID().toString(), TITLE, emptyList(), contributors, emptyList(), emptyList()))
-      .withMaterialType(new MaterialType(null, ITEM_MATERIAL_TYPE_NAME, null));
+      .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_ID.toString(), ITEM_MATERIAL_TYPE_NAME, null));
   }
 
   private OverdueFinePolicy createOverdueFinePolicy(

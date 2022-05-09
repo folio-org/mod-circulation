@@ -26,7 +26,7 @@ public class MaterialTypeRepository {
     final String materialTypeId = item.getMaterialTypeId();
 
     if (isNull(materialTypeId)) {
-      return Result.ofAsync(MaterialType::unknown);
+      return Result.ofAsync(() -> MaterialType.unknown(null));
     }
 
     final var mapper = new MaterialTypeMapper();

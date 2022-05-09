@@ -27,6 +27,7 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.storage.mappers.InstanceMapper;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -179,7 +180,7 @@ class PickSlipsTests extends APITests {
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
     String materialTypeName = getName(materialTypeResource.getJson());
     String loanTypeName = getName(loanTypeResource.getJson());
-    Location location = Location.from(locationResource.getJson());
+    Location location = new LocationMapper().toDomain(locationResource.getJson());
 
     assertEquals(item.getTitle(), itemContext.getString("title"));
     assertEquals(item.getBarcode(), itemContext.getString("barcode"));

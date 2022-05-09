@@ -65,7 +65,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -1691,9 +1690,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   private void assertThatItemStatusIs(UUID itemId, ItemStatus status) {
-    assertThat(
-      Item.from(itemsFixture.getById(itemId).getJson()).getStatus(),
-      is(status));
+    final var item = itemsFixture.getById(itemId);
+
+    assertThat(item.getStatusName(), is(status.getValue()));
   }
 
   private void assertThatRequestStatusIs(UUID requestId, RequestStatus status) {

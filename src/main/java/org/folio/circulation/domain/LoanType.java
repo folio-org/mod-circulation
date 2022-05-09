@@ -5,7 +5,10 @@ import lombok.Value;
 @Value
 public class LoanType {
   public static LoanType unknown() {
-    return new LoanType(null, null);
+    return unknown(null);
+  }
+  public static LoanType unknown(String id) {
+    return new LoanType(id, null);
   }
 
   String id;
