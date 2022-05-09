@@ -1337,6 +1337,9 @@ public class RequestsAPICreationTests extends APITests {
       .forHolding(defaultWithHoldings.getId())
       .withMaterialType(UUID.randomUUID())
       .withPermanentLoanType(UUID.randomUUID())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLocation(locationsFixture.fourthFloor())
       .create());
 
     IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
