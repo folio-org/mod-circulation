@@ -142,6 +142,7 @@ public class CreateRequestService {
 
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE
       && records.getRequest().isHold()) {
+
       return completedFuture(succeeded(records));
     }
 
