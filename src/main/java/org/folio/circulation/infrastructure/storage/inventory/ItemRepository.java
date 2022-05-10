@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
-import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -30,6 +29,7 @@ import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.LastCheckIn;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
@@ -101,16 +101,22 @@ public class ItemRepository {
 
     final var lastCheckIn = item.getLastCheckIn();
 
-    if (lastCheckIn == null) {
-      remove(updatedItemRepresentation, LAST_CHECK_IN);
-    }
-    else {
-      write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
-    }
+    setLastCheckIn(updatedItemRepresentation, lastCheckIn);
 
     return itemsClient.put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
+  }
+
+  private void setLastCheckIn(JsonObject representation, LastCheckIn lastCheckIn) {
+    final var LAST_CHECK_IN_PROPERTY = "lastCheckIn";
+
+    if (lastCheckIn == null) {
+      remove(representation, LAST_CHECK_IN_PROPERTY);
+    }
+    else {
+      write(representation, LAST_CHECK_IN_PROPERTY, lastCheckIn.toJson());
+    }
   }
 
   public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
