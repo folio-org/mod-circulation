@@ -2,7 +2,6 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
@@ -117,23 +116,6 @@ public class ItemRepository {
     else {
       write(representation, LAST_CHECK_IN_PROPERTY, lastCheckIn.toJson());
     }
-  }
-
-  public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
-    return holdingsRepository.fetchByInstanceId(instanceId)
-      .thenCompose(r -> r.after(this::getAvailableItem));
-  }
-
-  private CompletableFuture<Result<Item>> getAvailableItem(
-    MultipleRecords<Holdings> holdingsRecords) {
-
-    if (holdingsRecords == null || holdingsRecords.isEmpty()) {
-      return ofAsync(() -> Item.from(null));
-    }
-
-    return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
-      "holdingsRecordId", exactMatch("status.name", AVAILABLE.getName()))
-      .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
