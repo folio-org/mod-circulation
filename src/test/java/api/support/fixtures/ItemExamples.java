@@ -81,12 +81,12 @@ public class ItemExamples {
   }
 
   static ItemBuilder basedUponDunkirk(
-    UUID videoRecordingMaterialTypeId,
+    UUID materialTypeId,
     UUID loanTypeId) {
 
     return new ItemBuilder()
       .withPermanentLoanType(loanTypeId)
-      .withMaterialType(videoRecordingMaterialTypeId)
+      .withMaterialType(materialTypeId)
       .withBarcode("70594943205");
   }
 }

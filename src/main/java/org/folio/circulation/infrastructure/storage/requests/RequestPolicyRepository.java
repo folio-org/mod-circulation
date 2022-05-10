@@ -72,7 +72,7 @@ public class RequestPolicyRepository {
     String materialTypeId = item.getMaterialTypeId();
     String patronGroupId = user.getPatronGroupId();
     String loanTypeId = item.getLoanTypeId();
-    String locationId = item.getLocationId();
+    String locationId = item.getEffectiveLocationId();
 
     log.info(
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",

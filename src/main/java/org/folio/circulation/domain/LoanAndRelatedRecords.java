@@ -59,7 +59,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords withItemEffectiveLocationIdAtCheckOut() {
-    return withLoan(loan.changeItemEffectiveLocationIdAtCheckOut(getItem().getLocationId()));
+    return withLoan(loan.changeItemEffectiveLocationIdAtCheckOut(getItem().getEffectiveLocationId()));
   }
 
   public Item getItem() {

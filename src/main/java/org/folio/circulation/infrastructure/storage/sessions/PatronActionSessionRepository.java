@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Campus;
+import org.folio.circulation.domain.Institution;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
@@ -265,7 +267,7 @@ public class PatronActionSessionRepository {
         loans.mapRecords(loan -> setCampusForLoanItem(loan, campuses))));
   }
 
-  private Loan setCampusForLoanItem(Loan loan, Map<String, JsonObject> campuses) {
+  private Loan setCampusForLoanItem(Loan loan, Map<String, Campus> campuses) {
     Item item = loan.getItem();
 
     if (item.isNotFound()) {
@@ -274,8 +276,9 @@ public class PatronActionSessionRepository {
 
     Location oldLocation = item.getLocation();
 
-    JsonObject campus = campuses.get(oldLocation.getCampusId());
-    Location locationWithCampus = oldLocation.withCampusRepresentation(campus);
+    final var campus = campuses.getOrDefault(oldLocation.getCampusId(),
+      Campus.unknown(oldLocation.getCampusId()));
+    Location locationWithCampus = oldLocation.withCampus(campus);
 
     return loan.withItem(item.withLocation(locationWithCampus));
   }
@@ -293,7 +296,7 @@ public class PatronActionSessionRepository {
         loans.mapRecords(loan -> setInstitutionForLoanItem(loan, institutions))));
   }
 
-  private Loan setInstitutionForLoanItem(Loan loan, Map<String, JsonObject> institutions) {
+  private Loan setInstitutionForLoanItem(Loan loan, Map<String, Institution> institutions) {
     Item item = loan.getItem();
 
     if (item.isNotFound()) {
@@ -302,8 +305,9 @@ public class PatronActionSessionRepository {
 
     Location oldLocation = item.getLocation();
 
-    JsonObject institution = institutions.get(oldLocation.getInstitutionId());
-    Location locationWithInstitution = oldLocation.withInstitutionRepresentation(institution);
+    final var institution = institutions.getOrDefault(oldLocation.getInstitutionId(),
+      Institution.unknown(oldLocation.getInstitutionId()));
+    Location locationWithInstitution = oldLocation.withInstitution(institution);
 
     return loan.withItem(item.withLocation(locationWithInstitution));
   }

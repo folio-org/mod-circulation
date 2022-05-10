@@ -1,5 +1,7 @@
 package api.support.http;
 
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
+
 import java.util.UUID;
 
 public class ItemResource extends IndividualResource {
@@ -32,5 +34,9 @@ public class ItemResource extends IndividualResource {
 
   public String getBarcode() {
     return response.getJson().getString("barcode");
+  }
+
+  public String getStatusName() {
+    return getNestedStringProperty(response.getJson(), "status", "name");
   }
 }

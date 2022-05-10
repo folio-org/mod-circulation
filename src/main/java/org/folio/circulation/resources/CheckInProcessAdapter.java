@@ -185,13 +185,11 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<Item>> getDestinationServicePoint(CheckInContext context) {
     final Item item = context.getItem();
 
-    if (item.getInTransitDestinationServicePointId() != null && item.getInTransitDestinationServicePoint() == null) {
+    if (item.getInTransitDestinationServicePointId() != null) {
       final UUID inTransitDestinationServicePointId = UUID.fromString(item.getInTransitDestinationServicePointId());
+
       return servicePointRepository.getServicePointById(inTransitDestinationServicePointId)
-        .thenCompose(result ->
-          result.after(servicePoint ->
-            completedFuture(succeeded(updateItem.onDestinationServicePointUpdate(item, servicePoint))))
-        );
+        .thenApply(result -> result.map(item::withInTransitDestinationServicePoint));
     }
 
     return completedFuture(succeeded(item));

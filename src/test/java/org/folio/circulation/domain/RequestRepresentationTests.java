@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.time.ZoneOffset.UTC;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,15 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class RequestRepresentationTests {
@@ -31,7 +30,6 @@ class RequestRepresentationTests {
   private static final String PUBLICATION = "publication";
   private static final String IDENTIFIERS = "identifiers";
   private static final String INSTANCE = "instance";
-  private static final String ID = "id";
   public static final String IDENTIFIER_VALUE = "identifier-value";
 
   @Test
@@ -116,19 +114,11 @@ class RequestRepresentationTests {
       = new ServicePoint(SERVICE_POINT_ID.toString(), "Circ Desk", "cd1", true,
       "Circulation Desk", null, null, null);
 
-    JsonObject instanceRepresentation = new JsonObject();
-    write(instanceRepresentation, EDITIONS, new JsonArray().add("First American Edition"));
-    write(instanceRepresentation, IDENTIFIERS, new JsonArray().add(new JsonObject()
-      .put("identifierTypeId", IDENTIFIER_ID)
-      .put("value", IDENTIFIER_VALUE)));
-    JsonObject publication = new JsonObject();
-    publication.put("publisher", "fake publisher");
-    publication.put("place", "fake place");
-    publication.put("dateOfPublication", "2016");
-    write(instanceRepresentation, PUBLICATION, new JsonArray().add(publication));
-    write(instanceRepresentation, ID, UUID.randomUUID().toString());
-
-    Instance instance = new InstanceMapper().toDomain(instanceRepresentation);
+    Instance instance = new Instance(UUID.randomUUID().toString(), null,
+      List.of(new Identifier(IDENTIFIER_ID.toString(), IDENTIFIER_VALUE)),
+      emptyList(),
+      List.of(new Publication("fake publisher", "fake place", "2016", null)),
+      List.of("First American Edition"));
 
     final Item item = Item.from(new JsonObject()).withInstance(instance);
 

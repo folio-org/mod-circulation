@@ -25,7 +25,7 @@ public class CirculationRulesClient {
   }
 
   public CompletableFuture<Result<Response>> applyRules(String loanTypeId,
-                                                        String locationId, String materialTypeId, String patronGroupId) {
+    String locationId, String materialTypeId, String patronGroupId) {
 
     return client.get(root, namedParameter("item_type_id", materialTypeId),
         namedParameter("loan_type_id", loanTypeId),

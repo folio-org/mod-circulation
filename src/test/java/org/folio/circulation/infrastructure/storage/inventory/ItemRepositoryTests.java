@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemDescription;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
@@ -94,7 +95,7 @@ class ItemRepositoryTests {
     final var loanTypeRepository = mock(LoanTypeRepository.class);
 
     when(locationRepository.getLocation(any()))
-      .thenReturn(ofAsync(() -> Location.from(new JsonObject())));
+      .thenReturn(ofAsync(Location::unknown));
 
     when(materialTypeRepository.getFor(any()))
       .thenReturn(ofAsync(MaterialType::unknown));
@@ -111,9 +112,9 @@ class ItemRepositoryTests {
   }
 
   private Item dummyItem() {
-    return new Item(null, null, null, null, null, null, false,
+    return new Item(null, null, null, null, null, null, null, false,
       Holdings.unknown(), Instance.unknown(), MaterialType.unknown(),
-      LoanType.unknown());
+      LoanType.unknown(), ItemDescription.unknown());
   }
 
   @SneakyThrows

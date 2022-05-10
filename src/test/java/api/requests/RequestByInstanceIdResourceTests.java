@@ -13,8 +13,8 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.InstanceRequestRelatedRecords;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
+import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
@@ -56,22 +56,22 @@ class RequestByInstanceIdResourceTests extends APITests {
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location1.getString("id")))
       .create())
-      .withLocation(Location.from(location1));
+      .withLocation(new LocationMapper().toDomain(location1));
 
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location2.getString("id")))
       .create())
-      .withLocation(Location.from(location2));
+      .withLocation(new LocationMapper().toDomain(location2));
 
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location3.getString("id")))
       .create())
-      .withLocation(Location.from(location3));
+      .withLocation(new LocationMapper().toDomain(location3));
 
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
       .withTemporaryLocation(UUID.fromString(location4.getString("id")))
       .create())
-      .withLocation(Location.from(location4));
+      .withLocation(new LocationMapper().toDomain(location4));
 
     final ArrayList<Item> items = new ArrayList<>();
 
@@ -110,19 +110,19 @@ class RequestByInstanceIdResourceTests extends APITests {
 
     Item item1 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withLocation(new LocationMapper().toDomain(location));
 
     Item item2 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withLocation(new LocationMapper().toDomain(location));
 
     Item item3 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withLocation(new LocationMapper().toDomain(location));
 
     Item item4 = Item.from(ItemExamples.basedUponSmallAngryPlanet(bookMaterialTypeId, loanTypeId)
                       .withTemporaryLocation(UUID.randomUUID()).create())
-      .withLocation(Location.from(location));
+      .withLocation(new LocationMapper().toDomain(location));
 
     //order added is important so the test deliberately add items in a certain order
     List<Item> items = new ArrayList<>();
