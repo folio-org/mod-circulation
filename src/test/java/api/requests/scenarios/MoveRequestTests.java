@@ -432,7 +432,7 @@ class MoveRequestTests extends APITests {
 
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), nod.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Moving TLR to the same item"),
+      hasMessage("Not allowed to move TLR to the same item"),
       hasParameter("requesterId", jessica.getId().toString()),
       hasParameter("instanceId", nod.getInstanceId().toString()))));
   }
@@ -455,7 +455,7 @@ class MoveRequestTests extends APITests {
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
       secondItem.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Can not process TLRs with TLR feature disabled"),
+      hasMessage("Can not process TLR - TLR feature is disabled"),
       hasParameter("requestId", firstItemHoldTlr.getId().toString()))));
   }
 
