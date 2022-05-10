@@ -18,8 +18,10 @@ import java.util.stream.Stream;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
+@AllArgsConstructor
 public class Item {
   private final String id;
   @NonNull private final Location location;
@@ -50,28 +52,7 @@ public class Item {
   public static Item from(JsonObject representation) {
     return new ItemMapper().toDomain(representation);
   }
-  public Item(String id, Location effectiveLocation,
-    LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
-    Location permanentLocation, ServicePoint inTransitDestinationServicePoint,
-    boolean changed, Holdings holdings, Instance instance,
-    MaterialType materialType, LoanType loanType,
-    ItemDescription description, ItemStatus status) {
-
-    this.id = id;
-    this.location = effectiveLocation;
-    this.lastCheckIn = lastCheckIn;
-    this.callNumberComponents = callNumberComponents;
-    this.permanentLocation = permanentLocation;
-    this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
-    this.changed = changed;
-    this.holdings = holdings;
-    this.instance = instance;
-    this.materialType = materialType;
-    this.loanType = loanType;
-    this.description = description;
-    this.status = status;
-  }
-
+  
   public boolean isCheckedOut() {
     return isInStatus(CHECKED_OUT);
   }
