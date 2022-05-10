@@ -232,7 +232,7 @@ class MoveRequestTests extends APITests {
 
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
 
-    val pageIlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
+    val pageTlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
       usersFixture.james());
 
     ItemResource secondItem = itemsFixture.basedUponSmallAngryPlanet(
@@ -244,12 +244,11 @@ class MoveRequestTests extends APITests {
     val loanAfterCheckOut = checkOutFixture.checkOutByBarcode(secondItem,
       usersFixture.jessica());
 
-    requestsFixture.move(new MoveRequestBuilder(pageIlrForFirstItem.getId(),
+    requestsFixture.move(new MoveRequestBuilder(pageTlrForFirstItem.getId(),
       secondItem.getId(), RequestType.RECALL.getValue()));
     assertThat(itemsClient.get(firstItem), hasItemStatus(AVAILABLE));
     val loanAfterRecallJson = loansFixture.getLoanById(loanAfterCheckOut.getId()).getJson();
-    assertThat(loanAfterRecallJson.getString("action"),
-      is("recallrequested"));
+    assertThat(loanAfterRecallJson.getString("action"), is("recallrequested"));
   }
 
   @Test
@@ -269,8 +268,7 @@ class MoveRequestTests extends APITests {
     requestsFixture.move(new MoveRequestBuilder(recallTlrForFirstItem.getId(),
       secondItem.getId()));
     val secondLoanAfterRecallJson = loansFixture.getLoanById(secondLoanAfterCheckOut.getId()).getJson();
-    assertThat(secondLoanAfterRecallJson.getString("action"),
-      is("recallrequested"));
+    assertThat(secondLoanAfterRecallJson.getString("action"), is("recallrequested"));
   }
 
   @Test
@@ -290,8 +288,7 @@ class MoveRequestTests extends APITests {
     requestsFixture.move(new MoveRequestBuilder(recallTlrForFirstItem.getId(),
       secondItem.getId()));
     val secondLoanAfterRecallJson = loansFixture.getLoanById(secondLoanAfterCheckOut.getId()).getJson();
-    assertThat(secondLoanAfterRecallJson.getString("action"),
-      is("recallrequested"));
+    assertThat(secondLoanAfterRecallJson.getString("action"), is("recallrequested"));
   }
 
   @Test
@@ -408,7 +405,7 @@ class MoveRequestTests extends APITests {
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
       secondItem.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Moving from/to Hold TLR is disallowed"),
+      hasMessage("Not allowed to move from/to Hold TLR"),
       hasParameter("requestId", firstItemHoldTlr.getId().toString()))));
 
     val firstItemRecallTlr = requestsFixture.placeTitleLevelRecallRequest(
@@ -417,7 +414,7 @@ class MoveRequestTests extends APITests {
     response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemRecallTlr.getId(), secondItem.getId(),
       RequestType.HOLD.getValue()));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Moving from/to Hold TLR is disallowed"),
+      hasMessage("Not allowed to move from/to Hold TLR"),
       hasParameter("requestId", firstItemRecallTlr.getId().toString()))));
   }
 
