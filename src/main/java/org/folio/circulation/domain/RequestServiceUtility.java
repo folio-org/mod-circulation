@@ -138,9 +138,8 @@ public class RequestServiceUtility {
 
     Request request = requestAndRelatedRecords.getRequest();
     if (!requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      return failedValidation(
-        new ValidationError("Can not process TLR - TLR feature is disabled",
-          REQUEST_ID, request.getId()));
+      return failedValidation(new ValidationError("Can not process TLR - TLR feature is disabled",
+        REQUEST_ID, request.getId()));
     }
 
     return succeeded(requestAndRelatedRecords);

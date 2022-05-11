@@ -210,10 +210,8 @@ class MoveRequestTests extends APITests {
     configurationsFixture.enableTlrFeature();
 
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
-
     val pageIlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
       usersFixture.james());
-
     ItemResource secondItem = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder,
       instanceBuilder -> instanceBuilder.withId(firstItem.getInstanceId()),
@@ -229,12 +227,9 @@ class MoveRequestTests extends APITests {
   @Test
   void canMovePageTlrToRecall() {
     configurationsFixture.enableTlrFeature();
-
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
-
     val pageTlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
       usersFixture.james());
-
     ItemResource secondItem = itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder,
       instanceBuilder -> instanceBuilder.withId(firstItem.getInstanceId()),
