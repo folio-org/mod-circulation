@@ -48,7 +48,7 @@ public class RequestPoliciesFixture {
     return requestPolicyRecordCreator.createIfAbsent(customPolicy);
   }
 
-  public IndividualResource customRequestPolicy(ArrayList<RequestType> types, String name, String description) {
+  public IndividualResource customRequestPolicy(List<RequestType> types, String name, String description) {
 
     final RequestPolicyBuilder customPolicy = new RequestPolicyBuilder(types, name, description);
     return requestPolicyRecordCreator.createIfAbsent(customPolicy);

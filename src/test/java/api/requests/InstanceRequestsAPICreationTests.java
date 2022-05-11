@@ -23,9 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
@@ -925,23 +926,17 @@ class InstanceRequestsAPICreationTests extends APITests {
     templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
 
-    final IndividualResource noticePolicy = noticePoliciesFixture.activeNotice();
-    final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
-    final IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
-    final IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+    List<RequestType> allowedRequestPolicyTypes = Arrays.stream(allowedRequestTypes.split(","))
+      .map(RequestType::from)
+      .collect(Collectors.toList());
 
-    ArrayList<RequestType> allowedRequestPolicyTypes = new ArrayList<>();
-    Arrays.stream(allowedRequestTypes.split(",")).forEach(type -> allowedRequestPolicyTypes.add(RequestType.from(type)));
-    final IndividualResource requestPolicy = requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
-      "Request policy name", "Request policy description");
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
+        "Request policy name", "Request policy description").getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(), lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    useFallbackPolicies(loanPolicy.getId(),
-      requestPolicy.getId(),
-      noticePolicy.getId(),
-      overdueFinePolicy.getId(),
-      lostItemFeePolicy.getId());
-
-    final ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     JsonObject requestBody = createInstanceRequestObject(checkedOutItem.getInstanceId(),
