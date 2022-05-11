@@ -934,7 +934,8 @@ class InstanceRequestsAPICreationTests extends APITests {
       requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
         "Request policy name", "Request policy description").getId(),
       noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(), lostItemFeePoliciesFixture.facultyStandard().getId());
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
 
     ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
