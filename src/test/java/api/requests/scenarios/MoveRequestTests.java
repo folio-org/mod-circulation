@@ -1,7 +1,6 @@
 package api.requests.scenarios;
 
 import static api.support.builders.ItemBuilder.AVAILABLE;
-import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
@@ -417,19 +416,18 @@ class MoveRequestTests extends APITests {
   void cannotMoveTlrToTheSameItem() {
     configurationsFixture.enableTlrFeature();
 
-    val nod = itemsFixture.basedUponNod();
+    val item = itemsFixture.basedUponNod();
     val jessica = usersFixture.jessica();
 
-    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(item, usersFixture.james());
 
-    val nodPage = requestsFixture.placeTitleLevelRecallRequest(nod.getInstanceId(),
-      jessica);
+    val nodPage = requestsFixture.placeTitleLevelRecallRequest(item.getInstanceId(), jessica);
 
-    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), nod.getId()));
+    Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), item.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Not allowed to move TLR to the same item"),
       hasParameter("requesterId", jessica.getId().toString()),
-      hasParameter("instanceId", nod.getInstanceId().toString()))));
+      hasParameter("instanceId", item.getInstanceId().toString()))));
   }
 
   @Test

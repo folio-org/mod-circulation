@@ -176,12 +176,12 @@ public class RequestServiceUtility {
         if (request.getOperation() != Operation.MOVE) {
           return isTheSameRequester(records, req) && req.isOpen();
         }
+
         return isTheSameRequester(records, req) && req.isOpen() && Objects.equals(req.getItemId(),
           request.getItemId());
       };
     } else {
       return req -> {
-        // TODO: Why do we need this if (considering line 175)?
         if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
           return request.getInstanceId().equals(req.getInstanceId())
             && isTheSameRequester(records, req) && req.isOpen();
@@ -204,11 +204,9 @@ public class RequestServiceUtility {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
-        if (requestBeingPlaced.getOperation() == Operation.MOVE) {
-          message = "Not allowed to move TLR to the same item";
-        } else {
-          message = "This requester already has an open request for this instance";
-        }
+        message = requestBeingPlaced.getOperation() == Operation.MOVE
+          ? "Not allowed to move TLR to the same item"
+          : "This requester already has an open request for this instance";
       } else {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
