@@ -46,6 +46,9 @@ public class MoveRequestService {
       RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
+      .thenApply(r -> r.next(RequestServiceUtility::refuseTlrProcessingWhenFeatureIsDisabled))
+      .thenApply(r -> r.next(records -> RequestServiceUtility.refuseMovingToOrFromHoldTlr(records,
+          originalRequest)))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findDestinationItem))
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenMovedToDifferentInstance))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
