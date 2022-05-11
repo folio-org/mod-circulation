@@ -23,21 +23,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestLevel;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
@@ -265,7 +272,7 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), item2.getId(), RequestType.HOLD);
+      instance.getId(), item2.getId(), RequestType.RECALL);
   }
 
   @Test
@@ -408,7 +415,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     //here we check the itemID. It could be either of the 2 items because we use Future in the code to get request queues from the repository,
@@ -458,7 +465,7 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     JsonObject representation = postResponse.getJson();
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), item.getId(), RequestType.HOLD);
+      instance.getId(), item.getId(), RequestType.RECALL);
   }
 
   @Test
@@ -511,7 +518,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     JsonObject representation = postResponse.getJson();
     //Item2 should have been chosen because Jessica already requested item1
     validateInstanceRequestResponse(representation, pickupServicePointId,
-      instance.getId(), item2.getId(), RequestType.HOLD);
+      instance.getId(), item2.getId(), RequestType.RECALL);
   }
 
   @Test
@@ -560,7 +567,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     assertTrue(item1.getId().toString().equals(representation.getString("itemId")) ||
@@ -619,7 +626,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     assertEquals(item2.getId().toString(), representation.getString("itemId"));
@@ -689,7 +696,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertEquals(instance.getId().toString(),
       representation.getString("instanceId"));
 
-    assertEquals(RequestType.HOLD.getValue(),
+    assertEquals(RequestType.RECALL.getValue(),
       representation.getString("requestType"));
 
     assertEquals(item2.getId().toString(), representation.getString("itemId"));
@@ -741,7 +748,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       pickupServicePointId,
       instanceMultipleCopies.getId(),
       item2.getId(),
-      RequestType.HOLD);
+      RequestType.RECALL);
   }
 
   @Test
@@ -782,7 +789,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       pickupServicePointId,
       instanceMultipleCopies.getId(),
       item2.getId(),
-      RequestType.HOLD);
+      RequestType.RECALL);
   }
 
   @Test
@@ -910,6 +917,42 @@ class InstanceRequestsAPICreationTests extends APITests {
     assertThat(sentNotice, hasNoJsonPath("context.item"));
     assertThat(sentNotice, hasEmailNoticeProperties(requesterId, confirmationTemplateId,
       getUserContextMatchers(requester)));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"HOLD,PAGE", "PAGE", ""})
+  void canCreateHoldTLRWhenNotAllowedByRequestPolicy(String allowedRequestTypes) {
+    UUID confirmationTemplateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
+
+    List<RequestType> allowedRequestPolicyTypes = Arrays.stream(allowedRequestTypes.split(","))
+      .map(RequestType::from)
+      .collect(Collectors.toList());
+
+    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
+        "Request policy name", "Request policy description").getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+
+    JsonObject requestBody = createInstanceRequestObject(checkedOutItem.getInstanceId(),
+      usersFixture.undergradHenry().getId(), servicePointsFixture.cd1().getId(),
+      ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC),
+      ZonedDateTime.of(2022, 5, 5, 10, 22, 54, 0, UTC));
+
+    Response requestResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    assertThat(requestResponse, hasStatus(HTTP_CREATED));
+    assertEquals(checkedOutItem.getInstanceId().toString(),
+      requestResponse.getJson().getString("instanceId"));
+    assertThat(requestResponse.getJson().getString("requestType"),
+      is(RequestType.HOLD.getValue()));
+    assertThat(requestResponse.getJson().getString("status"),
+      is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
   private void validateInstanceRequestResponse(JsonObject representation,
