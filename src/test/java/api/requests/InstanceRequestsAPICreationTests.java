@@ -919,51 +919,38 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"HOLD,PAGE", "PAGE"})
-  void canCreateHoldTitleLevelRequestWithRequestPolicyNotAllowingRecallsOrRecallsAndHolds(String allowedRequestTypes) {
+  @ValueSource(strings = {"HOLD,PAGE", "PAGE", ""})
+  void canCreateHoldTLRWhenNotAllowedByRequestPolicy(String allowedRequestTypes) {
     UUID confirmationTemplateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
 
-    final String undergradPatronGroupPolicy = patronGroupsFixture.undergrad().getId().toString();
-    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String anyLoanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
-    final String anyRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+    final IndividualResource noticePolicy = noticePoliciesFixture.activeNotice();
+    final IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+    final IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    final IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
 
     ArrayList<RequestType> allowedRequestPolicyTypes = new ArrayList<>();
     Arrays.stream(allowedRequestTypes.split(",")).forEach(type -> allowedRequestPolicyTypes.add(RequestType.from(type)));
-    final String requestPolicy = requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
-      "Request policy name", "Request policy description").getId().toString();
-    final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
-      "fallback-policy : l " + anyLoanPolicy + " r " + anyRequestPolicy + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy +  "\n",
-      "g " + undergradPatronGroupPolicy + ": l " + anyLoanPolicy + " r " + requestPolicy +" n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy
-    );
-    try {
-      circulationRulesFixture.updateCirculationRules(rules);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    final IndividualResource requestPolicy = requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
+      "Request policy name", "Request policy description");
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPolicy.getId(),
+      noticePolicy.getId(),
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId());
 
     final ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
-    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    UserResource requester = usersFixture.undergradHenry();
-    UUID requesterId = requester.getId();
-    ZonedDateTime requestDate = ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC);
-    JsonObject requestBody = new RequestByInstanceIdRequestBuilder()
-      .withInstanceId(checkedOutItem.getInstanceId())
-      .withRequestDate(requestDate)
-      .withRequesterId(requesterId)
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequestExpirationDate(requestDate)
-      .create();
+    JsonObject requestBody = createInstanceRequestObject(checkedOutItem.getInstanceId(),
+      usersFixture.undergradHenry().getId(), servicePointsFixture.cd1().getId(),
+      ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC),
+      ZonedDateTime.of(2022, 5, 5, 10, 22, 54, 0, UTC));
 
     Response requestResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
-    assertEquals(201, requestResponse.getStatusCode());
+    assertThat(requestResponse, hasStatus(HTTP_CREATED));
     assertEquals(checkedOutItem.getInstanceId().toString(),
       requestResponse.getJson().getString("instanceId"));
     assertThat(requestResponse.getJson().getString("requestType"),
