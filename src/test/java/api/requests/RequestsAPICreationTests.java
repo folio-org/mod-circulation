@@ -1343,7 +1343,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPermanentLoanType(UUID.randomUUID())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withMaterialType(materialTypesFixture.book().getId())
-      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withPermanentLocation(locationsFixture.mainFloor())
       .create());
 
     IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
