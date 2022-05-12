@@ -1343,7 +1343,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPermanentLoanType(UUID.randomUUID())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withMaterialType(materialTypesFixture.book().getId())
-      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withPermanentLocation(locationsFixture.mainFloor())
       .create());
 
     IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
@@ -3247,97 +3247,6 @@ public class RequestsAPICreationTests extends APITests {
     // verify noticeLogContextItemLogs
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
-  }
-
-  @ParameterizedTest
-  @ValueSource(ints = {1, 2, 3, 4})
-  void titleLevelPageRequestIsCreatedForItemClosestToPickupServicePoint(int testCase) {
-    configurationsFixture.enableTlrFeature();
-
-    UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
-        "Pickup service point", "PICKUP", "Display name")
-        .withPickupLocation(Boolean.TRUE))
-      .getId();
-
-    UUID anotherServicePointId = servicePointsFixture.create(new ServicePointBuilder(
-        "Another service point", "OTHER", "Display name")
-        .withPickupLocation(Boolean.TRUE))
-      .getId();
-
-    UUID institutionId = locationsFixture.createInstitution("Institution").getId();
-    UUID campusIdA = locationsFixture.createCampus("Campus A", institutionId).getId();
-    UUID campusIdB = locationsFixture.createCampus("Campus B", institutionId).getId();
-    UUID libraryIdA1 = locationsFixture.createLibrary("Library A1", campusIdA).getId();
-    UUID libraryIdA2 = locationsFixture.createLibrary("Library A2", campusIdA).getId();
-    UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
-
-    UUID requestedPickupLocationId = locationsFixture.createLocation(new LocationBuilder()
-        .withName("Pickup location")
-        .withCode("1")
-        .forInstitution(institutionId)
-        .forCampus(campusIdA)
-        .forLibrary(libraryIdA1)
-        .withPrimaryServicePoint(pickupServicePointId)
-        .servedBy(pickupServicePointId))
-      .getId();
-
-    UUID sameLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
-        .withName("Location in same library")
-        .withCode("2")
-        .forInstitution(institutionId)
-        .forCampus(campusIdA)
-        .forLibrary(libraryIdA1)
-        .withPrimaryServicePoint(anotherServicePointId)
-        .servedBy(anotherServicePointId))
-      .getId();
-
-    UUID sameCampusLocationId = locationsFixture.createLocation(new LocationBuilder()
-        .withName("Location in different library of same campus")
-        .withCode("3")
-        .forInstitution(institutionId)
-        .forCampus(campusIdA)
-        .forLibrary(libraryIdA2)
-        .withPrimaryServicePoint(anotherServicePointId)
-        .servedBy(anotherServicePointId))
-      .getId();
-
-    UUID sameInstitutionLocationId = locationsFixture.createLocation(new LocationBuilder()
-        .withName("Location in different campus of same institution")
-        .withCode("4")
-        .forInstitution(institutionId)
-        .forCampus(campusIdB)
-        .forLibrary(libraryIdB1)
-        .withPrimaryServicePoint(anotherServicePointId)
-        .servedBy(anotherServicePointId))
-      .getId();
-
-    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
-    UUID holdingsId = holdingsFixture.defaultWithHoldings(instanceId).getId();
-
-    UUID expectedItemId = null;
-
-    if (testCase >= 1) {
-      expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, sameInstitutionLocationId).getId();
-    }
-    if (testCase >= 2) {
-      expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, sameCampusLocationId).getId();
-    }
-    if (testCase >= 3) {
-      expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, sameLibraryLocationId).getId();
-    }
-    if (testCase >= 4) {
-      expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, requestedPickupLocationId).getId();
-    }
-
-    IndividualResource request = requestsFixture.placeTitleLevelPageRequest(instanceId,
-      usersFixture.steve(), pickupServicePointId);
-
-    assertThat(request.getResponse().getStatusCode(), is(HttpStatus.SC_CREATED));
-    assertThat(request.getJson().getString("itemId"), is(expectedItemId));
   }
 
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
