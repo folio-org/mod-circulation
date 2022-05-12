@@ -246,10 +246,7 @@ public class LocationRepository {
 
     return new CqlQueryFinder<>(locationsStorageClient, "locations", new LocationMapper()::toDomain)
       .findByQuery(CqlQuery.match("servicePointIds", servicePointId))
-      .thenApply(r -> r.map(MultipleRecords::getRecords))
-      .thenCompose(r -> r.after(this::fetchLibraries))
-      .thenCompose(r -> r.after(this::fetchCampuses))
-      .thenCompose(r -> r.after(this::fetchInstitutions));
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   private <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {

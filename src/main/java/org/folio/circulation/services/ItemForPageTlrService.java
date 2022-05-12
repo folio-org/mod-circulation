@@ -1,11 +1,12 @@
 package org.folio.circulation.services;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -36,28 +35,39 @@ public class ItemForPageTlrService {
   }
 
   public CompletableFuture<Result<Request>> findItem(Request request) {
-    return locationRepository.fetchLocationsForServicePoint(request.getPickupServicePointId())
-      .thenApply(r -> r.next(locations -> findItem(request, locations)));
-  }
-
-  private static Result<Request> findItem(Request request, Collection<Location> requestedLocations) {
-    Map<Location, List<Item>> availableItemsByLocation = request.getInstanceItems()
+    List<Item> availableItems = request.getInstanceItems()
       .stream()
       .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+      .collect(toList());
+
+    if (availableItems.isEmpty()) {
+      return completedFuture(failedValidation(
+        "Cannot create page TLR for this instance ID - no available items found",
+        INSTANCE_ID, request.getInstanceId()));
+    }
+
+    return locationRepository.fetchLocationsForServicePoint(request.getPickupServicePointId())
+      .thenApply(r -> r.map(locations -> findItem(locations, availableItems)))
+      .thenApply(r -> r.map(request::withItem));
+  }
+
+  private static Item findItem(Collection<Location> requestedLocations, List<Item> availableItems) {
+    Map<Location, List<Item>> availableItemsByLocation = availableItems
+      .stream()
       .filter(item -> item.getLocation() != null)
       .collect(groupingBy(Item::getLocation));
 
     return findIntersection(requestedLocations, availableItemsByLocation.keySet())
       .map(location -> availableItemsByLocation.get(location).get(0))
-      .map(request::withItem)
-      .map(Result::succeeded)
-      .orElseGet(() -> failedValidation(
-        "Cannot create page TLR for this instance ID - no available items found",
-        INSTANCE_ID, request.getInstanceId()));
+      .orElseGet(() -> availableItems.get(0));
   }
 
   private static Optional<Location> findIntersection(Collection<Location> requested,
     Collection<Location> available) {
+
+    if (requested.isEmpty() || available.isEmpty()) {
+      return Optional.empty();
+    }
 
     return Optional.<Location>empty()
       .or(() -> findIntersection(requested, available, Location::getId))
