@@ -298,6 +298,7 @@ public class RequestCollectionResource extends CollectionResource {
       requestQueueRepository);
 
     fromFutureResult(requestRepository.getById(id))
+      .map(request -> request.withOperation(Request.Operation.MOVE))
       .map(RequestAndRelatedRecords::new)
       .map(request -> asMove(request, representation))
       .flatMapFuture(move -> moveRequestService.moveRequest(move, move.getOriginalRequest()))

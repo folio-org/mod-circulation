@@ -108,6 +108,19 @@ public class RequestsFixture {
       .withPickupServicePointId(servicePointId));
   }
 
+  public IndividualResource placeTitleLevelRecallRequest(UUID instanceId, IndividualResource by) {
+    return place(new RequestBuilder()
+      .recall()
+      .fulfilToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(by.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
   public IndividualResource placeTitleLevelHoldShelfRequest(UUID instanceId,
     IndividualResource by, ZonedDateTime on) {
 

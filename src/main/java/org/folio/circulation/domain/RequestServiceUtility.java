@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import org.folio.circulation.domain.Request.Operation;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -132,6 +133,32 @@ public class RequestServiceUtility {
     return succeeded(requestAndRelatedRecords);
   }
 
+  static Result<RequestAndRelatedRecords> refuseTlrProcessingWhenFeatureIsDisabled(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    Request request = requestAndRelatedRecords.getRequest();
+    if (!requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
+      return failedValidation(new ValidationError("Can not process TLR - TLR feature is disabled",
+        REQUEST_ID, request.getId()));
+    }
+
+    return succeeded(requestAndRelatedRecords);
+  }
+
+  static Result<RequestAndRelatedRecords> refuseMovingToOrFromHoldTlr(
+    RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
+
+    Request request = requestAndRelatedRecords.getRequest();
+    if ((request.isHold() && request.isTitleLevel())
+      || (originalRequest.isHold() && originalRequest.isTitleLevel())) {
+
+      return failedValidation(new ValidationError("Not allowed to move from/to Hold TLR",
+        REQUEST_ID, request.getId()));
+    }
+
+    return succeeded(requestAndRelatedRecords);
+  }
+
   static Result<RequestAndRelatedRecords> refuseWhenAlreadyRequested(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
@@ -145,7 +172,14 @@ public class RequestServiceUtility {
   private static Predicate<Request> isAlreadyRequested(RequestAndRelatedRecords records) {
     Request request = records.getRequest();
     if (records.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      return req -> isTheSameRequester(records, req) && req.isOpen();
+      return req -> {
+        if (request.getOperation() != Operation.MOVE) {
+          return isTheSameRequester(records, req) && req.isOpen();
+        }
+
+        return isTheSameRequester(records, req) && req.isOpen() && Objects.equals(req.getItemId(),
+          request.getItemId());
+      };
     } else {
       return req -> {
         if (req.isTitleLevel() && records.isTlrFeatureEnabled()) {
@@ -170,7 +204,9 @@ public class RequestServiceUtility {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
-        message = "This requester already has an open request for this instance";
+        message = requestBeingPlaced.getOperation() == Operation.MOVE
+          ? "Not allowed to move TLR to the same item"
+          : "This requester already has an open request for this instance";
       } else {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());

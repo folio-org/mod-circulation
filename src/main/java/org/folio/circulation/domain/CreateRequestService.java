@@ -140,7 +140,9 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
       .isTitleLevelRequestsFeatureEnabled();
 
-    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE) {
+    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE
+      && records.getRequest().isHold()) {
+
       return completedFuture(succeeded(records));
     }
 

@@ -50,6 +50,8 @@ import lombok.With;
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final TlrSettingsConfiguration tlrSettingsConfiguration;
+
+  @With
   private final Operation operation;
 
   @With
@@ -358,6 +360,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public enum Operation {
-    CREATE, REPLACE;
+    CREATE, REPLACE, MOVE;
   }
 }
