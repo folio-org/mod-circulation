@@ -3250,7 +3250,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {1, 2, 3, 4})
+  @ValueSource(ints = {1, 2, 3, 4, 5})
   void titleLevelPageRequestIsCreatedForItemClosestToPickupServicePoint(int testCase) {
     configurationsFixture.enableTlrFeature();
 
@@ -3271,9 +3271,19 @@ public class RequestsAPICreationTests extends APITests {
     UUID libraryIdA2 = locationsFixture.createLibrary("Library A2", campusIdA).getId();
     UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
 
+    UUID brokenLocationId = locationsFixture.createLocation(new LocationBuilder()
+        .withName("Location not linked to any existing library, campus or institution")
+        .withCode("1")
+        .forInstitution(UUID.randomUUID())
+        .forCampus(UUID.randomUUID())
+        .forLibrary(UUID.randomUUID())
+        .withPrimaryServicePoint(anotherServicePointId)
+        .servedBy(anotherServicePointId))
+      .getId();
+
     UUID requestedPickupLocationId = locationsFixture.createLocation(new LocationBuilder()
         .withName("Pickup location")
-        .withCode("1")
+        .withCode("2")
         .forInstitution(institutionId)
         .forCampus(campusIdA)
         .forLibrary(libraryIdA1)
@@ -3283,7 +3293,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID sameLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
         .withName("Location in same library")
-        .withCode("2")
+        .withCode("3")
         .forInstitution(institutionId)
         .forCampus(campusIdA)
         .forLibrary(libraryIdA1)
@@ -3293,7 +3303,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID sameCampusLocationId = locationsFixture.createLocation(new LocationBuilder()
         .withName("Location in different library of same campus")
-        .withCode("3")
+        .withCode("4")
         .forInstitution(institutionId)
         .forCampus(campusIdA)
         .forLibrary(libraryIdA2)
@@ -3303,7 +3313,7 @@ public class RequestsAPICreationTests extends APITests {
 
     UUID sameInstitutionLocationId = locationsFixture.createLocation(new LocationBuilder()
         .withName("Location in different campus of same institution")
-        .withCode("4")
+        .withCode("5")
         .forInstitution(institutionId)
         .forCampus(campusIdB)
         .forLibrary(libraryIdB1)
@@ -3318,17 +3328,21 @@ public class RequestsAPICreationTests extends APITests {
 
     if (testCase >= 1) {
       expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, sameInstitutionLocationId).getId();
+        holdingsId, brokenLocationId).getId();
     }
     if (testCase >= 2) {
       expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, sameCampusLocationId).getId();
+        holdingsId, sameInstitutionLocationId).getId();
     }
     if (testCase >= 3) {
       expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
-        holdingsId, sameLibraryLocationId).getId();
+        holdingsId, sameCampusLocationId).getId();
     }
     if (testCase >= 4) {
+      expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+        holdingsId, sameLibraryLocationId).getId();
+    }
+    if (testCase >= 5) {
       expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
         holdingsId, requestedPickupLocationId).getId();
     }

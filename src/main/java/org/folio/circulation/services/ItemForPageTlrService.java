@@ -10,6 +10,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -81,6 +82,7 @@ public class ItemForPageTlrService {
 
     Set<String> requestedIds = requested.stream()
       .map(idExtractor)
+      .filter(Objects::nonNull)
       .collect(toSet());
 
     return available.stream()
