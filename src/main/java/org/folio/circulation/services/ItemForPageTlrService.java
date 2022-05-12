@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class ItemForPageTlrService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private final LocationRepository locationRepository;
 
   public static ItemForPageTlrService using(Clients clients) {
