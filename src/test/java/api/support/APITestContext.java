@@ -122,9 +122,6 @@ public class APITestContext {
     useOkapiForStorage = Boolean.parseBoolean(
       System.getProperty("use.okapi.storage.requests", "false"));
 
-    useOkapiForStorage = Boolean.parseBoolean(
-      System.getProperty("use.okapi.storage.requests", "false"));
-
     useOkapiForInitialRequests = Boolean.parseBoolean(
       System.getProperty("use.okapi.initial.requests", "false"));
 
@@ -178,7 +175,7 @@ public class APITestContext {
 
   static URL okapiUrl() {
     try {
-      if (false) {
+      if (useOkapiForStorage) {
         return new URL("http://localhost:9130");
       } else {
         return new URL(FakeOkapi.getAddress());
