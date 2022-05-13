@@ -124,6 +124,11 @@
           "type": "string",
           "readonly": true
         },
+        "copyNumber" : {
+          "description" : "Item copy number",
+          "type": "string",
+          "readonly": true
+        },
         "materialType": {
           "description": "The material type from the item record",
           "type": "object",
@@ -286,6 +291,11 @@
       "type": "integer",
       "minimum": 0
     },
+    "dueDateChangedByRecall": {
+      "description": "Is due date changed by recall request",
+      "type": "boolean",
+      "readonly": true
+    },
     "checkoutServicePointId": {
       "description": "ID of the Service Point where the last checkout occured",
       "type": "string",
@@ -313,6 +323,11 @@
         },
         "discoveryDisplayName":{
           "description": "The human readable name",
+          "type": "string",
+          "readonly": true
+        },
+        "description":{
+          "description": "The Service Point description data",
           "type": "string",
           "readonly": true
         },
@@ -345,6 +360,11 @@
         },
         "discoveryDisplayName":{
           "description": "The human readable name",
+          "type": "string",
+          "readonly": true
+        },
+        "description":{
+          "description": "The Service Point description data",
           "type": "string",
           "readonly": true
         },
