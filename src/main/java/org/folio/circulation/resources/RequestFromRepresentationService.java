@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.lang.String.join;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -64,6 +63,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.services.ItemForPageTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -87,6 +87,7 @@ class RequestFromRepresentationService {
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
   private final ItemByInstanceIdFinder itemByInstanceIdFinder;
+  private final ItemForPageTlrService itemForPageTlrService;
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(Request.Operation operation,
     JsonObject representation) {
@@ -151,6 +152,7 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
     RequestAndRelatedRecords records) {
+
     Request request = records.getRequest();
     if (request.isTitleLevel() && request.isPage()) {
       return fetchItemAndLoanForPageTlr(records.getRequest())
@@ -176,7 +178,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrCreation(Request request) {
-    return fromFutureResult(completedFuture(findItemForPageTlr(request))
+    return fromFutureResult(itemForPageTlrService.findItem(request)
       .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
@@ -192,15 +194,6 @@ class RequestFromRepresentationService {
         .thenApply(r -> r.map(req::withLoan)))
       .flatMapFuture(this::fetchUserForLoan)
       .toCompletableFuture();
-  }
-
-  private Result<Request> findItemForPageTlr(Request request) {
-    return getFirstAvailableItem(request)
-      .map(request::withItem)
-      .map(Result::succeeded)
-      .orElseGet(() -> failedValidation(
-        "Cannot create page TLR for this instance ID - no available items found", INSTANCE_ID,
-        request.getInstanceId()));
   }
 
   private Optional<Item> getFirstAvailableItem(Request request) {

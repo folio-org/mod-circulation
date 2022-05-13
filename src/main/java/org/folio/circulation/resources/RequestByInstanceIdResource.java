@@ -70,6 +70,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.ItemForPageTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
@@ -336,7 +337,8 @@ public class RequestByInstanceIdResource extends Resource {
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler(),
-        new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository));
+        new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
+        ItemForPageTlrService.using(clients));
 
     return requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
         currentItemRequest)
