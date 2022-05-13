@@ -152,6 +152,7 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
     RequestAndRelatedRecords records) {
+
     Request request = records.getRequest();
     if (request.isTitleLevel() && request.isPage()) {
       return fetchItemAndLoanForPageTlr(records.getRequest())

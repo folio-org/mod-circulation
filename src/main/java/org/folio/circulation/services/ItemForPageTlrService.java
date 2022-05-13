@@ -53,8 +53,7 @@ public class ItemForPageTlrService {
   }
 
   private static Item findItem(Collection<Location> requestedLocations, List<Item> availableItems) {
-    Map<Location, List<Item>> availableItemsByLocation = availableItems
-      .stream()
+    Map<Location, List<Item>> availableItemsByLocation = availableItems.stream()
       .filter(item -> item.getLocation() != null)
       .collect(groupingBy(Item::getLocation));
 
@@ -65,10 +64,6 @@ public class ItemForPageTlrService {
 
   private static Optional<Location> findIntersection(Collection<Location> requested,
     Collection<Location> available) {
-
-    if (requested.isEmpty() || available.isEmpty()) {
-      return Optional.empty();
-    }
 
     return Optional.<Location>empty()
       .or(() -> findIntersection(requested, available, Location::getId))
