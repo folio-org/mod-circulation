@@ -307,78 +307,16 @@
       "$ref": "uuid.json"
     },
     "checkoutServicePoint": {
-      "description": "The Service Point where the last checkout occurred",
+      "description": "Service Point where the last checkout occurred",
       "type": "object",
       "readonly": true,
-      "properties": {
-        "name": {
-          "description": "The unique name of the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "code": {
-          "description": "The short code for the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "discoveryDisplayName":{
-          "description": "The human readable name",
-          "type": "string",
-          "readonly": true
-        },
-        "description":{
-          "description": "The Service Point description data",
-          "type": "string",
-          "readonly": true
-        },
-        "shelvingLagTime": {
-          "description": "The time to shelving",
-          "type": "integer",
-          "readonly": true
-        },
-        "pickupLocation": {
-          "description": "Is this a pickup location",
-          "type": "boolean",
-          "readonly": true
-        }
-      }
+      "$ref": "servicepoint-properties.json"
     },
     "checkinServicePoint": {
-      "description": "The Service Point where the last checkout occurred",
+      "description": "Service Point where the last checkin occurred",
       "type": "object",
       "readonly": true,
-      "properties": {
-        "name": {
-          "description": "Name of the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "code": {
-          "description": "The short code for the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "discoveryDisplayName":{
-          "description": "The human readable name",
-          "type": "string",
-          "readonly": true
-        },
-        "description":{
-          "description": "The Service Point description data",
-          "type": "string",
-          "readonly": true
-        },
-        "shelvingLagTime": {
-          "description": "The time to shelving",
-          "type": "integer",
-          "readonly": true
-        },
-        "pickupLocation": {
-          "description": "Is this a pickup location",
-          "type": "boolean",
-          "readonly": true
-        }
-      }
+      "$ref": "servicepoint-properties.json"
     },
     "patronGroupAtCheckout": {
       "description": "Patron Group at checkout",
