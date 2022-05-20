@@ -36,6 +36,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
 public class LocationRepository {
@@ -65,6 +67,12 @@ public class LocationRepository {
     return new LocationRepository(clients.locationsStorage(),
       clients.institutionsStorage(), clients.campusesStorage(),
       clients.librariesStorage(), servicePointRepository);
+  }
+
+  public static LocationRepository using(Clients clients) {
+    return new LocationRepository(clients.locationsStorage(),
+      clients.institutionsStorage(), clients.campusesStorage(),
+      clients.librariesStorage(), new ServicePointRepository(clients));
   }
 
   public CompletableFuture<Result<Location>> getLocation(Item item) {
@@ -231,6 +239,14 @@ public class LocationRepository {
     }
 
     return servicePointRepository.getServicePointById(location.getPrimaryServicePointId());
+  }
+
+  public CompletableFuture<Result<Collection<Location>>> fetchLocationsForServicePoint(
+    String servicePointId) {
+
+    return new CqlQueryFinder<>(locationsStorageClient, "locations", new LocationMapper()::toDomain)
+      .findByQuery(CqlQuery.match("servicePointIds", servicePointId))
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   private <T, R> Set<R> uniqueSet(Collection<T> collection, Function<T, R> mapper) {

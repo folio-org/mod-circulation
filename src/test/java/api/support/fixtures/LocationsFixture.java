@@ -3,6 +3,8 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.util.Random;
+import java.util.UUID;
 import java.util.function.Function;
 
 import api.support.http.IndividualResource;
@@ -159,77 +161,78 @@ public class LocationsFixture {
   }
 
   private IndividualResource djanoglyLibrary() {
-
-    final JsonObject djanoglyLibrary = new JsonObject();
-
-    write(djanoglyLibrary, "name", "Djanogly Learning Resource Centre");
-    write(djanoglyLibrary, "campusId", jubileeCampus().getId());
-    write(djanoglyLibrary, "code", "DLRC");
-
-    return libraryRecordCreator.createIfAbsent(djanoglyLibrary);
+    return createLibrary("Djanogly Learning Resource Centre", "DLRC", jubileeCampus().getId());
   }
 
   private IndividualResource businessLibrary() {
-
-    final JsonObject businessLibrary = new JsonObject();
-
-    write(businessLibrary, "name", "Business Library");
-    write(businessLibrary, "campusId", jubileeCampus().getId());
-    write(businessLibrary, "code", "BL");
-
-    return libraryRecordCreator.createIfAbsent(businessLibrary);
+    return createLibrary("Business Library", "BL", jubileeCampus().getId());
   }
 
   private IndividualResource mainLibrary() {
-
-    final JsonObject businessLibrary = new JsonObject();
-
-    write(businessLibrary, "name", "Main Library");
-    write(businessLibrary, "campusId", mainCampus().getId());
-    write(businessLibrary, "code","ML");
-
-    return libraryRecordCreator.createIfAbsent(businessLibrary);
+    return createLibrary("Main Library", "ML", mainCampus().getId());
   }
 
   private IndividualResource jubileeCampus() {
-
-    final JsonObject jubileeCampus = new JsonObject();
-
-    write(jubileeCampus, "name", "Jubilee Campus");
-    write(jubileeCampus, "institutionId", nottinghamUniversity().getId());
-    write(jubileeCampus, "code", "JC");
-
-    return campusRecordCreator.createIfAbsent(jubileeCampus);
+    return createCampus("Jubilee Campus", "JC", nottinghamUniversity().getId());
   }
 
   private IndividualResource mainCampus() {
-
-    final JsonObject mainCampus = new JsonObject();
-
-    write(mainCampus, "name", "Main Campus");
-    write(mainCampus, "institutionId", kopenhavnUniversity().getId());
-    write(mainCampus, "code", "MC");
-
-    return campusRecordCreator.createIfAbsent(mainCampus);
+    return createCampus("Main Campus", "MC", kopenhavnUniversity().getId());
   }
 
   private IndividualResource nottinghamUniversity() {
-
-    final JsonObject nottinghamUniversity = new JsonObject();
-
-    write(nottinghamUniversity, "name", "Nottingham University");
-    write(nottinghamUniversity, "code", "NU");
-
-    return institutionRecordCreator.createIfAbsent(nottinghamUniversity);
+    return createInstitution("Nottingham University", "NU");
   }
 
   private IndividualResource kopenhavnUniversity() {
+    return createInstitution("Kopenhavn University", "KU");
+  }
 
-    final JsonObject kopenhavnUniversity = new JsonObject();
+  public IndividualResource createInstitution(String name) {
+    return createInstitution(name, randomCode());
+  }
 
-    write(kopenhavnUniversity, "name", "Kopenhavn University");
-    write(kopenhavnUniversity, "code", "KU");
+  public IndividualResource createInstitution(String name, String code) {
+    final JsonObject institution = buildLocationUnitTemplate(name, code);
 
-    return institutionRecordCreator.createIfAbsent(kopenhavnUniversity);
+    return institutionRecordCreator.createIfAbsent(institution);
+  }
+
+  public IndividualResource createCampus(String name, UUID institutionId) {
+    return createCampus(name, randomCode(), institutionId);
+  }
+
+  public IndividualResource createCampus(String name, String code, UUID institutionId) {
+    final JsonObject campus = buildLocationUnitTemplate(name, code);
+    write(campus, "institutionId", institutionId);
+
+    return campusRecordCreator.createIfAbsent(campus);
+  }
+
+  public IndividualResource createLibrary(String name, UUID campusId) {
+    return createLibrary(name, randomCode(), campusId);
+  }
+
+  public IndividualResource createLibrary(String name, String code, UUID campusId) {
+    final JsonObject library = buildLocationUnitTemplate(name, code);
+    write(library, "campusId", campusId);
+
+    return libraryRecordCreator.createIfAbsent(library);
+  }
+
+  public IndividualResource createLocation(LocationBuilder locationBuilder) {
+    return locationRecordCreator.createIfAbsent(locationBuilder);
+  }
+
+  private static JsonObject buildLocationUnitTemplate(String name, String code) {
+    final JsonObject locationUnit = new JsonObject();
+    write(locationUnit, "name", name);
+    write(locationUnit, "code", code);
+
+    return locationUnit;
+  }
+
+  private static String randomCode() {
+    return String.valueOf(new Random().nextInt());
   }
 }
