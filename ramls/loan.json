@@ -314,13 +314,13 @@
       "description": "Service Point where the last checkout occurred",
       "type": "object",
       "readonly": true,
-      "$ref": "servicepoint-properties.json"
+      "$ref": "service-point.json"
     },
     "checkinServicePoint": {
       "description": "Service Point where the last checkin occurred",
       "type": "object",
       "readonly": true,
-      "$ref": "servicepoint-properties.json"
+      "$ref": "service-point.json"
     },
     "patronGroupAtCheckout": {
       "description": "Patron Group at checkout",
