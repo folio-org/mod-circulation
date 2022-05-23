@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A service point",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Unique name of the service point",
+      "type": "string",
+      "readonly": true
+    },
+    "code": {
+      "description": "Short code for the service point",
+      "type": "string",
+      "readonly": true
+    },
+    "discoveryDisplayName":{
+      "description": "Human readable name",
+      "type": "string",
+      "readonly": true
+    },
+    "description":{
+      "description": "Service Point description data",
+      "type": "string",
+      "readonly": true
+    },
+    "shelvingLagTime": {
+      "description": "Time to shelving",
+      "type": "integer",
+      "readonly": true
+    },
+    "pickupLocation": {
+      "description": "Is this a pickup location",
+      "type": "boolean",
+      "readonly": true
+    }
+  }
+}

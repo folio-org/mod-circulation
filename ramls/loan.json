@@ -124,6 +124,11 @@
           "type": "string",
           "readonly": true
         },
+        "copyNumber" : {
+          "description" : "Item copy number",
+          "type": "string",
+          "readonly": true
+        },
         "materialType": {
           "description": "The material type from the item record",
           "type": "object",
@@ -281,10 +286,19 @@
       "description": "Last action performed on a loan (currently can be any value, values commonly used are checkedout and checkedin)",
       "type": "string"
     },
+    "actionComment": {
+      "description": "Last action performed on a loan comments",
+      "type": "string"
+    },
     "renewalCount": {
       "description": "Count of how many times a loan has been renewed (incremented by the client)",
       "type": "integer",
       "minimum": 0
+    },
+    "dueDateChangedByRecall": {
+      "description": "Is due date changed by recall request",
+      "type": "boolean",
+      "readonly": true
     },
     "checkoutServicePointId": {
       "description": "ID of the Service Point where the last checkout occured",
@@ -297,68 +311,16 @@
       "$ref": "uuid.json"
     },
     "checkoutServicePoint": {
-      "description": "The Service Point where the last checkout occurred",
+      "description": "Service Point where the last checkout occurred",
       "type": "object",
       "readonly": true,
-      "properties": {
-        "name": {
-          "description": "The unique name of the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "code": {
-          "description": "The short code for the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "discoveryDisplayName":{
-          "description": "The human readable name",
-          "type": "string",
-          "readonly": true
-        },
-        "shelvingLagTime": {
-          "description": "The time to shelving",
-          "type": "integer",
-          "readonly": true
-        },
-        "pickupLocation": {
-          "description": "Is this a pickup location",
-          "type": "boolean",
-          "readonly": true
-        }
-      }
+      "$ref": "service-point.json"
     },
     "checkinServicePoint": {
-      "description": "The Service Point where the last checkout occurred",
+      "description": "Service Point where the last checkin occurred",
       "type": "object",
       "readonly": true,
-      "properties": {
-        "name": {
-          "description": "Name of the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "code": {
-          "description": "The short code for the service point",
-          "type": "string",
-          "readonly": true
-        },
-        "discoveryDisplayName":{
-          "description": "The human readable name",
-          "type": "string",
-          "readonly": true
-        },
-        "shelvingLagTime": {
-          "description": "The time to shelving",
-          "type": "integer",
-          "readonly": true
-        },
-        "pickupLocation": {
-          "description": "Is this a pickup location",
-          "type": "boolean",
-          "readonly": true
-        }
-      }
+      "$ref": "service-point.json"
     },
     "patronGroupAtCheckout": {
       "description": "Patron Group at checkout",
