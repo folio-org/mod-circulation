@@ -3,8 +3,7 @@ package api.support.fixtures;
 import static api.support.APITestContext.circulationModuleUrl;
 
 import org.folio.circulation.support.http.client.Response;
-import org.folio.rest.tools.PomReader;
-
+import org.folio.util.pubsub.PubSubClientUtils;
 import api.support.RestAssuredClient;
 import io.vertx.core.json.JsonObject;
 
@@ -16,11 +15,8 @@ public class TenantActivationFixture {
   }
 
   public Response postTenant() {
-    String moduleName = PomReader.INSTANCE.getModuleName();
-    String currentVersion = PomReader.INSTANCE.getVersion();
-
     return restAssuredClient.post(
-      new JsonObject().put("id", String.format("%s-%s", moduleName, currentVersion)),
+      new JsonObject().put("id", PubSubClientUtils.getModuleId()),
       circulationModuleUrl("/_/tenant"), "tenant-api-post-test-request");
   }
 
