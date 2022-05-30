@@ -1,3 +1,8 @@
+## 23.0.9 2022-05-30
+
+* Upgrade vulnerable dependencies (Vert.x, Spring, xstream) (CIRC-1539)
+* Rebuild docker container fixing ZipException on 64-bit systems (FOLIO-3484)
+
 ## 23.0.8 2022-04-15
 
 * Change due date when item is renewed (CIRC-1463)
