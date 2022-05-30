@@ -1,3 +1,8 @@
+## 22.1.6 2022-05-30
+
+* Upgrade vulnerable dependencies (Vert.x, Spring, xstream) (CIRC-1539)
+* Rebuild docker container fixing ZipException on 64-bit systems (FOLIO-3484)
+
 ## 22.1.5 2022-04-25
 
 * Suspend sending notices after a loan is marked as claimed returned (CIRC-1427)
