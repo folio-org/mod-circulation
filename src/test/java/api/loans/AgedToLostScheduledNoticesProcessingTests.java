@@ -370,10 +370,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final ZonedDateTime cancelLostItemFeeActionDate = getActionDate(cancelLostItemFeeAction);
     final ZonedDateTime cancelProcessingFeeActionDate = getActionDate(cancelProcessingFeeAction);
 
-    modifyFields(refundLostItemFeeAction, "amountAction", "balance");
-    modifyFields(refundProcessingFeeAction, "amountAction", "balance");
-    modifyFields(cancelLostItemFeeAction, "amountAction", "balance");
-    modifyFields(cancelProcessingFeeAction, "amountAction", "balance");
+    scaleFields(refundLostItemFeeAction, "amountAction", "balance");
+    scaleFields(refundProcessingFeeAction, "amountAction", "balance");
+    scaleFields(cancelLostItemFeeAction, "amountAction", "balance");
+    scaleFields(cancelProcessingFeeAction, "amountAction", "balance");
 
     verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
@@ -488,10 +488,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final JsonObject processingFeeCancellationAction =
       findFeeFineAction(ACTION_TYPE_CANCELLED, PROCESSING_FEE_AMOUNT);
 
-    modifyFields(lostItemFeeRefundAction, "amountAction", "balance");
-    modifyFields(processingFeeRefundAction, "amountAction", "balance");
-    modifyFields(lostItemFeeCancellationAction, "amountAction", "balance");
-    modifyFields(processingFeeCancellationAction, "amountAction", "balance");
+    scaleFields(lostItemFeeRefundAction, "amountAction", "balance");
+    scaleFields(processingFeeRefundAction, "amountAction", "balance");
+    scaleFields(lostItemFeeCancellationAction, "amountAction", "balance");
+    scaleFields(processingFeeCancellationAction, "amountAction", "balance");
 
     final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
     final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
@@ -574,7 +574,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
             getBaseNoticeContextMatcher(agedToLostResult),
             getFeeActionContextMatcher(feeFineAction),
             getFeeChargeContextMatcher(
-              modifyFields(findAccountForFeeFineAction(feeFineAction), "amount", "remaining")))))
+              scaleFields(findAccountForFeeFineAction(feeFineAction), "amount", "remaining")))))
       .forEach(matcher -> assertThat(FakeModNotify.getSentPatronNotices(), hasItem(matcher)));
   }
 
@@ -592,10 +592,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     return accountsClient.get(UUID.fromString(feeFineAction.getString("accountId"))).getJson();
   }
 
-  private JsonObject modifyFields(JsonObject feeFineAction, String field, String otherField) {
+  private JsonObject scaleFields(JsonObject feeFineAction, String fieldOne, String fieldTwo) {
     return feeFineAction
-      .put(field, new BigDecimal(feeFineAction.getDouble(field)).setScale(2))
-      .put(otherField, new BigDecimal(feeFineAction.getDouble(otherField)).setScale(2));
+      .put(fieldOne, new BigDecimal(feeFineAction.getDouble(fieldOne)).setScale(2))
+      .put(fieldTwo, new BigDecimal(feeFineAction.getDouble(fieldTwo)).setScale(2));
   }
 
   private Matcher<? super String> getBaseNoticeContextMatcher(AgeToLostResult agedToLostResult) {
