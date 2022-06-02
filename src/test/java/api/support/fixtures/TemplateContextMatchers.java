@@ -5,7 +5,6 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -243,8 +242,8 @@ public class TemplateContextMatchers {
       hasJsonPath("feeCharge.owner", is(account.getFeeFineOwner())),
       hasJsonPath("feeCharge.type", is(account.getFeeFineType())),
       hasJsonPath("feeCharge.paymentStatus", is(account.getPaymentStatus())),
-      hasJsonPath("feeCharge.amount", is(account.getAmount().toDouble())),
-      hasJsonPath("feeCharge.remainingAmount", is(account.getRemaining().toDouble()))
+      hasJsonPath("feeCharge.amount", is(account.getAmount().toScaledString())),
+      hasJsonPath("feeCharge.remainingAmount", is(account.getRemaining().toScaledString()))
     );
   }
 
@@ -253,8 +252,8 @@ public class TemplateContextMatchers {
       hasJsonPath("feeCharge.owner", is(account.getString("feeFineOwner"))),
       hasJsonPath("feeCharge.type", is(account.getString("feeFineType"))),
       hasJsonPath("feeCharge.paymentStatus", is(getNestedStringProperty(account, "paymentStatus", "name"))),
-      hasJsonPath("feeCharge.amount", is(getDoubleProperty(account, "amount", -1.0))),
-      hasJsonPath("feeCharge.remainingAmount", is(getDoubleProperty(account, "remaining", -1.0)))
+      hasJsonPath("feeCharge.amount", is(account.getString("amount"))),
+      hasJsonPath("feeCharge.remainingAmount", is(account.getString("remaining")))
     );
   }
 
@@ -273,8 +272,8 @@ public class TemplateContextMatchers {
       hasJsonPath("feeAction.type", is(action.getString("typeAction"))),
       hasJsonPath("feeAction.actionDate", isEquivalentTo(getDateTimeProperty(action, "dateAction"))),
       hasJsonPath("feeAction.actionDateTime", isEquivalentTo(getDateTimeProperty(action, "dateAction"))),
-      hasJsonPath("feeAction.amount", is(getDoubleProperty(action, "amountAction", -1.0))),
-      hasJsonPath("feeAction.remainingAmount", is(getDoubleProperty(action, "balance", -1.0)))
+      hasJsonPath("feeAction.amount", is(action.getString("amountAction"))),
+      hasJsonPath("feeAction.remainingAmount", is(action.getString("balance")))
     );
   }
 }
