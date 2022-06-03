@@ -432,6 +432,30 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <artifactSet>
+                <includes>
+                  <include>com.fasterxml.jackson.core:jackson-core</include>
+                  <include>javax.activation:activation</include>
+                  <include>javax.el:javax.el-api</include>
+                  <include>javax.ws.rs:javax.ws.rs-api</include>
+                  <include>org.folio:mod-pubsub-client</include>
+                  <include>jakarta.validation:jakarta.validation-api</include>
+                </includes>
+              </artifactSet>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>**/module-info.*</exclude>
+                    <exclude>META-INF/versions/**</exclude>
+                    <exclude>javax/activation/**</exclude>
+                    <exclude>javax/el/**</exclude>
+                    <exclude>javax/ws/rs/**</exclude>
+                    <exclude>org/folio/rest/jaxrs/**</exclude>
+                    <exclude>javax/validation/**</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>

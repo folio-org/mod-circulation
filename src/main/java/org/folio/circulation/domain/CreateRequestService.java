@@ -151,14 +151,32 @@ public class CreateRequestService {
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
   }
 
+  /**
+   * Condition for checking instance
+   *
+   * @param records Request records to be checked instance
+   * @return true when condition satisfies, otherwise false
+   */
   private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
+  /**
+   * Condition for checking item
+   *
+   * @param records Request records to be checked item
+   * @return true when condition satisfies, otherwise false
+   */
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
+  /**
+   * Condition for checking policy
+   *
+   * @param records Request records to be checked policy
+   * @return true when condition satisfies, otherwise false
+   */
   private CompletableFuture<Result<Boolean>> shouldCheckPolicy(RequestAndRelatedRecords records) {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
       INVALID_USER_OR_PATRON_GROUP_ID));

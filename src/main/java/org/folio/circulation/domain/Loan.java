@@ -26,6 +26,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.CHECKO
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.DUEDATE_CHANGED_BY_RECALL;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
@@ -121,14 +122,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan setDueDateChangedByRecall() {
-    write(representation, "dueDateChangedByRecall", TRUE);
+  public void setDueDateChangedByRecall() {
+    write(representation, DUEDATE_CHANGED_BY_RECALL, TRUE);
 
-    return this;
   }
 
   public Loan unsetDueDateChangedByRecall() {
-    write(representation, "dueDateChangedByRecall", FALSE);
+    write(representation, DUEDATE_CHANGED_BY_RECALL, FALSE);
 
     return this;
   }
@@ -229,7 +229,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public boolean wasDueDateChangedByRecall() {
-    return getBooleanProperty(representation, "dueDateChangedByRecall");
+    return getBooleanProperty(representation, DUEDATE_CHANGED_BY_RECALL);
   }
 
   private LoanStatus getStatus() {

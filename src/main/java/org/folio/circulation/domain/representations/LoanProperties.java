@@ -34,4 +34,5 @@ public class LoanProperties {
   public static final String DATE_LOST_ITEM_SHOULD_BE_BILLED = "dateLostItemShouldBeBilled";
   public static final String METADATA = "metadata";
   public static final String UPDATED_BY_USER_ID = "updatedByUserId";
+  public static final String DUEDATE_CHANGED_BY_RECALL = "dueDateChangedByRecall";
 }

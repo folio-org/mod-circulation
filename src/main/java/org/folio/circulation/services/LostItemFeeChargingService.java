@@ -148,15 +148,11 @@ public class LostItemFeeChargingService {
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
-    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE) || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)) && account.isOpen()) {
-      return true;
-    } else {
-      return false;
-    }
+    return (type.equals(FeeFine.LOST_ITEM_FEE_TYPE) || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)) && account.isOpen();
   }
 
-  private Boolean hasLostItemFees(Loan loan) {
-    return loan.getAccounts().stream().anyMatch(account -> isOpenLostItemFee(account));
+  private boolean hasLostItemFees(Loan loan) {
+    return loan.getAccounts().stream().anyMatch(this::isOpenLostItemFee);
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {
