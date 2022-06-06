@@ -53,6 +53,9 @@ public class StoredAccount extends JsonObject {
     this.put("status", createNamedObject("Open"));
 
     this.put("contributors", mapContributorNamesToJson(item));
+    this.put("loanPolicyId", loan.getLoanPolicyId());
+    this.put("overdueFinePolicyId", loan.getOverdueFinePolicyId());
+    this.put("lostItemFeePolicyId", loan.getLostItemPolicyId());
   }
 
   private StoredAccount(JsonObject json) {
