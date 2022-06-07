@@ -3,7 +3,7 @@ package org.folio.circulation.resources;
 import org.folio.circulation.services.ItemsInTransitReportService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.response.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;

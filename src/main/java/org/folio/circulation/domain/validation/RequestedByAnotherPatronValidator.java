@@ -9,7 +9,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
 
 public class RequestedByAnotherPatronValidator {
   private final Function<String, ValidationErrorFailure> errorFunction;

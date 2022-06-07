@@ -1,9 +1,9 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 
 public class RequestLoanValidator {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);

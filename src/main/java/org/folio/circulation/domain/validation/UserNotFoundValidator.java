@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import org.apache.commons.lang3.StringUtils;

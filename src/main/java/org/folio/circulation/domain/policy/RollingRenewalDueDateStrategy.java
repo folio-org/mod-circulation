@@ -1,14 +1,14 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
 
 import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 class RollingRenewalDueDateStrategy extends DueDateStrategy {

@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Objects;

@@ -12,8 +12,8 @@ import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.support.http.server.ForwardResponse.forward;
-import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
+import static org.folio.circulation.support.http.server.response.ForwardResponse.forward;
+import static org.folio.circulation.support.http.server.response.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
 
@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
@@ -406,7 +406,7 @@ public class FakeOkapi extends AbstractVerticle {
           Objects.equals(request.getInteger("position"),
             newOrUpdatedRequest.getInteger("position")))
         .findAny()
-        .map(r -> (Result<Object>) ValidationErrorFailure.failedValidation(
+        .map(r -> ValidationErrorFailure.failedValidation(
           "Cannot have more than one request with the same position in the queue",
           "itemId", r.getString("itemId")))
         .orElse(Result.succeeded(null));

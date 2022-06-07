@@ -5,7 +5,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.resources.context.RequestQueueType.FOR_INSTANCE;
 import static org.folio.circulation.resources.context.RequestQueueType.FOR_ITEM;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.List;
@@ -33,7 +33,7 @@ import org.folio.circulation.resources.context.RequestQueueType;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.response.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 

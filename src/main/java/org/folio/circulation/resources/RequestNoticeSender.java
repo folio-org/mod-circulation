@@ -39,8 +39,8 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.failures.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 
 import lombok.RequiredArgsConstructor;

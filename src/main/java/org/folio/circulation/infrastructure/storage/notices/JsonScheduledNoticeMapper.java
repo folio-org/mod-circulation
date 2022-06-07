@@ -18,8 +18,8 @@ import org.folio.circulation.domain.notice.schedule.ScheduledNoticeBuilder;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfigBuilder;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;

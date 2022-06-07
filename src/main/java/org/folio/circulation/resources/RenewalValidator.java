@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
@@ -13,7 +13,8 @@ import java.util.Map;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.UIError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public final class RenewalValidator {
@@ -66,6 +67,15 @@ public final class RenewalValidator {
     parameters.put("loanPolicyId", loanPolicy.getId());
     parameters.put("loanPolicyName", loanPolicy.getName());
     return new ValidationError(message, parameters);
+  }
+
+  public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
+    UIError error, Map<String, String> additionalParameters) {
+
+    Map<String, String> parameters = new HashMap<>(additionalParameters);
+    parameters.put("loanPolicyId", loanPolicy.getId());
+    parameters.put("loanPolicyName", loanPolicy.getName());
+    return new ValidationError(error.getName(), parameters, error.toString());
   }
 
   public static ValidationError errorForNotMatchingOverrideCases(LoanPolicy loanPolicy) {

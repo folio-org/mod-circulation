@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.failures.HttpFailure;
 import org.folio.circulation.support.ThrowingSupplier;
 
 public interface Result<T> {

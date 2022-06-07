@@ -2,8 +2,9 @@ package org.folio.circulation.infrastructure.storage.users;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.server.error.UIError.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -160,9 +161,8 @@ public class UserRepository {
       .thenApply(result -> result.next(this::mapResponseToUsers)
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
-        .next(user -> user.map(Result::succeeded).orElseGet(() ->
-          failedValidation("Could not find user with matching barcode",
-            propertyName, barcode))));
+        .next(user -> user.map(Result::succeeded)
+          .orElseGet(() ->  failedValidation(USER_BARCODE_NOT_FOUND, propertyName, barcode))));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(

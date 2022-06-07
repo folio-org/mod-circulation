@@ -17,7 +17,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -208,7 +208,7 @@ class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   private ValidationError errorForLoanPeriod(String reason) {
-    Map<String, String> parameters = new HashMap<String, String>();
+    Map<String, String> parameters = new HashMap<>();
     return new ValidationError(reason, parameters);
   }
 

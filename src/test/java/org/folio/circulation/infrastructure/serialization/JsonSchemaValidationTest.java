@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.util.UUID;
 
-import org.folio.circulation.support.BadRequestFailure;
+import org.folio.circulation.support.failures.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;

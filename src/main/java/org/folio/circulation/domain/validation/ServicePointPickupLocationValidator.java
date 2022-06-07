@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
 
 import java.lang.invoke.MethodHandles;
 

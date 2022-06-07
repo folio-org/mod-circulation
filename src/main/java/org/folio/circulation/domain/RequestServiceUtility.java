@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 
 import org.folio.circulation.domain.Request.Operation;
 import org.folio.circulation.domain.policy.RequestPolicy;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class RequestServiceUtility {

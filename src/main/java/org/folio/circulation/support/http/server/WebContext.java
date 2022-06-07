@@ -14,6 +14,7 @@ import java.util.Map;
 import org.folio.circulation.support.InvalidOkapiLocationException;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
+import org.folio.circulation.support.http.server.response.HttpResponse;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;

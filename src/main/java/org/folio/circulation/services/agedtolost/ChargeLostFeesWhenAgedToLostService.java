@@ -9,9 +9,9 @@ import static org.folio.circulation.domain.representations.LoanProperties.AGED_T
 import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
-import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.utils.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.ascending;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.lessThanOrEqualTo;
 import static org.folio.circulation.support.results.Result.failed;

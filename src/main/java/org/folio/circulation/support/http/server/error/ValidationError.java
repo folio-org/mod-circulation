@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server;
+package org.folio.circulation.support.http.server.error;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,12 +10,14 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 
 @Getter
 @EqualsAndHashCode
 public class ValidationError {
   private final String message;
   private final Map<String, String> parameters;
+  private String code;
 
   public ValidationError(String message, String key, String value) {
     this.message = message;
@@ -23,9 +25,22 @@ public class ValidationError {
     this.parameters.put(key, value);
   }
 
+  public ValidationError(String message, String key, String value, String code) {
+    this.message = message;
+    this.parameters = new HashMap<>();
+    this.parameters.put(key, value);
+    this.code = code;
+  }
+
   public ValidationError(String message, Map<String, String> parameters) {
     this.message = message;
     this.parameters = parameters;
+  }
+
+  public ValidationError(String message, Map<String, String> parameters, String code) {
+    this.message = message;
+    this.parameters = parameters;
+    this.code = code;
   }
 
   public JsonObject toJson() {
@@ -37,9 +52,11 @@ public class ValidationError {
             .put("value", parameters.get(key)))
         .collect(Collectors.toList()));
 
-    return new JsonObject()
+    JsonObject result = new JsonObject()
       .put("message", message)
       .put("parameters", mappedParameters);
+    JsonPropertyWriter.write(result, "code", code);
+    return result;
   }
 
   public boolean hasParameter(String key) {

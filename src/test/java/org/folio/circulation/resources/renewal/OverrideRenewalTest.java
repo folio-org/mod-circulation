@@ -24,7 +24,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;

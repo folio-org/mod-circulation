@@ -2,7 +2,7 @@ package org.folio.circulation.support.results;
 
 import java.util.concurrent.TimeUnit;
 
-import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.failures.HttpFailure;
 
 import lombok.SneakyThrows;
 

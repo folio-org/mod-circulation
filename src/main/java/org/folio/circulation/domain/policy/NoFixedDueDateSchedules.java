@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class NoFixedDueDateSchedules extends FixedDueDateSchedules {

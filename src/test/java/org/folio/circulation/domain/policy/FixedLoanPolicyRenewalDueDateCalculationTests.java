@@ -4,6 +4,7 @@ import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,8 +29,8 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
@@ -517,7 +518,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", null, renewalDate,
-        s -> new ValidationError(s, null, null));
+        s -> new ValidationError(s, emptyMap()));
 
     Loan loan = existingLoan();
 
@@ -534,7 +535,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
-        renewalDate, s -> new ValidationError(s, null, null));
+        renewalDate, s -> new ValidationError(s, emptyMap()));
 
     Loan loan = existingLoan();
 

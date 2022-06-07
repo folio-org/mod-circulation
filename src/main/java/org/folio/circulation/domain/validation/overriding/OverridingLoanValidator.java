@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation.overriding;
 
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
@@ -15,7 +15,7 @@ import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.ItemNotLoanableBlockOverride;
 import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class OverridingLoanValidator extends OverridingBlockValidator<LoanAndRelatedRecords> {

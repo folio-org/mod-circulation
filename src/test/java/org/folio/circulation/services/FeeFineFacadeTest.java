@@ -39,7 +39,7 @@ import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.BeforeEach;

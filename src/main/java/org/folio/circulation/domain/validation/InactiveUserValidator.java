@@ -2,7 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.PROXY_USER_BARCODE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.USER_BARCODE;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class InactiveUserValidator {

@@ -1,6 +1,6 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.failures;
 
-import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.http.server.response.JsonHttpResponse.unprocessableEntity;
 import static org.folio.circulation.support.results.Result.failed;
 
 import java.lang.invoke.MethodHandles;
@@ -12,7 +12,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.UIError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpServerResponse;
@@ -25,9 +26,14 @@ public class ValidationErrorFailure implements HttpFailure {
   private final Collection<ValidationError> errors = new ArrayList<>();
 
   public static <T> Result<T> failedValidation(String reason,
-                                               String key, String value) {
+    String key, String value) {
 
     return failedValidation(new ValidationError(reason, key, value));
+  }
+
+  public static <T> Result<T> failedValidation(UIError error, String key, String value) {
+
+    return failedValidation(new ValidationError(error.getName(), key, value, error.toString()));
   }
 
   public static <T> Result<T> failedValidation(String reason, Map<String, String> parameters) {
@@ -47,6 +53,13 @@ public class ValidationErrorFailure implements HttpFailure {
 
     return singleValidationError(
       new ValidationError(reason, propertyName, propertyValue));
+  }
+
+  public static ValidationErrorFailure singleValidationError(String reason,
+    String propertyName, String propertyValue, String code) {
+
+    return singleValidationError(
+      new ValidationError(reason, propertyName, propertyValue, code));
   }
 
   public static ValidationErrorFailure singleValidationError(ValidationError error) {

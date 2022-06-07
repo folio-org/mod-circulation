@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server;
+package org.folio.circulation.support.http.server.response;
 
 import org.folio.circulation.support.http.ContentType;
 

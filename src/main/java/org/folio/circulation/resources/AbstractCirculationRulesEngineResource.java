@@ -14,8 +14,8 @@ import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.response.ClientErrorResponse;
+import org.folio.circulation.support.http.server.response.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 

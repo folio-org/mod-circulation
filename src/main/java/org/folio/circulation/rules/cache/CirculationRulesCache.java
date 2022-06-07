@@ -17,7 +17,7 @@ import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.ExecutableRules;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 

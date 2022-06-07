@@ -20,6 +20,7 @@ import static api.support.fixtures.ConfigurationExample.utcTimezoneConfiguration
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
 import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.time.LocalTime.MIDNIGHT;
@@ -31,6 +32,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
+import static org.folio.circulation.support.http.server.error.UIError.ITEM_NOT_AVAILABLE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
@@ -605,7 +607,9 @@ class CheckOutCalculateDueDateTests extends APITests {
         .at(checkoutServicePointId));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(hasMessage("Item is not loanable")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(ITEM_NOT_AVAILABLE.getName()),
+      hasCode(ITEM_NOT_AVAILABLE))));
   }
 
   @Test

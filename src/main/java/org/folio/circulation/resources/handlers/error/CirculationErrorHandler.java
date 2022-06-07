@@ -5,7 +5,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.failures.HttpFailure;
 import org.folio.circulation.support.results.Result;
 
 import lombok.AccessLevel;

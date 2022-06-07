@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Comparator;
@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.reorder.ReorderRequest;
 import org.folio.circulation.resources.context.ReorderRequestContext;
-import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.failures.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.request.RequestHelper;
 

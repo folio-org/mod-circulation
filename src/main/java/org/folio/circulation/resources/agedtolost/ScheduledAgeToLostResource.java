@@ -9,7 +9,7 @@ import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.agedtolost.MarkOverdueLoansAsAgedLostService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.NoContentResponse;
+import org.folio.circulation.support.http.server.response.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;

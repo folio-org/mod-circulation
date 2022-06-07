@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.validation;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 
 public class CommonFailures {
   private CommonFailures() { }

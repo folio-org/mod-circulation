@@ -2,7 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
 
 import java.util.function.Function;
 

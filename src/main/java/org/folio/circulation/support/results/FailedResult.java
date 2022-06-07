@@ -1,6 +1,6 @@
 package org.folio.circulation.support.results;
 
-import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.failures.HttpFailure;
 
 public class FailedResult<T> implements Result<T> {
   private final HttpFailure cause;

@@ -1,8 +1,8 @@
-package org.folio.circulation.support;
+package org.folio.circulation.support.failures;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ForwardResponse;
+import org.folio.circulation.support.http.server.response.ForwardResponse;
 
 import io.vertx.core.http.HttpServerResponse;
 

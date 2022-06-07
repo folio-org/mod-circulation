@@ -81,7 +81,7 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Test;

@@ -11,7 +11,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +37,7 @@ class ResponseInterpretationTests {
     Result<String> result = new ResponseInterpreter<String>()
       .flatMapOn(200, response -> of(() -> "incorrect"))
       .flatMapOn(400, response -> of(() -> "correct"))
-      .apply(new Response(400, "", TEXT_PLAIN.toString()));
+      .apply(new Response(400, "", TEXT_PLAIN));
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is("correct"));
@@ -47,7 +47,7 @@ class ResponseInterpretationTests {
   void canMapToKnownResult() {
     Result<String> result = new ResponseInterpreter<String>()
       .on(200, of(() -> "correct"))
-      .apply(new Response(200, "", TEXT_PLAIN.toString()));
+      .apply(new Response(200, "", TEXT_PLAIN));
 
     assertThat(result.succeeded(), is(true));
     assertThat(result.value(), is("correct"));
@@ -124,7 +124,7 @@ class ResponseInterpretationTests {
   }
 
   private Response serverError() {
-    return new Response(500, "Something went wrong", TEXT_PLAIN.toString(),
+    return new Response(500, "Something went wrong", TEXT_PLAIN,
       caseInsensitiveMultiMap(), "http://failing.com");
   }
 }

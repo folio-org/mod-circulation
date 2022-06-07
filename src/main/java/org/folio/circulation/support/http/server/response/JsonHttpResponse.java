@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server;
+package org.folio.circulation.support.http.server.response;
 
 import static io.vertx.core.buffer.Buffer.buffer;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;

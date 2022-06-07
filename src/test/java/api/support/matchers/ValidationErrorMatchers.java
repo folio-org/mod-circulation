@@ -20,9 +20,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.error.UIError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
@@ -34,7 +35,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<JsonObject>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -54,7 +55,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<HttpFailure> isErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -149,6 +150,24 @@ public class ValidationErrorMatchers {
     };
   }
 
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasCode(UIError code) {
+    return new TypeSafeDiagnosingMatcher<>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has code ").appendValue(code.toString());
+      }
+
+      @Override
+      protected boolean matchesSafely(ValidationError error, Description description) {
+        final Matcher<Object> matcher = hasProperty("code", equalTo(code.toString()));
+
+        matcher.describeMismatch(error, description);
+
+        return matcher.matches(error);
+      }
+    };
+  }
+
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrors(int numberOfErrors) {
     return new TypeSafeDiagnosingMatcher<>() {
       @Override
@@ -181,7 +200,9 @@ public class ValidationErrorMatchers {
         p -> p.getString("key"),
         p -> p.getString("value")));
 
-    return new ValidationError(getProperty(representation, "message"), parameters);
+//    CheckoutUIError code = CheckoutUIError.valueOf(getProperty(representation, "code"));
+    return new ValidationError(getProperty(representation, "message"), parameters,
+      getProperty(representation, "code"));
   }
 
   public static List<ValidationError> errorsFromJson(JsonObject representation) {

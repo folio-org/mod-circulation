@@ -8,8 +8,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_PUBLISH_CHECKOUT_EVENT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_SAVE_SESSION_RECORD;
-import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
-import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
+import static org.folio.circulation.support.http.server.response.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.server.response.JsonHttpResponse.ok;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -49,7 +49,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.HttpResponse;
+import org.folio.circulation.support.http.server.response.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 

@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.failures.HttpFailure;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 

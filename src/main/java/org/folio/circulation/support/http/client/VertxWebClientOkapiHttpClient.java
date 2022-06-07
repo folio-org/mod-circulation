@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.failures.ServerErrorFailure;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.core.AsyncResult;

@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server;
+package org.folio.circulation.support.http.server.error;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.folio.circulation.support.http.server.error.ValidationError;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
@@ -20,14 +21,14 @@ public class BlockOverrideError extends ValidationError {
   public BlockOverrideError(ValidationError validationError,
     OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
 
-    this(validationError.getMessage(), validationError.getParameters(),
+    this(validationError.getMessage(), validationError.getParameters(), validationError.getCode(),
       blockType, missingOverridePermissions);
   }
 
-  public BlockOverrideError(String message, Map<String, String> parameters,
+  public BlockOverrideError(String message, Map<String, String> parameters, String code,
     OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
 
-    super(message, parameters);
+    super(message, parameters, code);
     this.blockType = blockType;
     this.missingOverridePermissions = missingOverridePermissions;
   }

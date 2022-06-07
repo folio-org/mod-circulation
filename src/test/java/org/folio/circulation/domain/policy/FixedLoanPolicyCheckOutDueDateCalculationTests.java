@@ -2,6 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static java.time.ZoneOffset.UTC;
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -10,7 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
@@ -281,7 +282,7 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
   void shouldFailWhenSchedulesCollectionIsNull() {
     final FixedScheduleCheckOutDueDateStrategy calculator =
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", null, s -> new ValidationError(s, null, null));
+        "Example Fixed Schedule Loan Policy", null, s -> new ValidationError(s, emptyMap()));
 
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
@@ -299,7 +300,7 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
     final FixedScheduleCheckOutDueDateStrategy calculator =
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
-        s -> new ValidationError(s, null, null));
+        s -> new ValidationError(s, emptyMap()));
 
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 

@@ -2,13 +2,13 @@ package org.folio.circulation.domain.validation.overriding;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSUFFICIENT_OVERRIDE_PERMISSIONS;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.OverridableBlockType;
-import org.folio.circulation.support.http.server.InsufficientOverridePermissionsError;
+import org.folio.circulation.support.http.server.error.InsufficientOverridePermissionsError;
 import org.folio.circulation.support.http.OkapiPermissions;
 
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.of;
@@ -22,8 +22,8 @@ import org.folio.circulation.domain.UserManualBlock;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.FindWithCqlQuery;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class UserManualBlocksValidator {

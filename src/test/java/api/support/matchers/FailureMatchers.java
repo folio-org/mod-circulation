@@ -1,7 +1,7 @@
 package api.support.matchers;
 
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.failures.ValidationErrorFailure;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
@@ -9,7 +9,7 @@ public class FailureMatchers {
   public static <T> TypeSafeDiagnosingMatcher<Result<T>> errorResultFor(
     String propertyName,
     String reason) {
-    return new TypeSafeDiagnosingMatcher<Result<T>>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendValue(reason)

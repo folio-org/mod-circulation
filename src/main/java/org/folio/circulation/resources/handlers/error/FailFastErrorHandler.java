@@ -4,7 +4,7 @@ import static java.util.Collections.emptyMap;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.failures.HttpFailure;
 import org.folio.circulation.support.results.Result;
 
 public class FailFastErrorHandler extends CirculationErrorHandler {
