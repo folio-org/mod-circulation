@@ -35,7 +35,7 @@ public class ItemLimitValidator {
   }
 
   public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
-    this(message -> singleValidationError(message, ITEM_BARCODE,//
+    this(message -> singleValidationError(message, ITEM_BARCODE,
       request.getItemBarcode(), PATRON_BLOCK_LIMIT_REACHED.toString()), loanRepository);
   }
 
@@ -53,8 +53,8 @@ public class ItemLimitValidator {
       .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
         ruleConditions -> {
           String message = getErrorMessage(ruleConditions);
-          return itemLimitErrorFunction.apply(String.format(PATRON_BLOCK_LIMIT_REACHED.getName() + " %d items %s",
-            itemLimit, message));
+          return itemLimitErrorFunction.apply(String.format("%s %d items %s",
+            PATRON_BLOCK_LIMIT_REACHED.getName(), itemLimit, message));
         }))
       .thenApply(result -> result.map(v -> records));
   }

@@ -4,7 +4,6 @@ import static java.util.Collections.emptyMap;
 
 import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.error.BlockOverrideError;
 
 public class InsufficientOverridePermissionsError extends BlockOverrideError {
 

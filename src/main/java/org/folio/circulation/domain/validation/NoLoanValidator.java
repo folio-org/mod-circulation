@@ -19,7 +19,7 @@ public class NoLoanValidator {
   public Result<Optional<Loan>> failWhenNoLoan(
     Result<Optional<Loan>> result) {
 
-    return result.failWhen(loan -> of(() -> loan.isEmpty()),
+    return result.failWhen(loan -> of(loan::isEmpty),
       loans -> failureSupplier.get());
   }
 }

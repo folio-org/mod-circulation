@@ -10,7 +10,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.folio.circulation.support.http.server.error.ValidationError;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
