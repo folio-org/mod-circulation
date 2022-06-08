@@ -1468,7 +1468,8 @@
         "automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "overdue-fines-policies.item.get",
-        "lost-item-fees-policies.item.get"
+        "lost-item-fees-policies.item.get",
+        "manualblocks.collection.get"
       ],
       "visible": false
     },
