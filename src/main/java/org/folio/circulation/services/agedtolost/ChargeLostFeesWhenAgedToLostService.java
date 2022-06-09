@@ -196,6 +196,9 @@ public class ChargeLostFeesWhenAgedToLostService {
       .withFeeFineOwner(loanToCharge.getOwner())
       .withLoan(loanToCharge.getLoan())
       .withItem(loanToCharge.getLoan().getItem())
+      .withLoanPolicyId(loanToCharge.getLoan().getLoanPolicyId())
+      .withOverdueFinePolicyId(loanToCharge.getLoan().getOverdueFinePolicyId())
+      .withLostItemFeePolicyId(loanToCharge.getLoan().getLostItemPolicyId())
       .build();
   }
 
