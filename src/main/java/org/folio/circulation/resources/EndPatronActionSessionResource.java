@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.http.server.response.NoContentResponse.noContent;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 
 import java.util.List;
 

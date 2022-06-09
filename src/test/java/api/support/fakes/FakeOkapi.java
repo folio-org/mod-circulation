@@ -12,8 +12,8 @@ import static api.support.fakes.StorageSchema.validatorForStorageItemSchema;
 import static api.support.fakes.StorageSchema.validatorForStorageLoanSchema;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.support.http.server.response.ForwardResponse.forward;
-import static org.folio.circulation.support.http.server.response.NoContentResponse.noContent;
+import static org.folio.circulation.support.http.server.ForwardResponse.forward;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
 

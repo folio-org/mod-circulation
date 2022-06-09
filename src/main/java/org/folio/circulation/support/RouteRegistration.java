@@ -1,7 +1,7 @@
 package org.folio.circulation.support;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.support.http.server.response.ServerErrorResponse;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;

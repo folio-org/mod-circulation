@@ -8,7 +8,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.agedtolost.ChargeLostFeesWhenAgedToLostService;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.response.NoContentResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;

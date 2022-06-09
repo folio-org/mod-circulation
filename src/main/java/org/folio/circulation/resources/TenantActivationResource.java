@@ -1,13 +1,13 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.support.http.server.response.JsonHttpResponse.created;
-import static org.folio.circulation.support.http.server.response.NoContentResponse.noContent;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 
 import java.util.Map;
 
 import org.folio.circulation.services.PubSubRegistrationService;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.response.ServerErrorResponse;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.json.JsonObject;

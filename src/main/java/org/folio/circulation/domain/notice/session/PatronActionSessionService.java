@@ -4,7 +4,7 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
-import static org.folio.circulation.support.utils.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 import static org.folio.circulation.support.results.Result.of;

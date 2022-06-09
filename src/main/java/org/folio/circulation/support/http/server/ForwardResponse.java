@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server.response;
+package org.folio.circulation.support.http.server;
 
 import org.folio.circulation.support.http.client.Response;
 

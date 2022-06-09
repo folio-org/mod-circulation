@@ -3,7 +3,7 @@ package api.support.fakes;
 import static api.support.fakes.Storage.getStorage;
 import static api.support.fakes.StorageSchema.validatorForFeeFineCancelOperationSchema;
 import static api.support.fakes.StorageSchema.validatorForFeeFineOperationSchema;
-import static org.folio.circulation.support.http.server.response.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;

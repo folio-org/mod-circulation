@@ -1,6 +1,6 @@
 package org.folio.circulation.support;
 
-import org.folio.circulation.support.http.server.response.ClientErrorResponse;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
 
 import io.vertx.core.http.HttpServerResponse;
 

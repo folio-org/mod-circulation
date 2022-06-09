@@ -1,4 +1,4 @@
-package org.folio.circulation.support.utils;
+package org.folio.circulation.support;
 
 import java.util.Collection;
 import java.util.List;

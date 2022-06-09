@@ -5,10 +5,10 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.support.http.server.response.JsonHttpResponse.ok;
-import static org.folio.circulation.support.http.server.response.JsonHttpResponse.unprocessableEntity;
-import static org.folio.circulation.support.http.server.response.NoContentResponse.noContent;
-import static org.folio.circulation.support.http.server.response.ServerErrorResponse.internalError;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.of;
 
@@ -34,7 +34,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.response.ForwardResponse;
+import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 

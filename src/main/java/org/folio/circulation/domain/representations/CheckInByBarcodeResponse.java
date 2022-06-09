@@ -2,11 +2,11 @@ package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createCheckInContext;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.http.server.response.JsonHttpResponse.ok;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.LoanRepresentation;
-import org.folio.circulation.support.http.server.response.HttpResponse;
+import org.folio.circulation.support.http.server.HttpResponse;
 
 import io.vertx.core.json.JsonObject;
 

@@ -46,8 +46,8 @@ import org.folio.circulation.services.ItemForPageTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.response.JsonHttpResponse;
-import org.folio.circulation.support.http.server.response.NoContentResponse;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;

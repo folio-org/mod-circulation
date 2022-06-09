@@ -4,7 +4,7 @@ import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_F
 import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_RETURNED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
-import static org.folio.circulation.support.utils.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
