@@ -283,8 +283,10 @@ public class LostItemFeeChargingService {
         //TODO check creation
         actualCostRecord.withEffectiveCallNumber(loan.getItem().getCallNumber());
         actualCostRecord.withPermanentItemLocation(loan.getItem().getPermanentLocation().getName());
-        actualCostRecord.withFeeFineOwnerId(context.feeFineOwner.getId());
-        actualCostRecord.withFeeFineOwner(context.feeFineOwner.getOwner());
+        actualCostRecord.withFeeFineOwnerId(context.feeFineOwner == null
+          ? null : context.feeFineOwner.getId());
+        actualCostRecord.withFeeFineOwner(context.feeFineOwner == null
+          ? null : context.feeFineOwner.getOwner());
         //TODO check how to deal with id
         actualCostRecord.withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_FEE_TYPE);
         actualCostRecord.withFeeFineType(LOST_ITEM_FEE_ACTUAL_FEE_TYPE);
