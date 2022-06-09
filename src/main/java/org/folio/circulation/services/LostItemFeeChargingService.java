@@ -221,6 +221,9 @@ public class LostItemFeeChargingService {
       .withFeeFineOwner(context.feeFineOwner)
       .withLoan(context.loan)
       .withItem(context.loan.getItem())
+      .withLoanPolicyId(context.loan.getLoanPolicyId())
+      .withOverdueFinePolicyId(context.loan.getOverdueFinePolicyId())
+      .withLostItemFeePolicyId(context.loan.getLostItemPolicyId())
       .build();
   }
 

@@ -39,7 +39,10 @@ public class OverdueFineMatcher {
       hasJsonPath("loanId", UUIDMatcher.is(getUUIDProperty(loan, "id"))),
       hasJsonPath("userId", is(loan.getString("userId"))),
       hasJsonPath("itemId", UUIDMatcher.is(item.getId())),
-      hasJsonPath("dueDate", is(loan.getString(LoanProperties.DUE_DATE)))
+      hasJsonPath("dueDate", is(loan.getString(LoanProperties.DUE_DATE))),
+      hasJsonPath("loanPolicyId", is(loan.getString("loanPolicyId"))),
+      hasJsonPath("overdueFinePolicyId", is(loan.getString("overdueFinePolicyId"))),
+      hasJsonPath("lostItemFeePolicyId", is(loan.getString("lostItemPolicyId")))
     ));
 
     if (loan.getString(LoanProperties.RETURN_DATE) != null) {
