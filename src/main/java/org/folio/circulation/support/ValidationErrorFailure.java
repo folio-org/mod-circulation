@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.support.http.server.UIError;
+import org.folio.circulation.support.http.server.RepresentationError;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -31,8 +31,8 @@ public class ValidationErrorFailure implements HttpFailure {
     return failedValidation(new ValidationError(reason, key, value));
   }
 
-  public static <T> Result<T> failedValidation(UIError error, String key, String value) {
-    return failedValidation(new ValidationError(error.getName(), key, value, error.toString()));
+  public static <T> Result<T> failedValidation(RepresentationError error, String key, String value) {
+    return failedValidation(new ValidationError(error.getDescription(), key, value, error.toString()));
   }
 
   public static <T> Result<T> failedValidation(String reason, Map<String, String> parameters) {

@@ -32,7 +32,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.support.http.server.UIError.ITEM_NOT_AVAILABLE;
+import static org.folio.circulation.support.http.server.RepresentationError.ITEM_NOT_AVAILABLE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
@@ -608,7 +608,7 @@ class CheckOutCalculateDueDateTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(ITEM_NOT_AVAILABLE.getName()),
+      hasMessage(ITEM_NOT_AVAILABLE.getDescription()),
       hasCode(ITEM_NOT_AVAILABLE))));
   }
 
