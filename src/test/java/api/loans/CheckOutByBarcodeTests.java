@@ -62,10 +62,10 @@ import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
-import static org.folio.circulation.support.http.server.RepresentationError.ITEM_HAS_OPEN_LOAN;
-import static org.folio.circulation.support.http.server.RepresentationError.ITEM_NOT_AVAILABLE;
-import static org.folio.circulation.support.http.server.RepresentationError.PATRON_BLOCK_LIMIT_REACHED;
-import static org.folio.circulation.support.http.server.RepresentationError.USER_BARCODE_NOT_FOUND;
+import static org.folio.circulation.support.http.server.ErrorCode.ITEM_HAS_OPEN_LOAN;
+import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_AVAILABLE;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED;
+import static org.folio.circulation.support.http.server.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
@@ -439,7 +439,7 @@ class CheckOutByBarcodeTests extends APITests {
     final Response response = checkOutFixture.attemptCheckOutByBarcode(smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(USER_BARCODE_NOT_FOUND.getDescription()),
+      hasMessage("Could not find user with matching barcode"),
       hasCode(USER_BARCODE_NOT_FOUND),
       hasUserBarcodeParameter(steve))));
   }
@@ -579,7 +579,7 @@ class CheckOutByBarcodeTests extends APITests {
       smallAngryPlanet, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(ITEM_HAS_OPEN_LOAN.getDescription()),
+      hasMessage("Cannot check out item that already has an open loan"),
       hasCode(ITEM_HAS_OPEN_LOAN),
       hasItemBarcodeParameter(smallAngryPlanet))));
   }
@@ -1012,7 +1012,7 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(nod, steve);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(ITEM_NOT_AVAILABLE.getDescription()),
+      hasMessage("Item is not loanable"),
       hasCode(ITEM_NOT_AVAILABLE),
       hasItemBarcodeParameter(nod),
       hasLoanPolicyParameters(notLoanablePolicy))));
@@ -1109,7 +1109,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription() + " 1 items for material type"),
+      hasMessage("Patron has reached maximum limit of 1 items for material type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1137,7 +1137,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription() + " 1 items for loan type"),
+      hasMessage("Patron has reached maximum limit of 1 items for loan type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1166,8 +1166,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription()
-        + " 1 items for combination of material type and loan type"),
+      hasMessage("Patron has reached maximum limit of 1 items for combination of " +
+        "material type and loan type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1199,8 +1199,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription()
-        + " 1 items for combination of patron group, material type and loan type"),
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group," +
+        " material type and loan type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1241,8 +1241,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription()
-        + " 1 items for combination of patron group, material type and loan type"),
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, " +
+        "material type and loan type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1271,7 +1271,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription() + " 1 items for material type"),
+      hasMessage("Patron has reached maximum limit of 1 items for material type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1296,7 +1296,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription() + " 1 items for material type"),
+      hasMessage("Patron has reached maximum limit of 1 items for material type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
 
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
@@ -1324,7 +1324,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription() + " 1 items for material type"),
+      hasMessage("Patron has reached maximum limit of 1 items for material type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
 
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
@@ -1525,7 +1525,7 @@ class CheckOutByBarcodeTests extends APITests {
       smallAngryPlanet, steve);
 
     assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
-      hasMessage(USER_BARCODE_NOT_FOUND.getDescription()),
+      hasMessage("Could not find user with matching barcode"),
       hasCode(USER_BARCODE_NOT_FOUND),
       hasUserBarcodeParameter(steve))));
 
@@ -1534,7 +1534,7 @@ class CheckOutByBarcodeTests extends APITests {
       hasItemBarcodeParameter(smallAngryPlanet))));
 
     assertThat(secondCheckoutResponse.getJson(), hasErrorWith(allOf(
-      hasMessage(ITEM_HAS_OPEN_LOAN.getDescription()),
+      hasMessage("Cannot check out item that already has an open loan"),
       hasCode(ITEM_HAS_OPEN_LOAN),
       hasItemBarcodeParameter(smallAngryPlanet))));
   }
@@ -1553,7 +1553,7 @@ class CheckOutByBarcodeTests extends APITests {
         .on(TEST_LOAN_DATE), okapiHeaders);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(ITEM_NOT_AVAILABLE.getDescription()),
+      hasMessage("Item is not loanable"),
       hasCode(ITEM_NOT_AVAILABLE),
       hasParameter("loanPolicyName", "Not Loanable Policy"))));
   }
@@ -1797,7 +1797,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage(PATRON_BLOCK_LIMIT_REACHED.getDescription() + " 1 items for material type"),
+      hasMessage("Patron has reached maximum limit of 1 items for material type"),
       hasCode(PATRON_BLOCK_LIMIT_REACHED))));
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
@@ -1838,7 +1838,7 @@ class CheckOutByBarcodeTests extends APITests {
       okapiHeaders);
 
     assertThat(responseBlocked.getJson(), hasErrorWith(allOf(
-      hasMessage(ITEM_NOT_AVAILABLE.getDescription()),
+      hasMessage("Item is not loanable"),
       hasCode(ITEM_NOT_AVAILABLE),
       hasParameter("loanPolicyName", "Not Loanable Policy"))));
 
@@ -1986,7 +1986,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(response.getJson(), hasErrorWith(hasMessage("Item is already checked out")));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEM_HAS_OPEN_LOAN.getDescription())));
+    assertThat(response.getJson(), hasErrorWith(hasMessage("Cannot check out item that already has an open loan")));
     assertThat(response.getJson(), hasErrorWith(hasCode(ITEM_HAS_OPEN_LOAN)));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));

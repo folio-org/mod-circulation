@@ -24,7 +24,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.http.server.RepresentationError.ITEM_HAS_OPEN_LOAN;
+import static org.folio.circulation.support.http.server.ErrorCode.ITEM_HAS_OPEN_LOAN;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

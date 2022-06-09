@@ -4,7 +4,7 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.http.server.RepresentationError.USER_BARCODE_NOT_FOUND;
+import static org.folio.circulation.support.http.server.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -162,7 +162,8 @@ public class UserRepository {
         .map(MultipleRecords::getRecords)
         .map(users -> users.stream().findFirst())
         .next(user -> user.map(Result::succeeded)
-          .orElseGet(() ->  failedValidation(USER_BARCODE_NOT_FOUND, propertyName, barcode))));
+          .orElseGet(() ->  failedValidation("Could not find user with matching barcode",
+            propertyName, barcode, USER_BARCODE_NOT_FOUND))));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(

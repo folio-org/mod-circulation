@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.RepresentationError;
+import org.folio.circulation.support.http.server.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -150,7 +150,7 @@ public class ValidationErrorMatchers {
     };
   }
 
-  public static TypeSafeDiagnosingMatcher<ValidationError> hasCode(RepresentationError code) {
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasCode(ErrorCode code) {
     return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {

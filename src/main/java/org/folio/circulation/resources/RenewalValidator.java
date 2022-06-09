@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.http.server.RepresentationError;
+import org.folio.circulation.support.http.server.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -70,12 +70,12 @@ public final class RenewalValidator {
   }
 
   public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
-    RepresentationError error, Map<String, String> additionalParameters) {
+    String message, Map<String, String> additionalParameters, ErrorCode errorCode) {
 
     Map<String, String> parameters = new HashMap<>(additionalParameters);
     parameters.put("loanPolicyId", loanPolicy.getId());
     parameters.put("loanPolicyName", loanPolicy.getName());
-    return new ValidationError(error.getDescription(), parameters, error.toString());
+    return new ValidationError(message, parameters, errorCode.toString());
   }
 
   public static ValidationError errorForNotMatchingOverrideCases(LoanPolicy loanPolicy) {

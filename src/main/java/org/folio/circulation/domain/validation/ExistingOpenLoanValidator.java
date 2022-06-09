@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.http.server.RepresentationError.ITEM_HAS_OPEN_LOAN;
+import static org.folio.circulation.support.http.server.ErrorCode.ITEM_HAS_OPEN_LOAN;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.concurrent.CompletableFuture;
@@ -28,7 +28,7 @@ public class ExistingOpenLoanValidator {
 
     return ofAsync(() -> loanAndRelatedRecords.getLoan().getItemId())
       .thenComposeAsync(result -> result.failAfter(loanRepository::hasOpenLoan,
-        v -> existingOpenLoanErrorFunction.apply(ITEM_HAS_OPEN_LOAN.getDescription())))
+        v -> existingOpenLoanErrorFunction.apply("Cannot check out item that already has an open loan")))
       .thenApply(result -> result.map(v -> loanAndRelatedRecords));
   }
 }

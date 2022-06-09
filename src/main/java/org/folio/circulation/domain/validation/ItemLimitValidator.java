@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
-import static org.folio.circulation.support.http.server.RepresentationError.PATRON_BLOCK_LIMIT_REACHED;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -53,8 +53,8 @@ public class ItemLimitValidator {
       .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
         ruleConditions -> {
           String message = getErrorMessage(ruleConditions);
-          return itemLimitErrorFunction.apply(String.format("%s %d items %s",
-            PATRON_BLOCK_LIMIT_REACHED.getDescription(), itemLimit, message));
+          return itemLimitErrorFunction.apply(
+            String.format("Patron has reached maximum limit of %d items %s", itemLimit, message));
         }))
       .thenApply(result -> result.map(v -> records));
   }
