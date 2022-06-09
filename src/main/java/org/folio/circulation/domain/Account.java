@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.folio.circulation.support.JsonPropertyWriter;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;

@@ -4,7 +4,7 @@ import static api.support.APITestContext.getTenantId;
 import static api.support.fakes.Storage.getStorage;
 import static api.support.http.InterfaceUrls.holdingsStorageUrl;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.util.Arrays;

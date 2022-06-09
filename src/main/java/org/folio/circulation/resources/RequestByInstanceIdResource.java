@@ -15,7 +15,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;

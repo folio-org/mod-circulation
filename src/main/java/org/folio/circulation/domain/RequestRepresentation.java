@@ -7,7 +7,7 @@ import static org.folio.circulation.domain.representations.CallNumberComponentsR
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.copyProperty;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
 import java.lang.invoke.MethodHandles;

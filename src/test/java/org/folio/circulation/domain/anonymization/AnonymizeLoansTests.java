@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.anonymization;
 
-import static org.folio.circulation.support.JsonPropertyWriter.write;
-import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 

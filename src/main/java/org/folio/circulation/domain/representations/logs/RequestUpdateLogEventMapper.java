@@ -8,7 +8,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.REQUESTS;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SOURCE;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.List;
 import java.util.stream.Collectors;

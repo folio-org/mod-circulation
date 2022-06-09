@@ -10,7 +10,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.folio.circulation.support.JsonPropertyWriter;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 
 @Getter
 @EqualsAndHashCode

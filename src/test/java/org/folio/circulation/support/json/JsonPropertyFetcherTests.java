@@ -1,7 +1,7 @@
 package org.folio.circulation.support.json;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
-import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

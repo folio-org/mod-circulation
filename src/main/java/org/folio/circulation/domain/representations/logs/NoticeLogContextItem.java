@@ -9,7 +9,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.TEMPLATE_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.TRIGGERING_EVENT;
-import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
