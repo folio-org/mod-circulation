@@ -11,7 +11,7 @@ import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.Collection;
 import java.util.Optional;

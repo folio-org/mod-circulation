@@ -1,9 +1,9 @@
-package org.folio.circulation.support.json;
+package org.folio.circulation.support;
 
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static org.folio.circulation.support.StreamToListMapper.toList;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

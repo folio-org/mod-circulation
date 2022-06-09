@@ -46,9 +46,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
+import static org.folio.circulation.support.JsonPropertyWriter.remove;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.CommonUtils.executeIfNotNull;

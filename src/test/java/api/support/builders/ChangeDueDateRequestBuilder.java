@@ -1,6 +1,6 @@
 package api.support.builders;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;

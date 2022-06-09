@@ -5,7 +5,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.List;
 import java.util.stream.Collectors;

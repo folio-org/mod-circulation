@@ -5,8 +5,8 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedObject;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.writeNamedObject;
 
 import java.util.Comparator;
 import java.util.List;

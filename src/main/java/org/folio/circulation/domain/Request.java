@@ -28,7 +28,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.STA
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.time.ZoneId;

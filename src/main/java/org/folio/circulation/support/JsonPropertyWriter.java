@@ -1,4 +1,4 @@
-package org.folio.circulation.support.json;
+package org.folio.circulation.support;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 

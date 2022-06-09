@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
 import java.time.LocalDate;

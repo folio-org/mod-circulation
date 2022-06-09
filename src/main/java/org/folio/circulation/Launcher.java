@@ -1,6 +1,6 @@
 package org.folio.circulation;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;

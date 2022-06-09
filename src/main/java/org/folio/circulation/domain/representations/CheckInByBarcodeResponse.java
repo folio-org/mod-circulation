@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createCheckInContext;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 
 import org.folio.circulation.domain.CheckInContext;

@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.time.ZoneOffset.UTC;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZoneId;

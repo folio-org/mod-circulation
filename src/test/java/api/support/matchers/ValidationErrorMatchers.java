@@ -200,7 +200,6 @@ public class ValidationErrorMatchers {
         p -> p.getString("key"),
         p -> p.getString("value")));
 
-//    CheckoutUIError code = CheckoutUIError.valueOf(getProperty(representation, "code"));
     return new ValidationError(getProperty(representation, "message"), parameters,
       getProperty(representation, "code"));
   }

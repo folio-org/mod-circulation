@@ -25,7 +25,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_UPDATED;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;

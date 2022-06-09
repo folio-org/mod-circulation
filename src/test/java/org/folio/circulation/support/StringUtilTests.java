@@ -1,4 +1,4 @@
-package org.folio.circulation.support.utils;
+package org.folio.circulation.support;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -6,7 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.charset.StandardCharsets;
 
-import org.folio.circulation.support.utils.StringUtil;
+import org.folio.circulation.support.StringUtil;
 import org.folio.rest.testing.UtilityClassTester;
 import org.junit.jupiter.api.Test;
 

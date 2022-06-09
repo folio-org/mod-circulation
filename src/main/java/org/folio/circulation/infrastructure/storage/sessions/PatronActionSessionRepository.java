@@ -12,7 +12,7 @@ import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJso
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;

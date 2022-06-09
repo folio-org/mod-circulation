@@ -1,6 +1,6 @@
 package org.folio.circulation.services.feefine;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AccessLevel;

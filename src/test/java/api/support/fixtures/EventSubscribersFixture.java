@@ -2,7 +2,7 @@ package api.support.fixtures;
 
 import static api.support.APITestContext.circulationModuleUrl;
 import static api.support.RestAssuredClient.defaultRestAssuredClient;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 

@@ -1,4 +1,4 @@
-package org.folio.circulation.support.utils;
+package org.folio.circulation.support;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

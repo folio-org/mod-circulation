@@ -1,7 +1,7 @@
 package org.folio.circulation.infrastructure.storage.notes;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.List;
 import java.util.stream.Collectors;

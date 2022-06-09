@@ -34,7 +34,7 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.json.JsonPropertyWriter;
+import org.folio.circulation.support.JsonPropertyWriter;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.params.ParameterizedTest;

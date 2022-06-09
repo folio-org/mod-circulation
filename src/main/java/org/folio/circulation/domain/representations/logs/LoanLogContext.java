@@ -14,7 +14,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 
 import java.time.ZonedDateTime;

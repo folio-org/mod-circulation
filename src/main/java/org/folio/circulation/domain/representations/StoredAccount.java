@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.JsonPropertyWriter.write;
 
 import java.util.UUID;
 

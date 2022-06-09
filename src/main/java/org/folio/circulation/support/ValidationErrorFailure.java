@@ -32,7 +32,6 @@ public class ValidationErrorFailure implements HttpFailure {
   }
 
   public static <T> Result<T> failedValidation(UIError error, String key, String value) {
-
     return failedValidation(new ValidationError(error.getName(), key, value, error.toString()));
   }
 
