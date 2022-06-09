@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLongProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.failed;
@@ -18,7 +18,7 @@ import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 

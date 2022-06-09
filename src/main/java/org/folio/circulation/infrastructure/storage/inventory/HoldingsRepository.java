@@ -1,6 +1,6 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;

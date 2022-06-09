@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.time.ZonedDateTime;
 import java.util.function.Function;

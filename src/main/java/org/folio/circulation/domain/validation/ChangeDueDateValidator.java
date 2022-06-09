@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class ChangeDueDateValidator {

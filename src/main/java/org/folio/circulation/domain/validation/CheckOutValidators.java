@@ -23,7 +23,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.error.UIError.ITEM_HAS_OPEN_LOAN;
 
 import java.util.Optional;
@@ -40,7 +40,7 @@ import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksReposit
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.results.Result;
 

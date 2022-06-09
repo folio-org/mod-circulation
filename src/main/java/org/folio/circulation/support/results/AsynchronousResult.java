@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.HttpFailure;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

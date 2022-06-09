@@ -2,7 +2,7 @@ package org.folio.circulation.support.results;
 
 import static org.folio.circulation.support.results.Result.failed;
 
-import org.folio.circulation.support.failures.ServerErrorFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 
 class ResultExamples {
   static Result<Integer> alreadyFailed() {

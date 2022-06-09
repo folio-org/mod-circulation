@@ -2,7 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 

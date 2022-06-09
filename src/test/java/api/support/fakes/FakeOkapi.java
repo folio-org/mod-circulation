@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;

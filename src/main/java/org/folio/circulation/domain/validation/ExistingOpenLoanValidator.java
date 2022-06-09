@@ -9,7 +9,7 @@ import java.util.function.Function;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ExistingOpenLoanValidator {
   private final Function<String, ValidationErrorFailure> existingOpenLoanErrorFunction;

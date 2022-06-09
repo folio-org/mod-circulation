@@ -9,7 +9,7 @@ import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE
 import static org.folio.circulation.services.LostItemFeeRefundContext.forCheckIn;
 import static org.folio.circulation.services.LostItemFeeRefundContext.forRenewal;
 import static org.folio.circulation.support.utils.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;

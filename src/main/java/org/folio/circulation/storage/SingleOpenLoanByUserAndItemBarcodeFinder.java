@@ -1,6 +1,6 @@
 package org.folio.circulation.storage;
 
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;

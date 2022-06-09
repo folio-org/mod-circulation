@@ -7,7 +7,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ServicePointOfCheckoutPresentValidator {
   private final Function<String, ValidationErrorFailure> servicePointOfCheckoutPresentFuntion;

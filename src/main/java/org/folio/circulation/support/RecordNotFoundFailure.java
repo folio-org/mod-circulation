@@ -1,4 +1,4 @@
-package org.folio.circulation.support.failures;
+package org.folio.circulation.support;
 
 import org.folio.circulation.support.http.server.response.ClientErrorResponse;
 

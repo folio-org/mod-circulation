@@ -40,7 +40,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.failures.ServerErrorFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
 import org.folio.circulation.support.fetching.CqlQueryFinder;

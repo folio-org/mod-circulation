@@ -9,8 +9,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import org.folio.circulation.support.failures.HttpFailure;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;

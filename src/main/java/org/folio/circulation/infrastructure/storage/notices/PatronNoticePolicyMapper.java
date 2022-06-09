@@ -19,8 +19,8 @@ import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.failures.HttpFailure;
-import org.folio.circulation.support.failures.ServerErrorFailure;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;

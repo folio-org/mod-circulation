@@ -13,7 +13,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 
 public class ItemStatusValidator {
   private final Function<Item, ValidationErrorFailure> itemStatusErrorFunction;

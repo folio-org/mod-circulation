@@ -20,8 +20,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.support.failures.HttpFailure;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.error.UIError;
 import org.folio.circulation.support.http.server.error.ValidationError;
 import org.hamcrest.Description;

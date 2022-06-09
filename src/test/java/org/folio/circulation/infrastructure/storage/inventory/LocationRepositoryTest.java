@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mock;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.failures.ServerErrorFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 

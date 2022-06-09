@@ -29,7 +29,7 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.failures.RecordNotFoundFailure;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 

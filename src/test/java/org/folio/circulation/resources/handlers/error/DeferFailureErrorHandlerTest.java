@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collection;
 import java.util.List;
 
-import org.folio.circulation.support.failures.HttpFailure;
-import org.folio.circulation.support.failures.ServerErrorFailure;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;

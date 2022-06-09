@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.User;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 

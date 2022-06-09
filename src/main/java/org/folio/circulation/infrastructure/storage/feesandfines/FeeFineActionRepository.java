@@ -15,7 +15,7 @@ import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
-import org.folio.circulation.support.failures.RecordNotFoundFailure;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;

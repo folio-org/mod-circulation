@@ -17,7 +17,7 @@ import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.failures.ForwardOnFailure;
+import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;

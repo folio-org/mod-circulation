@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.folio.circulation.domain.override.OverridableBlockType;
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.error.BlockOverrideError;
 import org.folio.circulation.support.http.server.error.ValidationError;

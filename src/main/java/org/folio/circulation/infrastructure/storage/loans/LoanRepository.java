@@ -55,7 +55,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.failures.RecordNotFoundFailure;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.GetManyRecordsRepository;
 import org.folio.circulation.support.http.client.CqlQuery;

@@ -2,7 +2,7 @@ package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.domain.OpeningDay.createClosedDay;
 import static org.folio.circulation.domain.OpeningDay.fromJsonByDefaultKey;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
 import java.time.LocalDate;
 import java.time.ZoneId;

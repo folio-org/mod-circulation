@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.notes;
 
-import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.Optional;
 

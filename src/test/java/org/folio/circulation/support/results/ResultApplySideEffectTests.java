@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.awaitility.Awaitility;
-import org.folio.circulation.support.failures.HttpFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.junit.jupiter.api.Test;
 
 class ResultApplySideEffectTests {

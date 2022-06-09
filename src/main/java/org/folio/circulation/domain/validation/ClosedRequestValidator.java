@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.util.concurrent.CompletableFuture;
 

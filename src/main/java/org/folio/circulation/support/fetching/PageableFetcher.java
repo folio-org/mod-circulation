@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.failures.ServerErrorFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.PageLimit;

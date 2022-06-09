@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.time.ZonedDateTime;

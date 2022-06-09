@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import static org.folio.circulation.support.StreamToListMapper.toList;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;

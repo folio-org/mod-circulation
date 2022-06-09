@@ -3,7 +3,7 @@ package api.support.matchers;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItems;
 
-import org.folio.circulation.support.failures.ValidationErrorFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.error.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.hamcrest.Description;

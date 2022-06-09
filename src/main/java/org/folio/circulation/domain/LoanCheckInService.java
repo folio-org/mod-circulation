@@ -9,7 +9,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
-import org.folio.circulation.support.failures.ServerErrorFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class LoanCheckInService {

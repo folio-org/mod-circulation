@@ -1,4 +1,4 @@
-package org.folio.circulation.support.failures;
+package org.folio.circulation.support;
 
 import static org.folio.circulation.support.http.server.response.JsonHttpResponse.unprocessableEntity;
 import static org.folio.circulation.support.results.Result.failed;

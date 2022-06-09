@@ -2,7 +2,7 @@ package org.folio.circulation.infrastructure.storage.users;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.failures.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.server.error.UIError.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.results.Result.of;
