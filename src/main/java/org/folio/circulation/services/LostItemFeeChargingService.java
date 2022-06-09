@@ -160,7 +160,10 @@ public class LostItemFeeChargingService {
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
-    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE) || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)) && account.isOpen()) {
+    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE)
+      || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)
+      || type.equals(FeeFine.LOST_ITEM_FEE_ACTUAL_FEE_TYPE)) && account.isOpen()) {
+
       return true;
     } else {
       return false;
@@ -208,9 +211,10 @@ public class LostItemFeeChargingService {
       }
 
       if (policy.getDeclareLostProcessingFee().isChargeable()
-        || policy.getActualCostFee().isChargeable()) {
+        || (policy.getActualCostFee().isChargeable()
+        && policy.getDeclareLostProcessingFee().isChargeable())) {
 
-        log.debug("Charging lost item processing fee for set and actual costs");
+        log.debug("Charging lost item processing fee for set or actual costs");
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
             .map(createAccountCreation(context, policy.getDeclareLostProcessingFee()));
