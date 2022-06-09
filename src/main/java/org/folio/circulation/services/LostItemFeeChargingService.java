@@ -1,6 +1,6 @@
 package org.folio.circulation.services;
 
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -162,7 +162,7 @@ public class LostItemFeeChargingService {
     String type = account.getFeeFineType();
     if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE)
       || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)
-      || type.equals(FeeFine.LOST_ITEM_FEE_ACTUAL_FEE_TYPE)) && account.isOpen()) {
+      || type.equals(FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE)) && account.isOpen()) {
 
       return true;
     } else {
@@ -292,8 +292,8 @@ public class LostItemFeeChargingService {
         actualCostRecord.withFeeFineOwnerId(context.feeFineOwner.getId());
         actualCostRecord.withFeeFineOwner(context.feeFineOwner.getOwner());
         //TODO check how to deal with id
-        actualCostRecord.withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_FEE_TYPE);
-        actualCostRecord.withFeeFineType(LOST_ITEM_FEE_ACTUAL_FEE_TYPE);
+        actualCostRecord.withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
+        actualCostRecord.withFeeFineType(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
 
         return of(() -> context.withActualCostRecord(actualCostRecord));
     });

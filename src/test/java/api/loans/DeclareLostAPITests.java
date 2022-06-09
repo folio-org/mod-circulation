@@ -41,6 +41,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -226,6 +227,40 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("amount", expectedItemFee),
       hasJsonPath("contributors[0].name", contributorName)));
 
+    verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
+      hasJsonPath("ownerId", expectedOwnerId),
+      hasJsonPath("feeFineType", "Lost item processing fee"),
+      hasJsonPath("amount", expectedProcessingFee),
+      hasJsonPath("contributors[0].name", contributorName)));
+  }
+
+  @Test
+  void shouldChargeProcessingFeesOnlyWhenBothDefinedForActualCostCharge() {
+    final double expectedProcessingFee = 10.0;
+    final double expectedItemFee = 20.0;
+    final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
+      servicePointsFixture.cd6().getId()).getId().toString();
+
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost with Actual Cost fee testing policy")
+      .chargeProcessingFeeWhenDeclaredLost(expectedProcessingFee)
+      .withActualCost(expectedItemFee);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final IndividualResource loan = declareItemLost(itemBuilder -> itemBuilder
+      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withTemporaryLocation(locationsFixture.thirdFloor()));
+
+    assertThat(loan.getJson(), isOpen());
+
+    String contributorName = itemsFixture.basedUponSmallAngryPlanet().getInstance().getJson()
+      .getJsonArray("contributors")
+      .getJsonObject(0)
+      .getString("name");
+
+    assertNull(getAccountForLoan(loan.getId(), "Lost item fee"));
     verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
