@@ -863,10 +863,10 @@ class DeclareLostAPITests extends APITests {
       return;
     }
     assertThat(account.getString("loanPolicyId"), is(loan.getJson().getString("loanPolicyId")));
-    assertThat(account.getString("overdueFinePolicyId"), is(
-      loan.getJson().getString("overdueFinePolicyId")));
-    assertThat(account.getString("lostItemFeePolicyId"), is(
-      loan.getJson().getString("lostItemPolicyId")));
+    assertThat(account.getString("overdueFinePolicyId"), is(loan.getJson().getString(
+      "overdueFinePolicyId")));
+    assertThat(account.getString("lostItemFeePolicyId"), is(loan.getJson().getString(
+      "lostItemPolicyId")));
 
     final JsonObject action = feeFineActionsClient
       .getMany(queryFromTemplate("accountId==%s", account.getString("id")))
