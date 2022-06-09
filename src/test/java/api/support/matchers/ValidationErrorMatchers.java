@@ -150,16 +150,16 @@ public class ValidationErrorMatchers {
     };
   }
 
-  public static TypeSafeDiagnosingMatcher<ValidationError> hasCode(ErrorCode code) {
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasCode(ErrorCode errorCode) {
     return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
-        description.appendText("has code ").appendValue(code.toString());
+        description.appendText("has code ").appendValue(errorCode.toString());
       }
 
       @Override
       protected boolean matchesSafely(ValidationError error, Description description) {
-        final Matcher<Object> matcher = hasProperty("code", equalTo(code.toString()));
+        final Matcher<Object> matcher = hasProperty("code", equalTo(errorCode.toString()));
 
         matcher.describeMismatch(error, description);
 
