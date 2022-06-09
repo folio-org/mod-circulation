@@ -86,8 +86,6 @@ public class LostItemFeeChargingService {
 
     return lostItemPolicyRepository.getLostItemPolicyById(loan.getLostItemPolicyId())
       .thenApply(result -> result.map(referenceDataContext::withLostItemPolicy))
-      .thenApply(this::buildActualCostRecord)
-      .thenCompose(r -> r.after(this::createActualCostRecord))
       .thenCompose(refDataResult -> refDataResult.after(referenceData -> {
         log.info("Checking for existing lost item fees for loan [{}]", loan.getId());
         return accountRepository.findAccountsForLoan(loan)
@@ -124,6 +122,8 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
+    .thenApply(this::buildActualCostRecord)
+    .thenCompose(r -> r.after(this::createActualCostRecord))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
@@ -207,13 +207,16 @@ public class LostItemFeeChargingService {
         accountsToCreate.add(lostItemFeeResult);
       }
 
+      if (policy.getDeclareLostProcessingFee().isChargeable()
+        || policy.getActualCostFee().isChargeable()) {
+
         log.debug("Charging lost item processing fee for set and actual costs");
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
             .map(createAccountCreation(context, policy.getDeclareLostProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
-
+      }
       log.debug("Total accounts created {}", accountsToCreate.size());
       return combineAll(accountsToCreate);
     });
@@ -280,13 +283,10 @@ public class LostItemFeeChargingService {
           .collect(Collectors.toList()));
         actualCostRecord.withItemBarcode(loan.getItem().getBarcode());
         actualCostRecord.withLoanType(loan.getItem().getLoanTypeName());
-        //TODO check creation
         actualCostRecord.withEffectiveCallNumber(loan.getItem().getCallNumber());
         actualCostRecord.withPermanentItemLocation(loan.getItem().getPermanentLocation().getName());
-        actualCostRecord.withFeeFineOwnerId(context.feeFineOwner == null
-          ? null : context.feeFineOwner.getId());
-        actualCostRecord.withFeeFineOwner(context.feeFineOwner == null
-          ? null : context.feeFineOwner.getOwner());
+        actualCostRecord.withFeeFineOwnerId(context.feeFineOwner.getId());
+        actualCostRecord.withFeeFineOwner(context.feeFineOwner.getOwner());
         //TODO check how to deal with id
         actualCostRecord.withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_FEE_TYPE);
         actualCostRecord.withFeeFineType(LOST_ITEM_FEE_ACTUAL_FEE_TYPE);
