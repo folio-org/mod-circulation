@@ -81,7 +81,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.response.JsonHttpResponse;
 import org.folio.circulation.support.http.server.response.ServerErrorResponse;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 

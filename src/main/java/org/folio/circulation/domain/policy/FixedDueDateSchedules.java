@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.DateTimeUtil;
 

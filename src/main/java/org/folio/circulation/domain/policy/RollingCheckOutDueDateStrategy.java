@@ -6,7 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 class RollingCheckOutDueDateStrategy extends DueDateStrategy {

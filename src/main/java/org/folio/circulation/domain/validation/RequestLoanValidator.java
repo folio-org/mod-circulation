@@ -23,7 +23,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 
 public class RequestLoanValidator {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);

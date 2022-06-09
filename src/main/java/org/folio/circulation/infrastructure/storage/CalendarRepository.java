@@ -19,7 +19,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonArray;

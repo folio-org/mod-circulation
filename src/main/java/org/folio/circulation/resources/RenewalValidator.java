@@ -13,8 +13,8 @@ import java.util.Map;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.http.server.error.UIError;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.UIError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public final class RenewalValidator {

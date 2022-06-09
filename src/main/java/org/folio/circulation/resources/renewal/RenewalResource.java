@@ -95,7 +95,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.response.HttpResponse;
 import org.folio.circulation.support.http.server.response.JsonHttpResponse;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;

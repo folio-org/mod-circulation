@@ -23,8 +23,8 @@ import java.util.Map;
 import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.error.BlockOverrideError;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.BlockOverrideError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import lombok.Getter;

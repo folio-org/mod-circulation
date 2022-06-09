@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.error.UIError;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.UIError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;

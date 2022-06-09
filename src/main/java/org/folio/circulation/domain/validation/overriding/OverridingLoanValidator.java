@@ -15,7 +15,7 @@ import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.ItemNotLoanableBlockOverride;
 import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.http.OkapiPermissions;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class OverridingLoanValidator extends OverridingBlockValidator<LoanAndRelatedRecords> {

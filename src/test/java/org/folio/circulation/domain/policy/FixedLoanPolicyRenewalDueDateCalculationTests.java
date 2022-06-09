@@ -30,7 +30,7 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 

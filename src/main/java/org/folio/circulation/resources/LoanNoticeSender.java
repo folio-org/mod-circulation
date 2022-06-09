@@ -25,7 +25,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import lombok.AllArgsConstructor;

@@ -19,7 +19,7 @@ import java.util.function.LongFunction;
 import java.util.function.Supplier;
 
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;

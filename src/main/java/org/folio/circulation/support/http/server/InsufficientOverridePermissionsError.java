@@ -1,4 +1,4 @@
-package org.folio.circulation.support.http.server.error;
+package org.folio.circulation.support.http.server;
 
 import static java.util.Collections.emptyMap;
 

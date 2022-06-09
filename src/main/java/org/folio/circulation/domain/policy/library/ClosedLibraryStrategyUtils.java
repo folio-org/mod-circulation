@@ -11,7 +11,7 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 
 public final class ClosedLibraryStrategyUtils {
 

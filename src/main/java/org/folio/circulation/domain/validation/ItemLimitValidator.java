@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
-import static org.folio.circulation.support.http.server.error.UIError.PATRON_BLOCK_LIMIT_REACHED;
+import static org.folio.circulation.support.http.server.UIError.PATRON_BLOCK_LIMIT_REACHED;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 

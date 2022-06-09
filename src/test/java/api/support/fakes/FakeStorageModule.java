@@ -34,7 +34,7 @@ import org.folio.HttpStatus;
 import org.folio.circulation.infrastructure.serialization.JsonSchemaValidator;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.response.ClientErrorResponse;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;

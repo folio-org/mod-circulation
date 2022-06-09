@@ -8,7 +8,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.OverridableBlockType;
-import org.folio.circulation.support.http.server.error.InsufficientOverridePermissionsError;
+import org.folio.circulation.support.http.server.InsufficientOverridePermissionsError;
 import org.folio.circulation.support.http.OkapiPermissions;
 
 import lombok.Getter;

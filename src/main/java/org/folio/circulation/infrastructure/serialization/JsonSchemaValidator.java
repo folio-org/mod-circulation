@@ -18,7 +18,7 @@ import org.everit.json.schema.loader.SchemaLoader;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;

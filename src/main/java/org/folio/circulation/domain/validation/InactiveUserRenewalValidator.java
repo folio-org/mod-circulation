@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.http.server.error.ValidationError;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class InactiveUserRenewalValidator {
