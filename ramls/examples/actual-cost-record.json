@@ -1,0 +1,23 @@
+{
+  "id": "89105c06-dbdb-4aa0-9695-d4d19c733270",
+  "userId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
+  "userBarcode": "777",
+  "loanId": "98805c06-dbdb-4aa0-9695-d4d19c733221",
+  "lossType": "Aged to lost",
+  "dateOfLoss": "2022-01-01T22:25:37Z",
+  "title": "Test Title",
+  "identifiers": [
+    {
+      "identifierTypeId": "8261054f-be78-422d-bd51-4ed9f33c3422",
+      "value": "9781466636897"
+    }
+  ],
+  "itemBarcode": "888",
+  "loanType": "2e6f51b9-d00a-4f1d-9960-49b1977acfca",
+  "effectiveCallNumber": "f TX809.M17J66 1993",
+  "permanentItemLocation": "UC/HP/JCL/Sci",
+  "feeFineOwnerId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
+  "feeFineOwner": "Main circ desk",
+  "feeFineTypeId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
+  "feeFineType": "Lost Item fee (actual cost)"
+}

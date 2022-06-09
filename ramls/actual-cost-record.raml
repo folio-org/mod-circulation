@@ -1,0 +1,61 @@
+#%RAML 1.0
+title: Actual Cost Record Storage
+version: v1.0
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Actual cost record API
+    content: <b>Storage for actual cost record</b>
+
+types:
+  actual-cost-record: !include actual-cost-record.json
+  actual-cost-records: !include actual-cost-records.json
+  errors: !include raml-util/schemas/errors.schema
+  parameters: !include raml-util/schemas/parameters.schema
+  kvConfigurations: !include kv-configurations.json
+  kvConfiguration: !include kv-configuration.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/actual-cost-record-storage:
+  /actual-cost-records:
+    displayName: Actual cost records
+    type:
+      collection:
+        exampleCollection: !include examples/actual-cost-records.json
+        exampleItem: !include examples/actual-cost-record.json
+        schemaCollection: actual-cost-records
+        schemaItem: actual-cost-record
+    get:
+      is: [pageable,
+        searchable: {description: "by using CQL",
+                     example: "lossType=\"Aged to lost\""}
+      ]
+    post:
+      is: [validate]
+      body:
+        application/json:
+          type: actual-cost-record
+    /{id}:
+      type:
+        collection-item:
+          exampleItem: !include examples/actual-cost-record.json
+          schema: actual-cost-record
+      get:
+        description: "Looks up actual cost record"
+      put:
+        description: "Updates actual cost record"
+        is: [validate]
+      delete:
+        description: "Removes actual cost record"
+        is: [language]
+

@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Actual cost record schema",
+  "properties": {
+    "id": {
+      "description": "Actual cost record ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userId": {
+      "description": "ID of a user which is charged actual cost fee",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userBarcode": {
+      "description": "Barcode of a user which is charged actual cost fee",
+      "type": "string"
+    },
+    "loanId": {
+      "description": "Loan ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "lossType": {
+      "description": "How the item became lost",
+      "type": "string",
+      "enum": [
+        "Aged to lost",
+        "Declared lost"
+      ]
+    },
+    "dateOfLoss": {
+      "description": "A date when the item was lost",
+      "type": "string",
+      "format": "date-time"
+    },
+    "title": {
+      "description": "Title of the instance",
+      "type": "string"
+    },
+    "identifiers": {
+      "type": "array",
+      "description": "An extensible set of name-value pairs of identifiers associated with the resource",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Resource identifier value"
+          },
+          "identifierTypeId": {
+            "type": "string",
+            "description": "UUID of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)",
+            "$ref": "raml-util/schemas/uuid.schema"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "identifierTypeId"
+        ]
+      }
+    },
+    "itemBarcode": {
+      "description": "Barcode of an item",
+      "type": "string"
+    },
+    "loanType": {
+      "description": "Item loan type ID",
+      "type": "string"
+    },
+    "effectiveCallNumber": {
+      "description": "Effective call number of the item",
+      "type": "string"
+    },
+    "permanentItemLocation": {
+      "description": "Permanent item location",
+      "type": "string"
+    },
+    "feeFineOwnerId": {
+      "description": "Fee fine owner ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "feeFineOwner": {
+      "description": "Fee fine owner name",
+      "type": "string"
+    },
+    "feeFineTypeId": {
+      "description": "Fee fine type ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "feeFineType": {
+      "description": "Fee fine type name",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Metadata about creation and changes, provided by the server (client should not provide)",
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema"
+    }
+  },
+  "additionalProperties": false
+}
