@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.http.server.ErrorCode.ITEM_HAS_OPEN_LOAN;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.concurrent.CompletableFuture;
