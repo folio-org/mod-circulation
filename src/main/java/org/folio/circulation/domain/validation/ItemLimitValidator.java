@@ -36,7 +36,7 @@ public class ItemLimitValidator {
 
   public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
     this(message -> singleValidationError(message, ITEM_BARCODE,
-      request.getItemBarcode(), PATRON_BLOCK_LIMIT_REACHED.toString()), loanRepository);
+      request.getItemBarcode(), PATRON_BLOCK_LIMIT_REACHED), loanRepository);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
@@ -53,8 +53,8 @@ public class ItemLimitValidator {
       .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
         ruleConditions -> {
           String message = getErrorMessage(ruleConditions);
-          return itemLimitErrorFunction.apply(
-            String.format("Patron has reached maximum limit of %d items %s", itemLimit, message));
+          return itemLimitErrorFunction.apply(String.format("Patron has reached maximum limit of %d items %s",
+            itemLimit, message));
         }))
       .thenApply(result -> result.map(v -> records));
   }

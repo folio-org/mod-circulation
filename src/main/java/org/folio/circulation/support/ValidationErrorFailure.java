@@ -55,10 +55,10 @@ public class ValidationErrorFailure implements HttpFailure {
   }
 
   public static ValidationErrorFailure singleValidationError(String reason,
-    String propertyName, String propertyValue, String code) {
+    String propertyName, String propertyValue, ErrorCode code) {
 
     return singleValidationError(
-      new ValidationError(reason, propertyName, propertyValue, code));
+      new ValidationError(reason, propertyName, propertyValue, code.toString()));
   }
 
   public static ValidationErrorFailure singleValidationError(ValidationError error) {

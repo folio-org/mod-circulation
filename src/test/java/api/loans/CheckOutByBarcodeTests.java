@@ -1986,7 +1986,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
     assertThat(response.getJson(), hasErrorWith(hasMessage("Item is already checked out")));
-    assertThat(response.getJson(), hasErrorWith(hasMessage("Cannot check out item that already has an open loan")));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Cannot check out item that already has an open loan")));
     assertThat(response.getJson(), hasErrorWith(hasCode(ITEM_HAS_OPEN_LOAN)));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));

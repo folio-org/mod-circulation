@@ -27,7 +27,8 @@ public class ExistingOpenLoanValidator {
 
     return ofAsync(() -> loanAndRelatedRecords.getLoan().getItemId())
       .thenComposeAsync(result -> result.failAfter(loanRepository::hasOpenLoan,
-        v -> existingOpenLoanErrorFunction.apply("Cannot check out item that already has an open loan")))
+        v -> existingOpenLoanErrorFunction.apply(
+          "Cannot check out item that already has an open loan")))
       .thenApply(result -> result.map(v -> loanAndRelatedRecords));
   }
 }

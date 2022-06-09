@@ -95,7 +95,7 @@ public class CheckOutValidators {
 
     openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
       message -> singleValidationError(
-        message, ITEM_BARCODE, request.getItemBarcode(), ITEM_HAS_OPEN_LOAN.toString()));
+        message, ITEM_BARCODE, request.getItemBarcode(), ITEM_HAS_OPEN_LOAN));
 
     itemLimitValidator = createItemLimitValidator(request, permissions,
       loanRepository);
