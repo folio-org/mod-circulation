@@ -260,7 +260,7 @@ class DeclareLostAPITests extends APITests {
       .getString("name");
 
     assertNull(getAccountForLoan(loan.getId(), "Lost item fee"));
-    verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
+    verifyFeeHasBeenCharged(loan, "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee),
