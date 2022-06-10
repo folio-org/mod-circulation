@@ -220,13 +220,13 @@ class DeclareLostAPITests extends APITests {
       .getJsonObject(0)
       .getString("name");
 
-    verifyFeeHasBeenCharged(loan.getId(), "Lost item fee", allOf(
+    verifyFeeHasBeenCharged(loan, "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
       hasJsonPath("amount", expectedItemFee),
       hasJsonPath("contributors[0].name", contributorName)));
 
-    verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
+    verifyFeeHasBeenCharged(loan, "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee),
@@ -250,7 +250,7 @@ class DeclareLostAPITests extends APITests {
 
     assertThat(loan.getJson(), isOpen());
 
-    verifyFeeHasBeenCharged(loan.getId(), "Lost item fee", allOf(
+    verifyFeeHasBeenCharged(loan, "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
       hasJsonPath("amount", expectedItemFee)
@@ -274,7 +274,7 @@ class DeclareLostAPITests extends APITests {
 
     assertThat(loan.getJson(), isOpen());
 
-    verifyFeeHasBeenCharged(loan.getId(), "Lost item processing fee", allOf(
+    verifyFeeHasBeenCharged(loan, "Lost item processing fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee)
@@ -852,16 +852,21 @@ class DeclareLostAPITests extends APITests {
     }
   }
 
-  private void verifyFeeHasBeenCharged(UUID loanId, String feeType,
+  private void verifyFeeHasBeenCharged(IndividualResource loan, String feeType,
     Matcher<JsonObject> accountMatcher) {
 
-    final JsonObject account = getAccountForLoan(loanId, feeType);
+    final JsonObject account = getAccountForLoan(loan.getId(), feeType);
 
     assertThat(account, accountMatcher);
 
     if (account == null) {
       return;
     }
+    assertThat(account.getString("loanPolicyId"), is(loan.getJson().getString("loanPolicyId")));
+    assertThat(account.getString("overdueFinePolicyId"), is(loan.getJson().getString(
+      "overdueFinePolicyId")));
+    assertThat(account.getString("lostItemFeePolicyId"), is(loan.getJson().getString(
+      "lostItemPolicyId")));
 
     final JsonObject action = feeFineActionsClient
       .getMany(queryFromTemplate("accountId==%s", account.getString("id")))

@@ -46,6 +46,7 @@ import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.ServicePointBuilder;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -478,6 +479,34 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(thirdLoanAfter.getJson(), isLostItemHasBeenBilled());
     assertThat(thirdLoanAfter, hasLostItemFee(isOpen(10.0)));
     assertThat(thirdLoanAfter, hasLostItemProcessingFee(isOpen(5.0)));
+  }
+
+  @Test
+  void accountShouldContainAppropriatePolicyIds() {
+    final PoliciesToActivate policies = defaultRollingPolicies().build();
+    IndividualResource loanPolicy = policies.getLoanPolicy();
+    IndividualResource overduePolicy = policies.getOverduePolicy();
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .doNotChargeOverdueFineWhenReturned()
+        .withNoFeeRefundInterval()
+        .withActualCost(10.00)
+        .billPatronImmediatelyWhenAgedToLost()
+        .chargeProcessingFeeWhenAgedToLost(10.00));
+
+    useFallbackPolicies(loanPolicy.getId(), policies.getRequestPolicy().getId(),
+      policies.getNoticePolicy().getId(), overduePolicy.getId(), lostItemPolicy.getId());
+
+    final ItemResource item = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(item);
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    assertThat(accountsClient.getAll().get(0).getString("loanPolicyId"),
+      is(loanPolicy.getId().toString()));
+    assertThat(accountsClient.getAll().get(0).getString("overdueFinePolicyId"),
+      is(overduePolicy.getId().toString()));
+    assertThat(accountsClient.getAll().get(0).getString("lostItemFeePolicyId"),
+      is(lostItemPolicy.getId().toString()));
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {
