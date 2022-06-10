@@ -24,7 +24,7 @@ public class ValidationError {
     this.message = message;
     this.parameters = new HashMap<>();
     this.parameters.put(key, value);
-    code = UNSEND_DEFAULT_VALUE.toString();
+    this.code = UNSEND_DEFAULT_VALUE.toString();
   }
 
   public ValidationError(String message, String key, String value, String code) {
@@ -37,7 +37,7 @@ public class ValidationError {
   public ValidationError(String message, Map<String, String> parameters) {
     this.message = message;
     this.parameters = parameters;
-    code = UNSEND_DEFAULT_VALUE.toString();
+    this.code = UNSEND_DEFAULT_VALUE.toString();
   }
 
   public ValidationError(String message, Map<String, String> parameters, String code) {
