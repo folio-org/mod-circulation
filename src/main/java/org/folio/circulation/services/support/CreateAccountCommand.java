@@ -20,4 +20,7 @@ public final class CreateAccountCommand {
   private final String staffUserId;
   private final boolean createdByAutomatedProcess;
   private final String currentServicePointId;
+  private final String loanPolicyId;
+  private final String overdueFinePolicyId;
+  private final String lostItemFeePolicyId;
 }

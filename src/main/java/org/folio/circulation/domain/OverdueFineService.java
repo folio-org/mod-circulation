@@ -227,6 +227,9 @@ public class OverdueFineService {
       .withAmount(new FeeAmount(params.fineAmount))
       .withStaffUserId(params.loggedInUserId)
       .withCurrentServicePointId(params.loan.getCheckInServicePointId())
+      .withLoanPolicyId(params.loan.getLoanPolicyId())
+      .withOverdueFinePolicyId(params.loan.getOverdueFinePolicyId())
+      .withLostItemFeePolicyId(params.loan.getLostItemPolicyId())
       .build();
 
     return feeFineFacade.createAccount(createAccountCommand);
