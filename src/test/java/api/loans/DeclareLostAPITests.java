@@ -35,12 +35,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.arrayWithSize;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
@@ -70,6 +68,7 @@ import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonObject;
 
@@ -266,6 +265,49 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee),
       hasJsonPath("contributors[0].name", contributorName)));
+  }
+
+  @Test
+  void shouldCreateActualCostRecordWhenItemDeclaredLost() {
+    final double expectedProcessingFee = 10.0;
+    final double expectedItemFee = 20.0;
+    final IndividualResource owner = feeFineOwnerFixture.ownerForServicePoint(
+      servicePointsFixture.cd6().getId());
+
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost with Actual Cost fee testing policy")
+      .chargeProcessingFeeWhenDeclaredLost(expectedProcessingFee)
+      .withActualCost(expectedItemFee);
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
+      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withTemporaryLocation(locationsFixture.thirdFloor()));
+    final UserResource user = usersFixture.charlotte();
+    final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
+
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointsFixture.cd2().getId())
+      .forLoanId(initialLoan.getId()));
+
+    final IndividualResource loan = loansFixture.getLoanById(initialLoan.getId());
+
+    JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
+
+    assertThat(loan.getJson(), isOpen());
+    assertNotNull(actualCostRecord);
+    assertThat(actualCostRecord.getString("id"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("userId", user.getId().toString()));
+    assertThat(actualCostRecord, hasJsonPath("userBarcode", user.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("lossType", "Declared lost"));
+    assertThat(actualCostRecord.getString("dateOfLoss"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("itemBarcode", item.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", owner.getId().toString()));
+    assertThat(actualCostRecord, hasJsonPath("feeFineOwner", owner.getJson().getString("owner")));
+    assertThat(actualCostRecord, hasJsonPath("feeFineTypeId", "Lost Item fee (actual cost)"));
+    assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost Item fee (actual cost)"));
   }
 
   @Test
@@ -849,6 +891,14 @@ class DeclareLostAPITests extends APITests {
     return accountsClient.getMany(queryFromTemplate("loanId==%s and feeFineType==%s",
       loanId.toString(), feeType))
       .getFirst();
+  }
+
+  private JsonObject getActualCostRecordForLoan(UUID loanId) {
+    return actualCostRecordsClient.getAll().stream()
+      .filter(record -> record.getString("loanId")
+        .equals(loanId.toString()))
+      .findFirst()
+      .orElse(null);
   }
 
   private IndividualResource declareItemLost(UnaryOperator<ItemBuilder> itemBuilder) {

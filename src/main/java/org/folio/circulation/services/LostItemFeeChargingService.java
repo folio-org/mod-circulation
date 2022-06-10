@@ -276,27 +276,27 @@ public class LostItemFeeChargingService {
     return contextResult.next(
       context -> {
         Loan loan = context.loan;
-        ActualCostRecord actualCostRecord = new ActualCostRecord();
-        actualCostRecord.withUserId(loan.getUserId());
-        actualCostRecord.withUserBarcode(loan.getUser().getBarcode());
-        actualCostRecord.withLoanId(loan.getId());
-        actualCostRecord.withLossType(LossType.DECLARED_LOST);
-        actualCostRecord.withDateOfLoss(context.request.getDeclaredLostDateTime().toString());
-        actualCostRecord.withTitle(loan.getItem().getTitle());
-        actualCostRecord.withIdentifiers(loan.getItem().getIdentifiers()
-          .collect(Collectors.toList()));
-        actualCostRecord.withItemBarcode(loan.getItem().getBarcode());
-        actualCostRecord.withLoanType(loan.getItem().getLoanTypeName());
-        actualCostRecord.withEffectiveCallNumber(loan.getItem().getCallNumber());
-        actualCostRecord.withPermanentItemLocation(loan.getItem().getPermanentLocation().getName());
-        actualCostRecord.withFeeFineOwnerId(context.feeFineOwner.getId());
-        actualCostRecord.withFeeFineOwner(context.feeFineOwner.getOwner());
-        //TODO check how to deal with id
-        actualCostRecord.withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
-        actualCostRecord.withFeeFineType(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
+        ActualCostRecord actualCostRecord = new ActualCostRecord()
+          .withUserId(loan.getUserId())
+          .withUserBarcode(loan.getUser().getBarcode())
+          .withLoanId(loan.getId())
+          .withLossType(LossType.DECLARED_LOST)
+          .withDateOfLoss(context.request.getDeclaredLostDateTime().toString())
+          .withTitle(loan.getItem().getTitle())
+          .withIdentifiers(loan.getItem().getIdentifiers()
+            .collect(Collectors.toList()))
+          .withItemBarcode(loan.getItem().getBarcode())
+          .withLoanType(loan.getItem().getLoanTypeName())
+          .withEffectiveCallNumber(loan.getItem().getCallNumber())
+          .withPermanentItemLocation(loan.getItem().getPermanentLocation().getName())
+          .withFeeFineOwnerId(context.feeFineOwner.getId())
+          .withFeeFineOwner(context.feeFineOwner.getOwner())
+        //TODO check how to deal with id.withFeeFineTypeId
+          .withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE)
+          .withFeeFineType(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
 
         return of(() -> context.withActualCostRecord(actualCostRecord));
-    });
+      });
   }
 
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecord(ReferenceDataContext context) {

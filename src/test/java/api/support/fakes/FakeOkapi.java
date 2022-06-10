@@ -380,6 +380,12 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("automatedPatronBlocks")
       .create().register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("actualCostRecord")
+      .withRootPath("/actual-cost-record-storage/actual-cost-records")
+      .withCollectionPropertyName("actualCostRecords")
+      .create().register(router);
+
     new FakeFeeFineOperationsModule().register(router);
 
     server.requestHandler(router)

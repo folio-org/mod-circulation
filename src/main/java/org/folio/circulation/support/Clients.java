@@ -718,6 +718,6 @@ public class Clients {
   private CollectionResourceClient createActualCostRecordClient(
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/actual-cost-record-storage");
+    return getCollectionResourceClient(client, context, "/actual-cost-record-storage/actual-cost-records");
   }
 }
