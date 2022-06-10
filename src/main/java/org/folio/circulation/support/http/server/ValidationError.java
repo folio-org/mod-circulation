@@ -18,12 +18,13 @@ import static org.folio.circulation.support.http.server.ErrorCode.UNSEND_DEFAULT
 public class ValidationError {
   private final String message;
   private final Map<String, String> parameters;
-  private String code;
+  private final String code;
 
   public ValidationError(String message, String key, String value) {
     this.message = message;
     this.parameters = new HashMap<>();
     this.parameters.put(key, value);
+    code = UNSEND_DEFAULT_VALUE.toString();
   }
 
   public ValidationError(String message, String key, String value, String code) {
@@ -36,6 +37,7 @@ public class ValidationError {
   public ValidationError(String message, Map<String, String> parameters) {
     this.message = message;
     this.parameters = parameters;
+    code = UNSEND_DEFAULT_VALUE.toString();
   }
 
   public ValidationError(String message, Map<String, String> parameters, String code) {
