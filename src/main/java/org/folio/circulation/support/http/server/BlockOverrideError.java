@@ -24,6 +24,14 @@ public class BlockOverrideError extends ValidationError {
       blockType, missingOverridePermissions);
   }
 
+  public BlockOverrideError(String message, Map<String, String> parameters,
+    OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
+
+    super(message, parameters);
+    this.blockType = blockType;
+    this.missingOverridePermissions = missingOverridePermissions;
+  }
+
   public BlockOverrideError(String message, Map<String, String> parameters, String code,
     OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
 
