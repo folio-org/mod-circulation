@@ -10,7 +10,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.folio.circulation.support.json.JsonPropertyWriter;
+
+import static org.folio.circulation.support.http.server.ErrorCode.UNSEND_DEFAULT_VALUE;
 
 @Getter
 @EqualsAndHashCode
@@ -52,11 +53,9 @@ public class ValidationError {
             .put("value", parameters.get(key)))
         .collect(Collectors.toList()));
 
-    JsonObject result = new JsonObject()
+    return createJsonObjectWithFieldCode()
       .put("message", message)
       .put("parameters", mappedParameters);
-    JsonPropertyWriter.write(result, "code", code);
-    return result;
   }
 
   public boolean hasParameter(String key) {
@@ -69,6 +68,14 @@ public class ValidationError {
 
   public String getParameter(String key) {
     return parameters.getOrDefault(key, null);
+  }
+
+  private JsonObject createJsonObjectWithFieldCode() {
+    JsonObject result = new JsonObject();
+    if (code != null && !UNSEND_DEFAULT_VALUE.toString().equals(code)) {
+      result.put("code", code);
+    }
+    return result;
   }
 
   @Override
