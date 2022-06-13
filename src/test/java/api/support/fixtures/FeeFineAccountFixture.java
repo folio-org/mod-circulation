@@ -11,6 +11,7 @@ import api.support.http.IndividualResource;
 import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
 public final class FeeFineAccountFixture {
@@ -60,6 +61,12 @@ public final class FeeFineAccountFixture {
 
   public void payLostItemFee(UUID loanId, double amount) {
     final String accountId = getLostItemFeeAccount(loanId).getString("id");
+
+    pay(accountId, amount);
+  }
+
+  public void payLostItemActualCostFee(UUID loanId, double amount) {
+    final String accountId = getLostItemActualCostFeeAccount(loanId).getString("id");
 
     pay(accountId, amount);
   }
@@ -119,6 +126,12 @@ public final class FeeFineAccountFixture {
   private JsonObject getLostItemFeeAccount(UUID loanId) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString())
       .and(exactMatch("feeFineType", "Lost item fee")))
+      .getFirst();
+  }
+
+  private JsonObject getLostItemActualCostFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+        .and(exactMatch("feeFineType", "Lost item fee (actual cost)")))
       .getFirst();
   }
 

@@ -30,7 +30,7 @@ public class LostItemFeePoliciesFixture {
 
   public IndividualResource chargeFee() {
     createReferenceData();
-
+    feeFineTypeFixture.lostItemFee();
     return create(chargeFeePolicy(10.0, 5.0));
   }
 
@@ -42,34 +42,31 @@ public class LostItemFeePoliciesFixture {
 
   public IndividualResource chargeFeeWithZeroLostItemFee() {
     createReferenceData();
+    feeFineTypeFixture.lostItemFee();
     return create(chargeFeePolicy(0.0, 5.0));
   }
 
-  public IndividualResource chargeFeeWithZeroLostItemActualCostFee() {
-    createReferenceData();
-    feeFineTypeFixture.lostItemActualCostFee();
-    return create(chargeActualCostFeePolicy(0.0, 5.0));
-  }
-
-
   public IndividualResource chargeFeeWithZeroLostItemProcessingFee() {
     createReferenceData();
+    feeFineTypeFixture.lostItemFee();
     return create(chargeFeePolicy(10.0, 0.0));
   }
 
   public IndividualResource chargeActualCostFeeWithZeroLostItemProcessingFee() {
     createReferenceData();
     feeFineTypeFixture.lostItemActualCostFee();
-    return create(chargeFeePolicy(10.0, 0.0));
+    return create(chargeActualCostFeePolicy(10.0, 0.0));
   }
 
   public IndividualResource ageToLostAfterOneMinute() {
     createReferenceData();
+    feeFineTypeFixture.lostItemFee();
     return create(ageToLostAfterOneMinutePolicy());
   }
 
   public IndividualResource ageToLostAfterOneWeek() {
     createReferenceData();
+    feeFineTypeFixture.lostItemFee();
     return create(ageToLostAfterOneWeekPolicy());
   }
 
@@ -165,7 +162,6 @@ public class LostItemFeePoliciesFixture {
 
   private void createReferenceData() {
     feeFineTypeFixture.lostItemProcessingFee();
-    feeFineTypeFixture.lostItemFee();
     feeFineOwnerFixture.cd1Owner();
   }
 }

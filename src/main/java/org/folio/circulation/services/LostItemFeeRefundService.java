@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.services.LostItemFeeRefundContext.forCheckIn;
@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -209,7 +210,7 @@ public class LostItemFeeRefundService {
 
     List<String> feeFineTypes = new ArrayList<>();
     if(context.getLostItemPolicy().hasActualCostFee()) {
-      feeFineTypes.add(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+      feeFineTypes.add(LOST_ITEM_FEE_ACTUAL_COST_TYPE);
     }
     else {
       feeFineTypes.add(LOST_ITEM_FEE_TYPE);
@@ -232,29 +233,22 @@ public class LostItemFeeRefundService {
 
     return getLatestAccount(accounts, feeFineTypes)
       .filter(this::isAccountEligibleForRefund)
-      .map(account -> findRefundableAccounts(account, accounts))
+      .map(account -> findRefundableAccounts(account, accounts, feeFineTypes))
       .orElse(Collections.emptyList());
   }
 
-  private List<Account> findRefundableAccounts(Account latestAccount, Collection<Account> accounts) {
+  private List<Account> findRefundableAccounts(Account latestAccount, Collection<Account> accounts,
+    final List<String> feeFineTypes) {
+
     List<Account> filteredList = new ArrayList<>();
     filteredList.add(latestAccount);
     ZonedDateTime creationDate = latestAccount.getCreationDate();
 
-    String feeFineTypeForSearch;
-    if(LOST_ITEM_PROCESSING_FEE_TYPE.equals(latestAccount.getFeeFineType()) &&
-      !LOST_ITEM_FEE_TYPE.equals(latestAccount.getFeeFineType())) {
-      feeFineTypeForSearch = LOST_ITEM_ACTUAL_COST_FEE_TYPE;
-    }
-    else if(LOST_ITEM_PROCESSING_FEE_TYPE.equals(latestAccount.getFeeFineType()) &&
-      !LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(latestAccount.getFeeFineType())) {
-      feeFineTypeForSearch = LOST_ITEM_FEE_TYPE;
-    }
-    else {
-      feeFineTypeForSearch = LOST_ITEM_PROCESSING_FEE_TYPE;
-    }
+    List<String> associatedFeeFineAccountType = feeFineTypes.stream()
+      .filter(feeFIneType -> !feeFIneType.equals(latestAccount.getFeeFineType()))
+      .collect(Collectors.toList());
 
-    getLatestAccount(accounts, Collections.singletonList(feeFineTypeForSearch))
+    getLatestAccount(accounts, associatedFeeFineAccountType)
       .filter(this::isAccountEligibleForRefund)
       .filter(associatedAccount -> isDifferenceOneMinuteOrLess(creationDate,
         associatedAccount.getCreationDate()))
