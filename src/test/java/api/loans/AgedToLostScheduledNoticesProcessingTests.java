@@ -584,12 +584,6 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
       .put("remaining", new BigDecimal(account.getDouble("remaining")).setScale(2));
   }
 
-  private JsonObject scaleFields(JsonObject feeFineAction, String fieldOne, String fieldTwo) {
-    return feeFineAction
-      .put(fieldOne, new BigDecimal(feeFineAction.getDouble(fieldOne)).setScale(2))
-      .put(fieldTwo, new BigDecimal(feeFineAction.getDouble(fieldTwo)).setScale(2));
-  }
-
   private Matcher<? super String> getBaseNoticeContextMatcher(AgeToLostResult agedToLostResult) {
     final IndividualResource holdingsRecord = holdingsClient.get(
       getUUIDProperty(agedToLostResult.getItem().getJson(), "holdingsRecordId"));
