@@ -5,6 +5,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -272,8 +273,8 @@ public class TemplateContextMatchers {
       hasJsonPath("feeAction.type", is(action.getString("typeAction"))),
       hasJsonPath("feeAction.actionDate", isEquivalentTo(getDateTimeProperty(action, "dateAction"))),
       hasJsonPath("feeAction.actionDateTime", isEquivalentTo(getDateTimeProperty(action, "dateAction"))),
-      hasJsonPath("feeAction.amount", is(action.getString("amountAction"))),
-      hasJsonPath("feeAction.remainingAmount", is(action.getString("balance")))
+      hasJsonPath("feeAction.amount", is(getDoubleProperty(action, "amountAction", -1.0))),
+      hasJsonPath("feeAction.remainingAmount", is(getDoubleProperty(action, "balance", -1.0)))
     );
   }
 }

@@ -370,11 +370,6 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final ZonedDateTime cancelLostItemFeeActionDate = getActionDate(cancelLostItemFeeAction);
     final ZonedDateTime cancelProcessingFeeActionDate = getActionDate(cancelProcessingFeeAction);
 
-    scaleFields(refundLostItemFeeAction, "amountAction", "balance");
-    scaleFields(refundProcessingFeeAction, "amountAction", "balance");
-    scaleFields(cancelLostItemFeeAction, "amountAction", "balance");
-    scaleFields(cancelProcessingFeeAction, "amountAction", "balance");
-
     verifyNumberOfSentNotices(0);
     assertThat(scheduledNoticesClient.getAll(), allOf(
       iterableWithSize(4),
@@ -488,11 +483,6 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final JsonObject processingFeeCancellationAction =
       findFeeFineAction(ACTION_TYPE_CANCELLED, PROCESSING_FEE_AMOUNT);
 
-    scaleFields(lostItemFeeRefundAction, "amountAction", "balance");
-    scaleFields(processingFeeRefundAction, "amountAction", "balance");
-    scaleFields(lostItemFeeCancellationAction, "amountAction", "balance");
-    scaleFields(processingFeeCancellationAction, "amountAction", "balance");
-
     final UUID refundLostItemFeeActionId = getId(lostItemFeeRefundAction);
     final UUID refundProcessingFeeActionId = getId(processingFeeRefundAction);
     final UUID cancelLostItemActionId = getId(lostItemFeeCancellationAction);
@@ -573,8 +563,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
           allOf(
             getBaseNoticeContextMatcher(agedToLostResult),
             getFeeActionContextMatcher(feeFineAction),
-            getFeeChargeContextMatcher(
-              scaleFields(findAccountForFeeFineAction(feeFineAction), "amount", "remaining")))))
+            getFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
       .forEach(matcher -> assertThat(FakeModNotify.getSentPatronNotices(), hasItem(matcher)));
   }
 
@@ -589,7 +578,10 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   private JsonObject findAccountForFeeFineAction(JsonObject feeFineAction) {
-    return accountsClient.get(UUID.fromString(feeFineAction.getString("accountId"))).getJson();
+    JsonObject account = accountsClient.get(UUID.fromString(feeFineAction.getString("accountId"))).getJson();
+    return account
+      .put("amount", new BigDecimal(account.getDouble("amount")).setScale(2))
+      .put("remaining", new BigDecimal(account.getDouble("remaining")).setScale(2));
   }
 
   private JsonObject scaleFields(JsonObject feeFineAction, String fieldOne, String fieldTwo) {
