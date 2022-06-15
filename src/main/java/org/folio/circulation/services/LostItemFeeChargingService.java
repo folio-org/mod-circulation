@@ -1,6 +1,6 @@
 package org.folio.circulation.services;
 
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -32,7 +32,7 @@ import org.folio.circulation.domain.LossType;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
-import org.folio.circulation.infrastructure.storage.ActualCostStorageRepository;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
@@ -56,7 +56,7 @@ public class LostItemFeeChargingService {
   private final EventPublisher eventPublisher;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
-  private final ActualCostStorageRepository actualCostRepository;
+  private final ActualCostRecordRepository actualCostRepository;
   private String userId;
   private String servicePointId;
 
@@ -73,7 +73,7 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
-    this.actualCostRepository = new ActualCostStorageRepository(clients);
+    this.actualCostRepository = new ActualCostRecordRepository(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -162,7 +162,7 @@ public class LostItemFeeChargingService {
     String type = account.getFeeFineType();
     if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE)
       || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)
-      || type.equals(FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE)) && account.isOpen()) {
+      || type.equals(FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE)) && account.isOpen()) {
 
       return true;
     } else {
@@ -210,9 +210,7 @@ public class LostItemFeeChargingService {
         accountsToCreate.add(lostItemFeeResult);
       }
 
-      if (policy.getDeclareLostProcessingFee().isChargeable()
-        || (policy.getActualCostFee().isChargeable()
-        && policy.getDeclareLostProcessingFee().isChargeable())) {
+      if (policy.getDeclareLostProcessingFee().isChargeable()) {
 
         log.debug("Charging lost item processing fee for set or actual costs");
         final Result<CreateAccountCommand> processingFeeResult =
@@ -276,6 +274,7 @@ public class LostItemFeeChargingService {
 
   private Result<ReferenceDataContext> buildActualCostRecord(
     Result<ReferenceDataContext> contextResult) {
+
     return contextResult.next(
       context -> {
         Loan loan = context.loan;
@@ -294,9 +293,8 @@ public class LostItemFeeChargingService {
           .withPermanentItemLocation(loan.getItem().getPermanentLocation().getName())
           .withFeeFineOwnerId(context.feeFineOwner.getId())
           .withFeeFineOwner(context.feeFineOwner.getOwner())
-        //TODO check how to deal with id.withFeeFineTypeId
-          .withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE)
-          .withFeeFineType(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
+          .withFeeFineTypeId(LOST_ITEM_ACTUAL_COST_FEE_TYPE)
+          .withFeeFineType(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
 
         return of(() -> context.withActualCostRecord(actualCostRecord));
       });

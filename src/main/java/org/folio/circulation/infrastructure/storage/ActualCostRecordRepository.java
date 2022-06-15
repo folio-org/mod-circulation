@@ -10,11 +10,11 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
-public class ActualCostStorageRepository {
+public class ActualCostRecordRepository {
   private final CollectionResourceClient actualCostRecordStorageClient;
 
-  public ActualCostStorageRepository(Clients clients) {
-    actualCostRecordStorageClient = clients.actualCostRecordStorageClient();
+  public ActualCostRecordRepository(Clients clients) {
+    actualCostRecordStorageClient = clients.actualCostRecordsStorage();
   }
 
   public CompletableFuture<Result<Void>> createActualCostRecord(
