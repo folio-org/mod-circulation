@@ -3,7 +3,7 @@ package org.folio.circulation.domain.validation;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_AVAILABLE;
+import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
@@ -27,7 +27,7 @@ public class LoanPolicyValidator {
   public LoanPolicyValidator(CheckOutByBarcodeRequest request) {
     this(loanPolicy -> new ValidationErrorFailure(
       loanPolicyValidationError(loanPolicy, "Item is not loanable",
-        Map.of(ITEM_BARCODE, request.getItemBarcode()), ITEM_NOT_AVAILABLE)));
+        Map.of(ITEM_BARCODE, request.getItemBarcode()), ITEM_NOT_LOANABLE)));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(

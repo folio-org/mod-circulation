@@ -63,7 +63,7 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.http.server.ErrorCode.ITEM_HAS_OPEN_LOAN;
-import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_AVAILABLE;
+import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED;
 import static org.folio.circulation.support.http.server.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -1013,7 +1013,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is not loanable"),
-      hasCode(ITEM_NOT_AVAILABLE),
+      hasCode(ITEM_NOT_LOANABLE),
       hasItemBarcodeParameter(nod),
       hasLoanPolicyParameters(notLoanablePolicy))));
   }
@@ -1554,7 +1554,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is not loanable"),
-      hasCode(ITEM_NOT_AVAILABLE),
+      hasCode(ITEM_NOT_LOANABLE),
       hasParameter("loanPolicyName", "Not Loanable Policy"))));
   }
 
@@ -1839,7 +1839,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(responseBlocked.getJson(), hasErrorWith(allOf(
       hasMessage("Item is not loanable"),
-      hasCode(ITEM_NOT_AVAILABLE),
+      hasCode(ITEM_NOT_LOANABLE),
       hasParameter("loanPolicyName", "Not Loanable Policy"))));
 
     JsonObject loan = checkOutFixture.checkOutByBarcode(
