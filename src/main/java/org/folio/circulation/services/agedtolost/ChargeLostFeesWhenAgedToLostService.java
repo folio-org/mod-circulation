@@ -21,8 +21,10 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.CommonUtils.pair;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +57,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
+
+import com.google.common.collect.Lists;
 
 import lombok.val;
 
@@ -126,6 +130,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
+      .thenComposeAsync(r -> r.after())
       .thenCompose(r -> r.after(this::chargeLostFeesForLoan))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .thenApply(r -> r.mapFailure(failure -> handleFailure(loanToChargeFees, failure.toString())))
@@ -175,11 +180,14 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     final LostItemPolicy policy = loanToCharge.getLostItemPolicy();
 
-    val setCostPair = pair(policy.getSetCostFee(), loanToCharge.getLostItemFeeType());
-    val processingFeePair = pair(policy.getAgeToLostProcessingFee(),
-      loanToCharge.getLostItemProcessingFeeType());
+    var chargeableLostFeeToTypePairs = Lists.newArrayList(pair(policy.getAgeToLostProcessingFee(),
+      loanToCharge.getLostItemProcessingFeeType()));
 
-    return Stream.of(setCostPair, processingFeePair)
+    if (policy.hasSetCostFee()) {
+      chargeableLostFeeToTypePairs.add(pair(policy.getSetCostFee(), loanToCharge.getLostItemFeeType()));
+    }
+
+    return chargeableLostFeeToTypePairs.stream()
       .filter(pair -> pair.getKey().isChargeable());
   }
 
