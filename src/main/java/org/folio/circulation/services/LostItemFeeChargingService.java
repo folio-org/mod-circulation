@@ -1,11 +1,14 @@
 package org.folio.circulation.services;
 
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.ArrayList;
@@ -13,19 +16,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountCancelReason;
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.LossType;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
+import org.folio.circulation.infrastructure.storage.ActualCostStorageRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
@@ -34,6 +41,7 @@ import org.folio.circulation.infrastructure.storage.inventory.LocationRepository
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 public class LostItemFeeChargingService {
@@ -48,6 +56,7 @@ public class LostItemFeeChargingService {
   private final EventPublisher eventPublisher;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
+  private final ActualCostStorageRepository actualCostRepository;
   private String userId;
   private String servicePointId;
 
@@ -64,6 +73,7 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
+    this.actualCostRepository = new ActualCostStorageRepository(clients);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -112,6 +122,8 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
+    .thenApply(this::buildActualCostRecord)
+    .thenCompose(r -> r.after(this::createActualCostRecord))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
@@ -148,7 +160,10 @@ public class LostItemFeeChargingService {
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
-    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE) || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)) && account.isOpen()) {
+    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE)
+      || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)
+      || type.equals(FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE)) && account.isOpen()) {
+
       return true;
     } else {
       return false;
@@ -195,16 +210,17 @@ public class LostItemFeeChargingService {
         accountsToCreate.add(lostItemFeeResult);
       }
 
-      if (policy.getDeclareLostProcessingFee().isChargeable()) {
-        log.debug("Charging lost item processing fee");
+      if (policy.getDeclareLostProcessingFee().isChargeable()
+        || (policy.getActualCostFee().isChargeable()
+        && policy.getDeclareLostProcessingFee().isChargeable())) {
 
+        log.debug("Charging lost item processing fee for set or actual costs");
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
             .map(createAccountCreation(context, policy.getDeclareLostProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
       }
-
       log.debug("Total accounts created {}", accountsToCreate.size());
       return combineAll(accountsToCreate);
     });
@@ -258,6 +274,42 @@ public class LostItemFeeChargingService {
         "locationId", context.loan.getItem().getPermanentLocationId()));
   }
 
+  private Result<ReferenceDataContext> buildActualCostRecord(
+    Result<ReferenceDataContext> contextResult) {
+    return contextResult.next(
+      context -> {
+        Loan loan = context.loan;
+        ActualCostRecord actualCostRecord = new ActualCostRecord()
+          .withUserId(loan.getUserId())
+          .withUserBarcode(loan.getUser().getBarcode())
+          .withLoanId(loan.getId())
+          .withLossType(LossType.DECLARED_LOST)
+          .withDateOfLoss(context.request.getDeclaredLostDateTime().toString())
+          .withTitle(loan.getItem().getTitle())
+          .withIdentifiers(loan.getItem().getIdentifiers()
+            .collect(Collectors.toList()))
+          .withItemBarcode(loan.getItem().getBarcode())
+          .withLoanType(loan.getItem().getLoanTypeName())
+          .withEffectiveCallNumber(loan.getItem().getCallNumber())
+          .withPermanentItemLocation(loan.getItem().getPermanentLocation().getName())
+          .withFeeFineOwnerId(context.feeFineOwner.getId())
+          .withFeeFineOwner(context.feeFineOwner.getOwner())
+        //TODO check how to deal with id.withFeeFineTypeId
+          .withFeeFineTypeId(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE)
+          .withFeeFineType(LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE);
+
+        return of(() -> context.withActualCostRecord(actualCostRecord));
+      });
+  }
+
+  public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecord(ReferenceDataContext context) {
+    ofAsync(() -> context.actualCostRecord)
+      .thenCompose(r -> r.after(actualCostRepository::createActualCostRecord))
+      .exceptionally(CommonFailures::failedDueToServerError);
+
+    return ofAsync(() -> context);
+  }
+
   private static final class ReferenceDataContext {
     private final Loan loan;
     private final DeclareItemLostRequest request;
@@ -266,6 +318,7 @@ public class LostItemFeeChargingService {
     private LostItemPolicy lostItemPolicy;
     private FeeFineOwner feeFineOwner;
     private Collection<FeeFine> feeFines;
+    private ActualCostRecord actualCostRecord;
 
     public ReferenceDataContext(Loan loan, DeclareItemLostRequest request, String staffUserId) {
       this.loan = loan;
@@ -285,6 +338,11 @@ public class LostItemFeeChargingService {
 
     public ReferenceDataContext withFeeFines(Collection<FeeFine> feeFines) {
       this.feeFines = feeFines;
+      return this;
+    }
+
+    public ReferenceDataContext withActualCostRecord(ActualCostRecord actualCostRecord) {
+      this.actualCostRecord = actualCostRecord;
       return this;
     }
   }
