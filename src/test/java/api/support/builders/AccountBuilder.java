@@ -17,12 +17,13 @@ public class AccountBuilder extends JsonBuilder implements Builder {
   private Double amount;
   private String status;
   private String feeFineType;
+  private String paymentStatus;
 
   public AccountBuilder() {
   }
 
   AccountBuilder(String loanId, Double amount, Double remainingAmount,
-    String status, String feeFineType) {
+    String status, String feeFineType, String paymentStatus) {
 
     this.loanId = loanId;
     this.amount = amount;
@@ -30,6 +31,7 @@ public class AccountBuilder extends JsonBuilder implements Builder {
     this.status = status;
     this.id = UUID.randomUUID().toString();
     this.feeFineType = feeFineType;
+    this.paymentStatus = paymentStatus;
   }
 
   @Override
@@ -46,31 +48,47 @@ public class AccountBuilder extends JsonBuilder implements Builder {
     write(statusObject, "name", status);
     write(accountRequest, "status", statusObject);
 
+    JsonObject paymentStatusObject = new JsonObject();
+    write(paymentStatusObject, "name", paymentStatus);
+    write(accountRequest, "paymentStatus", paymentStatusObject);
+
     return accountRequest;
   }
 
   public AccountBuilder withLoan(IndividualResource loan) {
     return new AccountBuilder(loan.getId().toString(), amount, remainingAmount,
-      status, feeFineType);
+      status, feeFineType, paymentStatus);
   }
 
   public AccountBuilder withRemainingFeeFine(double remaining) {
-    return new AccountBuilder(loanId, amount, remaining, status, feeFineType);
+    return new AccountBuilder(loanId, amount, remaining, status, feeFineType, paymentStatus);
+  }
+
+  public AccountBuilder withFeeFineActualCostType() {
+    return new AccountBuilder(loanId, amount, remainingAmount, status,
+      "Lost item fee (actual cost)", paymentStatus);
   }
 
   public AccountBuilder withAmount(double amount) {
-    return new AccountBuilder(loanId, amount, remainingAmount, status, feeFineType);
+    return new AccountBuilder(loanId, amount, remainingAmount, status, feeFineType, paymentStatus);
   }
 
   public AccountBuilder feeFineStatusOpen() {
-    return new AccountBuilder(loanId, amount, remainingAmount, "Open", feeFineType);
+    return new AccountBuilder(loanId, amount, remainingAmount, "Open", feeFineType, paymentStatus);
   }
 
   public AccountBuilder feeFineStatusClosed() {
-    return new AccountBuilder(loanId, amount, remainingAmount, "Closed", feeFineType);
+    return new AccountBuilder(loanId, amount, remainingAmount, "Closed", feeFineType,
+      paymentStatus);
   }
 
   public AccountBuilder manualFeeFine() {
-    return new AccountBuilder(loanId, amount, remainingAmount, status, "Manual fee fine");
+    return new AccountBuilder(loanId, amount, remainingAmount, status, "Manual fee fine",
+      paymentStatus);
+  }
+
+  public AccountBuilder withPaymentStatus(String paymentStatus) {
+    return new AccountBuilder(loanId, amount, remainingAmount, status, feeFineType,
+      paymentStatus);
   }
 }
