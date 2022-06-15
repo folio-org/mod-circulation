@@ -30,43 +30,31 @@ public class LostItemFeePoliciesFixture {
 
   public IndividualResource chargeFee() {
     createReferenceData();
-    feeFineTypeFixture.lostItemFee();
-    return create(chargeFeePolicy(10.0, 5.0));
-  }
 
-  public IndividualResource chargeFeeWithActualCost() {
-    createReferenceData();
-    feeFineTypeFixture.lostItemActualCostFee();
-    return create(chargeActualCostFeePolicy( 10.0, 5.0));
+    return create(chargeFeePolicy(10.0, 5.0));
   }
 
   public IndividualResource chargeFeeWithZeroLostItemFee() {
     createReferenceData();
-    feeFineTypeFixture.lostItemFee();
+
     return create(chargeFeePolicy(0.0, 5.0));
   }
 
   public IndividualResource chargeFeeWithZeroLostItemProcessingFee() {
     createReferenceData();
-    feeFineTypeFixture.lostItemFee();
-    return create(chargeFeePolicy(10.0, 0.0));
-  }
 
-  public IndividualResource chargeActualCostFeeWithZeroLostItemProcessingFee() {
-    createReferenceData();
-    feeFineTypeFixture.lostItemActualCostFee();
-    return create(chargeActualCostFeePolicy(10.0, 0.0));
+    return create(chargeFeePolicy(10.0, 0.0));
   }
 
   public IndividualResource ageToLostAfterOneMinute() {
     createReferenceData();
-    feeFineTypeFixture.lostItemFee();
+
     return create(ageToLostAfterOneMinutePolicy());
   }
 
   public IndividualResource ageToLostAfterOneWeek() {
     createReferenceData();
-    feeFineTypeFixture.lostItemFee();
+
     return create(ageToLostAfterOneWeekPolicy());
   }
 
@@ -92,22 +80,6 @@ public class LostItemFeePoliciesFixture {
   private LostItemFeePolicyBuilder chargeFeePolicy(double lostItemFeeCost,
     double lostItemProcessingFeeCost) {
 
-    return chargePolicy()
-      .withName("No lost item fees policy")
-      .withSetCost(lostItemFeeCost)
-      .chargeProcessingFeeWhenDeclaredLost(lostItemProcessingFeeCost);
-  }
-
-  private LostItemFeePolicyBuilder chargeActualCostFeePolicy(double lostItemFeeCost,
-    double lostItemProcessingFeeCost) {
-
-    return chargePolicy()
-      .withName("No lost item actual cost fees policy")
-      .withActualCost(lostItemFeeCost)
-      .chargeProcessingFeeWhenDeclaredLost(lostItemProcessingFeeCost);
-  }
-
-  private LostItemFeePolicyBuilder chargePolicy() {
     Period itemAgedLostOverdue = Period.months(12);
     Period patronBilledAfterAgedLost = Period.months(12);
 
@@ -115,6 +87,8 @@ public class LostItemFeePoliciesFixture {
       .withName("No lost item fees policy")
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterItemAgedToLost(patronBilledAfterAgedLost)
+      .withSetCost(lostItemFeeCost)
+      .chargeProcessingFeeWhenDeclaredLost(lostItemProcessingFeeCost)
       .withChargeAmountItemSystem(true)
       .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
@@ -162,6 +136,7 @@ public class LostItemFeePoliciesFixture {
 
   private void createReferenceData() {
     feeFineTypeFixture.lostItemProcessingFee();
+    feeFineTypeFixture.lostItemFee();
     feeFineOwnerFixture.cd1Owner();
   }
 }

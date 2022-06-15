@@ -65,7 +65,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
-import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -88,12 +87,10 @@ import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
-import api.support.builders.AccountBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
-import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.ItemBuilder;
@@ -108,7 +105,6 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -1990,61 +1986,6 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  void canOverrideRenewalAfterTwoDeclaredLostAndRefundsWithLostItemActualCostFee() {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-    final UUID servicePointId = servicePointsFixture.cd6().getId();
-    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
-    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFeeWithActualCost().getId());
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, jessica,
-      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
-    declareLostFixtures.declareItemLost(loan.getJson());
-
-    postLostItemActualCostAccountForLoan(loan, jessica, 10.0);
-
-    assertThat(feeFineActionsClient.getAll(), hasSize(2));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Open"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 10.0)));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"), allOf(
-      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 5.0)));
-
-    feeFineAccountFixture.payLostItemActualCostFee(loan.getId(), 3.0);
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
-
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_RENEWAL_BLOCK_PERMISSION);
-    JsonObject renewedLoan = loansFixture.renewLoan(
-      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
-      okapiHeaders).getJson();
-
-    assertThat(renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Closed"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Closed"), allOf(
-      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
-
-    declareLostFixtures.declareItemLost(renewedLoan);
-    postLostItemActualCostAccountForLoan(loan, jessica, 10.0);
-
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Open"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 10.0)));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Open"), allOf(
-      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 5.0)));
-
-    feeFineAccountFixture.payLostItemActualCostFee(loan.getId(), 3.0);
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
-
-    JsonObject secondRenewedLoan = loansFixture.renewLoan(
-      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
-      okapiHeaders).getJson();
-    assertThat(secondRenewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Closed"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item processing fee", "Closed"), allOf(
-      hasJsonPath("amount", 5.0), hasJsonPath("remaining", 0.0)));
-  }
-
-  @Test
   void canOverrideRenewalAfterTwoDeclaredLostAndRefundsWithOlyLostItemProcessingFee() {
     IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -2132,52 +2073,6 @@ public abstract class RenewalAPITests extends APITests {
       hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
   }
 
-  @Test
-  void canOverrideRenewalAfterTwoDeclaredLostAndRefundsWithOnlyLostItemActualCostFee() {
-    IndividualResource item = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-    final UUID servicePointId = servicePointsFixture.cd6().getId();
-    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
-    useLostItemPolicy(lostItemFeePoliciesFixture.chargeActualCostFeeWithZeroLostItemProcessingFee().getId());
-
-    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, jessica,
-      ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC));
-    declareLostFixtures.declareItemLost(loan.getJson());
-    postLostItemActualCostAccountForLoan(loan, jessica, 10.0);
-
-    assertThat(feeFineActionsClient.getAll(), hasSize(1));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Open"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 10.0)));
-
-    feeFineAccountFixture.payLostItemActualCostFee(loan.getId(), 3.0);
-
-    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
-      OVERRIDE_RENEWAL_BLOCK_PERMISSION);
-    JsonObject renewedLoan = loansFixture.renewLoan(
-      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
-      okapiHeaders).getJson();
-
-    assertThat(renewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Closed"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
-
-    declareLostFixtures.declareItemLost(renewedLoan);
-    postLostItemActualCostAccountForLoan(loan, jessica, 10.0);
-
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Open"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 10.0)));
-
-    feeFineAccountFixture.payLostItemActualCostFee(loan.getId(), 3.0);
-
-    JsonObject secondRenewedLoan = loansFixture.renewLoan(
-      buildRenewByBarcodeRequestWithRenewalBlockOverride(item, jessica, servicePointId.toString()),
-      okapiHeaders).getJson();
-
-    assertThat(secondRenewedLoan.getString("action"), is(RENEWED_THROUGH_OVERRIDE));
-    assertThat(getAccountForLoan(loan.getId(), "Lost item fee (actual cost)", "Closed"), allOf(
-      hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
-  }
-
   private void checkOutItem(ZonedDateTime loanDate, IndividualResource item, ZonedDateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 
@@ -2261,26 +2156,6 @@ public abstract class RenewalAPITests extends APITests {
       .rolling(Period.days(days))
       .withClosedLibraryDueDateManagement(strategy.getValue())
       .withRenewable(true);
-  }
-
-  private void postLostItemActualCostAccountForLoan(IndividualResource loan,
-    IndividualResource user, double amount) {
-
-    IndividualResource account = accountsClient.create(new AccountBuilder()
-      .withLoan(loan)
-      .withAmount(amount)
-      .withRemainingFeeFine(amount)
-      .withFeeFineActualCostType()
-      .feeFineStatusOpen()
-      .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
-      .withUser(user)
-      .withOwner(feeFineOwnerFixture.cd1Owner()));
-
-    feeFineActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(account.getId())
-      .withBalance(amount)
-      .withActionAmount(amount)
-      .withActionType("Lost item fee (actual cost)"));
   }
 
   private JsonObject getAccountForLoan(UUID loanId, String feeType, String status) {
