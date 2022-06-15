@@ -1,6 +1,7 @@
 package org.folio.circulation.services.agedtolost;
 
 import static java.util.stream.Collectors.toSet;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -37,19 +38,24 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LossType;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
+import org.folio.circulation.infrastructure.storage.ActualCostStorageRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.ActualCostRecordService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -76,6 +82,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final EventPublisher eventPublisher;
   private final PageableFetcher<Loan> loanPageableFetcher;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
+  private final ActualCostRecordService actualCostRecordService;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients,
     ItemRepository itemRepository, UserRepository userRepository) {
@@ -92,6 +99,8 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
+    //TODO with using
+    this.actualCostRecordService = new ActualCostRecordService(new ActualCostStorageRepository(clients));
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
@@ -130,7 +139,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
-      .thenComposeAsync(r -> r.after())
+      .thenCompose(r -> r.after(actualCostRecordService::createActualCostRecordIfNecessary))
       .thenCompose(r -> r.after(this::chargeLostFeesForLoan))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .thenApply(r -> r.mapFailure(failure -> handleFailure(loanToChargeFees, failure.toString())))
@@ -323,5 +332,4 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
-
 }

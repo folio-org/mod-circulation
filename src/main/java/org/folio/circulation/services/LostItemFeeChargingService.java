@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import lombok.Getter;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
@@ -57,6 +58,7 @@ public class LostItemFeeChargingService {
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
   private final ActualCostStorageRepository actualCostRepository;
+  private final ActualCostRecordService actualCostRecordService;
   private String userId;
   private String servicePointId;
 
@@ -74,6 +76,7 @@ public class LostItemFeeChargingService {
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
     this.actualCostRepository = new ActualCostStorageRepository(clients);
+    this.actualCostRecordService = new ActualCostRecordService(actualCostRepository);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -122,8 +125,7 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
-    .thenApply(this::buildActualCostRecord)
-    .thenCompose(r -> r.after(this::createActualCostRecord))
+    .thenComposeAsync(r -> r.after(actualCostRecordService::createActualCostRecordIfNecessary))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
@@ -310,7 +312,8 @@ public class LostItemFeeChargingService {
     return ofAsync(() -> context);
   }
 
-  private static final class ReferenceDataContext {
+  @Getter
+  public static final class ReferenceDataContext {
     private final Loan loan;
     private final DeclareItemLostRequest request;
     private final String staffUserId;

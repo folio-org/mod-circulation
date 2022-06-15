@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
@@ -28,7 +29,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@Getter(AccessLevel.PACKAGE)
+@Getter
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public final class LoanToChargeFees {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -36,6 +37,8 @@ public final class LoanToChargeFees {
   private final Loan loan;
   private final FeeFineOwner owner;
   private final Map<String, FeeFine> feeFineTypes;
+
+  private final ActualCostRecord actualCostRecord;
 
   boolean hasNoLostItemFee() {
     return getLostItemFeeType() == null;
@@ -61,6 +64,10 @@ public final class LoanToChargeFees {
       });
   }
 
+  public ActualCostRecord getActualCostRecord() {
+    return actualCostRecord;
+  }
+
   FeeFine getLostItemFeeType() {
     return feeFineTypes.get(LOST_ITEM_FEE_TYPE);
   }
@@ -81,11 +88,15 @@ public final class LoanToChargeFees {
     final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
       .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
 
-    return new LoanToChargeFees(loan, owner, feeFineTypeToFeeFineMap);
+    return new LoanToChargeFees(loan, owner, feeFineTypeToFeeFineMap, null);
+  }
+
+  public LoanToChargeFees withActualCostRecord(ActualCostRecord actualCostRecord) {
+    return new LoanToChargeFees(loan, owner, feeFineTypes, actualCostRecord);
   }
 
   LoanToChargeFees withOwner(Map<String, FeeFineOwner> owners) {
-    return new LoanToChargeFees(loan, owners.get(getPrimaryServicePointId()), feeFineTypes);
+    return new LoanToChargeFees(loan, owners.get(getPrimaryServicePointId()), feeFineTypes, null);
   }
 
   boolean shouldCloseLoan() {
@@ -94,7 +105,7 @@ public final class LoanToChargeFees {
   }
 
   public static LoanToChargeFees usingLoan(Loan loan) {
-    return new LoanToChargeFees(loan, null, Collections.emptyMap());
+    return new LoanToChargeFees(loan, null, Collections.emptyMap(), null);
   }
 
   static List<LoanToChargeFees> usingLoans(MultipleRecords<Loan> loans) {
