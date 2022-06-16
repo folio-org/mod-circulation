@@ -314,7 +314,7 @@ public class LostItemFeeChargingService {
 
   @Getter
   public static final class ReferenceDataContext {
-    private final Loan loan;
+    private Loan loan;
     private final DeclareItemLostRequest request;
     private final String staffUserId;
 
@@ -331,6 +331,7 @@ public class LostItemFeeChargingService {
 
     public ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
+      this.loan = loan.withLostItemPolicy(lostItemPolicy);
       return this;
     }
 

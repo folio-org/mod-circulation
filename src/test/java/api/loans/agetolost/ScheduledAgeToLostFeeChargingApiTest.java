@@ -298,6 +298,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(result.getLoan().getJson(), isLostItemHasNotBeenBilled());
     assertThat(result.getLoan(), hasNoLostItemFee());
+    assertThat(actualCostRecordsClient.getAll(), hasSize(0));
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
@@ -389,8 +390,34 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
 
+    assertThat(actualCostRecordsClient.getAll().size(), is(1));
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
+  }
+
+  @Test
+  void shouldAgeToLostAndCreateActualCostRecordAndNotChargeLostProcessingFee () {
+    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .doNotChargeOverdueFineWhenReturned()
+        .withNoFeeRefundInterval()
+        .withActualCost(10.00)
+        .billPatronImmediatelyWhenAgedToLost()
+        .doNotChargeProcessingFeeWhenAgedToLost());
+
+    useLostItemPolicy(lostItemPolicy.getId());
+
+    final ItemResource item = itemsFixture.basedUponNod();
+    final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
+
+    assertThat(actualCostRecordsClient.getAll().size(), is(1));
+    assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
+    assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
+    assertThat(loanFromStorage, hasNoLostItemProcessingFee());
   }
 
   @Test

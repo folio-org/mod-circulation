@@ -36,7 +36,7 @@ public class ActualCostRecordMapper {
       getProperty(representation, "userId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
-      LossType.valueOf(getProperty(representation, "lossType")),
+      LossType.from(getProperty(representation, "lossType")),
       getProperty(representation, "dateOfLoss"),
       getProperty(representation, "title"),
       IdentifierMapper.mapIdentifiers(representation),

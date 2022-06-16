@@ -26,12 +26,6 @@ public class ActualCostStorageRepository {
     actualCostRecordStorageClient = clients.actualCostRecordStorageClient();
   }
 
-/*  public CompletableFuture<Result<LoanToChargeFees>> createActualCostRecord(
-    LoanToChargeFees loanToChargeFees) {
-    return createActualCostRecord(loanToChargeFees.getActualCostRecord())
-      .thenApply(mapResult(loanToChargeFees::withActualCostRecord));
-  }*/
-
   public CompletableFuture<Result<ActualCostRecord>> createActualCostRecord(
     ActualCostRecord actualCostRecord) {
 

@@ -189,14 +189,11 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     final LostItemPolicy policy = loanToCharge.getLostItemPolicy();
 
-    var chargeableLostFeeToTypePairs = Lists.newArrayList(pair(policy.getAgeToLostProcessingFee(),
-      loanToCharge.getLostItemProcessingFeeType()));
+    val setCostPair = pair(policy.getSetCostFee(), loanToCharge.getLostItemFeeType());
+    val processingFeePair = pair(policy.getAgeToLostProcessingFee(),
+      loanToCharge.getLostItemProcessingFeeType());
 
-    if (policy.hasSetCostFee()) {
-      chargeableLostFeeToTypePairs.add(pair(policy.getSetCostFee(), loanToCharge.getLostItemFeeType()));
-    }
-
-    return chargeableLostFeeToTypePairs.stream()
+    return Stream.of(setCostPair, processingFeePair)
       .filter(pair -> pair.getKey().isChargeable());
   }
 

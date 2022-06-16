@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -16,7 +17,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.services.LostItemFeeChargingService.ReferenceDataContext;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.*;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 public class ActualCostRecordService {
   private final ActualCostStorageRepository actualCostStorageRepository;
 
@@ -27,31 +28,29 @@ public class ActualCostRecordService {
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
     ReferenceDataContext referenceDataContext) {
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
-      referenceDataContext.getFeeFineOwner(),
-      LossType.DECLARED_LOST)
+      referenceDataContext.getFeeFineOwner(), LossType.DECLARED_LOST, ZonedDateTime.now())
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
 
   public CompletableFuture<Result<LoanToChargeFees>> createActualCostRecordIfNecessary(
     LoanToChargeFees loanToChargeFees) {
 
-    return createActualCostRecordIfNecessary(loanToChargeFees.getLoan(),
-      loanToChargeFees.getOwner(),
-      LossType.AGED_TO_LOST)
+    Loan loan = loanToChargeFees.getLoan();
+    return createActualCostRecordIfNecessary(loan, loanToChargeFees.getOwner(), LossType.AGED_TO_LOST,
+      loan.getAgedToLostDateTime())
       .thenApply(mapResult(loanToChargeFees::withActualCostRecord));
   }
 
   public CompletableFuture<Result<ActualCostRecord>> createActualCostRecordIfNecessary(Loan loan,
-    FeeFineOwner feeFineOwner, LossType lossType) {
+    FeeFineOwner feeFineOwner, LossType lossType, ZonedDateTime dateOfLoss) {
 
     return loan.getLostItemPolicy().hasActualCostFee() ?
-      actualCostStorageRepository.createActualCostRecord(
-        buildActualCostRecord(loan, feeFineOwner, lossType))
-      : completedFuture(succeeded(null));
+      actualCostStorageRepository.createActualCostRecord(buildActualCostRecord(loan, feeFineOwner,
+        lossType, dateOfLoss)) : completedFuture(succeeded(null));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
-    LossType lossType) {
+    LossType lossType, ZonedDateTime dateOfLoss) {
 
     Item item = loan.getItem();
 
@@ -60,7 +59,7 @@ public class ActualCostRecordService {
       .withUserBarcode(loan.getUser().getBarcode())
       .withLoanId(loan.getId())
       .withLossType(lossType)
-      .withDateOfLoss(loan.getAgedToLostDateTime().toString())
+      .withDateOfLoss(dateOfLoss.toString())
       .withTitle(item.getTitle())
       .withIdentifiers(item.getIdentifiers()
         .collect(Collectors.toList()))
