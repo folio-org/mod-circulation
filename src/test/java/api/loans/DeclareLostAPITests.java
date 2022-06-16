@@ -220,6 +220,8 @@ class DeclareLostAPITests extends APITests {
       .getJsonObject(0)
       .getString("name");
 
+    JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
+
     verifyFeeHasBeenCharged(loan, "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
@@ -231,6 +233,8 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee),
       hasJsonPath("contributors[0].name", contributorName)));
+
+    assertNull(actualCostRecord);
   }
 
   @Test
@@ -301,7 +305,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord.getString("id"), notNullValue());
     assertThat(actualCostRecord, hasJsonPath("userId", user.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("userBarcode", user.getBarcode()));
-    assertThat(actualCostRecord, hasJsonPath("lossType", "Declared lost"));
+    assertThat(actualCostRecord, hasJsonPath("itemLossType", "Declared lost"));
     assertThat(actualCostRecord.getString("dateOfLoss"), notNullValue());
     assertThat(actualCostRecord, hasJsonPath("itemBarcode", item.getBarcode()));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", owner.getId().toString()));

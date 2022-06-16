@@ -4,18 +4,18 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 import java.util.Arrays;
 
-public enum LossType {
+public enum ItemLossType {
   NONE(""),
   AGED_TO_LOST("Aged to lost"),
   DECLARED_LOST("Declared lost");
 
   public final String value;
 
-  LossType(String value) {
+  ItemLossType(String value) {
     this.value = value;
   }
 
-  public static LossType from(String value) {
+  public static ItemLossType from(String value) {
     return Arrays.stream(values())
       .filter(status -> status.nameMatches(value))
       .findFirst()
