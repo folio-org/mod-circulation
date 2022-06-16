@@ -4,7 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_ACTUAL_COST_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.services.LostItemFeeRefundContext.forCheckIn;
@@ -210,7 +210,7 @@ public class LostItemFeeRefundService {
 
     List<String> feeFineTypes = new ArrayList<>();
     if(context.getLostItemPolicy().hasActualCostFee()) {
-      feeFineTypes.add(LOST_ITEM_FEE_ACTUAL_COST_TYPE);
+      feeFineTypes.add(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
     }
     else {
       feeFineTypes.add(LOST_ITEM_FEE_TYPE);

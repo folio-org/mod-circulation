@@ -1,5 +1,6 @@
 package api.loans.scenarios;
 
+import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFeeActualCost;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
@@ -56,7 +57,6 @@ class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
 
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId(), 3.0);
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId(), 3.0);
-
     overrideRenewalFixture.overrideRenewalByBarcode(loan, servicePointsFixture.cd1().getId());
 
     assertThat(loansClient.get(loan.getId()).getJson().getString("action"),
@@ -74,7 +74,6 @@ class OverrideRenewDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     assertThat(loan, hasLostItemFeeActualCost(isOpen(itemFeeActualCost)));
 
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId(), 3.0);
-
     overrideRenewalFixture.overrideRenewalByBarcode(loan, servicePointsFixture.cd1().getId());
 
     assertThat(loansClient.get(loan.getId()).getJson().getString("action"),

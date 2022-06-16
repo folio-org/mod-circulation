@@ -1,5 +1,6 @@
 package api.loans.scenarios;
 
+import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;
 import static api.support.matchers.AccountMatchers.isTransferredFully;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
@@ -360,11 +361,10 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
       .withActualCost(itemFee).refundFeesWithinMinutes(1)).getId());
 
     declareItemLost();
-    postLostItemActualCostFeeAccountForLoan(itemFee);
+    createLostItemFeeActualCostAccount(itemFee);
   }
 
-  private void postLostItemActualCostFeeAccountForLoan(double amount) {
-
+  protected void createLostItemFeeActualCostAccount(double amount) {
     IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loan)
       .withAmount(amount)
@@ -383,9 +383,5 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
   protected Matcher<JsonObject> isClosedCancelled(double amount) {
     return AccountMatchers.isClosedCancelled(cancellationReason, amount);
-  }
-
-  protected Matcher<JsonObject> isOpen(double amount) {
-    return AccountMatchers.isOpen(amount);
   }
 }
