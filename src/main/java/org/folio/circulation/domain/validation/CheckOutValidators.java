@@ -94,8 +94,8 @@ public class CheckOutValidators {
     inactiveProxyUserValidator = InactiveUserValidator.forProxy(request.getProxyUserBarcode());
 
     openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
-      message -> singleValidationError(
-        message, ITEM_BARCODE, request.getItemBarcode(), ITEM_HAS_OPEN_LOAN));
+      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode(),
+        ITEM_HAS_OPEN_LOAN));
 
     itemLimitValidator = createItemLimitValidator(request, permissions,
       loanRepository);
