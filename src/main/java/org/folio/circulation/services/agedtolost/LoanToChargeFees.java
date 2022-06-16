@@ -1,6 +1,5 @@
 package org.folio.circulation.services.agedtolost;
 
-import static java.lang.String.format;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
@@ -62,10 +61,6 @@ public final class LoanToChargeFees {
         log.error("Failed to get servicePointId for loan {}", loan.getId());
         return null;
       });
-  }
-
-  public ActualCostRecord getActualCostRecord() {
-    return actualCostRecord;
   }
 
   FeeFine getLostItemFeeType() {
