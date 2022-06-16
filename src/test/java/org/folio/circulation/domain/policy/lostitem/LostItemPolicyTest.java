@@ -172,14 +172,14 @@ class LostItemPolicyTest {
   }
 
   @Test
-  void shouldNotAgeItemToLostIfActualCostIsUsed() {
+  void shouldAgeItemToLostIfActualCostIsUsed() {
     final LostItemFeePolicyBuilder builder = new LostItemFeePolicyBuilder()
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withActualCost(10.0);
 
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
-    assertFalse(lostItemPolicy.canAgeLoanToLost(false, getZonedDateTime()));
+    assertTrue(lostItemPolicy.canAgeLoanToLost(false, getZonedDateTime()));
   }
 
   @ParameterizedTest

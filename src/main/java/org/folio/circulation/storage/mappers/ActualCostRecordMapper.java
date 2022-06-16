@@ -1,7 +1,7 @@
 package org.folio.circulation.storage.mappers;
 
 import org.folio.circulation.domain.ActualCostRecord;
-import org.folio.circulation.domain.LossType;
+import org.folio.circulation.domain.ItemLossType;
 
 import io.vertx.core.json.JsonObject;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -36,7 +36,7 @@ public class ActualCostRecordMapper {
       getProperty(representation, "userId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
-      LossType.from(getProperty(representation, "lossType")),
+      ItemLossType.from(getProperty(representation, "lossType")),
       getProperty(representation, "dateOfLoss"),
       getProperty(representation, "title"),
       IdentifierMapper.mapIdentifiers(representation),
