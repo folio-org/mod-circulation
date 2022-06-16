@@ -279,8 +279,8 @@ public class TemplateContextUtil {
     write(context, "owner", account.getFeeFineOwner());
     write(context, "type", account.getFeeFineType());
     write(context, "paymentStatus", account.getPaymentStatus());
-    write(context, "amount", account.getAmount().toDouble());
-    write(context, "remainingAmount", account.getRemaining().toDouble());
+    write(context, "amount", account.getAmount().toScaledString());
+    write(context, "remainingAmount", account.getRemaining().toScaledString());
     write(context, "chargeDate", account.getCreationDate());
     write(context, "chargeDateTime", account.getCreationDate());
 
