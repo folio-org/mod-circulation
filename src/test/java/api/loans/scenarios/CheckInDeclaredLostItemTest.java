@@ -161,7 +161,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     assertThat(accountsClient.getAll(), hasSize(1));
     assertThat(actualCostRecordsClient.getAll(), hasSize(1));
 
-    runWithTimeOffset(() -> createActualCostAccount(itemFeeActualCost), ofMinutes(2));
+    runWithTimeOffset(() -> createLostItemFeeActualCostAccount(itemFeeActualCost), ofMinutes(2));
     assertThat(accountsClient.getAll(), hasSize(2));
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()

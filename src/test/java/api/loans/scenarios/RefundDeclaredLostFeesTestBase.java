@@ -360,7 +360,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
     return AccountMatchers.isClosedCancelled(cancellationReason, amount);
   }
 
-  protected void createActualCostAccount(double amount) {
+  protected void createLostItemFeeActualCostAccount(double amount) {
     IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loan)
       .withAmount(amount)
