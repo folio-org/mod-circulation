@@ -10,8 +10,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
-import static org.folio.circulation.support.http.server.ErrorCode.UNSEND_DEFAULT_VALUE;
+import org.folio.circulation.support.json.JsonPropertyWriter;
 
 @Getter
 @EqualsAndHashCode
@@ -24,7 +23,7 @@ public class ValidationError {
     this.message = message;
     this.parameters = new HashMap<>();
     this.parameters.put(key, value);
-    this.code = UNSEND_DEFAULT_VALUE.toString();
+    this.code = null;
   }
 
   public ValidationError(String message, String key, String value, String code) {
@@ -37,7 +36,7 @@ public class ValidationError {
   public ValidationError(String message, Map<String, String> parameters) {
     this.message = message;
     this.parameters = parameters;
-    this.code = UNSEND_DEFAULT_VALUE.toString();
+    this.code = null;
   }
 
   public ValidationError(String message, Map<String, String> parameters, String code) {
@@ -55,9 +54,12 @@ public class ValidationError {
             .put("value", parameters.get(key)))
         .collect(Collectors.toList()));
 
-    return createJsonObjectWithFieldCode()
+    JsonObject result = new JsonObject()
       .put("message", message)
       .put("parameters", mappedParameters);
+    JsonPropertyWriter.write(result, "code", code);
+
+    return result;
   }
 
   public boolean hasParameter(String key) {
@@ -70,14 +72,6 @@ public class ValidationError {
 
   public String getParameter(String key) {
     return parameters.getOrDefault(key, null);
-  }
-
-  private JsonObject createJsonObjectWithFieldCode() {
-    JsonObject result = new JsonObject();
-    if (code != null && !UNSEND_DEFAULT_VALUE.toString().equals(code)) {
-      result.put("code", code);
-    }
-    return result;
   }
 
   @Override

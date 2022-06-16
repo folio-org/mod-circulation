@@ -160,9 +160,7 @@ public class ValidationErrorMatchers {
       @Override
       protected boolean matchesSafely(ValidationError error, Description description) {
         final Matcher<Object> matcher = hasProperty("code", equalTo(errorCode.toString()));
-
         matcher.describeMismatch(error, description);
-
         return matcher.matches(error);
       }
     };
