@@ -578,10 +578,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
   }
 
   private JsonObject findAccountForFeeFineAction(JsonObject feeFineAction) {
-    JsonObject account = accountsClient.get(UUID.fromString(feeFineAction.getString("accountId"))).getJson();
-    return account
-      .put("amount", new BigDecimal(account.getDouble("amount")).setScale(2))
-      .put("remaining", new BigDecimal(account.getDouble("remaining")).setScale(2));
+    return accountsClient.get(UUID.fromString(feeFineAction.getString("accountId"))).getJson();
   }
 
   private Matcher<? super String> getBaseNoticeContextMatcher(AgeToLostResult agedToLostResult) {

@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFineAction;
 import org.hamcrest.Matcher;
 
@@ -253,8 +254,8 @@ public class TemplateContextMatchers {
       hasJsonPath("feeCharge.owner", is(account.getString("feeFineOwner"))),
       hasJsonPath("feeCharge.type", is(account.getString("feeFineType"))),
       hasJsonPath("feeCharge.paymentStatus", is(getNestedStringProperty(account, "paymentStatus", "name"))),
-      hasJsonPath("feeCharge.amount", is(account.getString("amount"))),
-      hasJsonPath("feeCharge.remainingAmount", is(account.getString("remaining")))
+      hasJsonPath("feeCharge.amount", is(new FeeAmount(account.getDouble("amount")).toScaledString())),
+      hasJsonPath("feeCharge.remainingAmount", is(new FeeAmount(account.getDouble("remaining")).toScaledString()))
     );
   }
 
