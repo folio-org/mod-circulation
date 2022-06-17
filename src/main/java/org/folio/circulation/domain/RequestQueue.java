@@ -75,11 +75,17 @@ public class RequestQueue {
     if (request.getRequestLevel() == RequestLevel.TITLE) {
       String itemInstanceId = item.getInstanceId();
       String requestInstanceId = request.getInstanceId();
-      String requestItemId = request.getItemId();
-      String itemId = item.getItemId();
 
-      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
+//        TODO: potential critical point
+//        return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
+//        && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
+      if(!request.isNotYetFilled()) {
+        String requestItemId = request.getItemId();
+        String itemId = item.getItemId();
+        return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
         && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
+      }
+      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
     }
     else if (request.getRequestLevel() == RequestLevel.ITEM) {
       String itemId = item.getItemId();
