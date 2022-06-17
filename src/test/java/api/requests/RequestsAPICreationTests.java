@@ -3354,6 +3354,99 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
   }
 
+  @Test
+  void shouldFillInMissingRequestProperties() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withItemId(item.getId())
+      .withRequestLevel(null)
+      .withNoHoldingsRecordId()
+      .withNoInstanceId()
+      .withFulfilmentPreference("Hold Shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+
+    JsonObject createdRequest = response.getJson();
+    assertThat(createdRequest.getString("requestLevel"), is("Item"));
+    assertThat(createdRequest.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
+    assertThat(createdRequest.getString("instanceId"), is(item.getInstanceId()));
+  }
+
+  @Test
+  void shouldNotFillInMissingRequestPropertiesWhenRequestLevelIsPresent() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withItemId(item.getId())
+      .itemRequestLevel()
+      .withNoHoldingsRecordId()
+      .withNoInstanceId()
+      .withFulfilmentPreference("Hold Shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(2));
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("Cannot create a request with no instance ID"),
+        hasNullParameter("instanceId"))),
+      hasErrorWith(allOf(
+        hasMessage("Cannot create a request with item ID but no holdings record ID"),
+        hasNullParameter("holdingsRecordId")))
+    ));
+  }
+
+  @Test
+  void shouldNotFillInMissingRequestPropertiesWhenHoldingsRecordIdIsPresent() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withItemId(item.getId())
+      .withRequestLevel(null)
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withNoInstanceId()
+      .withFulfilmentPreference("Hold Shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasNullParameter("requestLevel"))));
+  }
+
+  @Test
+  void shouldNotFillInMissingRequestPropertiesWhenInstanceIdIsPresent() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withItemId(item.getId())
+      .withRequestLevel(null)
+      .withNoHoldingsRecordId()
+      .withInstanceId(item.getInstanceId())
+      .withFulfilmentPreference("Hold Shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasNullParameter("requestLevel"))));
+  }
+
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
     JsonObject itemJsonObject = new JsonObject(noticeLogContextItem.getString("eventPayload"))
       .getJsonObject("payload")

@@ -385,7 +385,6 @@
     "instanceId",
     "requesterId",
     "requestType",
-    "requestLevel",
     "requestDate",
     "fulfilmentPreference"
   ]

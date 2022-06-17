@@ -227,10 +227,14 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
     final var mapper = new ItemMapper();
 
+    return fetchItemAsJson(itemId)
+      .thenApply(mapResult(mapper::toDomain));
+  }
+
+  public CompletableFuture<Result<JsonObject>> fetchItemAsJson(String itemId) {
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
       .fetch(itemId)
-      .thenApply(mapResult(identityMap::add))
-      .thenApply(mapResult(mapper::toDomain));
+      .thenApply(mapResult(identityMap::add));
   }
 
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
