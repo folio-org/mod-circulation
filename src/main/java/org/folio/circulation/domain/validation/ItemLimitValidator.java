@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -14,6 +13,8 @@ import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_L
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -123,30 +124,11 @@ public class ItemLimitValidator {
   private static ValidationErrorFailure getValidationErrorFailure(CheckOutByBarcodeRequest request,
     String message) {
 
-    ErrorCode errorCode = getErrorCode(message);
-    return singleValidationError(message, ITEM_BARCODE,
-      request.getItemBarcode(), errorCode);
+    String key = message.substring(message.indexOf("for"));
+    ErrorCode errorCode = errorCodeMap().get(key);
+    return singleValidationError(message, ITEM_BARCODE,  request.getItemBarcode(), errorCode);
   }
 
-  private static ErrorCode getErrorCode(String message) {
-    ErrorCode result = null;
-
-    if (endsWith(message, FOR_COMBINATION_OF_PATRON_GROUP_MATERIAL_TYPE_AND_LOAN_TYPE)) {
-      result = PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE_AND_LOAN_TYPE;
-    } else if (endsWith(message, FOR_COMBINATION_OF_PATRON_GROUP_AND_MATERIAL_TYPE)) {
-      result = PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE;
-    } else if (endsWith(message, FOR_COMBINATION_OF_PATRON_GROUP_AND_LOAN_TYPE)) {
-      result = PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_LOAN_TYPE;
-    } else if (endsWith(message, FOR_COMBINATION_OF_MATERIAL_TYPE_AND_LOAN_TYPE)) {
-      result = PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE_AND_LOAN_TYPE;
-    } else if (endsWith(message, FOR_MATERIAL_TYPE)) {
-      result = PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE;
-    } else if (endsWith(message, FOR_LOAN_TYPE)) {
-      result = PATRON_BLOCK_LIMIT_REACHED_FOR_LOAN_TYPE;
-    }
-
-    return result;
-  }
 
   private String getErrorMessage(AppliedRuleConditions ruleConditionsEntity) {
     boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
@@ -167,5 +149,21 @@ public class ItemLimitValidator {
       return FOR_LOAN_TYPE;
     }
     return StringUtils.EMPTY;
+  }
+
+  private static Map<String, ErrorCode> errorCodeMap() {
+    Map<String, ErrorCode> map = new HashMap<>();
+    map.put(FOR_COMBINATION_OF_PATRON_GROUP_MATERIAL_TYPE_AND_LOAN_TYPE,
+      PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE_AND_LOAN_TYPE);
+    map.put(FOR_COMBINATION_OF_PATRON_GROUP_AND_MATERIAL_TYPE,
+      PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE);
+    map.put(FOR_COMBINATION_OF_PATRON_GROUP_AND_LOAN_TYPE,
+      PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_LOAN_TYPE);
+    map.put(FOR_COMBINATION_OF_MATERIAL_TYPE_AND_LOAN_TYPE,
+      PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE_AND_LOAN_TYPE);
+    map.put(FOR_MATERIAL_TYPE, PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE);
+    map.put(FOR_LOAN_TYPE, PATRON_BLOCK_LIMIT_REACHED_FOR_LOAN_TYPE);
+
+    return map;
   }
 }
