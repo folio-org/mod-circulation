@@ -12,7 +12,6 @@ public class FeeFine {
   public static final String LOST_ITEM_FEE_TYPE = "Lost item fee";
   public static final String LOST_ITEM_PROCESSING_FEE_TYPE = "Lost item processing fee";
   public static final String LOST_ITEM_ACTUAL_COST_FEE_TYPE = "Lost item fee (actual cost)";
-  public static final String LOST_ITEM_ACTUAL_COST_FEE_ID = "f6867765-34e0-4072-ab76-7be5d07fd2fa";
 
   private static final Set<String> LOST_ITEM_FEE_TYPES =
     unmodifiableSet(hashSet(LOST_ITEM_FEE_TYPE, LOST_ITEM_PROCESSING_FEE_TYPE,

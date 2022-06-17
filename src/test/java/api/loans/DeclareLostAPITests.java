@@ -24,6 +24,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Function.identity;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
@@ -50,7 +51,9 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -70,6 +73,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import api.support.matchers.EventTypeMatchers;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class DeclareLostAPITests extends APITests {
@@ -275,6 +279,11 @@ class DeclareLostAPITests extends APITests {
   void shouldCreateActualCostRecordWhenItemDeclaredLost() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
+    final IndividualResource loanType = loanTypesFixture.canCirculate();
+    final IndividualResource permanentItemLocation = locationsFixture.fourthFloor();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
+
     final IndividualResource owner = feeFineOwnerFixture.ownerForServicePoint(
       servicePointsFixture.cd6().getId());
 
@@ -286,9 +295,12 @@ class DeclareLostAPITests extends APITests {
 
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
 
-    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder
-      .withPermanentLocation(locationsFixture.fourthFloor())
-      .withTemporaryLocation(locationsFixture.thirdFloor()));
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+      itemBuilder -> itemBuilder
+      .withPermanentLoanType(loanType.getId())
+      .withPermanentLocation(permanentItemLocation));
     final UserResource user = usersFixture.charlotte();
     final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
 
@@ -305,12 +317,35 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord.getString("id"), notNullValue());
     assertThat(actualCostRecord, hasJsonPath("userId", user.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("userBarcode", user.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("loanId", loan.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("itemLossType", "Declared lost"));
     assertThat(actualCostRecord.getString("dateOfLoss"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("title",
+      item.getInstance().getJson().getString("title")));
+
+    JsonArray identifiers = item.getInstance().getJson().getJsonArray("identifiers");
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.size(), Is.is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      Is.is(isbnIdentifierId.toString()));
+
+    assertThat(identifiers.getJsonObject(0).getString("value"), Is.is(isbnValue));
     assertThat(actualCostRecord, hasJsonPath("itemBarcode", item.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("loanType", loanType.getJson().getString("name")));
+
+    JsonObject callNumberComponents = item.getJson().getJsonObject("effectiveCallNumberComponents");
+    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
+      hasJsonPath("callNumber", callNumberComponents.getString("callNumber")));
+    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
+      hasJsonPath("prefix", callNumberComponents.getString("prefix")));
+    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
+      hasJsonPath("suffix", callNumberComponents.getString("suffix")));
+
+    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation",
+      permanentItemLocation.getJson().getString("name")));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", owner.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwner", owner.getJson().getString("owner")));
-    assertThat(actualCostRecord, hasJsonPath("feeFineTypeId", "f6867765-34e0-4072-ab76-7be5d07fd2fa"));
+    assertThat(actualCostRecord.getString("feeFineTypeId"), notNullValue());
     assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost item fee (actual cost)"));
   }
 

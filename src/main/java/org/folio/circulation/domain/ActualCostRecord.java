@@ -22,7 +22,7 @@ public class ActualCostRecord {
   private Collection<Identifier> identifiers;
   private String itemBarcode;
   private String loanType;
-  private String effectiveCallNumber;
+  private CallNumberComponents callNumberComponents;
   private String permanentItemLocation;
   private String feeFineOwnerId;
   private String feeFineOwner;
