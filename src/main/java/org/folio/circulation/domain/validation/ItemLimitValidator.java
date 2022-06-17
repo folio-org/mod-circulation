@@ -1,10 +1,16 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
-import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED_FOR_LOAN_TYPE;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE_AND_LOAN_TYPE;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_LOAN_TYPE;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE;
+import static org.folio.circulation.support.http.server.ErrorCode.PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE_AND_LOAN_TYPE;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -20,12 +26,23 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.server.ErrorCode;
 import org.folio.circulation.support.results.Result;
 
 public class ItemLimitValidator {
+  private static final String FOR_COMBINATION_OF_PATRON_GROUP_MATERIAL_TYPE_AND_LOAN_TYPE =
+    "for combination of patron group, material type and loan type";
+  private static final String FOR_COMBINATION_OF_PATRON_GROUP_AND_MATERIAL_TYPE =
+    "for combination of patron group and material type";
+  private static final String FOR_COMBINATION_OF_PATRON_GROUP_AND_LOAN_TYPE =
+    "for combination of patron group and loan type";
+  private static final String FOR_COMBINATION_OF_MATERIAL_TYPE_AND_LOAN_TYPE =
+    "for combination of material type and loan type";
+  private static final String FOR_MATERIAL_TYPE = "for material type";
+  private static final String FOR_LOAN_TYPE = "for loan type";
+  private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
   private final LoanRepository loanRepository;
-  private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
   public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
     LoanRepository loanRepository) {
@@ -35,8 +52,7 @@ public class ItemLimitValidator {
   }
 
   public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
-    this(message -> singleValidationError(message, ITEM_BARCODE,
-      request.getItemBarcode(), PATRON_BLOCK_LIMIT_REACHED), loanRepository);
+    this(message -> getValidationErrorFailure(request, message), loanRepository);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
@@ -104,23 +120,51 @@ public class ItemLimitValidator {
       && expectedLoanType.equals(loanRecord.getItem().getLoanTypeId());
   }
 
+  private static ValidationErrorFailure getValidationErrorFailure(CheckOutByBarcodeRequest request,
+    String message) {
+
+    ErrorCode errorCode = getErrorCode(message);
+    return singleValidationError(message, ITEM_BARCODE,
+      request.getItemBarcode(), errorCode);
+  }
+
+  private static ErrorCode getErrorCode(String message) {
+    ErrorCode result = null;
+
+    if (endsWith(message, FOR_COMBINATION_OF_PATRON_GROUP_MATERIAL_TYPE_AND_LOAN_TYPE)) {
+      result = PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE_AND_LOAN_TYPE;
+    } else if (endsWith(message, FOR_COMBINATION_OF_PATRON_GROUP_AND_MATERIAL_TYPE)) {
+      result = PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_MATERIAL_TYPE;
+    } else if (endsWith(message, FOR_COMBINATION_OF_PATRON_GROUP_AND_LOAN_TYPE)) {
+      result = PATRON_BLOCK_LIMIT_REACHED_FOR_PATRON_GROUP_AND_LOAN_TYPE;
+    } else if (endsWith(message, FOR_COMBINATION_OF_MATERIAL_TYPE_AND_LOAN_TYPE)) {
+      result = PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE_AND_LOAN_TYPE;
+    } else if (endsWith(message, FOR_MATERIAL_TYPE)) {
+      result = PATRON_BLOCK_LIMIT_REACHED_FOR_MATERIAL_TYPE;
+    } else if (endsWith(message, FOR_LOAN_TYPE)) {
+      result = PATRON_BLOCK_LIMIT_REACHED_FOR_LOAN_TYPE;
+    }
+
+    return result;
+  }
+
   private String getErrorMessage(AppliedRuleConditions ruleConditionsEntity) {
     boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
     boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();
     boolean isRulePatronGroupPresent = ruleConditionsEntity.isPatronGroupPresent();
 
     if (isRulePatronGroupPresent && isRuleMaterialTypePresent && isRuleLoanTypePresent) {
-      return "for combination of patron group, material type and loan type";
+      return FOR_COMBINATION_OF_PATRON_GROUP_MATERIAL_TYPE_AND_LOAN_TYPE;
     } else if (isRulePatronGroupPresent && isRuleMaterialTypePresent) {
-      return "for combination of patron group and material type";
+      return FOR_COMBINATION_OF_PATRON_GROUP_AND_MATERIAL_TYPE;
     } else if (isRulePatronGroupPresent && isRuleLoanTypePresent) {
-      return "for combination of patron group and loan type";
+      return FOR_COMBINATION_OF_PATRON_GROUP_AND_LOAN_TYPE;
     } else if (isRuleMaterialTypePresent && isRuleLoanTypePresent) {
-      return "for combination of material type and loan type";
+      return FOR_COMBINATION_OF_MATERIAL_TYPE_AND_LOAN_TYPE;
     } else if (isRuleMaterialTypePresent) {
-      return "for material type";
+      return FOR_MATERIAL_TYPE;
     } else if (isRuleLoanTypePresent) {
-      return "for loan type";
+      return FOR_LOAN_TYPE;
     }
     return StringUtils.EMPTY;
   }

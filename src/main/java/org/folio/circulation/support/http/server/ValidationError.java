@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.server;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,6 +19,12 @@ public class ValidationError {
   private final String message;
   private final Map<String, String> parameters;
   private final String code;
+
+  public ValidationError(String message) {
+    this.message = message;
+    this.parameters = Collections.emptyMap();
+    this.code = null;
+  }
 
   public ValidationError(String message, String key, String value) {
     this.message = message;

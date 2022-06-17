@@ -1,6 +1,5 @@
 package org.folio.circulation.infrastructure.serialization;
 
-import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.collectingAndThen;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -79,6 +78,6 @@ public class JsonSchemaValidator {
   }
 
   private ValidationError toValidationError(ValidationException validationException) {
-    return new ValidationError(validationException.getMessage(), emptyMap());
+    return new ValidationError(validationException.getMessage());
   }
 }

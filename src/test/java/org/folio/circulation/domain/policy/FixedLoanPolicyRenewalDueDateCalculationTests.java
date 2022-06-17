@@ -4,7 +4,6 @@ import static api.support.matchers.FailureMatcher.hasValidationFailure;
 import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -517,8 +516,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", null, renewalDate,
-        s -> new ValidationError(s, emptyMap()));
+        "Example Fixed Schedule Loan Policy", null, renewalDate, ValidationError::new);
 
     Loan loan = existingLoan();
 
@@ -534,8 +532,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
-        renewalDate, s -> new ValidationError(s, emptyMap()));
+        "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(), renewalDate,
+        ValidationError::new);
 
     Loan loan = existingLoan();
 
