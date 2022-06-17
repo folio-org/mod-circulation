@@ -283,18 +283,14 @@ class DeclareLostAPITests extends APITests {
     final IndividualResource permanentItemLocation = locationsFixture.fourthFloor();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
-
     final IndividualResource owner = feeFineOwnerFixture.ownerForServicePoint(
       servicePointsFixture.cd6().getId());
-
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost with Actual Cost fee testing policy")
       .chargeProcessingFeeWhenDeclaredLost(expectedProcessingFee)
       .withActualCost(expectedItemFee);
-
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
-
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       identity(),
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
@@ -303,13 +299,10 @@ class DeclareLostAPITests extends APITests {
       .withPermanentLocation(permanentItemLocation));
     final UserResource user = usersFixture.charlotte();
     final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
-
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointsFixture.cd2().getId())
       .forLoanId(initialLoan.getId()));
-
     final IndividualResource loan = loansFixture.getLoanById(initialLoan.getId());
-
     JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
 
     assertThat(loan.getJson(), isOpen());
