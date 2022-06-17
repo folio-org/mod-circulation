@@ -4,7 +4,6 @@ import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.domain.Request.Operation.CREATE;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
@@ -147,7 +146,7 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<JsonObject>> fillInMissingProperties(JsonObject request,
     Request.Operation operation) {
 
-    if (operation != CREATE ||
+    if (operation != Request.Operation.CREATE ||
       request.containsKey(REQUEST_LEVEL) ||
       request.containsKey(HOLDINGS_RECORD_ID) ||
       request.containsKey(INSTANCE_ID)) {
@@ -227,7 +226,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(Request request) {
-    return request.getOperation() == CREATE
+    return request.getOperation() == Request.Operation.CREATE
       ? fetchItemAndLoanForPageTlrCreation(request)
       : fetchItemAndLoanForPageTlrReplacement(request);
   }
@@ -470,7 +469,7 @@ class RequestFromRepresentationService {
     String holdingsRecordId = request.getHoldingsRecordId();
 
     if (errorHandler.hasNone(INVALID_ITEM_ID, INVALID_HOLDINGS_RECORD_ID)
-      && request.getOperation() == CREATE
+      && request.getOperation() == Request.Operation.CREATE
       && request.getRequestLevel() == TITLE
       && (isNotBlank(itemId) || isNotBlank(holdingsRecordId))) {
 
