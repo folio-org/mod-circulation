@@ -175,7 +175,8 @@ public class APITestContext {
 
   static URL okapiUrl() {
     try {
-      if (useOkapiForStorage) {
+//      if (useOkapiForStorage) {
+      if (false) {
         return new URL("http://localhost:9130");
       } else {
         return new URL(FakeOkapi.getAddress());

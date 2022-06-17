@@ -382,7 +382,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "instanceId",
     "requesterId",
     "requestType",
     "requestDate",
