@@ -76,9 +76,6 @@ public class RequestQueue {
       String itemInstanceId = item.getInstanceId();
       String requestInstanceId = request.getInstanceId();
 
-//        TODO: potential critical point
-//        return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
-//        && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
       if(!request.isNotYetFilled()) {
         String requestItemId = request.getItemId();
         String itemId = item.getItemId();

@@ -1611,6 +1611,34 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       allOf(isOpenNotYetFilled(), hasPosition(1)));
   }
 
+  @Test
+  void canSatisfyRecallRequestWhenCheckInAnotherItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.james());
+
+    IndividualResource recallRequest = requestsFixture.placeTitleLevelRecallRequest(
+      firstItem.getInstanceId(), usersFixture.steve());
+    assertThat(recallRequest.getJson(), allOf(isOpenNotYetFilled(), hasPosition(1)));
+    assertThat(recallRequest.getJson().getString("itemId"), is(firstItem.getId().toString()));
+
+    CheckInByBarcodeResponse secondItemCheckInResponse = checkInFixture.checkInByBarcode(secondItem);
+    assertThat(secondItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Awaiting pickup"));
+
+    JsonObject recallRequestResponse = requestsFixture.getById(recallRequest.getId()).getJson();
+    assertThat(recallRequestResponse, allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(recallRequestResponse.getString("itemId"), is(secondItem.getId().toString()));
+
+    CheckInByBarcodeResponse firstItemCheckInResponse = checkInFixture.checkInByBarcode(firstItem);
+    assertThat(firstItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
     return new ItemBuilder()
       .forHolding(holdingRecordsId)
