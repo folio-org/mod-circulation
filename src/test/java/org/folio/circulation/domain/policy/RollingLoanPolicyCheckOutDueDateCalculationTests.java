@@ -208,7 +208,7 @@ class RollingLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   private ValidationError errorForLoanPeriod(String reason) {
-    Map<String, String> parameters = new HashMap<String, String>();
+    Map<String, String> parameters = new HashMap<>();
     return new ValidationError(reason, parameters);
   }
 

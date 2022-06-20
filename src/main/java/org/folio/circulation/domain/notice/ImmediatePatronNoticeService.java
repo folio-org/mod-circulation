@@ -11,10 +11,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.combiner.NoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;

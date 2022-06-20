@@ -516,8 +516,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", null, renewalDate,
-        s -> new ValidationError(s, null, null));
+        "Example Fixed Schedule Loan Policy", null, renewalDate, ValidationError::new);
 
     Loan loan = existingLoan();
 
@@ -533,8 +532,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
-        renewalDate, s -> new ValidationError(s, null, null));
+        "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(), renewalDate,
+        ValidationError::new);
 
     Loan loan = existingLoan();
 
