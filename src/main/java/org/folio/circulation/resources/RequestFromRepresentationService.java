@@ -81,7 +81,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 class RequestFromRepresentationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
   private final InstanceRepository instanceRepository;
@@ -168,7 +167,7 @@ class RequestFromRepresentationService {
       return ofAsync(() -> request);
     }
 
-    log.debug("Attempting to get missing property 'holdingsRecordId' from item");
+    log.info("Attempting to get missing property 'holdingsRecordId' from item");
 
     return itemRepository.fetchItemAsJson(itemId)
       .thenApply(mapResult(item -> copyProperty(item, request, HOLDINGS_RECORD_ID)));
@@ -180,7 +179,7 @@ class RequestFromRepresentationService {
       return ofAsync(() -> request);
     }
 
-    log.debug("Attempting to get missing property 'instanceId' from holdings record");
+    log.info("Attempting to get missing property 'instanceId' from holdings record");
 
     return holdingsRepository.fetchAsJson(holdingsRecordId)
       .thenApply(mapResult(holdings -> copyProperty(holdings, request, INSTANCE_ID)));
