@@ -16,7 +16,7 @@ import org.hamcrest.core.IsIterableContaining;
 
 public class FailureMatcher {
   public static <T> Matcher<Result<T>> hasValidationFailure(String expectedReason) {
-    return new TypeSafeDiagnosingMatcher<Result<T>>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -48,7 +48,7 @@ public class FailureMatcher {
   }
 
   public static <T> Matcher<Result<T>> hasNumberOfFailureMessages(int numberFailureMsg) {
-    return new TypeSafeDiagnosingMatcher<Result<T>>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -70,7 +70,7 @@ public class FailureMatcher {
   }
 
   public static <T> Matcher<Result<T>> isErrorFailureContaining(String expectedReason) {
-    return new TypeSafeDiagnosingMatcher<Result<T>>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
@@ -101,7 +101,7 @@ public class FailureMatcher {
   }
 
   public static Matcher<HttpFailure> isFailureContaining(String expectedReason) {
-    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format("a failure: %s", expectedReason));

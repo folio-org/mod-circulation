@@ -24,6 +24,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ErrorCode.ITEM_HAS_OPEN_LOAN;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -93,7 +94,8 @@ public class CheckOutValidators {
     inactiveProxyUserValidator = InactiveUserValidator.forProxy(request.getProxyUserBarcode());
 
     openLoanValidator = new ExistingOpenLoanValidator(loanRepository,
-      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
+      message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode(),
+        ITEM_HAS_OPEN_LOAN));
 
     itemLimitValidator = createItemLimitValidator(request, permissions,
       loanRepository);
