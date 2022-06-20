@@ -174,7 +174,7 @@ public class UpdateRequestQueue {
     RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
     Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityRequestFulfillableByItem(item);
-    if (firstRequest == null) {
+    if (firstRequest == null || !firstRequest.getItemId().equals(item.getItemId())) {
       return completedFuture(succeeded(relatedRecords));
     }
 
