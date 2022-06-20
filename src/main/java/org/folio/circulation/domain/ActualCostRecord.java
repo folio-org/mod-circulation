@@ -16,13 +16,13 @@ public class ActualCostRecord {
   private String userId;
   private String userBarcode;
   private String loanId;
-  private ItemLossType lossType;
+  private ItemLossType itemLossType;
   private String dateOfLoss;
   private String title;
   private Collection<Identifier> identifiers;
   private String itemBarcode;
   private String loanType;
-  private String effectiveCallNumber;
+  private CallNumberComponents callNumberComponents;
   private String permanentItemLocation;
   private String feeFineOwnerId;
   private String feeFineOwner;

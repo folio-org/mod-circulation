@@ -285,18 +285,17 @@ public class LostItemFeeChargingService {
           .withUserId(loan.getUserId())
           .withUserBarcode(loan.getUser().getBarcode())
           .withLoanId(loan.getId())
-          .withLossType(ItemLossType.DECLARED_LOST)
+          .withItemLossType(ItemLossType.DECLARED_LOST)
           .withDateOfLoss(context.request.getDeclaredLostDateTime().toString())
           .withTitle(loan.getItem().getTitle())
           .withIdentifiers(loan.getItem().getIdentifiers()
             .collect(Collectors.toList()))
           .withItemBarcode(loan.getItem().getBarcode())
           .withLoanType(loan.getItem().getLoanTypeName())
-          .withEffectiveCallNumber(loan.getItem().getCallNumber())
+          .withCallNumberComponents(loan.getItem().getCallNumberComponents())
           .withPermanentItemLocation(loan.getItem().getPermanentLocation().getName())
           .withFeeFineOwnerId(context.feeFineOwner.getId())
           .withFeeFineOwner(context.feeFineOwner.getOwner())
-        //TODO check how to deal with id.withFeeFineTypeId
           .withFeeFineTypeId(LOST_ITEM_ACTUAL_COST_FEE_TYPE)
           .withFeeFineType(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
 
