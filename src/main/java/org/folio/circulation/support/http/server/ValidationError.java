@@ -11,6 +11,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 
 @Getter
@@ -18,7 +20,7 @@ import org.folio.circulation.support.json.JsonPropertyWriter;
 public class ValidationError {
   private final String message;
   private final Map<String, String> parameters;
-  private final String code;
+  private final ErrorCode code;
 
   public ValidationError(String message) {
     this.message = message;
@@ -33,7 +35,7 @@ public class ValidationError {
     this.code = null;
   }
 
-  public ValidationError(String message, String key, String value, String code) {
+  public ValidationError(String message, String key, String value, ErrorCode code) {
     this.message = message;
     this.parameters = new HashMap<>();
     this.parameters.put(key, value);
@@ -46,7 +48,7 @@ public class ValidationError {
     this.code = null;
   }
 
-  public ValidationError(String message, Map<String, String> parameters, String code) {
+  public ValidationError(String message, Map<String, String> parameters, ErrorCode code) {
     this.message = message;
     this.parameters = parameters;
     this.code = code;
@@ -64,7 +66,10 @@ public class ValidationError {
     JsonObject result = new JsonObject()
       .put("message", message)
       .put("parameters", mappedParameters);
-    JsonPropertyWriter.write(result, "code", code);
+
+    if (code != null) {
+      JsonPropertyWriter.write(result, "code", code.toString());
+    }
 
     return result;
   }

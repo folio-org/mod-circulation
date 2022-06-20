@@ -3,7 +3,7 @@ package org.folio.circulation.domain.validation;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
-import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_LOANABLE;
+import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 

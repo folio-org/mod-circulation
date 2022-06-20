@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.support.http.server.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -30,7 +29,7 @@ public class ValidationErrorFailure implements HttpFailure {
   }
 
   public static <T> Result<T> failedValidation(String message, String key, String value, ErrorCode errorCode) {
-    return failedValidation(new ValidationError(message, key, value, errorCode.toString()));
+    return failedValidation(new ValidationError(message, key, value, errorCode));
   }
 
   public static <T> Result<T> failedValidation(String reason, Map<String, String> parameters) {
@@ -56,7 +55,7 @@ public class ValidationErrorFailure implements HttpFailure {
     String propertyName, String propertyValue, ErrorCode errorCode) {
 
     return singleValidationError(new ValidationError(reason, propertyName, propertyValue,
-      errorCode.toString()));
+      errorCode));
   }
 
   public static ValidationErrorFailure singleValidationError(ValidationError error) {

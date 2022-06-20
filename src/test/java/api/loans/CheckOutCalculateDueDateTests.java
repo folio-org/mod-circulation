@@ -32,7 +32,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
-import static org.folio.circulation.support.http.server.ErrorCode.ITEM_NOT_LOANABLE;
+import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;

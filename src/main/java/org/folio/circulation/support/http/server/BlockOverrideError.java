@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.folio.circulation.domain.override.OverridableBlockType;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.OkapiPermissions;
 
 import io.vertx.core.json.JsonArray;
@@ -32,7 +33,7 @@ public class BlockOverrideError extends ValidationError {
     this.missingOverridePermissions = missingOverridePermissions;
   }
 
-  public BlockOverrideError(String message, Map<String, String> parameters, String code,
+  public BlockOverrideError(String message, Map<String, String> parameters, ErrorCode code,
     OverridableBlockType blockType, OkapiPermissions missingOverridePermissions) {
 
     super(message, parameters, code);

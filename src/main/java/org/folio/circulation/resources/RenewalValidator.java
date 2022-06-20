@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.support.http.server.ErrorCode;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -71,7 +71,7 @@ public final class RenewalValidator {
     String message, Map<String, String> additionalParameters, ErrorCode errorCode) {
 
     Map<String, String> parameters = addParams(additionalParameters, loanPolicy);
-    return new ValidationError(message, parameters, errorCode.toString());
+    return new ValidationError(message, parameters, errorCode);
   }
 
   private static Map<String, String> addParams(Map<String, String> additionalParameters,
