@@ -127,8 +127,7 @@ public class RequestQueue {
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
     Request request = getHighestPriorityRequestFulfillableByItem(item);
 
-    boolean b = !(request == null || (request.isFor(requestingUser) )) && request.isFor(item);
-    return b;
+    return !(request == null || (request.isFor(requestingUser))) && request.isFor(item);
   }
 
   private List<Request> fulfillableRequests() {
