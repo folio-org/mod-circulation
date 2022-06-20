@@ -3447,6 +3447,33 @@ public class RequestsAPICreationTests extends APITests {
       hasNullParameter("requestLevel"))));
   }
 
+  @Test
+  void shouldNotFillInMissingRequestPropertiesWhenItemIdIsMissing() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .page()
+      .withNoItemId()
+      .withRequestLevel(null)
+      .withNoHoldingsRecordId()
+      .withNoInstanceId()
+      .withFulfilmentPreference("Hold Shelf")
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(2));
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("Cannot create a request with no instance ID"),
+        hasNullParameter("instanceId"))),
+      hasErrorWith(allOf(
+        hasMessage("Cannot create an item level request with no item ID"),
+        hasNullParameter("itemId")))
+    ));
+  }
+
   private void validateNoticeLogContextItem(JsonObject noticeLogContextItem, ItemResource item) {
     JsonObject itemJsonObject = new JsonObject(noticeLogContextItem.getString("eventPayload"))
       .getJsonObject("payload")

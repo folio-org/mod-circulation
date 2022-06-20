@@ -153,7 +153,7 @@ class RequestFromRepresentationService {
       return ofAsync(() -> request);
     }
 
-    log.warn("Request properties 'requestLevel', 'holdingsRecord' and 'instanceId' are missing, " +
+    log.warn("Request properties 'requestLevel', 'holdingsRecordId' and 'instanceId' are missing, " +
       "assuming item-level request by a legacy client");
     request.put(REQUEST_LEVEL, ITEM.getValue());
 
@@ -167,7 +167,7 @@ class RequestFromRepresentationService {
       return ofAsync(() -> request);
     }
 
-    log.info("Attempting to get missing property 'holdingsRecordId' from item");
+    log.info("Attempting to get missing property 'holdingsRecordId' from item {}", itemId);
 
     return itemRepository.fetchItemAsJson(itemId)
       .thenApply(mapResult(item -> copyProperty(item, request, HOLDINGS_RECORD_ID)));
@@ -179,7 +179,7 @@ class RequestFromRepresentationService {
       return ofAsync(() -> request);
     }
 
-    log.info("Attempting to get missing property 'instanceId' from holdings record");
+    log.info("Attempting to get missing property 'instanceId' from holdings record {}", holdingsRecordId);
 
     return holdingsRepository.fetchAsJson(holdingsRecordId)
       .thenApply(mapResult(holdings -> copyProperty(holdings, request, INSTANCE_ID)));
