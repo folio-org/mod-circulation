@@ -63,19 +63,19 @@ public final class RenewalValidator {
   public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
     String message, Map<String, String> additionalParameters) {
 
-    Map<String, String> parameters = addParams(additionalParameters, loanPolicy);
+    Map<String, String> parameters = buildLoanPolicyParameters(additionalParameters, loanPolicy);
     return new ValidationError(message, parameters);
   }
 
   public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
     String message, Map<String, String> additionalParameters, ErrorCode errorCode) {
 
-    Map<String, String> parameters = addParams(additionalParameters, loanPolicy);
+    Map<String, String> parameters = buildLoanPolicyParameters(additionalParameters, loanPolicy);
     return new ValidationError(message, parameters, errorCode);
   }
 
-  private static Map<String, String> addParams(Map<String, String> additionalParameters,
-    LoanPolicy loanPolicy) {
+  private static Map<String, String> buildLoanPolicyParameters(
+    Map<String, String> additionalParameters, LoanPolicy loanPolicy) {
 
     Map<String, String> result = new HashMap<>(additionalParameters);
     result.put("loanPolicyId", loanPolicy.getId());
