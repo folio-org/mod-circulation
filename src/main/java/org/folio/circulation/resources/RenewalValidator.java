@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -62,10 +63,24 @@ public final class RenewalValidator {
   public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
     String message, Map<String, String> additionalParameters) {
 
-    Map<String, String> parameters = new HashMap<>(additionalParameters);
-    parameters.put("loanPolicyId", loanPolicy.getId());
-    parameters.put("loanPolicyName", loanPolicy.getName());
+    Map<String, String> parameters = buildLoanPolicyParameters(additionalParameters, loanPolicy);
     return new ValidationError(message, parameters);
+  }
+
+  public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
+    String message, Map<String, String> additionalParameters, ErrorCode errorCode) {
+
+    Map<String, String> parameters = buildLoanPolicyParameters(additionalParameters, loanPolicy);
+    return new ValidationError(message, parameters, errorCode);
+  }
+
+  private static Map<String, String> buildLoanPolicyParameters(
+    Map<String, String> additionalParameters, LoanPolicy loanPolicy) {
+
+    Map<String, String> result = new HashMap<>(additionalParameters);
+    result.put("loanPolicyId", loanPolicy.getId());
+    result.put("loanPolicyName", loanPolicy.getName());
+    return result;
   }
 
   public static ValidationError errorForNotMatchingOverrideCases(LoanPolicy loanPolicy) {

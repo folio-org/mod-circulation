@@ -2,15 +2,24 @@ package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.CAN_NOT_DETERMINE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.LOAN_TYPE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.MATERIAL_TYPE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.MATERIAL_TYPE_AND_LOAN_TYPE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.PATRON_GROUP_LOAN_TYPE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.PATRON_GROUP_MATERIAL_TYPE;
+import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -22,11 +31,14 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 public class ItemLimitValidator {
-  private final Function<String, ValidationErrorFailure> itemLimitErrorFunction;
-  private final LoanRepository loanRepository;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
+  private final Function<ItemLimitValidationErrorCause, ValidationErrorFailure>
+    itemLimitErrorFunction;
+  private final LoanRepository loanRepository;
 
-  public ItemLimitValidator(Function<String, ValidationErrorFailure> itemLimitErrorFunction,
+  private ItemLimitValidator(
+    Function<ItemLimitValidationErrorCause, ValidationErrorFailure> itemLimitErrorFunction,
     LoanRepository loanRepository) {
 
     this.itemLimitErrorFunction = itemLimitErrorFunction;
@@ -34,8 +46,8 @@ public class ItemLimitValidator {
   }
 
   public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
-    this(message -> singleValidationError(message, ITEM_BARCODE,
-      request.getItemBarcode()), loanRepository);
+    this(cause -> singleValidationError(cause.formatMessage(), ITEM_BARCODE,
+      request.getItemBarcode(), cause.getErrorCode()), loanRepository);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
@@ -51,9 +63,17 @@ public class ItemLimitValidator {
     return ofAsync(() -> loan.getLoanPolicy().getRuleConditions())
       .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
         ruleConditions -> {
-          String message = getErrorMessage(ruleConditions);
-          return itemLimitErrorFunction.apply(String.format("Patron has reached maximum limit of %d items %s",
-            itemLimit, message));
+          ItemLimitValidationErrorCause cause = getValidationErrorCause(ruleConditions);
+
+          if (cause == null) {
+            String message = String.format("Can not determine item limit validation error cause " +
+              "for item %s, patron %s", loan.getItemId(), loan.getUserId());
+            log.warn(message);
+            return itemLimitErrorFunction.apply(CAN_NOT_DETERMINE);
+          }
+
+          cause.setItemLimit(itemLimit);
+          return itemLimitErrorFunction.apply(cause);
         }))
       .thenApply(result -> result.map(v -> records));
   }
@@ -103,24 +123,24 @@ public class ItemLimitValidator {
       && expectedLoanType.equals(loanRecord.getItem().getLoanTypeId());
   }
 
-  private String getErrorMessage(AppliedRuleConditions ruleConditionsEntity) {
+  private ItemLimitValidationErrorCause getValidationErrorCause(AppliedRuleConditions ruleConditionsEntity) {
     boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
     boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();
     boolean isRulePatronGroupPresent = ruleConditionsEntity.isPatronGroupPresent();
 
     if (isRulePatronGroupPresent && isRuleMaterialTypePresent && isRuleLoanTypePresent) {
-      return "for combination of patron group, material type and loan type";
+      return PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;
     } else if (isRulePatronGroupPresent && isRuleMaterialTypePresent) {
-      return "for combination of patron group and material type";
+      return PATRON_GROUP_MATERIAL_TYPE;
     } else if (isRulePatronGroupPresent && isRuleLoanTypePresent) {
-      return "for combination of patron group and loan type";
+      return PATRON_GROUP_LOAN_TYPE;
     } else if (isRuleMaterialTypePresent && isRuleLoanTypePresent) {
-      return "for combination of material type and loan type";
+      return MATERIAL_TYPE_AND_LOAN_TYPE;
     } else if (isRuleMaterialTypePresent) {
-      return "for material type";
+      return MATERIAL_TYPE;
     } else if (isRuleLoanTypePresent) {
-      return "for loan type";
+      return LOAN_TYPE;
     }
-    return StringUtils.EMPTY;
+    return null;
   }
 }
