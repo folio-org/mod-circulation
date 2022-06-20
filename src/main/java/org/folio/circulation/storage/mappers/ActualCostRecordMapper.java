@@ -5,8 +5,8 @@ import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.ItemLossType;
 
 import io.vertx.core.json.JsonObject;
+
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
@@ -24,7 +24,8 @@ public class ActualCostRecordMapper {
     write(json, "identifiers", actualCostRecord.getIdentifiers());
     write(json, "itemBarcode", actualCostRecord.getItemBarcode());
     write(json, "loanType", actualCostRecord.getLoanType());
-    write(json, "effectiveCallNumberComponents", createCallNumberComponents(actualCostRecord.getCallNumberComponents()));
+    write(json, "effectiveCallNumberComponents",
+      createCallNumberComponents(actualCostRecord.getCallNumberComponents()));
     write(json, "permanentItemLocation", actualCostRecord.getPermanentItemLocation());
     write(json, "feeFineOwnerId", actualCostRecord.getFeeFineOwnerId());
     write(json, "feeFineOwner", actualCostRecord.getFeeFineOwner());
@@ -45,12 +46,12 @@ public class ActualCostRecordMapper {
       IdentifierMapper.mapIdentifiers(representation),
       getProperty(representation, "itemBarcode"),
       getProperty(representation, "loanType"),
-      CallNumberComponents.fromItemJson(getObjectProperty(representation, "effectiveCallNumber")),
+      CallNumberComponents.fromItemJson(representation),
       getProperty(representation, "permanentItemLocation"),
       getProperty(representation, "feeFineOwnerId"),
       getProperty(representation, "feeFineOwner"),
       getProperty(representation, "feeFineTypeId"),
       getProperty(representation, "feeFineType")
-      );
+    );
   }
 }

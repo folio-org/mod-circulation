@@ -3,8 +3,8 @@ package org.folio.circulation.domain;
 import java.util.Collection;
 
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.With;
 
 @NoArgsConstructor

@@ -61,7 +61,7 @@ public class Clients {
   private final CirculationRulesProcessor circulationRulesProcessor;
   private final CollectionResourceClient accountsRefundClient;
   private final CollectionResourceClient accountsCancelClient;
-  private final CollectionResourceClient actualCostRecordStorageClient;
+  private final CollectionResourceClient actualCostRecordsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -121,7 +121,7 @@ public class Clients {
         circulationRulesStorageClient, locationsStorageClient);
       accountsRefundClient = createAccountsRefundClient(client, context);
       accountsCancelClient = createAccountsCancelClient(client, context);
-      actualCostRecordStorageClient = createActualCostRecordClient(client, context);
+      actualCostRecordsStorageClient = createActualCostRecordClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -340,8 +340,8 @@ public class Clients {
     return noticeTemplatesClient;
   }
 
-  public CollectionResourceClient actualCostRecordStorageClient() {
-    return actualCostRecordStorageClient;
+  public CollectionResourceClient actualCostRecordsStorage() {
+    return actualCostRecordsStorageClient;
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(

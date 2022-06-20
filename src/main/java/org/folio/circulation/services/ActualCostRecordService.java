@@ -73,6 +73,6 @@ public class ActualCostRecordService {
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(actualCostFeeFine.getId())
-      .withFeeFineType(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+      .withFeeFineType(actualCostFeeFine.getFeeFineType());
   }
 }
