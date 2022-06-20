@@ -67,9 +67,7 @@ public class ValidationError {
       .put("message", message)
       .put("parameters", mappedParameters);
 
-    if (code != null) {
-      JsonPropertyWriter.write(result, "code", code.toString());
-    }
+    JsonPropertyWriter.write(result, "code", code.toString());
 
     return result;
   }
