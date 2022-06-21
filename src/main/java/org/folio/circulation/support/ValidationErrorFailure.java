@@ -24,10 +24,12 @@ public class ValidationErrorFailure implements HttpFailure {
 
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> Result<T> failedValidation(String reason,
-                                               String key, String value) {
-
+  public static <T> Result<T> failedValidation(String reason, String key, String value) {
     return failedValidation(new ValidationError(reason, key, value));
+  }
+
+  public static <T> Result<T> failedValidation(String message, String key, String value, ErrorCode errorCode) {
+    return failedValidation(new ValidationError(message, key, value, errorCode));
   }
 
   public static <T> Result<T> failedValidation(String reason, Map<String, String> parameters) {
@@ -47,6 +49,13 @@ public class ValidationErrorFailure implements HttpFailure {
 
     return singleValidationError(
       new ValidationError(reason, propertyName, propertyValue));
+  }
+
+  public static ValidationErrorFailure singleValidationError(String reason,
+    String propertyName, String propertyValue, ErrorCode errorCode) {
+
+    return singleValidationError(new ValidationError(reason, propertyName, propertyValue,
+      errorCode));
   }
 
   public static ValidationErrorFailure singleValidationError(ValidationError error) {

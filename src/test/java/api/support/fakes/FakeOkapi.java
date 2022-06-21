@@ -412,7 +412,7 @@ public class FakeOkapi extends AbstractVerticle {
           Objects.equals(request.getInteger("position"),
             newOrUpdatedRequest.getInteger("position")))
         .findAny()
-        .map(r -> (Result<Object>) ValidationErrorFailure.failedValidation(
+        .map(r -> ValidationErrorFailure.failedValidation(
           "Cannot have more than one request with the same position in the queue",
           "itemId", r.getString("itemId")))
         .orElse(Result.succeeded(null));
