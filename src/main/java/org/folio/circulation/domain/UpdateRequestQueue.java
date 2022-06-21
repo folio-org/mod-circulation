@@ -169,13 +169,12 @@ public class UpdateRequestQueue {
     return succeeded(request);
   }
 
-  // TODO : consider about check all the fullfillableItems
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(LoanAndRelatedRecords relatedRecords) {
     Item item = relatedRecords.getItem();
     RequestQueue requestQueue = relatedRecords.getRequestQueue();
 
-    Request firstRequest = relatedRecords.getRequestQueue()
-        .getHighestPriorityRequestFulfillableByExactItem(item);
+    Request firstRequest = requestQueue
+        .getHighestPriorityFulfillableRequestForExactItem(item);
 
     if (firstRequest == null) {
       return completedFuture(succeeded(relatedRecords));

@@ -71,10 +71,9 @@ public class RequestQueue {
       .orElse(null);
   }
 
-  Request getHighestPriorityRequestFulfillableByExactItem(Item item) {
+  Request getHighestPriorityFulfillableRequestForExactItem(Item item) {
     return fulfillableRequests().stream()
-      .filter(request -> requestIsFulfillableByItem(request, item))
-      .filter(request -> request.isFor(item))
+      .filter(request -> requestIsFulfillableByItem(request, item) && request.isFor(item))
       .findFirst()
       .orElse(null);
   }
@@ -86,11 +85,8 @@ public class RequestQueue {
       if(request.isNotYetFilled()) {
         return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
       }
-
-      String requestItemId = request.getItemId();
-      String itemId = item.getItemId();
       return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
-        && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
+        && (item.isFound() && item.getItemId().equals(request.getItemId()));
     }
     else if (request.getRequestLevel() == RequestLevel.ITEM) {
       String itemId = item.getItemId();
@@ -132,9 +128,8 @@ public class RequestQueue {
         .orElse(null)));
   }
 
-  //TODO: check all fullfillable requests list
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
-    Request request = getHighestPriorityRequestFulfillableByExactItem(item);
+    Request request = getHighestPriorityFulfillableRequestForExactItem(item);
     return !(request == null || request.isFor(requestingUser));
   }
 
