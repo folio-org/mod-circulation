@@ -145,16 +145,18 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<JsonObject>> fillInMissingProperties(JsonObject request,
     Request.Operation operation) {
 
-    if (operation != Request.Operation.CREATE ||
-      request.containsKey(REQUEST_LEVEL) ||
-      request.containsKey(HOLDINGS_RECORD_ID) ||
-      request.containsKey(INSTANCE_ID)) {
+    List<String> newProperties = List.of(REQUEST_LEVEL, HOLDINGS_RECORD_ID, INSTANCE_ID);
+    boolean requestContainsNewProperties = request.getMap()
+      .keySet()
+      .stream()
+      .anyMatch(newProperties::contains);
 
+    if (operation != Request.Operation.CREATE || requestContainsNewProperties) {
       return ofAsync(() -> request);
     }
 
-    log.warn("Request properties 'requestLevel', 'holdingsRecordId' and 'instanceId' are missing, " +
-      "assuming item-level request by a legacy client");
+    log.warn("Request properties {} are missing, assuming item-level request by a legacy client",
+      newProperties);
     request.put(REQUEST_LEVEL, ITEM.getValue());
 
     return fillInMissingHoldingsRecordId(request)
