@@ -382,10 +382,8 @@
   },
   "additionalProperties": false,
   "required": [
-    "instanceId",
     "requesterId",
     "requestType",
-    "requestLevel",
     "requestDate",
     "fulfilmentPreference"
   ]

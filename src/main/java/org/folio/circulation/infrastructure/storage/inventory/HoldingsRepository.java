@@ -16,6 +16,8 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.json.JsonObject;
+
 public class HoldingsRepository {
   private final CollectionResourceClient holdingsClient;
 
@@ -26,10 +28,14 @@ public class HoldingsRepository {
   CompletableFuture<Result<Holdings>> fetchById(String id) {
     final var mapper = new HoldingsMapper();
 
+    return fetchAsJson(id)
+      .thenApply(mapResult(mapper::toDomain));
+  }
+
+  public CompletableFuture<Result<JsonObject>> fetchAsJson(String id) {
     return SingleRecordFetcher.json(holdingsClient, "holdings",
         r -> failedValidation("Holdings record does not exist", "id", id))
-      .fetch(id)
-      .thenApply(mapResult(mapper::toDomain));
+      .fetch(id);
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByInstanceId(String instanceId) {
