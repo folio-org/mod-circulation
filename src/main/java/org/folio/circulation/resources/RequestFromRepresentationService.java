@@ -24,6 +24,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.copyProperty;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
@@ -531,12 +532,4 @@ class RequestFromRepresentationService {
         .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
   }
 
-  private static JsonObject copyProperty(JsonObject source, JsonObject destination,
-    String propertyName) {
-
-    return Optional.ofNullable(source)
-      .map(json -> json.getValue(propertyName))
-      .map(value -> destination.put(propertyName, value))
-      .orElse(destination);
-  }
 }

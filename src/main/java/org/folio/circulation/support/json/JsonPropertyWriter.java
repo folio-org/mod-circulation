@@ -5,6 +5,7 @@ import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -142,6 +143,15 @@ public class JsonPropertyWriter {
     }
 
     setter.set(currentObject, paths[paths.length - 1], value);
+  }
+
+  public static JsonObject copyProperty(JsonObject source, JsonObject destination,
+    String propertyName) {
+
+    return Optional.ofNullable(source)
+      .map(json -> json.getValue(propertyName))
+      .map(value -> destination.put(propertyName, value))
+      .orElse(destination);
   }
 
   @FunctionalInterface
