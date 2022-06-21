@@ -1626,6 +1626,32 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void tlrRecallShouldPickItemWithLoanWithNextClosestDueDateIfAnotherRecallRequestExists1() {
+    configurationsFixture.enableTlrFeature();
+    var londonZoneId = ZoneId.of("Europe/London");
+    var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    var firstItem = items.get(0);
+
+//    ZonedDateTime firstLoanDate = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
+//    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica(),
+//      firstLoanDate);
+//    var secondLoan = checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.steve(),
+//      firstLoanDate.plusDays(1));
+//    checkOutFixture.checkOutByBarcode(items.get(2), usersFixture.steve(),
+//      firstLoanDate.plusDays(2));
+
+//    requestsFixture.recallItem(firstItem, usersFixture.james());
+//    requestsFixture.recallItem(items.get(2), usersFixture.james());
+    var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
+      usersFixture.charlotte(), RECALL).getJson();
+    var loanForTlrRecall = loansStorageClient.getAll().stream()
+      .filter(loan -> loan.getString("itemId").equals(requestJson.getString("itemId")))
+      .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
+
+    assertThat(loanForTlrRecall.getString("id"), is(firstItem.getId()));
+  }
+
+  @Test
   void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();

@@ -12,6 +12,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -219,11 +220,53 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(loan -> ofAsync(() -> loan == null),
         ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan), result -> ofAsync(() ->  result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
-      .thenComposeAsync(requestResult -> requestResult.combineAfter(
-        r -> itemRepository.fetchFor(r.getLoan()), Request::withItem))
+      .thenApply(this::refuseWhenNoAllowedItemAndLoan)
+      .thenApply(this::fetchAllowedItemIfNoLoanExists)
+      .thenCompose(r -> r.after(this::fetchItemForLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         this::getUserForExistingLoan, this::addUserToLoan))
-      .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
+      .thenApply(res -> errorHandler.handleValidationResult(res, INSTANCE_DOES_NOT_EXIST, request));
+  }
+
+  private CompletableFuture<Result<Request>> fetchItemForLoan(Request request) {
+    if (request.getLoan() == null) {
+      return ofAsync(() -> request);
+    }
+    return itemRepository.fetchFor(request.getLoan())
+      .thenApply(r -> r.map(request::withItem));
+  }
+
+  private Result<Request> fetchAllowedItemIfNoLoanExists(Result<Request> request) {
+    request.next(req -> {
+      Item item = shouldHaveItemsWithAllowedStatusesForRecall(req);
+      if (req.getLoan() == null && item != null) {
+        return of(() -> req.withItem(item));
+      }
+      return of(() -> req);
+    });
+    return request;
+  }
+
+  private Result<Request> refuseWhenNoAllowedItemAndLoan(Result<Request> request) {
+    return request.next(this::validateIfAllowedItemAndLoanExist)
+      .mapFailure(err -> errorHandler.handleValidationError(err, FAILED_TO_FETCH_ITEM, request));
+  }
+
+  private Result<Request> validateIfAllowedItemAndLoanExist(Request request) {
+    Item item = shouldHaveItemsWithAllowedStatusesForRecall(request);
+    if (request.getLoan() == null && item == null) {
+      return failedValidation("Request doesn't have loan and items with allowed statuses",
+        "loan", null);
+    }
+    return of(() -> request);
+  }
+
+  private Item shouldHaveItemsWithAllowedStatusesForRecall(Request request) {
+    return request.getInstanceItems().stream()
+      .filter(item -> List.of("Awaiting delivery", "Paged", "Awaiting pick-up")
+        .contains(item.getStatus().getValue()))
+      .findFirst()
+      .orElse(null);
   }
 
   private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
