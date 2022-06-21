@@ -73,7 +73,11 @@ public class RequestQueue {
 
   Request getHighestPriorityFulfillableRequestForExactItem(Item item) {
     return fulfillableRequests().stream()
-      .filter(request -> requestIsFulfillableByItem(request, item) && request.isFor(item))
+      .filter(request -> {
+        boolean isFulfillableByItem = requestIsFulfillableByItem(request, item);
+        return request.isTitleLevel() && request.isNotYetFilled() ? isFulfillableByItem
+          && request.isFor(item) : isFulfillableByItem;
+      })
       .findFirst()
       .orElse(null);
   }
