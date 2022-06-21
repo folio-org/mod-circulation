@@ -247,15 +247,12 @@ class DeclareLostAPITests extends APITests {
     final double expectedItemFee = 20.0;
     final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
       servicePointsFixture.cd6().getId()).getId().toString();
-
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost with Actual Cost fee testing policy")
       .chargeProcessingFeeWhenDeclaredLost(expectedProcessingFee)
       .withActualCost(expectedItemFee);
-
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
-
     final IndividualResource loan = declareItemLost(itemBuilder -> itemBuilder
       .withPermanentLocation(locationsFixture.fourthFloor())
       .withTemporaryLocation(locationsFixture.thirdFloor()));

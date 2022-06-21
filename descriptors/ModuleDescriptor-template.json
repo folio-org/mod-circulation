@@ -101,7 +101,8 @@
             "circulation.loans.declare-item-lost.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.declare-item-lost.post"
+            "modperms.circulation.loans.declare-item-lost.post",
+            "actual-cost-record-storage.actual-cost-records.item.post"
           ]
         }
       ]
