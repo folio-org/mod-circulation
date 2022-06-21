@@ -830,7 +830,8 @@
             "circulation-storage.patron-notice-policies.item.get",
             "circulation-storage.patron-notice-policies.collection.get",
             "circulation.rules.notice-policy.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
+            "scheduled-notice-storage.scheduled-notices.item.post",
+            "actual-cost-record-storage.actual-cost-records.item.post"
           ],
           "unit": "minute",
           "delay": "35"
