@@ -71,18 +71,26 @@ public class RequestQueue {
       .orElse(null);
   }
 
+  Request getHighestPriorityRequestFulfillableByExactItem(Item item) {
+    return fulfillableRequests().stream()
+      .filter(request -> requestIsFulfillableByItem(request, item))
+      .filter(request -> request.isFor(item))
+      .findFirst()
+      .orElse(null);
+  }
+
   private boolean requestIsFulfillableByItem(Request request, Item item) {
     if (request.getRequestLevel() == RequestLevel.TITLE) {
       String itemInstanceId = item.getInstanceId();
       String requestInstanceId = request.getInstanceId();
-
-      if(!request.isNotYetFilled()) {
-        String requestItemId = request.getItemId();
-        String itemId = item.getItemId();
-        return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
-        && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
+      if(request.isNotYetFilled()) {
+        return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
       }
-      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId);
+
+      String requestItemId = request.getItemId();
+      String itemId = item.getItemId();
+      return itemInstanceId != null && itemInstanceId.equals(requestInstanceId)
+        && (requestItemId == null ^ (item.isFound() && itemId.equals(requestItemId)));
     }
     else if (request.getRequestLevel() == RequestLevel.ITEM) {
       String itemId = item.getItemId();
@@ -124,10 +132,10 @@ public class RequestQueue {
         .orElse(null)));
   }
 
+  //TODO: check all fullfillable requests list
   public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
-    Request request = getHighestPriorityRequestFulfillableByItem(item);
-
-    return !(request == null || (request.isFor(requestingUser))) && request.isFor(item);
+    Request request = getHighestPriorityRequestFulfillableByExactItem(item);
+    return !(request == null || request.isFor(requestingUser));
   }
 
   private List<Request> fulfillableRequests() {
