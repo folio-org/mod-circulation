@@ -42,7 +42,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
-import org.folio.circulation.infrastructure.storage.ActualCostStorageRepository;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -91,7 +91,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
-    this.actualCostRecordService = new ActualCostRecordService(new ActualCostStorageRepository(clients));
+    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients));
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {

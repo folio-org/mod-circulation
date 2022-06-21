@@ -52,7 +52,6 @@ public class LostItemFeeChargingService {
   private final EventPublisher eventPublisher;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
-  private final ActualCostRecordRepository actualCostRecordRepository;
   private final ActualCostRecordService actualCostRecordService;
   private String userId;
   private String servicePointId;
@@ -70,7 +69,7 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
-    this.actualCostRecordRepository = new ActualCostRecordRepository(clients);
+    ActualCostRecordRepository actualCostRecordRepository = new ActualCostRecordRepository(clients);
     this.actualCostRecordService = new ActualCostRecordService(actualCostRecordRepository);
   }
 

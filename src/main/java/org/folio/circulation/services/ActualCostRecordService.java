@@ -10,7 +10,7 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
-import org.folio.circulation.infrastructure.storage.ActualCostStorageRepository;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
 
@@ -20,9 +20,9 @@ import static org.folio.circulation.services.LostItemFeeChargingService.Referenc
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 public class ActualCostRecordService {
-  private final ActualCostStorageRepository actualCostStorageRepository;
+  private final ActualCostRecordRepository actualCostStorageRepository;
 
-  public ActualCostRecordService(ActualCostStorageRepository actualCostStorageRepository) {
+  public ActualCostRecordService(ActualCostRecordRepository actualCostStorageRepository) {
     this.actualCostStorageRepository = actualCostStorageRepository;
   }
 
