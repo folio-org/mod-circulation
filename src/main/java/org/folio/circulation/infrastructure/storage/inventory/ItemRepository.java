@@ -343,9 +343,13 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
-    return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
-      .fetch(itemId)
+    return fetchItemAsJson(itemId)
       .thenApply(r -> r.map(Item::from));
+  }
+
+  public CompletableFuture<Result<JsonObject>> fetchItemAsJson(String itemId) {
+    return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
+      .fetch(itemId);
   }
 
   private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
@@ -374,14 +378,19 @@ public class ItemRepository {
       else {
         final var mapper = new HoldingsMapper();
 
-        return SingleRecordFetcher.json(holdingsClient, "holding",
-            r -> failedValidation("Holding does not exist", ITEM_ID, item.getItemId()))
-          .fetch(item.getHoldingsRecordId())
+        return fetchHoldingsAsJson(item.getHoldingsRecordId())
           .thenApply(r -> r.map(mapper::toDomain))
           .thenApply(r -> r.map(item::withHoldings));
       }
     });
   }
+
+  public CompletableFuture<Result<JsonObject>> fetchHoldingsAsJson(String holdingsRecordId) {
+    return SingleRecordFetcher.json(holdingsClient, "holding",
+        r -> failedValidation("Holding does not exist", HOLDINGS_RECORD_ID, holdingsRecordId))
+      .fetch(holdingsRecordId);
+  }
+
 
   private CompletableFuture<Result<Item>> fetchInstance(Result<Item> result) {
     return result.after(item -> {
