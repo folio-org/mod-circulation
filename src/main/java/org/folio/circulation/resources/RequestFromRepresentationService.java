@@ -12,7 +12,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_RECALL_WITHOUT_LOAN_AND_ALLOWED_ITEMS;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -249,7 +249,8 @@ class RequestFromRepresentationService {
 
   private Result<Request> refuseWhenNoAllowedItemAndLoan(Result<Request> request) {
     return request.next(this::validateIfAllowedItemAndLoanExist)
-      .mapFailure(err -> errorHandler.handleValidationError(err, FAILED_TO_FETCH_ITEM, request));
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        ATTEMPT_TO_RECALL_WITHOUT_LOAN_AND_ALLOWED_ITEMS, request));
   }
 
   private Result<Request> validateIfAllowedItemAndLoanExist(Request request) {
