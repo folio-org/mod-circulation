@@ -78,6 +78,6 @@ public class JsonSchemaValidator {
   }
 
   private ValidationError toValidationError(ValidationException validationException) {
-    return new ValidationError(validationException.getMessage(), null, null);
+    return new ValidationError(validationException.getMessage());
   }
 }

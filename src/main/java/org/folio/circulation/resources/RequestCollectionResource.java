@@ -31,6 +31,7 @@ import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -106,6 +107,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients), itemRepository,
+      new HoldingsRepository(clients.holdingsStorage()),
       new RequestQueueRepository(requestRepository), userRepository, loanRepository,
       new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
@@ -169,6 +171,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       new InstanceRepository(clients), itemRepository,
+      new HoldingsRepository(clients.holdingsStorage()),
       new RequestQueueRepository(requestRepository), userRepository,
       loanRepository, new ServicePointRepository(clients), configurationRepository,
       createProxyRelationshipValidator(representation, clients),
