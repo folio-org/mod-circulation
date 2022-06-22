@@ -334,8 +334,8 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
       hasJsonPath("suffix", callNumberComponents.getString("suffix")));
 
-   /* assertThat(actualCostRecord, hasJsonPath("permanentItemLocation",
-      permanentItemLocation.getJson().getString("name")));*/
+    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation",
+      permanentItemLocation.getJson().getString("name")));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", owner.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwner", owner.getJson().getString("owner")));
     assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost item fee (actual cost)"));

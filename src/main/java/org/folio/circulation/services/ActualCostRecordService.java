@@ -30,12 +30,11 @@ public class ActualCostRecordService {
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
     ReferenceDataContext referenceDataContext) {
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
-      referenceDataContext.getFeeFineOwner(),
-      ItemLossType.DECLARED_LOST, ZonedDateTime.now(), referenceDataContext.getFeeFines().stream()
-        .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(feeFine.getFeeFineType()))
-        .findFirst().orElse(null))
+      referenceDataContext.getFeeFineOwner(), ItemLossType.DECLARED_LOST, ZonedDateTime.now(),
+      getFeeFine(referenceDataContext))
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
+
 
   public CompletableFuture<Result<LoanToChargeFees>> createActualCostRecordIfNecessary(
     LoanToChargeFees loanToChargeFees) {
@@ -60,7 +59,6 @@ public class ActualCostRecordService {
 
     Item item = loan.getItem();
 
-    Location permanentLocation = item.getPermanentLocation();
     return new ActualCostRecord()
       .withUserId(loan.getUserId())
       .withUserBarcode(loan.getUser().getBarcode())
@@ -73,11 +71,16 @@ public class ActualCostRecordService {
       .withItemBarcode(item.getBarcode())
       .withLoanType(item.getLoanTypeName())
       .withCallNumberComponents(item.getCallNumberComponents())
-      .withPermanentItemLocation(permanentLocation == null || permanentLocation.getName() == null ?
-        "" : permanentLocation.getName())
+      .withPermanentItemLocation(item.getPermanentLocationName())
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(actualCostFeeFine.getId())
       .withFeeFineType(actualCostFeeFine.getFeeFineType());
+  }
+
+  private FeeFine getFeeFine(ReferenceDataContext referenceDataContext) {
+    return referenceDataContext.getFeeFines().stream()
+      .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(feeFine.getFeeFineType()))
+      .findFirst().orElse(null);
   }
 }
