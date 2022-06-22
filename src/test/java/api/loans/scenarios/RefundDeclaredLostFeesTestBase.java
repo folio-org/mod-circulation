@@ -372,7 +372,8 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
       .withFeeFineActualCostType()
       .feeFineStatusOpen()
       .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
-      .withOwner(feeFineOwnerFixture.cd1Owner()));
+      .withOwner(feeFineOwnerFixture.cd1Owner())
+      .withPaymentStatus("Outstanding"));
 
     feeFineActionsClient.create(new FeefineActionsBuilder()
       .forAccount(account.getId())
