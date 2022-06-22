@@ -26,11 +26,11 @@ public class ActualCostRecordMapper {
     write(json, "loanType", actualCostRecord.getLoanType());
     write(json, "effectiveCallNumberComponents",
       createCallNumberComponents(actualCostRecord.getCallNumberComponents()));
-    write(json, "permanentItemLocation", actualCostRecord.getPermanentItemLocation());
     write(json, "feeFineOwnerId", actualCostRecord.getFeeFineOwnerId());
     write(json, "feeFineOwner", actualCostRecord.getFeeFineOwner());
     write(json, "feeFineTypeId", actualCostRecord.getFeeFineTypeId());
     write(json, "feeFineType", actualCostRecord.getFeeFineType());
+    json.put("permanentItemLocation", actualCostRecord.getPermanentItemLocation());
 
     return json;
   }
