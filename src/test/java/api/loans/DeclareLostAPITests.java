@@ -292,7 +292,7 @@ class DeclareLostAPITests extends APITests {
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
       itemBuilder -> itemBuilder
       .withPermanentLoanType(loanType.getId())
-      .withTemporaryLocation(locationsFixture.thirdFloor()));
+      .withTemporaryLocation(locationsFixture.thirdFloor().getId()));
     final UserResource user = usersFixture.charlotte();
     final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
