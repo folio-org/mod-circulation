@@ -10,10 +10,10 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
@@ -29,9 +29,10 @@ public class ActualCostRecordService {
 
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
     ReferenceDataContext referenceDataContext) {
+
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
-      referenceDataContext.getFeeFineOwner(), ItemLossType.DECLARED_LOST, ZonedDateTime.now(),
-      getFeeFine(referenceDataContext))
+      referenceDataContext.getFeeFineOwner(), ItemLossType.DECLARED_LOST,
+      ClockUtil.getZonedDateTime(), getFeeFine(referenceDataContext))
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
 
@@ -48,10 +49,10 @@ public class ActualCostRecordService {
   public CompletableFuture<Result<ActualCostRecord>> createActualCostRecordIfNecessary(Loan loan,
     FeeFineOwner feeFineOwner, ItemLossType lossType, ZonedDateTime dateOfLoss, FeeFine actualCostFeeFine) {
 
-    return loan.getLostItemPolicy().hasActualCostFee() ?
-      actualCostStorageRepository.createActualCostRecord(buildActualCostRecord(loan, feeFineOwner,
-        lossType, dateOfLoss, actualCostFeeFine)) :
-      completedFuture(succeeded(null));
+    return loan.getLostItemPolicy().hasActualCostFee()
+      ? actualCostStorageRepository.createActualCostRecord(
+      buildActualCostRecord(loan, feeFineOwner, lossType, dateOfLoss, actualCostFeeFine))
+      : completedFuture(succeeded(null));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
@@ -80,7 +81,8 @@ public class ActualCostRecordService {
 
   private FeeFine getFeeFine(ReferenceDataContext referenceDataContext) {
     return referenceDataContext.getFeeFines().stream()
-      .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(feeFine.getFeeFineType()))
-      .findFirst().orElse(null);
+      .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
+      .findFirst()
+      .orElse(null);
   }
 }

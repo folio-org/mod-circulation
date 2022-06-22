@@ -3,7 +3,7 @@
   "userId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
   "userBarcode": "777",
   "loanId": "98805c06-dbdb-4aa0-9695-d4d19c733221",
-  "lossType": "Aged to lost",
+  "itemLossType": "Aged to lost",
   "dateOfLoss": "2022-01-01T22:25:37Z",
   "title": "Test Title",
   "identifiers": [
@@ -15,10 +15,9 @@
   "itemBarcode": "888",
   "loanType": "Can Circulate",
   "effectiveCallNumberComponents": {
-    "callNumber": "PR6056.I4588 B749 2016",
-    "prefix": "HFDC",
-    "suffix": "RRE1",
-    "typeId": "98805c06-dbdb-4aa0-9695-d4d19c733553"
+    "callNumber": "TX809.M17J66",
+    "suffix": "1993",
+    "prefix": "f"
   },
   "permanentItemLocation": "UC/HP/JCL/Sci",
   "feeFineOwnerId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
