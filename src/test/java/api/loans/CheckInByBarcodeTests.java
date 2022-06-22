@@ -1611,6 +1611,77 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
       allOf(isOpenNotYetFilled(), hasPosition(1)));
   }
 
+  @Test
+  void canSatisfyRecallRequestWhenCheckInAnotherItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.james());
+
+    IndividualResource recallRequest = requestsFixture.placeTitleLevelRecallRequest(
+      firstItem.getInstanceId(), usersFixture.steve());
+    assertThat(recallRequest.getJson(), allOf(isOpenNotYetFilled(), hasPosition(1)));
+    assertThat(recallRequest.getJson().getString("itemId"), is(firstItem.getId().toString()));
+
+    CheckInByBarcodeResponse secondItemCheckInResponse = checkInFixture.checkInByBarcode(secondItem);
+    assertThat(secondItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Awaiting pickup"));
+
+    JsonObject recallRequestResponse = requestsFixture.getById(recallRequest.getId()).getJson();
+    assertThat(recallRequestResponse, allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(recallRequestResponse.getString("itemId"), is(secondItem.getId().toString()));
+
+    CheckInByBarcodeResponse firstItemCheckInResponse = checkInFixture.checkInByBarcode(firstItem);
+    assertThat(firstItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
+  @Test
+  void canSatisfyRecallRequestWhenCheckInAnotherItemOfSameInstanceWithMultipleRecallRequests() {
+    configurationsFixture.enableTlrFeature();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+    ItemResource thirdItem = items.get(2);
+
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.rebecca());
+
+    IndividualResource recallRequest1 = requestsFixture.placeTitleLevelRecallRequest(
+      firstItem.getInstanceId(), usersFixture.steve());
+    IndividualResource recallRequest2 = requestsFixture.placeTitleLevelRecallRequest(
+      secondItem.getInstanceId(), usersFixture.undergradHenry());
+
+    assertThat(recallRequest1.getJson(), allOf(isOpenNotYetFilled(), hasPosition(1)));
+    assertThat(recallRequest1.getJson().getString("itemId"), is(firstItem.getId().toString()));
+    assertThat(recallRequest2.getJson(), allOf(isOpenNotYetFilled(), hasPosition(2)));
+    assertThat(recallRequest2.getJson().getString("itemId"), is(thirdItem.getId().toString()));
+
+    CheckInByBarcodeResponse secondItemCheckInResponse = checkInFixture.checkInByBarcode(secondItem);
+    assertThat(secondItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Awaiting pickup"));
+
+    JsonObject recallRequestResponse1 = requestsFixture.getById(recallRequest1.getId()).getJson();
+    assertThat(recallRequestResponse1, allOf(isOpenAwaitingPickup(), hasPosition(1)));
+    assertThat(recallRequestResponse1.getString("itemId"), is(secondItem.getId().toString()));
+
+    CheckInByBarcodeResponse firstItemCheckInResponse = checkInFixture.checkInByBarcode(firstItem);
+    assertThat(firstItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Awaiting pickup"));
+
+    JsonObject recallRequestResponse2 = requestsFixture.getById(recallRequest2.getId()).getJson();
+    assertThat(recallRequestResponse2, allOf(isOpenAwaitingPickup(), hasPosition(2)));
+    assertThat(recallRequestResponse2.getString("itemId"), is(firstItem.getId().toString()));
+
+    CheckInByBarcodeResponse thirdCheckInResponse = checkInFixture.checkInByBarcode(thirdItem);
+    assertThat(thirdCheckInResponse.getItem().getJsonObject("status").getString("name"),
+      is("Available"));
+  }
+
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
     return new ItemBuilder()
       .forHolding(holdingRecordsId)
