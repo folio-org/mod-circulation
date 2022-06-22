@@ -157,7 +157,7 @@ public class LostItemFeeChargingService {
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
-    return (FeeFine.lostItemFeeTypes().contains(type)) && account.isOpen();
+    return FeeFine.lostItemFeeTypes().contains(type) && account.isOpen();
   }
 
   private Boolean hasLostItemFees(Loan loan) {

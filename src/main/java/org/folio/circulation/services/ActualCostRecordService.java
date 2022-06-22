@@ -12,6 +12,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
@@ -31,9 +32,11 @@ public class ActualCostRecordService {
 
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
       referenceDataContext.getFeeFineOwner(),
-      ItemLossType.DECLARED_LOST, ZonedDateTime.now(), referenceDataContext.getFeeFines().stream()
+      ItemLossType.DECLARED_LOST, ClockUtil.getZonedDateTime(),
+      referenceDataContext.getFeeFines().stream()
         .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
-        .findFirst().orElse(null))
+        .findFirst()
+        .orElse(null))
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
 
@@ -43,7 +46,7 @@ public class ActualCostRecordService {
 
     return loan.getLostItemPolicy().hasActualCostFee()
       ? actualCostRecordRepository.createActualCostRecord(
-        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
+      buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
       : completedFuture(succeeded(null));
   }
 

@@ -14,7 +14,7 @@
   ],
   "itemBarcode": "888",
   "loanType": "Can Circulate",
-  "effectiveCallNumber": {
+  "effectiveCallNumberComponents": {
     "callNumber": "TX809.M17J66",
     "suffix": "1993",
     "prefix": "f"

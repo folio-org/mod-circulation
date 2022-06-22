@@ -75,6 +75,7 @@ import api.support.http.UserResource;
 import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.val;
 
 class DeclareLostAPITests extends APITests {
   public DeclareLostAPITests() {
@@ -242,7 +243,7 @@ class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  void shouldChargeProcessingFeesOnlyWhenBothDefinedForActualCostCharge() {
+  void shouldOnlyCreateActualCostRecordWhenProcessingFeeIsNotOn() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
     final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
@@ -292,7 +293,7 @@ class DeclareLostAPITests extends APITests {
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
       itemBuilder -> itemBuilder
       .withPermanentLoanType(loanType.getId())
-      .withTemporaryLocation(locationsFixture.thirdFloor().getId()));
+      .withTemporaryLocation(locationsFixture.mainFloor().getId()));
     final UserResource user = usersFixture.charlotte();
     final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
