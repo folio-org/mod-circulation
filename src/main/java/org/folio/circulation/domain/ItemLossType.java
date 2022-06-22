@@ -17,7 +17,7 @@ public enum ItemLossType {
 
   public static ItemLossType from(String value) {
     return Arrays.stream(values())
-      .filter(status -> status.nameMatches(value))
+      .filter(status -> status.valueMatches(value))
       .findFirst()
       .orElse(NONE);
   }
@@ -26,7 +26,7 @@ public enum ItemLossType {
     return value;
   }
 
-  public boolean nameMatches(String value) {
+  public boolean valueMatches(String value) {
     return equalsIgnoreCase(getValue(), value);
   }
 }

@@ -31,12 +31,8 @@ public class ActualCostRecordService {
     ReferenceDataContext referenceDataContext) {
 
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
-      referenceDataContext.getFeeFineOwner(),
-      ItemLossType.DECLARED_LOST, ClockUtil.getZonedDateTime(),
-      referenceDataContext.getFeeFines().stream()
-        .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
-        .findFirst()
-        .orElse(null))
+      referenceDataContext.getFeeFineOwner(), ItemLossType.DECLARED_LOST,
+      ClockUtil.getZonedDateTime(), getFeeFine(referenceDataContext))
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
 
@@ -67,12 +63,17 @@ public class ActualCostRecordService {
       .withItemBarcode(item.getBarcode())
       .withLoanType(item.getLoanTypeName())
       .withCallNumberComponents(item.getCallNumberComponents())
-      .withPermanentItemLocation((item.getPermanentLocation()  == null
-        || item.getPermanentLocation().getName() == null)
-        ? "" : item.getPermanentLocation().getName())
+      .withPermanentItemLocation(item.getPermanentLocationName())
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
       .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType());
+  }
+
+  private FeeFine getFeeFine(ReferenceDataContext referenceDataContext) {
+    return referenceDataContext.getFeeFines().stream()
+      .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
+      .findFirst()
+      .orElse(null);
   }
 }
