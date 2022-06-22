@@ -240,7 +240,7 @@ class RequestFromRepresentationService {
     request.next(req -> {
       Item item = shouldHaveItemsWithAllowedStatusesForRecall(req);
       if (req.getLoan() == null && item != null) {
-        return of(() -> req.withItem(item));
+        return Result.succeeded(req.withItem(item));
       }
       return of(() -> req);
     });
@@ -264,7 +264,7 @@ class RequestFromRepresentationService {
 
   private Item shouldHaveItemsWithAllowedStatusesForRecall(Request request) {
     return request.getInstanceItems().stream()
-      .filter(item -> List.of("Awaiting delivery", "Paged", "Awaiting pick-up")
+      .filter(item -> List.of("Awaiting delivery", "Paged", "Awaiting pickup")
         .contains(item.getStatus().getValue()))
       .findFirst()
       .orElse(null);

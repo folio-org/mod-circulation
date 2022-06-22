@@ -1626,29 +1626,53 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldPickItemWithLoanWithNextClosestDueDateIfAnotherRecallRequestExists1() {
+  void tlrRecallShouldFailIfLoansAndItemsWithAllowedStatusesNotExist() {
     configurationsFixture.enableTlrFeature();
     var londonZoneId = ZoneId.of("Europe/London");
     var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     var firstItem = items.get(0);
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
+      usersFixture.charlotte(), RECALL);
 
-//    ZonedDateTime firstLoanDate = ZonedDateTime.of(2022, 4, 2, 0, 0, 0, 0, londonZoneId);
-//    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica(),
-//      firstLoanDate);
-//    var secondLoan = checkOutFixture.checkOutByBarcode(items.get(1), usersFixture.steve(),
-//      firstLoanDate.plusDays(1));
-//    checkOutFixture.checkOutByBarcode(items.get(2), usersFixture.steve(),
-//      firstLoanDate.plusDays(2));
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Request doesn't have loan and items with allowed statuses")));
+  }
 
-//    requestsFixture.recallItem(firstItem, usersFixture.james());
-//    requestsFixture.recallItem(items.get(2), usersFixture.james());
-    var requestJson = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
-      usersFixture.charlotte(), RECALL).getJson();
-    var loanForTlrRecall = loansStorageClient.getAll().stream()
-      .filter(loan -> loan.getString("itemId").equals(requestJson.getString("itemId")))
-      .findFirst().orElseThrow(() -> new AssertionError("No loan for item"));
+  @Test
+  void tlrRecallShouldFailIfLoansAndItemsWithAllowedStatusesNotExist1() {
+    configurationsFixture.enableTlrFeature();
+    UUID instanceId = UUID.randomUUID();
+    ItemResource item1 = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6FD")
+        .paged());
 
-    assertThat(loanForTlrRecall.getString("id"), is(firstItem.getId()));
+    ItemResource item2 = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F1")
+        .awaitingDelivery());
+
+    ItemResource item3 = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F2")
+        .awaitingPickup());
+
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
+      usersFixture.charlotte(), RECALL);
+
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Request doesn't have loan and items with allowed statuses")));
   }
 
   @Test
