@@ -82,9 +82,7 @@ public class UpdateRequestQueue {
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
     Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
-    if (requestBeingFulfilled.getItemId() == null ||
-      !requestBeingFulfilled.getItemId().equals(item.getItemId())) {
-
+    if (requestBeingFulfilled.getItemId() == null || !requestBeingFulfilled.isFor(item)) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
     }
 
