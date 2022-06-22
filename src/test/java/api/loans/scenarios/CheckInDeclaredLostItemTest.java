@@ -147,7 +147,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     final double itemProcessingFee = 10.00;
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     UserResource user = usersFixture.charlotte();
-    feeFineOwnerFixture.ownerForServicePoint(servicePointsFixture.cd1().getId());
+    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
         .withName("Lost item fee actual cost policy")
