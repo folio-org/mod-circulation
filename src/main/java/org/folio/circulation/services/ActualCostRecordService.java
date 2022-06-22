@@ -10,6 +10,7 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
@@ -49,7 +50,8 @@ public class ActualCostRecordService {
 
     return loan.getLostItemPolicy().hasActualCostFee() ?
       actualCostStorageRepository.createActualCostRecord(buildActualCostRecord(loan, feeFineOwner,
-        lossType, dateOfLoss, actualCostFeeFine)) : completedFuture(succeeded(null));
+        lossType, dateOfLoss, actualCostFeeFine)) :
+      completedFuture(succeeded(null));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
@@ -57,6 +59,7 @@ public class ActualCostRecordService {
 
     Item item = loan.getItem();
 
+    Location permanentLocation = item.getPermanentLocation();
     return new ActualCostRecord()
       .withUserId(loan.getUserId())
       .withUserBarcode(loan.getUser().getBarcode())
@@ -69,7 +72,8 @@ public class ActualCostRecordService {
       .withItemBarcode(item.getBarcode())
       .withLoanType(item.getLoanTypeName())
       .withCallNumberComponents(item.getCallNumberComponents())
-      .withPermanentItemLocation(item.getPermanentLocation().getName())
+      .withPermanentItemLocation(permanentLocation == null || permanentLocation.getName() == null ?
+        "" : permanentLocation.getName())
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(actualCostFeeFine.getId())
