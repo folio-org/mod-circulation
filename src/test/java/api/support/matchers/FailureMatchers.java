@@ -9,7 +9,7 @@ public class FailureMatchers {
   public static <T> TypeSafeDiagnosingMatcher<Result<T>> errorResultFor(
     String propertyName,
     String reason) {
-    return new TypeSafeDiagnosingMatcher<Result<T>>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description.appendValue(reason)
