@@ -30,7 +30,8 @@ public class ActualCostRecordService {
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
     ReferenceDataContext referenceDataContext) {
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
-      referenceDataContext.getFeeFineOwner(), ItemLossType.DECLARED_LOST, ZonedDateTime.now(), referenceDataContext.getFeeFines().stream()
+      referenceDataContext.getFeeFineOwner(),
+      ItemLossType.DECLARED_LOST, ZonedDateTime.now(), referenceDataContext.getFeeFines().stream()
         .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(feeFine.getFeeFineType()))
         .findFirst().orElse(null))
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
