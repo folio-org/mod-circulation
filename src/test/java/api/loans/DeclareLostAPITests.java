@@ -277,11 +277,10 @@ class DeclareLostAPITests extends APITests {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
     final IndividualResource loanType = loanTypesFixture.canCirculate();
-    final IndividualResource permanentItemLocation = locationsFixture.fourthFloor();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
     final IndividualResource owner = feeFineOwnerFixture.ownerForServicePoint(
-      servicePointsFixture.cd6().getId());
+      servicePointsFixture.cd1().getId());
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost with Actual Cost fee testing policy")
@@ -293,7 +292,7 @@ class DeclareLostAPITests extends APITests {
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
       itemBuilder -> itemBuilder
       .withPermanentLoanType(loanType.getId())
-      .withPermanentLocation(permanentItemLocation));
+      .withTemporaryLocation(locationsFixture.thirdFloor()));
     final UserResource user = usersFixture.charlotte();
     final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
@@ -331,8 +330,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
       hasJsonPath("suffix", callNumberComponents.getString("suffix")));
 
-    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation",
-      permanentItemLocation.getJson().getString("name")));
+    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation", ""));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", owner.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwner", owner.getJson().getString("owner")));
     assertThat(actualCostRecord.getString("feeFineTypeId"), notNullValue());

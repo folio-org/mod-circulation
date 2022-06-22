@@ -28,6 +28,7 @@ public class ActualCostRecordService {
 
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
     ReferenceDataContext referenceDataContext) {
+
     return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
       referenceDataContext.getFeeFineOwner(),
       ItemLossType.DECLARED_LOST, ZonedDateTime.now(), referenceDataContext.getFeeFines().stream()
@@ -40,8 +41,8 @@ public class ActualCostRecordService {
     Loan loan, FeeFineOwner feeFineOwner, ItemLossType itemLossType,
     ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
-    return loan.getLostItemPolicy().hasActualCostFee() ?
-      actualCostRecordRepository.createActualCostRecord(
+    return loan.getLostItemPolicy().hasActualCostFee()
+      ? actualCostRecordRepository.createActualCostRecord(
         buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
       : completedFuture(succeeded(null));
   }
@@ -63,7 +64,9 @@ public class ActualCostRecordService {
       .withItemBarcode(item.getBarcode())
       .withLoanType(item.getLoanTypeName())
       .withCallNumberComponents(item.getCallNumberComponents())
-      .withPermanentItemLocation(loan.getItem().getLocation().getName())
+      .withPermanentItemLocation((item.getPermanentLocation()  == null
+        || item.getPermanentLocation().getName() == null)
+        ? "" : item.getPermanentLocation().getName())
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
