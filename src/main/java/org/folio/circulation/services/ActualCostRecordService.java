@@ -42,7 +42,7 @@ public class ActualCostRecordService {
 
     return loan.getLostItemPolicy().hasActualCostFee()
       ? actualCostRecordRepository.createActualCostRecord(
-      buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
+        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
       : completedFuture(succeeded(null));
   }
 
@@ -58,8 +58,7 @@ public class ActualCostRecordService {
       .withItemLossType(itemLossType)
       .withDateOfLoss(dateOfLoss.toString())
       .withTitle(item.getTitle())
-      .withIdentifiers(item.getIdentifiers()
-        .collect(Collectors.toList()))
+      .withIdentifiers(item.getIdentifiers().collect(Collectors.toList()))
       .withItemBarcode(item.getBarcode())
       .withLoanType(item.getLoanTypeName())
       .withCallNumberComponents(item.getCallNumberComponents())

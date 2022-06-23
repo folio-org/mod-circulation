@@ -201,7 +201,6 @@ public class LostItemFeeChargingService {
       }
 
       if (policy.getDeclareLostProcessingFee().isChargeable()) {
-
         log.debug("Charging lost item processing fee");
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)

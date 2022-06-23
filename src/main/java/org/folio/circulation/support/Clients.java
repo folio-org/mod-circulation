@@ -220,6 +220,10 @@ public class Clients {
     return patronGroupsStorageClient;
   }
 
+  public CollectionResourceClient actualCostRecordsStorage() {
+    return actualCostRecordsStorageClient;
+  }
+
   public CollectionResourceClient calendarStorageClient() {
     return calendarStorageClient;
   }
@@ -338,10 +342,6 @@ public class Clients {
 
   public CollectionResourceClient noticeTemplatesClient() {
     return noticeTemplatesClient;
-  }
-
-  public CollectionResourceClient actualCostRecordsStorage() {
-    return actualCostRecordsStorageClient;
   }
 
   private static CirculationRulesClient createCirculationLoanRulesClient(

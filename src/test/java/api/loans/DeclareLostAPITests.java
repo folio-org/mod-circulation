@@ -242,7 +242,7 @@ class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  void shouldCreateRecordAndChargeProcessingFeeWhenLostItemPolicySetToActualCost() {
+  void shouldCreateActualCostRecordAndChargeLostItemProcessingFeeWhenDeclaredLost() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
     final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
