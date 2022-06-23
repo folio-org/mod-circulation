@@ -281,7 +281,7 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
   void shouldFailWhenSchedulesCollectionIsNull() {
     final FixedScheduleCheckOutDueDateStrategy calculator =
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", null, s -> new ValidationError(s, null, null));
+        "Example Fixed Schedule Loan Policy", null, ValidationError::new);
 
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
@@ -298,8 +298,7 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
   void shouldFailWhenNoSchedules() {
     final FixedScheduleCheckOutDueDateStrategy calculator =
       new FixedScheduleCheckOutDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(),
-        s -> new ValidationError(s, null, null));
+        "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(), ValidationError::new);
 
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 14, 11, 14, 54, 0, UTC);
 
