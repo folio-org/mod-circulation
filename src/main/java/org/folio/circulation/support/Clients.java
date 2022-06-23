@@ -344,10 +344,6 @@ public class Clients {
     return noticeTemplatesClient;
   }
 
-  public CollectionResourceClient actualCostRecordsStorage() {
-    return actualCostRecordsStorageClient;
-  }
-
   private static CirculationRulesClient createCirculationLoanRulesClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
