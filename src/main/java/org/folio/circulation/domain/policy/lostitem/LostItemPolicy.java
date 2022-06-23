@@ -147,7 +147,6 @@ public class LostItemPolicy extends Policy {
     return chargeOverdueFine;
   }
 
-
   public boolean hasActualCostFee() {
     return getActualCostFee().isChargeable();
   }

@@ -20,11 +20,12 @@ import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYP
 import static org.folio.circulation.services.LostItemFeeChargingService.ReferenceDataContext;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-public class ActualCostRecordService {
-  private final ActualCostRecordRepository actualCostStorageRepository;
 
-  public ActualCostRecordService(ActualCostRecordRepository actualCostStorageRepository) {
-    this.actualCostStorageRepository = actualCostStorageRepository;
+public class ActualCostRecordService {
+  private final ActualCostRecordRepository actualCostRecordRepository;
+
+  public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository) {
+    this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
   public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
@@ -36,7 +37,6 @@ public class ActualCostRecordService {
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
 
-
   public CompletableFuture<Result<LoanToChargeFees>> createActualCostRecordIfNecessary(
     LoanToChargeFees loanToChargeFees) {
 
@@ -46,17 +46,18 @@ public class ActualCostRecordService {
       .thenApply(mapResult(loanToChargeFees::withActualCostRecord));
   }
 
-  public CompletableFuture<Result<ActualCostRecord>> createActualCostRecordIfNecessary(Loan loan,
-    FeeFineOwner feeFineOwner, ItemLossType lossType, ZonedDateTime dateOfLoss, FeeFine actualCostFeeFine) {
+  public CompletableFuture<Result<ActualCostRecord>> createActualCostRecordIfNecessary(
+    Loan loan, FeeFineOwner feeFineOwner, ItemLossType itemLossType,
+    ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
     return loan.getLostItemPolicy().hasActualCostFee()
-      ? actualCostStorageRepository.createActualCostRecord(
-      buildActualCostRecord(loan, feeFineOwner, lossType, dateOfLoss, actualCostFeeFine))
+      ? actualCostRecordRepository.createActualCostRecord(
+        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
       : completedFuture(succeeded(null));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
-    ItemLossType lossType, ZonedDateTime dateOfLoss, FeeFine actualCostFeeFine) {
+    ItemLossType itemLossType, ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
     Item item = loan.getItem();
 
@@ -64,19 +65,18 @@ public class ActualCostRecordService {
       .withUserId(loan.getUserId())
       .withUserBarcode(loan.getUser().getBarcode())
       .withLoanId(loan.getId())
-      .withItemLossType(lossType)
+      .withItemLossType(itemLossType)
       .withDateOfLoss(dateOfLoss.toString())
       .withTitle(item.getTitle())
-      .withIdentifiers(item.getIdentifiers()
-        .collect(Collectors.toList()))
+      .withIdentifiers(item.getIdentifiers().collect(Collectors.toList()))
       .withItemBarcode(item.getBarcode())
       .withLoanType(item.getLoanTypeName())
       .withCallNumberComponents(item.getCallNumberComponents())
       .withPermanentItemLocation(item.getPermanentLocationName())
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
-      .withFeeFineTypeId(actualCostFeeFine.getId())
-      .withFeeFineType(actualCostFeeFine.getFeeFineType());
+      .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
+      .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType());
   }
 
   private FeeFine getFeeFine(ReferenceDataContext referenceDataContext) {

@@ -220,6 +220,10 @@ public class Clients {
     return patronGroupsStorageClient;
   }
 
+  public CollectionResourceClient actualCostRecordsStorage() {
+    return actualCostRecordsStorageClient;
+  }
+
   public CollectionResourceClient calendarStorageClient() {
     return calendarStorageClient;
   }

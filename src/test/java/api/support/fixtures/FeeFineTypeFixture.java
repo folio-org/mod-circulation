@@ -25,6 +25,7 @@ public final class FeeFineTypeFixture extends RecordCreator {
   }
 
   public IndividualResource lostItemActualCostFee() {
+
     return createIfAbsent(new FeeFineBuilder()
       .withFeeFineType("Lost item fee (actual cost)")
       .withAutomatic(true));

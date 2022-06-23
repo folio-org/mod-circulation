@@ -36,6 +36,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -242,7 +243,7 @@ class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  void shouldCreateRecordAndChargeProcessingFeeWhenLostItemPolicySetToActualCost() {
+  void shouldCreateActualCostRecordAndChargeLostItemProcessingFeeWhenDeclaredLost() {
     final double expectedProcessingFee = 10.0;
     final double expectedItemFee = 20.0;
     final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
@@ -279,8 +280,6 @@ class DeclareLostAPITests extends APITests {
     final IndividualResource loanType = loanTypesFixture.canCirculate();
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989732";
-    final IndividualResource owner = feeFineOwnerFixture.ownerForServicePoint(
-      servicePointsFixture.cd1().getId());
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
       .withName("Declared lost with Actual Cost fee testing policy")
@@ -331,8 +330,8 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("suffix", callNumberComponents.getString("suffix")));
 
     assertThat(actualCostRecord, hasJsonPath("permanentItemLocation", ""));
-    assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", owner.getId().toString()));
-    assertThat(actualCostRecord, hasJsonPath("feeFineOwner", owner.getJson().getString("owner")));
+    assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", notNullValue()));
+    assertThat(actualCostRecord, hasJsonPath("feeFineOwner", notNullValue()));
     assertThat(actualCostRecord.getString("feeFineTypeId"), notNullValue());
     assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost item fee (actual cost)"));
   }
@@ -364,7 +363,7 @@ class DeclareLostAPITests extends APITests {
 
     JsonArray identifiers = item.getInstance().getJson().getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
-    assertThat(identifiers.size(), is(0));
+    assertThat(identifiers.stream().toArray(), emptyArray());
   }
 
   @Test

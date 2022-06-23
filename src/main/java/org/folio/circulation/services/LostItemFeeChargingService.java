@@ -69,8 +69,7 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
-    ActualCostRecordRepository actualCostRecordRepository = new ActualCostRecordRepository(clients);
-    this.actualCostRecordService = new ActualCostRecordService(actualCostRecordRepository);
+    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients));
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -200,7 +199,6 @@ public class LostItemFeeChargingService {
       }
 
       if (policy.getDeclareLostProcessingFee().isChargeable()) {
-
         log.debug("Charging lost item processing fee");
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
