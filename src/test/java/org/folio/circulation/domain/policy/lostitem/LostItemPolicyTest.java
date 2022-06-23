@@ -179,7 +179,7 @@ class LostItemPolicyTest {
 
     final LostItemPolicy lostItemPolicy = LostItemPolicy.from(builder.create());
 
-    assertTrue(lostItemPolicy.canAgeLoanToLost(false, getZonedDateTime()));
+    assertTrue(lostItemPolicy.canAgeLoanToLost(false, getZonedDateTime().minusMinutes(2)));
   }
 
   @ParameterizedTest
