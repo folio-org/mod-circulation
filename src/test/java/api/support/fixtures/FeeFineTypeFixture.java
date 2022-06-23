@@ -30,6 +30,12 @@ public final class FeeFineTypeFixture extends RecordCreator {
       .withAutomatic(true));
   }
 
+  public IndividualResource lostItemFeeActualCost() {
+    return createIfAbsent(new FeeFineBuilder()
+      .withFeeFineType("Lost item fee (actual cost)")
+      .withAutomatic(true));
+  }
+
   public IndividualResource overdueFine() {
     return createIfAbsent(new FeeFineBuilder()
       .withFeeFineType("Overdue fine")

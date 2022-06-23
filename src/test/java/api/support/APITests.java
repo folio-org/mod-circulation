@@ -170,6 +170,9 @@ public abstract class APITests {
     ResourceClient.forExpiredSessions();
   protected final ResourceClient loanHistoryClient = forLoanHistoryStorage();
 
+  protected final ResourceClient actualCostRecordsClient =
+    ResourceClient.forActualCostRecordsStorage();
+
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
 
