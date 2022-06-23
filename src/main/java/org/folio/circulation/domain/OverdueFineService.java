@@ -107,12 +107,8 @@ public class OverdueFineService {
       return false;
     }
 
-    if (!loan.getLostItemPolicy().shouldRefundFees(loan.getLostDate())) {
-      // if the refund period has passed, do not charge fines.
-      return false;
-    }
-
-    return true;
+    // if the refund period has passed, do not charge fines.
+    return loan.getLostItemPolicy().shouldRefundFees(loan.getLostDate());
   }
 
   private CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(Loan loan,
