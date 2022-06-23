@@ -35,7 +35,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -43,6 +42,7 @@ import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
@@ -1628,7 +1628,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldFailIfLoansAndItemsWithAllowedStatusesNotExist() {
+  void tlrRecallShouldFailIfLoanAndAllowedStatusItemsForInstanceNotExist() {
     configurationsFixture.enableTlrFeature();
     var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     var firstItem = items.get(0);
@@ -1641,7 +1641,48 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldPickOneFromAllowedStatusesItemsIfLoanIsNullAndInstanceHasOnlyAllowedItems() {
+  void tlrRecallShouldFailIfNoLoanAndInstanceHasItemsStatusAllowedForHold() {
+    configurationsFixture.enableTlrFeature();
+    UUID instanceId = UUID.randomUUID();
+    itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6FD")
+        .inTransit());
+    itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F1")
+        .onOrder());
+    itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F2")
+        .inProcess());
+    itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F3")
+        .missing());
+
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
+      usersFixture.charlotte(), RECALL);
+
+    assertThat(response.getStatusCode(), CoreMatchers.is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Request doesn't have loan and items with allowed statuses")));
+  }
+
+  @Test
+  void tlrRecallShouldPickOneFromAllowedStatusItemsIfLoanNotExistsAndInstanceHasAllowedItems() {
     configurationsFixture.enableTlrFeature();
     UUID instanceId = UUID.randomUUID();
     itemsFixture.basedUponSmallAngryPlanet(
@@ -1684,7 +1725,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldPickOneFromAllowedStatusesItemsIfLoanIsNullAndInstanceHasOnlyAllowedItems1() {
+  void tlrRecallShouldPickItemWithAllowedStatusIfLoanNotExistsAndInstanceHasMoreItems() {
     configurationsFixture.enableTlrFeature();
     UUID instanceId = UUID.randomUUID();
     ItemResource allowedItem = itemsFixture.basedUponSmallAngryPlanet(
@@ -1717,7 +1758,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getStatusCode(), CoreMatchers.is(201));
     assertThat(response.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
     assertThat(response.getJson().getJsonObject("item").getString("status"), is(AWAITING_PICKUP.getValue()));
-    assertThat(response.getJson().getJsonObject("item").getString("id"), is(allowedItem.getId()));
+    assertThat(response.getJson().getString("itemId"), is(allowedItem.getId()));
     assertThat(response.getJson().getString("requestType"), is("Recall"));
     assertThat(response.getJson().getString("requestLevel"), is("Title"));
     assertThat(response.getJson().getString("instanceId"), is(instanceId));
@@ -1866,7 +1907,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     var publishedEvents = Awaitility.await()
@@ -1888,7 +1929,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.steve()));
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
@@ -1910,7 +1951,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
@@ -1928,9 +1969,25 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.MISSING.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"In transit", "On order", "In process", "Missing"})
+  void canCreateTlrHoldRequestWhenInstanceHasItemsWithStatusAllowedForHold(String itemStatus) {
+    configurationsFixture.enableTlrFeature();
+    final ItemResource item = createItemWithStatus(itemsFixture, itemStatus);
+
+    IndividualResource response = requestsFixture.placeTitleLevelHoldShelfRequest(item.getInstanceId(),
+      usersFixture.charlotte());
+
+    assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(response.getJson().getString("requestLevel"), is("Title"));
+    assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
+    assertThat(response.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(response.getJson().getString("instanceId"), is(item.getInstanceId()));
   }
 
   @Test
@@ -1944,7 +2001,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.steve()));
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
@@ -3658,6 +3715,33 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
+  }
+
+  private ItemResource createItemWithStatus(ItemsFixture itemsFixture, String itemStatus) {
+    ItemResource item = null;
+    switch (ItemStatus.from(itemStatus)) {
+      case IN_TRANSIT:
+        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::inTransit);
+        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
+          is(ItemStatus.IN_TRANSIT.getValue()));
+        break;
+      case ON_ORDER:
+        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::onOrder);
+        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
+          is(ItemStatus.ON_ORDER.getValue()));
+        break;
+      case IN_PROCESS:
+        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::inProcess);
+        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
+          is(ItemStatus.IN_PROCESS.getValue()));
+        break;
+      case MISSING:
+        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
+        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
+          is(ItemStatus.MISSING.getValue()));
+        break;
+    }
+    return item;
   }
 
   private void createAutomatedPatronBlockForUser(UUID requesterId) {

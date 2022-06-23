@@ -165,6 +165,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder awaitingPickup() { return withStatus(AWAITING_PICKUP); }
 
+  public ItemBuilder inTransit() { return withStatus(IN_TRANSIT); }
+
   private ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
