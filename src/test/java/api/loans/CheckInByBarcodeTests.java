@@ -1612,7 +1612,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  void canSatisfyRecallRequestWhenCheckInAnotherItemOfSameInstance() {
+  void canFulFillRecallRequestWhenCheckInAnotherItemOfSameInstance() {
     configurationsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource firstItem = items.get(0);
@@ -1640,7 +1640,7 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  void canSatisfyRecallRequestWhenCheckInAnotherItemOfSameInstanceWithMultipleRecallRequests() {
+  void canFulFillRecallRequestWhenCheckInAnotherItemOfSameInstanceWithMultipleRecallRequests() {
     configurationsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource firstItem = items.get(0);
