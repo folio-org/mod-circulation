@@ -2,11 +2,14 @@ package api.support.fixtures;
 
 import static api.support.http.ResourceClient.forLostItemFeePolicies;
 import static org.folio.circulation.domain.policy.Period.minutes;
+import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
+
 import api.support.http.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -52,6 +55,12 @@ public class LostItemFeePoliciesFixture {
     return create(ageToLostAfterOneMinutePolicy());
   }
 
+  public IndividualResource ageToLostAfterOneMinute(ChargeAmountType costType) {
+    createReferenceData();
+
+    return create(ageToLostAfterOneMinutePolicy(costType));
+  }
+
   public IndividualResource ageToLostAfterOneWeek() {
     createReferenceData();
 
@@ -80,6 +89,12 @@ public class LostItemFeePoliciesFixture {
   private LostItemFeePolicyBuilder chargeFeePolicy(double lostItemFeeCost,
     double lostItemProcessingFeeCost) {
 
+    return chargeFeePolicy(lostItemFeeCost, lostItemProcessingFeeCost, SET_COST);
+  }
+
+  private LostItemFeePolicyBuilder chargeFeePolicy(double lostItemFeeCost,
+    double lostItemProcessingFeeCost, ChargeAmountType costType) {
+
     Period itemAgedLostOverdue = Period.months(12);
     Period patronBilledAfterAgedLost = Period.months(12);
 
@@ -87,20 +102,26 @@ public class LostItemFeePoliciesFixture {
       .withName("No lost item fees policy")
       .withItemAgedToLostAfterOverdue(itemAgedLostOverdue)
       .withPatronBilledAfterItemAgedToLost(patronBilledAfterAgedLost)
-      .withSetCost(lostItemFeeCost)
+      .withChargeAmountItem(costType.getValue(), lostItemFeeCost)
       .chargeProcessingFeeWhenDeclaredLost(lostItemProcessingFeeCost)
       .withChargeAmountItemSystem(true)
       .refundProcessingFeeWhenReturned()
       .withReplacedLostItemProcessingFee(true)
       .withReplacementAllowed(true)
+      .withRecalledItemAgedToLostAfterOverdue(Period.months(6))
       .chargeOverdueFineWhenReturned();
   }
 
   public LostItemFeePolicyBuilder ageToLostAfterOneMinutePolicy() {
-    return chargeFeePolicy(10.0, 5.00)
+    return ageToLostAfterOneMinutePolicy(SET_COST);
+  }
+
+  public LostItemFeePolicyBuilder ageToLostAfterOneMinutePolicy(ChargeAmountType costType) {
+    return chargeFeePolicy(10.0, 5.00, costType)
       .withName("Age to lost after one minute overdue")
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withPatronBilledAfterItemAgedToLost(minutes(5))
+      .withPatronBilledAfterRecalledItemAgedLost(minutes(5))
       // disable lost item processing fee
       .withChargeAmountItemPatron(false)
       .withChargeAmountItemSystem(true);
