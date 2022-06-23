@@ -130,7 +130,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
-      .thenCompose(r -> r.after(actualCostRecordService::createActualCostRecordIfNecessary))
+      .thenCompose(r -> r.after(actualCostRecordService::createIfNecessaryForAgedToLostItem))
       .thenCompose(r -> r.after(this::chargeLostFeesForLoan))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .thenApply(r -> r.mapFailure(failure -> handleFailure(loanToChargeFees, failure.toString())))

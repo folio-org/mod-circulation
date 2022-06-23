@@ -36,7 +36,6 @@ public final class LoanToChargeFees {
   private final Loan loan;
   private final FeeFineOwner owner;
   private final Map<String, FeeFine> feeFineTypes;
-
   private final ActualCostRecord actualCostRecord;
 
   boolean hasNoLostItemFee() {
@@ -83,7 +82,7 @@ public final class LoanToChargeFees {
     final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
       .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
 
-    return new LoanToChargeFees(loan, owner, feeFineTypeToFeeFineMap, null);
+    return new LoanToChargeFees(loan, owner, feeFineTypeToFeeFineMap, actualCostRecord);
   }
 
   public LoanToChargeFees withActualCostRecord(ActualCostRecord actualCostRecord) {
@@ -91,7 +90,8 @@ public final class LoanToChargeFees {
   }
 
   LoanToChargeFees withOwner(Map<String, FeeFineOwner> owners) {
-    return new LoanToChargeFees(loan, owners.get(getPrimaryServicePointId()), feeFineTypes, null);
+    return new LoanToChargeFees(loan, owners.get(getPrimaryServicePointId()), feeFineTypes,
+      actualCostRecord);
   }
 
   boolean shouldCloseLoan() {

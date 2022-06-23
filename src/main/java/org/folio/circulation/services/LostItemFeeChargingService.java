@@ -118,7 +118,7 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
-    .thenComposeAsync(r -> r.after(actualCostRecordService::createActualCostRecordIfNecessary))
+    .thenComposeAsync(r -> r.after(actualCostRecordService::createIfNecessaryForDeclaredLostItem))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
