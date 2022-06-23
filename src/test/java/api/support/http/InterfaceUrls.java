@@ -296,4 +296,8 @@ public class InterfaceUrls {
   public static URL scheduledAgeToLostFeeChargingUrl() {
     return circulationModuleUrl("/circulation/scheduled-age-to-lost-fee-charging");
   }
+
+  public static URL actualCostRecordsStorageUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/actual-cost-record-storage/actual-cost-records" + subPath);
+  }
 }
