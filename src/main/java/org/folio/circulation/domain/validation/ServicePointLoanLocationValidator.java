@@ -14,7 +14,7 @@ public class ServicePointLoanLocationValidator {
   }
 
   private Result<LoanAndRelatedRecords> refuseInvalidLoanServicePoints(LoanAndRelatedRecords larr) {
-    Loan loan = null;
+    Loan loan;
 
     if(larr == null) {
       return succeeded(larr);

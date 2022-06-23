@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -34,7 +35,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ValidationErrorMatchers {
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<JsonObject>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -54,7 +55,7 @@ public class ValidationErrorMatchers {
   }
 
   public static TypeSafeDiagnosingMatcher<HttpFailure> isErrorWith(Matcher<ValidationError> matcher) {
-    return new TypeSafeDiagnosingMatcher<HttpFailure>() {
+    return new TypeSafeDiagnosingMatcher<>() {
       @Override
       public void describeTo(Description description) {
         description
@@ -149,6 +150,22 @@ public class ValidationErrorMatchers {
     };
   }
 
+  public static TypeSafeDiagnosingMatcher<ValidationError> hasCode(ErrorCode errorCode) {
+    return new TypeSafeDiagnosingMatcher<>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("has code ").appendValue(errorCode.toString());
+      }
+
+      @Override
+      protected boolean matchesSafely(ValidationError error, Description description) {
+        final Matcher<Object> matcher = hasProperty("code", equalTo(errorCode));
+        matcher.describeMismatch(error, description);
+        return matcher.matches(error);
+      }
+    };
+  }
+
   public static TypeSafeDiagnosingMatcher<JsonObject> hasErrors(int numberOfErrors) {
     return new TypeSafeDiagnosingMatcher<>() {
       @Override
@@ -171,6 +188,8 @@ public class ValidationErrorMatchers {
   }
 
   private static ValidationError fromJson(JsonObject representation) {
+    String message = getProperty(representation, "message");
+
     final Map<String, String> parameters = toStream(representation, "parameters")
       .filter(Objects::nonNull)
       .filter(p -> p.containsKey("key"))
@@ -181,7 +200,13 @@ public class ValidationErrorMatchers {
         p -> p.getString("key"),
         p -> p.getString("value")));
 
-    return new ValidationError(getProperty(representation, "message"), parameters);
+    String code = getProperty(representation, "code");
+
+    if (code != null) {
+      return new ValidationError(message, parameters, ErrorCode.valueOf(code));
+    } else {
+      return new ValidationError(message, parameters);
+    }
   }
 
   public static List<ValidationError> errorsFromJson(JsonObject representation) {

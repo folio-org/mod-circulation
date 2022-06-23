@@ -6,12 +6,13 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
+import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_RECALL_WITHOUT_LOAN_AND_ALLOWED_ITEMS;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
@@ -24,6 +25,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyWriter.copyProperty;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.failed;
@@ -32,6 +34,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +46,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
@@ -54,10 +59,12 @@ import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -75,10 +82,12 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 class RequestFromRepresentationService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
 
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
+  private final HoldingsRepository holdingsRepository;
   private final RequestQueueRepository requestQueueRepository;
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
@@ -93,7 +102,8 @@ class RequestFromRepresentationService {
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(Request.Operation operation,
     JsonObject representation) {
 
-    return initRequest(operation, representation)
+    return configurationRepository.lookupTlrSettings()
+      .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
       .thenApply(r -> r.next(this::validateFulfilmentPreference))
@@ -127,10 +137,56 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> initRequest(Request.Operation operation,
-    JsonObject representation) {
+    TlrSettingsConfiguration tlrSettings, JsonObject representation) {
 
-    return configurationRepository.lookupTlrSettings()
-      .thenApply(r -> r.map(tlrSettings -> Request.from(tlrSettings, operation, representation)));
+    return fillInMissingProperties(representation, operation)
+      .thenApply(r -> r.map(request -> Request.from(tlrSettings, operation, request)));
+  }
+
+  // this is to provide backward compatibility to third-party clients who use pre-TLR request schema
+  private CompletableFuture<Result<JsonObject>> fillInMissingProperties(JsonObject request,
+    Request.Operation operation) {
+
+    List<String> newProperties = List.of(REQUEST_LEVEL, HOLDINGS_RECORD_ID, INSTANCE_ID);
+    boolean requestContainsNewProperties = request.getMap()
+      .keySet()
+      .stream()
+      .anyMatch(newProperties::contains);
+
+    if (operation != Request.Operation.CREATE || requestContainsNewProperties) {
+      return ofAsync(() -> request);
+    }
+
+    log.warn("Request properties {} are missing, assuming item-level request by a legacy client",
+      newProperties);
+    request.put(REQUEST_LEVEL, ITEM.getValue());
+
+    return fillInMissingHoldingsRecordId(request)
+      .thenCompose(r -> r.after(this::fillInMissingInstanceId));
+  }
+
+  private CompletableFuture<Result<JsonObject>> fillInMissingHoldingsRecordId(JsonObject request) {
+    final String itemId = request.getString(ITEM_ID);
+    if (itemId == null) {
+      return ofAsync(() -> request);
+    }
+
+    log.info("Attempting to get missing property 'holdingsRecordId' from item {}", itemId);
+
+    return itemRepository.fetchItemAsJson(itemId)
+      .thenApply(mapResult(item -> copyProperty(item, request, HOLDINGS_RECORD_ID)));
+  }
+
+  private CompletableFuture<Result<JsonObject>> fillInMissingInstanceId(JsonObject request) {
+    final String holdingsRecordId = request.getString(HOLDINGS_RECORD_ID);
+    if (holdingsRecordId == null) {
+      return ofAsync(() -> request);
+    }
+
+    log.info("Attempting to get missing property 'instanceId' from holdings record {}", holdingsRecordId);
+
+    return holdingsRepository.fetchAsJson(holdingsRecordId)
+      .thenApply(mapResult(holdings -> copyProperty(holdings, request, INSTANCE_ID)));
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchInstance(Request request) {
@@ -518,4 +574,5 @@ class RequestFromRepresentationService {
     return succeeded(request)
         .combineAfter(this::getUserForExistingLoan, this::addUserToLoan);
   }
+
 }
