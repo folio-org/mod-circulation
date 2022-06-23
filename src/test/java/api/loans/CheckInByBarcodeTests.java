@@ -12,6 +12,7 @@ import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarc
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.ItemMatchers.isAwaitingPickup;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.OverdueFineMatcher.isValidOverdueFine;
@@ -1627,16 +1628,14 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(recallRequest.getJson().getString("itemId"), is(firstItem.getId().toString()));
 
     CheckInByBarcodeResponse secondItemCheckInResponse = checkInFixture.checkInByBarcode(secondItem);
-    assertThat(secondItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
-      is("Awaiting pickup"));
+    assertThat(secondItemCheckInResponse.getItem(), isAwaitingPickup());
 
     JsonObject recallRequestResponse = requestsFixture.getById(recallRequest.getId()).getJson();
     assertThat(recallRequestResponse, allOf(isOpenAwaitingPickup(), hasPosition(1)));
     assertThat(recallRequestResponse.getString("itemId"), is(secondItem.getId().toString()));
 
     CheckInByBarcodeResponse firstItemCheckInResponse = checkInFixture.checkInByBarcode(firstItem);
-    assertThat(firstItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(firstItemCheckInResponse.getItem(), isAvailable());
   }
 
   @Test
@@ -1662,24 +1661,21 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(recallRequest2.getJson().getString("itemId"), is(thirdItem.getId().toString()));
 
     CheckInByBarcodeResponse secondItemCheckInResponse = checkInFixture.checkInByBarcode(secondItem);
-    assertThat(secondItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
-      is("Awaiting pickup"));
+    assertThat(secondItemCheckInResponse.getItem(), isAwaitingPickup());
 
     JsonObject recallRequestResponse1 = requestsFixture.getById(recallRequest1.getId()).getJson();
     assertThat(recallRequestResponse1, allOf(isOpenAwaitingPickup(), hasPosition(1)));
     assertThat(recallRequestResponse1.getString("itemId"), is(secondItem.getId().toString()));
 
     CheckInByBarcodeResponse firstItemCheckInResponse = checkInFixture.checkInByBarcode(firstItem);
-    assertThat(firstItemCheckInResponse.getItem().getJsonObject("status").getString("name"),
-      is("Awaiting pickup"));
+    assertThat(firstItemCheckInResponse.getItem(), isAwaitingPickup());
 
     JsonObject recallRequestResponse2 = requestsFixture.getById(recallRequest2.getId()).getJson();
     assertThat(recallRequestResponse2, allOf(isOpenAwaitingPickup(), hasPosition(2)));
     assertThat(recallRequestResponse2.getString("itemId"), is(firstItem.getId().toString()));
 
     CheckInByBarcodeResponse thirdCheckInResponse = checkInFixture.checkInByBarcode(thirdItem);
-    assertThat(thirdCheckInResponse.getItem().getJsonObject("status").getString("name"),
-      is("Available"));
+    assertThat(thirdCheckInResponse.getItem(), isAvailable());
   }
 
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
