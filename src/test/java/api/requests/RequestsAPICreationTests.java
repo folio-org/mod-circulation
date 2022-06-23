@@ -40,6 +40,8 @@ import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.policy.Period.hours;
@@ -1628,7 +1630,6 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void tlrRecallShouldFailIfLoansAndItemsWithAllowedStatusesNotExist() {
     configurationsFixture.enableTlrFeature();
-    var londonZoneId = ZoneId.of("Europe/London");
     var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     var firstItem = items.get(0);
     Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
@@ -1640,10 +1641,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldFailIfLoansAndItemsWithAllowedStatusesNotExist1() {
+  void tlrRecallShouldPickOneFromAllowedStatusesItemsIfLoanIsNullAndInstanceHasOnlyAllowedItems() {
     configurationsFixture.enableTlrFeature();
     UUID instanceId = UUID.randomUUID();
-    ItemResource item1 = itemsFixture.basedUponSmallAngryPlanet(
+    itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder.forInstance(instanceId),
       instanceBuilder -> instanceBuilder
         .withId(instanceId),
@@ -1651,7 +1652,7 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("SDFTY6FD")
         .paged());
 
-    ItemResource item2 = itemsFixture.basedUponSmallAngryPlanet(
+    itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder.forInstance(instanceId),
       instanceBuilder -> instanceBuilder
         .withId(instanceId),
@@ -1659,7 +1660,7 @@ public class RequestsAPICreationTests extends APITests {
         .withBarcode("SDFTY6F1")
         .awaitingDelivery());
 
-    ItemResource item3 = itemsFixture.basedUponSmallAngryPlanet(
+    itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder.forInstance(instanceId),
       instanceBuilder -> instanceBuilder
         .withId(instanceId),
@@ -1670,9 +1671,58 @@ public class RequestsAPICreationTests extends APITests {
     Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
       usersFixture.charlotte(), RECALL);
 
-    assertThat(response.getStatusCode(), CoreMatchers.is(422));
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Request doesn't have loan and items with allowed statuses")));
+    assertThat(response.getStatusCode(), CoreMatchers.is(201));
+    assertThat(response.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
+    assertTrue(Stream.of(AWAITING_PICKUP.getValue(), AWAITING_DELIVERY.getValue(),
+      PAGED.getValue()).anyMatch(status -> status.equals(response.getJson().getJsonObject("item")
+      .getString("status"))));
+    assertThat(response.getJson().getString("requestType"), is("Recall"));
+    assertThat(response.getJson().getString("requestLevel"), is("Title"));
+    assertThat(response.getJson().getString("instanceId"), is(instanceId));
+    assertThat(response.getJson().getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
+  }
+
+  @Test
+  void tlrRecallShouldPickOneFromAllowedStatusesItemsIfLoanIsNullAndInstanceHasOnlyAllowedItems1() {
+    configurationsFixture.enableTlrFeature();
+    UUID instanceId = UUID.randomUUID();
+    ItemResource allowedItem = itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6FD")
+        .awaitingPickup());
+
+    itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F1")
+        .onOrder());
+
+    itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      itemBuilder -> itemBuilder
+        .withBarcode("SDFTY6F2")
+        .inProcess());
+
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
+      usersFixture.charlotte(), RECALL);
+
+    assertThat(response.getStatusCode(), CoreMatchers.is(201));
+    assertThat(response.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
+    assertThat(response.getJson().getJsonObject("item").getString("status"), is(AWAITING_PICKUP.getValue()));
+    assertThat(response.getJson().getJsonObject("item").getString("id"), is(allowedItem.getId()));
+    assertThat(response.getJson().getString("requestType"), is("Recall"));
+    assertThat(response.getJson().getString("requestLevel"), is("Title"));
+    assertThat(response.getJson().getString("instanceId"), is(instanceId));
+    assertThat(response.getJson().getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
   }
 
   @Test

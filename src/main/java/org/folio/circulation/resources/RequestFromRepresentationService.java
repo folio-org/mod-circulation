@@ -237,14 +237,13 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> fetchAllowedItemIfNoLoanExists(Result<Request> request) {
-    request.next(req -> {
+    return request.next(req -> {
       Item item = shouldHaveItemsWithAllowedStatusesForRecall(req);
       if (req.getLoan() == null && item != null) {
         return Result.succeeded(req.withItem(item));
       }
       return of(() -> req);
     });
-    return request;
   }
 
   private Result<Request> refuseWhenNoAllowedItemAndLoan(Result<Request> request) {
