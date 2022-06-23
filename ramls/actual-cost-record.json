@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Actual cost record",
+  "properties": {
+    "id": {
+      "description": "Actual cost record ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userId": {
+      "description": "ID of the patron the actual cost record was created for",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userBarcode": {
+      "description": "Barcode of the patron the actual cost record was created for",
+      "type": "string"
+    },
+    "loanId": {
+      "description": "Unique ID (generated UUID) of the loan",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "itemLossType": {
+      "description": "Type of the item loss",
+      "type": "string",
+      "enum": [
+        "Aged to lost",
+        "Declared lost"
+      ]
+    },
+    "dateOfLoss": {
+      "description": "Date and time when the item was lost",
+      "type": "string",
+      "format": "date-time"
+    },
+    "title": {
+      "description": "The primary title (or label) associated with the resource",
+      "type": "string"
+    },
+    "identifiers": {
+      "type": "array",
+      "description": "An extensible set of name-value pairs of identifiers associated with the resource",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Resource identifier value"
+          },
+          "identifierTypeId": {
+            "type": "string",
+            "description": "UUID of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)",
+            "$ref": "raml-util/schemas/uuid.schema"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "identifierTypeId"
+        ]
+      }
+    },
+    "itemBarcode": {
+      "description": "Barcode of the lost item",
+      "type": "string"
+    },
+    "loanType": {
+      "description": "Loan type of the lost item",
+      "type": "string"
+    },
+    "effectiveCallNumberComponents": {
+      "type": "object",
+      "description": "Elements of a full call number generated from the item or holding",
+      "properties": {
+        "callNumber": {
+          "type": "string",
+          "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item.",
+          "readonly": true
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item.",
+          "readonly": true
+        },
+        "suffix": {
+          "type": "string",
+          "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item.",
+          "readonly": true
+        }
+      }
+    },
+    "permanentItemLocation": {
+      "description": "Permanent item location of the lost item",
+      "type": "string"
+    },
+    "feeFineOwnerId": {
+      "description": "Fee/fine owner ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "feeFineOwner": {
+      "description": "Fee/fine owner name",
+      "type": "string"
+    },
+    "feeFineTypeId": {
+      "description": "Fee/fine type ID",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "feeFineType": {
+      "description": "Fee/fine type name",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Metadata about creation and changes, provided by the server (client should not provide)",
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "userId",
+    "userBarcode",
+    "loanId",
+    "itemLossType",
+    "dateOfLoss",
+    "title",
+    "identifiers",
+    "itemBarcode",
+    "loanType",
+    "effectiveCallNumberComponents",
+    "permanentItemLocation",
+    "feeFineOwnerId",
+    "feeFineOwner",
+    "feeFineTypeId",
+    "feeFineType"
+  ]
+}

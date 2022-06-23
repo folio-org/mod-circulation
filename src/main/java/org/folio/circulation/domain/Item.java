@@ -254,6 +254,13 @@ public class Item {
     return loanType.getName();
   }
 
+  public String getPermanentLocationName() {
+    if (getPermanentLocation() != null && getPermanentLocation().getName() != null) {
+      return getPermanentLocation().getName();
+    }
+    return "";
+  }
+
   public Item changeStatus(ItemStatus newStatus) {
     if (isNotSameStatus(newStatus)) {
       changed = true;

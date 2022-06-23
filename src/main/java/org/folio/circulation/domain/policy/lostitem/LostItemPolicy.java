@@ -152,6 +152,10 @@ public class LostItemPolicy extends Policy {
     return getActualCostFee().isChargeable();
   }
 
+  public boolean hasSetCostFee() {
+    return getSetCostFee().isChargeable();
+  }
+
   public boolean canAgeLoanToLost(boolean isRecalled, ZonedDateTime loanDueDate) {
     final Period periodShouldPassSinceOverdue = isRecalled
       ? recalledItemAgedToLostAfterOverdueInterval : itemAgedToLostAfterOverdueInterval;

@@ -24,6 +24,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Function.identity;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
@@ -35,12 +36,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.arrayWithSize;
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -51,7 +52,9 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,7 +72,9 @@ import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import api.support.matchers.EventTypeMatchers;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class DeclareLostAPITests extends APITests {
@@ -220,6 +225,8 @@ class DeclareLostAPITests extends APITests {
       .getJsonObject(0)
       .getString("name");
 
+    JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
+
     verifyFeeHasBeenCharged(loan, "Lost item fee", allOf(
       hasJsonPath("ownerId", expectedOwnerId),
       hasJsonPath("feeFineType", "Lost item fee"),
@@ -231,6 +238,158 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("feeFineType", "Lost item processing fee"),
       hasJsonPath("amount", expectedProcessingFee),
       hasJsonPath("contributors[0].name", contributorName)));
+
+    assertNull(actualCostRecord);
+  }
+
+  @Test
+  void shouldCreateActualCostRecordAndChargeLostItemProcessingFeeWhenDeclaredLost() {
+    final double expectedProcessingFee = 10.0;
+    final double expectedItemFee = 20.0;
+    final String expectedOwnerId = feeFineOwnerFixture.ownerForServicePoint(
+      servicePointsFixture.cd6().getId()).getId().toString();
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost with Actual Cost fee testing policy")
+      .chargeProcessingFeeWhenDeclaredLost(expectedProcessingFee)
+      .withActualCost(expectedItemFee);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    final IndividualResource loan = declareItemLost(itemBuilder -> itemBuilder
+      .withPermanentLocation(locationsFixture.fourthFloor())
+      .withTemporaryLocation(locationsFixture.thirdFloor()));
+
+    assertThat(loan.getJson(), isOpen());
+
+    String contributorName = itemsFixture.basedUponSmallAngryPlanet().getInstance().getJson()
+      .getJsonArray("contributors")
+      .getJsonObject(0)
+      .getString("name");
+
+    assertNull(getAccountForLoan(loan.getId(), "Lost item fee"));
+    verifyFeeHasBeenCharged(loan, "Lost item processing fee", allOf(
+      hasJsonPath("ownerId", expectedOwnerId),
+      hasJsonPath("feeFineType", "Lost item processing fee"),
+      hasJsonPath("amount", expectedProcessingFee),
+      hasJsonPath("contributors[0].name", contributorName)));
+  }
+
+  @Test
+  void shouldCreateActualCostRecordWhenItemDeclaredLost() {
+    final double expectedProcessingFee = 10.0;
+    final double expectedItemFee = 20.0;
+    final IndividualResource loanType = loanTypesFixture.canCirculate();
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+    String isbnValue = "9780866989732";
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost with Actual Cost fee testing policy")
+      .chargeProcessingFeeWhenDeclaredLost(expectedProcessingFee)
+      .withActualCost(expectedItemFee);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      identity(),
+      instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
+      itemBuilder -> itemBuilder
+      .withPermanentLoanType(loanType.getId())
+      .withTemporaryLocation(locationsFixture.mainFloor().getId()));
+    final UserResource user = usersFixture.charlotte();
+    final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointsFixture.cd2().getId())
+      .forLoanId(initialLoan.getId()));
+    final IndividualResource loan = loansFixture.getLoanById(initialLoan.getId());
+    JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
+
+    assertThat(loan.getJson(), isOpen());
+    assertNotNull(actualCostRecord);
+    assertThat(actualCostRecord.getString("id"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("userId", user.getId().toString()));
+    assertThat(actualCostRecord, hasJsonPath("userBarcode", user.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("loanId", loan.getId().toString()));
+    assertThat(actualCostRecord, hasJsonPath("itemLossType", "Declared lost"));
+    assertThat(actualCostRecord.getString("dateOfLoss"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("title",
+      item.getInstance().getJson().getString("title")));
+
+    JsonArray identifiers = item.getInstance().getJson().getJsonArray("identifiers");
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.size(), is(1));
+    assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
+      Is.is(isbnIdentifierId.toString()));
+    assertThat(identifiers.getJsonObject(0).getString("value"), Is.is(isbnValue));
+
+    assertThat(actualCostRecord, hasJsonPath("itemBarcode", item.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("loanType", loanType.getJson().getString("name")));
+
+    JsonObject callNumberComponents = item.getJson().getJsonObject("effectiveCallNumberComponents");
+    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
+      hasJsonPath("callNumber", callNumberComponents.getString("callNumber")));
+    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
+      hasJsonPath("prefix", callNumberComponents.getString("prefix")));
+    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
+      hasJsonPath("suffix", callNumberComponents.getString("suffix")));
+
+    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation", ""));
+    assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", notNullValue()));
+    assertThat(actualCostRecord, hasJsonPath("feeFineOwner", notNullValue()));
+    assertThat(actualCostRecord.getString("feeFineTypeId"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost item fee (actual cost)"));
+  }
+
+  @Test
+  void shouldCreateActualCostRecordWithEmptyIdentifiersWhenTheyNotExistInInstance() {
+    final IndividualResource loanType = loanTypesFixture.canCirculate();
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost with Actual Cost fee testing policy")
+      .chargeProcessingFeeWhenDeclaredLost(10.0)
+      .withActualCost(20.0);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withPermanentLoanType(loanType.getId())
+        .withTemporaryLocation(locationsFixture.mainFloor().getId()));
+    final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item,
+      usersFixture.charlotte());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointsFixture.cd2().getId())
+      .forLoanId(initialLoan.getId()));
+    final IndividualResource loan = loansFixture.getLoanById(initialLoan.getId());
+    JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
+
+    assertThat(loan.getJson(), isOpen());
+    assertNotNull(actualCostRecord);
+    assertThat(actualCostRecord.getString("id"), notNullValue());
+
+    JsonArray identifiers = item.getInstance().getJson().getJsonArray("identifiers");
+    assertThat(identifiers, CoreMatchers.notNullValue());
+    assertThat(identifiers.stream().toArray(), emptyArray());
+  }
+
+  @Test
+  void shouldCreateRecordAndNotChargeProcessingFeeWhenLostItemPolicySetToActualCostOnly() {
+    final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost with Actual Cost fee testing policy")
+      .withActualCost(20.0);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder
+        .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+        .withTemporaryLocation(locationsFixture.mainFloor().getId()));
+    final UserResource user = usersFixture.charlotte();
+    final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointsFixture.cd2().getId())
+      .forLoanId(initialLoan.getId()));
+    final IndividualResource loan = loansFixture.getLoanById(initialLoan.getId());
+    JsonObject actualCostRecord = getActualCostRecordForLoan(loan.getId());
+
+    assertThat(loan.getJson(), isOpen());
+    assertNotNull(actualCostRecord);
+    assertThat(actualCostRecord.getString("id"), notNullValue());
+    assertNull(getAccountForLoan(loan.getId(), "Lost item fee"));
+    assertNull(getAccountForLoan(loan.getId(), "Lost item processing fee"));
   }
 
   @Test
@@ -814,6 +973,13 @@ class DeclareLostAPITests extends APITests {
     return accountsClient.getMany(queryFromTemplate("loanId==%s and feeFineType==%s",
       loanId.toString(), feeType))
       .getFirst();
+  }
+
+  private JsonObject getActualCostRecordForLoan(UUID loanId) {
+    return actualCostRecordsClient.getAll().stream()
+      .filter(record -> record.getString("loanId").equals(loanId.toString()))
+      .findFirst()
+      .orElse(null);
   }
 
   private IndividualResource declareItemLost(UnaryOperator<ItemBuilder> itemBuilder) {
