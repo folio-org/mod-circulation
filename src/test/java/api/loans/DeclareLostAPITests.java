@@ -36,6 +36,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -362,7 +363,7 @@ class DeclareLostAPITests extends APITests {
 
     JsonArray identifiers = item.getInstance().getJson().getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
-    assertThat(identifiers.size(), is(0));
+    assertThat(identifiers.stream().toArray(), emptyArray());
   }
 
   @Test
