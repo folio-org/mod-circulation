@@ -11,7 +11,6 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
-import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -28,36 +27,16 @@ public class ActualCostRecordService {
     this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
-  public CompletableFuture<Result<ReferenceDataContext>> createIfNecessaryForDeclaredLostItem(
+  public CompletableFuture<Result<ReferenceDataContext>> createActualCostRecordIfNecessary(
     ReferenceDataContext referenceDataContext) {
 
-    Loan loan = referenceDataContext.getLoan();
-    FeeFineOwner owner = referenceDataContext.getFeeFineOwner();
-    ItemLossType itemLossType = ItemLossType.DECLARED_LOST;
-    ZonedDateTime dateOfLoss = ClockUtil.getZonedDateTime();
-    FeeFine feeFineType = referenceDataContext.getFeeFines().stream()
-      .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
-      .findFirst()
-      .orElse(null);
-
-    return createActualCostRecordIfNecessary(loan, owner, itemLossType, dateOfLoss, feeFineType)
+    return createActualCostRecordIfNecessary(referenceDataContext.getLoan(),
+      referenceDataContext.getFeeFineOwner(), ItemLossType.DECLARED_LOST,
+      ClockUtil.getZonedDateTime(), getFeeFine(referenceDataContext))
       .thenApply(mapResult(referenceDataContext::withActualCostRecord));
   }
 
-  public CompletableFuture<Result<LoanToChargeFees>> createIfNecessaryForAgedToLostItem(
-    LoanToChargeFees loanToChargeFees) {
-
-    Loan loan = loanToChargeFees.getLoan();
-    FeeFineOwner owner = loanToChargeFees.getOwner();
-    ItemLossType itemLossType = ItemLossType.AGED_TO_LOST;
-    ZonedDateTime dateOfLoss = loan.getAgedToLostDateTime();
-    FeeFine feeFineType = loanToChargeFees.getFeeFineTypes().get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
-
-    return createActualCostRecordIfNecessary(loan, owner, itemLossType, dateOfLoss, feeFineType)
-      .thenApply(mapResult(loanToChargeFees::withActualCostRecord));
-  }
-
-  private CompletableFuture<Result<ActualCostRecord>> createActualCostRecordIfNecessary(
+  public CompletableFuture<Result<ActualCostRecord>> createActualCostRecordIfNecessary(
     Loan loan, FeeFineOwner feeFineOwner, ItemLossType itemLossType,
     ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
@@ -88,5 +67,12 @@ public class ActualCostRecordService {
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
       .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType());
+  }
+
+  private FeeFine getFeeFine(ReferenceDataContext referenceDataContext) {
+    return referenceDataContext.getFeeFines().stream()
+      .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
+      .findFirst()
+      .orElse(null);
   }
 }

@@ -1,6 +1,5 @@
 package org.folio.circulation.storage.mappers;
 
-import static org.folio.circulation.storage.mappers.IdentifierMapper.mapIdentifiers;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -21,6 +20,10 @@ public class InstanceMapper {
       getProperty(representation, "title"),
       mapIdentifiers(representation), mapContributors(representation),
       mapPublication(representation), mapEditions(representation));
+  }
+
+  private List<Identifier> mapIdentifiers(JsonObject representation) {
+    return mapToList(representation, "identifiers", new IdentifierMapper()::toDomain);
   }
 
   private List<Contributor> mapContributors(JsonObject representation) {

@@ -39,7 +39,6 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     feeFineOwnerFixture.cd1Owner();
     feeFineTypeFixture.lostItemFee();
     feeFineTypeFixture.lostItemProcessingFee();
-    feeFineTypeFixture.lostItemActualCostFee();
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()

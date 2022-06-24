@@ -52,6 +52,7 @@ public class LostItemFeeChargingService {
   private final EventPublisher eventPublisher;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
+  private final ActualCostRecordRepository actualCostRecordRepository;
   private final ActualCostRecordService actualCostRecordService;
   private String userId;
   private String servicePointId;
@@ -69,7 +70,8 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
-    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients));
+    this.actualCostRecordRepository = new ActualCostRecordRepository(clients);
+    this.actualCostRecordService = new ActualCostRecordService(actualCostRecordRepository);
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -118,7 +120,7 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
-    .thenComposeAsync(r -> r.after(actualCostRecordService::createIfNecessaryForDeclaredLostItem))
+    .thenComposeAsync(r -> r.after(actualCostRecordService::createActualCostRecordIfNecessary))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
@@ -278,7 +280,7 @@ public class LostItemFeeChargingService {
 
     public ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
-      this.loan = loan.withLostItemPolicy(lostItemPolicy);
+      this. loan = loan.withLostItemPolicy(lostItemPolicy);
       return this;
     }
 

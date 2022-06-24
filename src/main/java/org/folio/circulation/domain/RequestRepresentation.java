@@ -117,7 +117,7 @@ public class RequestRepresentation {
   private static JsonObject identifierToJson(Identifier identifier) {
     final var representation = new JsonObject();
 
-    write(representation, "identifierTypeId", identifier.getIdentifierTypeId());
+    write(representation, "identifierTypeId", identifier.getTypeId());
     write(representation, "value", identifier.getValue());
 
     return representation;
