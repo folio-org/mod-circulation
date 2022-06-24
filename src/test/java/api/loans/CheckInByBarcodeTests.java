@@ -1650,10 +1650,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     checkOutFixture.checkOutByBarcode(thirdItem, usersFixture.james());
     checkOutFixture.checkOutByBarcode(secondItem, usersFixture.rebecca());
 
+    UUID instanceId = firstItem.getInstanceId();
     IndividualResource recallRequest1 = requestsFixture.placeTitleLevelRecallRequest(
-      firstItem.getInstanceId(), usersFixture.steve());
+      instanceId, usersFixture.steve());
     IndividualResource recallRequest2 = requestsFixture.placeTitleLevelRecallRequest(
-      secondItem.getInstanceId(), usersFixture.undergradHenry());
+      instanceId, usersFixture.undergradHenry());
 
     assertThat(recallRequest1.getJson(), allOf(isOpenNotYetFilled(), hasPosition(1)));
     assertThat(recallRequest1.getJson().getString("itemId"), is(firstItem.getId().toString()));
