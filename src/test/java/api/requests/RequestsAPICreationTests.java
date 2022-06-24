@@ -1637,7 +1637,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getStatusCode(), CoreMatchers.is(422));
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Request doesn't have loan and items with allowed statuses")));
+      hasMessage("Request has no loan or recallable item")));
   }
 
   @Test
@@ -1658,7 +1658,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getStatusCode(), CoreMatchers.is(422));
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Request doesn't have loan and items with allowed statuses")));
+      hasMessage("Request has no loan or recallable item")));
   }
 
   @Test

@@ -1,9 +1,13 @@
 package org.folio.circulation.resources;
 
 import static java.lang.String.join;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
@@ -13,7 +17,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_RECALL_WITHOUT_LOAN_AND_ALLOWED_ITEMS;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RECALL_WITHOUT_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -41,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -84,6 +89,8 @@ import lombok.AllArgsConstructor;
 class RequestFromRepresentationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
+  private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
+    Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
 
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
@@ -260,8 +267,8 @@ class RequestFromRepresentationService {
         .findFirst();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(RequestAndRelatedRecords
-    records) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(
+    RequestAndRelatedRecords records) {
     Request request = records.getRequest();
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
       return ofAsync(() -> request);
@@ -276,53 +283,33 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(when(loan -> ofAsync(() -> loan == null),
         ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan), result -> ofAsync(() ->  result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
-      .thenApply(this::refuseWhenNoAllowedItemAndLoan)
-      .thenApply(this::fetchAllowedItemIfNoLoanExists)
-      .thenCompose(r -> r.after(this::fetchItemForLoan))
+      .thenCompose(r -> r.after(this::findItemForRecall))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(res -> errorHandler.handleValidationResult(res, INSTANCE_DOES_NOT_EXIST, request));
   }
 
+  private CompletableFuture<Result<Request>> findItemForRecall(Request request) {
+    return request.getLoan() == null
+      ? completedFuture(findRecallableItemOrFail(request))
+      : fetchItemForLoan(request);
+  }
+
+  private Result<Request> findRecallableItemOrFail(Request request) {
+    return request.getInstanceItems()
+      .stream()
+      .filter(item -> RECALLABLE_ITEM_STATUSES.contains(item.getStatus()))
+      .findFirst()
+      .map(request::withItem)
+      .map(Result::succeeded)
+      .orElseGet(() -> failedValidation("Request has no loan or recallable item", "loan", null))
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        RECALL_WITHOUT_LOAN_OR_RECALLABLE_ITEM, request));
+  }
+
   private CompletableFuture<Result<Request>> fetchItemForLoan(Request request) {
-    if (request.getLoan() == null) {
-      return ofAsync(() -> request);
-    }
     return itemRepository.fetchFor(request.getLoan())
       .thenApply(r -> r.map(request::withItem));
-  }
-
-  private Result<Request> fetchAllowedItemIfNoLoanExists(Result<Request> request) {
-    return request.next(req -> {
-      Item item = shouldHaveItemsWithAllowedStatusesForRecall(req);
-      if (req.getLoan() == null && item != null) {
-        return Result.succeeded(req.withItem(item));
-      }
-      return of(() -> req);
-    });
-  }
-
-  private Result<Request> refuseWhenNoAllowedItemAndLoan(Result<Request> request) {
-    return request.next(this::validateIfAllowedItemAndLoanExist)
-      .mapFailure(err -> errorHandler.handleValidationError(err,
-        ATTEMPT_TO_RECALL_WITHOUT_LOAN_AND_ALLOWED_ITEMS, request));
-  }
-
-  private Result<Request> validateIfAllowedItemAndLoanExist(Request request) {
-    Item item = shouldHaveItemsWithAllowedStatusesForRecall(request);
-    if (request.getLoan() == null && item == null) {
-      return failedValidation("Request doesn't have loan and items with allowed statuses",
-        "loan", null);
-    }
-    return of(() -> request);
-  }
-
-  private Item shouldHaveItemsWithAllowedStatusesForRecall(Request request) {
-    return request.getInstanceItems().stream()
-      .filter(item -> List.of("Awaiting delivery", "Paged", "Awaiting pickup")
-        .contains(item.getStatus().getValue()))
-      .findFirst()
-      .orElse(null);
   }
 
   private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
