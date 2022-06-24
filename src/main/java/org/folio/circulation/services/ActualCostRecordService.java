@@ -10,6 +10,7 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
@@ -65,17 +66,20 @@ public class ActualCostRecordService {
     Loan loan, FeeFineOwner feeFineOwner, ItemLossType itemLossType,
     ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
-    return loan.getLostItemPolicy().hasActualCostFee()
-      ? locationRepository.getPermanentLocation(loan.getItem())
+    if (!loan.getLostItemPolicy().hasActualCostFee()) {
+      return completedFuture(succeeded(null));
+    }
+
+    return locationRepository.getPermanentLocation(loan.getItem())
       .thenCompose(r -> r.after(location -> actualCostRecordRepository.createActualCostRecord(
-        buildActualCostRecord(loan.withItem(loan.getItem().withPermanentLocation(location)),
-          feeFineOwner, itemLossType, dateOfLoss, feeFine))))
-      : completedFuture(succeeded(null));
+        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine, location))));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
-    ItemLossType itemLossType, ZonedDateTime dateOfLoss, FeeFine feeFine) {
+    ItemLossType itemLossType, ZonedDateTime dateOfLoss, FeeFine feeFine,
+    Location itemPermanentLocation) {
 
+    loan = loan.withItem(loan.getItem().withPermanentLocation(itemPermanentLocation));
     Item item = loan.getItem();
 
     return new ActualCostRecord()
