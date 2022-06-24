@@ -1,6 +1,7 @@
 package org.folio.circulation.services;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,8 @@ public class ActualCostRecordService {
     FeeFineOwner owner = loanToChargeFees.getOwner();
     ItemLossType itemLossType = ItemLossType.AGED_TO_LOST;
     ZonedDateTime dateOfLoss = loan.getAgedToLostDateTime();
-    FeeFine feeFineType = loanToChargeFees.getFeeFineTypes().get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+    Map<String, FeeFine> feeFineTypes = loanToChargeFees.getFeeFineTypes();
+    FeeFine feeFineType = feeFineTypes == null ? null : feeFineTypes.get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
 
     return createActualCostRecordIfNecessary(loan, owner, itemLossType, dateOfLoss, feeFineType)
       .thenApply(mapResult(loanToChargeFees::withActualCostRecord));
