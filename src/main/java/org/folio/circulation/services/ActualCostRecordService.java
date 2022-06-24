@@ -88,7 +88,7 @@ public class ActualCostRecordService {
       .withPermanentItemLocation(item.getPermanentLocationName())
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
-      .withFeeFineTypeId(feeFine == null ? "" : feeFine.getId())
-      .withFeeFineType(feeFine == null ? "" : feeFine.getFeeFineType());
+      .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
+      .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType());
   }
 }
