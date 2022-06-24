@@ -15,6 +15,7 @@ public class ActualCostRecordMapper {
   public JsonObject toJson(ActualCostRecord actualCostRecord) {
     JsonObject json = new JsonObject();
     write(json, "id", actualCostRecord.getId());
+    json.put("accountId", "");
     write(json, "userId", actualCostRecord.getUserId());
     write(json, "userBarcode", actualCostRecord.getUserBarcode());
     write(json, "loanId", actualCostRecord.getLoanId());
@@ -38,6 +39,7 @@ public class ActualCostRecordMapper {
   public ActualCostRecord toDomain(JsonObject representation) {
     return new ActualCostRecord(getProperty(representation, "id"),
       getProperty(representation, "userId"),
+      getProperty(representation, "accountId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
       ItemLossType.from(getProperty(representation, "itemLossType")),

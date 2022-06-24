@@ -80,6 +80,7 @@ public class ActualCostRecordService {
 
     return new ActualCostRecord()
       .withUserId(loan.getUserId())
+      .withAccountId("")
       .withUserBarcode(loan.getUser().getBarcode())
       .withLoanId(loan.getId())
       .withItemLossType(itemLossType)

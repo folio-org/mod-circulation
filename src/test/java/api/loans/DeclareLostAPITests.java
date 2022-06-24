@@ -303,6 +303,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(loan.getJson(), isOpen());
     assertNotNull(actualCostRecord);
     assertThat(actualCostRecord.getString("id"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("accountId", ""));
     assertThat(actualCostRecord, hasJsonPath("userId", user.getId().toString()));
     assertThat(actualCostRecord, hasJsonPath("userBarcode", user.getBarcode()));
     assertThat(actualCostRecord, hasJsonPath("loanId", loan.getId().toString()));
