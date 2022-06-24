@@ -291,7 +291,7 @@ class DeclareLostAPITests extends APITests {
       instanceBuilder -> instanceBuilder.addIdentifier(isbnIdentifierId, isbnValue),
       itemBuilder -> itemBuilder
       .withPermanentLoanType(loanType.getId())
-      .withTemporaryLocation(locationsFixture.mainFloor().getId()));
+        .withPermanentLocation(locationsFixture.secondFloorEconomics().getId()));
     final UserResource user = usersFixture.charlotte();
     final IndividualResource initialLoan = checkOutFixture.checkOutByBarcode(item, user);
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
@@ -329,11 +329,12 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
       hasJsonPath("suffix", callNumberComponents.getString("suffix")));
 
-    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation", ""));
+    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation","2nd Floor - Economics"));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", notNullValue()));
     assertThat(actualCostRecord, hasJsonPath("feeFineOwner", notNullValue()));
     assertThat(actualCostRecord.getString("feeFineTypeId"), notNullValue());
     assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost item fee (actual cost)"));
+    assertThat(actualCostRecord, hasNoJsonPath("accountId"));
   }
 
   @Test

@@ -75,12 +75,22 @@ public class LocationRepository {
       clients.librariesStorage(), new ServicePointRepository(clients));
   }
 
-  public CompletableFuture<Result<Location>> getLocation(Item item) {
-    if (item == null || item.getEffectiveLocationId() == null) {
+  public CompletableFuture<Result<Location>> getEffectiveLocation(Item item) {
+    return getLocation(item, Item::getEffectiveLocationId);
+  }
+
+  public CompletableFuture<Result<Location>> getPermanentLocation(Item item) {
+    return getLocation(item, Item::getPermanentLocationId);
+  }
+
+  private CompletableFuture<Result<Location>> getLocation(Item item,
+    Function<Item, String> locationIdGetter) {
+
+    if (item == null || locationIdGetter.apply(item) == null) {
       return ofAsync(() -> Location.unknown(null));
     }
 
-    return fetchLocationById(item.getEffectiveLocationId())
+    return fetchLocationById(locationIdGetter.apply(item))
       .thenCompose(combineAfter(this::fetchPrimaryServicePoint,
         Location::withPrimaryServicePoint))
       .thenCompose(r -> r.after(this::loadLibrary))
