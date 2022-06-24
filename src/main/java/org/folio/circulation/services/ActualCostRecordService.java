@@ -11,6 +11,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -23,9 +24,12 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 public class ActualCostRecordService {
   private final ActualCostRecordRepository actualCostRecordRepository;
+  private final LocationRepository locationRepository;
 
-  public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository) {
+  public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository,
+    LocationRepository locationRepository) {
     this.actualCostRecordRepository = actualCostRecordRepository;
+    this.locationRepository = locationRepository;
   }
 
   public CompletableFuture<Result<ReferenceDataContext>> createIfNecessaryForDeclaredLostItem(
@@ -62,8 +66,10 @@ public class ActualCostRecordService {
     ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
     return loan.getLostItemPolicy().hasActualCostFee()
-      ? actualCostRecordRepository.createActualCostRecord(
-        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
+      ? locationRepository.getPermanentLocation(loan.getItem())
+      .thenCompose(r -> r.after(location -> actualCostRecordRepository.createActualCostRecord(
+        buildActualCostRecord(loan.withItem(loan.getItem().withPermanentLocation(location)),
+          feeFineOwner, itemLossType, dateOfLoss, feeFine))))
       : completedFuture(succeeded(null));
   }
 

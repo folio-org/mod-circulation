@@ -88,6 +88,19 @@ public class LocationRepository {
       .thenCompose(r -> r.after(this::loadInstitution));
   }
 
+  public CompletableFuture<Result<Location>> getPermanentLocation(Item item) {
+    if (item == null || item.getPermanentLocationId() == null) {
+      return ofAsync(() -> Location.unknown(null));
+    }
+
+    return fetchLocationById(item.getPermanentLocationId())
+      .thenCompose(combineAfter(this::fetchPrimaryServicePoint,
+        Location::withPrimaryServicePoint))
+      .thenCompose(r -> r.after(this::loadLibrary))
+      .thenCompose(r -> r.after(this::loadCampus))
+      .thenCompose(r -> r.after(this::loadInstitution));
+  }
+
   public CompletableFuture<Result<Location>> fetchLocationById(String id) {
     if (isBlank(id)) {
       return ofAsync(() -> Location.unknown(null));
