@@ -62,7 +62,7 @@ public class StoredRequestRepresentation {
   private static JsonObject identifierToJson(Identifier identifier) {
     final var representation = new JsonObject();
 
-    write(representation, "identifierTypeId", identifier.getTypeId());
+    write(representation, "identifierTypeId", identifier.getIdentifierTypeId());
     write(representation, "value", identifier.getValue());
 
     return representation;

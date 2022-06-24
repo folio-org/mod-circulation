@@ -147,13 +147,8 @@ public class LostItemPolicy extends Policy {
     return chargeOverdueFine;
   }
 
-
   public boolean hasActualCostFee() {
     return getActualCostFee().isChargeable();
-  }
-
-  public boolean hasSetCostFee() {
-    return getSetCostFee().isChargeable();
   }
 
   public boolean canAgeLoanToLost(boolean isRecalled, ZonedDateTime loanDueDate) {
