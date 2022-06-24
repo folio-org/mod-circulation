@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.AccountCancelReason;
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
@@ -26,6 +27,7 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
@@ -35,6 +37,8 @@ import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyReposito
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
+
+import lombok.Getter;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LogManager.getLogger(LostItemFeeChargingService.class);
@@ -48,6 +52,7 @@ public class LostItemFeeChargingService {
   private final EventPublisher eventPublisher;
   private final LostItemFeeRefundService refundService;
   private final AccountRepository accountRepository;
+  private final ActualCostRecordService actualCostRecordService;
   private String userId;
   private String servicePointId;
 
@@ -64,6 +69,7 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
+    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients));
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -112,6 +118,7 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)
+    .thenComposeAsync(r -> r.after(actualCostRecordService::createIfNecessaryForDeclaredLostItem))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
     .thenApply(r -> r.map(notUsed -> loan));
@@ -148,11 +155,7 @@ public class LostItemFeeChargingService {
 
   private Boolean isOpenLostItemFee(Account account) {
     String type = account.getFeeFineType();
-    if ((type.equals(FeeFine.LOST_ITEM_FEE_TYPE) || type.equals(FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE)) && account.isOpen()) {
-      return true;
-    } else {
-      return false;
-    }
+    return FeeFine.lostItemFeeTypes().contains(type) && account.isOpen();
   }
 
   private Boolean hasLostItemFees(Loan loan) {
@@ -197,14 +200,12 @@ public class LostItemFeeChargingService {
 
       if (policy.getDeclareLostProcessingFee().isChargeable()) {
         log.debug("Charging lost item processing fee");
-
         final Result<CreateAccountCommand> processingFeeResult =
           getFeeFineOfType(feeFines, LOST_ITEM_PROCESSING_FEE_TYPE)
             .map(createAccountCreation(context, policy.getDeclareLostProcessingFee()));
 
         accountsToCreate.add(processingFeeResult);
       }
-
       log.debug("Total accounts created {}", accountsToCreate.size());
       return combineAll(accountsToCreate);
     });
@@ -258,14 +259,16 @@ public class LostItemFeeChargingService {
         "locationId", context.loan.getItem().getPermanentLocationId()));
   }
 
-  private static final class ReferenceDataContext {
-    private final Loan loan;
+  @Getter
+  public static final class ReferenceDataContext {
+    private Loan loan;
     private final DeclareItemLostRequest request;
     private final String staffUserId;
 
     private LostItemPolicy lostItemPolicy;
     private FeeFineOwner feeFineOwner;
     private Collection<FeeFine> feeFines;
+    private ActualCostRecord actualCostRecord;
 
     public ReferenceDataContext(Loan loan, DeclareItemLostRequest request, String staffUserId) {
       this.loan = loan;
@@ -275,6 +278,7 @@ public class LostItemFeeChargingService {
 
     public ReferenceDataContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
       this.lostItemPolicy = lostItemPolicy;
+      this.loan = loan.withLostItemPolicy(lostItemPolicy);
       return this;
     }
 
@@ -285,6 +289,11 @@ public class LostItemFeeChargingService {
 
     public ReferenceDataContext withFeeFines(Collection<FeeFine> feeFines) {
       this.feeFines = feeFines;
+      return this;
+    }
+
+    public ReferenceDataContext withActualCostRecord(ActualCostRecord actualCostRecord) {
+      this.actualCostRecord = actualCostRecord;
       return this;
     }
   }

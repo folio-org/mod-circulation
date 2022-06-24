@@ -42,12 +42,14 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.ActualCostRecordService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -72,6 +74,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private final EventPublisher eventPublisher;
   private final PageableFetcher<Loan> loanPageableFetcher;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
+  private final ActualCostRecordService actualCostRecordService;
 
   public ChargeLostFeesWhenAgedToLostService(Clients clients,
     ItemRepository itemRepository, UserRepository userRepository) {
@@ -88,6 +91,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
+    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients));
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
@@ -126,6 +130,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
+      .thenCompose(r -> r.after(actualCostRecordService::createIfNecessaryForAgedToLostItem))
       .thenCompose(r -> r.after(this::chargeLostFeesForLoan))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .thenApply(r -> r.mapFailure(failure -> handleFailure(loanToChargeFees, failure.toString())))
@@ -315,5 +320,4 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
-
 }

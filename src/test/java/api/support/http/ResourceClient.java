@@ -245,6 +245,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::tenantStorage, "");
   }
 
+  public static ResourceClient forActualCostRecordsStorage() {
+    return new ResourceClient(InterfaceUrls::actualCostRecordsStorageUrl, "actualCostRecords");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;

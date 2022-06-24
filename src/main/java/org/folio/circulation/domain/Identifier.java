@@ -4,6 +4,6 @@ import lombok.Value;
 
 @Value
 public class Identifier {
-  String typeId;
+  String identifierTypeId;
   String value;
 }
