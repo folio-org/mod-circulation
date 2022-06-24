@@ -319,7 +319,7 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
-      .thenComposeAsync(combineAfter(locationRepository::getLocation, Item::withLocation))
+      .thenComposeAsync(combineAfter(locationRepository::getEffectiveLocation, Item::withLocation))
       .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
       .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType));
   }

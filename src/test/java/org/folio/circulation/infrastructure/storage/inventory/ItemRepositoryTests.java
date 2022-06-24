@@ -94,7 +94,7 @@ class ItemRepositoryTests {
     final var holdingsRepository = mock(HoldingsRepository.class);
     final var loanTypeRepository = mock(LoanTypeRepository.class);
 
-    when(locationRepository.getLocation(any()))
+    when(locationRepository.getEffectiveLocation(any()))
       .thenReturn(ofAsync(Location::unknown));
 
     when(materialTypeRepository.getFor(any()))
