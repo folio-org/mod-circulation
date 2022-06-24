@@ -2,6 +2,9 @@ package org.folio.circulation.domain.policy.lostitem;
 
 import java.util.Arrays;
 
+import lombok.Getter;
+
+@Getter
 public enum ChargeAmountType {
   SET_COST("anotherCost"),
   ACTUAL_COST("actualCost");
