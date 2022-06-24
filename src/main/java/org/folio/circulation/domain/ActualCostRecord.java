@@ -13,6 +13,7 @@ import lombok.With;
 @Getter
 public class ActualCostRecord {
   private String id;
+  private String accountId;
   private String userId;
   private String userBarcode;
   private String loanId;
