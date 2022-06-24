@@ -36,10 +36,6 @@ public class ActualCostRecordMapper {
       write(json, "accountId", actualCostRecord.getAccountId());
     }
 
-    if (actualCostRecord.getAccountId() != null) {
-      write(json, "accountId", actualCostRecord.getAccountId());
-    }
-
     return json;
   }
 
