@@ -137,6 +137,7 @@ public class LostItemFeePoliciesFixture {
   private void createReferenceData() {
     feeFineTypeFixture.lostItemProcessingFee();
     feeFineTypeFixture.lostItemFee();
+    feeFineTypeFixture.lostItemActualCostFee();
     feeFineOwnerFixture.cd1Owner();
   }
 }

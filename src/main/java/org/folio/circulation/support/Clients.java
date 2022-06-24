@@ -61,6 +61,7 @@ public class Clients {
   private final CirculationRulesProcessor circulationRulesProcessor;
   private final CollectionResourceClient accountsRefundClient;
   private final CollectionResourceClient accountsCancelClient;
+  private final CollectionResourceClient actualCostRecordsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -120,6 +121,7 @@ public class Clients {
         circulationRulesStorageClient, locationsStorageClient);
       accountsRefundClient = createAccountsRefundClient(client, context);
       accountsCancelClient = createAccountsCancelClient(client, context);
+      actualCostRecordsStorageClient = createActualCostRecordClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -216,6 +218,10 @@ public class Clients {
 
   public CollectionResourceClient patronGroupsStorage() {
     return patronGroupsStorageClient;
+  }
+
+  public CollectionResourceClient actualCostRecordsStorage() {
+    return actualCostRecordsStorageClient;
   }
 
   public CollectionResourceClient calendarStorageClient() {
@@ -707,5 +713,11 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/accounts/%s/cancel");
+  }
+
+  private CollectionResourceClient createActualCostRecordClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/actual-cost-record-storage/actual-cost-records");
   }
 }
