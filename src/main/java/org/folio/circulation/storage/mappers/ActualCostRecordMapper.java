@@ -15,7 +15,6 @@ public class ActualCostRecordMapper {
   public JsonObject toJson(ActualCostRecord actualCostRecord) {
     JsonObject json = new JsonObject();
     write(json, "id", actualCostRecord.getId());
-    json.put("accountId", "");
     write(json, "userId", actualCostRecord.getUserId());
     write(json, "userBarcode", actualCostRecord.getUserBarcode());
     write(json, "loanId", actualCostRecord.getLoanId());
@@ -31,7 +30,11 @@ public class ActualCostRecordMapper {
     write(json, "feeFineOwner", actualCostRecord.getFeeFineOwner());
     write(json, "feeFineTypeId", actualCostRecord.getFeeFineTypeId());
     write(json, "feeFineType", actualCostRecord.getFeeFineType());
-    json.put("permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+    write(json,"permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+
+    if (actualCostRecord.getAccountId() != null) {
+      write(json, "accountId", actualCostRecord.getAccountId());
+    }
 
     return json;
   }
