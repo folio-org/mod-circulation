@@ -2,7 +2,6 @@ package api.loans.scenarios;
 
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;
-import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.AccountMatchers.isTransferredFully;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
@@ -19,7 +18,9 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import api.support.builders.AccountBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.FeefineActionsBuilder;
 import api.support.http.IndividualResource;
 import api.support.matchers.AccountMatchers;
 import api.support.spring.SpringApiTest;
@@ -349,6 +350,36 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
         .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withSetCost(itemFee)
         .refundFeesWithinMinutes(1)).getId());
+  }
+
+  protected void declareItemLostWithActualCost(double itemFee, double processingFee) {
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName(String.format("Test lost policy processing fee %s, item fee %s",
+        processingFee, itemFee))
+      .chargeProcessingFeeWhenDeclaredLost(processingFee)
+      .withActualCost(itemFee).refundFeesWithinMinutes(1)).getId());
+
+    declareItemLost();
+    createLostItemFeeActualCostAccount(itemFee);
+  }
+
+  protected void createLostItemFeeActualCostAccount(double amount) {
+    IndividualResource account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .withFeeFineActualCostType()
+      .feeFineStatusOpen()
+      .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
+      .withOwner(feeFineOwnerFixture.cd1Owner())
+      .withPaymentStatus("Outstanding"));
+
+    feeFineActionsClient.create(new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Lost item fee (actual cost)"));
   }
 
   protected Matcher<JsonObject> isClosedCancelled(double amount) {
