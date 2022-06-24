@@ -1644,34 +1644,14 @@ public class RequestsAPICreationTests extends APITests {
   void tlrRecallShouldFailIfNoLoanAndInstanceHasItemsStatusAllowedForHold() {
     configurationsFixture.enableTlrFeature();
     UUID instanceId = UUID.randomUUID();
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6FD")
-        .inTransit());
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F1")
-        .onOrder());
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F2")
-        .inProcess());
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F3")
-        .missing());
+    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::inTransit);
+    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::onOrder);
+    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::inProcess);
+    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::missing);
 
     Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
       usersFixture.charlotte(), RECALL);
@@ -1684,30 +1664,25 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void tlrRecallShouldPickOneFromAllowedStatusItemsIfLoanNotExistsAndInstanceHasAllowedItems() {
     configurationsFixture.enableTlrFeature();
-    UUID instanceId = UUID.randomUUID();
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6FD")
-        .paged());
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLocation(locationsFixture.mainFloor())
+      .create());
+    requestsClient.create(buildPageTitleLevelRequest(usersFixture.jessica().getId(),
+      servicePointsFixture.cd1().getId(), instanceId));
+    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::awaitingDelivery);
+    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::awaitingPickup);
 
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F1")
-        .awaitingDelivery());
-
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F2")
-        .awaitingPickup());
+    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::missing);
 
     Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
       usersFixture.charlotte(), RECALL);
@@ -1725,32 +1700,16 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void tlrRecallShouldPickItemWithAllowedStatusIfLoanNotExistsAndInstanceHasMoreItems() {
+  void tlrRecallShouldPickItemWithAllowedStatusIfLoanNotExistsAndInstanceHasOtherItems() {
     configurationsFixture.enableTlrFeature();
     UUID instanceId = UUID.randomUUID();
     ItemResource allowedItem = itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6FD")
-        .awaitingPickup());
-
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F1")
-        .onOrder());
-
-    itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder.forInstance(instanceId),
-      instanceBuilder -> instanceBuilder
-        .withId(instanceId),
-      itemBuilder -> itemBuilder
-        .withBarcode("SDFTY6F2")
-        .inProcess());
+      holdingBuilder -> holdingBuilder, instanceBuilder -> instanceBuilder.withId(instanceId),
+      ItemBuilder::awaitingPickup);
+    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::onOrder);
+    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::inProcess);
 
     Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
       usersFixture.charlotte(), RECALL);
