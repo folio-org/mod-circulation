@@ -402,7 +402,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
 
-  @Disabled
+  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
@@ -444,7 +444,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
 
-  @Disabled
+  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldAgeToLostAndCreateActualCostRecordAndNotChargeLostProcessingFee () {
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(

@@ -243,7 +243,7 @@ class DeclareLostAPITests extends APITests {
     assertNull(actualCostRecord);
   }
 
-  @Disabled
+  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldCreateActualCostRecordAndChargeLostItemProcessingFeeWhenDeclaredLost() {
     final double expectedProcessingFee = 10.0;
@@ -275,7 +275,7 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("contributors[0].name", contributorName)));
   }
 
-  @Disabled
+  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldCreateActualCostRecordWhenItemDeclaredLost() {
     final double expectedProcessingFee = 10.0;
@@ -340,7 +340,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord, hasNoJsonPath("accountId"));
   }
 
-  @Disabled
+  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldCreateActualCostRecordWithEmptyIdentifiersWhenTheyNotExistInInstance() {
     final IndividualResource loanType = loanTypesFixture.canCirculate();
@@ -371,7 +371,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(identifiers.stream().toArray(), emptyArray());
   }
 
-  @Disabled
+  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldCreateRecordAndNotChargeProcessingFeeWhenLostItemPolicySetToActualCostOnly() {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
