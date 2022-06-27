@@ -55,8 +55,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.Is;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
@@ -243,7 +243,7 @@ class DeclareLostAPITests extends APITests {
     assertNull(actualCostRecord);
   }
 
-  @Ignore
+  @Disabled
   @Test
   void shouldCreateActualCostRecordAndChargeLostItemProcessingFeeWhenDeclaredLost() {
     final double expectedProcessingFee = 10.0;
@@ -275,7 +275,7 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("contributors[0].name", contributorName)));
   }
 
-  @Ignore
+  @Disabled
   @Test
   void shouldCreateActualCostRecordWhenItemDeclaredLost() {
     final double expectedProcessingFee = 10.0;
@@ -340,7 +340,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(actualCostRecord, hasNoJsonPath("accountId"));
   }
 
-  @Ignore
+  @Disabled
   @Test
   void shouldCreateActualCostRecordWithEmptyIdentifiersWhenTheyNotExistInInstance() {
     final IndividualResource loanType = loanTypesFixture.canCirculate();
@@ -371,7 +371,7 @@ class DeclareLostAPITests extends APITests {
     assertThat(identifiers.stream().toArray(), emptyArray());
   }
 
-  @Ignore
+  @Disabled
   @Test
   void shouldCreateRecordAndNotChargeProcessingFeeWhenLostItemPolicySetToActualCostOnly() {
     final LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture

@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.FeeFineOwnerBuilder;
@@ -402,7 +402,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
 
-  @Ignore
+  @Disabled
   @Test
   void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
@@ -444,7 +444,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
 
-  @Ignore
+  @Disabled
   @Test
   void shouldAgeToLostAndCreateActualCostRecordAndNotChargeLostProcessingFee () {
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
