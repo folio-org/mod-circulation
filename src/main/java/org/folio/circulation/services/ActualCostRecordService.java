@@ -72,9 +72,12 @@ public class ActualCostRecordService {
       return completedFuture(succeeded(null));
     }
 
-    return locationRepository.getPermanentLocation(loan.getItem())
-      .thenCompose(r -> r.after(location -> actualCostRecordRepository.createActualCostRecord(
-        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine, location))));
+    // temporarily disable actual cost record creation
+    return completedFuture(succeeded(null));
+
+//    return locationRepository.getPermanentLocation(loan.getItem())
+//      .thenCompose(r -> r.after(location -> actualCostRecordRepository.createActualCostRecord(
+//        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine, location))));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
