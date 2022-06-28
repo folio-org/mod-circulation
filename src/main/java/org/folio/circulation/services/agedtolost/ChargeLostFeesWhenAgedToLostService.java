@@ -93,7 +93,8 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
-    this.actualCostRecordService = new ActualCostRecordService();
+    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients),
+      LocationRepository.using(clients, new ServicePointRepository(clients)));
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {
