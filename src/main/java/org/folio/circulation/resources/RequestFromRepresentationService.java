@@ -275,13 +275,15 @@ class RequestFromRepresentationService {
     }
 
     RequestQueue requestQueue = records.getRequestQueue();
+    List<String> recalledLoansIds = requestQueue.getRecalledLoansIds();
 
     return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()),
-        requestQueue.getRecalledLoansIds())
+        recalledLoansIds)
       //Loan is null means that we have no items that haven't been recalled. In this case we
       //take the loan that has been recalled the least times
-      .thenComposeAsync(r -> r.after(when(loan -> shouldCheckRecalledLoan(loan, requestQueue),
-        ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan), result -> ofAsync(() ->  result))))
+      .thenComposeAsync(r -> r.after(when(loan -> shouldLookForTheLeastRecalledLoan(loan,
+        recalledLoansIds), ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan),
+        result -> ofAsync(() -> result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenCompose(r -> r.after(this::findItemForRecall))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
@@ -289,8 +291,10 @@ class RequestFromRepresentationService {
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldCheckRecalledLoan(Loan loan, RequestQueue requestQueue) {
-    return ofAsync(() -> loan == null && requestQueue.hasOpenRecalls());
+  private CompletableFuture<Result<Boolean>> shouldLookForTheLeastRecalledLoan(Loan loan,
+    List<String> recalledLoansIds) {
+
+    return ofAsync(() -> loan == null && !recalledLoansIds.isEmpty());
   }
 
   private CompletableFuture<Result<Request>> findItemForRecall(Request request) {

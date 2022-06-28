@@ -157,26 +157,6 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withStatus("Withdrawn");
   }
 
-  public ItemBuilder intellectualItem() { return withStatus(INTELLECTUAL_ITEM); }
-
-  public ItemBuilder awaitingDelivery() { return withStatus(AWAITING_DELIVERY); }
-
-  public ItemBuilder awaitingPickup() { return withStatus(AWAITING_PICKUP); }
-
-  public ItemBuilder inTransit() { return withStatus(IN_TRANSIT); }
-
-  public ItemBuilder longMissing() { return withStatus("Long missing"); }
-
-  public ItemBuilder inProcessNonRequestable() { return withStatus("In process (non-requestable)"); }
-
-  public ItemBuilder unavailable() { return withStatus("Unavailable"); }
-
-  public ItemBuilder restricted() { return withStatus("Restricted"); }
-
-  public ItemBuilder unknown() { return withStatus("Unknown"); }
-
-  public ItemBuilder orderClosed() { return withStatus("Order closed"); }
-
   public ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
