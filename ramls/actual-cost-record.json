@@ -96,6 +96,10 @@
       "description": "Permanent item location of the lost item",
       "type": "string"
     },
+    "accountId": {
+      "description": "ID of the fee/fine created based on the actual cost record during its manual processing",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
     "feeFineOwnerId": {
       "description": "Fee/fine owner ID",
       "type": "string",

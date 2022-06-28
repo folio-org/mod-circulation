@@ -69,7 +69,7 @@ public class LostItemFeeChargingService {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
-    this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients));
+    this.actualCostRecordService = new ActualCostRecordService();
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(

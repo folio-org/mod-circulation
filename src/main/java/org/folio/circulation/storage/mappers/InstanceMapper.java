@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Contributor;
-import org.folio.circulation.domain.Identifier;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Publication;
 
