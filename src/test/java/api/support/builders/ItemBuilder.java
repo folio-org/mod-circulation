@@ -165,7 +165,19 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder inTransit() { return withStatus(IN_TRANSIT); }
 
-  private ItemBuilder withStatus(String status) {
+  public ItemBuilder longMissing() { return withStatus("Long missing"); }
+
+  public ItemBuilder inProcessNonRequestable() { return withStatus("In process (non-requestable)"); }
+
+  public ItemBuilder unavailable() { return withStatus("Unavailable"); }
+
+  public ItemBuilder restricted() { return withStatus("Restricted"); }
+
+  public ItemBuilder unknown() { return withStatus("Unknown"); }
+
+  public ItemBuilder orderClosed() { return withStatus("Order closed"); }
+
+  public ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
       this.holdingId,
