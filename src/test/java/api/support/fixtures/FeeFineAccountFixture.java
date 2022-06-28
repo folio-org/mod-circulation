@@ -21,14 +21,14 @@ public final class FeeFineAccountFixture {
   private static final String LOST_ITEM_ACTUAL_COST_FEE_TYPE = "Lost item fee (actual cost)";
 
   public void transferLostItemFee(UUID loanId) {
-    final JsonObject lostItemFeeAccount = getAccountByLoanIdAndFeeFineType(loanId, LOST_ITEM_FEE_TYPE);
+    final JsonObject lostItemFeeAccount = getAccount(loanId, LOST_ITEM_FEE_TYPE);
     final String accountId = lostItemFeeAccount.getString("id");
 
     transfer(accountId, lostItemFeeAccount.getDouble("amount"));
   }
 
   public void transferLostItemFee(UUID loanId, double amount) {
-    final String accountId = getAccountByLoanIdAndFeeFineType(loanId, LOST_ITEM_FEE_TYPE)
+    final String accountId = getAccount(loanId, LOST_ITEM_FEE_TYPE)
       .getString("id");
 
     transfer(accountId, amount);
@@ -56,7 +56,7 @@ public final class FeeFineAccountFixture {
   }
 
   public void payLostItemFee(UUID loanId) {
-    final JsonObject lostItemFeeAccount = getAccountByLoanIdAndFeeFineType(
+    final JsonObject lostItemFeeAccount = getAccount(
       loanId, LOST_ITEM_FEE_TYPE);
 
     final String accountId = lostItemFeeAccount.getString("id");
@@ -64,21 +64,21 @@ public final class FeeFineAccountFixture {
   }
 
   public void payLostItemFee(UUID loanId, double amount) {
-    final String accountId = getAccountByLoanIdAndFeeFineType(loanId, LOST_ITEM_FEE_TYPE)
+    final String accountId = getAccount(loanId, LOST_ITEM_FEE_TYPE)
       .getString("id");
 
     pay(accountId, amount);
   }
 
   public void payLostItemActualCostFee(UUID loanId, double amount) {
-    final String accountId = getAccountByLoanIdAndFeeFineType(
+    final String accountId = getAccount(
       loanId, LOST_ITEM_ACTUAL_COST_FEE_TYPE).getString("id");
 
     pay(accountId, amount);
   }
 
   public void payLostItemProcessingFee(UUID loanId) {
-    final JsonObject lostItemProcessingFeeAccount = getAccountByLoanIdAndFeeFineType(
+    final JsonObject lostItemProcessingFeeAccount = getAccount(
       loanId, LOST_ITEM_PROCESSING_FEE_TYPE);
 
     final String accountId = lostItemProcessingFeeAccount.getString("id");
@@ -86,7 +86,7 @@ public final class FeeFineAccountFixture {
   }
 
   public void payLostItemProcessingFee(UUID loanId, double amount) {
-    final String accountId = getAccountByLoanIdAndFeeFineType(
+    final String accountId = getAccount(
       loanId, LOST_ITEM_PROCESSING_FEE_TYPE).getString("id");
 
     pay(accountId, amount);
@@ -131,7 +131,7 @@ public final class FeeFineAccountFixture {
     return account;
   }
 
-  private JsonObject getAccountByLoanIdAndFeeFineType(UUID loanId, String feeFineType) {
+  private JsonObject getAccount(UUID loanId, String feeFineType) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString())
         .and(exactMatch("feeFineType", feeFineType)))
       .getFirst();

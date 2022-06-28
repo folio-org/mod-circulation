@@ -238,14 +238,14 @@ public class LostItemFeeRefundService {
   }
 
   private List<Account> findRefundableAccounts(Account latestAccount, Collection<Account> accounts,
-    final List<String> feeFineTypes) {
+    List<String> feeFineTypes) {
 
     List<Account> filteredList = new ArrayList<>();
     filteredList.add(latestAccount);
     ZonedDateTime creationDate = latestAccount.getCreationDate();
 
     List<String> associatedFeeFineAccountType = feeFineTypes.stream()
-      .filter(feeFIneType -> !feeFIneType.equals(latestAccount.getFeeFineType()))
+      .filter(feeFineType -> !feeFineType.equals(latestAccount.getFeeFineType()))
       .collect(Collectors.toList());
 
     getLatestAccount(accounts, associatedFeeFineAccountType)
