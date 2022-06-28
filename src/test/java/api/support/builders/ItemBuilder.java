@@ -157,6 +157,10 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withStatus("Withdrawn");
   }
 
+  public ItemBuilder intellectualItem() {
+    return withStatus(INTELLECTUAL_ITEM);
+  }
+
   public ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
