@@ -39,8 +39,6 @@ import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
@@ -1627,102 +1625,79 @@ public class RequestsAPICreationTests extends APITests {
       .forEach(index -> requestsFixture.recallItem(item, users.get(index)));
   }
 
-  @Test
-  void tlrRecallShouldFailIfLoanAndAllowedStatusItemsForInstanceNotExist() {
-    configurationsFixture.enableTlrFeature();
-    var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
-    var firstItem = items.get(0);
-    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(firstItem.getInstanceId(),
-      usersFixture.charlotte(), RECALL);
-
-    assertThat(response.getStatusCode(), CoreMatchers.is(422));
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Request has no loan or recallable item")));
-  }
-
-  @Test
-  void tlrRecallShouldFailIfNoLoanAndInstanceHasItemsStatusAllowedForHold() {
-    configurationsFixture.enableTlrFeature();
-    UUID instanceId = UUID.randomUUID();
-    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::inTransit);
-    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::onOrder);
-    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::inProcess);
-    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::missing);
-
-    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
-      usersFixture.charlotte(), RECALL);
-
-    assertThat(response.getStatusCode(), CoreMatchers.is(422));
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Request has no loan or recallable item")));
-  }
-
-  @Test
-  void tlrRecallShouldPickOneFromAllowedStatusItemsIfLoanNotExistsAndInstanceHasAllowedItems() {
-    configurationsFixture.enableTlrFeature();
+  @ParameterizedTest
+  @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery"})
+  void tlrRecallWithoutLoanShouldPickRecallableItemFromRequestedInstance(String itemStatus) {
+    IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    itemsClient.create(new ItemBuilder()
-      .forHolding(defaultWithHoldings.getId())
-      .withMaterialType(UUID.randomUUID())
-      .withPermanentLoanType(UUID.randomUUID())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .withMaterialType(materialTypesFixture.book().getId())
-      .withPermanentLocation(locationsFixture.mainFloor())
-      .create());
-    requestsClient.create(buildPageTitleLevelRequest(usersFixture.jessica().getId(),
-      servicePointsFixture.cd1().getId(), instanceId));
-    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::awaitingDelivery);
-    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::awaitingPickup);
+    configurationsFixture.enableTlrFeature();
+    if (itemStatus.equals("Paged")) {
+      itemsClient.create(new ItemBuilder()
+        .forHolding(defaultWithHoldings.getId())
+        .withMaterialType(UUID.randomUUID())
+        .withPermanentLoanType(UUID.randomUUID())
+        .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+        .withMaterialType(materialTypesFixture.book().getId())
+        .withPermanentLocation(locationsFixture.mainFloor())
+        .create());
+      requestsClient.create(buildPageTitleLevelRequest(usersFixture.james().getId(),
+        servicePointsFixture.cd1().getId(), instanceId));
+    } else {
+      itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder
+          .forHolding(defaultWithHoldings.getId())
+          .withStatus(itemStatus));
+    }
+    Response response = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .recall()
+        .withPickupServicePointId(requestPickupServicePoint.getId())
+        .titleRequestLevel()
+        .withInstanceId(instanceId)
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .by(usersFixture.jessica())
+        .create());
 
-    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::missing);
-
-    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
-      usersFixture.charlotte(), RECALL);
-
-    assertThat(response.getStatusCode(), CoreMatchers.is(201));
-    assertThat(response.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertTrue(Stream.of(AWAITING_PICKUP.getValue(), AWAITING_DELIVERY.getValue(),
-      PAGED.getValue()).anyMatch(status -> status.equals(response.getJson().getJsonObject("item")
-      .getString("status"))));
-    assertThat(response.getJson().getString("requestType"), is("Recall"));
+    assertThat(response.getJson().getString("requestType"), is(RECALL.getValue()));
+    assertThat(response.getJson().getJsonObject("item").getString("status"), is(itemStatus));
     assertThat(response.getJson().getString("requestLevel"), is("Title"));
     assertThat(response.getJson().getString("instanceId"), is(instanceId));
     assertThat(response.getJson().getString("fulfilmentPreference"), is("Hold Shelf"));
     assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
   }
 
-  @Test
-  void tlrRecallShouldPickItemWithAllowedStatusIfLoanNotExistsAndInstanceHasOtherItems() {
+  @ParameterizedTest
+  @CsvSource({"On order", "In process", "Available", "Checked out", "In transit", "Missing",
+    "Long missing", "Withdrawn", "Claimed returned", "Declared lost", "Aged to lost",
+    "Lost and paid", "In process (non-requestable)", "Intellectual item", "Unavailable",
+    "Restricted", "Unknown", "Order closed"})
+  void tlrRecallShouldFailWhenRequestHasNoLoanOrRecallableItem(String itemStatus) {
+    IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     configurationsFixture.enableTlrFeature();
-    UUID instanceId = UUID.randomUUID();
-    ItemResource allowedItem = itemsFixture.basedUponSmallAngryPlanet(
-      holdingBuilder -> holdingBuilder, instanceBuilder -> instanceBuilder.withId(instanceId),
-      ItemBuilder::awaitingPickup);
-    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::onOrder);
-    itemsFixture.basedUponSmallAngryPlanet(holdingBuilder -> holdingBuilder,
-      instanceBuilder -> instanceBuilder.withId(instanceId), ItemBuilder::inProcess);
+    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      itemBuilder -> itemBuilder
+        .forHolding(defaultWithHoldings.getId())
+        .withStatus(itemStatus));
+    Response response = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .recall()
+        .withPickupServicePointId(requestPickupServicePoint.getId())
+        .titleRequestLevel()
+        .withInstanceId(instanceId)
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .by(usersFixture.jessica())
+        .create());
 
-    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instanceId,
-      usersFixture.charlotte(), RECALL);
-
-    assertThat(response.getStatusCode(), CoreMatchers.is(201));
-    assertThat(response.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(response.getJson().getJsonObject("item").getString("status"), is(AWAITING_PICKUP.getValue()));
-    assertThat(response.getJson().getString("itemId"), is(allowedItem.getId()));
-    assertThat(response.getJson().getString("requestType"), is("Recall"));
-    assertThat(response.getJson().getString("requestLevel"), is("Title"));
-    assertThat(response.getJson().getString("instanceId"), is(instanceId));
-    assertThat(response.getJson().getString("fulfilmentPreference"), is("Hold Shelf"));
-    assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Request has no loan or recallable item")));
   }
 
   @Test
@@ -1934,15 +1909,18 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"In transit", "On order", "In process", "Missing"})
+    @CsvSource({"On order", "In process", "Checked out", "In transit", "Awaiting pickup",
+    "Missing", "Long missing", "Withdrawn", "Claimed returned", "Declared lost", "Aged to lost",
+    "Lost and paid", "Paged", "In process (non-requestable)", "Intellectual item", "Unavailable",
+    "Restricted", "Unknown", "Awaiting delivery", "Order closed"})
   void canCreateTlrHoldRequestWhenInstanceHasItemsWithStatusAllowedForHold(String itemStatus) {
     configurationsFixture.enableTlrFeature();
-    final ItemResource item = createItemWithStatus(itemsFixture, itemStatus);
-
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder.withStatus(itemStatus));
     IndividualResource response = requestsFixture.placeTitleLevelHoldShelfRequest(item.getInstanceId(),
       usersFixture.charlotte());
 
-    assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(response.getJson().getString("requestLevel"), is("Title"));
     assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
     assertThat(response.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
@@ -3794,33 +3772,6 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
 
     return missingItem;
-  }
-
-  private ItemResource createItemWithStatus(ItemsFixture itemsFixture, String itemStatus) {
-    ItemResource item = null;
-    switch (ItemStatus.from(itemStatus)) {
-      case IN_TRANSIT:
-        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::inTransit);
-        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
-          is(ItemStatus.IN_TRANSIT.getValue()));
-        break;
-      case ON_ORDER:
-        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::onOrder);
-        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
-          is(ItemStatus.ON_ORDER.getValue()));
-        break;
-      case IN_PROCESS:
-        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::inProcess);
-        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
-          is(ItemStatus.IN_PROCESS.getValue()));
-        break;
-      case MISSING:
-        item = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
-        assertThat(item.getResponse().getJson().getJsonObject("status").getString("name"),
-          is(ItemStatus.MISSING.getValue()));
-        break;
-    }
-    return item;
   }
 
   private void createAutomatedPatronBlockForUser(UUID requesterId) {
