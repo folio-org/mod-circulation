@@ -161,7 +161,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     return withStatus(INTELLECTUAL_ITEM);
   }
 
-  private ItemBuilder withStatus(String status) {
+  public ItemBuilder withStatus(String status) {
     return new ItemBuilder(
       this.id,
       this.holdingId,
