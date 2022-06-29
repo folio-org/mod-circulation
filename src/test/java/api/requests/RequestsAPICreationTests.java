@@ -1650,16 +1650,8 @@ public class RequestsAPICreationTests extends APITests {
           .forHolding(defaultWithHoldings.getId())
           .withStatus(itemStatus));
     }
-    Response response = requestsClient.attemptCreate(
-      new RequestBuilder()
-        .recall()
-        .withPickupServicePointId(requestPickupServicePoint.getId())
-        .titleRequestLevel()
-        .withInstanceId(instanceId)
-        .withNoItemId()
-        .withNoHoldingsRecordId()
-        .by(usersFixture.jessica())
-        .create());
+    IndividualResource response = requestsFixture.placeTitleLevelRecallRequest(
+      instanceId, usersFixture.jessica());
 
     assertThat(response.getJson().getString("requestType"), is(RECALL.getValue()));
     assertThat(response.getJson().getJsonObject("item").getString("status"), is(itemStatus));
@@ -1922,7 +1914,6 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(response.getJson().getString("requestLevel"), is("Title"));
-    assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
     assertThat(response.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(response.getJson().getString("instanceId"), is(item.getInstanceId()));
   }
