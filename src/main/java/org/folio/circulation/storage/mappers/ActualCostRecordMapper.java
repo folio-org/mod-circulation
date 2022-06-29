@@ -44,7 +44,6 @@ public class ActualCostRecordMapper {
     return new ActualCostRecord(getProperty(representation, "id"),
       getProperty(representation, "accountId"),
       getProperty(representation, "userId"),
-      getProperty(representation, "accountId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
       ItemLossType.from(getProperty(representation, "itemLossType")),
