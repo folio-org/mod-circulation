@@ -233,35 +233,13 @@ public class LostItemFeeRefundService {
     Collection<Account> accounts, List<String> feeFineTypes) {
 
     if (accounts == null || accounts.isEmpty()) {
-      return ofAsync(() -> Collections.emptyList());
+      return ofAsync(Collections::emptyList);
     }
 
     return ofAsync(() -> getLatestAccount(accounts, feeFineTypes))
       .thenCompose(r -> r.after(this::setActualCostRecordCreationDate))
       .thenApply(r -> r.map(account -> findRefundableAccounts(account, accounts, feeFineTypes)));
-
-
-//      .thenCompose(pairResult ->
-//        pairResult.nextWhen(pair -> succeeded(isAccountEligibleForRefund(pair)),
-//        succeeded(findRefundableAccounts(pairResult, accounts, feeFineTypes)),
-//        pair -> succeeded(Collections.emptyList()))));
-//      .thenCompose(pairResult -> pairResult.map(pair -> findRefundableAccounts(pair, accounts, feeFineTypes))));
-
-
-//      .filter(this::isAccountEligibleForRefund)
-//      .map(account -> findRefundableAccounts(account, accounts, feeFineTypes))
-//      .orElse(Collections.emptyList());
   }
-
-//  private Result<Collection<Account>> findRefundableAccounts(
-//    Pair<Optional<Account>, ActualCostRecord> accountWithRecord,
-//    Collection<Account> accounts, List<String> feeFineTypes) {
-//
-//    if (isAccountEligibleForRefund(accountWithRecord)) {
-//      return findRefundableAccounts(accountWithRecord, accounts, feeFineTypes);
-//    }
-//    return succeeded(Collections.EMPTY_LIST);
-//  }
 
   private CompletableFuture<Result<Account>> setActualCostRecordCreationDate(
     Account latestAccount) {
