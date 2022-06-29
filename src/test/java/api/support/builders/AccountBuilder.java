@@ -58,6 +58,11 @@ public class AccountBuilder extends JsonBuilder implements Builder {
     return new AccountBuilder(loanId, amount, remaining, status, feeFineType);
   }
 
+  public AccountBuilder withFeeFineActualCostType() {
+    return new AccountBuilder(loanId, amount, remainingAmount, status,
+      "Lost item fee (actual cost)");
+  }
+
   public AccountBuilder withAmount(double amount) {
     return new AccountBuilder(loanId, amount, remainingAmount, status, feeFineType);
   }

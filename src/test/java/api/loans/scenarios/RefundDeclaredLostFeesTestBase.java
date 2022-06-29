@@ -2,7 +2,6 @@ package api.loans.scenarios;
 
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;
-import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.AccountMatchers.isTransferredFully;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
@@ -10,16 +9,24 @@ import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
 import static api.support.matchers.LoanMatchers.isClosed;
+import static org.folio.circulation.support.utils.ClockUtil.getClock;
+import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import api.support.builders.AccountBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.FeefineActionsBuilder;
 import api.support.http.IndividualResource;
 import api.support.matchers.AccountMatchers;
 import api.support.spring.SpringApiTest;
@@ -353,5 +360,34 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
   protected Matcher<JsonObject> isClosedCancelled(double amount) {
     return AccountMatchers.isClosedCancelled(cancellationReason, amount);
+  }
+
+  protected void createLostItemFeeActualCostAccount(double amount, UUID recordId) {
+    IndividualResource account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .withFeeFineActualCostType()
+      .feeFineStatusOpen());
+
+    feeFineActionsClient.create(new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Lost item fee (actual cost)"));
+
+    JsonObject actualCostRecord = actualCostRecordsClient.getById(recordId).getJson();
+    actualCostRecord.put("accountId", account.getId());
+    actualCostRecordsClient.replace(recordId, actualCostRecord);
+  }
+
+  protected void runWithTimeOffset(Runnable runnable, Duration offset) {
+    final Clock original = getClock();
+    try {
+      setClock(Clock.offset(original, offset));
+      runnable.run();
+    } finally {
+      setClock(original);
+    }
   }
 }
