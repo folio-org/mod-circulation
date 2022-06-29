@@ -35,12 +35,12 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
@@ -1625,6 +1625,73 @@ public class RequestsAPICreationTests extends APITests {
       .forEach(index -> requestsFixture.recallItem(item, users.get(index)));
   }
 
+  @ParameterizedTest
+  @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery"})
+  void tlrRecallWithoutLoanShouldPickRecallableItemFromRequestedInstance(String itemStatus) {
+    IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    configurationsFixture.enableTlrFeature();
+    if (itemStatus.equals("Paged")) {
+      itemsClient.create(new ItemBuilder()
+        .forHolding(defaultWithHoldings.getId())
+        .withMaterialType(UUID.randomUUID())
+        .withPermanentLoanType(UUID.randomUUID())
+        .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+        .withMaterialType(materialTypesFixture.book().getId())
+        .withPermanentLocation(locationsFixture.mainFloor())
+        .create());
+      requestsClient.create(buildPageTitleLevelRequest(usersFixture.james().getId(),
+        servicePointsFixture.cd1().getId(), instanceId));
+    } else {
+      itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder
+          .forHolding(defaultWithHoldings.getId())
+          .withStatus(itemStatus));
+    }
+    IndividualResource response = requestsFixture.placeTitleLevelRecallRequest(
+      instanceId, usersFixture.jessica());
+
+    assertThat(response.getJson().getString("requestType"), is(RECALL.getValue()));
+    assertThat(response.getJson().getJsonObject("item").getString("status"), is(itemStatus));
+    assertThat(response.getJson().getString("requestLevel"), is("Title"));
+    assertThat(response.getJson().getString("instanceId"), is(instanceId));
+    assertThat(response.getJson().getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
+  }
+
+  @ParameterizedTest
+  @CsvSource({"On order", "In process", "Available", "Checked out", "In transit", "Missing",
+    "Long missing", "Withdrawn", "Claimed returned", "Declared lost", "Aged to lost",
+    "Lost and paid", "In process (non-requestable)", "Intellectual item", "Unavailable",
+    "Restricted", "Unknown", "Order closed"})
+  void tlrRecallShouldFailWhenRequestHasNoLoanOrRecallableItem(String itemStatus) {
+    IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    configurationsFixture.enableTlrFeature();
+    itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      itemBuilder -> itemBuilder
+        .forHolding(defaultWithHoldings.getId())
+        .withStatus(itemStatus));
+    Response response = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .recall()
+        .withPickupServicePointId(requestPickupServicePoint.getId())
+        .titleRequestLevel()
+        .withInstanceId(instanceId)
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .by(usersFixture.jessica())
+        .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Request has no loan or recallable item")));
+  }
+
   @Test
   void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
@@ -1766,7 +1833,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     var publishedEvents = Awaitility.await()
@@ -1788,7 +1855,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(servicePoint.getId())
       .by(usersFixture.steve()));
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
@@ -1810,7 +1877,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
@@ -1828,9 +1895,27 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(requestedItem.getString("status"), is(ItemStatus.MISSING.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  @ParameterizedTest
+    @CsvSource({"On order", "In process", "Checked out", "In transit", "Awaiting pickup",
+    "Missing", "Long missing", "Withdrawn", "Claimed returned", "Declared lost", "Aged to lost",
+    "Lost and paid", "Paged", "In process (non-requestable)", "Intellectual item", "Unavailable",
+    "Restricted", "Unknown", "Awaiting delivery", "Order closed"})
+  void canCreateTlrHoldRequestWhenInstanceHasItemsWithStatusAllowedForHold(String itemStatus) {
+    configurationsFixture.enableTlrFeature();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
+      builder -> builder.withStatus(itemStatus));
+    IndividualResource response = requestsFixture.placeTitleLevelHoldShelfRequest(item.getInstanceId(),
+      usersFixture.charlotte());
+
+    assertThat(response.getJson().getString("requestType"), is(HOLD.getValue()));
+    assertThat(response.getJson().getString("requestLevel"), is("Title"));
+    assertThat(response.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(response.getJson().getString("instanceId"), is(item.getInstanceId()));
   }
 
   @Test
@@ -1844,7 +1929,7 @@ public class RequestsAPICreationTests extends APITests {
       .withPickupServicePointId(requestPickupServicePoint.getId())
       .by(usersFixture.steve()));
 
-    assertThat(holdRequest.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
