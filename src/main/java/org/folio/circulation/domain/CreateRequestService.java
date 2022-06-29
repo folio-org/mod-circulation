@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.REQ
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -136,6 +137,10 @@ public class CreateRequestService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
+
+    if (errorHandler.hasAny(TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
+      return completedFuture(succeeded(records));
+    }
 
     boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
       .isTitleLevelRequestsFeatureEnabled();
