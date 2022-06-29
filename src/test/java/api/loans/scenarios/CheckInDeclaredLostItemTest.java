@@ -142,7 +142,7 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   }
 
   @Test
-  void shouldCancelItemFeeActualCostAndProcessingFee() {
+  void shouldCancelLostItemFeeActualCostAndProcessingFee() {
     final double itemFeeActualCost = 15.00;
     final double itemProcessingFee = 10.00;
     final UUID servicePointId = servicePointsFixture.cd1().getId();
