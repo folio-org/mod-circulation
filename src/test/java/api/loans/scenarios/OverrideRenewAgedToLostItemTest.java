@@ -1,11 +1,27 @@
 package api.loans.scenarios;
 
+import static api.support.matchers.AccountMatchers.isClosedCancelled;
+import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemFeeActualCost;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
+import static org.folio.circulation.domain.policy.Period.minutes;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+
 import java.time.ZonedDateTime;
 
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import api.support.builders.AccountBuilder;
+import api.support.builders.FeefineActionsBuilder;
 import api.support.fixtures.AgeToLostFixture;
 import api.support.fixtures.OverrideRenewalFixture;
+import api.support.http.IndividualResource;
+import lombok.val;
 
 class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   @Autowired
@@ -23,5 +39,83 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
 
     overrideRenewalFixture.overrideRenewalByBarcode(result.getLoan(),
       servicePointsFixture.cd1().getId());
+  }
+
+  @Test
+  void canOverrideRenewalAfterAgeToLostAndRefundsWithLostItemActualCostFee() {
+
+    final double itemFeeActualCost = 10.0;
+    final double itemProcessingFee = 5.0;
+    val policy = lostItemFeePoliciesFixture.facultyStandardPolicy()
+      .withName("shouldChargeOverdueFine")
+      .withActualCost(itemFeeActualCost)
+      .withItemAgedToLostAfterOverdue(Period.minutes(1))
+      .withItemAgedToLostAfterOverdue(minutes(1))
+      .withPatronBilledAfterItemAgedToLost(minutes(5))
+      .chargeProcessingFeeWhenAgedToLost(itemProcessingFee)
+      .chargeOverdueFineWhenReturned()
+      .withNoFeeRefundInterval();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    createLostItemFeeActualCostAccount(result.getLoan(), itemFeeActualCost);
+
+    assertThat(feeFineActionsClient.getAll(), hasSize(2));
+    assertThat(result.getLoan(), hasLostItemFeeActualCost(isOpen(itemFeeActualCost)));
+    assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(itemProcessingFee)));
+
+
+    feeFineAccountFixture.payLostItemActualCostFee(result.getLoanId(), 3.0);
+    feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId(), 3.0);
+    performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
+
+    IndividualResource loan = loansClient.get(result.getLoanId());
+    assertThat(loan.getJson().getString("action"),
+      is("renewedThroughOverride"));
+    assertThat(loan, hasLostItemFeeActualCost(isClosedCancelled(cancellationReason, itemFeeActualCost)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, itemProcessingFee)));
+  }
+
+  @Test
+  void canOverrideRenewalAfterAgeToLostAndRefundsWithOnlyLostItemActualCostFee() {
+    final double itemFeeActualCost = 10.0;
+    val policy = lostItemFeePoliciesFixture.facultyStandardPolicy()
+      .withName("shouldChargeOverdueFine")
+      .withActualCost(itemFeeActualCost)
+      .withItemAgedToLostAfterOverdue(Period.minutes(1))
+      .withItemAgedToLostAfterOverdue(minutes(1))
+      .withPatronBilledAfterItemAgedToLost(minutes(5))
+      .chargeOverdueFineWhenReturned()
+      .withNoFeeRefundInterval();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    createLostItemFeeActualCostAccount(result.getLoan(), itemFeeActualCost);
+
+    assertThat(feeFineActionsClient.getAll(), hasSize(1));
+    assertThat(result.getLoan(), hasLostItemFeeActualCost(isOpen(itemFeeActualCost)));
+
+    feeFineAccountFixture.payLostItemActualCostFee(result.getLoanId(), 3.0);
+    performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
+
+    assertThat(loansClient.get(result.getLoanId()).getJson().getString("action"),
+      is("renewedThroughOverride"));
+    assertThat(loansClient.get(result.getLoanId()), hasLostItemFeeActualCost(isClosedCancelled(cancellationReason, itemFeeActualCost)));
+  }
+
+  private void createLostItemFeeActualCostAccount(IndividualResource loan, double amount) {
+    IndividualResource account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .withFeeFineActualCostType()
+      .feeFineStatusOpen()
+      .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
+      .withOwner(feeFineOwnerFixture.cd1Owner())
+      .withPaymentStatus("Outstanding"));
+
+    feeFineActionsClient.create(new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Lost item fee (actual cost)"));
   }
 }
