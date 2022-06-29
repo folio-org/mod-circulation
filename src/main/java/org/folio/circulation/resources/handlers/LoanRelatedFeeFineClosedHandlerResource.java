@@ -2,6 +2,7 @@ package org.folio.circulation.resources.handlers;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
@@ -16,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -107,7 +109,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(Loan loan,
     LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
 
-    if (!allLostFeesClosed(loan)) {
+    if (!allLostFeesClosed(loan) && !shouldCloseLoan(loan)) {
       return completedFuture(succeeded(loan));
     }
 
@@ -127,14 +129,23 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   }
 
   private boolean allLostFeesClosed(Loan loan) {
-    if (loan.getLostItemPolicy().hasActualCostFee()) {
-      // Actual cost fee is processed manually
-      return false;
-    }
-
     return loan.getAccounts().stream()
       .filter(account -> lostItemFeeTypes().contains(account.getFeeFineType()))
       .allMatch(Account::isClosed);
+  }
+
+  private boolean shouldCloseLoan(Loan loan) {
+    LostItemPolicy lostItemPolicy = loan.getLostItemPolicy();
+
+    if (!lostItemPolicy.hasActualCostFee()) {
+      return true;
+    }
+
+    if (loan.getAccounts().stream().noneMatch(account -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(account.getFeeFineType()))) {
+      return lostItemPolicy.feeFineChargingPeriodHasPassed();
+    } else {
+      return true;
+    }
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {

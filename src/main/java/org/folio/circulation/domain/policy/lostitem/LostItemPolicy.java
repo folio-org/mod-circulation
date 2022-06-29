@@ -20,6 +20,7 @@ import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ChargeableFee;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
@@ -34,6 +35,7 @@ public class LostItemPolicy extends Policy {
   private final Period patronBilledAfterItemAgedToLostInterval;
   private final Period recalledItemAgedToLostAfterOverdueInterval;
   private final Period patronBilledAfterRecalledItemAgedToLostInterval;
+  private final Period lostItemChargeFeeFine;
   // There is no separate age to lost processing fee but there is a flag
   // that turns on/off the fee, but we're modelling it as a separate fee
   // to simplify logic.
@@ -45,7 +47,7 @@ public class LostItemPolicy extends Policy {
     Period itemAgedToLostAfterOverdueInterval, Period patronBilledAfterItemAgedToLostInterval,
     Period recalledItemAgedToLostAfterOverdueInterval,
     Period patronBilledAfterRecalledItemAgedToLostInterval,
-    AutomaticallyChargeableFee ageToLostProcessingFee) {
+    AutomaticallyChargeableFee ageToLostProcessingFee, Period lostItemChargeFeeFine) {
 
     super(id, name);
     this.declareLostProcessingFee = declareLostProcessingFee;
@@ -60,6 +62,7 @@ public class LostItemPolicy extends Policy {
     this.patronBilledAfterRecalledItemAgedToLostInterval =
       patronBilledAfterRecalledItemAgedToLostInterval;
     this.ageToLostProcessingFee = ageToLostProcessingFee;
+    this.lostItemChargeFeeFine = lostItemChargeFeeFine;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -76,7 +79,8 @@ public class LostItemPolicy extends Policy {
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterAgedLost"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "recalledItemAgedLostOverdue"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterRecalledItemAgedLost"),
-      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
+      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem"),
+      getPeriodPropertyOrEmpty(lostItemPolicy, "lostItemChargeFeeFine")
     );
   }
 
@@ -139,6 +143,12 @@ public class LostItemPolicy extends Policy {
       || feeRefundInterval.isEqualToDateTillNow(lostDateTime);
   }
 
+  public boolean feeFineChargingPeriodHasPassed() {
+    ZonedDateTime now = ClockUtil.getZonedDateTime();
+    return lostItemChargeFeeFine.isEqualToDateTillNow(now) ||
+      lostItemChargeFeeFine.hasPassedSinceDateTillNow(now);
+  }
+
   public boolean isRefundProcessingFeeWhenReturned() {
     return refundProcessingFeeWhenReturned;
   }
@@ -189,7 +199,7 @@ public class LostItemPolicy extends Policy {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
         noActualCostFee(), zeroDurationPeriod(), false, false,
         zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(),
-        zeroDurationPeriod(), noAutomaticallyChargeableFee());
+        zeroDurationPeriod(), noAutomaticallyChargeableFee(), zeroDurationPeriod());
     }
   }
 }

@@ -268,11 +268,12 @@ class RequestFromRepresentationService {
 
     RequestQueue requestQueue = records.getRequestQueue();
 
+    List<String> recalledLoansIds = requestQueue.getRecalledLoansIds();
     return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()),
-        requestQueue.getRecalledLoansIds())
+        recalledLoansIds)
       //Loan is null means that we have no items that haven't been recalled. In this case we
       //take the loan that has been recalled the least times
-      .thenComposeAsync(r -> r.after(when(loan -> ofAsync(() -> loan == null),
+      .thenComposeAsync(r -> r.after(when(loan -> ofAsync(() -> loan == null && !recalledLoansIds.isEmpty()),
         ignored -> ofAsync(requestQueue::getTheLeastRecalledLoan), result -> ofAsync(() ->  result))))
       .thenApply(resultLoan -> resultLoan.map(request::withLoan))
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
