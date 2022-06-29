@@ -31,7 +31,11 @@ public class ActualCostRecordMapper {
     write(json, "feeFineOwner", actualCostRecord.getFeeFineOwner());
     write(json, "feeFineTypeId", actualCostRecord.getFeeFineTypeId());
     write(json, "feeFineType", actualCostRecord.getFeeFineType());
-    json.put("permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+    write(json,"permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+
+    if (actualCostRecord.getAccountId() != null) {
+      write(json, "accountId", actualCostRecord.getAccountId());
+    }
 
     return json;
   }
@@ -40,6 +44,7 @@ public class ActualCostRecordMapper {
     return new ActualCostRecord(getProperty(representation, "id"),
       getProperty(representation, "accountId"),
       getProperty(representation, "userId"),
+      getProperty(representation, "accountId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
       ItemLossType.from(getProperty(representation, "itemLossType")),

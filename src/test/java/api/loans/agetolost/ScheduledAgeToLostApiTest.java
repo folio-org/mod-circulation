@@ -11,7 +11,10 @@ import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static java.time.Clock.fixed;
+import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,10 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import api.support.MultipleJsonRecords;
@@ -53,13 +57,10 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     super(true, true);
   }
 
-  @BeforeEach
-  public void activateLostItemFeePolicy() {
-    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute().getId());
-  }
-
-  @Test
-  void shouldAgeItemToLostWhenOverdueByMoreThanInterval() {
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void shouldAgeItemToLostWhenOverdueByMoreThanInterval(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
     checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
@@ -72,8 +73,28 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThatItemAgedToLostEventWasPublished(overdueLoan);
   }
 
-  @Test
-  void canAgeTenItemsToLostWhenOverdueByMoreThanInterval() {
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void shouldAgeRecalledItemToLostWhenOverdueByMoreThanInterval(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
+    checkOutItem();
+    requestsFixture.recallItem(overdueItem, usersFixture.jessica());
+    ClockUtil.setClock(fixed(getZonedDateTime().plusMonths(7).toInstant(), UTC));
+    scheduledAgeToLostClient.triggerJob();
+
+    assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
+    assertThat(getLoanActions(), hasAgedToLostAction());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasAgedToLostDate());
+
+    assertThatPublishedLoanLogRecordEventsAreValid(overdueLoan.getJson());
+    assertThatItemAgedToLostEventWasPublished(overdueLoan);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void canAgeTenItemsToLostWhenOverdueByMoreThanInterval(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
     val loanToItemMap = checkOutTenItems();
 
     scheduledAgeToLostClient.triggerJob();
@@ -91,8 +112,10 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThatItemAgedToLostEventsWerePublished(loanToItemMap.keySet());
   }
 
-  @Test
-  void shouldIgnoreOverdueLoansWhenItemIsClaimedReturned() {
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void shouldIgnoreOverdueLoansWhenItemIsClaimedReturned(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
     checkOutItem();
     claimItemReturnedFixture.claimItemReturned(overdueLoan.getId());
 
@@ -102,8 +125,10 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThat(loansClient.get(overdueLoan).getJson(), not(hasPatronBillingDate()));
   }
 
-  @Test
-  void shouldNotAgeAnyItemsToLostIfNoIntervalDefined() {
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void shouldNotAgeAnyItemsToLostIfNoIntervalDefined(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
     val policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("Aged to lost disabled")
       .withItemAgedToLostAfterOverdue(null);
@@ -121,8 +146,10 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
-  @Test
-  void shouldNotAgeItemToLostWhenNotOverdueByMoreThanIntervalYet() {
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void shouldNotAgeItemToLostWhenNotOverdueByMoreThanIntervalYet(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
     overdueItem = itemsFixture.basedUponNod();
     overdueLoan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -140,8 +167,10 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
 
-  @Test
-  void shouldNotProcessAgedToLostItemSecondTime() {
+  @ParameterizedTest
+  @EnumSource(value = ChargeAmountType.class)
+  void shouldNotProcessAgedToLostItemSecondTime(ChargeAmountType costType) {
+    initLostItemFeePolicy(costType);
     checkOutItem();
     scheduledAgeToLostClient.triggerJob();
 
@@ -244,5 +273,9 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     for (IndividualResource loan : loans) {
       assertThat(itemAgedToLostEvents, hasItem(isValidItemAgedToLostEvent(loan.getJson())));
     }
+  }
+
+  private void initLostItemFeePolicy(ChargeAmountType costType) {
+    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinute(costType).getId());
   }
 }
