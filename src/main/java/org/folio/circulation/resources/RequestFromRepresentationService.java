@@ -17,7 +17,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RECALL_WITHOUT_LOAN_OR_RECALLABLE_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -312,7 +312,7 @@ class RequestFromRepresentationService {
       .map(Result::succeeded)
       .orElseGet(() -> failedValidation("Request has no loan or recallable item", "loan", null))
       .mapFailure(err -> errorHandler.handleValidationError(err,
-        RECALL_WITHOUT_LOAN_OR_RECALLABLE_ITEM, request));
+        TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM, request));
   }
 
   private CompletableFuture<Result<Request>> fetchItemForLoan(Request request) {
