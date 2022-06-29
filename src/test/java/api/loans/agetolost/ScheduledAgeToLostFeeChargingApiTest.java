@@ -42,7 +42,6 @@ import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.FeeFineOwnerBuilder;
@@ -59,7 +58,6 @@ import api.support.matchers.LoanMatchers;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
@@ -379,31 +377,6 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSetOld() {
-    final double agedToLostLostProcessingFee = 10.00;
-    IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
-      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
-        .doNotChargeOverdueFineWhenReturned()
-        .withNoFeeRefundInterval()
-        .withActualCost(10.00)
-        .billPatronImmediatelyWhenAgedToLost()
-        .chargeProcessingFeeWhenAgedToLost(agedToLostLostProcessingFee));
-
-    useLostItemPolicy(lostItemPolicy.getId());
-
-    final ItemResource item = itemsFixture.basedUponNod();
-    final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
-
-    ageToLostFixture.ageToLostAndChargeFees();
-
-    final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
-
-    assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
-    assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
-  }
-
-  @Disabled(value = "Disabled for Morning Glory release")
-  @Test
   void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
     UUID typeId = UUID.randomUUID();
@@ -444,7 +417,6 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
 
-  @Disabled(value = "Disabled for Morning Glory release")
   @Test
   void shouldAgeToLostAndCreateActualCostRecordAndNotChargeLostProcessingFee () {
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
