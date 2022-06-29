@@ -13,6 +13,9 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class ActualCostRecordMapper {
 
+  private ActualCostRecordMapper() {
+  }
+
   public static JsonObject toJson(ActualCostRecord actualCostRecord) {
     JsonObject json = new JsonObject();
     write(json, "id", actualCostRecord.getId());

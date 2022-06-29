@@ -262,7 +262,7 @@ public class LostItemFeeRefundService {
     List<Account> accountsForRefund = new ArrayList<>();
     accountsForRefund.add(latestAccount);
     List<String> feeFineTypeForAssociatedAccount = feeFineTypes.stream()
-      .filter(feeFIneType -> !feeFIneType.equals(latestAccount.getFeeFineType()))
+      .filter(not(latestAccount.getFeeFineType()::equals))
       .collect(Collectors.toList());
 
     Optional.ofNullable(getLatestAccount(accounts, feeFineTypeForAssociatedAccount))
