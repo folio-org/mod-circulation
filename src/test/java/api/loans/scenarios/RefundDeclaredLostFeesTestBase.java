@@ -16,7 +16,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -360,7 +362,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
     return AccountMatchers.isClosedCancelled(cancellationReason, amount);
   }
 
-  protected void createLostItemFeeActualCostAccount(double amount) {
+  protected void createLostItemFeeActualCostAccount(double amount, UUID recordId) {
     IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loan)
       .withAmount(amount)
@@ -374,6 +376,10 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
       .withBalance(amount)
       .withActionAmount(amount)
       .withActionType("Lost item fee (actual cost)"));
+
+    JsonObject actualCostRecord = actualCostRecordsClient.getById(recordId).getJson();
+    actualCostRecord.put("accountId", account.getId());
+    actualCostRecordsClient.replace(recordId, actualCostRecord);
   }
 
   protected void runWithTimeOffset(Runnable runnable, Duration offset) {

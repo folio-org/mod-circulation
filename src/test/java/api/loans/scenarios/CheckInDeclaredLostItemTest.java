@@ -160,8 +160,9 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
       .forLoanId(loan.getId()));
     assertThat(accountsClient.getAll(), hasSize(1));
     assertThat(actualCostRecordsClient.getAll(), hasSize(1));
-
-    runWithTimeOffset(() -> createLostItemFeeActualCostAccount(itemFeeActualCost), ofMinutes(2));
+    String recordId = actualCostRecordsClient.getAll().get(0).getString("id");
+    runWithTimeOffset(() -> createLostItemFeeActualCostAccount(itemFeeActualCost,
+      UUID.fromString(recordId)), ofMinutes(2));
     assertThat(accountsClient.getAll(), hasSize(2));
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
