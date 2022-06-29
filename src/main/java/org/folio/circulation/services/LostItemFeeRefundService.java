@@ -252,8 +252,8 @@ public class LostItemFeeRefundService {
 
     return succeeded(latestAccount)
       .combineAfter(account -> actualCostRecordRepository.getActualCostRecordByAccountId(
-        latestAccount.getId()), (account, record) -> account.withActualRecordCreationDate(
-          record.getCreationDate()));
+        latestAccount.getId()), (account, actualCostRecord) -> account
+          .withActualRecordCreationDate(actualCostRecord.getCreationDate()));
   }
 
   private List<Account> findRefundableAccounts(Account latestAccount,
@@ -269,7 +269,7 @@ public class LostItemFeeRefundService {
       .filter(this::isAccountEligibleForRefund)
       .filter(associatedAccount -> isTimeDifferenceWithAssociatedAccountSuitable(
         latestAccount, associatedAccount))
-      .map(accountsForRefund::add);
+      .ifPresentOrElse(accountsForRefund::add, () -> log.debug("No refundable accounts found"));
 
     return accountsForRefund;
   }
