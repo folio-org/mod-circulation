@@ -27,6 +27,7 @@ public class Account {
   private final String paymentStatus;
   @Getter private final Collection<FeeFineAction> feeFineActions;
   private final ZonedDateTime creationDate;
+  private final ZonedDateTime actualRecordCreationDate;
 
   public static Account from(JsonObject representation) {
     return new Account(getProperty(representation, "id"),
@@ -53,7 +54,8 @@ public class Account {
       getNestedStringProperty(representation, "status", "name"),
       getNestedStringProperty(representation, "paymentStatus", "name"),
       Collections.emptyList(),
-      getNestedDateTimeProperty(representation, "metadata", "createdDate"));
+      getNestedDateTimeProperty(representation, "metadata", "createdDate"),
+      null);
   }
 
   public JsonObject toJson() {
@@ -159,7 +161,16 @@ public class Account {
 
   public Account withFeeFineActions(Collection<FeeFineAction> actions) {
     return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus, actions,
-      creationDate);
+      creationDate, actualRecordCreationDate);
+  }
+
+  public Account withActualRecordCreationDate(ZonedDateTime actualRecordCreationDate) {
+    return new Account(id, relatedRecordsInfo, amount, remaining, status, paymentStatus, feeFineActions,
+      creationDate, actualRecordCreationDate);
+  }
+
+  public ZonedDateTime getActualRecordCreationDate() {
+    return actualRecordCreationDate;
   }
 
   public boolean isClosed() {

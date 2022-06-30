@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 
 import lombok.AllArgsConstructor;
@@ -29,5 +30,6 @@ public class ActualCostRecord {
   private String feeFineOwner;
   private String feeFineTypeId;
   private String feeFineType;
+  private ZonedDateTime creationDate;
   private String expirationDate;
 }

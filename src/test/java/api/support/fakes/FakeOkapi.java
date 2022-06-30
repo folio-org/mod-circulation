@@ -384,6 +384,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("actualCostRecord")
       .withRootPath("/actual-cost-record-storage/actual-cost-records")
       .withCollectionPropertyName("actualCostRecords")
+      .withChangeMetadata()
       .create().register(router);
 
     new FakeFeeFineOperationsModule().register(router);

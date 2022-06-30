@@ -8,6 +8,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -29,7 +30,6 @@ import org.folio.circulation.support.results.Result;
 public class ActualCostRecordRepository implements GetManyRecordsRepository<ActualCostRecord> {
   private final CollectionResourceClient actualCostRecordStorageClient;
 
-  private final ActualCostRecordMapper actualCostRecordMapper = new ActualCostRecordMapper();
   private static final String ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME = "actualCostRecords";
   private static final String LOAN_ID_FIELD_NAME = "loanId";
 
@@ -42,11 +42,30 @@ public class ActualCostRecordRepository implements GetManyRecordsRepository<Actu
 
     final ResponseInterpreter<ActualCostRecord> interpreter =
       new ResponseInterpreter<ActualCostRecord>()
-        .flatMapOn(201, mapUsingJson(actualCostRecordMapper::toDomain))
+        .flatMapOn(201, mapUsingJson(ActualCostRecordMapper::toDomain))
         .otherwise(forwardOnFailure());
 
-    return actualCostRecordStorageClient.post(actualCostRecordMapper.toJson(actualCostRecord))
+    return actualCostRecordStorageClient.post(ActualCostRecordMapper.toJson(actualCostRecord))
       .thenApply(interpreter::flatMap);
+  }
+
+  public CompletableFuture<Result<ActualCostRecord>> getActualCostRecordByAccountId(
+    String accountId) {
+
+    if (accountId == null) {
+      return ofAsync(() -> null);
+    }
+
+    return CqlQuery.exactMatch("accountId", accountId)
+      .after(query -> actualCostRecordStorageClient.getMany(query, PageLimit.one()))
+      .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
+      .thenApply(r -> r.map(multipleRecords -> multipleRecords.getRecords().stream()
+        .findFirst()
+        .orElse(null)));
+  }
+
+  private Result<MultipleRecords<ActualCostRecord>> mapResponseToActualCostRecords(Response response) {
+    return MultipleRecords.from(response, ActualCostRecordMapper::toDomain, "actualCostRecords");
   }
 
   public CompletableFuture<Result<Loan>> findByLoan(Result<Loan> loanResult) {

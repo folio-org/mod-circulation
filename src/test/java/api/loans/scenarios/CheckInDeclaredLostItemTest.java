@@ -2,27 +2,31 @@ package api.loans.scenarios;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.AccountMatchers.isOpen;
-import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemFeeActualCost;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static java.time.Duration.ofMinutes;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckInByBarcodeRequestBuilder;
+import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.http.IndividualResource;
-import api.support.matchers.AccountMatchers;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
 class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
@@ -137,4 +141,34 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
   }
 
+  @Test
+  void shouldCancelLostItemFeeActualCostAndProcessingFee() {
+    final double itemFeeActualCost = 15.00;
+    final double itemProcessingFee = 10.00;
+    final UUID servicePointId = servicePointsFixture.cd1().getId();
+    UserResource user = usersFixture.charlotte();
+    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("Lost item fee actual cost policy")
+        .chargeProcessingFeeWhenDeclaredLost(itemProcessingFee)
+        .withActualCost(itemFeeActualCost)).getId());
+
+    loan = checkOutFixture.checkOutByBarcode(item, user);
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+    assertThat(accountsClient.getAll(), hasSize(1));
+    assertThat(actualCostRecordsClient.getAll(), hasSize(1));
+    String recordId = actualCostRecordsClient.getAll().get(0).getString("id");
+    runWithTimeOffset(() -> createLostItemFeeActualCostAccount(itemFeeActualCost,
+      UUID.fromString(recordId)), ofMinutes(2));
+    assertThat(accountsClient.getAll(), hasSize(2));
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .at(servicePointsFixture.cd1()));
+    assertThat(loan, hasLostItemFeeActualCost(isClosedCancelled(itemFeeActualCost)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(itemProcessingFee)));
+  }
 }
