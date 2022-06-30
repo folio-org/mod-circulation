@@ -212,11 +212,13 @@ public class LostItemFeeRefundService {
     LostItemFeeRefundContext context) {
 
     List<String> feeFineTypes = new ArrayList<>();
-    if (context.getLostItemPolicy().hasActualCostFee()) {
+    if(context.getLostItemPolicy().hasActualCostFee()) {
       feeFineTypes.add(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
-    } else {
+    }
+    else {
       feeFineTypes.add(LOST_ITEM_FEE_TYPE);
     }
+
     if (context.getLostItemPolicy().isRefundProcessingFeeWhenReturned()) {
       feeFineTypes.add(LOST_ITEM_PROCESSING_FEE_TYPE);
     }

@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -358,6 +357,19 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
         .refundFeesWithinMinutes(1)).getId());
   }
 
+  protected void declareItemLostWithActualCost(double itemFee, double processingFee) {
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName(String.format("Test lost policy processing fee %s, item fee %s",
+        processingFee, itemFee))
+      .chargeProcessingFeeWhenDeclaredLost(processingFee)
+      .withActualCost(itemFee).refundFeesWithinMinutes(1)).getId());
+
+    declareItemLost();
+    String recordId = actualCostRecordsClient.getAll().get(0).getString("id");
+    createLostItemFeeActualCostAccount(itemFee, UUID.fromString(recordId));
+  }
+
   protected Matcher<JsonObject> isClosedCancelled(double amount) {
     return AccountMatchers.isClosedCancelled(cancellationReason, amount);
   }
@@ -391,3 +403,4 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
     }
   }
 }
+

@@ -18,16 +18,15 @@ public final class FeeFineTypeFixture extends RecordCreator {
       .withAutomatic(true));
   }
 
-  public IndividualResource lostItemProcessingFee() {
+  public IndividualResource lostItemActualCostFee() {
     return createIfAbsent(new FeeFineBuilder()
-      .withFeeFineType("Lost item processing fee")
+      .withFeeFineType("Lost item fee (actual cost)")
       .withAutomatic(true));
   }
 
-  public IndividualResource lostItemActualCostFee() {
-
+  public IndividualResource lostItemProcessingFee() {
     return createIfAbsent(new FeeFineBuilder()
-      .withFeeFineType("Lost item fee (actual cost)")
+      .withFeeFineType("Lost item processing fee")
       .withAutomatic(true));
   }
 
