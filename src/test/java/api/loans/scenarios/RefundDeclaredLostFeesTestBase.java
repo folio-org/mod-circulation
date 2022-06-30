@@ -361,10 +361,10 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
       .withActualCost(itemFee).refundFeesWithinMinutes(1)).getId());
 
     declareItemLost();
-    createLostItemFeeActualCostAccount(itemFee);
+    createLostItemFees(itemFee);
   }
 
-  protected void createLostItemFeeActualCostAccount(double amount) {
+  protected void createLostItemFees(double amount) {
     IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loan)
       .withAmount(amount)

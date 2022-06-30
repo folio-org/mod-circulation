@@ -11,7 +11,6 @@ import static org.hamcrest.Matchers.hasSize;
 
 import java.time.ZonedDateTime;
 
-import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
