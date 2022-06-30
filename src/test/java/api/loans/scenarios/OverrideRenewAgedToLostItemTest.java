@@ -43,13 +43,11 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
 
   @Test
   void canOverrideRenewalAfterAgeToLostAndRefundsWithLostItemActualCostFee() {
-
     final double itemFeeActualCost = 10.0;
     final double itemProcessingFee = 5.0;
     val policy = lostItemFeePoliciesFixture.facultyStandardPolicy()
       .withName("shouldChargeOverdueFine")
       .withActualCost(itemFeeActualCost)
-      .withItemAgedToLostAfterOverdue(Period.minutes(1))
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withPatronBilledAfterItemAgedToLost(minutes(5))
       .chargeProcessingFeeWhenAgedToLost(itemProcessingFee)
@@ -63,14 +61,12 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
     assertThat(result.getLoan(), hasLostItemFeeActualCost(isOpen(itemFeeActualCost)));
     assertThat(result.getLoan(), hasLostItemProcessingFee(isOpen(itemProcessingFee)));
 
-
     feeFineAccountFixture.payLostItemActualCostFee(result.getLoanId(), 3.0);
     feeFineAccountFixture.payLostItemProcessingFee(result.getLoanId(), 3.0);
     performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
 
     IndividualResource loan = loansClient.get(result.getLoanId());
-    assertThat(loan.getJson().getString("action"),
-      is("renewedThroughOverride"));
+    assertThat(loan.getJson().getString("action"), is("renewedThroughOverride"));
     assertThat(loan, hasLostItemFeeActualCost(isClosedCancelled(cancellationReason, itemFeeActualCost)));
     assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(cancellationReason, itemProcessingFee)));
   }
@@ -81,7 +77,6 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
     val policy = lostItemFeePoliciesFixture.facultyStandardPolicy()
       .withName("shouldChargeOverdueFine")
       .withActualCost(itemFeeActualCost)
-      .withItemAgedToLostAfterOverdue(Period.minutes(1))
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withPatronBilledAfterItemAgedToLost(minutes(5))
       .chargeOverdueFineWhenReturned()
@@ -96,9 +91,10 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
     feeFineAccountFixture.payLostItemActualCostFee(result.getLoanId(), 3.0);
     performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime().plusMonths(8));
 
-    assertThat(loansClient.get(result.getLoanId()).getJson().getString("action"),
-      is("renewedThroughOverride"));
-    assertThat(loansClient.get(result.getLoanId()), hasLostItemFeeActualCost(isClosedCancelled(cancellationReason, itemFeeActualCost)));
+    IndividualResource loan = loansClient.get(result.getLoanId());
+    assertThat(loan.getJson().getString("action"), is("renewedThroughOverride"));
+    assertThat(loan, hasLostItemFeeActualCost(isClosedCancelled(cancellationReason,
+      itemFeeActualCost)));
   }
 
   private void createLostItemFeeActualCostAccount(IndividualResource loan, double amount) {
