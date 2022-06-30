@@ -31,6 +31,7 @@ public class ActualCostRecordMapper {
     write(json, "feeFineTypeId", actualCostRecord.getFeeFineTypeId());
     write(json, "feeFineType", actualCostRecord.getFeeFineType());
     write(json,"permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+    write(json, "expirationDate", actualCostRecord.getExpirationDate());
 
     if (actualCostRecord.getAccountId() != null) {
       write(json, "accountId", actualCostRecord.getAccountId());
@@ -40,6 +41,10 @@ public class ActualCostRecordMapper {
   }
 
   public ActualCostRecord toDomain(JsonObject representation) {
+    if (representation == null ) {
+      return null;
+    }
+
     return new ActualCostRecord(getProperty(representation, "id"),
       getProperty(representation, "userId"),
       getProperty(representation, "accountId"),
@@ -56,7 +61,8 @@ public class ActualCostRecordMapper {
       getProperty(representation, "feeFineOwnerId"),
       getProperty(representation, "feeFineOwner"),
       getProperty(representation, "feeFineTypeId"),
-      getProperty(representation, "feeFineType")
+      getProperty(representation, "feeFineType"),
+      getProperty(representation, "expirationDate")
     );
   }
 }

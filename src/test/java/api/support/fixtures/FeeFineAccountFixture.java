@@ -12,6 +12,9 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 
 public final class FeeFineAccountFixture {
   private final ResourceClient accountsClient = forAccounts();
@@ -59,20 +62,30 @@ public final class FeeFineAccountFixture {
   }
 
   public void payLostItemFee(UUID loanId, double amount) {
-    final String accountId = getLostItemFeeAccount(loanId).getString("id");
+    final String accountId = getAccount(loanId, LOST_ITEM_FEE_TYPE)
+      .getString("id");
 
     pay(accountId, amount);
   }
 
-  public void payLostItemProcessingFee(UUID loanId) {
-    final JsonObject lostItemProcessingFeeAccount = getLostItemProcessingFeeAccount(loanId);
-    final String accountId = lostItemProcessingFeeAccount.getString("id");
+  public void payLostItemActualCostFee(UUID loanId) {
+    final JsonObject lostItemFeeActualCostAccount = getAccount(loanId, LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+    final String accountId = lostItemFeeActualCostAccount.getString("id");
 
+    pay(accountId, lostItemFeeActualCostAccount.getDouble("amount"));
+  }
+
+  public void payLostItemProcessingFee(UUID loanId) {
+    final JsonObject lostItemProcessingFeeAccount = getAccount(
+      loanId, LOST_ITEM_PROCESSING_FEE_TYPE);
+
+    final String accountId = lostItemProcessingFeeAccount.getString("id");
     pay(accountId, lostItemProcessingFeeAccount.getDouble("amount"));
   }
 
   public void payLostItemProcessingFee(UUID loanId, double amount) {
-    final String accountId = getLostItemProcessingFeeAccount(loanId).getString("id");
+    final String accountId = getAccount(
+      loanId, LOST_ITEM_PROCESSING_FEE_TYPE).getString("id");
 
     pay(accountId, amount);
   }
@@ -122,9 +135,9 @@ public final class FeeFineAccountFixture {
       .getFirst();
   }
 
-  private JsonObject getLostItemProcessingFeeAccount(UUID loanId) {
+  private JsonObject getAccount(UUID loanId, String feeFineType) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString())
-      .and(exactMatch("feeFineType", "Lost item processing fee")))
+        .and(exactMatch("feeFineType", feeFineType)))
       .getFirst();
   }
 }

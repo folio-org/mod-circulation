@@ -29,4 +29,5 @@ public class ActualCostRecord {
   private String feeFineOwner;
   private String feeFineTypeId;
   private String feeFineType;
+  private String expirationDate;
 }

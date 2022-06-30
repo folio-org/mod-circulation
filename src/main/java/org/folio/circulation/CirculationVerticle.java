@@ -13,6 +13,7 @@ import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResour
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
+import org.folio.circulation.resources.ExpiredActualCostProcessingResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
@@ -71,6 +72,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
     new CheckInByBarcodeResource(client).register(router);
+    new ExpiredActualCostProcessingResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);

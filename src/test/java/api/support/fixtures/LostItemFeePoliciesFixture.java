@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static api.support.http.ResourceClient.forLostItemFeePolicies;
 import static org.folio.circulation.domain.policy.Period.minutes;
+import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.ACTUAL_COST;
 import static org.folio.circulation.domain.policy.lostitem.ChargeAmountType.SET_COST;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
@@ -34,19 +35,19 @@ public class LostItemFeePoliciesFixture {
   public IndividualResource chargeFee() {
     createReferenceData();
 
-    return create(chargeFeePolicy(10.0, 5.0));
+    return create(chargeSetCostFeePolicy(10.0, 5.0));
   }
 
   public IndividualResource chargeFeeWithZeroLostItemFee() {
     createReferenceData();
 
-    return create(chargeFeePolicy(0.0, 5.0));
+    return create(chargeSetCostFeePolicy(0.0, 5.0));
   }
 
   public IndividualResource chargeFeeWithZeroLostItemProcessingFee() {
     createReferenceData();
 
-    return create(chargeFeePolicy(10.0, 0.0));
+    return create(chargeSetCostFeePolicy(10.0, 0.0));
   }
 
   public IndividualResource ageToLostAfterOneMinute() {
@@ -86,10 +87,16 @@ public class LostItemFeePoliciesFixture {
       .chargeOverdueFineWhenReturned();
   }
 
-  private LostItemFeePolicyBuilder chargeFeePolicy(double lostItemFeeCost,
+  private LostItemFeePolicyBuilder chargeSetCostFeePolicy(double lostItemFeeCost,
     double lostItemProcessingFeeCost) {
 
     return chargeFeePolicy(lostItemFeeCost, lostItemProcessingFeeCost, SET_COST);
+  }
+
+  private LostItemFeePolicyBuilder chargeActualCostFeePolicy(double lostItemFeeCost,
+    double lostItemProcessingFeeCost) {
+
+    return chargeFeePolicy(lostItemFeeCost, lostItemProcessingFeeCost, ACTUAL_COST);
   }
 
   private LostItemFeePolicyBuilder chargeFeePolicy(double lostItemFeeCost,
