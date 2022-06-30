@@ -10,6 +10,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import api.support.builders.FeefineActionsBuilder;
 import api.support.fixtures.AgeToLostFixture;
 import api.support.fixtures.OverrideRenewalFixture;
 import api.support.http.IndividualResource;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
@@ -102,15 +105,17 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
       .withAmount(amount)
       .withRemainingFeeFine(amount)
       .withFeeFineActualCostType()
-      .feeFineStatusOpen()
-      .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
-      .withOwner(feeFineOwnerFixture.cd1Owner())
-      .withPaymentStatus("Outstanding"));
+      .feeFineStatusOpen());
 
     feeFineActionsClient.create(new FeefineActionsBuilder()
       .forAccount(account.getId())
       .withBalance(amount)
       .withActionAmount(amount)
       .withActionType("Lost item fee (actual cost)"));
+
+    JsonObject actualCostRecord = actualCostRecordsClient.getAll().get(0);
+    String recordId = actualCostRecord.getString("id");
+    actualCostRecord.put("accountId", account.getId());
+    actualCostRecordsClient.replace(UUID.fromString(recordId), actualCostRecord);
   }
 }

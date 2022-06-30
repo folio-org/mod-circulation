@@ -58,7 +58,6 @@ import api.support.matchers.LoanMatchers;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {

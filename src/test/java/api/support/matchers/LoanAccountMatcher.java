@@ -50,6 +50,10 @@ public class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
     return hasLostItemFees(hasItems(accountMatcher));
   }
 
+  public static LoanAccountMatcher hasLostItemFeeActualCost(Matcher<JsonObject> accountMatcher) {
+    return hasLostItemFeesActualCost(hasItems(accountMatcher));
+  }
+
   public static LoanAccountMatcher hasNoLostItemFee() {
     return hasLostItemFees(iterableWithSize(0));
   }
@@ -58,11 +62,7 @@ public class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
     return new LoanAccountMatcher("Lost item fee", accountsMatcher);
   }
 
-  public static LoanAccountMatcher hasLostItemFeeActualCost(Matcher<JsonObject> accountMatcher) {
-    return hasLostItemFeesActualCost(hasItems(accountMatcher));
-  }
-
-  private static LoanAccountMatcher hasLostItemFeesActualCost(
+  public static LoanAccountMatcher hasLostItemFeesActualCost(
     Matcher<Iterable<JsonObject>> accountsMatcher) {
 
     return new LoanAccountMatcher("Lost item fee (actual cost)", accountsMatcher);

@@ -1,6 +1,7 @@
 package org.folio.circulation.services;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -10,7 +11,9 @@ import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ItemLossType;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -23,9 +26,12 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 public class ActualCostRecordService {
   private final ActualCostRecordRepository actualCostRecordRepository;
+  private final LocationRepository locationRepository;
 
-  public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository) {
+  public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository,
+    LocationRepository locationRepository) {
     this.actualCostRecordRepository = actualCostRecordRepository;
+    this.locationRepository = locationRepository;
   }
 
   public CompletableFuture<Result<ReferenceDataContext>> createIfNecessaryForDeclaredLostItem(
@@ -51,7 +57,8 @@ public class ActualCostRecordService {
     FeeFineOwner owner = loanToChargeFees.getOwner();
     ItemLossType itemLossType = ItemLossType.AGED_TO_LOST;
     ZonedDateTime dateOfLoss = loan.getAgedToLostDateTime();
-    FeeFine feeFineType = loanToChargeFees.getFeeFineTypes().get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+    Map<String, FeeFine> feeFineTypes = loanToChargeFees.getFeeFineTypes();
+    FeeFine feeFineType = feeFineTypes == null ? null : feeFineTypes.get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
 
     return createActualCostRecordIfNecessary(loan, owner, itemLossType, dateOfLoss, feeFineType)
       .thenApply(mapResult(loanToChargeFees::withActualCostRecord));
@@ -61,15 +68,20 @@ public class ActualCostRecordService {
     Loan loan, FeeFineOwner feeFineOwner, ItemLossType itemLossType,
     ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
-    return loan.getLostItemPolicy().hasActualCostFee()
-      ? actualCostRecordRepository.createActualCostRecord(
-        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine))
-      : completedFuture(succeeded(null));
+    if (!loan.getLostItemPolicy().hasActualCostFee()) {
+      return completedFuture(succeeded(null));
+    }
+
+    return locationRepository.getPermanentLocation(loan.getItem())
+      .thenCompose(r -> r.after(location -> actualCostRecordRepository.createActualCostRecord(
+        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine, location))));
   }
 
   private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
-    ItemLossType itemLossType, ZonedDateTime dateOfLoss, FeeFine feeFine) {
+    ItemLossType itemLossType, ZonedDateTime dateOfLoss, FeeFine feeFine,
+    Location itemPermanentLocation) {
 
+    loan = loan.withItem(loan.getItem().withPermanentLocation(itemPermanentLocation));
     Item item = loan.getItem();
 
     return new ActualCostRecord()

@@ -7,12 +7,16 @@ import org.folio.circulation.domain.ItemLossType;
 import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class ActualCostRecordMapper {
 
-  public JsonObject toJson(ActualCostRecord actualCostRecord) {
+  private ActualCostRecordMapper() {
+  }
+
+  public static JsonObject toJson(ActualCostRecord actualCostRecord) {
     JsonObject json = new JsonObject();
     write(json, "id", actualCostRecord.getId());
     write(json, "userId", actualCostRecord.getUserId());
@@ -30,13 +34,18 @@ public class ActualCostRecordMapper {
     write(json, "feeFineOwner", actualCostRecord.getFeeFineOwner());
     write(json, "feeFineTypeId", actualCostRecord.getFeeFineTypeId());
     write(json, "feeFineType", actualCostRecord.getFeeFineType());
-    json.put("permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+    write(json,"permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+
+    if (actualCostRecord.getAccountId() != null) {
+      write(json, "accountId", actualCostRecord.getAccountId());
+    }
 
     return json;
   }
 
-  public ActualCostRecord toDomain(JsonObject representation) {
+  public static ActualCostRecord toDomain(JsonObject representation) {
     return new ActualCostRecord(getProperty(representation, "id"),
+      getProperty(representation, "accountId"),
       getProperty(representation, "userId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
@@ -51,7 +60,8 @@ public class ActualCostRecordMapper {
       getProperty(representation, "feeFineOwnerId"),
       getProperty(representation, "feeFineOwner"),
       getProperty(representation, "feeFineTypeId"),
-      getProperty(representation, "feeFineType")
+      getProperty(representation, "feeFineType"),
+      getNestedDateTimeProperty(representation, "metadata", "createdDate")
     );
   }
 }

@@ -411,6 +411,6 @@ class AnonymizeLoansTests {
   }
 
   private Account fee(String status, List<FeeFineAction> actions) {
-    return new Account(null, null, null, null, status, null, actions, null);
+    return new Account(null, null, null, null, status, null, actions, null, null);
   }
 }

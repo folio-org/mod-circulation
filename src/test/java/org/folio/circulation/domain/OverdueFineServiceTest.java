@@ -682,9 +682,7 @@ class OverdueFineServiceTest {
           LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
-      emptyList(),
-      ClockUtil.getZonedDateTime()
-    );
+      emptyList(), ClockUtil.getZonedDateTime(), null);
   }
 
   private ServicePoint createServicePoint() {
