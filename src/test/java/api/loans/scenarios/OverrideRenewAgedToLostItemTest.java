@@ -21,7 +21,6 @@ import api.support.builders.FeefineActionsBuilder;
 import api.support.fixtures.AgeToLostFixture;
 import api.support.fixtures.OverrideRenewalFixture;
 import api.support.http.IndividualResource;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 

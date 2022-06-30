@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
