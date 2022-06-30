@@ -14,6 +14,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.policy.Policy;
@@ -76,7 +77,7 @@ public class LostItemPolicy extends Policy {
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterAgedLost"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "recalledItemAgedLostOverdue"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterRecalledItemAgedLost"),
-      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
+      getAgeToLostProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
     );
   }
 
@@ -98,6 +99,19 @@ public class LostItemPolicy extends Policy {
     final BigDecimal amount = getBigDecimalProperty(policy, "lostItemProcessingFee");
 
     return amount != null && chargeProcessingFee
+      ? new AutomaticallyChargeableFee(amount)
+      : noAutomaticallyChargeableFee();
+  }
+
+  private static AutomaticallyChargeableFee getAgeToLostProcessingFee(JsonObject policy, String enabledFlag) {
+    final boolean chargeProcessingFee = getBooleanProperty(policy, enabledFlag);
+    String chargeType = Optional.ofNullable(policy.getJsonObject("chargeAmountItem"))
+      .map(object -> object.getString("chargeType"))
+      .orElse("non-existent cost type");
+    boolean actualCost = "actualCost".equals(chargeType);
+    final BigDecimal amount = getBigDecimalProperty(policy, "lostItemProcessingFee");
+
+    return amount != null && (chargeProcessingFee || actualCost)
       ? new AutomaticallyChargeableFee(amount)
       : noAutomaticallyChargeableFee();
   }

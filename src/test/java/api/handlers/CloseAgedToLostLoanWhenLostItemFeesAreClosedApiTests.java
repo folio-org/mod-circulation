@@ -15,11 +15,14 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +67,25 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     List<JsonObject> loanClosedEvents = getPublishedEventsAsList(byEventType(LOAN_CLOSED));
     assertThat(loanClosedEvents, hasSize(1));
     assertThat(loanClosedEvents.get(0), isValidLoanClosedEvent(loan.getJson()));
+  }
+
+  @Test
+  void shouldProcessingFeeBeingBilledWhenSetActualCost() {
+    accountsClient.deleteAll();
+    val amount = 3.0;
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy(ChargeAmountType.ACTUAL_COST)
+        .withActualCost(0.00)
+        .chargeProcessingFeeWhenAgedToLost(amount)
+        .withChargeAmountItemSystem(false)
+    );
+
+    val delayedBilling = result.getLoan().getJson().getJsonObject("agedToLostDelayedBilling");
+    List<JsonObject> accounts = accountsClient.getAll();
+    assertTrue(delayedBilling.getBoolean("lostItemHasBeenBilled"));
+    assertEquals(accounts.size(), 1);
+    assertEquals(accounts.get(0).getDouble("amount"), amount);
   }
 
   @Test
