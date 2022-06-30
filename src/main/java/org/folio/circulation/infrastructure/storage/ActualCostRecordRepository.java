@@ -72,7 +72,7 @@ public class ActualCostRecordRepository implements GetManyRecordsRepository<Actu
     return loanResult.after(loan -> createActualCostRecordFinder().findByQuery(
         exactMatch(LOAN_ID_FIELD_NAME, loan.getId()), one())
       .thenApply(records -> records.map(MultipleRecords::firstOrNull))
-      .thenApply(mapResult(actualCostRecordMapper::toDomain))
+      .thenApply(mapResult(ActualCostRecordMapper::toDomain))
       .thenApply(mapResult(loan::withActualCostRecord)));
   }
 
@@ -85,10 +85,6 @@ public class ActualCostRecordRepository implements GetManyRecordsRepository<Actu
     PageLimit pageLimit, Offset offset) {
     return actualCostRecordStorageClient.getMany(cqlQuery, pageLimit, offset)
       .thenApply(flatMapResult(this::mapResponseToActualCostRecords));
-  }
-
-  private Result<MultipleRecords<ActualCostRecord>> mapResponseToActualCostRecords(Response response) {
-    return MultipleRecords.from(response, actualCostRecordMapper::toDomain, ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME);
   }
 
 }

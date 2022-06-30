@@ -44,7 +44,7 @@ public class ActualCostRecordMapper {
     return json;
   }
 
-  public ActualCostRecord toDomain(JsonObject representation) {
+  public static ActualCostRecord toDomain(JsonObject representation) {
     if (representation == null ) {
       return null;
     }
@@ -66,7 +66,7 @@ public class ActualCostRecordMapper {
       getProperty(representation, "feeFineOwner"),
       getProperty(representation, "feeFineTypeId"),
       getProperty(representation, "feeFineType"),
-      getNestedDateTimeProperty(representation, "metadata", "createdDate")
+      getNestedDateTimeProperty(representation, "metadata", "createdDate"),
       getProperty(representation, "expirationDate")
     );
   }
