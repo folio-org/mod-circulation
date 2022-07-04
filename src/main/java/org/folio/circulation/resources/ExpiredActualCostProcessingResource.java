@@ -49,4 +49,6 @@ public class ExpiredActualCostProcessingResource extends Resource {
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
+
+
 }

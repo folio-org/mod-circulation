@@ -30,11 +30,11 @@ public class ActualCostRecordExpirationService {
   }
 
   public CompletableFuture<Result<Void>> expireActualCostRecords() {
-    return loanFetchQuery()
+    return fetchLoansForLostItemsQuery()
       .after(query -> loanPageableFetcher.processPages(query, this::closeLoans));
   }
 
-  private Result<CqlQuery> loanFetchQuery() {
+  private Result<CqlQuery> fetchLoansForLostItemsQuery() {
     return CqlQuery.exactMatch(ITEM_STATUS, DECLARED_LOST.getValue());
   }
 

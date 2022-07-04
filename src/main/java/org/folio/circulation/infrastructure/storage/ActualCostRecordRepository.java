@@ -6,7 +6,6 @@ import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailur
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
-import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
@@ -19,15 +18,13 @@ import org.folio.circulation.storage.mappers.ActualCostRecordMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
-import org.folio.circulation.support.fetching.GetManyRecordsRepository;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
-public class ActualCostRecordRepository implements GetManyRecordsRepository<ActualCostRecord> {
+public class ActualCostRecordRepository {
   private final CollectionResourceClient actualCostRecordStorageClient;
 
   private static final String ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME = "actualCostRecords";
@@ -79,12 +76,6 @@ public class ActualCostRecordRepository implements GetManyRecordsRepository<Actu
   private CqlQueryFinder<JsonObject> createActualCostRecordFinder() {
     return new CqlQueryFinder<>(actualCostRecordStorageClient, ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME,
       identity());
-  }
-
-  public CompletableFuture<Result<MultipleRecords<ActualCostRecord>>> getMany(CqlQuery cqlQuery,
-    PageLimit pageLimit, Offset offset) {
-    return actualCostRecordStorageClient.getMany(cqlQuery, pageLimit, offset)
-      .thenApply(flatMapResult(this::mapResponseToActualCostRecords));
   }
 
 }

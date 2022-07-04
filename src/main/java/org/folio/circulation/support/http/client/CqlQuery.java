@@ -42,10 +42,6 @@ public class CqlQuery implements QueryParameter {
     return of(() -> new CqlQuery(String.format("%s=\"\"", index), none()));
   }
 
-  public static Result<CqlQuery> valueUndefined(String index) {
-    return of(() -> new CqlQuery(format("cql.allRecords=1 NOT %s=\"\" ", index), none()));
-  }
-
   public static Result<CqlQuery> match(String index, String value) {
     return Result.of(() -> new CqlQuery(format("%s=\"%s\"", index, value), none()));
   }

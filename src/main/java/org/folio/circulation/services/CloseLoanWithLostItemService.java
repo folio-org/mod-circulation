@@ -92,7 +92,7 @@ public class CloseLoanWithLostItemService {
   private boolean shouldCloseLoan(Loan loan) {
     if (allLostFeesClosed(loan)) {
       ActualCostRecord actualCostRecord = loan.getActualCostRecord();
-      if(actualCostRecord == null) {
+      if (actualCostRecord == null) {
         return true;
       }
       if (loan.getAccounts().stream().noneMatch(account ->

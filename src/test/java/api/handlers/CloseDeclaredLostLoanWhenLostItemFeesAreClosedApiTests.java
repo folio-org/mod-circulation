@@ -125,17 +125,13 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     useLostItemPolicy(actualCostLostItemFeePolicyId);
 
     item = itemsFixture.basedUponNod();
-
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
-
     createLostItemFeeActualCostAccount(10.0);
 
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
@@ -153,42 +149,18 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     useLostItemPolicy(actualCostLostItemFeePolicyId);
 
     item = itemsFixture.basedUponNod();
-
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
     createLostItemFeeActualCostAccount(10.0);
 
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
-
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
-  }
-
-  @Test
-  void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
-    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
-      new LostItemFeePolicyBuilder().withName("test")
-        .chargeProcessingFeeWhenDeclaredLost(10.00)
-        .withActualCost(10.0)
-        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
-    useLostItemPolicy(actualCostLostItemFeePolicyId);
-
-    loansFixture.replaceLoan(loan.getId(), loan.getJson().put("lostItemPolicyId",
-      actualCostLostItemFeePolicyId));
-
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 
   @Test
@@ -203,53 +175,14 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     useLostItemPolicy(actualCostLostItemFeePolicyId);
 
     item = itemsFixture.basedUponNod();
-
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
 
-    loansFixture.replaceLoan(loan.getId(), loan.getJson().put("lostItemPolicyId",
-      actualCostLostItemFeePolicyId));
-
     mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(3));
-
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
-  }
-
-  @Test
-  void shouldCloseLoanDuringScheduledExpirationIfChargingPeriodElapsedAndProcessingFeeHasBeenPaid() {
-    UUID servicePointId = servicePointsFixture.cd2().getId();
-
-    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
-      new LostItemFeePolicyBuilder().withName("test")
-        .chargeProcessingFeeWhenDeclaredLost(10.00)
-        .withActualCost(10.0)
-        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
-    useLostItemPolicy(actualCostLostItemFeePolicyId);
-
-    item = itemsFixture.basedUponNod();
-
-    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-
-    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
-      .withServicePointId(servicePointId)
-      .forLoanId(loan.getId()));
-
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(3));
-
-    timedTaskClient.start(scheduledActualCostExpiration(), 204,
-      "scheduled-actual-cost-expiration");
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
@@ -267,15 +200,12 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     useLostItemPolicy(actualCostLostItemFeePolicyId);
 
     item = itemsFixture.basedUponNod();
-
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
-
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
 
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(1));
@@ -371,12 +301,4 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
       .withActionType("Lost item fee (actual cost)"));
   }
 
-  public void expireActualCost() {
-    setClock(fixed(getZonedDateTime().plusWeeks(3).toInstant(), UTC));
-
-    timedTaskClient.start(scheduledActualCostExpiration(), 204,
-      "scheduled-actual-cost-expiration");
-
-    setDefaultClock();
-  }
 }

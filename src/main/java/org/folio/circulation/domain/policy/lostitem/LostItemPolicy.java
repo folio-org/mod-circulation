@@ -143,12 +143,6 @@ public class LostItemPolicy extends Policy {
       || feeRefundInterval.isEqualToDateTillNow(lostDateTime);
   }
 
-  public boolean feeFineChargingPeriodHasPassed(ZonedDateTime lostDateTime) {
-    return lostItemChargeFeeFine.hasZeroDuration()
-    || lostItemChargeFeeFine.isEqualToDateTillNow(lostDateTime)
-    || lostItemChargeFeeFine.hasPassedSinceDateTillNow(lostDateTime);
-  }
-
   public boolean isRefundProcessingFeeWhenReturned() {
     return refundProcessingFeeWhenReturned;
   }
@@ -175,7 +169,6 @@ public class LostItemPolicy extends Policy {
   public ZonedDateTime calculateFeeFineChargingPeriodExpirationDateTime(ZonedDateTime lostTime) {
     return lostItemChargeFeeFine.plusDate(lostTime);
   }
-
 
   public ZonedDateTime calculateDateTimeWhenPatronBilledForAgedToLost(
     boolean isRecalled, ZonedDateTime ageToLostDate) {
