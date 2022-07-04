@@ -645,10 +645,13 @@
           "pubsub.events.post"
           ],
           "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "inventory-storage.items.item.put",
+            "actual-cost-record-storage.actual-cost-records.collection.get",
             "accounts.collection.get",
             "circulation.internal.fetch-items",
+            "lost-item-fees-policies.collection.get",
             "circulation-storage.loans.collection.get",
-            "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
             "pubsub.publish.post"
           ],
           "unit": "minute",
