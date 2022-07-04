@@ -185,7 +185,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   private CompletableFuture<Result<Loan>> fetchItem(Result<Loan> result) {
-    return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
+    return result.combineAfter(itemRepository::fetchItemsWithRelatedRecordsFor, Loan::withItem);
   }
 
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {

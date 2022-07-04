@@ -2,10 +2,15 @@ package org.folio.circulation.services.actualcostrecord;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.services.CloseLoanWithLostItemService;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
@@ -21,12 +26,21 @@ public class ActualCostRecordExpirationService {
   private final PageableFetcher<Loan> loanPageableFetcher;
   private final CloseLoanWithLostItemService closeLoanWithLostItemService;
   private final ItemRepository itemRepository;
+  private final AccountRepository accountRepository;
+  private final LostItemPolicyRepository lostItemPolicyRepository;
+  private final ActualCostRecordRepository actualCostRecordRepository;
 
   public ActualCostRecordExpirationService(PageableFetcher<Loan> loanPageableFetcher,
-    CloseLoanWithLostItemService closeLoanWithLostItemService, ItemRepository itemRepository) {
+    CloseLoanWithLostItemService closeLoanWithLostItemService, ItemRepository itemRepository,
+    AccountRepository accountRepository, LostItemPolicyRepository lostItemPolicyRepository,
+    ActualCostRecordRepository actualCostRecordRepository) {
+
     this.itemRepository = itemRepository;
     this.loanPageableFetcher = loanPageableFetcher;
     this.closeLoanWithLostItemService = closeLoanWithLostItemService;
+    this.accountRepository = accountRepository;
+    this.lostItemPolicyRepository = lostItemPolicyRepository;
+    this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
   public CompletableFuture<Result<Void>> expireActualCostRecords() {
@@ -43,9 +57,13 @@ public class ActualCostRecordExpirationService {
       return ofAsync(() -> null);
     }
 
-    return fromFutureResult(itemRepository.fetchItemsFor(succeeded(expiredLoans), Loan::withItem)
+    return fromFutureResult(itemRepository.fetchItems(succeeded(expiredLoans), Loan::withItem)
       .thenApply(r -> r.next(this::excludeLoansWithNonexistentItems)))
-      .flatMapFuture(loans -> allOf(loans.getRecords(), closeLoanWithLostItemService::tryCloseLoan))
+      .flatMapFuture(accountRepository::findAccountsForLoans)
+      .flatMapFuture(lostItemPolicyRepository::findLostItemPoliciesForLoans)
+      .flatMapFuture(actualCostRecordRepository::findActualCostRecordsForLoans)
+      .flatMapFuture(loans -> allOf(loans.getRecords(),
+        closeLoanWithLostItemService::tryCloseLoanForActualCostExpiration))
       .toCompletableFuture()
       .thenApply(r -> r.map(ignored -> null));
   }

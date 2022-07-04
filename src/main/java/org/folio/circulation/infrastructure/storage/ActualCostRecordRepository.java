@@ -1,22 +1,36 @@
 package org.folio.circulation.infrastructure.storage;
 
 import io.vertx.core.json.JsonObject;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.storage.mappers.ActualCostRecordMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -62,18 +76,45 @@ public class ActualCostRecordRepository {
   }
 
   private Result<MultipleRecords<ActualCostRecord>> mapResponseToActualCostRecords(Response response) {
-    return MultipleRecords.from(response, ActualCostRecordMapper::toDomain, "actualCostRecords");
+    return MultipleRecords.from(response, ActualCostRecordMapper::toDomain, ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME);
   }
 
   public CompletableFuture<Result<Loan>> findByLoan(Result<Loan> loanResult) {
-    return loanResult.after(loan -> createActualCostRecordFinder().findByQuery(
+    return loanResult.after(loan -> createActualCostRecordCqlFinder().findByQuery(
         exactMatch(LOAN_ID_FIELD_NAME, loan.getId()), one())
       .thenApply(records -> records.map(MultipleRecords::firstOrNull))
       .thenApply(mapResult(ActualCostRecordMapper::toDomain))
       .thenApply(mapResult(loan::withActualCostRecord)));
   }
 
-  private CqlQueryFinder<JsonObject> createActualCostRecordFinder() {
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findActualCostRecordsForLoans(
+    MultipleRecords<Loan> multipleLoans) {
+
+    if (multipleLoans.getRecords().isEmpty()) {
+      return completedFuture(succeeded(multipleLoans));
+    }
+
+    return getActualCostRecordsForLoans(multipleLoans.getRecords())
+      .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
+        loan -> loan.withActualCostRecord(accountMap.getOrDefault(loan.getId(),null)))));
+  }
+
+  private CompletableFuture<Result<Map<String, ActualCostRecord>>> getActualCostRecordsForLoans(Collection<Loan> loans) {
+
+    final Set<String> loanIds =
+      loans.stream()
+        .filter(Objects::nonNull)
+        .map(Loan::getId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+
+    return findWithMultipleCqlIndexValues(actualCostRecordStorageClient,
+      ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME, ActualCostRecordMapper::toDomain)
+      .find(byIndex(LOAN_ID_FIELD_NAME, loanIds))
+      .thenApply(mapResult(r -> r.toMap(ActualCostRecord::getLoanId)));
+  }
+
+  private CqlQueryFinder<JsonObject> createActualCostRecordCqlFinder() {
     return new CqlQueryFinder<>(actualCostRecordStorageClient, ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME,
       identity());
   }

@@ -44,21 +44,30 @@ public class CloseLoanWithLostItemService {
     this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
-  public CompletableFuture<Result<Void>> tryCloseLoan(Loan loan) {
+  public CompletableFuture<Result<Void>> tryCloseLoanForActualCostExpiration(Loan loan) {
+    return closeLoanWithLostItemIfLostFeesResolvedAndPublishLoanClosedEventAndLogEvent(loan);
+  }
+
+  public CompletableFuture<Result<Void>> tryCloseLoanForLoanRelatedFeeFineClosedEvent(Loan loan) {
     if (loan == null || !loan.isItemLost()) {
       return completedFuture(Result.succeeded(null));
     }
 
-    return closeLoanWithLostItemIfLostFeesResolved(loan);
+    return fetchLoanRelatedRecords(loan)
+      .thenCompose(r -> r.after(
+        this::closeLoanWithLostItemIfLostFeesResolvedAndPublishLoanClosedEventAndLogEvent));
   }
 
-  private CompletableFuture<Result<Void>> closeLoanWithLostItemIfLostFeesResolved(Loan loan) {
+  private CompletableFuture<Result<Void>>
+  closeLoanWithLostItemIfLostFeesResolvedAndPublishLoanClosedEventAndLogEvent(Loan loan) {
+    return closeLoanAndUpdateItem(loan, loanRepository, itemRepository, eventPublisher)
+      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
+  }
+
+  private CompletableFuture<Result<Loan>> fetchLoanRelatedRecords(Loan loan) {
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenComposeAsync(actualCostRecordRepository::findByLoan)
-      .thenCompose(r -> r.after(l -> closeLoanAndUpdateItem(l, loanRepository,
-        itemRepository, eventPublisher)))
-      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
+      .thenComposeAsync(actualCostRecordRepository::findByLoan);
   }
 
   public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(Loan loan,

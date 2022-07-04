@@ -38,12 +38,16 @@ public class ExpiredActualCostProcessingResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    AccountRepository accountRepository = new AccountRepository(clients);
+    LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    ActualCostRecordRepository actualCostRecordRepository = new ActualCostRecordRepository(clients);
     final var closeLoanWithLostItemService = new CloseLoanWithLostItemService(loanRepository,
-      itemRepository, new AccountRepository(clients), new LostItemPolicyRepository(clients),
-      eventPublisher, new ActualCostRecordRepository(clients));
+      itemRepository, accountRepository, lostItemPolicyRepository,
+      eventPublisher, actualCostRecordRepository);
     final var loanPageableFetcher = new PageableFetcher<>(loanRepository);
     final var actualCostRecordExpirationService = new ActualCostRecordExpirationService(
-      loanPageableFetcher, closeLoanWithLostItemService, itemRepository);
+      loanPageableFetcher, closeLoanWithLostItemService, itemRepository, accountRepository, lostItemPolicyRepository,
+      actualCostRecordRepository);
 
     actualCostRecordExpirationService.expireActualCostRecords()
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))

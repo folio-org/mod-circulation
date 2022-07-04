@@ -20,7 +20,6 @@ import org.folio.circulation.domain.policy.Policy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ActualCostFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
 import org.folio.circulation.domain.policy.lostitem.itemfee.ChargeableFee;
-import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 

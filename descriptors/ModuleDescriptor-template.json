@@ -645,6 +645,9 @@
           "pubsub.events.post"
           ],
           "modulePermissions": [
+            "accounts.collection.get",
+            "circulation.internal.fetch-items",
+            "circulation-storage.loans.collection.get",
             "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
             "pubsub.publish.post"
           ],

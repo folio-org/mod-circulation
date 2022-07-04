@@ -205,7 +205,7 @@ public class LostItemFeeRefundService {
     }
 
     return userRepository.findUserForLoan(succeeded(loan))
-      .thenCompose(r -> r.combineAfter(itemRepository::fetchFor, Loan::withItem));
+      .thenCompose(r -> r.combineAfter(itemRepository::fetchItemsWithRelatedRecordsFor, Loan::withItem));
   }
 
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchAccountsAndActionsForLoan(
