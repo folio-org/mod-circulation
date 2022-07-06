@@ -39,6 +39,8 @@ public class LostItemPolicy extends Policy {
   // that turns on/off the fee, but we're modelling it as a separate fee
   // to simplify logic.
   private final AutomaticallyChargeableFee ageToLostProcessingFee;
+  private static final String CHARGE_AMOUNT_ITEM = "chargeAmountItem";
+  private static final String CHARGE_TYPE = "chargeType";
 
   private LostItemPolicy(String id, String name, AutomaticallyChargeableFee declareLostProcessingFee,
     AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
@@ -107,8 +109,8 @@ public class LostItemPolicy extends Policy {
     String enabledFlag) {
 
     final boolean chargeProcessingFee = getBooleanProperty(policy, enabledFlag);
-    String chargeType = Optional.ofNullable(policy.getJsonObject("chargeAmountItem"))
-      .map(object -> object.getString("chargeType"))
+    String chargeType = Optional.ofNullable(policy.getJsonObject(CHARGE_AMOUNT_ITEM))
+      .map(object -> object.getString(CHARGE_TYPE))
       .orElse("non-existent cost type");
     boolean actualCost = "actualCost".equals(chargeType);
     final BigDecimal amount = getBigDecimalProperty(policy, "lostItemProcessingFee");
@@ -119,8 +121,8 @@ public class LostItemPolicy extends Policy {
   }
 
   private static AutomaticallyChargeableFee getSetCostFee(JsonObject policy) {
-    final JsonObject chargeAmountItem = getObjectProperty(policy, "chargeAmountItem");
-    final ChargeAmountType chargeType = forValue(getProperty(chargeAmountItem, "chargeType"));
+    final JsonObject chargeAmountItem = getObjectProperty(policy, CHARGE_AMOUNT_ITEM);
+    final ChargeAmountType chargeType = forValue(getProperty(chargeAmountItem, CHARGE_TYPE));
     final BigDecimal amount = getBigDecimalProperty(chargeAmountItem, "amount");
 
     return chargeAmountItem != null && chargeType == SET_COST && amount != null
@@ -130,7 +132,7 @@ public class LostItemPolicy extends Policy {
 
   private static ChargeableFee getActualCostFee(JsonObject policy) {
     final ChargeAmountType chargeType = forValue(getNestedStringProperty(policy,
-      "chargeAmountItem", "chargeType"));
+      CHARGE_AMOUNT_ITEM, CHARGE_TYPE));
 
     return chargeType == ACTUAL_COST
       ? new ActualCostFee()

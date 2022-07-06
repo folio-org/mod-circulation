@@ -84,8 +84,8 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     val delayedBilling = result.getLoan().getJson().getJsonObject("agedToLostDelayedBilling");
     List<JsonObject> accounts = accountsClient.getAll();
     assertTrue(delayedBilling.getBoolean("lostItemHasBeenBilled"));
-    assertEquals(accounts.size(), 1);
-    assertEquals(accounts.get(0).getDouble("amount"), amount);
+    assertThat(accounts.size(), is(1));
+    assertThat(accounts.get(0).getDouble("amount"), is(amount));
   }
 
   @Test
