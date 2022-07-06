@@ -70,7 +70,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   }
 
   @Test
-  void shouldProcessingFeeBeingBilledWhenSetActualCost() {
+  void processingFeeShouldBeChargedWhenSetActualCost() {
     accountsClient.deleteAll();
     val amount = 3.0;
 

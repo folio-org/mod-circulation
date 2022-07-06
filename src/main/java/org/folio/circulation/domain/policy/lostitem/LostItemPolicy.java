@@ -103,7 +103,9 @@ public class LostItemPolicy extends Policy {
       : noAutomaticallyChargeableFee();
   }
 
-  private static AutomaticallyChargeableFee getAgeToLostProcessingFee(JsonObject policy, String enabledFlag) {
+  private static AutomaticallyChargeableFee getAgeToLostProcessingFee(JsonObject policy,
+    String enabledFlag) {
+
     final boolean chargeProcessingFee = getBooleanProperty(policy, enabledFlag);
     String chargeType = Optional.ofNullable(policy.getJsonObject("chargeAmountItem"))
       .map(object -> object.getString("chargeType"))
