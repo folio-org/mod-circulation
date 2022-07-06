@@ -1,6 +1,5 @@
 package org.folio.circulation.infrastructure.storage;
 
-import io.vertx.core.json.JsonObject;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -9,9 +8,9 @@ import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailur
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Collection;
 import java.util.Map;
@@ -32,6 +31,8 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public class ActualCostRecordRepository {
   private final CollectionResourceClient actualCostRecordStorageClient;
