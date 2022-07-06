@@ -13,24 +13,19 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.storage.mappers.ActualCostRecordMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -41,7 +36,7 @@ import org.folio.circulation.support.results.Result;
 public class ActualCostRecordRepository {
   private final CollectionResourceClient actualCostRecordStorageClient;
 
-  private static final String ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME = "actualCostRecords";
+  private static final String ACTUAL_COST_RECORDS = "actualCostRecords";
   private static final String LOAN_ID_FIELD_NAME = "loanId";
 
   public ActualCostRecordRepository(Clients clients) {
@@ -76,7 +71,7 @@ public class ActualCostRecordRepository {
   }
 
   private Result<MultipleRecords<ActualCostRecord>> mapResponseToActualCostRecords(Response response) {
-    return MultipleRecords.from(response, ActualCostRecordMapper::toDomain, ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME);
+    return MultipleRecords.from(response, ActualCostRecordMapper::toDomain, ACTUAL_COST_RECORDS);
   }
 
   public CompletableFuture<Result<Loan>> findByLoan(Result<Loan> loanResult) {
@@ -96,26 +91,26 @@ public class ActualCostRecordRepository {
 
     return getActualCostRecordsForLoans(multipleLoans.getRecords())
       .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
-        loan -> loan.withActualCostRecord(accountMap.getOrDefault(loan.getId(),null)))));
+        loan -> loan.withActualCostRecord(accountMap.getOrDefault(loan.getId(), null)))));
   }
 
-  private CompletableFuture<Result<Map<String, ActualCostRecord>>> getActualCostRecordsForLoans(Collection<Loan> loans) {
+  private CompletableFuture<Result<Map<String, ActualCostRecord>>> getActualCostRecordsForLoans(
+    Collection<Loan> loans) {
 
-    final Set<String> loanIds =
-      loans.stream()
-        .filter(Objects::nonNull)
-        .map(Loan::getId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    final Set<String> loanIds = loans.stream()
+      .filter(Objects::nonNull)
+      .map(Loan::getId)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
 
     return findWithMultipleCqlIndexValues(actualCostRecordStorageClient,
-      ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME, ActualCostRecordMapper::toDomain)
+      ACTUAL_COST_RECORDS, ActualCostRecordMapper::toDomain)
       .find(byIndex(LOAN_ID_FIELD_NAME, loanIds))
       .thenApply(mapResult(r -> r.toMap(ActualCostRecord::getLoanId)));
   }
 
   private CqlQueryFinder<JsonObject> createActualCostRecordCqlFinder() {
-    return new CqlQueryFinder<>(actualCostRecordStorageClient, ACTUAL_COST_RECORDS_COLLECTION_PROPERTY_NAME,
+    return new CqlQueryFinder<>(actualCostRecordStorageClient, ACTUAL_COST_RECORDS,
       identity());
   }
 

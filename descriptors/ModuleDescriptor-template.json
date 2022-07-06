@@ -642,7 +642,7 @@
           ],
           "pathPattern": "/circulation/actual-cost-expiration-by-timeout",
           "permissionsRequired": [
-          "pubsub.events.post"
+            "pubsub.events.post"
           ],
           "modulePermissions": [
             "circulation-storage.loans.item.put",

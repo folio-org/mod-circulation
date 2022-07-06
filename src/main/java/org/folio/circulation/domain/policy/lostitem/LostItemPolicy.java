@@ -34,7 +34,7 @@ public class LostItemPolicy extends Policy {
   private final Period patronBilledAfterItemAgedToLostInterval;
   private final Period recalledItemAgedToLostAfterOverdueInterval;
   private final Period patronBilledAfterRecalledItemAgedToLostInterval;
-  private final Period lostItemChargeFeeFine;
+  private final Period lostItemChargeFeeFineInterval;
   // There is no separate age to lost processing fee but there is a flag
   // that turns on/off the fee, but we're modelling it as a separate fee
   // to simplify logic.
@@ -46,7 +46,7 @@ public class LostItemPolicy extends Policy {
     Period itemAgedToLostAfterOverdueInterval, Period patronBilledAfterItemAgedToLostInterval,
     Period recalledItemAgedToLostAfterOverdueInterval,
     Period patronBilledAfterRecalledItemAgedToLostInterval,
-    AutomaticallyChargeableFee ageToLostProcessingFee, Period lostItemChargeFeeFine) {
+    AutomaticallyChargeableFee ageToLostProcessingFee, Period lostItemChargeFeeFineInterval) {
 
     super(id, name);
     this.declareLostProcessingFee = declareLostProcessingFee;
@@ -61,7 +61,7 @@ public class LostItemPolicy extends Policy {
     this.patronBilledAfterRecalledItemAgedToLostInterval =
       patronBilledAfterRecalledItemAgedToLostInterval;
     this.ageToLostProcessingFee = ageToLostProcessingFee;
-    this.lostItemChargeFeeFine = lostItemChargeFeeFine;
+    this.lostItemChargeFeeFineInterval = lostItemChargeFeeFineInterval;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -166,7 +166,7 @@ public class LostItemPolicy extends Policy {
   }
 
   public ZonedDateTime calculateFeeFineChargingPeriodExpirationDateTime(ZonedDateTime lostTime) {
-    return lostItemChargeFeeFine.plusDate(lostTime);
+    return lostItemChargeFeeFineInterval.plusDate(lostTime);
   }
 
   public ZonedDateTime calculateDateTimeWhenPatronBilledForAgedToLost(
