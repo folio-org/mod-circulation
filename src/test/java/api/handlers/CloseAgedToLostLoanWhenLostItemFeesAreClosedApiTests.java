@@ -15,8 +15,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
@@ -83,7 +81,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     val delayedBilling = result.getLoan().getJson().getJsonObject("agedToLostDelayedBilling");
     List<JsonObject> accounts = accountsClient.getAll();
-    assertTrue(delayedBilling.getBoolean("lostItemHasBeenBilled"));
+    assertThat(delayedBilling.getBoolean("lostItemHasBeenBilled"), is(true));
     assertThat(accounts.size(), is(1));
     assertThat(accounts.get(0).getDouble("amount"), is(amount));
   }
