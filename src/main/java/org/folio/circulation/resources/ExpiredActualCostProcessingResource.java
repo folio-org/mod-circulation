@@ -19,6 +19,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+
 public class ExpiredActualCostProcessingResource extends Resource {
   public ExpiredActualCostProcessingResource(HttpClient client) {
     super(client);
@@ -31,21 +32,21 @@ public class ExpiredActualCostProcessingResource extends Resource {
   }
 
   private void process(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
-    final var clients = create(context, client);
+    var context = new WebContext(routingContext);
+    var clients = create(context, client);
 
-    final var eventPublisher = new EventPublisher(routingContext);
-    final var itemRepository = new ItemRepository(clients);
-    final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    AccountRepository accountRepository = new AccountRepository(clients);
-    LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    ActualCostRecordRepository actualCostRecordRepository = new ActualCostRecordRepository(clients);
-    final var closeLoanWithLostItemService = new CloseLoanWithLostItemService(loanRepository,
+    var eventPublisher = new EventPublisher(routingContext);
+    var itemRepository = new ItemRepository(clients);
+    var userRepository = new UserRepository(clients);
+    var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    var accountRepository = new AccountRepository(clients);
+    var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    var actualCostRecordRepository = new ActualCostRecordRepository(clients);
+    var closeLoanWithLostItemService = new CloseLoanWithLostItemService(loanRepository,
       itemRepository, accountRepository, lostItemPolicyRepository,
       eventPublisher, actualCostRecordRepository);
-    final var loanPageableFetcher = new PageableFetcher<>(loanRepository);
-    final var actualCostRecordExpirationService = new ActualCostRecordExpirationService(
+    var loanPageableFetcher = new PageableFetcher<>(loanRepository);
+    var actualCostRecordExpirationService = new ActualCostRecordExpirationService(
       loanPageableFetcher, closeLoanWithLostItemService, itemRepository, accountRepository,
       lostItemPolicyRepository, actualCostRecordRepository);
 
