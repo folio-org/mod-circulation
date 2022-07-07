@@ -316,13 +316,6 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 
-  private CompletableFuture<Result<MultipleRecords<Item>>> fetchItemsWithHoldingsRecords(
-    Collection<String> itemIds) {
-
-    return fetchItems(itemIds)
-      .thenComposeAsync(this::fetchHoldingsRecords);
-  }
-
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
