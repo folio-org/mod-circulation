@@ -78,7 +78,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     LoanRelatedFeeFineClosedEvent event, CloseLoanWithLostItemService closeLoanWithLostItemService) {
 
     return loanRepository.getById(event.getLoanId())
-      .thenCompose(r -> r.after(closeLoanWithLostItemService::tryCloseLoanForLoanRelatedFeeFineClosedEvent));
+      .thenCompose(r -> r.after(closeLoanWithLostItemService::closeLoanWithLostItemFeesPaid));
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {

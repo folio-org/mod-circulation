@@ -57,11 +57,8 @@ public class ActualCostRecordExpirationService {
 
     return fromFutureResult(itemRepository.fetchItems(succeeded(expiredLoans))
       .thenApply(r -> r.next(this::excludeLoansWithNonexistentItems)))
-      .flatMapFuture(accountRepository::findAccountsForLoans)
-      .flatMapFuture(lostItemPolicyRepository::findLostItemPoliciesForLoans)
-      .flatMapFuture(actualCostRecordRepository::fetchActualCostRecords)
       .flatMapFuture(loans -> allOf(loans.getRecords(),
-        closeLoanWithLostItemService::tryCloseLoanForActualCostExpiration))
+        closeLoanWithLostItemService::closeLoanWithLostItemFeesPaid))
       .toCompletableFuture()
       .thenApply(r -> r.map(ignored -> null));
   }

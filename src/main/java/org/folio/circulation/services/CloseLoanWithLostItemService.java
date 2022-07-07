@@ -44,33 +44,27 @@ public class CloseLoanWithLostItemService {
     this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
-  public CompletableFuture<Result<Void>> tryCloseLoanForActualCostExpiration(Loan loan) {
-    return closeLoanWithLostItemIfLostFeesResolvedAndPublishLoanClosedEventAndLogEvent(loan);
-  }
-
-  public CompletableFuture<Result<Void>> tryCloseLoanForLoanRelatedFeeFineClosedEvent(Loan loan) {
+  public CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaid(Loan loan) {
     if (loan == null || !loan.isItemLost()) {
       return completedFuture(Result.succeeded(null));
     }
 
-    return fetchLoanRelatedRecords(loan)
-      .thenCompose(r -> r.after(
-        this::closeLoanWithLostItemIfLostFeesResolvedAndPublishLoanClosedEventAndLogEvent));
+    return fetchLoanFeeFineData(loan)
+      .thenCompose(r -> r.after(this::closeLoanWithLostItemFeesPaidAndPublishEvents));
   }
 
-  private CompletableFuture<Result<Void>>
-  closeLoanWithLostItemIfLostFeesResolvedAndPublishLoanClosedEventAndLogEvent(Loan loan) {
-    return closeLoanAndUpdateItem(loan, loanRepository, itemRepository, eventPublisher)
+  private CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaidAndPublishEvents(Loan loan) {
+    return closeLoanWithLostItemFeesPaid(loan, loanRepository, itemRepository, eventPublisher)
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
   }
 
-  private CompletableFuture<Result<Loan>> fetchLoanRelatedRecords(Loan loan) {
+  private CompletableFuture<Result<Loan>> fetchLoanFeeFineData(Loan loan) {
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenComposeAsync(actualCostRecordRepository::findByLoan);
   }
 
-  public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(Loan loan,
+  private CompletableFuture<Result<Loan>> closeLoanWithLostItemFeesPaid(Loan loan,
     LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
 
     if (!shouldCloseLoan(loan)) {
