@@ -150,7 +150,7 @@ public class RequestRepository {
 
   public CompletableFuture<Result<Request>> getById(String id) {
     return getByIdWithoutItem(id)
-      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchItemsWithRelatedRecordsFor,
+      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
         Request::withItem))
       .thenComposeAsync(result -> result.combineAfter(instanceRepository::fetch,
         Request::withInstance))

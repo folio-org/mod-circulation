@@ -316,7 +316,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemForLoan(Request request) {
-    return itemRepository.fetchItemsWithRelatedRecordsFor(request.getLoan())
+    return itemRepository.fetchFor(request.getLoan())
       .thenApply(r -> r.map(request::withItem));
   }
 
@@ -338,7 +338,7 @@ class RequestFromRepresentationService {
       // of the title's items
 
       return fetchFirstLoanForUserWithTheSameInstanceId(request)
-        .thenCompose(r -> r.combineAfter(itemRepository::fetchItemsWithRelatedRecordsFor, Request::withItem));
+        .thenCompose(r -> r.combineAfter(itemRepository::fetchFor, Request::withItem));
     }
     else {
       return loanRepository.findOpenLoanForRequest(request)
@@ -562,7 +562,7 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<Request>> findItemForRequest(Request request) {
     return succeeded(request)
-      .combineAfter(itemRepository::fetchItemsWithRelatedRecordsFor, Request::withItem);
+      .combineAfter(itemRepository::fetchFor, Request::withItem);
   }
 
   private CompletableFuture<Result<Request>> fetchUserForLoan(Request request) {

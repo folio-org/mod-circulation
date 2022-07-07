@@ -71,7 +71,7 @@ public class ItemRepository {
       new LoanTypeRepository(clients.loanTypesStorage()));
   }
 
-  public CompletableFuture<Result<Item>> fetchItemsWithRelatedRecordsFor(ItemRelatedRecord itemRelatedRecord) {
+  public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
     if (itemRelatedRecord.getItemId() == null) {
       return completedFuture(succeeded(Item.from(null)));
     }
@@ -252,19 +252,19 @@ public class ItemRepository {
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
   fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
 
-    return fetchItemsFor(result, includeItemMap, this::fetchItemsWithRelatedRecordsFor);
+    return fetchItemsFor(result, includeItemMap, this::fetchFor);
   }
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
-  fetchItemsWithHoldings(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
+  fetchItemsWithHoldings(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> withItemMapper) {
 
-    return fetchItemsFor(result, includeItemMap, this::fetchItemsWithHoldingsRecords);
+    return fetchItemsFor(result, withItemMapper, this::fetchItemsWithHoldingsRecords);
   }
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
-  fetchItems(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap) {
+  fetchItems(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> withItemMapper) {
 
-    return fetchItemsFor(result, includeItemMap, this::fetchItems);
+    return fetchItemsFor(result, withItemMapper, this::fetchItems);
   }
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
@@ -308,9 +308,7 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 
-  private CompletableFuture<Result<MultipleRecords<Item>>> fetchItemsWithRelatedRecordsFor(
-    Collection<String> itemIds) {
-
+  private CompletableFuture<Result<MultipleRecords<Item>>> fetchFor(Collection<String> itemIds) {
     return fetchItems(itemIds)
       .thenComposeAsync(this::fetchItemsRelatedRecords);
   }

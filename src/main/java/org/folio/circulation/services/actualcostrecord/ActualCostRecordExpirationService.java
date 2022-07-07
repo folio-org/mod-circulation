@@ -59,7 +59,7 @@ public class ActualCostRecordExpirationService {
       .thenApply(r -> r.next(this::excludeLoansWithNonexistentItems)))
       .flatMapFuture(accountRepository::findAccountsForLoans)
       .flatMapFuture(lostItemPolicyRepository::findLostItemPoliciesForLoans)
-      .flatMapFuture(actualCostRecordRepository::findActualCostRecordsForLoans)
+      .flatMapFuture(actualCostRecordRepository::fetchActualCostRecords)
       .flatMapFuture(loans -> allOf(loans.getRecords(),
         closeLoanWithLostItemService::tryCloseLoanForActualCostExpiration))
       .toCompletableFuture()

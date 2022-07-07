@@ -282,7 +282,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
   private CompletableFuture<Result<Request>> fetchItem(ItemRepository itemRepository, Request request) {
     return CompletableFuture.completedFuture(Result.succeeded(request))
-      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchItemsWithRelatedRecordsFor, Request::withItem));
+      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor, Request::withItem));
   }
 
   private Result<MultipleRecords<Request>> mapResponseToRequest(Response response) {

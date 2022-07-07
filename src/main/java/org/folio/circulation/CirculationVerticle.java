@@ -72,7 +72,6 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
     new CheckInByBarcodeResource(client).register(router);
-    new ExpiredActualCostProcessingResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);
@@ -140,6 +139,7 @@ public class CirculationVerticle extends AbstractVerticle {
           startFuture.fail(result.cause());
         }
       });
+    new ExpiredActualCostProcessingResource(client).register(router);
   }
 
   @Override

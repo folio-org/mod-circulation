@@ -83,19 +83,19 @@ public class ActualCostRecordRepository {
       .thenApply(mapResult(loan::withActualCostRecord)));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findActualCostRecordsForLoans(
+  public CompletableFuture<Result<MultipleRecords<Loan>>> fetchActualCostRecords(
     MultipleRecords<Loan> multipleLoans) {
 
     if (multipleLoans.getRecords().isEmpty()) {
       return completedFuture(succeeded(multipleLoans));
     }
 
-    return getActualCostRecordsForLoans(multipleLoans.getRecords())
-      .thenApply(r -> r.map(accountMap -> multipleLoans.mapRecords(
-        loan -> loan.withActualCostRecord(accountMap.getOrDefault(loan.getId(), null)))));
+    return buildLoanIdToActualCostRecordMap(multipleLoans.getRecords())
+      .thenApply(r -> r.map(actualCostRecordMap -> multipleLoans.mapRecords(
+        loan -> loan.withActualCostRecord(actualCostRecordMap.getOrDefault(loan.getId(), null)))));
   }
 
-  private CompletableFuture<Result<Map<String, ActualCostRecord>>> getActualCostRecordsForLoans(
+  private CompletableFuture<Result<Map<String, ActualCostRecord>>> buildLoanIdToActualCostRecordMap(
     Collection<Loan> loans) {
 
     final Set<String> loanIds = loans.stream()
