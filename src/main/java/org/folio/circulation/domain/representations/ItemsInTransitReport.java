@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.folio.circulation.domain.Holdings;
-import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LastCheckIn;
