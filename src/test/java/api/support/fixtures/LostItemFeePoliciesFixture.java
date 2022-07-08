@@ -7,9 +7,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
-import api.support.http.IndividualResource;
 
 import api.support.builders.LostItemFeePolicyBuilder;
+import api.support.http.IndividualResource;
 
 public class LostItemFeePoliciesFixture {
   private final RecordCreator lostItemFeePolicyRecordCreator;
@@ -50,6 +50,14 @@ public class LostItemFeePoliciesFixture {
     createReferenceData();
 
     return create(ageToLostAfterOneMinutePolicy());
+  }
+
+  public IndividualResource ageToLostAfterOneMinuteWithActualCost() {
+    createReferenceData();
+
+    return create(ageToLostAfterOneMinutePolicy()
+      .withName("Age to lost after one minute overdue with actual cost")
+      .withActualCost(20.0));
   }
 
   public IndividualResource ageToLostAfterOneWeek() {

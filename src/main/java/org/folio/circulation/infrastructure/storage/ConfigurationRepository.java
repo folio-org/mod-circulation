@@ -122,14 +122,4 @@ public class ConfigurationRepository {
     return configurations -> new ConfigurationService()
       .findSessionTimeout(configurations.getRecords());
   }
-
-  private JsonObject findFirstConfigurationAsJsonObject(
-    MultipleRecords<Configuration> configurations) {
-
-    return configurations.getRecords().stream()
-      .findFirst()
-      .map(Configuration::getValue)
-      .map(JsonObject::new)
-      .orElse(new JsonObject());
-  }
 }
