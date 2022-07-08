@@ -229,6 +229,7 @@ public class LostItemFeeRefundService {
   private List<Account> findRefundableAccounts(Account latestAccount, Collection<Account> accounts) {
     List<Account> filteredList = new ArrayList<>();
     filteredList.add(latestAccount);
+
     ZonedDateTime creationDate = latestAccount.getCreationDate();
     List<String> feeFineTypeForSearch = List.of(
       LOST_ITEM_FEE_TYPE.equals(latestAccount.getFeeFineType())
@@ -239,7 +240,7 @@ public class LostItemFeeRefundService {
       .filter(this::isAccountEligibleForRefund)
       .filter(associatedAccount -> isDifferenceOneMinuteOrLess(creationDate,
         associatedAccount.getCreationDate()))
-      .map(filteredList::add);
+      .ifPresentOrElse(filteredList::add, () -> log.debug("No refundable accounts found"));
 
     return filteredList;
   }

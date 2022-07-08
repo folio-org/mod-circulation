@@ -161,6 +161,22 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
     agedToLostActions.forEach(PubsubPublisherTestUtils::assertThatPublishedLoanLogRecordEventsAreValid);
   }
 
+  @Test
+  void shouldAgeItemToLostWhenActualCostIsSet() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.ageToLostAfterOneMinuteWithActualCost().getId());
+
+    checkOutItem();
+    scheduledAgeToLostClient.triggerJob();
+
+    assertThat(itemsClient.get(overdueItem).getJson(), isAgedToLost());
+    assertThat(getLoanActions(), hasAgedToLostAction());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasPatronBillingDate());
+    assertThat(loansStorageClient.get(overdueLoan).getJson(), hasAgedToLostDate());
+
+    assertThatPublishedLoanLogRecordEventsAreValid(overdueLoan.getJson());
+    assertThatItemAgedToLostEventWasPublished(overdueLoan);
+  }
+
   private ZonedDateTime getLoanOverdueDate() {
     return ClockUtil.getZonedDateTime().minusWeeks(3);
   }

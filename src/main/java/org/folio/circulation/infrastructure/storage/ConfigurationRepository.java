@@ -2,8 +2,6 @@ package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.time.ZoneId;
@@ -53,12 +51,6 @@ public class ConfigurationRepository {
   }
 
   public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
-    Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
-      "SETTINGS", "TLR");
-
-//    TODO uncomment to enable TLR feature
-//    return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
-
     return ofAsync(() -> TlrSettingsConfiguration.from(new JsonObject()
       .put("titleLevelRequestsFeatureEnabled", false)
       .put("createTitleLevelRequestsByDefault", false)));
@@ -129,28 +121,5 @@ public class ConfigurationRepository {
   private Function<MultipleRecords<Configuration>, Integer> applySessionTimeout() {
     return configurations -> new ConfigurationService()
       .findSessionTimeout(configurations.getRecords());
-  }
-
-  /**
-   * Find first configuration and maps it to an object with a provided mapper
-   */
-  private <T> CompletableFuture<Result<T>> findAndMapFirstConfiguration(
-    Result<CqlQuery> cqlQueryResult, Function<JsonObject, T> mapper) {
-
-    return cqlQueryResult
-      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
-      .thenApply(result -> result.next(r -> from(r, Configuration::new, CONFIGS_KEY)))
-      .thenApply(result -> result.map(this::findFirstConfigurationAsJsonObject))
-      .thenApply(result -> result.map(mapper));
-  }
-
-  private JsonObject findFirstConfigurationAsJsonObject(
-    MultipleRecords<Configuration> configurations) {
-
-    return configurations.getRecords().stream()
-      .findFirst()
-      .map(Configuration::getValue)
-      .map(JsonObject::new)
-      .orElse(new JsonObject());
   }
 }

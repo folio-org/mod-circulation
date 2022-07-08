@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected final RequestRepository requestRepository;
 
-  public RequestScheduledNoticeHandler(Clients clients) {
+  protected RequestScheduledNoticeHandler(Clients clients) {
     super(clients);
     this.requestRepository = RequestRepository.using(clients, true);
   }
