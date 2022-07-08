@@ -236,13 +236,13 @@ public class LostItemFeeRefundService {
         ? LOST_ITEM_PROCESSING_FEE_TYPE
         : LOST_ITEM_FEE_TYPE);
 
-    return getLatestAccount(accounts, feeFineTypeForSearch)
+    getLatestAccount(accounts, feeFineTypeForSearch)
       .filter(this::isAccountEligibleForRefund)
       .filter(associatedAccount -> isDifferenceOneMinuteOrLess(creationDate,
         associatedAccount.getCreationDate()))
-      .map(filteredList::add)
-      .map(added -> filteredList)
-      .orElse(filteredList);
+      .ifPresentOrElse(filteredList::add, () -> log.debug("No refundable accounts found"));
+
+    return filteredList;
   }
 
   private boolean isAccountEligibleForRefund(Account latestLostItemFeeAccount) {

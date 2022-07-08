@@ -100,12 +100,12 @@ public class ItemRepository {
     this.fetchLoanType = fetchLoanType;
   }
 
-  public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord record) {
-    if (record.getItemId() == null) {
+  public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
+    if (itemRelatedRecord.getItemId() == null) {
       return completedFuture(succeeded(Item.from(null)));
     }
 
-    return fetchById(record.getItemId());
+    return fetchById(itemRelatedRecord.getItemId());
   }
 
   private CompletableFuture<Result<Item>> fetchLocation(Result<Item> result) {
