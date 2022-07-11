@@ -1,3 +1,7 @@
+## 23.0.11 2022-07-08
+
+* Age to lost loans with Actual cost enabled in the Lost item fee policy (CIRC-1557)
+
 ## 23.0.10 2022-06-27
 
 * Provide backward compatibility for legacy clients of request creation API (CIRC-1546)
