@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
@@ -14,6 +15,7 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
+import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.LOG_EVENT_TYPE;
@@ -52,12 +54,15 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class EventPublisher {
+
+
   private static final Logger logger = LogManager.getLogger(EventPublisher.class);
 
   public static final String USER_ID_FIELD = "userId";
@@ -66,14 +71,17 @@ public class EventPublisher {
   public static final String RETURN_DATE_FIELD = "returnDate";
   public static final String GRACE_PERIOD_FIELD = "gracePeriod";
   public static final String DUE_DATE_CHANGED_BY_RECALL_FIELD = "dueDateChangedByRecall";
+  public static final String METADATA = "metadata";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
   public static final String NEW_DUE_DATE_FROM_PREVIOUS_DUE_DATE = "New due date: %s (from %s)";
 
   private final PubSubPublishingService pubSubPublishingService;
+  private WebContext webContext;
 
   public EventPublisher(RoutingContext routingContext) {
     pubSubPublishingService = new PubSubPublishingService(routingContext);
+    webContext = new WebContext(routingContext);
   }
 
   public EventPublisher(PubSubPublishingService pubSubPublishingService) {
@@ -348,7 +356,7 @@ public class EventPublisher {
   }
 
   public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
-    runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, requestAndRelatedRecords.getRequest()), logEventType));
+    runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, prepareUpdatedRequest(requestAndRelatedRecords)), logEventType));
     return requestAndRelatedRecords;
   }
 
@@ -357,5 +365,19 @@ public class EventPublisher {
       return failedDueToServerError(error.getMessage());
     }
     return succeeded(value);
+  }
+
+  private Request prepareUpdatedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
+    var request = requestAndRelatedRecords.getRequest();
+    if (nonNull(request)) {
+      var requestJson = request.asJson();
+      var metadataJson = requestJson.getJsonObject(METADATA);
+      if (nonNull(metadataJson) && nonNull(webContext)) {
+        write(metadataJson, UPDATED_BY_USER_ID, webContext.getUserId());
+        write(requestJson, METADATA, metadataJson);
+        return Request.from(requestJson);
+      }
+    }
+    return requestAndRelatedRecords.getRequest();
   }
 }
