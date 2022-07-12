@@ -24,21 +24,13 @@ public class ActualCostRecordExpirationService {
   private final PageableFetcher<Loan> loanPageableFetcher;
   private final CloseLoanWithLostItemService closeLoanWithLostItemService;
   private final ItemRepository itemRepository;
-  private final AccountRepository accountRepository;
-  private final LostItemPolicyRepository lostItemPolicyRepository;
-  private final ActualCostRecordRepository actualCostRecordRepository;
 
   public ActualCostRecordExpirationService(PageableFetcher<Loan> loanPageableFetcher,
-    CloseLoanWithLostItemService closeLoanWithLostItemService, ItemRepository itemRepository,
-    AccountRepository accountRepository, LostItemPolicyRepository lostItemPolicyRepository,
-    ActualCostRecordRepository actualCostRecordRepository) {
+    CloseLoanWithLostItemService closeLoanWithLostItemService, ItemRepository itemRepository) {
 
     this.itemRepository = itemRepository;
     this.loanPageableFetcher = loanPageableFetcher;
     this.closeLoanWithLostItemService = closeLoanWithLostItemService;
-    this.accountRepository = accountRepository;
-    this.lostItemPolicyRepository = lostItemPolicyRepository;
-    this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
   public CompletableFuture<Result<Void>> expireActualCostRecords() {
