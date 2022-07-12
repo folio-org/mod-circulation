@@ -21,6 +21,7 @@ import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.utils.ClockUtil.getZoneId;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 public class CloseLoanWithLostItemService {
+
   private final LoanRepository loanRepository;
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
@@ -36,6 +37,7 @@ public class CloseLoanWithLostItemService {
   public CloseLoanWithLostItemService(LoanRepository loanRepository, ItemRepository itemRepository,
     AccountRepository accountRepository, LostItemPolicyRepository lostItemPolicyRepository,
     EventPublisher eventPublisher, ActualCostRecordRepository actualCostRecordRepository) {
+
     this.loanRepository = loanRepository;
     this.itemRepository = itemRepository;
     this.accountRepository = accountRepository;
@@ -53,7 +55,9 @@ public class CloseLoanWithLostItemService {
       .thenCompose(r -> r.after(this::closeLoanWithLostItemFeesPaidAndPublishEvents));
   }
 
-  private CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaidAndPublishEvents(Loan loan) {
+  private CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaidAndPublishEvents(
+    Loan loan) {
+
     return closeLoanWithLostItemFeesPaid(loan, loanRepository, itemRepository, eventPublisher)
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
   }
