@@ -357,7 +357,7 @@ public class EventPublisher {
   }
 
   public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
-    runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, prepareUpdatedRequest(requestAndRelatedRecords)), logEventType));
+    runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, fetchRequestAndUpdateMetadata(requestAndRelatedRecords)), logEventType));
     return requestAndRelatedRecords;
   }
 
@@ -368,7 +368,7 @@ public class EventPublisher {
     return succeeded(value);
   }
 
-  private Request prepareUpdatedRequest(RequestAndRelatedRecords requestAndRelatedRecords) {
+  private Request fetchRequestAndUpdateMetadata(RequestAndRelatedRecords requestAndRelatedRecords) {
     var request = requestAndRelatedRecords.getRequest();
     if (nonNull(request)) {
       var requestJson = request.asJson();
