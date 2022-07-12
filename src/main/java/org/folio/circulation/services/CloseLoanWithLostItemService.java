@@ -1,5 +1,11 @@
 package org.folio.circulation.services;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
+
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
@@ -13,14 +19,6 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.DateFormatUtil;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
-import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.support.results.Result.*;
-import static org.folio.circulation.support.utils.ClockUtil.getZoneId;
-import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 public class CloseLoanWithLostItemService {
 
   private final LoanRepository loanRepository;
