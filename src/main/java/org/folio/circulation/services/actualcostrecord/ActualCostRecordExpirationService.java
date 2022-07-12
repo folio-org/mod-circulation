@@ -11,10 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.services.CloseLoanWithLostItemService;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;

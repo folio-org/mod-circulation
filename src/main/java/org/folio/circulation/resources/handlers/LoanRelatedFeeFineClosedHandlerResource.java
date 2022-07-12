@@ -11,6 +11,8 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
@@ -21,15 +23,12 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.services.CloseLoanWithLostItemService;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
