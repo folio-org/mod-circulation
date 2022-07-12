@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -372,7 +373,10 @@ public class EventPublisher {
     if (nonNull(request)) {
       var requestJson = request.asJson();
       var metadataJson = requestJson.getJsonObject(METADATA);
-      if (nonNull(metadataJson) && nonNull(webContext)) {
+      if (nonNull(webContext)) {
+        if (isNull(metadataJson)) {
+          metadataJson = new JsonObject();
+        }
         write(metadataJson, UPDATED_BY_USER_ID, webContext.getUserId());
         write(requestJson, METADATA, metadataJson);
         return Request.from(requestJson);
