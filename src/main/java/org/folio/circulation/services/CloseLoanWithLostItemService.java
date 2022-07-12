@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.StoreLoanAndItem;
@@ -105,10 +106,9 @@ public class CloseLoanWithLostItemService {
       if (loan.getAccounts().stream().noneMatch(account ->
         LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals(account.getFeeFineType()))) {
 
-        String expirationDate = actualCostRecord.getExpirationDate();
+        ZonedDateTime expirationDate = actualCostRecord.getExpirationDate();
 
-        return expirationDate != null && getZonedDateTime().isAfter(DateFormatUtil.parseDateTime(
-          expirationDate, getZoneId()));
+        return expirationDate != null && getZonedDateTime().isAfter(expirationDate);
       } else {
         return true;
       }

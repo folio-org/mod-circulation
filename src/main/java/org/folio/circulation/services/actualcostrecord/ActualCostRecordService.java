@@ -89,7 +89,7 @@ public class ActualCostRecordService {
       .withUserBarcode(loan.getUser().getBarcode())
       .withLoanId(loan.getId())
       .withItemLossType(itemLossType)
-      .withDateOfLoss(dateOfLoss.toString())
+      .withDateOfLoss(dateOfLoss)
       .withTitle(item.getTitle())
       .withIdentifiers(item.getIdentifiers().collect(Collectors.toList()))
       .withItemBarcode(item.getBarcode())
@@ -101,6 +101,6 @@ public class ActualCostRecordService {
       .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
       .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType())
       .withExpirationDate(loan.getLostItemPolicy()
-        .calculateFeeFineChargingPeriodExpirationDateTime(dateOfLoss).toString());
+        .calculateFeeFineChargingPeriodExpirationDateTime(dateOfLoss));
   }
 }

@@ -19,7 +19,7 @@ public class ActualCostRecord {
   private String userBarcode;
   private String loanId;
   private ItemLossType itemLossType;
-  private String dateOfLoss;
+  private ZonedDateTime dateOfLoss;
   private String title;
   private Collection<Identifier> identifiers;
   private String itemBarcode;
@@ -31,5 +31,5 @@ public class ActualCostRecord {
   private String feeFineTypeId;
   private String feeFineType;
   private ZonedDateTime creationDate;
-  private String expirationDate;
+  private ZonedDateTime expirationDate;
 }

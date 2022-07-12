@@ -7,6 +7,7 @@ import org.folio.circulation.domain.ItemLossType;
 import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -55,7 +56,7 @@ public class ActualCostRecordMapper {
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
       ItemLossType.from(getProperty(representation, "itemLossType")),
-      getProperty(representation, "dateOfLoss"),
+      getDateTimeProperty(representation, "dateOfLoss"),
       getProperty(representation, "title"),
       IdentifierMapper.mapIdentifiers(representation),
       getProperty(representation, "itemBarcode"),
@@ -67,7 +68,7 @@ public class ActualCostRecordMapper {
       getProperty(representation, "feeFineTypeId"),
       getProperty(representation, "feeFineType"),
       getNestedDateTimeProperty(representation, "metadata", "createdDate"),
-      getProperty(representation, "expirationDate")
+      getDateTimeProperty(representation, "expirationDate")
     );
   }
 }
