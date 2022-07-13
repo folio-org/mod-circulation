@@ -45,12 +45,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.APITestContext;
+import com.jayway.jsonpath.JsonPath;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -822,5 +825,37 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(replaceResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron comments are not allowed to change"),
       hasParameter("existingPatronComments", "Original patron comments"))));
+  }
+
+  @Test
+  void shouldUseCurrentUserIdAsSourceWhenSendingUpdateRequestMessage() {
+    final ItemResource temeraire = itemsFixture.basedUponTemeraire();
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource exampleServicePoint = servicePointsFixture.cd1();
+
+    var originalRequest = requestsClient.create(
+      new RequestBuilder()
+        .page()
+        .forItem(temeraire)
+        .by(steve)
+        .withRequestDate(ZonedDateTime.now())
+        .withPickupServicePointId(exampleServicePoint.getId()));
+
+    final IndividualResource newServicePoint = servicePointsFixture.cd2();
+
+    requestsClient.replace(originalRequest.getId(),
+      RequestBuilder.from(originalRequest)
+        .withPickupServicePointId(newServicePoint.getId()));
+
+    final var publishedEvents = Awaitility.await()
+      .atMost(1, SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(2));
+
+    final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));
+    var resultStr = requestUpdatedLogEvent.getString("eventPayload");
+    var userIdPath = "$['payload']['requests']['updated']['metadata']['updatedByUserId']";
+    var userId = JsonPath.parse(resultStr).read(userIdPath);
+
+    assertThat(userId, Matchers.equalTo(APITestContext.getUserId()));
   }
 }
