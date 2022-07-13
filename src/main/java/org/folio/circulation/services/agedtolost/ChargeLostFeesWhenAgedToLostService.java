@@ -125,8 +125,24 @@ public class ChargeLostFeesWhenAgedToLostService {
     Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
     return loansToChargeFeesResult
+      .next(this::excludeActualCostItemsWithNoLostItemProcessingFee)
       .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFees))
       .thenApply(r -> r.map(ignored -> null));
+  }
+
+  private Result<List<LoanToChargeFees>> excludeActualCostItemsWithNoLostItemProcessingFee(
+    List<LoanToChargeFees> loansToChargeFees) {
+
+    List<LoanToChargeFees> loansToStopProcessingOf = loansToChargeFees.stream()
+      .filter(loan -> loan.getLostItemPolicy().hasActualCostFee())
+      .filter(loan -> !loan.getLostItemPolicy().getAgeToLostProcessingFee().isChargeable())
+      .collect(Collectors.toList());
+
+    loansToChargeFees.removeAll(loansToStopProcessingOf);
+
+    return succeeded(loansToStopProcessingOf)
+      .map(loans -> allOf(loans, this::updateLoanBillingInfo))
+      .map(r -> loansToChargeFees);
   }
 
   private CompletableFuture<Result<Void>> chargeLostFees(

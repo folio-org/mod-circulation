@@ -24,6 +24,8 @@ import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
@@ -67,23 +69,34 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     assertThat(loanClosedEvents.get(0), isValidLoanClosedEvent(loan.getJson()));
   }
 
-  @Test
-  void processingFeeShouldBeChargedWhenSetActualCost() {
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0.0, 3.0, false",
+    "0.0, 0.0, false",
+    "4.0, 0.0, false",
+    "4.0, 0.0, false",
+  })
+  void agedToLostActualCostItemShouldBeSkippedWhenNoProcessingFeeInThePolicy(
+    double lostItemFee, double itemProcessingFeeAmount,
+    boolean chargeItemProcessingFeeWhenAgedToLost) {
+
     accountsClient.deleteAll();
-    val amount = 3.0;
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy(ChargeAmountType.ACTUAL_COST)
-        .withActualCost(0.00)
-        .chargeProcessingFeeWhenAgedToLost(amount)
-        .withChargeAmountItemSystem(false)
+        .withActualCost(lostItemFee)
+        .chargeProcessingFeeWhenAgedToLost(itemProcessingFeeAmount)
+        .withChargeAmountItemSystem(chargeItemProcessingFeeWhenAgedToLost)
     );
 
     val delayedBilling = result.getLoan().getJson().getJsonObject("agedToLostDelayedBilling");
     List<JsonObject> accounts = accountsClient.getAll();
+
     assertThat(delayedBilling.getBoolean("lostItemHasBeenBilled"), is(true));
-    assertThat(accounts.size(), is(1));
-    assertThat(accounts.get(0).getDouble("amount"), is(amount));
+    assertThat(accounts.size(), is(0));
+
+    List<JsonObject> actualCostRecords = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecords.size(), is(0));
   }
 
   @Test

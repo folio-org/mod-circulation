@@ -190,9 +190,8 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), zeroDurationPeriod(), false, false,
-        zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(),
-        zeroDurationPeriod(), noAutomaticallyChargeableFee());
+        noAutomaticallyChargeableFee(), noActualCostFee(), zeroDurationPeriod(), false, false,
+        zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod());
     }
   }
 }
