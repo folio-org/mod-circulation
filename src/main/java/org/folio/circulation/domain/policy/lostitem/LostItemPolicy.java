@@ -14,7 +14,6 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.policy.Policy;
@@ -53,6 +52,7 @@ public class LostItemPolicy extends Policy {
 
     super(id, name);
     this.declareLostProcessingFee = declareLostProcessingFee;
+    this.ageToLostProcessingFee = ageToLostProcessingFee;
     this.setCostFee = setCostFee;
     this.actualCostFee = actualCostFee;
     this.feeRefundInterval = feeRefundInterval;
@@ -63,7 +63,6 @@ public class LostItemPolicy extends Policy {
     this.recalledItemAgedToLostAfterOverdueInterval = recalledItemAgedToLostAfterOverdueInterval;
     this.patronBilledAfterRecalledItemAgedToLostInterval =
       patronBilledAfterRecalledItemAgedToLostInterval;
-    this.ageToLostProcessingFee = ageToLostProcessingFee;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
