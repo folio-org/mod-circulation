@@ -425,7 +425,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
         .withNoFeeRefundInterval()
         .withActualCost(10.00)
         .billPatronImmediatelyWhenAgedToLost()
-        .doNotChargeProcessingFeeWhenAgedToLost());
+        .chargeProcessingFeeWhenAgedToLost(1.00));
 
     useLostItemPolicy(lostItemPolicy.getId());
 
@@ -447,7 +447,6 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee()));
     assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
-    assertThat(loanFromStorage, hasNoLostItemProcessingFee());
   }
 
   @Test
