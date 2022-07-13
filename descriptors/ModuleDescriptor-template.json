@@ -640,6 +640,24 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/actual-cost-expiration-by-timeout",
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "inventory-storage.items.item.put",
+            "actual-cost-record-storage.actual-cost-records.collection.get",
+            "accounts.collection.get",
+            "circulation.internal.fetch-items",
+            "lost-item-fees-policies.collection.get",
+            "circulation-storage.loans.collection.get",
+            "pubsub.publish.post"
+          ],
+          "unit": "minute",
+          "delay": "20"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loan-scheduled-notices-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",

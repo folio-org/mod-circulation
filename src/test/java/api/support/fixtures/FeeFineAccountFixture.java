@@ -12,6 +12,9 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
+import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 
 public final class FeeFineAccountFixture {
   private final ResourceClient accountsClient = forAccounts();
@@ -77,6 +80,13 @@ public final class FeeFineAccountFixture {
     pay(accountId, amount);
   }
 
+  public void payLostItemActualCostFee(UUID loanId) {
+    final JsonObject lostItemFeeActualCostAccount = getAccount(loanId, LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+    final String accountId = lostItemFeeActualCostAccount.getString("id");
+
+    pay(accountId, lostItemFeeActualCostAccount.getDouble("amount"));
+  }
+
   public void payLostItemProcessingFee(UUID loanId) {
     final JsonObject lostItemProcessingFeeAccount = getAccount(
       loanId, LOST_ITEM_PROCESSING_FEE_TYPE);
@@ -130,6 +140,13 @@ public final class FeeFineAccountFixture {
 
     return account;
   }
+
+  private JsonObject getLostItemFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+        .and(exactMatch("feeFineType", "Lost item fee")))
+      .getFirst();
+  }
+
 
   private JsonObject getAccount(UUID loanId, String feeFineType) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString())

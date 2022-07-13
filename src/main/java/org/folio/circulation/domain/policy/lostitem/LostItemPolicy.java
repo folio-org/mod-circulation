@@ -34,6 +34,7 @@ public class LostItemPolicy extends Policy {
   private final Period patronBilledAfterItemAgedToLostInterval;
   private final Period recalledItemAgedToLostAfterOverdueInterval;
   private final Period patronBilledAfterRecalledItemAgedToLostInterval;
+  private final Period lostItemChargeFeeFineInterval;
   // There is no separate age to lost processing fee but there is a flag
   // that turns on/off the fee, but we're modelling it as a separate fee
   // to simplify logic.
@@ -45,7 +46,7 @@ public class LostItemPolicy extends Policy {
     Period itemAgedToLostAfterOverdueInterval, Period patronBilledAfterItemAgedToLostInterval,
     Period recalledItemAgedToLostAfterOverdueInterval,
     Period patronBilledAfterRecalledItemAgedToLostInterval,
-    AutomaticallyChargeableFee ageToLostProcessingFee) {
+    AutomaticallyChargeableFee ageToLostProcessingFee, Period lostItemChargeFeeFineInterval) {
 
     super(id, name);
     this.declareLostProcessingFee = declareLostProcessingFee;
@@ -60,6 +61,7 @@ public class LostItemPolicy extends Policy {
     this.patronBilledAfterRecalledItemAgedToLostInterval =
       patronBilledAfterRecalledItemAgedToLostInterval;
     this.ageToLostProcessingFee = ageToLostProcessingFee;
+    this.lostItemChargeFeeFineInterval = lostItemChargeFeeFineInterval;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -76,7 +78,8 @@ public class LostItemPolicy extends Policy {
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterAgedLost"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "recalledItemAgedLostOverdue"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterRecalledItemAgedLost"),
-      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
+      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem"),
+      getPeriodPropertyOrEmpty(lostItemPolicy, "lostItemChargeFeeFine")
     );
   }
 
@@ -162,6 +165,10 @@ public class LostItemPolicy extends Policy {
     return periodShouldPassSinceOverdue.hasPassedSinceDateTillNow(loanDueDate);
   }
 
+  public ZonedDateTime calculateFeeFineChargingPeriodExpirationDateTime(ZonedDateTime lostTime) {
+    return lostItemChargeFeeFineInterval.plusDate(lostTime);
+  }
+
   public ZonedDateTime calculateDateTimeWhenPatronBilledForAgedToLost(
     boolean isRecalled, ZonedDateTime ageToLostDate) {
 
@@ -189,7 +196,7 @@ public class LostItemPolicy extends Policy {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
         noActualCostFee(), zeroDurationPeriod(), false, false,
         zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(),
-        zeroDurationPeriod(), noAutomaticallyChargeableFee());
+        zeroDurationPeriod(), noAutomaticallyChargeableFee(), zeroDurationPeriod());
     }
   }
 }

@@ -24,7 +24,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
   private final Double lostItemProcessingFee;
   private final boolean chargeAmountItemPatron;
   private final boolean chargeAmountItemSystem;
-  private final JsonObject lostItemChargeFeeFine;
+  private final Period lostItemChargeFeeFine;
   private final boolean returnedLostItemProcessingFee;
   private final boolean replacedLostItemProcessingFee;
   private final double replacementProcessingFee;
@@ -44,7 +44,7 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       null,
       false,
       false,
-      new JsonObject(),
+      null,
       false,
       false,
       0.0,
@@ -156,13 +156,16 @@ public class LostItemFeePolicyBuilder extends JsonBuilder implements Builder {
       request.put("feesFinesShallRefunded", this.feeRefundInterval.asJson());
     }
 
+    if (lostItemChargeFeeFine != null) {
+      request.put("lostItemChargeFeeFine", this.lostItemChargeFeeFine.asJson());
+    }
+
     put(request, "name", this.name);
     put(request, "description", this.description);
     put(request, "chargeAmountItem", this.chargeAmountItem);
     put(request, "lostItemProcessingFee", this.lostItemProcessingFee);
     put(request, "chargeAmountItemPatron", this.chargeAmountItemPatron);
     put(request, "chargeAmountItemSystem", this.chargeAmountItemSystem);
-    put(request, "lostItemChargeFeeFine", this.lostItemChargeFeeFine);
     put(request, "returnedLostItemProcessingFee", this.returnedLostItemProcessingFee);
     put(request, "replacedLostItemProcessingFee", this.replacedLostItemProcessingFee);
     put(request, "replacementProcessingFee", String.valueOf(this.replacementProcessingFee));

@@ -13,6 +13,7 @@ import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResour
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
+import org.folio.circulation.resources.ExpiredActualCostProcessingResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
@@ -138,6 +139,7 @@ public class CirculationVerticle extends AbstractVerticle {
           startFuture.fail(result.cause());
         }
       });
+    new ExpiredActualCostProcessingResource(client).register(router);
   }
 
   @Override

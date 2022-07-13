@@ -297,6 +297,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/scheduled-age-to-lost-fee-charging");
   }
 
+  public static URL scheduledActualCostExpiration() {
+    return circulationModuleUrl("/circulation/actual-cost-expiration-by-timeout");
+  }
+
   public static URL actualCostRecordsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/actual-cost-record-storage/actual-cost-records" + subPath);
   }

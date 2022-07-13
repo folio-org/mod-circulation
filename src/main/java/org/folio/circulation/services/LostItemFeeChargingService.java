@@ -34,6 +34,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRep
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
