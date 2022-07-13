@@ -81,12 +81,13 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
       .withItemAgedToLostAfterOverdue(minutes(1))
       .withPatronBilledAfterItemAgedToLost(minutes(5))
       .chargeOverdueFineWhenReturned()
-      .withNoFeeRefundInterval();
+      .withNoFeeRefundInterval()
+      .withLostItemProcessingFee(1.0);
 
     val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
     createLostItemFeeActualCostAccount(result.getLoan(), itemFeeActualCost);
 
-    assertThat(feeFineActionsClient.getAll(), hasSize(1));
+    assertThat(feeFineActionsClient.getAll(), hasSize(2));
     assertThat(result.getLoan(), hasLostItemFeeActualCost(isOpen(itemFeeActualCost)));
 
     feeFineAccountFixture.payLostItemActualCostFee(result.getLoanId(), 3.0);
