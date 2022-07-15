@@ -130,19 +130,9 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
-    return shouldCloseLoan(loan) ? closeLoan(loan) : chargeLostFees(loan);
-  }
-
-  private static boolean shouldCloseLoan(LoanToChargeFees loan) {
-    return loan.getLostItemPolicy().hasActualCostFee() &&
-      !loan.getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
-  }
-
-  private CompletableFuture<Result<Void>> closeLoan(LoanToChargeFees loan) {
-    loan.getLoan().removePreviousAction();
-
-    return closeLoanAsLostAndPaid(loan)
-      .thenApply(Result::mapEmpty);
+    return loan.shouldCloseLoanWhenActualCostUsed()
+      ? updateBillingInfoAndCloseLoanAsLostAndPaid(loan)
+      : chargeLostFees(loan);
   }
 
   private CompletableFuture<Result<Void>> chargeLostFees(
@@ -177,14 +167,6 @@ public class ChargeLostFeesWhenAgedToLostService {
       .thenCompose(r -> r.after(actions ->
         feeFineScheduledNoticeService.scheduleNoticesForAgedLostFeeFineCharged(loan, actions)))
       .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
-  }
-
-  private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
-    final Loan updatedLoan = loanToChargeFees.getLoan()
-      .setLostItemHasBeenBilled()
-      .removePreviousAction();
-
-    return loanRepository.updateLoan(updatedLoan);
   }
 
   private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToChargeFees loanToChargeFees) {
@@ -331,6 +313,14 @@ public class ChargeLostFeesWhenAgedToLostService {
     return succeeded(loanToChargeFees);
   }
 
+  private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
+    final Loan updatedLoan = loanToChargeFees.getLoan()
+      .setLostItemHasBeenBilled()
+      .removePreviousAction();
+
+    return loanRepository.updateLoan(updatedLoan);
+  }
+
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(LoanToChargeFees loanToChargeFees) {
     final Loan loan = loanToChargeFees.getLoan();
 
@@ -338,5 +328,14 @@ public class ChargeLostFeesWhenAgedToLostService {
     loan.closeLoanAsLostAndPaid();
 
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+  }
+
+  private CompletableFuture<Result<Void>> updateBillingInfoAndCloseLoanAsLostAndPaid(
+    LoanToChargeFees loan) {
+
+    loan.getLoan().removePreviousAction();
+
+    return closeLoanAsLostAndPaid(loan)
+      .thenApply(Result::mapEmpty);
   }
 }
