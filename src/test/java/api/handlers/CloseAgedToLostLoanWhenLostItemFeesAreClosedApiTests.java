@@ -74,7 +74,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     "0.0, 3.0, false",
     "0.0, 0.0, false",
     "4.0, 0.0, false",
-    "4.0, 0.0, false",
+    "4.0, 3.0, false",
   })
   void agedToLostActualCostItemShouldBeSkippedWhenNoProcessingFeeInThePolicy(
     double lostItemFee, double itemProcessingFeeAmount,
@@ -97,6 +97,10 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     List<JsonObject> actualCostRecords = actualCostRecordsClient.getAll();
     assertThat(actualCostRecords.size(), is(0));
+
+    var updatedLoan = loansClient.get(result.getLoan().getId());
+    assertThat(updatedLoan.getJson().getJsonObject("status").getString("name"),
+      is("Closed"));
   }
 
   @Test
