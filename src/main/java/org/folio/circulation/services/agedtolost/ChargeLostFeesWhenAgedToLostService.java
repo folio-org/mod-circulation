@@ -131,7 +131,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
   private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
     return loan.shouldCloseLoanWhenActualCostUsed()
-      ? updateBillingInfoAndCloseLoanAsLostAndPaid(loan)
+      ? removePreviousActionAndCloseLoanAsLostAndPaid(loan)
       : chargeLostFees(loan);
   }
 
@@ -330,7 +330,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
 
-  private CompletableFuture<Result<Void>> updateBillingInfoAndCloseLoanAsLostAndPaid(
+  private CompletableFuture<Result<Void>> removePreviousActionAndCloseLoanAsLostAndPaid(
     LoanToChargeFees loan) {
 
     loan.getLoan().removePreviousAction();
