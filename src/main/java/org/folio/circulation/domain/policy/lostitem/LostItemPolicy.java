@@ -25,6 +25,10 @@ import io.vertx.core.json.JsonObject;
 
 public class LostItemPolicy extends Policy {
   private final AutomaticallyChargeableFee declareLostProcessingFee;
+  // There is no separate age to lost processing fee but there is a flag
+  // that turns on/off the fee, but we're modelling it as a separate fee
+  // to simplify logic.
+  private final AutomaticallyChargeableFee ageToLostProcessingFee;
   private final AutomaticallyChargeableFee setCostFee;
   private final ChargeableFee actualCostFee;
   private final Period feeRefundInterval;
@@ -34,21 +38,21 @@ public class LostItemPolicy extends Policy {
   private final Period patronBilledAfterItemAgedToLostInterval;
   private final Period recalledItemAgedToLostAfterOverdueInterval;
   private final Period patronBilledAfterRecalledItemAgedToLostInterval;
-  // There is no separate age to lost processing fee but there is a flag
-  // that turns on/off the fee, but we're modelling it as a separate fee
-  // to simplify logic.
-  private final AutomaticallyChargeableFee ageToLostProcessingFee;
+  private static final String CHARGE_AMOUNT_ITEM = "chargeAmountItem";
+  private static final String CHARGE_TYPE = "chargeType";
 
-  private LostItemPolicy(String id, String name, AutomaticallyChargeableFee declareLostProcessingFee,
-    AutomaticallyChargeableFee setCostFee, ChargeableFee actualCostFee,
-    Period feeRefundInterval, boolean refundProcessingFeeWhenFound, boolean chargeOverdueFine,
-    Period itemAgedToLostAfterOverdueInterval, Period patronBilledAfterItemAgedToLostInterval,
+  private LostItemPolicy(String id, String name,
+    AutomaticallyChargeableFee declareLostProcessingFee,
+    AutomaticallyChargeableFee ageToLostProcessingFee, AutomaticallyChargeableFee setCostFee,
+    ChargeableFee actualCostFee, Period feeRefundInterval, boolean refundProcessingFeeWhenFound,
+    boolean chargeOverdueFine, Period itemAgedToLostAfterOverdueInterval,
+    Period patronBilledAfterItemAgedToLostInterval,
     Period recalledItemAgedToLostAfterOverdueInterval,
-    Period patronBilledAfterRecalledItemAgedToLostInterval,
-    AutomaticallyChargeableFee ageToLostProcessingFee) {
+    Period patronBilledAfterRecalledItemAgedToLostInterval) {
 
     super(id, name);
     this.declareLostProcessingFee = declareLostProcessingFee;
+    this.ageToLostProcessingFee = ageToLostProcessingFee;
     this.setCostFee = setCostFee;
     this.actualCostFee = actualCostFee;
     this.feeRefundInterval = feeRefundInterval;
@@ -59,7 +63,6 @@ public class LostItemPolicy extends Policy {
     this.recalledItemAgedToLostAfterOverdueInterval = recalledItemAgedToLostAfterOverdueInterval;
     this.patronBilledAfterRecalledItemAgedToLostInterval =
       patronBilledAfterRecalledItemAgedToLostInterval;
-    this.ageToLostProcessingFee = ageToLostProcessingFee;
   }
 
   public static LostItemPolicy from(JsonObject lostItemPolicy) {
@@ -67,6 +70,7 @@ public class LostItemPolicy extends Policy {
       getProperty(lostItemPolicy, "id"),
       getProperty(lostItemPolicy, "name"),
       getProcessingFee(lostItemPolicy, "chargeAmountItemPatron"),
+      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem"),
       getSetCostFee(lostItemPolicy),
       getActualCostFee(lostItemPolicy),
       getPeriodPropertyOrEmpty(lostItemPolicy, "feesFinesShallRefunded"),
@@ -75,8 +79,7 @@ public class LostItemPolicy extends Policy {
       getPeriodPropertyOrEmpty(lostItemPolicy, "itemAgedLostOverdue"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterAgedLost"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "recalledItemAgedLostOverdue"),
-      getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterRecalledItemAgedLost"),
-      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem")
+      getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterRecalledItemAgedLost")
     );
   }
 
@@ -103,8 +106,8 @@ public class LostItemPolicy extends Policy {
   }
 
   private static AutomaticallyChargeableFee getSetCostFee(JsonObject policy) {
-    final JsonObject chargeAmountItem = getObjectProperty(policy, "chargeAmountItem");
-    final ChargeAmountType chargeType = forValue(getProperty(chargeAmountItem, "chargeType"));
+    final JsonObject chargeAmountItem = getObjectProperty(policy, CHARGE_AMOUNT_ITEM);
+    final ChargeAmountType chargeType = forValue(getProperty(chargeAmountItem, CHARGE_TYPE));
     final BigDecimal amount = getBigDecimalProperty(chargeAmountItem, "amount");
 
     return chargeAmountItem != null && chargeType == SET_COST && amount != null
@@ -114,7 +117,7 @@ public class LostItemPolicy extends Policy {
 
   private static ChargeableFee getActualCostFee(JsonObject policy) {
     final ChargeAmountType chargeType = forValue(getNestedStringProperty(policy,
-      "chargeAmountItem", "chargeType"));
+      CHARGE_AMOUNT_ITEM, CHARGE_TYPE));
 
     return chargeType == ACTUAL_COST
       ? new ActualCostFee()
@@ -187,9 +190,8 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), zeroDurationPeriod(), false, false,
-        zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(),
-        zeroDurationPeriod(), noAutomaticallyChargeableFee());
+        noAutomaticallyChargeableFee(), noActualCostFee(), zeroDurationPeriod(), false, false,
+        zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod());
     }
   }
 }

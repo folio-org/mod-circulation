@@ -125,8 +125,14 @@ public class ChargeLostFeesWhenAgedToLostService {
     Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
     return loansToChargeFeesResult
-      .after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFees))
-      .thenApply(r -> r.map(ignored -> null));
+      .after(loans -> allOf(loans, this::processLoan))
+      .thenApply(Result::mapEmpty);
+  }
+
+  private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
+    return loan.shouldCloseLoanWhenActualCostUsed()
+      ? closeLoanAsLostAndPaid(loan).thenApply(Result::mapEmpty)
+      : chargeLostFees(loan);
   }
 
   private CompletableFuture<Result<Void>> chargeLostFees(
@@ -161,14 +167,6 @@ public class ChargeLostFeesWhenAgedToLostService {
       .thenCompose(r -> r.after(actions ->
         feeFineScheduledNoticeService.scheduleNoticesForAgedLostFeeFineCharged(loan, actions)))
       .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
-  }
-
-  private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
-    final Loan updatedLoan = loanToChargeFees.getLoan()
-      .setLostItemHasBeenBilled()
-      .removePreviousAction();
-
-    return loanRepository.updateLoan(updatedLoan);
   }
 
   private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToChargeFees loanToChargeFees) {
@@ -313,6 +311,14 @@ public class ChargeLostFeesWhenAgedToLostService {
     }
 
     return succeeded(loanToChargeFees);
+  }
+
+  private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
+    final Loan updatedLoan = loanToChargeFees.getLoan()
+      .setLostItemHasBeenBilled()
+      .removePreviousAction();
+
+    return loanRepository.updateLoan(updatedLoan);
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(LoanToChargeFees loanToChargeFees) {

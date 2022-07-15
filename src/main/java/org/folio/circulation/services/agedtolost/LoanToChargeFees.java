@@ -99,6 +99,11 @@ public final class LoanToChargeFees {
       && !getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
   }
 
+  boolean shouldCloseLoanWhenActualCostUsed() {
+    return getLostItemPolicy().hasActualCostFee() &&
+      !getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
+  }
+
   public static LoanToChargeFees usingLoan(Loan loan) {
     return new LoanToChargeFees(loan, null, Collections.emptyMap(), null);
   }

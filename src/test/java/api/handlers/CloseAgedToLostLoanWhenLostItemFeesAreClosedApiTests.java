@@ -20,9 +20,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
@@ -64,6 +67,40 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     List<JsonObject> loanClosedEvents = getPublishedEventsAsList(byEventType(LOAN_CLOSED));
     assertThat(loanClosedEvents, hasSize(1));
     assertThat(loanClosedEvents.get(0), isValidLoanClosedEvent(loan.getJson()));
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0.0, 3.0, false",
+    "0.0, 0.0, false",
+    "4.0, 0.0, false",
+    "4.0, 3.0, false",
+  })
+  void agedToLostActualCostItemShouldBeSkippedWhenNoProcessingFeeInThePolicy(
+    double lostItemFee, double itemProcessingFeeAmount,
+    boolean chargeItemProcessingFeeWhenAgedToLost) {
+
+    accountsClient.deleteAll();
+
+    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy(ChargeAmountType.ACTUAL_COST)
+        .withActualCost(lostItemFee)
+        .chargeProcessingFeeWhenAgedToLost(itemProcessingFeeAmount)
+        .withChargeAmountItemSystem(chargeItemProcessingFeeWhenAgedToLost)
+    );
+
+    val delayedBilling = result.getLoan().getJson().getJsonObject("agedToLostDelayedBilling");
+    List<JsonObject> accounts = accountsClient.getAll();
+
+    assertThat(delayedBilling.getBoolean("lostItemHasBeenBilled"), is(true));
+    assertThat(accounts.size(), is(0));
+
+    List<JsonObject> actualCostRecords = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecords.size(), is(0));
+
+    var updatedLoan = loansClient.get(result.getLoan().getId());
+    assertThat(updatedLoan.getJson().getJsonObject("status").getString("name"),
+      is("Closed"));
   }
 
   @Test
