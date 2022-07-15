@@ -125,24 +125,24 @@ public class ChargeLostFeesWhenAgedToLostService {
     Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
     return loansToChargeFeesResult
-      .after(this::excludeActualCostItemsWithNoLostItemProcessingFee)
-      .thenCompose(r -> r.after(loansToChargeFees -> allOf(loansToChargeFees, this::chargeLostFees)))
-      .thenApply(r -> r.map(ignored -> null));
+      .after(loans -> allOf(loans, this::processLoan))
+      .thenApply(Result::mapEmpty);
   }
 
-  private CompletableFuture<Result<List<LoanToChargeFees>>>
-  excludeActualCostItemsWithNoLostItemProcessingFee(List<LoanToChargeFees> loansToChargeFees) {
+  private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
+    return shouldCloseLoan(loan) ? closeLoan(loan) : chargeLostFees(loan);
+  }
 
-    List<LoanToChargeFees> loansToStopProcessingOf = loansToChargeFees.stream()
-      .filter(loan -> loan.getLostItemPolicy().hasActualCostFee())
-      .filter(loan -> !loan.getLostItemPolicy().getAgeToLostProcessingFee().isChargeable())
-      .collect(Collectors.toList());
+  private static boolean shouldCloseLoan(LoanToChargeFees loan) {
+    return loan.getLostItemPolicy().hasActualCostFee() &&
+      !loan.getLostItemPolicy().getAgeToLostProcessingFee().isChargeable();
+  }
 
-    loansToChargeFees.removeAll(loansToStopProcessingOf);
+  private CompletableFuture<Result<Void>> closeLoan(LoanToChargeFees loan) {
+    loan.getLoan().removePreviousAction();
 
-    return allOf(loansToStopProcessingOf, this::updateLoanBillingInfo)
-      .thenCompose(r -> r.after(l -> allOf(loansToStopProcessingOf, this::closeLoanAsLostAndPaid)))
-      .thenApply(r -> r.map(l -> loansToChargeFees));
+    return closeLoanAsLostAndPaid(loan)
+      .thenApply(Result::mapEmpty);
   }
 
   private CompletableFuture<Result<Void>> chargeLostFees(
