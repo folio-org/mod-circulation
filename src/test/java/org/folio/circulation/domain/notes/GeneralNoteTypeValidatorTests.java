@@ -37,6 +37,6 @@ class GeneralNoteTypeValidatorTests {
   }
 
   private NoteType generateNoteType() {
-    return new NoteType(UUID.randomUUID().toString(), "General");
+    return new NoteType(UUID.randomUUID().toString());
   }
 }

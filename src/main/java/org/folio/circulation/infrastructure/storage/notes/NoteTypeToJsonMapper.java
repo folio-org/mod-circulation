@@ -8,6 +8,6 @@ import io.vertx.core.json.JsonObject;
 
 public class NoteTypeToJsonMapper {
   public NoteType fromJson(JsonObject json) {
-    return new NoteType(getProperty(json, "id"), getProperty(json, "type"));
+    return new NoteType(getProperty(json, "id"));
   }
 }

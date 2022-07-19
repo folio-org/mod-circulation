@@ -7,5 +7,4 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NoteType {
   private final String id;
-  private final String type;
 }
