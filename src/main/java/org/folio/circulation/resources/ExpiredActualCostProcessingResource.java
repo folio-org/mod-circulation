@@ -1,5 +1,8 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.support.Clients.create;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -10,15 +13,12 @@ import org.folio.circulation.services.CloseLoanWithLostItemService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.actualcostrecord.ActualCostRecordExpirationService;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import static org.folio.circulation.support.Clients.create;
-import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
 public class ExpiredActualCostProcessingResource extends Resource {
   public ExpiredActualCostProcessingResource(HttpClient client) {

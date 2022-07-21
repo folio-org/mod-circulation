@@ -197,6 +197,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payLostItemActualCostFeeAndCheckThatLoanIsClosed();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -211,7 +212,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
-
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test

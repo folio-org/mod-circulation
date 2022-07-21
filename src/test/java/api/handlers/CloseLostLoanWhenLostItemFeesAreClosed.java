@@ -52,7 +52,6 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   protected void payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed() {
@@ -62,7 +61,6 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   protected void createLostItemFeeActualCostAccount(double amount, IndividualResource loan) {

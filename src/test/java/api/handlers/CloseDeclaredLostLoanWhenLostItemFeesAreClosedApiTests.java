@@ -115,6 +115,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     payLostItemActualCostFeeAndCheckThatLoanIsClosed();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -134,6 +135,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
