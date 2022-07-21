@@ -155,11 +155,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
 
-    mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(3));
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 

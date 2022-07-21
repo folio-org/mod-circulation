@@ -228,6 +228,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test

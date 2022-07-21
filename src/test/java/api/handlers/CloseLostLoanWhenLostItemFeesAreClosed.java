@@ -27,7 +27,6 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     payProcessingFeeAndRunScheduledActualCostExpiration(ClockUtil.getZonedDateTime().plusMonths(2));
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   protected void payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired() {
