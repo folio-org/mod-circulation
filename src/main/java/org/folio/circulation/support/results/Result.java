@@ -327,6 +327,10 @@ public interface Result<T> {
     }
   }
 
+  default Result<Void> mapEmpty() {
+    return map(value -> null);
+  }
+
   /**
    * Returns a BiFunction that combines two results and executes another BiFunction
    * on un-flatted values.
