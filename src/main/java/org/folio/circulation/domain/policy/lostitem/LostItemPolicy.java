@@ -44,7 +44,6 @@ public class LostItemPolicy extends Policy {
   // There is no separate age to lost processing fee but there is a flag
   // that turns on/off the fee, but we're modelling it as a separate fee
   // to simplify logic.
-  private final AutomaticallyChargeableFee ageToLostProcessingFee;
 
   private LostItemPolicy(String id, String name,
     AutomaticallyChargeableFee declareLostProcessingFee,
@@ -54,7 +53,7 @@ public class LostItemPolicy extends Policy {
     Period patronBilledAfterItemAgedToLostInterval,
     Period recalledItemAgedToLostAfterOverdueInterval,
     Period patronBilledAfterRecalledItemAgedToLostInterval,
-    AutomaticallyChargeableFee ageToLostProcessingFee, Period lostItemChargeFeeFineInterval) {
+    Period lostItemChargeFeeFineInterval) {
 
     super(id, name);
     this.declareLostProcessingFee = declareLostProcessingFee;
@@ -69,7 +68,6 @@ public class LostItemPolicy extends Policy {
     this.recalledItemAgedToLostAfterOverdueInterval = recalledItemAgedToLostAfterOverdueInterval;
     this.patronBilledAfterRecalledItemAgedToLostInterval =
       patronBilledAfterRecalledItemAgedToLostInterval;
-    this.ageToLostProcessingFee = ageToLostProcessingFee;
     this.lostItemChargeFeeFineInterval = lostItemChargeFeeFineInterval;
   }
 
@@ -88,7 +86,6 @@ public class LostItemPolicy extends Policy {
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterAgedLost"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "recalledItemAgedLostOverdue"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "patronBilledAfterRecalledItemAgedLost"),
-      getProcessingFee(lostItemPolicy, "chargeAmountItemSystem"),
       getPeriodPropertyOrEmpty(lostItemPolicy, "lostItemChargeFeeFine")
     );
   }
@@ -204,9 +201,9 @@ public class LostItemPolicy extends Policy {
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
-        noActualCostFee(), zeroDurationPeriod(), false, false,
+        noAutomaticallyChargeableFee(), noActualCostFee(), zeroDurationPeriod(), false, false,
         zeroDurationPeriod(), zeroDurationPeriod(), zeroDurationPeriod(),
-        zeroDurationPeriod(), noAutomaticallyChargeableFee(), zeroDurationPeriod());
+        zeroDurationPeriod(), zeroDurationPeriod());
     }
   }
 }
