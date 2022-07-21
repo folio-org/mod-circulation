@@ -216,7 +216,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
     GetManyRecordsClient client, List<String> itemIds) {
 
     final Result<CqlQuery> itemIdQuery = exactMatchAny(ITEM_ID_KEY, itemIds);
-    final Result<CqlQuery> notEmptyDateQuery = CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
+    final Result<CqlQuery> notEmptyDateQuery =  CqlQuery.greaterThan(REQUEST_CLOSED_DATE_KEY, StringUtils.EMPTY);
     final Result<CqlQuery> statusQuery = exactMatchAny(STATUS_KEY,
       Arrays.asList(CLOSED_PICKUP_EXPIRED.getValue(), CLOSED_CANCELLED.getValue()));
 

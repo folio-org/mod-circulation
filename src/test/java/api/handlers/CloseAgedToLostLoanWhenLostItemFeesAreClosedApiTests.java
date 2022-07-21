@@ -20,39 +20,26 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import api.support.APITests;
 import api.support.builders.ItemBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
-  private IndividualResource loan;
-  private IndividualResource item;
+class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoanWhenLostItemFeesAreClosed {
 
   @BeforeEach
   public void createLoanAndAgeToLost() {
     feeFineOwnerFixture.cd1Owner();
-    feeFineTypeFixture.lostItemFee();
-    feeFineTypeFixture.lostItemProcessingFee();
-    feeFineTypeFixture.lostItemActualCostFee();
-
-    val result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
-      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
-        .withName("Age to lost policy")
-        .withSetCost(10.0)
-        .chargeProcessingFeeWhenAgedToLost(15.00));
-
-    item = result.getItem();
-    loan = result.getLoan();
   }
 
   @Test
   void shouldCloseLoanWhenAllFeesClosed() {
+    createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -68,6 +55,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void shouldIgnoreFeesThatAreNotDueToLosingItem() {
+    createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
@@ -84,6 +72,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
+    createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -94,6 +83,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
+    createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
@@ -104,6 +94,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
+    createAgeToLostLoanWithSetCostPolicy();
     item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
 
@@ -123,6 +114,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void shouldNotFailWhenAgedToLostLoanHasNonexistentItem() {
+    createAgeToLostLoanWithSetCostPolicy();
     var item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
     ageToLostFixture.ageToLost();
@@ -139,6 +131,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void getOwnerServicePointIdShouldNotFailIfItemDoesNotExist() {
+    createAgeToLostLoanWithSetCostPolicy();
     JsonObject loanJson = new JsonObject().put("id", UUID.randomUUID().toString());
     assertThat(LoanToChargeFees.usingLoan(Loan.from(loanJson)).getPrimaryServicePointId(),
       nullValue());
@@ -146,6 +139,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
   @Test
   void shouldNotCloseCheckedOutLoan() {
+    createAgeToLostLoanWithSetCostPolicy();
     item = itemsFixture.basedUponNod();
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
 
@@ -153,6 +147,65 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), isCheckedOut());
+  }
+
+  @Test
+  void shouldCloseAgedToLostLoanIfActualCostFeeHasBeenPaidWithoutProcessingFee() {
+    var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withActualCost(10.0));
+
+    item = result.getItem();
+    loan = result.getLoan();
+
+    payLostItemActualCostFeeAndCheckThatLoanIsClosed();
+  }
+
+  @Test
+  void shouldCloseAgedToLostLoanIfActualCostFeeAndProcessingFeeHaveBeenPaid() {
+    feeFineTypeFixture.lostItemProcessingFee();
+    var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withActualCost(10.0)
+        .chargeProcessingFeeWhenAgedToLost((15.00)));
+    item = result.getItem();
+    loan = result.getLoan();
+
+    payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
+
+  }
+
+  @Test
+  void shouldCloseLoanIfChargingPeriodElapsedAndProcessingFeeHasBeenPaid() {
+    feeFineTypeFixture.lostItemProcessingFee();
+    var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withActualCost(10.0)
+        .chargeProcessingFeeWhenAgedToLost(15.00)
+        .withLostItemChargeFeeFine(Period.days(1)));
+    item = result.getItem();
+    loan = result.getLoan();
+
+    payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
+  }
+
+  @Test
+  void shouldNotCloseLoanIfChargingPeriodHasNotElapsedAndProcessingFeeHasBeenPaid() {
+    feeFineTypeFixture.lostItemProcessingFee();
+    var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withActualCost(10.0)
+        .chargeProcessingFeeWhenAgedToLost(15.00)
+        .withLostItemChargeFeeFine(Period.days(1)));
+    item = result.getItem();
+    loan = result.getLoan();
+
+    payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
   }
 
   private void updateLostPolicyToUseActualCost() {
@@ -164,5 +217,19 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
       .put("chargeType", "actualCost"));
 
     lostItemFeePolicyClient.replace(lostItemPolicyId, lostItemPolicy);
+  }
+
+  private void createAgeToLostLoanWithSetCostPolicy() {
+    feeFineTypeFixture.lostItemFee();
+    feeFineTypeFixture.lostItemProcessingFee();
+    feeFineTypeFixture.lostItemActualCostFee();
+    var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withSetCost(10.0)
+        .chargeProcessingFeeWhenAgedToLost(15.00));
+
+    item = result.getItem();
+    loan = result.getLoan();
   }
 }

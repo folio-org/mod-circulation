@@ -19,6 +19,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.support.results.Result;
+
 public class CloseLoanWithLostItemService {
 
   private final LoanRepository loanRepository;

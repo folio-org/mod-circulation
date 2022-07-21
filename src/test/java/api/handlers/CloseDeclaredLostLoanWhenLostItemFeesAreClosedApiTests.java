@@ -1,14 +1,8 @@
 package api.handlers;
 
-import static api.support.APITestContext.getOkapiHeadersFromContext;
-import api.support.builders.AccountBuilder;
-import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
-import static api.support.http.InterfaceUrls.scheduledActualCostExpiration;
-import static api.support.http.InterfaceUrls.scheduledAgeToLostFeeChargingUrl;
-import api.support.http.TimedTaskClient;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
@@ -17,12 +11,7 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
-import static java.time.Clock.fixed;
-import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
-import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
-import static org.folio.circulation.support.utils.ClockUtil.setClock;
-import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,16 +27,11 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
-  private IndividualResource loan;
-  private IndividualResource item;
-
-  private final TimedTaskClient timedTaskClient =  new TimedTaskClient(getOkapiHeadersFromContext());
+class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoanWhenLostItemFeesAreClosed {
 
   @BeforeEach
   public void createLoanAndDeclareItemLost() {
@@ -129,13 +113,8 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
-    createLostItemFeeActualCostAccount(10.0);
 
-    feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    payLostItemActualCostFeeAndCheckThatLoanIsClosed();
   }
 
   @Test
@@ -153,18 +132,12 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
     declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
-    createLostItemFeeActualCostAccount(10.0);
 
-    feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
   }
 
   @Test
-  void shouldCloseLoanIfActualCostFeeShouldBeChargedButChargingPeriodElapsedAndProcessingFeeHasBeenPaid() {
+  void shouldCloseLoanIfChargingPeriodElapsedAndProcessingFeeHasBeenPaid() {
     UUID servicePointId = servicePointsFixture.cd2().getId();
 
     UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
@@ -189,7 +162,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   }
 
   @Test
-  void shouldNotCloseLoanDuringScheduledExpirationIfChargingPeriodHasNotElapsedAndProcessingFeeHasBeenPaid() {
+  void shouldNotCloseLoanIfChargingPeriodHasNotElapsedAndProcessingFeeHasBeenPaid() {
     UUID servicePointId = servicePointsFixture.cd2().getId();
 
     UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
@@ -205,15 +178,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
 
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(1));
-
-    timedTaskClient.start(scheduledActualCostExpiration(), 204,
-      "scheduled-actual-cost-expiration");
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
+    payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired();
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 
@@ -282,23 +247,4 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
 
     assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), empty());
   }
-
-  protected void createLostItemFeeActualCostAccount(double amount) {
-    IndividualResource account = accountsClient.create(new AccountBuilder()
-      .withLoan(loan)
-      .withAmount(amount)
-      .withRemainingFeeFine(amount)
-      .feeFineStatusOpen()
-      .withFeeFineActualCostType()
-      .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
-      .withOwner(feeFineOwnerFixture.cd1Owner())
-      .withPaymentStatus("Outstanding"));
-
-    feeFineActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(account.getId())
-      .withBalance(amount)
-      .withActionAmount(amount)
-      .withActionType("Lost item fee (actual cost)"));
-  }
-
 }

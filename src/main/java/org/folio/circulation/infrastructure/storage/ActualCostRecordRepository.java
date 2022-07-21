@@ -12,6 +12,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -93,6 +94,13 @@ public class ActualCostRecordRepository {
     return buildLoanIdToActualCostRecordMap(multipleLoans.getRecords())
       .thenApply(r -> r.map(actualCostRecordMap -> multipleLoans.mapRecords(
         loan -> loan.withActualCostRecord(actualCostRecordMap.getOrDefault(loan.getId(), null)))));
+  }
+
+  public CompletableFuture<Result<Collection<ActualCostRecord>>> findExpiredActualCostRecords() {
+    return CqlQuery.lessThan("expirationDate", ZonedDateTime.now())
+      .after(cql -> actualCostRecordStorageClient.getMany(cql, PageLimit.oneThousand())
+        .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
+        .thenApply(r -> r.map(MultipleRecords::getRecords)));
   }
 
   private CompletableFuture<Result<Map<String, ActualCostRecord>>> buildLoanIdToActualCostRecordMap(
