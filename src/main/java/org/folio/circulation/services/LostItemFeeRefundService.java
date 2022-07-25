@@ -242,7 +242,7 @@ public class LostItemFeeRefundService {
       .filter(this::isAccountEligibleForRefund)
       .filter(associatedAccount -> isDifferenceOneMinuteOrLess(creationDate,
         associatedAccount.getCreationDate()))
-      .map(filteredList::add);
+      .map(filteredList::add); //NOSONAR
 
     return filteredList;
   }
