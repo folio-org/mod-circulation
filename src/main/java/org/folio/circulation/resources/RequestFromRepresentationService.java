@@ -17,7 +17,6 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
@@ -25,6 +24,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -63,8 +63,10 @@ import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
+import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -73,6 +75,7 @@ import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -80,18 +83,16 @@ import org.folio.circulation.services.ItemForPageTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 class RequestFromRepresentationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
     Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
-
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
   private final HoldingsRepository holdingsRepository;
@@ -100,11 +101,35 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
+  private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
   private final ItemByInstanceIdFinder itemByInstanceIdFinder;
   private final ItemForPageTlrService itemForPageTlrService;
+
+  public RequestFromRepresentationService(RequestRelatedRepositories repositories,
+    ProxyRelationshipValidator proxyRelationshipValidator,
+    ServicePointPickupLocationValidator pickupLocationValidator,
+    CirculationErrorHandler errorHandler, ItemByInstanceIdFinder itemByInstanceIdFinder,
+    ItemForPageTlrService itemForPageTlrService) {
+
+    this.instanceRepository = repositories.getInstanceRepository();
+    this.itemRepository = repositories.getItemRepository();
+    this.holdingsRepository = repositories.getHoldingsRepository();
+    this.requestQueueRepository = repositories.getRequestQueueRepository();
+    this.userRepository = repositories.getUserRepository();
+    this.loanRepository = repositories.getLoanRepository();
+    this.servicePointRepository = repositories.getServicePointRepository();
+    this.configurationRepository = repositories.getConfigurationRepository();
+    this.requestPolicyRepository = repositories.getRequestPolicyRepository();
+
+    this.proxyRelationshipValidator = proxyRelationshipValidator;
+    this.pickupLocationValidator = pickupLocationValidator;
+    this.errorHandler = errorHandler;
+    this.itemByInstanceIdFinder = itemByInstanceIdFinder;
+    this.itemForPageTlrService = itemForPageTlrService;
+  }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(Request.Operation operation,
     JsonObject representation) {
@@ -128,7 +153,6 @@ class RequestFromRepresentationService {
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
-      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
@@ -137,6 +161,8 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, records -> ofAsync(() -> records))))
+      .thenCompose(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
+      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -392,15 +418,46 @@ class RequestFromRepresentationService {
     }
   }
 
-  private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Request request) {
+  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
+    Result<RequestAndRelatedRecords> requestAndRelatedRecords) {
+
+    return requestAndRelatedRecords.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, requestAndRelatedRecords));
+  }
+
+  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    Request request = requestAndRelatedRecords.getRequest();
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
       Optional<Item> itemOptional = getFirstAvailableItem(request);
       if (itemOptional.isPresent()) {
-        return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
-          Map.of(ITEM_ID, itemOptional.get().getItemId(), INSTANCE_ID, request.getInstanceId()));
+        String availableItemId = itemOptional.get().getItemId();
+        log.info("Available item found: {}", availableItemId);
+
+        RequestPolicy policy = requestAndRelatedRecords.getRequestPolicy();
+        if (policy != null) {
+          if (policy.allowsType(RequestType.PAGE)) {
+            log.info("Hold and Recall are not allowed because Page is allowed by policy {} and " +
+              "available item {} exists", policy.getId(), availableItemId);
+            return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
+          }
+        } else {
+          log.info("Hold and Recall are not allowed because available item {} exists",
+            availableItemId);
+          return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
+        }
       }
     }
-    return succeeded(request);
+    return succeeded(requestAndRelatedRecords);
+  }
+
+  private Result<RequestAndRelatedRecords> failedValidationHoldAndRecallNotAllowed(Request request,
+    String availableItemId) {
+
+    return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
+      Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
   }
 
   private Result<Request> validateRequestLevel(Request request) {
@@ -453,12 +510,6 @@ class RequestFromRepresentationService {
     else {
       return of(() -> context);
     }
-  }
-
-  private Result<Request> refuseHoldOrRecallTlrWhenAvailableItemExists(Result<Request> request) {
-    return request.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .mapFailure(err -> errorHandler.handleValidationError(err,
-        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, request));
   }
 
   private Result<Request> refuseWhenNoItemId(Result<Request> request) {

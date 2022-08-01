@@ -19,6 +19,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
+import static org.folio.circulation.support.results.MappingFunctions.mapWhen;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -31,10 +32,11 @@ import org.folio.circulation.resources.RequestBlockValidators;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
 public class CreateRequestService {
-  private final CreateRequestRepositories repositories;
+  private final RequestRelatedRepositories repositories;
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
@@ -42,7 +44,7 @@ public class CreateRequestService {
   private final EventPublisher eventPublisher;
   private final CirculationErrorHandler errorHandler;
 
-  public CreateRequestService(CreateRequestRepositories repositories,
+  public CreateRequestService(RequestRelatedRepositories repositories,
     UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
     RequestNoticeSender requestNoticeSender, RequestBlockValidators requestBlockValidators,
     EventPublisher eventPublisher, CirculationErrorHandler errorHandler) {
@@ -76,9 +78,9 @@ public class CreateRequestService {
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
       .thenCompose(r -> r.after(manualBlocksValidator::validate))
       .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
-      .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::doNothing)))
-      .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
-      .thenComposeAsync(r -> r.after(when(this::shouldCheckPolicy, this::checkPolicy, this::doNothing)))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::composeNothing)))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::composeNothing)))
+      .thenApply(r -> r.next(mapWhen(this::shouldCheckPolicy, this::checkPolicy, this::applyNothing)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -90,6 +92,12 @@ public class CreateRequestService {
         r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       });
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> nothing(
+    RequestAndRelatedRecords records) {
+
+    return completedFuture(succeeded(records));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
@@ -135,11 +143,11 @@ public class CreateRequestService {
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_ALREADY_LOANED_TO_SAME_USER, records));
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
+  private Result<RequestAndRelatedRecords> checkPolicy(
     RequestAndRelatedRecords records) {
 
     if (errorHandler.hasAny(TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
-      return completedFuture(succeeded(records));
+      return succeeded(records);
     }
 
     boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
@@ -148,12 +156,12 @@ public class CreateRequestService {
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE
       && records.getRequest().isHold()) {
 
-      return completedFuture(succeeded(records));
+      return succeeded(records);
     }
 
-    return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
-      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
-        .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
+    return RequestServiceUtility.refuseWhenRequestCannotBeFulfilled(records)
+      .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY,
+        records));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {
@@ -164,15 +172,19 @@ public class CreateRequestService {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
-  private CompletableFuture<Result<Boolean>> shouldCheckPolicy(RequestAndRelatedRecords records) {
-    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
+  private Result<Boolean> shouldCheckPolicy(RequestAndRelatedRecords records) {
+    return succeeded(errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
       INVALID_USER_OR_PATRON_GROUP_ID));
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> doNothing(
-    RequestAndRelatedRecords records) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> composeNothing(RequestAndRelatedRecords records) {
 
     return ofAsync(() -> records);
+  }
+
+  private Result<RequestAndRelatedRecords> applyNothing(RequestAndRelatedRecords records) {
+
+    return succeeded(records);
   }
 
   private LogEventType getLogEventType() {

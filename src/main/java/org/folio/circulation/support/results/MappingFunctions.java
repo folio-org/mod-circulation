@@ -36,4 +36,16 @@ public class MappingFunctions {
           ? whenTrue.apply(value)
           : whenFalse.apply(value)));
   }
+
+  public static <T, R> Function<T, Result<R>> mapWhen(
+    Function<T, Result<Boolean>> conditionFunction,
+    Function<T, Result<R>> whenTrue,
+    Function<T, Result<R>> whenFalse) {
+
+    return value ->
+      conditionFunction.apply(value)
+        .next(r -> r
+          ? whenTrue.apply(value)
+          : whenFalse.apply(value));
+  }
 }
