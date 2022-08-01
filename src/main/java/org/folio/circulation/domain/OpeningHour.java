@@ -2,10 +2,13 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.TIME_MINUTES;
 
-import java.time.LocalTime;
-
 import io.vertx.core.json.JsonObject;
+import java.time.LocalTime;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
+@AllArgsConstructor
 public class OpeningHour {
 
   private static final String START_TIME_KEY = "startTime";
@@ -14,22 +17,11 @@ public class OpeningHour {
   private LocalTime startTime;
   private LocalTime endTime;
 
-  OpeningHour(JsonObject jsonObject) {
-    this.startTime = LocalTime.parse(jsonObject.getString(START_TIME_KEY));
-    this.endTime = LocalTime.parse(jsonObject.getString(END_TIME_KEY));
-  }
-
-  public OpeningHour(LocalTime startTime, LocalTime endTime) {
-    this.startTime = startTime;
-    this.endTime = endTime;
-  }
-
-  public LocalTime getStartTime() {
-    return startTime;
-  }
-
-  public LocalTime getEndTime() {
-    return endTime;
+  public OpeningHour(JsonObject jsonObject) {
+    this(
+      LocalTime.parse(jsonObject.getString(START_TIME_KEY)),
+      LocalTime.parse(jsonObject.getString(END_TIME_KEY))
+    );
   }
 
   JsonObject toJson() {

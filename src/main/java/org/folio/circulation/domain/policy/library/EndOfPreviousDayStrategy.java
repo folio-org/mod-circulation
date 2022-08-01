@@ -24,11 +24,11 @@ public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
   @Override
   public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
-    if (openingDays.getRequestedDay().getOpen()) {
+    if (openingDays.getRequestedDay().isOpen()) {
       return succeeded(atEndOfDay(requestedDate, zone));
     }
     OpeningDay previousDay = openingDays.getPreviousDay();
-    if (!previousDay.getOpen()) {
+    if (!previousDay.isOpen()) {
       return failed(failureForAbsentTimetable());
     }
 

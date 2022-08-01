@@ -39,7 +39,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
-import api.support.OpeningDayPeriod;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.http.IndividualResource;
@@ -85,7 +84,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     long offsetDuration = 3;
 
     // next day
-    OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
+    OpeningDay dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime
       .of(CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE, TEST_TIME_MORNING, UTC);
     ZonedDateTime expectedDueDate =
@@ -109,7 +108,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     long offsetDuration = 3;
 
     // next day
-    OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
+    OpeningDay dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime
       .of(CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE, TEST_TIME_MORNING, UTC);
     ZonedDateTime expectedDueDate =
@@ -133,7 +132,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     long offsetDuration = 2;
 
     // next day
-    OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
+    OpeningDay dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime
       .of(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, TEST_TIME_MORNING, UTC);
     ZonedDateTime expectedDueDate =
@@ -143,12 +142,11 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
       OFFSET_INTERVAL_HOURS, offsetDuration);
   }
 
-  private ZonedDateTime getExpectedDateTimeOfPeriodDay(OpeningDayPeriod dayPeriod,
+  private ZonedDateTime getExpectedDateTimeOfPeriodDay(OpeningDay openingDay,
       String offsetInterval, long offsetDuration) {
-    OpeningDay openingDay = dayPeriod.getOpeningDay();
     LocalTime startTime = openingDay.getOpeningHour().get(0).getStartTime();
 
-    return getExpectedDateTimeOfOpeningDay(dayPeriod, startTime, offsetInterval, offsetDuration);
+    return getExpectedDateTimeOfOpeningDay(openingDay, startTime, offsetInterval, offsetDuration);
   }
 
   /**
@@ -165,7 +163,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     long offsetDuration = 3;
 
     // next day
-    OpeningDayPeriod dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
+    OpeningDay dayPeriod = getLastFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime
       .of(CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY, TEST_TIME_MORNING, UTC);
     ZonedDateTime expectedDueDate =
@@ -264,7 +262,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
       duration = HOURS_PER_DAY - (int) hoursBetween(endTimeOfPeriod, timeNow) + 1;
     }
 
-    OpeningDay openingDay = getLastFakeOpeningDayByServId(servicePointId).getOpeningDay();
+    OpeningDay openingDay = getLastFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime.of(openingDay.getDate(), LocalTime.of(5, 0), UTC);
     LocalDate expectedDate = openingDay.getDate();
     LocalTime expectedTime = END_TIME_SECOND_PERIOD.plusHours(offsetDuration);
@@ -297,7 +295,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
       duration = HOURS_PER_DAY - hoursBetween(endTimeOfPeriod, timeNow) + 1;
     }
 
-    OpeningDay openingDay = getLastFakeOpeningDayByServId(servicePointId).getOpeningDay();
+    OpeningDay openingDay = getLastFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime.of(openingDay.getDate(), LocalTime.of(5, 0), UTC);
     LocalDate expectedDate = openingDay.getDate();
     LocalTime expectedTime = START_TIME_SECOND_PERIOD.plusHours(offsetDuration);
@@ -390,9 +388,9 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     int duration = 1;
     int offsetDuration = 1;
 
-    OpeningDayPeriod dayPeriod = getFirstFakeOpeningDayByServId(servicePointId);
+    OpeningDay dayPeriod = getFirstFakeOpeningDayByServId(servicePointId);
     ZonedDateTime loanDate = ZonedDateTime
-      .of(dayPeriod.getOpeningDay().getDate(), LocalTime.of(6, 0), UTC);
+      .of(dayPeriod.getDate(), LocalTime.of(6, 0), UTC);
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -456,9 +454,8 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     return dateTime.truncatedTo(ChronoUnit.MINUTES);
   }
 
-  private ZonedDateTime getExpectedDateTimeOfOpeningDay(OpeningDayPeriod openingDayPeriod,
+  private ZonedDateTime getExpectedDateTimeOfOpeningDay(OpeningDay openingDay,
       LocalTime time, String intervalHours, long duration) {
-    OpeningDay openingDay = openingDayPeriod.getOpeningDay();
     LocalTime timeShift = intervalHours.equals(INTERVAL_HOURS)
       ? time.plusHours(duration)
       : time.plusMinutes(duration);
@@ -467,9 +464,8 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
     return ZonedDateTime.of(date, timeShift, UTC);
   }
 
-  private ZonedDateTime getExpectedDateTimeOfOpeningAllDay(OpeningDayPeriod openingDayPeriod,
+  private ZonedDateTime getExpectedDateTimeOfOpeningAllDay(OpeningDay openingDay,
       String offsetInterval, long offsetDuration) {
-    OpeningDay openingDay = openingDayPeriod.getOpeningDay();
     LocalDate date = openingDay.getDate();
 
     LocalTime timeOffset = offsetInterval.equals(INTERVAL_HOURS)

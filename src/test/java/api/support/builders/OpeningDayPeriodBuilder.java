@@ -1,36 +1,26 @@
 package api.support.builders;
 
-import api.support.OpeningDayPeriod;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.folio.circulation.AdjacentOpeningDays;
+import org.folio.circulation.domain.OpeningDay;
 
-import java.util.Arrays;
-import java.util.List;
-
+@Getter
+@AllArgsConstructor
 public class OpeningDayPeriodBuilder {
+
   private String serviceId;
-  private List<OpeningDayPeriod> openingDays;
+  private AdjacentOpeningDays openingDays;
 
-  public OpeningDayPeriodBuilder(String serviceId, OpeningDayPeriod... openingDays) {
-    this.serviceId = serviceId;
-    this.openingDays = Arrays.asList(openingDays);
+  public OpeningDay getLastPeriod() {
+    return openingDays.getNextDay();
   }
 
-  String getServiceId() {
-    return serviceId;
+  public OpeningDay getCurrentPeriod() {
+    return openingDays.getRequestedDay();
   }
 
-  List<OpeningDayPeriod> getOpeningDays() {
-    return openingDays;
-  }
-
-  public OpeningDayPeriod getLastPeriod() {
-    return openingDays.get(openingDays.size() - 1);
-  }
-
-  public OpeningDayPeriod getCurrentPeriod() {
-    return openingDays.get(openingDays.size() / 2);
-  }
-
-  public OpeningDayPeriod getFirstPeriod() {
-    return openingDays.get(0);
+  public OpeningDay getFirstPeriod() {
+    return openingDays.getPreviousDay();
   }
 }

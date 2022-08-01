@@ -227,9 +227,8 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     registerCirculationRulesStorage(router);
-    FakeCalendarOkapi.registerCalendar(router);
-    FakeCalendarOkapi.registerLibraryHours(router);
-    FakeCalendarOkapi.registerOpeningHours(router);
+    FakeCalendarOkapi.registerCalendarAllDates(router);
+    FakeCalendarOkapi.registerCalendarSurroundingDates(router);
     registerFakeStorageLoansAnonymize(router);
 
     new FakeStorageModuleBuilder()

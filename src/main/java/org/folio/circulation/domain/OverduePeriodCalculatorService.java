@@ -65,7 +65,7 @@ public class OverduePeriodCalculatorService {
     ZonedDateTime dueDate = loan.getDueDate();
     String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
     return calendarRepository
-      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate, false)
+      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate)
       .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
         openingDays, dueDate, returnDate)));
   }
@@ -75,7 +75,7 @@ public class OverduePeriodCalculatorService {
 
     return succeeded(
       openingDays.stream()
-        .filter(OpeningDay::getOpen)
+        .filter(OpeningDay::isOpen)
         .mapToInt(day -> getOpeningDayDurationMinutes(day, dueDate, returnDate))
         .sum());
   }

@@ -126,29 +126,29 @@ class OverduePeriodCalculatorServiceTest {
     LocalTime now = getLocalTime();
 
     List<OpeningDay> invalid = Arrays.asList(
-      OpeningDay.createOpeningDay(
+      new OpeningDay(
         singletonList(new OpeningHour(null, null)),
         LocalDate.parse("2020-04-08"), false, true, UTC),
-      OpeningDay.createOpeningDay(
+      new OpeningDay(
         singletonList(new OpeningHour(now, now.minusHours(1))),
         LocalDate.parse("2020-04-09"), false, true, UTC)
     );
 
     List<OpeningDay> allDaysClosed = Arrays.asList(
-      OpeningDay.createOpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-08"),
+      new OpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-08"),
         true, false, NEW_YORK),
-      OpeningDay.createOpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-09"),
+      new OpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-09"),
         true, false, NEW_YORK),
-      OpeningDay.createOpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-10"),
+      new OpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-10"),
         true, false, NEW_YORK)
     );
 
     List<OpeningDay> secondDayClosed = Arrays.asList(
-      OpeningDay.createOpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-08"),
+      new OpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-08"),
         true, true, NEW_YORK),
-      OpeningDay.createOpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-09"),
+      new OpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-09"),
         true, false, NEW_YORK),
-      OpeningDay.createOpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-10"),
+      new OpeningDay(singletonList(allDay()), LocalDate.parse("2020-04-10"),
         true, true, NEW_YORK)
     );
 
@@ -250,7 +250,7 @@ class OverduePeriodCalculatorServiceTest {
   private static OpeningDay createOpeningDay(
     boolean allDay, LocalDate date, ZoneId dateTimeZone) {
 
-    return OpeningDay.createOpeningDay(
+    return new OpeningDay(
       allDay ? singletonList(allDay()) : Arrays.asList(morning(), afternoon()),
       date, allDay, true, dateTimeZone
       );
