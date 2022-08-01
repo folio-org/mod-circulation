@@ -2,6 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.lang.String.join;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -15,7 +16,6 @@ import static org.folio.circulation.domain.representations.RequestProperties.INS
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_HOLDINGS_RECORD_ID;
@@ -23,8 +23,10 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -43,8 +45,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -62,11 +62,10 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestServiceUtility;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
-import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -93,6 +92,7 @@ class RequestFromRepresentationService {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
     Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
+  private final Request.Operation operation;
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
   private final HoldingsRepository holdingsRepository;
@@ -108,11 +108,13 @@ class RequestFromRepresentationService {
   private final ItemByInstanceIdFinder itemByInstanceIdFinder;
   private final ItemForPageTlrService itemForPageTlrService;
 
-  public RequestFromRepresentationService(RequestRelatedRepositories repositories,
-    ProxyRelationshipValidator proxyRelationshipValidator,
+  public RequestFromRepresentationService(Request.Operation operation,
+    RequestRelatedRepositories repositories, ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler, ItemByInstanceIdFinder itemByInstanceIdFinder,
     ItemForPageTlrService itemForPageTlrService) {
+
+    this.operation = operation;
 
     this.instanceRepository = repositories.getInstanceRepository();
     this.itemRepository = repositories.getItemRepository();
@@ -131,8 +133,7 @@ class RequestFromRepresentationService {
     this.itemForPageTlrService = itemForPageTlrService;
   }
 
-  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(Request.Operation operation,
-    JsonObject representation) {
+  CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
 
     return configurationRepository.lookupTlrSettings()
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
@@ -161,8 +162,8 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, records -> ofAsync(() -> records))))
-      .thenCompose(r -> r.after(requestPolicyRepository::lookupRequestPolicy))
-      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .thenComposeAsync(r -> r.after(when(this::shouldFetchRequestPolicy, this::fetchRequestPolicy,
+        records -> ofAsync(() -> records))))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -286,13 +287,6 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private Optional<Item> getFirstAvailableItem(Request request) {
-    return request.getInstanceItems().stream()
-        .filter(Objects::nonNull)
-        .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
-        .findFirst();
-  }
-
   private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(
     RequestAndRelatedRecords records) {
     Request request = records.getRequest();
@@ -315,6 +309,46 @@ class RequestFromRepresentationService {
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
+  }
+
+  private CompletableFuture<Result<Boolean>> shouldFetchRequestPolicy(
+    RequestAndRelatedRecords records) {
+
+    Item item = records.getRequest().getItem();
+    boolean itemExists = item != null && item.isFound();
+    boolean userIsValid = errorHandler.hasNone(INVALID_USER_OR_PATRON_GROUP_ID);
+    boolean requesterIsValid = records.getRequest().getRequester() != null;
+    return ofAsync(() -> itemExists && userIsValid && requesterIsValid);
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchRequestPolicy(
+    RequestAndRelatedRecords records) {
+
+    return ofAsync(() -> records)
+      .thenApply(operation == Request.Operation.CREATE ? this::validateUser : identity())
+      .thenCompose(r -> r.after(this::fetchRequestPolicyIfUserIsValid));
+  }
+
+  private Result<RequestAndRelatedRecords> validateUser(Result<RequestAndRelatedRecords> records) {
+    // This validation is needed here during request creation because it should fail with 422
+    // rather than 500 (which is the result of being unable to apply the rules). It needs to be
+    // done before the request policy lookup.
+
+    return records
+      .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
+      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, records))
+      .next(RequestServiceUtility::refuseWhenUserIsInactive)
+      .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, records));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchRequestPolicyIfUserIsValid(
+    RequestAndRelatedRecords records) {
+
+    if (errorHandler.hasNone(INVALID_USER_OR_PATRON_GROUP_ID, USER_IS_INACTIVE)) {
+      return requestPolicyRepository.lookupRequestPolicy(records);
+    }
+
+    return ofAsync(() -> records);
   }
 
   private CompletableFuture<Result<Boolean>> shouldLookForTheLeastRecalledLoan(Loan loan,
@@ -416,48 +450,6 @@ class RequestFromRepresentationService {
       status.writeTo(representation);
       return succeeded(request);
     }
-  }
-
-  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
-    Result<RequestAndRelatedRecords> requestAndRelatedRecords) {
-
-    return requestAndRelatedRecords.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .mapFailure(err -> errorHandler.handleValidationError(err,
-        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, requestAndRelatedRecords));
-  }
-
-  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    Request request = requestAndRelatedRecords.getRequest();
-    if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
-      Optional<Item> itemOptional = getFirstAvailableItem(request);
-      if (itemOptional.isPresent()) {
-        String availableItemId = itemOptional.get().getItemId();
-        log.info("Available item found: {}", availableItemId);
-
-        RequestPolicy policy = requestAndRelatedRecords.getRequestPolicy();
-        if (policy != null) {
-          if (policy.allowsType(RequestType.PAGE)) {
-            log.info("Hold and Recall are not allowed because Page is allowed by policy {} and " +
-              "available item {} exists", policy.getId(), availableItemId);
-            return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
-          }
-        } else {
-          log.info("Hold and Recall are not allowed because available item {} exists",
-            availableItemId);
-          return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
-        }
-      }
-    }
-    return succeeded(requestAndRelatedRecords);
-  }
-
-  private Result<RequestAndRelatedRecords> failedValidationHoldAndRecallNotAllowed(Request request,
-    String availableItemId) {
-
-    return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
-      Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
   }
 
   private Result<Request> validateRequestLevel(Request request) {

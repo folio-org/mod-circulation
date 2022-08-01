@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class MappingFunctions {
@@ -37,15 +38,11 @@ public class MappingFunctions {
           : whenFalse.apply(value)));
   }
 
-  public static <T, R> Function<T, Result<R>> mapWhen(
-    Function<T, Result<Boolean>> conditionFunction,
+  public static <T, R> Function<T, Result<R>> whenPredicate(
+    Predicate<T> predicate,
     Function<T, Result<R>> whenTrue,
     Function<T, Result<R>> whenFalse) {
 
-    return value ->
-      conditionFunction.apply(value)
-        .next(r -> r
-          ? whenTrue.apply(value)
-          : whenFalse.apply(value));
+    return value -> predicate.test(value) ? whenTrue.apply(value) : whenFalse.apply(value);
   }
 }

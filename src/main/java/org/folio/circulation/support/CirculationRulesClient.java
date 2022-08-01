@@ -1,6 +1,9 @@
 package org.folio.circulation.support;
 
+import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,6 +29,14 @@ public class CirculationRulesClient {
 
   public CompletableFuture<Result<Response>> applyRules(String loanTypeId,
     String locationId, String materialTypeId, String patronGroupId) {
+
+    if (materialTypeId == null || loanTypeId == null || patronGroupId == null ||
+      locationId == null) {
+
+      return completedFuture(failedDueToServerError(format("Failed to apply rules for " +
+          "materialTypeId: %s, loanTypeId: %s, patronGroupId: %s, locationId: %s",
+        materialTypeId, loanTypeId, patronGroupId, locationId)));
+    }
 
     return client.get(root, namedParameter("item_type_id", materialTypeId),
         namedParameter("loan_type_id", loanTypeId),

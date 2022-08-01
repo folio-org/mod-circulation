@@ -100,15 +100,15 @@ public class RequestCollectionResource extends CollectionResource {
       errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      repositories, createProxyRelationshipValidator(representation, clients),
+      Request.Operation.CREATE, repositories,
+      createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
       ItemForPageTlrService.using(clients));
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    fromFutureResult(requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
-      representation))
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
       .flatMapFuture(createRequestService::createRequest)
       .onSuccess(scheduledNoticeService::scheduleRequestNotices)
       .onSuccess(records -> eventPublisher.publishDueDateChangedEvent(records, loanRepository))
@@ -156,15 +156,14 @@ public class RequestCollectionResource extends CollectionResource {
       updateItem, eventPublisher);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      repositories, createProxyRelationshipValidator(representation, clients),
+      Request.Operation.REPLACE, repositories, createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
       ItemForPageTlrService.using(clients));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    fromFutureResult(requestFromRepresentationService.getRequestFrom(Request.Operation.REPLACE,
-      representation))
+    fromFutureResult(requestFromRepresentationService.getRequestFrom(representation))
       .flatMapFuture(when(requestRepository::exists, updateRequestService::replaceRequest,
         createRequestService::createRequest))
       .flatMapFuture(records -> eventPublisher.publishDueDateChangedEvent(records, loanRepository))

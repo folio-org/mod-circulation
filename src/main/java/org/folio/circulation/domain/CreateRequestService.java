@@ -2,13 +2,13 @@ package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
+import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSTANCE_DOES_NOT_EXIST;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_INSTANCE_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
@@ -16,16 +16,26 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_LOANED_TO_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_ALREADY_REQUESTED_BY_SAME_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
-import static org.folio.circulation.support.results.MappingFunctions.mapWhen;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
+import static org.folio.circulation.support.results.MappingFunctions.whenPredicate;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.resources.RequestBlockValidators;
@@ -36,6 +46,8 @@ import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
 public class CreateRequestService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private final RequestRelatedRepositories repositories;
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
@@ -78,9 +90,10 @@ public class CreateRequestService {
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
       .thenCompose(r -> r.after(manualBlocksValidator::validate))
       .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
+      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::composeNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::composeNothing)))
-      .thenApply(r -> r.next(mapWhen(this::shouldCheckPolicy, this::checkPolicy, this::applyNothing)))
+      .thenApply(r -> r.next(whenPredicate(this::shouldCheckPolicy, this::checkPolicy, this::applyNothing)))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -94,10 +107,53 @@ public class CreateRequestService {
       });
   }
 
-  private CompletableFuture<Result<RequestAndRelatedRecords>> nothing(
-    RequestAndRelatedRecords records) {
+  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
+    Result<RequestAndRelatedRecords> requestAndRelatedRecords) {
 
-    return completedFuture(succeeded(records));
+    return requestAndRelatedRecords.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .mapFailure(err -> errorHandler.handleValidationError(err,
+        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, requestAndRelatedRecords));
+  }
+
+  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    Request request = requestAndRelatedRecords.getRequest();
+    if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
+      Optional<Item> itemOptional = getFirstAvailableItem(request);
+      if (itemOptional.isPresent()) {
+        String availableItemId = itemOptional.get().getItemId();
+        log.info("Available item found: {}", availableItemId);
+
+        RequestPolicy policy = requestAndRelatedRecords.getRequestPolicy();
+        if (policy != null) {
+          if (policy.allowsType(RequestType.PAGE)) {
+            log.info("Hold and Recall are not allowed because Page is allowed by policy {} and " +
+              "available item {} exists", policy.getId(), availableItemId);
+            return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
+          }
+        } else {
+          log.info("Hold and Recall are not allowed because available item {} exists",
+            availableItemId);
+          return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
+        }
+      }
+    }
+    return succeeded(requestAndRelatedRecords);
+  }
+
+  private Result<RequestAndRelatedRecords> failedValidationHoldAndRecallNotAllowed(Request request,
+    String availableItemId) {
+
+    return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
+      Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
+  }
+
+  private Optional<Item> getFirstAvailableItem(Request request) {
+    return request.getInstanceItems().stream()
+      .filter(Objects::nonNull)
+      .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+      .findFirst();
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
@@ -159,6 +215,11 @@ public class CreateRequestService {
       return succeeded(records);
     }
 
+    if (records.getRequestPolicy() == null) {
+      log.info("Request policy is null - skipping policy check");
+      return succeeded(records);
+    }
+
     return RequestServiceUtility.refuseWhenRequestCannotBeFulfilled(records)
       .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY,
         records));
@@ -172,9 +233,9 @@ public class CreateRequestService {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
-  private Result<Boolean> shouldCheckPolicy(RequestAndRelatedRecords records) {
-    return succeeded(errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
-      INVALID_USER_OR_PATRON_GROUP_ID));
+  private boolean shouldCheckPolicy(RequestAndRelatedRecords records) {
+    return errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
+      INVALID_USER_OR_PATRON_GROUP_ID);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> composeNothing(RequestAndRelatedRecords records) {

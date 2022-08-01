@@ -311,15 +311,14 @@ public class RequestByInstanceIdResource extends Resource {
     JsonObject currentItemRequest = itemRequests.get(startIndex);
 
     final RequestFromRepresentationService requestFromRepresentationService =
-      new RequestFromRepresentationService(repositories,
+      new RequestFromRepresentationService(Request.Operation.CREATE, repositories,
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler(),
         new ItemByInstanceIdFinder(clients.holdingsStorage(), repositories.getItemRepository()),
         ItemForPageTlrService.using(clients));
 
-    return requestFromRepresentationService.getRequestFrom(Request.Operation.CREATE,
-        currentItemRequest)
+    return requestFromRepresentationService.getRequestFrom(currentItemRequest)
       .thenCompose(r -> r.after(createRequestService::createRequest))
       .thenCompose(r -> {
           if (r.succeeded()) {
