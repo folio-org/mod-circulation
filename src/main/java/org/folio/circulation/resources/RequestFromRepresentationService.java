@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.lang.String.join;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -23,10 +22,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_ITEM_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_USER_OR_PATRON_GROUP_ID;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -62,7 +59,6 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestServiceUtility;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
@@ -74,7 +70,6 @@ import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -101,7 +96,6 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
-  private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
@@ -124,7 +118,6 @@ class RequestFromRepresentationService {
     this.loanRepository = repositories.getLoanRepository();
     this.servicePointRepository = repositories.getServicePointRepository();
     this.configurationRepository = repositories.getConfigurationRepository();
-    this.requestPolicyRepository = repositories.getRequestPolicyRepository();
 
     this.proxyRelationshipValidator = proxyRelationshipValidator;
     this.pickupLocationValidator = pickupLocationValidator;
@@ -162,8 +155,6 @@ class RequestFromRepresentationService {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchItemAndLoan, this::fetchItemAndLoan, records -> ofAsync(() -> records))))
-      .thenComposeAsync(r -> r.after(when(this::shouldFetchRequestPolicy, this::fetchRequestPolicy,
-        records -> ofAsync(() -> records))))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid)
         .thenApply(res -> errorHandler.handleValidationResult(res, INVALID_PROXY_RELATIONSHIP, r)))
       .thenApply(r -> r.next(pickupLocationValidator::refuseInvalidPickupServicePoint)
@@ -309,46 +300,6 @@ class RequestFromRepresentationService {
       .thenComposeAsync(requestResult -> requestResult.combineAfter(
         this::getUserForExistingLoan, this::addUserToLoan))
       .thenApply(r -> errorHandler.handleValidationResult(r, INSTANCE_DOES_NOT_EXIST, request));
-  }
-
-  private CompletableFuture<Result<Boolean>> shouldFetchRequestPolicy(
-    RequestAndRelatedRecords records) {
-
-    Item item = records.getRequest().getItem();
-    boolean itemExists = item != null && item.isFound();
-    boolean userIsValid = errorHandler.hasNone(INVALID_USER_OR_PATRON_GROUP_ID);
-    boolean requesterIsValid = records.getRequest().getRequester() != null;
-    return ofAsync(() -> itemExists && userIsValid && requesterIsValid);
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchRequestPolicy(
-    RequestAndRelatedRecords records) {
-
-    return ofAsync(() -> records)
-      .thenApply(operation == Request.Operation.CREATE ? this::validateUser : identity())
-      .thenCompose(r -> r.after(this::fetchRequestPolicyIfUserIsValid));
-  }
-
-  private Result<RequestAndRelatedRecords> validateUser(Result<RequestAndRelatedRecords> records) {
-    // This validation is needed here during request creation because it should fail with 422
-    // rather than 500 (which is the result of being unable to apply the rules). It needs to be
-    // done before the request policy lookup.
-
-    return records
-      .next(RequestServiceUtility::refuseWhenInvalidUserAndPatronGroup)
-      .mapFailure(err -> errorHandler.handleValidationError(err, INVALID_USER_OR_PATRON_GROUP_ID, records))
-      .next(RequestServiceUtility::refuseWhenUserIsInactive)
-      .mapFailure(err -> errorHandler.handleValidationError(err, USER_IS_INACTIVE, records));
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> fetchRequestPolicyIfUserIsValid(
-    RequestAndRelatedRecords records) {
-
-    if (errorHandler.hasNone(INVALID_USER_OR_PATRON_GROUP_ID, USER_IS_INACTIVE)) {
-      return requestPolicyRepository.lookupRequestPolicy(records);
-    }
-
-    return ofAsync(() -> records);
   }
 
   private CompletableFuture<Result<Boolean>> shouldLookForTheLeastRecalledLoan(Loan loan,

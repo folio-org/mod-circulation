@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.WebContext;
@@ -30,9 +31,7 @@ public class CirculationRulesClient {
   public CompletableFuture<Result<Response>> applyRules(String loanTypeId,
     String locationId, String materialTypeId, String patronGroupId) {
 
-    if (materialTypeId == null || loanTypeId == null || patronGroupId == null ||
-      locationId == null) {
-
+    if (!ObjectUtils.allNotNull(materialTypeId, loanTypeId, patronGroupId, locationId)) {
       return completedFuture(failedDueToServerError(format("Failed to apply rules for " +
           "materialTypeId: %s, loanTypeId: %s, patronGroupId: %s, locationId: %s",
         materialTypeId, loanTypeId, patronGroupId, locationId)));

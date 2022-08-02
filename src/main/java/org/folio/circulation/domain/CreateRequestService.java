@@ -89,10 +89,10 @@ public class CreateRequestService {
       .thenApply(r -> errorHandler.handleValidationResult(r, automatedBlocksValidator.getErrorType(), result))
       .thenCompose(r -> r.after(manualBlocksValidator::validate))
       .thenApply(r -> errorHandler.handleValidationResult(r, manualBlocksValidator.getErrorType(), result))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::doNothing)))
+      .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
+      .thenComposeAsync(r -> r.after(this::checkPolicy))
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::composeNothing)))
-      .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::composeNothing)))
-      .thenApply(r -> r.next(this.shouldCheckPolicy() ? this::checkPolicy : this::applyNothing))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -198,11 +198,13 @@ public class CreateRequestService {
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_ALREADY_LOANED_TO_SAME_USER, records));
   }
 
-  private Result<RequestAndRelatedRecords> checkPolicy(
+  private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
-    if (errorHandler.hasAny(TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
-      return succeeded(records);
+    if (errorHandler.hasAny(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
+      TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
+
+      return ofAsync(() -> records);
     }
 
     boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
@@ -211,17 +213,12 @@ public class CreateRequestService {
     if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE
       && records.getRequest().isHold()) {
 
-      return succeeded(records);
+      return ofAsync(() -> records);
     }
 
-    if (records.getRequestPolicy() == null) {
-      log.info("Request policy is null - skipping policy check");
-      return succeeded(records);
-    }
-
-    return RequestServiceUtility.refuseWhenRequestCannotBeFulfilled(records)
-      .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY,
-        records));
+    return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
+      .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
+        .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {
@@ -232,19 +229,10 @@ public class CreateRequestService {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
-  private boolean shouldCheckPolicy() {
-    return errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
-      INVALID_USER_OR_PATRON_GROUP_ID);
-  }
-
-  private CompletableFuture<Result<RequestAndRelatedRecords>> composeNothing(RequestAndRelatedRecords records) {
+  private CompletableFuture<Result<RequestAndRelatedRecords>> doNothing(
+    RequestAndRelatedRecords records) {
 
     return ofAsync(() -> records);
-  }
-
-  private Result<RequestAndRelatedRecords> applyNothing(RequestAndRelatedRecords records) {
-
-    return succeeded(records);
   }
 
   private LogEventType getLogEventType() {
