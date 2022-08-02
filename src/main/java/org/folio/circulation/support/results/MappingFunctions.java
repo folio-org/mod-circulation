@@ -37,12 +37,4 @@ public class MappingFunctions {
           ? whenTrue.apply(value)
           : whenFalse.apply(value)));
   }
-
-  public static <T, R> Function<T, Result<R>> whenPredicate(
-    Predicate<T> predicate,
-    Function<T, Result<R>> whenTrue,
-    Function<T, Result<R>> whenFalse) {
-
-    return value -> predicate.test(value) ? whenTrue.apply(value) : whenFalse.apply(value);
-  }
 }

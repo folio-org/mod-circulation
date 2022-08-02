@@ -23,7 +23,6 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
-import static org.folio.circulation.support.results.MappingFunctions.whenPredicate;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -93,7 +92,7 @@ public class CreateRequestService {
       .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
       .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::composeNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::composeNothing)))
-      .thenApply(r -> r.next(whenPredicate(this::shouldCheckPolicy, this::checkPolicy, this::applyNothing)))
+      .thenApply(r -> r.next(this.shouldCheckPolicy() ? this::checkPolicy : this::applyNothing))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -233,7 +232,7 @@ public class CreateRequestService {
     return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
   }
 
-  private boolean shouldCheckPolicy(RequestAndRelatedRecords records) {
+  private boolean shouldCheckPolicy() {
     return errorHandler.hasNone(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST,
       INVALID_USER_OR_PATRON_GROUP_ID);
   }
