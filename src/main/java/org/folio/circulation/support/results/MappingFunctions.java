@@ -4,7 +4,6 @@ import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class MappingFunctions {
