@@ -808,11 +808,11 @@ class InstanceRequestsAPICreationTests extends APITests {
     ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
 
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-
-    checkOutFixture.checkOutByBarcode(items.get(0), usersFixture.jessica());
+    var firstItem = items.get(0);
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
 
     JsonObject requestBody = createInstanceRequestObject(
-      items.get(0).getInstanceId(),
+      firstItem.getInstanceId(),
       usersFixture.charlotte().getId(),
       pickupServicePointId,
       requestDate,
@@ -825,8 +825,8 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     validateInstanceRequestResponse(representation,
       pickupServicePointId,
-      items.get(0).getInstanceId(),
-      items.get(0).getId(),
+      firstItem.getInstanceId(),
+      firstItem.getId(),
       RequestType.RECALL);
   }
 

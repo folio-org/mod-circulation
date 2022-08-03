@@ -81,7 +81,7 @@ public class RequestServiceUtility {
       REQUEST_TYPE, requestTypeName);
   }
 
-  public static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
+  static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
@@ -97,7 +97,7 @@ public class RequestServiceUtility {
     }
   }
 
-  public static Result<RequestAndRelatedRecords> refuseWhenUserIsInactive(
+  static Result<RequestAndRelatedRecords> refuseWhenUserIsInactive(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();

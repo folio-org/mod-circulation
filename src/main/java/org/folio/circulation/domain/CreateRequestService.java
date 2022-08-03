@@ -151,7 +151,7 @@ public class CreateRequestService {
   private Optional<Item> getFirstAvailableItem(Request request) {
     return request.getInstanceItems().stream()
       .filter(Objects::nonNull)
-      .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+      .filter(Item::isAvailable)
       .findFirst();
   }
 
