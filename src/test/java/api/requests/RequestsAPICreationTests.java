@@ -1329,6 +1329,35 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void canCreateTlrRecallWhenAvailableItemExistsButPageIsNotAllowedByPolicy() {
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowHoldAndRecallRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    configurationsFixture.enableTlrFeature();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    var instanceId = items.get(0).getInstanceId();
+
+    checkOutFixture.checkOutByBarcode(items.get(0), usersFixture.jessica());
+
+    var request = requestsFixture.placeTitleLevelRecallRequest(instanceId,
+      usersFixture.charlotte());
+
+    assertThat(request.getResponse(), hasStatus(HTTP_CREATED));
+
+    JsonObject json = request.getJson();
+    assertThat(json, hasJsonPath("requestType", RequestType.RECALL.getValue()));
+    assertThat(json, hasJsonPath("instanceId", instanceId.toString()));
+    assertThat(json, hasJsonPath("requestLevel", RequestLevel.TITLE.getValue()));
+    assertThat(json, hasJsonPath("requestType", RequestType.RECALL.getValue()));
+    assertThat(json, hasJsonPath("requestType", RequestType.RECALL.getValue()));
+  }
+
+  @Test
   void canCreateTitleLevelPagedRequest() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
