@@ -119,9 +119,9 @@ public class CreateRequestService {
 
     Request request = requestAndRelatedRecords.getRequest();
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
-      Optional<Item> itemOptional = getFirstAvailableItem(request);
-      if (itemOptional.isPresent()) {
-        String availableItemId = itemOptional.get().getItemId();
+      Item item = getFirstAvailableItem(request);
+      if (item != null) {
+        String availableItemId = item.getItemId();
         log.info("Available item found: {}", availableItemId);
 
         RequestPolicy policy = requestAndRelatedRecords.getRequestPolicy();
@@ -148,11 +148,12 @@ public class CreateRequestService {
       Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
   }
 
-  private Optional<Item> getFirstAvailableItem(Request request) {
+  private Item getFirstAvailableItem(Request request) {
     return request.getInstanceItems().stream()
       .filter(Objects::nonNull)
       .filter(Item::isAvailable)
-      .findFirst();
+      .findFirst()
+      .orElse(null);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
