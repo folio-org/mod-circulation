@@ -793,6 +793,44 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void canCreateRecallTlrWhenAvailableItemExistsAndPageNotAllowedByPolicy() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowHoldAndRecallRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    ZonedDateTime requestExpirationDate = requestDate.plusDays(30);
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    var firstItem = items.get(0);
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+
+    JsonObject requestBody = createInstanceRequestObject(
+      firstItem.getInstanceId(),
+      usersFixture.charlotte().getId(),
+      pickupServicePointId,
+      requestDate,
+      requestExpirationDate);
+
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    JsonObject representation = postResponse.getJson();
+
+    assertThat(postResponse.getStatusCode(), is(HTTP_CREATED.toInt()));
+
+    validateInstanceRequestResponse(representation,
+      pickupServicePointId,
+      firstItem.getInstanceId(),
+      firstItem.getId(),
+      RequestType.RECALL);
+  }
+
+  @Test
   void cannotCreateATitleLevelRequestForAPreviouslyRequestedCopy() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
