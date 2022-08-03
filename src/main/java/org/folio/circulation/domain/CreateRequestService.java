@@ -125,15 +125,13 @@ public class CreateRequestService {
         log.info("Available item found: {}", availableItemId);
 
         RequestPolicy policy = requestAndRelatedRecords.getRequestPolicy();
-        if (policy != null) {
-          if (policy.allowsType(RequestType.PAGE)) {
-            log.info("Hold and Recall are not allowed because Page is allowed by policy {} and " +
-              "available item {} exists", policy.getId(), availableItemId);
-            return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
-          }
-        } else {
+        if (policy == null) {
           log.info("Hold and Recall are not allowed because available item {} exists",
             availableItemId);
+          return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
+        } else if (policy.allowsType(RequestType.PAGE)) {
+          log.info("Hold and Recall are not allowed because Page is allowed by policy {} and " +
+            "available item {} exists", policy.getId(), availableItemId);
           return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
         }
       }
