@@ -33,7 +33,6 @@ public class RequestPoliciesFixture {
   }
 
   public IndividualResource allowHoldAndRecallRequestPolicy() {
-
     ArrayList<RequestType> types = new ArrayList<>();
     types.add(RequestType.HOLD);
     types.add(RequestType.RECALL);
