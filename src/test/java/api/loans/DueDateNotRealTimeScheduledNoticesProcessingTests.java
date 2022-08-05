@@ -539,8 +539,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(2);
 
     // setting invalid loanDate should cause DateTimeParseException while building notice context
-    String invalidLoanDate = loanDate.toLocalDateTime().toString() + " o'clock";
-    loansFixture.replaceLoan(firstLoan.getId(), firstLoan.getJson().put("loanDate", invalidLoanDate));
+    loansFixture.replaceLoan(firstLoan.getId(), firstLoan.getJson().put("loanDate", "invalid date"));
 
     ZonedDateTime dueDate = parseDateTime(firstLoan.getJson().getString("dueDate"));
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
