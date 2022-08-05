@@ -137,25 +137,6 @@ public abstract class RenewalAPITests extends APITests {
 
   abstract Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item);
 
-  @ParameterizedTest
-  @ValueSource(strings = {
-    "2020-01-13T01:23:45.000000+0000",
-    "2020-01-13T12:34:56.000000",
-    "2020-01-13T12:34:56+00:00",
-    "2020-01-13T12:34:56.000Z",
-    "2020-01-13T12:34:56Z",
-    "2020-01-13T12:34:56"
-  })
-  void canRenewLoanWithVariousLoanDateFormats(String loanDate) {
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource jessica = usersFixture.jessica();
-    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
-      ZonedDateTime.of(2020, 1, 13, 12, 34, 56, 0, UTC));
-    JsonObject loanFromStorage = loansClient.get(loan.getId()).getJson();
-    loansClient.attemptReplace(loan.getId(), loanFromStorage.put("loanDate", loanDate));
-    renew(smallAngryPlanet, jessica);
-  }
-
   @Test
   void canRenewRollingLoanFromSystemDate() {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
@@ -2094,6 +2075,25 @@ public abstract class RenewalAPITests extends APITests {
       hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
   }
 
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "2020-01-13T12:34:56.123456+0000",
+    "2020-01-13T12:34:56.123456",
+    "2020-01-13T12:34:56+00:00",
+    "2020-01-13T12:34:56.123Z",
+    "2020-01-13T12:34:56Z",
+    "2020-01-13T12:34:56"
+  })
+  void canRenewLoanWithVariousLoanDateFormats(String loanDate) {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      ZonedDateTime.of(2020, 1, 13, 12, 34, 56, 0, UTC));
+    JsonObject loanFromStorage = loansClient.get(loan.getId()).getJson();
+    loansClient.attemptReplace(loan.getId(), loanFromStorage.put("loanDate", loanDate));
+    renew(smallAngryPlanet, jessica);
+  }
   private void checkOutItem(ZonedDateTime loanDate, IndividualResource item, ZonedDateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 
