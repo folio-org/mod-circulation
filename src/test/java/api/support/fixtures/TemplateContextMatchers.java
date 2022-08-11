@@ -293,11 +293,11 @@ public class TemplateContextMatchers {
 
   public static Map<String, Matcher<String>> getInstanceContextMatchers(IndividualResource instanceResource) {
     Instance instance = new InstanceMapper().toDomain(instanceResource.getJson());
-
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("item.title", is(instance.getTitle()));
     tokenMatchers.put("item.primaryContributor", is(instance.getPrimaryContributorName()));
     tokenMatchers.put("item.allContributors", is(instance.getContributorNames().collect(joining("; "))));
+
     return tokenMatchers;
   }
 }

@@ -190,10 +190,8 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createItemContext(Request request) {
-    Item item = request.getItem();
-
-    return item != null && item.isFound()
-      ? createItemContext(item)
+    return request.hasItem()
+      ? createItemContext(request.getItem())
       : createInstanceContext(request.getInstance());
   }
 

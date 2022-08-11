@@ -100,13 +100,13 @@ public class RequestNoticeSender {
   private Result<RequestAndRelatedRecords> sendConfirmationNoticeForRequestWithItemId(
     RequestAndRelatedRecords records) {
 
-    loadMissingLocationDetails(records.getRequest())
+    fetchCampusAndInstitution(records.getRequest())
       .thenApply(r -> r.next(this::sendConfirmationNoticeForRequestWithItemId));
 
     return succeeded(records);
   }
 
-  private CompletableFuture<Result<Request>> loadMissingLocationDetails(Request request) {
+  private CompletableFuture<Result<Request>> fetchCampusAndInstitution(Request request) {
     Item item = request.getItem();
 
     if (item == null || item.isNotFound() || item.getLocation() == null) {

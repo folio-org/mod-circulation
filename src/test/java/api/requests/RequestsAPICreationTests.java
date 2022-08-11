@@ -3609,21 +3609,6 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(itemJsonObject.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
   }
 
-  @Test
-  void confirmationNoticeShouldContainInstancePropertiesWhenTitleLevelRequestIsNotLinkedToItem() {
-    UUID templateId = UUID.randomUUID();
-    templateFixture.createDummyNoticeTemplate(templateId);
-    reconfigureTlrFeature(ENABLED, templateId, null, null);
-    IndividualResource instance = instancesFixture.basedUponDunkirk();
-    holdingsFixture.defaultWithHoldings(instance.getId());
-    UserResource requester = usersFixture.charlotte();
-    requestsFixture.placeTitleLevelHoldShelfRequest(instance.getId(), requester);
-
-    JsonObject confirmationNotice = verifyNumberOfSentNotices(1).get(0);
-    assertThat(confirmationNotice, hasEmailNoticeProperties(requester.getId(),
-      templateId, getInstanceContextMatchers(instance)));
-  }
-
   @ParameterizedTest
   @CsvSource(value = {
     "true,  true,  true,    Notice from Patron Notice Policy",

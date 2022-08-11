@@ -364,6 +364,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return isNotBlank(getItemId());
   }
 
+  public boolean hasItem() {
+    return item != null && item.isFound();
+  }
+
   public enum Operation {
     CREATE, REPLACE, MOVE;
   }
