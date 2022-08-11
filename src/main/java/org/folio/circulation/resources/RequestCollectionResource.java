@@ -1,6 +1,5 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.resources.RequestBlockValidators.regularRequestBlockValidators;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -15,7 +14,6 @@ import org.folio.circulation.domain.MoveRequestService;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.UpdateItem;
@@ -48,6 +46,7 @@ import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.request.RequestRelatedRepositories;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -80,7 +79,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = repositories.getLoanPolicyRepository();
     final var requestRepository = repositories.getRequestRepository();
 
-    final var requestNoticeSender = createRequestNoticeSender(clients, representation);
+    final var requestNoticeSender = new RequestNoticeSender(clients);
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients, requestRepository,
@@ -137,7 +136,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var updateRequestQueue = UpdateRequestQueue.using(clients,
       requestRepository, requestQueueRepository);
     final var eventPublisher = new EventPublisher(routingContext);
-    final var requestNoticeSender = createRequestNoticeSender(clients, representation);
+    final var requestNoticeSender = new RequestNoticeSender(clients);
     final var updateItem = new UpdateItem(itemRepository);
 
     final var updateUponRequest = new UpdateUponRequest(updateItem,
@@ -319,13 +318,4 @@ public class RequestCollectionResource extends CollectionResource {
     return routingContext.request().getParam("id");
   }
 
-  private RequestNoticeSender createRequestNoticeSender(Clients clients,
-    JsonObject representation) {
-
-    String requestLevel = representation.getString("requestLevel");
-    if (TITLE.getValue().equals(requestLevel)) {
-      return new TitleLevelRequestNoticeSender(clients);
-    }
-    return new ItemLevelRequestNoticeSender(clients);
-  }
 }

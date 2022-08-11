@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsAreValid;
+import static api.support.TlrFeatureStatus.ENABLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
@@ -8,6 +9,10 @@ import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
+import static api.support.fixtures.TemplateContextMatchers.getInstanceContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getRequestContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
@@ -33,6 +38,7 @@ import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
@@ -41,7 +47,10 @@ import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.notice.NoticeEventType.HOLD_REQUEST;
+import static org.folio.circulation.domain.notice.NoticeEventType.PAGING_REQUEST;
 import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -591,7 +600,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateTlrRequestWhenUserHasLoanForSomeItemsOfInstance() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    reconfigureTlrFeature(ENABLED);
 
     IndividualResource instanceMultipleCopies = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(
@@ -624,7 +633,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateTlrWhenUserAlreadyRequestedTheSameTitle() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    reconfigureTlrFeature(ENABLED);
 
     final IndividualResource james = usersFixture.james();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
@@ -645,7 +654,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateTlrWhenUserAlreadyRequestedAnItemFromTheSameTitle() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    reconfigureTlrFeature(ENABLED);
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource item1 = items.get(0);
@@ -1297,7 +1306,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
-    assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(pagedRequest.getJson().getString("requestType"), is(PAGE.getValue()));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
   }
@@ -1379,7 +1388,7 @@ public class RequestsAPICreationTests extends APITests {
       pickupServicePointId, instanceId));
 
     JsonObject json = pagedRequest.getJson();
-    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(json.getString("requestType"), is(PAGE.getValue()));
     assertThat(json.getString("holdingsRecordId"), is(defaultWithHoldings.getId().toString()));
     assertThat(json.getString("itemId"), is(item.getId()));
     assertThat(json.getString("instanceId"), is(instanceId));
@@ -1723,7 +1732,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void canCreateTlrRecallForInstanceWithSingleItemAndTwoLoans() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    reconfigureTlrFeature(ENABLED);
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
 
@@ -1742,7 +1751,7 @@ public class RequestsAPICreationTests extends APITests {
 
     PublishedEvents publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(9));
+      .until(FakePubSub::getPublishedEvents, hasSize(10));
 
     JsonObject loanWithoutChange = loansClient.get(initialLoan.getId()).getJson();
     assertNull(loanWithoutChange.getString("dueDateChangedByRecall"));
@@ -2077,7 +2086,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
@@ -2188,7 +2197,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
-    noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
+    noticeContextMatchers.putAll(getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
@@ -2330,13 +2339,13 @@ public class RequestsAPICreationTests extends APITests {
 
     Map<String, Matcher<String>> recallConfirmationContextMatchers = new HashMap<>();
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
-    recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
+    recallConfirmationContextMatchers.putAll(getItemContextMatchers(item, false));
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
     recallConfirmationContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
 
     Map<String, Matcher<String>> recallNotificationContextMatchers = new HashMap<>();
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(loanOwner));
-    recallNotificationContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, false));
+    recallNotificationContextMatchers.putAll(getItemContextMatchers(item, false));
     recallNotificationContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRecall));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
@@ -2499,7 +2508,7 @@ public class RequestsAPICreationTests extends APITests {
       .withUserProxyId(null));
 
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
-    assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(pagedRequest.getJson().getString("requestType"), is(PAGE.getValue()));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
     assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
   }
@@ -3035,7 +3044,7 @@ public class RequestsAPICreationTests extends APITests {
   void titleLevelRequestConfirmationNoticeShouldBeSentWithEnabledTlr() {
     UUID templateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(templateId);
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
+    reconfigureTlrFeature(ENABLED, templateId, null, null);
 
     requestsFixture.place(buildTitleLevelRequest());
     var notices = verifyNumberOfSentNotices(1);
@@ -3063,7 +3072,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void titleLevelRequestConfirmationNoticeShouldNotBeSentWithoutConfiguredNoticeTemplate() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+    reconfigureTlrFeature(ENABLED, null, null, null);
 
     requestsFixture.place(buildTitleLevelRequest());
     verifyNumberOfSentNotices(0);
@@ -3073,7 +3082,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateItemLevelRequestWithoutInstanceId() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+    reconfigureTlrFeature(ENABLED, null, null, null);
 
     ItemResource item = itemsFixture.basedUponNod();
 
@@ -3134,7 +3143,7 @@ public class RequestsAPICreationTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
   void cannotCreateRequestWithItemIdButNoHoldingsRecordId(RequestLevel requestLevel) {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+    reconfigureTlrFeature(ENABLED, null, null, null);
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .page()
@@ -3600,6 +3609,111 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(itemJsonObject.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
   }
 
+  @Test
+  void confirmationNoticeShouldContainInstancePropertiesWhenTitleLevelRequestIsNotLinkedToItem() {
+    UUID templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+    reconfigureTlrFeature(ENABLED, templateId, null, null);
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    holdingsFixture.defaultWithHoldings(instance.getId());
+    UserResource requester = usersFixture.charlotte();
+    requestsFixture.placeTitleLevelHoldShelfRequest(instance.getId(), requester);
+
+    JsonObject confirmationNotice = verifyNumberOfSentNotices(1).get(0);
+    assertThat(confirmationNotice, hasEmailNoticeProperties(requester.getId(),
+      templateId, getInstanceContextMatchers(instance)));
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "true,  true,  true,    Notice from Patron Notice Policy",
+    "false, true,  true,    Notice from TLR-settings",
+    "true,  true,  false,   No notice",
+    "false, true,  false,   Notice from TLR-settings",
+    "true,  false, true,    Notice from Patron Notice Policy",
+    "false, false, true,    No notice",
+    "true,  false, false,   No notice",
+    "false, false, false,   No notice"
+  })
+  void titleLevelRequestConfirmationNoticeIsSentAccordingToConfiguration(boolean requestHasItemId,
+    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy,
+    String expectedTemplateNameForSentNotice) {
+
+    // set up instance
+    IndividualResource instance = null;
+    ItemResource item = null;
+    UUID instanceId;
+    RequestType requestType;
+    NoticeEventType noticeEventType;
+    if (requestHasItemId) {
+      requestType = PAGE;
+      noticeEventType = PAGING_REQUEST;
+      ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+        materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+      HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings("CN", "Prefix",
+        "Suffix", singletonList("CopyNumbers"));
+      item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+      instanceId = item.getInstanceId();
+    } else {
+      requestType = HOLD;
+      noticeEventType = HOLD_REQUEST;
+      instance = instancesFixture.basedUponDunkirk();
+      instanceId = instance.getId();
+      holdingsFixture.defaultWithHoldings(instanceId);
+    }
+
+    // set up templates
+    UUID templateIdFromNoticePolicy = UUID.randomUUID();
+    UUID templateIdFromTlrSettings = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateIdFromNoticePolicy);
+    templateFixture.createDummyNoticeTemplate(templateIdFromTlrSettings);
+    Map<String, UUID> templateNameToId = Map.of(
+      "Notice from Patron Notice Policy", templateIdFromNoticePolicy,
+      "Notice from TLR-settings", templateIdFromTlrSettings);
+
+    // set up TLR settings
+    reconfigureTlrFeature(ENABLED, isNoticeEnabledInTlrSettings ? templateIdFromTlrSettings : null,
+      null, null);
+
+    // set up patron notice policy
+    if (isNoticeEnabledInNoticePolicy) {
+      use(new NoticePolicyBuilder()
+        .withName("Test patron notice policy")
+        .withLoanNotices(singletonList(
+          new NoticeConfigurationBuilder()
+            .withTemplateId(templateIdFromNoticePolicy)
+            .withEventType(noticeEventType.getRepresentation())
+            .create())));
+    }
+
+    // create request
+    var requester = usersFixture.james();
+    var requesterId = requester.getId();
+    var request = requestsFixture.placeTitleLevelRequest(requestType, instanceId, requester);
+    assertThat(request.getJson().getString("itemId"), requestHasItemId ? notNullValue() : nullValue());
+
+    // verify result
+    UUID expectedTemplateId = templateNameToId.get(expectedTemplateNameForSentNotice);
+    if (expectedTemplateId == null) {
+      verifyNumberOfSentNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 0);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    } else {
+      JsonObject sentNotice = verifyNumberOfSentNotices(1).get(0);
+      Map<String, Matcher<String>> matchers = new HashMap<>();
+      matchers.putAll(getUserContextMatchers(requester));
+      matchers.putAll(getRequestContextMatchers(request));
+      if (requestHasItemId) {
+        matchers.putAll(getItemContextMatchers(item, true));
+        assertThat(sentNotice, hasEmailNoticeProperties(requesterId, expectedTemplateId, matchers));
+      } else {
+        matchers.putAll(getInstanceContextMatchers(instance));
+        assertThat(sentNotice, hasEmailNoticeProperties(requesterId, expectedTemplateId, matchers));
+      }
+    }
+
+  }
+
   private boolean isNotPaged(IndividualResource item) {
     return !PAGED.getValue().equals(item.getJson().getJsonObject("status").getString("name"));
   }
@@ -3803,13 +3917,15 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private RequestBuilder buildTitleLevelRequest() {
-    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    holdingsFixture.defaultWithHoldings(instance.getId());
+
     return new RequestBuilder()
-      .page()
+      .hold()
       .titleRequestLevel()
       .withNoItemId()
       .withNoHoldingsRecordId()
-      .withInstanceId(itemResource.getInstanceId())
+      .withInstanceId(instance.getId())
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)

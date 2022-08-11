@@ -14,11 +14,11 @@ import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.FeeFineAction;
+import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -67,14 +67,10 @@ public class TemplateContextUtil {
   public static JsonObject createRequestNoticeContext(Request request) {
     JsonObject requestNoticeContext = new JsonObject()
       .put(USER, createUserContext(request.getRequester()))
-      .put(REQUEST, createRequestContext(request));
+      .put(REQUEST, createRequestContext(request))
+      .put(ITEM, createItemContext(request));
 
-    // item may be missing if it is a title level request
-    if (request.getItem() != null && request.getItem().isFound()) {
-      requestNoticeContext.put(ITEM, createItemContext(request.getItem()));
-    }
-
-    if (request.getRequestType() == RequestType.RECALL && request.getLoan() != null) {
+    if (request.isRecall() && request.getLoan() != null) {
       requestNoticeContext.put(LOAN, createLoanContext(request.getLoan()));
     }
     return requestNoticeContext;
@@ -156,18 +152,12 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createItemContext(Item item) {
-    String contributorNamesToken = item.getContributorNames()
-      .collect(joining("; "));
-
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
 
-    JsonObject itemContext = new JsonObject()
-      .put("title", item.getTitle())
+    JsonObject itemContext = createInstanceContext(item.getInstance())
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
-      .put("primaryContributor", item.getPrimaryContributorName())
-      .put("allContributors", contributorNamesToken)
       .put("enumeration", item.getEnumeration())
       .put("volume", item.getVolume())
       .put("chronology", item.getChronology())
@@ -199,13 +189,34 @@ public class TemplateContextUtil {
     return itemContext;
   }
 
+  private static JsonObject createItemContext(Request request) {
+    Item item = request.getItem();
+
+    return item != null && item.isFound()
+      ? createItemContext(item)
+      : createInstanceContext(request.getInstance());
+  }
+
+  private static JsonObject createInstanceContext(Instance instance) {
+    JsonObject instanceContext = new JsonObject();
+
+    if (instance != null && instance.isFound()) {
+      instanceContext
+        .put("title", instance.getTitle())
+        .put("primaryContributor", instance.getPrimaryContributorName())
+        .put("allContributors", instance.getContributorNames().collect(joining("; ")));
+    }
+
+    return instanceContext;
+  }
+
   private static JsonObject createRequestContext(Request request) {
     Optional<Request> optionalRequest = Optional.ofNullable(request);
     JsonObject requestContext = new JsonObject();
 
     optionalRequest
       .map(Request::getId)
-      .ifPresent(value -> requestContext.put("requestID", value));
+      .ifPresent(value -> requestContext.put("requestId", value));
     optionalRequest
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)

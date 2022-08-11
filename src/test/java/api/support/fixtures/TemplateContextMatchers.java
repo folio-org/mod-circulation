@@ -4,6 +4,7 @@ import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.time.ZoneOffset.UTC;
+import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDoubleProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
@@ -25,6 +26,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFineAction;
+import org.folio.circulation.domain.Instance;
+import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.hamcrest.Matcher;
 
 import api.support.http.IndividualResource;
@@ -171,6 +174,7 @@ public class TemplateContextMatchers {
 
   public static Map<String, Matcher<String>> getRequestContextMatchers(
     IndividualResource requestResource) {
+
     return getRequestContextMatchers(requestResource.getJson());
   }
 
@@ -179,11 +183,19 @@ public class TemplateContextMatchers {
 
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("request.servicePointPickup", notNullValue(String.class));
-    tokenMatchers.put("request.requestExpirationDate ", isEquivalentTo(ZonedDateTime
-      .of(getDateTimeProperty(request, "requestExpirationDate").withZoneSameInstant(UTC).toLocalDate(),
-        LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
-    tokenMatchers.put("request.holdShelfExpirationDate",
-      isEquivalentTo(getDateTimeProperty(request, "holdShelfExpirationDate")));
+
+    ZonedDateTime requestExpirationDate = getDateTimeProperty(request, "requestExpirationDate");
+    if (requestExpirationDate != null) {
+      tokenMatchers.put("request.requestExpirationDate ", isEquivalentTo(ZonedDateTime
+        .of(requestExpirationDate.withZoneSameInstant(UTC).toLocalDate(),
+          LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    }
+
+    ZonedDateTime holdShelfExpirationDate = getDateTimeProperty(request, "holdShelfExpirationDate");
+    if (holdShelfExpirationDate != null) {
+      tokenMatchers.put("request.holdShelfExpirationDate", isEquivalentTo(holdShelfExpirationDate));
+    }
+
     return tokenMatchers;
   }
 
@@ -277,5 +289,15 @@ public class TemplateContextMatchers {
       hasJsonPath("feeAction.amount", is(getDoubleProperty(action, "amountAction", -1.0))),
       hasJsonPath("feeAction.remainingAmount", is(getDoubleProperty(action, "balance", -1.0)))
     );
+  }
+
+  public static Map<String, Matcher<String>> getInstanceContextMatchers(IndividualResource instanceResource) {
+    Instance instance = new InstanceMapper().toDomain(instanceResource.getJson());
+
+    Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
+    tokenMatchers.put("item.title", is(instance.getTitle()));
+    tokenMatchers.put("item.primaryContributor", is(instance.getPrimaryContributorName()));
+    tokenMatchers.put("item.allContributors", is(instance.getContributorNames().collect(joining("; "))));
+    return tokenMatchers;
   }
 }
