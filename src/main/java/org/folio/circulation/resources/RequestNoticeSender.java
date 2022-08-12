@@ -187,7 +187,7 @@ public class RequestNoticeSender {
     PatronNoticeEvent event = createPatronNoticeEvent(request, getEventType(request));
 
     return patronNoticeService.acceptNoticeEvent(event)
-      .thenCompose(r -> r.after(v -> sendNoticeOnRecall(request)));
+      .whenComplete((r, t) -> sendNoticeOnRecall(request));
   }
 
   private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithoutItemId(
@@ -287,8 +287,9 @@ public class RequestNoticeSender {
       .withNoticeLogContext(NoticeLogContext.from(loan))
       .build();
 
-    return patronNoticeService.acceptNoticeEvent(itemRecalledEvent)
-      .thenCompose(r -> r.after(v -> eventPublisher.publishRecallRequestedEvent(loan)));
+    eventPublisher.publishRecallRequestedEvent(loan);
+
+    return patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
   }
 
   private static PatronNoticeEvent createPatronNoticeEvent(Request request,
