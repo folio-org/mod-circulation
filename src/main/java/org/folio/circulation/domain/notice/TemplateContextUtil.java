@@ -214,7 +214,7 @@ public class TemplateContextUtil {
 
     optionalRequest
       .map(Request::getId)
-      .ifPresent(value -> requestContext.put("requestId", value));
+      .ifPresent(value -> requestContext.put("requestID", value));
     optionalRequest
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)

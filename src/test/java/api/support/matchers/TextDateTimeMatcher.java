@@ -58,7 +58,7 @@ public class TextDateTimeMatcher {
       @Override
       public void describeTo(Description description) {
         description.appendText(String.format(
-          "a date time within %l seconds after %s",
+          "a date time within %d seconds after %s",
           seconds, formatDateTimeOptional(after)));
       }
 
