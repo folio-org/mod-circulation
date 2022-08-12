@@ -1,7 +1,11 @@
 package org.folio.circulation.resources;
 
+import static java.util.Optional.ofNullable;
+import static org.folio.circulation.domain.notice.NoticeEventType.AVAILABLE;
+import static org.folio.circulation.domain.notice.NoticeEventType.ITEM_RECALLED;
 import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCELLATION;
 import static org.folio.circulation.domain.notice.NoticeFormat.EMAIL;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -35,7 +39,6 @@ import org.folio.circulation.domain.notice.PatronNotice;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
-import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -49,6 +52,7 @@ import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.json.JsonObject;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -90,114 +94,49 @@ public class RequestNoticeSender {
   protected final LocationRepository locationRepository;
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
-    RequestAndRelatedRecords relatedRecords) {
-
-    return relatedRecords.getRequest().hasItemId()
-      ? sendConfirmationNoticeForRequestWithItemId(relatedRecords)
-      : sendConfirmationNoticeForRequestWithoutItemId(relatedRecords);
-  }
-
-  private Result<RequestAndRelatedRecords> sendConfirmationNoticeForRequestWithItemId(
     RequestAndRelatedRecords records) {
 
-    fetchCampusAndInstitution(records.getRequest())
-      .thenApply(r -> r.next(this::sendConfirmationNoticeForRequestWithItemId));
+    Request request = records.getRequest();
 
-    return succeeded(records);
-  }
-
-  private CompletableFuture<Result<Request>> fetchCampusAndInstitution(Request request) {
-    Item item = request.getItem();
-
-    if (item == null || item.isNotFound() || item.getLocation() == null) {
-      return ofAsync(request);
+    if (request.hasItemId()) {
+      sendConfirmationNoticeForRequestWithItemId(request);
+    } else {
+      sendConfirmationNoticeForRequestWithoutItemId(request);
     }
 
-    return ofAsync(item.getLocation())
-      .thenCompose(r -> r.after(locationRepository::loadCampus))
-      .thenCompose(r -> r.after(locationRepository::loadInstitution))
-      .thenApply(r -> r.map(request.getItem()::withLocation))
-      .thenApply(r -> r.map(request::withItem));
-  }
-
-  private Result<Request> sendConfirmationNoticeForRequestWithItemId(Request request) {
-    patronNoticeService.acceptNoticeEvent(createPatronNoticeEvent(request, getEventType(request)));
-    sendNoticeOnRecall(request);
-
-    return succeeded(request);
-  }
-
-  private Result<RequestAndRelatedRecords> sendConfirmationNoticeForRequestWithoutItemId(
-    RequestAndRelatedRecords records) {
-
-    return sendNoticeForRequestWithoutItemId(records, getEventType(records.getRequest()),
-      TlrSettingsConfiguration::getConfirmationPatronNoticeTemplateId);
+    return succeeded(records);
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCancelled(
-    RequestAndRelatedRecords relatedRecords) {
-
-    return relatedRecords.getRequest().hasItemId()
-      ? sendCancellationNoticeForRequestWithItemId(relatedRecords)
-      : sendCancellationNoticeForRequestWithoutItemId(relatedRecords);
-  }
-
-  private Result<RequestAndRelatedRecords> sendCancellationNoticeForRequestWithItemId(
-    RequestAndRelatedRecords relatedRecords) {
-
-    patronNoticeService.acceptNoticeEvent(
-      createPatronNoticeEvent(relatedRecords.getRequest(), REQUEST_CANCELLATION));
-
-    return succeeded(relatedRecords);
-  }
-
-  private Result<RequestAndRelatedRecords> sendCancellationNoticeForRequestWithoutItemId(
     RequestAndRelatedRecords records) {
 
-    return sendNoticeForRequestWithoutItemId(records, REQUEST_CANCELLATION,
-      TlrSettingsConfiguration::getCancellationPatronNoticeTemplateId);
-  }
-
-  private Result<RequestAndRelatedRecords> sendNoticeForRequestWithoutItemId(
-    RequestAndRelatedRecords records, NoticeEventType noticeEventType,
-    Function<TlrSettingsConfiguration, UUID> templateIdExtractor) {
-
     Request request = records.getRequest();
-    TlrSettingsConfiguration tlrSettings = request.getTlrSettingsConfiguration();
-    UUID templateId = templateIdExtractor.apply(tlrSettings);
 
-    if (tlrSettings.isTitleLevelRequestsFeatureEnabled() && templateId != null) {
-      PatronNoticeEvent patronNoticeEvent = createPatronNoticeEvent(request, noticeEventType);
-      NoticeLogContext noticeLogContext = patronNoticeEvent.getNoticeLogContext()
-        .withTriggeringEvent(patronNoticeEvent.getEventType().getRepresentation())
-        .withTemplateId(templateId.toString());
-      NoticeConfiguration noticeConfiguration = buildTlrNoticeConfiguration(patronNoticeEvent,
-        templateId);
-      PatronNotice patronNotice = new PatronNotice(patronNoticeEvent.getUser().getId(),
-        patronNoticeEvent.getNoticeContext(), noticeConfiguration);
-
-      patronNoticeService.sendNotice(patronNotice, noticeLogContext);
+    if (request.hasItemId()) {
+      sendCancellationNoticeForRequestWithItemId(request);
+    } else {
+      sendCancellationNoticeForRequestWithoutItemId(request);
     }
 
     return succeeded(records);
   }
 
-  public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(
-    RequestAndRelatedRecords relatedRecords) {
+  public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(RequestAndRelatedRecords records) {
+    sendNoticeOnRecall(records.getRequest());
 
-    sendNoticeOnRecall(relatedRecords.getRequest());
-
-    return succeeded(relatedRecords);
+    return succeeded(records);
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestUpdated(
-    RequestAndRelatedRecords relatedRecords) {
-    if (relatedRecords.getRequest().getStatus() == RequestStatus.CLOSED_CANCELLED) {
-      requestRepository.loadCancellationReason(relatedRecords.getRequest())
-        .thenApply(r -> r.map(relatedRecords::withRequest))
+    RequestAndRelatedRecords records) {
+
+    if (records.getRequest().getStatus() == RequestStatus.CLOSED_CANCELLED) {
+      requestRepository.loadCancellationReason(records.getRequest())
+        .thenApply(r -> r.map(records::withRequest))
         .thenAccept(r -> r.next(this::sendNoticeOnRequestCancelled));
     }
-    return succeeded(relatedRecords);
+
+    return succeeded(records);
   }
 
   public Result<CheckInContext> sendNoticeOnRequestAwaitingPickup(CheckInContext context) {
@@ -223,12 +162,89 @@ public class RequestNoticeSender {
     return succeeded(context);
   }
 
-  private void fetchDataAndSendRequestAwaitingPickupNotice(Request request) {
-    ofAsync(() -> request)
+  private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithItemId(
+    Request request) {
+
+    return fetchMissingLocationDetails(request)
+      .thenCompose(r -> r.after(this::sendConfirmationNoticeForRequestWithItem));
+  }
+
+  private CompletableFuture<Result<Request>> fetchMissingLocationDetails(Request request) {
+    Item item = request.getItem();
+
+    if (item == null || item.isNotFound() || item.getLocation() == null) {
+      return ofAsync(request);
+    }
+
+    return ofAsync(item.getLocation())
+      .thenCompose(r -> r.after(locationRepository::loadCampus))
+      .thenCompose(r -> r.after(locationRepository::loadInstitution))
+      .thenApply(r -> r.map(request.getItem()::withLocation))
+      .thenApply(r -> r.map(request::withItem));
+  }
+
+  private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithItem(Request request) {
+    PatronNoticeEvent event = createPatronNoticeEvent(request, getEventType(request));
+
+    return patronNoticeService.acceptNoticeEvent(event)
+      .thenCompose(r -> r.after(v -> sendNoticeOnRecall(request)));
+  }
+
+  private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithoutItemId(
+    Request request) {
+
+    return sendNoticeForRequestWithoutItemId(request, getEventType(request),
+      TlrSettingsConfiguration::getConfirmationPatronNoticeTemplateId);
+  }
+
+  private CompletableFuture<Result<Void>> sendCancellationNoticeForRequestWithItemId(
+    Request request) {
+
+    return patronNoticeService.acceptNoticeEvent(
+      createPatronNoticeEvent(request, REQUEST_CANCELLATION));
+  }
+
+  private CompletableFuture<Result<Void>> sendCancellationNoticeForRequestWithoutItemId(
+    Request request) {
+
+    return sendNoticeForRequestWithoutItemId(request, REQUEST_CANCELLATION,
+      TlrSettingsConfiguration::getCancellationPatronNoticeTemplateId);
+  }
+
+  private CompletableFuture<Result<Void>> sendNoticeForRequestWithoutItemId(Request request,
+    NoticeEventType eventType, Function<TlrSettingsConfiguration, UUID> templateIdExtractor) {
+
+    return ofNullable(request.getTlrSettingsConfiguration())
+      .filter(TlrSettingsConfiguration::isTitleLevelRequestsFeatureEnabled)
+      .map(templateIdExtractor)
+      .map(templateId -> sendNotice(request, templateId, eventType))
+      .orElseGet(() -> ofAsync(null));
+  }
+
+  private CompletableFuture<Result<Void>> sendNotice(Request request, UUID templateId,
+    NoticeEventType eventType) {
+
+    JsonObject noticeContext = createRequestNoticeContext(request);
+    NoticeLogContext noticeLogContext = NoticeLogContext.from(request)
+      .withTriggeringEvent(eventType.getRepresentation())
+      .withTemplateId(templateId.toString());
+    NoticeConfiguration noticeConfiguration = new NoticeConfiguration(templateId.toString(),
+      EMAIL, eventType, null, null, false, null, true);
+    PatronNotice patronNotice = new PatronNotice(request.getUserId(), noticeContext,
+      noticeConfiguration);
+
+    return patronNoticeService.sendNotice(patronNotice, noticeLogContext);
+  }
+
+  private CompletableFuture<Result<Void>> fetchDataAndSendRequestAwaitingPickupNotice(
+    Request request) {
+
+    return ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
       .thenCompose(r -> r.combineAfter(this::fetchRequester, Request::withRequester))
       .thenApply(r -> r.mapFailure(failure -> publishNoticeErrorEvent(failure, request)))
-      .thenCompose(r -> r.after(this::sendRequestAwaitingPickupNotice));
+      .thenApply(r -> r.map(req -> createPatronNoticeEvent(req, AVAILABLE)))
+      .thenCompose(r -> r.after(patronNoticeService::acceptNoticeEvent));
   }
 
   private CompletableFuture<Result<User>> fetchRequester(Request request) {
@@ -247,11 +263,6 @@ public class RequestNoticeSender {
         sp -> new RecordNotFoundFailure("servicePoint", pickupServicePointId)));
   }
 
-  private CompletableFuture<Result<Void>> sendRequestAwaitingPickupNotice(Request request) {
-    return patronNoticeService.acceptNoticeEvent(
-      createPatronNoticeEvent(request, NoticeEventType.AVAILABLE));
-  }
-
   private Result<Request> publishNoticeErrorEvent(HttpFailure failure, Request request) {
     log.error("Failed to send Request Awaiting Pickup notice for request {} to user {}. Cause: {}",
       request.getId(), request.getRequesterId(), failure);
@@ -261,41 +272,35 @@ public class RequestNoticeSender {
     return failed(failure);
   }
 
-  private void sendNoticeOnRecall(Request request) {
+  private CompletableFuture<Result<Void>> sendNoticeOnRecall(Request request) {
     Loan loan = request.getLoan();
 
-    if (request.isRecall() && loan != null && loan.getUser() != null && loan.getItem() != null) {
-      PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
-        .withItem(loan.getItem())
-        .withUser(loan.getUser())
-        .withEventType(NoticeEventType.ITEM_RECALLED)
-        .withNoticeContext(TemplateContextUtil.createLoanNoticeContext(loan))
-        .withNoticeLogContext(NoticeLogContext.from(loan))
-        .build();
-      patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
-      eventPublisher.publishRecallRequestedEvent(loan);
+    if (!request.isRecall() || loan == null || loan.getUser() == null || loan.getItem() == null) {
+      return ofAsync(null);
     }
+
+    PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
+      .withItem(loan.getItem())
+      .withUser(loan.getUser())
+      .withEventType(ITEM_RECALLED)
+      .withNoticeContext(createLoanNoticeContext(loan))
+      .withNoticeLogContext(NoticeLogContext.from(loan))
+      .build();
+
+    return patronNoticeService.acceptNoticeEvent(itemRecalledEvent)
+      .thenCompose(r -> r.after(v -> eventPublisher.publishRecallRequestedEvent(loan)));
   }
 
   private static PatronNoticeEvent createPatronNoticeEvent(Request request,
     NoticeEventType noticeEventType) {
 
-    Item item = request.getItem();
-
     return new PatronNoticeEventBuilder()
       .withUser(request.getRequester())
       .withEventType(noticeEventType)
-      .withItem(item != null && item.isFound() ? item : null)
+      .withItem(request.hasItem() ? request.getItem() : null)
       .withNoticeContext(createRequestNoticeContext(request))
       .withNoticeLogContext(NoticeLogContext.from(request))
       .build();
-  }
-
-  private NoticeConfiguration buildTlrNoticeConfiguration(PatronNoticeEvent patronNoticeEvent,
-    UUID templateId) {
-
-    return new NoticeConfiguration(templateId.toString(), EMAIL,
-      patronNoticeEvent.getEventType(), null, null, false, null, true);
   }
 
   private static NoticeEventType getEventType(Request request) {
