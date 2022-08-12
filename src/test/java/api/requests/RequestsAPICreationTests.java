@@ -3624,7 +3624,6 @@ public class RequestsAPICreationTests extends APITests {
     boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy,
     String expectedTemplateNameForSentNotice) {
 
-    // set up instance
     IndividualResource instance = null;
     ItemResource item = null;
     UUID instanceId;
@@ -3696,7 +3695,6 @@ public class RequestsAPICreationTests extends APITests {
         assertThat(sentNotice, hasEmailNoticeProperties(requesterId, expectedTemplateId, matchers));
       }
     }
-
   }
 
   private boolean isNotPaged(IndividualResource item) {
