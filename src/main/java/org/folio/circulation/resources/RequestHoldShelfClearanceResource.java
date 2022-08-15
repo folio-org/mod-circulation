@@ -1,6 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.OPEN_AWAITING_PICKUP;
@@ -92,7 +92,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
     final String servicePointId = routingContext.request().getParam(SERVICE_POINT_ID_PARAM);
 
-    itemReportRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getValue())
+    itemReportRepository.getAllItemsByField(STATUS_NAME_KEY, AWAITING_PICKUP.getName())
       .thenComposeAsync(r -> r.after(this::mapContextToItemIdList))
       .thenComposeAsync(r -> r.after(this::mapItemIdsInBatchItemIds))
       .thenComposeAsync(r -> findAwaitingPickupRequestsByItemsIds(requestsStorage, r.value()))

@@ -3,7 +3,7 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatusName.IN_TRANSIT;
 import static org.folio.circulation.support.results.Result.combineAll;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -87,7 +87,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     ItemsInTransitReportContext context) {
 
-    return itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
+    return itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getName())
       .thenApply(r -> r.next(itemsReportFetcher ->
         combineAll(itemsReportFetcher.getResultListOfItems())
           .map(listOfPages -> listOfPages.stream()

@@ -2,10 +2,7 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
-import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
-import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -31,6 +28,7 @@ import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.LastCheckIn;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
@@ -93,7 +91,7 @@ public class ItemRepository {
 
     final var updatedItemRepresentation = identityMap.get(item.getItemId());
 
-    write(updatedItemRepresentation, STATUS_PROPERTY,
+    write(updatedItemRepresentation, "status",
       new JsonObject().put("name", item.getStatus().getValue()));
 
     remove(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
@@ -102,33 +100,22 @@ public class ItemRepository {
 
     final var lastCheckIn = item.getLastCheckIn();
 
-    if (lastCheckIn == null) {
-      remove(updatedItemRepresentation, LAST_CHECK_IN);
-    }
-    else {
-      write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
-    }
+    setLastCheckIn(updatedItemRepresentation, lastCheckIn);
 
     return itemsClient.put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
   }
 
-  public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
-    return holdingsRepository.fetchByInstanceId(instanceId)
-      .thenCompose(r -> r.after(this::getAvailableItem));
-  }
+  private void setLastCheckIn(JsonObject representation, LastCheckIn lastCheckIn) {
+    final var LAST_CHECK_IN_PROPERTY = "lastCheckIn";
 
-  private CompletableFuture<Result<Item>> getAvailableItem(
-    MultipleRecords<Holdings> holdingsRecords) {
-
-    if (holdingsRecords == null || holdingsRecords.isEmpty()) {
-      return ofAsync(() -> Item.from(null));
+    if (lastCheckIn == null) {
+      remove(representation, LAST_CHECK_IN_PROPERTY);
     }
-
-    return findByIndexNameAndQuery(holdingsRecords.toKeys(Holdings::getId),
-      "holdingsRecordId", exactMatch("status.name", AVAILABLE.getValue()))
-      .thenApply(mapResult(MultipleRecords::firstOrNull));
+    else {
+      write(representation, LAST_CHECK_IN_PROPERTY, lastCheckIn.toJson());
+    }
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
@@ -147,9 +134,9 @@ public class ItemRepository {
     return result.combineAfter(this::fetchLocations,
       (items, locations) -> items
         .combineRecords(locations, matchRecordsById(Item::getPermanentLocationId, Location::getId),
-          Item::withPermanentLocation, null)
+          Item::withPermanentLocation, Location.unknown())
         .combineRecords(locations, matchRecordsById(Item::getEffectiveLocationId, Location::getId),
-          Item::withLocation, null));
+          Item::withLocation, Location.unknown()));
   }
 
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(

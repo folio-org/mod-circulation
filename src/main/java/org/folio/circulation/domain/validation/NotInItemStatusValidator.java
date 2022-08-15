@@ -1,10 +1,10 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.Result.succeeded;
 
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.results.Result;
 
@@ -20,11 +20,11 @@ public final class NotInItemStatusValidator {
   }
 
   private static Result<Loan> refuseWhenItemIsNotInStatus(
-    Result<Loan> loanResult, ItemStatus status) {
+    Result<Loan> loanResult, ItemStatusName status) {
 
     return loanResult.failWhen(
       records -> succeeded(loanResult.value().getItem().isNotInStatus(status)),
       loan -> singleValidationError(String.format("Item is not %s",
-        status.getValue()), "itemId", loanResult.value().getItem().getItemId()));
+        status.getName()), "itemId", loanResult.value().getItem().getItemId()));
   }
 }

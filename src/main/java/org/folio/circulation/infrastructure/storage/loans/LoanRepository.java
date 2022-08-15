@@ -3,7 +3,7 @@ package org.folio.circulation.infrastructure.storage.loans;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatusName.IN_TRANSIT;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.FEESANDFINES;
@@ -67,6 +67,7 @@ import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String RECORDS_PROPERTY_NAME = "loans";
@@ -143,13 +144,13 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * success with null if the no open loan is found,
    * failure if more than one open loan for the item found
    */
-  public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
+  public CompletableFuture<Result<Loan>> findOpenLoanForItem(@NonNull Item item) {
     return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         if (loans.getTotalRecords() == 0) {
           return succeeded(null);
         }
-        else if(loans.getTotalRecords() == 1) {
+        else if (loans.getTotalRecords() == 1) {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
 
           return firstLoan
@@ -235,7 +236,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Collection<Loan>>> findByItemIds(
     Collection<String> itemIds) {
 
-    Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
+    Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getName());
     FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
       loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 

@@ -13,6 +13,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -29,7 +30,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
@@ -1045,7 +1045,7 @@ class InstanceRequestsAPICreationTests extends APITests {
       ? holdRequest.getJson().getJsonObject("item") : new JsonObject();
 
     assertThat(requestedItem.getString("status"),
-      is(ItemStatus.CHECKED_OUT.getValue()));
+      is(CHECKED_OUT.getName()));
   }
 
 }

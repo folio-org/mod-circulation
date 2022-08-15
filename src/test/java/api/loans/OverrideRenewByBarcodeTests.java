@@ -22,7 +22,7 @@ import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEven
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -462,7 +463,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat("item status should be changed",
       renewedLoan.getJsonObject("item").getJsonObject("status").getString("name"),
-      is(CHECKED_OUT.getValue()));
+      is(CHECKED_OUT.getName()));
 
     ZonedDateTime expectedDueDate = loanDate.plusWeeks(2);
     assertThat("due date should be 2 weeks later",

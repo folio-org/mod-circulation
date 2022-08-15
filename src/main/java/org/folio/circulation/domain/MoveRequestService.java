@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
 import static org.folio.circulation.support.results.Result.of;
 
@@ -75,7 +76,7 @@ public class MoveRequestService {
 
     Item item = requestAndRelatedRecords.getRequest().getItem();
 
-    if (item.getStatus().equals(ItemStatus.AVAILABLE)) {
+    if (item.getStatus().is(AVAILABLE)) {
       return requestAndRelatedRecords.withRequestType(RequestType.PAGE);
     }
 

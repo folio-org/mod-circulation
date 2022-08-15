@@ -3,7 +3,7 @@ package org.folio.circulation.services;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RENEWED;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.domain.AccountRefundReason.LOST_ITEM_FOUND;
-import static org.folio.circulation.domain.ItemStatus.LOST_AND_PAID;
+import static org.folio.circulation.domain.ItemStatusName.LOST_AND_PAID;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -59,7 +59,8 @@ public final class LostItemFeeRefundContext {
   }
 
   boolean shouldRefundFeesForItem() {
-    return initialItemStatus.isLostNotResolved() || initialItemStatus == LOST_AND_PAID;
+    return initialItemStatus.isLostNotResolved()
+      || initialItemStatus.getName() == LOST_AND_PAID;
   }
 
   boolean hasLoan() {

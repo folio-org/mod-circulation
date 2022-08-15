@@ -1,6 +1,7 @@
 package org.folio.circulation.storage.mappers;
 
 import static org.apache.commons.lang3.StringUtils.firstNonBlank;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
@@ -11,6 +12,8 @@ import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemDescription;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.LastCheckIn;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
@@ -21,7 +24,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ItemMapper {
   public Item toDomain(JsonObject representation) {
-    return new Item(getProperty(representation, "id"), representation,
+    return new Item(getProperty(representation, "id"),
       Location.unknown(getProperty(representation, "effectiveLocationId")),
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
@@ -30,7 +33,8 @@ public class ItemMapper {
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
       Instance.unknown(),
       MaterialType.unknown(getProperty(representation, "materialTypeId")),
-      LoanType.unknown(getLoanTypeId(representation)), getDescription(representation));
+      LoanType.unknown(getLoanTypeId(representation)), getDescription(representation),
+      getItemStatus(representation));
   }
 
   private ItemDescription getDescription(JsonObject representation) {
@@ -44,6 +48,14 @@ public class ItemMapper {
       getProperty(representation, "descriptionOfPieces"),
       toStream(representation, "yearCaption")
         .collect(Collectors.toList()));
+  }
+
+  private ItemStatus getItemStatus(JsonObject representation) {
+    final String STATUS_PROPERTY = "status";
+
+    return new ItemStatus(ItemStatusName
+      .from(getNestedStringProperty(representation, STATUS_PROPERTY, "name")),
+        getNestedStringProperty(representation, STATUS_PROPERTY, "date"));
   }
 
   private ServicePoint getInTransitServicePoint(JsonObject representation) {

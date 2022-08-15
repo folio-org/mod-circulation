@@ -9,6 +9,7 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 /**
  * The loan captures a snapshot of the item status
@@ -54,7 +55,7 @@ public class CheckInContext {
       this.itemStatusBeforeCheckIn);
   }
 
-  public CheckInContext withItem(Item item) {
+  public CheckInContext withItem(@NonNull Item item) {
 
     //When the item is updated, also update the item for the loan,
     //as they should be the same

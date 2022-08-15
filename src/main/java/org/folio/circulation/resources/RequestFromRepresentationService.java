@@ -5,9 +5,10 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
+import static org.folio.circulation.domain.ItemStatusName.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatusName.PAGED;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
@@ -51,7 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -85,7 +86,7 @@ import io.vertx.core.json.JsonObject;
 class RequestFromRepresentationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
-  private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
+  private static final Set<ItemStatusName> RECALLABLE_ITEM_STATUSES =
     Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
   private final Request.Operation operation;
   private final InstanceRepository instanceRepository;
@@ -317,7 +318,7 @@ class RequestFromRepresentationService {
   private Result<Request> findRecallableItemOrFail(Request request) {
     return request.getInstanceItems()
       .stream()
-      .filter(item -> RECALLABLE_ITEM_STATUSES.contains(item.getStatus()))
+      .filter(item -> RECALLABLE_ITEM_STATUSES.contains(item.getStatus().getName()))
       .findFirst()
       .map(request::withItem)
       .map(Result::succeeded)

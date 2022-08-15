@@ -1,8 +1,8 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_DELIVERY;
+import static org.folio.circulation.domain.ItemStatusName.AWAITING_PICKUP;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +35,7 @@ public enum RequestFulfilmentPreference {
       .orElse(NONE);
   }
 
-  ItemStatus toCheckedInItemStatus() {
+  ItemStatusName toCheckedInItemStatus() {
     switch(this) {
       case HOLD_SHELF:
         return AWAITING_PICKUP;
@@ -44,7 +44,7 @@ public enum RequestFulfilmentPreference {
         return AWAITING_DELIVERY;
 
       default:
-        return ItemStatus.NONE;
+        return ItemStatusName.NONE;
     }
   }
 

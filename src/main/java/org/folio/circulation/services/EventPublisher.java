@@ -190,10 +190,11 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
-    if (records.getRecalledLoanPreviousDueDate() != null) {
-      loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
-    }
-    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
+    final var loanWithPreviousDueDate = records.getRecalledLoanPreviousDueDate() != null
+      ? loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate())
+      : loan;
+
+    return publishDueDateChangedEvent(loanWithPreviousDueDate, records.getRequest().getRequester(), false);
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
@@ -258,12 +259,13 @@ public class EventPublisher {
       .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
   }
 
-  public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
+  public CompletableFuture<Result<Loan>> publishClosedLoanEvent(Loan loan) {
     if (!CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
       return publishLogRecord(LoanLogContext.from(loan)
-        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
+        .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN)
+        .thenApply(r -> r.map(x -> loan));
     }
-    return CompletableFuture.completedFuture(succeeded(null));
+    return CompletableFuture.completedFuture(succeeded(loan));
   }
 
   public CompletableFuture<Result<Loan>> publishMarkedAsMissingLoanEvent(Loan loan) {

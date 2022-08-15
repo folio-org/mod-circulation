@@ -8,7 +8,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
-import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatusName.CHECKED_OUT;
 import static org.folio.circulation.domain.policy.Period.weeks;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
@@ -48,7 +48,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -61,7 +61,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -97,7 +97,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -126,7 +126,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(loan, overrideDueDate);
 
     assertDueDate(overrideDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -143,7 +143,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(loan, null);
 
     assertDueDateWithinOneSecondAfter(estimatedDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -168,7 +168,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renewWithRecall(loan, overrideDueDate);
 
     assertDueDate(overrideDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -188,7 +188,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renewWithRecall(loan, null);
 
     assertDueDateWithinOneSecondAfter(estimatedDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -201,7 +201,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(loan, overrideDueDate);
 
     assertDueDate(overrideDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -223,7 +223,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(loan, null);
 
     assertDueDateWithinOneSecondAfter(estimatedDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -234,7 +234,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(loan, overrideDate);
 
     assertDueDate(overrideDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
   }
 
   @Test
@@ -285,7 +285,7 @@ class OverrideRenewalTest {
     final Result<Loan> renewedLoan = renew(loan, newDueDate);
 
     assertDueDate(newDueDate, renewedLoan);
-    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus());
+    assertEquals(CHECKED_OUT, renewedLoan.value().getItem().getStatus().getName());
 
     assertThat(renewedLoan.value().asJson(), allOf(
       hasNoJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled"),

@@ -1,8 +1,8 @@
 package org.folio.circulation.services.agedtolost;
 
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
-import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
-import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatusName.DECLARED_LOST;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -141,9 +141,9 @@ public class MarkOverdueLoansAsAgedLostService {
   private Result<CqlQuery> loanFetchQuery() {
     final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
     final Result<CqlQuery> dueDateQuery = lessThan("dueDate", formatDateTime(ClockUtil.getZonedDateTime()));
-    final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
-    final Result<CqlQuery> agedToLostQuery = notEqual("itemStatus", AGED_TO_LOST.getValue());
-    final Result<CqlQuery> declaredLostQuery = notEqual("itemStatus", DECLARED_LOST.getValue());
+    final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getName());
+    final Result<CqlQuery> agedToLostQuery = notEqual("itemStatus", AGED_TO_LOST.getName());
+    final Result<CqlQuery> declaredLostQuery = notEqual("itemStatus", DECLARED_LOST.getName());
 
     return statusQuery.combine(dueDateQuery, CqlQuery::and)
       .combine(claimedReturnedQuery, CqlQuery::and)

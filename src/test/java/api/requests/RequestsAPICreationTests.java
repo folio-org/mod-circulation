@@ -1,6 +1,12 @@
 package api.requests;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsAreValid;
+import static api.support.builders.ItemBuilder.AVAILABLE;
+import static api.support.builders.ItemBuilder.AWAITING_PICKUP;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.ItemBuilder.IN_TRANSIT;
+import static api.support.builders.ItemBuilder.MISSING;
+import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
@@ -13,6 +19,7 @@ import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -38,8 +45,6 @@ import static java.util.function.Function.identity;
 import static org.folio.HttpStatus.HTTP_BAD_REQUEST;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.policy.Period.hours;
@@ -80,7 +85,6 @@ import java.util.stream.Stream;
 
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
@@ -1283,10 +1287,8 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void canCreatePagedRequestWhenItemStatusIsAvailable() {
-    //Set up the item's initial status to be AVAILABLE
-    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final String itemInitialStatus = smallAngryPlanet.getResponse().getJson().getJsonObject("status").getString("name");
-    assertThat(itemInitialStatus, is(ItemStatus.AVAILABLE.getValue()));
+    final var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
 
     //Attempt to create a page request on it.  Final expected status is PAGED
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -1299,7 +1301,7 @@ public class RequestsAPICreationTests extends APITests {
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
     assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+    assertThat(finalStatus, is(PAGED));
   }
 
   @Test
@@ -1384,8 +1386,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(json.getString("itemId"), is(item.getId()));
     assertThat(json.getString("instanceId"), is(instanceId));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-    assertThat(json.getJsonObject("item")
-      .getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(json.getJsonObject("item").getString("status"), is(PAGED));
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
 
@@ -1584,7 +1585,7 @@ public class RequestsAPICreationTests extends APITests {
 
     JsonObject requestedItem = recallRequest.getJson().getJsonObject("item");
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(requestedItem.getString("status"), is(CHECKED_OUT));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1770,7 +1771,8 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.steve()));
 
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(recallRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+    assertThat(recallRequest.getJson().getJsonObject("item").getString("status"),
+      is(AWAITING_PICKUP));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1791,7 +1793,7 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestItem = recallRequest.getJson().getJsonObject("item");
 
     assertThat(recallRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
-    assertThat(requestItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(requestItem.getString("status"), is(IN_TRANSIT));
     assertThat(recallRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1843,7 +1845,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.jessica()));
 
     assertThat(recallResponse.getJson().getString("requestType"), is(RECALL.getValue()));
-    assertThat(pagedItem.getResponse().getJson().getJsonObject("status").getString("name"), is(PAGED.getValue()));
+    assertThat(pagedItem, hasItemStatus(PAGED));
     assertThat(recallResponse.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1863,8 +1865,9 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
     assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.CHECKED_OUT.getValue()));
+    assertThat(requestedItem.getString("status"), is(CHECKED_OUT));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+
     var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(5));
@@ -1885,7 +1888,8 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.steve()));
 
     assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
-    assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+    assertThat(holdRequest.getJson().getJsonObject("item").getString("status"),
+      is(AWAITING_PICKUP));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1907,7 +1911,7 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
     assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(requestedItem.getString("status"), is(IN_TRANSIT));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1925,7 +1929,7 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
 
     assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
-    assertThat(requestedItem.getString("status"), is(ItemStatus.MISSING.getValue()));
+    assertThat(requestedItem.getString("status"), is(MISSING));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -1959,7 +1963,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.steve()));
 
     assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
-    assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(PAGED));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
@@ -2484,10 +2488,8 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void canCreatePagedRequestWithNullProxyUser() {
-    //Set up the item's initial status to be AVAILABLE
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final String itemInitialStatus = smallAngryPlanet.getResponse().getJson().getJsonObject("status").getString("name");
-    assertThat(itemInitialStatus, is(ItemStatus.AVAILABLE.getValue()));
+    assertThat(smallAngryPlanet, hasItemStatus(AVAILABLE));
 
     //Attempt to create a page request on it.  Final expected status is PAGED
     final IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -2501,7 +2503,7 @@ public class RequestsAPICreationTests extends APITests {
     String finalStatus = pagedRequest.getResponse().getJson().getJsonObject("item").getString("status");
     assertThat(pagedRequest.getJson().getString("requestType"), is(RequestType.PAGE.getValue()));
     assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-    assertThat(finalStatus, is(ItemStatus.PAGED.getValue()));
+    assertThat(finalStatus, is(PAGED));
   }
 
   @Test
@@ -3253,8 +3255,7 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("Cannot create a request with no requestDate"),
       hasParameter("requestDate", null))));
     var itemById = itemsFixture.getById(item.getId());
-    assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
-      is(AVAILABLE.getValue()));
+    assertThat(itemById, hasItemStatus(AVAILABLE));
   }
 
   @ParameterizedTest
@@ -3282,8 +3283,7 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("fulfilmentPreference must be one of the following: Hold Shelf, Delivery"),
       hasParameter("fulfilmentPreference", fulfilmentPreference))));
     var itemById = itemsFixture.getById(item.getId());
-    assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
-      is(AVAILABLE.getValue()));
+    assertThat(itemById, hasItemStatus(AVAILABLE));
   }
 
   @Test
@@ -3601,7 +3601,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private boolean isNotPaged(IndividualResource item) {
-    return !PAGED.getValue().equals(item.getJson().getJsonObject("status").getString("name"));
+    return !PAGED.equals(item.getJson().getJsonObject("status").getString("name"));
   }
 
   private RequestBuilder buildPageRequest(UUID instanceId, UUID pickupServicePointId,
@@ -3730,7 +3730,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestedItem = pagedRequest.getJson().getJsonObject("item");
-    assertThat(requestedItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(requestedItem.getString("status"), is(PAGED));
 
     return smallAngryPlanet;
   }
@@ -3751,8 +3751,8 @@ public class RequestsAPICreationTests extends APITests {
 
     checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getZonedDateTime(), requestPickupServicePoint.getId());
 
-    Response pagedRequestRecord = itemsClient.getById(smallAngryPlanet.getId());
-    assertThat(pagedRequestRecord.getJson().getJsonObject("status").getString("name"), is(ItemStatus.AWAITING_PICKUP.getValue()));
+    final var pagedItem = itemsFixture.getById(smallAngryPlanet.getId());
+    assertThat(pagedItem, hasItemStatus(AWAITING_PICKUP));
 
     return smallAngryPlanet;
   }
@@ -3772,7 +3772,7 @@ public class RequestsAPICreationTests extends APITests {
       .by(usersFixture.james()));
 
     JsonObject requestItem = firstRequest.getJson().getJsonObject("item");
-    assertThat(requestItem.getString("status"), is(ItemStatus.PAGED.getValue()));
+    assertThat(requestItem.getString("status"), is(PAGED));
     assertThat(firstRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
 
     //check it it at the "wrong" or unintended pickup location
@@ -3781,7 +3781,8 @@ public class RequestsAPICreationTests extends APITests {
     MultipleRecords<JsonObject> requests = requestsFixture.getQueueFor(smallAngryPlanet);
     JsonObject pagedRequestRecord = requests.getRecords().iterator().next();
 
-    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(pagedRequestRecord.getJsonObject("item").getString("status"),
+      is(IN_TRANSIT));
     assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
 
     return smallAngryPlanet;
@@ -3789,7 +3790,7 @@ public class RequestsAPICreationTests extends APITests {
 
   public static IndividualResource setupMissingItem(ItemsFixture itemsFixture) {
     IndividualResource missingItem = itemsFixture.basedUponSmallAngryPlanet(ItemBuilder::missing);
-    assertThat(missingItem.getResponse().getJson().getJsonObject("status").getString("name"), is(ItemStatus.MISSING.getValue()));
+    assertThat(missingItem, hasItemStatus(MISSING));
 
     return missingItem;
   }

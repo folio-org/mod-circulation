@@ -19,6 +19,10 @@ public class LastCheckIn {
   private final String staffMemberId;
   private ServicePoint servicePoint;
 
+  public static LastCheckIn unknown() {
+    return new LastCheckIn(null, null, null);
+  }
+
   public LastCheckIn(ZonedDateTime dateTime, UUID servicePointId, String staffMemberId) {
     this.dateTime = dateTime;
     this.servicePointId = servicePointId;

@@ -81,8 +81,7 @@ public class RequestRepresentation {
 
     ItemStatus status = item.getStatus();
     if (status != null) {
-      String statusValue = status.getValue();
-      itemSummary.put("status", statusValue);
+      write(itemSummary, "status", status.getValue());
     }
 
     write(itemSummary, "callNumber", item.getCallNumber());

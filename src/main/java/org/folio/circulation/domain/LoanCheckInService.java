@@ -27,11 +27,11 @@ public class LoanCheckInService {
           systemDateTime, request.getServicePointId()));
     }
 
-    if (loan.isAgedToLost()) {
-      loan.removeAgedToLostBillingInfo();
-    }
+    final Loan changedLoan = loan.isAgedToLost()
+      ? loan.removeAgedToLostBillingInfo()
+      : loan;
 
-    return succeeded(loan.checkIn(request.getCheckInDate(), systemDateTime,
+    return succeeded(changedLoan.checkIn(request.getCheckInDate(), systemDateTime,
       request.getServicePointId()));
   }
 

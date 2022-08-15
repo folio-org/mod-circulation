@@ -61,7 +61,7 @@ public class RenewByIdResource extends RenewalResource {
     String itemId, CirculationErrorHandler errorHandler) {
 
     return itemFinder.findItemById(itemId)
-      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, (Item) null));
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, Item.unknown()));
   }
 
   private CompletableFuture<Result<Loan>> lookupLoan(

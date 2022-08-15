@@ -4,7 +4,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
 import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
@@ -129,13 +129,13 @@ public class ChargeLostFeesWhenAgedToLostService {
       .thenApply(Result::mapEmpty);
   }
 
-  private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
+  private CompletableFuture<Result<Loan>> processLoan(LoanToChargeFees loan) {
     return loan.shouldCloseLoanWhenActualCostUsed()
-      ? closeLoanAsLostAndPaid(loan).thenApply(Result::mapEmpty)
+      ? closeLoanAsLostAndPaid(loan)
       : chargeLostFees(loan);
   }
 
-  private CompletableFuture<Result<Void>> chargeLostFees(
+  private CompletableFuture<Result<Loan>> chargeLostFees(
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
@@ -146,7 +146,7 @@ public class ChargeLostFeesWhenAgedToLostService {
       .exceptionally(t -> handleFailure(loanToChargeFees, t.getMessage()));
   }
 
-  private static Result<Void> handleFailure(LoanToChargeFees loan, String errorMessage) {
+  private static Result<Loan> handleFailure(LoanToChargeFees loan, String errorMessage) {
     log.error("Failed to charge lost item fee(s) for loan {}: {}", loan.getLoanId(), errorMessage);
     return succeeded(null);
   }
@@ -272,7 +272,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final ZonedDateTime currentDate = getZonedDateTime();
 
     final Result<CqlQuery> billingDateQuery = lessThanOrEqualTo(billingDateProperty, currentDate);
-    final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getValue());
+    final Result<CqlQuery> agedToLostQuery = exactMatch(ITEM_STATUS, AGED_TO_LOST.getName());
     final Result<CqlQuery> hasNotBeenBilledQuery = exactMatch(
       lostItemHasBeenBilled, "false");
 
@@ -324,9 +324,9 @@ public class ChargeLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(LoanToChargeFees loanToChargeFees) {
     final Loan loan = loanToChargeFees.getLoan();
 
-    loan.setLostItemHasBeenBilled();
-    loan.closeLoanAsLostAndPaid();
+    final var changedLoan = loan.setLostItemHasBeenBilled()
+      .closeLoanAsLostAndPaid();
 
-    return storeLoanAndItem.updateLoanAndItemInStorage(loan);
+    return storeLoanAndItem.updateLoanAndItemInStorage(changedLoan);
   }
 }

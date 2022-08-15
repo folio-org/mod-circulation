@@ -49,12 +49,8 @@ public class JsonPropertyWriter {
     }
   }
 
-  public static void write(
-    JsonObject to,
-    String propertyName,
-    JsonObject value) {
-
-    if(value != null) {
+  public static void write(JsonObject to, String propertyName, JsonObject value) {
+    if (to != null && value != null) {
       to.put(propertyName, value);
     }
   }

@@ -2,7 +2,7 @@ package org.folio.circulation.resources.renewal;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
+import static org.folio.circulation.domain.ItemStatusName.AGED_TO_LOST;
 import static org.folio.circulation.domain.policy.Period.days;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
@@ -12,8 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.ItemStatusName;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -23,6 +24,9 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -86,10 +90,9 @@ class RegularRenewalTest {
     renew(loan, recallRequest, errorHandler);
 
     assertEquals(3, errorHandler.getErrors().size());
-    assertTrue(matchErrorReason(errorHandler,
-      ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
-    assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
-    assertTrue(matchErrorReason(errorHandler, ITEM_IS_AGED_TO_LOST));
+    assertThat(errorHandler, hasError(ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
+    assertThat(errorHandler, hasError(ITEM_IS_NOT_LOANABLE));
+    assertThat(errorHandler, hasError(ITEM_IS_AGED_TO_LOST));
   }
 
   @Test
@@ -179,12 +182,12 @@ class RegularRenewalTest {
     final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
     final var loan = new LoanBuilder().asDomainObject()
       .withLoanPolicy(loanPolicy)
-      .changeItemStatusForItemAndLoan(ItemStatus.from(itemStatus));
+      .changeItemStatusForItemAndLoan(ItemStatusName.from(itemStatus));
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loan, errorHandler);
 
-    assertTrue(matchErrorReason(errorHandler, "item is " + itemStatus));
+    assertThat(errorHandler, hasError("item is " + itemStatus));
   }
 
   @Test
@@ -291,5 +294,38 @@ class RegularRenewalTest {
     return errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
+  }
+  private Matcher<CirculationErrorHandler> hasError(String expectedReason) {
+    return new TypeSafeDiagnosingMatcher<>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(String.format(
+          "a validation error with: %s", expectedReason));
+      }
+
+      @Override
+      protected boolean matchesSafely(CirculationErrorHandler errorHandler,
+        Description description) {
+
+        final var validationErrors = errorHandler.getErrors().keySet().stream()
+          .map(ValidationErrorFailure.class::cast);
+
+        if (errorHandler.getErrors().isEmpty())  {
+          description.appendText("but there are no errors");
+          return false;
+        } else if (validationErrors.anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason))) {
+          return true;
+        } else {
+          final var errorDescriptions = errorHandler.getErrors().keySet()
+            .stream()
+            .map(ValidationErrorFailure.class::cast)
+            .map(ValidationErrorFailure::toString)
+            .collect(Collectors.joining(";"));
+
+          description.appendText("was not found. Failures are: " + errorDescriptions);
+          return false;
+        }
+      }
+    };
   }
 }

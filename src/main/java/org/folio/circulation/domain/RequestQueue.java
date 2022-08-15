@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,14 +44,10 @@ public class RequestQueue {
       .collect(toList()));
   }
 
-  ItemStatus checkedInItemStatus(Item item) {
+  ItemStatusName checkedInItemStatus(Item item) {
     return hasOutstandingRequestsFulfillableByItem(item)
       ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
-      : AVAILABLE;
-  }
-
-  boolean hasOutstandingFulfillableRequests() {
-    return !fulfillableRequests().isEmpty();
+      : ItemStatusName.AVAILABLE;
   }
 
   boolean hasOutstandingRequestsFulfillableByItem(Item item) {

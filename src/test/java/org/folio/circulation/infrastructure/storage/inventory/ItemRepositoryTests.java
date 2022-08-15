@@ -21,6 +21,7 @@ import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemDescription;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
@@ -112,9 +113,10 @@ class ItemRepositoryTests {
   }
 
   private Item dummyItem() {
-    return new Item(null, null, null, null, null, null, null, false,
-      Holdings.unknown(), Instance.unknown(), MaterialType.unknown(),
-      LoanType.unknown(), ItemDescription.unknown());
+    return new Item(null, Location.unknown(), null, null,
+      Location.unknown(), null, false, Holdings.unknown(),
+      Instance.unknown(), MaterialType.unknown(), LoanType.unknown(),
+      ItemDescription.unknown(), ItemStatus.unknown());
   }
 
   @SneakyThrows
