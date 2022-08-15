@@ -4,7 +4,7 @@ import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.notice.NoticeEventType.AVAILABLE;
 import static org.folio.circulation.domain.notice.NoticeEventType.ITEM_RECALLED;
 import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCELLATION;
-import static org.folio.circulation.domain.notice.NoticeFormat.EMAIL;
+import static org.folio.circulation.domain.notice.PatronNotice.buildEmail;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.support.results.Result.failed;
@@ -33,7 +33,6 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
-import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNotice;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
@@ -228,12 +227,9 @@ public class RequestNoticeSender {
     NoticeLogContext noticeLogContext = NoticeLogContext.from(request)
       .withTriggeringEvent(eventType.getRepresentation())
       .withTemplateId(templateId.toString());
-    NoticeConfiguration noticeConfiguration = new NoticeConfiguration(templateId.toString(),
-      EMAIL, eventType, null, null, false, null, true);
-    PatronNotice patronNotice = new PatronNotice(request.getUserId(), noticeContext,
-      noticeConfiguration);
+    PatronNotice notice = buildEmail(request.getUserId(), templateId, noticeContext);
 
-    return patronNoticeService.sendNotice(patronNotice, noticeLogContext);
+    return patronNoticeService.sendNotice(notice, noticeLogContext);
   }
 
   private CompletableFuture<Result<Void>> fetchDataAndSendRequestAwaitingPickupNotice(
