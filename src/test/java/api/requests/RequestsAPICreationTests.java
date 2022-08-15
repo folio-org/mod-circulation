@@ -49,8 +49,8 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
-import static org.folio.circulation.domain.notice.NoticeEventType.HOLD_REQUEST;
 import static org.folio.circulation.domain.notice.NoticeEventType.PAGING_REQUEST;
+import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCELLATION;
 import static org.folio.circulation.domain.policy.Period.hours;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -150,6 +150,11 @@ public class RequestsAPICreationTests extends APITests {
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
   private static final String ITEM_RECALLED = "Item recalled";
+
+  private static final UUID CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY = UUID.randomUUID();
+  private static final UUID CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY = UUID.randomUUID();
+  private static final UUID CONFIRMATION_TEMPLATE_ID_FROM_TLR_SETTINGS = UUID.randomUUID();
+  private static final UUID CANCELLATION_TEMPLATE_ID_FROM_TLR_SETTINGS = UUID.randomUUID();
 
   public static final String CREATE_REQUEST_PERMISSION = "circulation.requests.item.post";
   public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
@@ -3611,89 +3616,113 @@ public class RequestsAPICreationTests extends APITests {
 
   @ParameterizedTest
   @CsvSource(value = {
-    "true,  true,  true,    Notice from Patron Notice Policy",
-    "false, true,  true,    Notice from TLR-settings",
-    "true,  true,  false,   No notice",
-    "false, true,  false,   Notice from TLR-settings",
-    "true,  false, true,    Notice from Patron Notice Policy",
-    "false, false, true,    No notice",
-    "true,  false, false,   No notice",
-    "false, false, false,   No notice"
+    "true,  true",
+    "false, true",
+    "true,  false",
+    "false, false"
   })
-  void titleLevelRequestConfirmationNoticeIsSentAccordingToConfiguration(boolean requestHasItemId,
-    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy,
-    String expectedTemplateNameForSentNotice) {
+  void immediateNoticesForTitleLevelRequestWithItemIdAreSentAccordingToNoticePolicy(
+    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
 
-    IndividualResource instance = null;
-    ItemResource item = null;
-    UUID instanceId;
-    RequestType requestType;
-    NoticeEventType noticeEventType;
-    if (requestHasItemId) {
-      requestType = PAGE;
-      noticeEventType = PAGING_REQUEST;
-      ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
-        materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
-      HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings("CN", "Prefix",
-        "Suffix", singletonList("CopyNumbers"));
-      item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
-      instanceId = item.getInstanceId();
-    } else {
-      requestType = HOLD;
-      noticeEventType = HOLD_REQUEST;
-      instance = instancesFixture.basedUponDunkirk();
-      instanceId = instance.getId();
-      holdingsFixture.defaultWithHoldings(instanceId);
-    }
+    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings("CN", "Prefix",
+      "Suffix", singletonList("CopyNumbers"));
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
 
-    // set up templates
-    UUID templateIdFromNoticePolicy = UUID.randomUUID();
-    UUID templateIdFromTlrSettings = UUID.randomUUID();
-    templateFixture.createDummyNoticeTemplate(templateIdFromNoticePolicy);
-    templateFixture.createDummyNoticeTemplate(templateIdFromTlrSettings);
-    Map<String, UUID> templateNameToId = Map.of(
-      "Notice from Patron Notice Policy", templateIdFromNoticePolicy,
-      "Notice from TLR-settings", templateIdFromTlrSettings);
+    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
 
-    // set up TLR settings
-    reconfigureTlrFeature(ENABLED, isNoticeEnabledInTlrSettings ? templateIdFromTlrSettings : null,
-      null, null);
-
-    // set up patron notice policy
-    if (isNoticeEnabledInNoticePolicy) {
-      use(new NoticePolicyBuilder()
-        .withName("Test patron notice policy")
-        .withLoanNotices(singletonList(
-          new NoticeConfigurationBuilder()
-            .withTemplateId(templateIdFromNoticePolicy)
-            .withEventType(noticeEventType.getRepresentation())
-            .create())));
-    }
-
-    // create request
     var requester = usersFixture.james();
-    var requesterId = requester.getId();
-    var request = requestsFixture.placeTitleLevelRequest(requestType, instanceId, requester);
-    assertThat(request.getJson().getString("itemId"), requestHasItemId ? notNullValue() : nullValue());
+    var request = requestsFixture.placeTitleLevelRequest(PAGE, item.getInstanceId(), requester);
+    assertThat(request.getJson().getString("itemId"), is(item.getId()));
+    requestsFixture.cancelRequest(request);
 
-    // verify result
-    UUID expectedTemplateId = templateNameToId.get(expectedTemplateNameForSentNotice);
-    if (expectedTemplateId == null) {
-      verifyNumberOfSentNotices(0);
-      verifyNumberOfPublishedEvents(NOTICE, 0);
-      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    } else {
-      JsonObject sentNotice = verifyNumberOfSentNotices(1).get(0);
+    // if request has no itemId, notices are sent according to notice policy, regardless of TLR settings
+    if (isNoticeEnabledInNoticePolicy) {
+      List<JsonObject> sentNotices = verifyNumberOfSentNotices(2);
       Map<String, Matcher<String>> matchers = new HashMap<>();
       matchers.putAll(getUserContextMatchers(requester));
       matchers.putAll(getRequestContextMatchers(request));
-      if (requestHasItemId) {
-        matchers.putAll(getItemContextMatchers(item, true));
-        assertThat(sentNotice, hasEmailNoticeProperties(requesterId, expectedTemplateId, matchers));
-      } else {
-        matchers.putAll(getInstanceContextMatchers(instance));
-        assertThat(sentNotice, hasEmailNoticeProperties(requesterId, expectedTemplateId, matchers));
-      }
+      matchers.putAll(getItemContextMatchers(item, true));
+      assertThat(sentNotices.get(0), hasEmailNoticeProperties(requester.getId(),
+        CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
+      assertThat(sentNotices.get(1), hasEmailNoticeProperties(requester.getId(),
+        CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
+    } else {
+      verifyNumberOfSentNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 0);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "true,  true",
+    "false, true",
+    "true,  false",
+    "false, false"
+  })
+  void immediateNoticesForTitleLevelRequestWithoutItemIdAreSentAccordingToTlrSettings(
+    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca()); // make item unavailable
+
+    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
+
+    var requester = usersFixture.james();
+    var request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(), requester);
+    assertThat(request.getJson().getString("itemId"), nullValue());
+    requestsFixture.cancelRequest(request);
+
+    // if request has no itemId, notices are sent according to TLR settings, regardless of notice policy
+    if (isNoticeEnabledInTlrSettings) {
+      List<JsonObject> sentNotices = verifyNumberOfSentNotices(2);
+      JsonObject instance = instancesClient.getById(item.getInstanceId()).getJson();
+      Map<String, Matcher<String>> matchers = new HashMap<>();
+      matchers.putAll(getUserContextMatchers(requester));
+      matchers.putAll(getRequestContextMatchers(request));
+      matchers.putAll(getInstanceContextMatchers(instance));
+      assertThat(sentNotices.get(0), hasEmailNoticeProperties(requester.getId(),
+        CONFIRMATION_TEMPLATE_ID_FROM_TLR_SETTINGS, matchers));
+      assertThat(sentNotices.get(1), hasEmailNoticeProperties(requester.getId(),
+        CANCELLATION_TEMPLATE_ID_FROM_TLR_SETTINGS, matchers));
+    } else {
+      verifyNumberOfSentNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 0);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    }
+  }
+
+  private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
+    boolean isNoticeEnabledInNoticePolicy) {
+
+    // set up TLR settings
+    if (isNoticeEnabledInTlrSettings) {
+      templateFixture.createDummyNoticeTemplate(CONFIRMATION_TEMPLATE_ID_FROM_TLR_SETTINGS);
+      templateFixture.createDummyNoticeTemplate(CANCELLATION_TEMPLATE_ID_FROM_TLR_SETTINGS);
+      reconfigureTlrFeature(ENABLED, CONFIRMATION_TEMPLATE_ID_FROM_TLR_SETTINGS,
+        CANCELLATION_TEMPLATE_ID_FROM_TLR_SETTINGS, null);
+    } else {
+      reconfigureTlrFeature(ENABLED, null, null, null);
+    }
+
+    // set up patron notice policy
+    if (isNoticeEnabledInNoticePolicy) {
+      templateFixture.createDummyNoticeTemplate(CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY);
+      templateFixture.createDummyNoticeTemplate(CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY);
+      use(new NoticePolicyBuilder()
+        .withName("Test patron notice policy")
+        .withRequestNotices(List.of(
+          new NoticeConfigurationBuilder()
+            .withTemplateId(CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY)
+            .withEventType(PAGING_REQUEST.getRepresentation())
+            .create(),
+          new NoticeConfigurationBuilder()
+            .withTemplateId(CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY)
+            .withEventType(REQUEST_CANCELLATION.getRepresentation())
+            .create()
+        )));
     }
   }
 

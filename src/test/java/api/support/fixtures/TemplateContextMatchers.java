@@ -291,8 +291,12 @@ public class TemplateContextMatchers {
     );
   }
 
-  public static Map<String, Matcher<String>> getInstanceContextMatchers(IndividualResource instanceResource) {
-    Instance instance = new InstanceMapper().toDomain(instanceResource.getJson());
+  public static Map<String, Matcher<String>> getInstanceContextMatchers(IndividualResource instance) {
+    return getInstanceContextMatchers(instance.getJson());
+  }
+
+  public static Map<String, Matcher<String>> getInstanceContextMatchers(JsonObject instanceJson) {
+    Instance instance = new InstanceMapper().toDomain(instanceJson);
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put("item.title", is(instance.getTitle()));
     tokenMatchers.put("item.primaryContributor", is(instance.getPrimaryContributorName()));
