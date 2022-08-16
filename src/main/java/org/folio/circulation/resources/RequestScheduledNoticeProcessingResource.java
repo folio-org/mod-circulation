@@ -11,11 +11,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.notice.schedule.InstanceAwareRequestScheduledNoticeHandler;
@@ -35,7 +35,6 @@ import io.vertx.core.http.HttpClient;
 
 public class RequestScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
 
-
   public RequestScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/request-scheduled-notices-processing", client);
   }
@@ -53,35 +52,36 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
-    MultipleRecords<ScheduledNotice> scheduledNotices) {
+    MultipleRecords<ScheduledNotice> scheduledNoticesRecords) {
 
-    Set<String> requestIds = scheduledNotices.getRecords()
-      .stream()
+    Collection<ScheduledNotice> notices = scheduledNoticesRecords.getRecords();
+
+    Set<String> requestIds = notices.stream()
       .map(ScheduledNotice::getRequestId)
-      .filter(StringUtils::isNotBlank)
+      .filter(Objects::nonNull)
       .collect(Collectors.toSet());
-    
+
+    // TODO: avoid fetching requests twice
     return requestRepository.fetchRequests(requestIds)
-      .thenCompose(r -> r.after(requests -> handleNotices(clients, requestRepository, loanRepository, scheduledNotices, requests)));
+      .thenCompose(r -> r.after(requests -> handleNotices(clients, requestRepository,
+        loanRepository, notices, requests)))
+      .thenApply(mapResult(v -> scheduledNoticesRecords));
   }
 
-  private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleNotices(
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
-    MultipleRecords<ScheduledNotice> scheduledNotices, Collection<Request> requests) {
+    Collection<ScheduledNotice> notices, Collection<Request> requests) {
 
     Map<String, Boolean> requestIdToItemIdPresence = requests.stream()
       .collect(Collectors.toMap(Request::getId, Request::hasItemId));
 
-    Map<Boolean, List<ScheduledNotice>> groupedNotices = scheduledNotices.getRecords()
-      .stream()
+    Map<Boolean, List<ScheduledNotice>> groupedNotices = notices.stream()
       .collect(groupingBy(notice -> requestIdToItemIdPresence.getOrDefault(notice.getRequestId(), false)));
 
-    List<ScheduledNotice> noticesWithItemId = groupedNotices.get(true);
-    List<ScheduledNotice> noticesWithoutItemId = groupedNotices.get(false);
-
-    return handleNoticesForRequestsWithItemId(clients, requestRepository, loanRepository, noticesWithItemId)
-      .thenCompose(v -> handleNoticesForRequestsWithoutItemId(clients, requestRepository, loanRepository, noticesWithoutItemId))
-      .thenApply(mapResult(v -> scheduledNotices));
+    return handleNoticesForRequestsWithItemId(clients, requestRepository, loanRepository,
+      groupedNotices.get(true))
+      .thenCompose(v -> handleNoticesForRequestsWithoutItemId(clients, requestRepository,
+        loanRepository, groupedNotices.get(false)));
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticesForRequestsWithItemId(
