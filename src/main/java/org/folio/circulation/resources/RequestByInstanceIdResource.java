@@ -46,7 +46,6 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.domain.RequestRepresentation;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.UpdateItem;
@@ -76,6 +75,7 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
@@ -231,7 +231,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     return buildRequests(requestBody, tlrConfig, itemFinder, repositories)
       .thenCompose(r -> r.after(requests -> placeRequests(clients, eventPublisher, repositories,
-        itemFinder, tlrConfig, requests)));
+        itemFinder, requests)));
   }
 
   private CompletableFuture<Result<List<JsonObject>>> buildRequests(
@@ -267,8 +267,7 @@ public class RequestByInstanceIdResource extends Resource {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
     Clients clients, EventPublisher eventPublisher, RequestRelatedRepositories repositories,
-    ItemByInstanceIdFinder itemFinder, TlrSettingsConfiguration tlrConfig,
-    List<JsonObject> requestRepresentations) {
+    ItemByInstanceIdFinder itemFinder, List<JsonObject> requestRepresentations) {
 
     final var itemRepository = repositories.getItemRepository();
     final var loanRepository = repositories.getLoanRepository();

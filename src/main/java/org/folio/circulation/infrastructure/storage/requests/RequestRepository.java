@@ -2,11 +2,11 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.domain.RequestStatus.openStates;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
@@ -48,6 +48,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public class RequestRepository {
+
+  private static final String REQUESTS_COLLECTION_NAME = "requests";
+
   private final CollectionResourceClient requestsStorageClient;
   private final CollectionResourceClient requestsBatchStorageClient;
   private final CollectionResourceClient cancellationReasonStorageClient;
@@ -131,7 +134,7 @@ public class RequestRepository {
   }
 
   private Result<MultipleRecords<Request>> mapResponseToRequests(Response response) {
-    return MultipleRecords.from(response, Request::from, "requests");
+    return MultipleRecords.from(response, Request::from, REQUESTS_COLLECTION_NAME);
   }
 
   public CompletableFuture<Result<Boolean>> exists(
@@ -171,7 +174,7 @@ public class RequestRepository {
   private CompletableFuture<Result<Request>> fetchRequest(String id) {
     return createSingleRequestFetcher(new ResponseInterpreter<Request>()
       .flatMapOn(200, mapUsingJson(Request::from))
-      .on(404, failed(new RecordNotFoundFailure("request", id))))
+      .on(404, failed(new RecordNotFoundFailure(REQUESTS_COLLECTION_NAME, id))))
       .fetch(id);
   }
 
@@ -181,7 +184,7 @@ public class RequestRepository {
     Result<CqlQuery> query = exactMatchAny("status", openStates())
       .map(q -> q.sortBy(ascending("position")));
 
-    return findWithMultipleCqlIndexValues(requestsStorageClient, "requests", Request::from)
+    return findWithMultipleCqlIndexValues(requestsStorageClient, REQUESTS_COLLECTION_NAME, Request::from)
       .findByIdIndexAndQuery(itemIds, "itemId", query);
   }
 
@@ -260,7 +263,10 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Collection<Request>>> fetchRequests(Collection<String> requestIds) {
-    return new CqlIndexValuesFinder<>(new CqlQueryFinder<>(requestsStorageClient, "requests", identity()))
+    CqlQueryFinder<JsonObject> cqlQueryFinder = new CqlQueryFinder<>(
+      requestsStorageClient, REQUESTS_COLLECTION_NAME, identity());
+
+    return new CqlIndexValuesFinder<>(cqlQueryFinder)
       .findByIds(requestIds)
       .thenApply(mapResult(records -> records.mapRecords(Request::from)))
       .thenApply(mapResult(MultipleRecords::getRecords));
