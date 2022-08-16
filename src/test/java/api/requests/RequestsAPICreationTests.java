@@ -3647,6 +3647,7 @@ public class RequestsAPICreationTests extends APITests {
     JsonObject json = holdRequest.getJson();
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
     assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(json.getString("instanceId"), is(instance.getId().toString()));
   }
 
   @ParameterizedTest
@@ -3664,30 +3665,30 @@ public class RequestsAPICreationTests extends APITests {
       locationsFixture.mainFloor().getId());
 
     // Checked-out requestable item
-    IndividualResource nonAvailableItem = itemsClient.create(new ItemBuilder()
+    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
       .withBarcode("checkedOutItem")
       .forHolding(holdingsRecord.getId())
       .withMaterialType(materialTypesFixture.videoRecording().getId())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
-    // Available non-requestable item
+    // Available non-pageable item
     itemsClient.create(new ItemBuilder()
-      .withBarcode("availableNonRequestableItem")
+      .withBarcode("availableNonPageableItem")
       .forHolding(holdingsRecord.getId())
       .withMaterialType(materialTypesFixture.book().getId())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
     // Available pageable item that should prevent a hold/recall request
-    IndividualResource availableRequestableItem = itemsClient.create(new ItemBuilder()
-      .withBarcode("availableRequestableItem")
+    IndividualResource availablePageableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("availablePageableItem")
       .forHolding(holdingsRecord.getId())
       .withMaterialType(materialTypesFixture.videoRecording().getId())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
-    checkOutFixture.checkOutByBarcode(nonAvailableItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
     Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instance.getId(),
       usersFixture.steve(), type);
@@ -3698,13 +3699,12 @@ public class RequestsAPICreationTests extends APITests {
       hasErrorWith(allOf(
         hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
         hasUUIDParameter("instanceId", instanceId),
-        hasUUIDParameter("itemId", availableRequestableItem.getId())
+        hasUUIDParameter("itemId", availablePageableItem.getId())
       ))));
   }
 
-  @ParameterizedTest
-  @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
-  void holdAndRecallTlrShouldFailWhenNotAllowedByPolicy(RequestType type) {
+  @Test
+  void recallTlrShouldFailWhenNotAllowedByPolicy() {
     configurationsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
@@ -3713,13 +3713,72 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
       locationsFixture.mainFloor().getId());
 
-    // Checked-out item that is not requestable (holds and recalls are not allowed by the policy)
-    IndividualResource nonAvailableItem = itemsClient.create(new ItemBuilder()
+    // Checked-out item that is not requestable (recalls are not allowed by the policy)
+    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
       .withBarcode("checkedOutItem")
       .forHolding(holdingsRecord.getId())
       .withMaterialType(materialTypesFixture.book().getId())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
+
+    // Available non-pageable item
+    itemsClient.create(new ItemBuilder()
+      .withBarcode("availableNonPageableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instance.getId(),
+      usersFixture.steve(), RECALL);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("Request has no loan or recallable item")
+      ))));
+  }
+
+  @Test
+  void holdTlrShouldSucceedEvenWhenPolicyDoesNotAllowHolds() {
+    configurationsFixture.enableTlrFeature();
+    circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      locationsFixture.mainFloor().getId());
+
+    // Checked-out item that is not requestable (holds are not allowed by the policy)
+    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("checkedOutItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    // Available non-pageable item
+    itemsClient.create(new ItemBuilder()
+      .withBarcode("availableNonPageableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instance.getId(),
+      usersFixture.steve(), HOLD);
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+
+    JsonObject json = response.getJson();
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(json.getString("instanceId"), is(instanceId.toString()));
   }
 
   @Test
