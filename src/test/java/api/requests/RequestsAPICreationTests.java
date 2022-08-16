@@ -3624,13 +3624,14 @@ public class RequestsAPICreationTests extends APITests {
   void immediateNoticesForTitleLevelRequestWithItemIdAreSentAccordingToNoticePolicy(
     boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
 
+    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
+
     ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
     HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings("CN", "Prefix",
       "Suffix", singletonList("CopyNumbers"));
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
 
-    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
 
     var requester = usersFixture.james();
     var request = requestsFixture.placeTitleLevelRequest(PAGE, item.getInstanceId(), requester);
@@ -3665,10 +3666,10 @@ public class RequestsAPICreationTests extends APITests {
   void immediateNoticesForTitleLevelRequestWithoutItemIdAreSentAccordingToTlrSettings(
     boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
 
+    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
+
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca()); // make item unavailable
-
-    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
 
     var requester = usersFixture.james();
     var request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(), requester);

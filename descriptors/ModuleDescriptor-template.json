@@ -710,7 +710,9 @@
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
-            "templates.item.get"
+            "templates.item.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.instances.collection.get"
           ],
           "unit": "minute",
           "delay": "2"

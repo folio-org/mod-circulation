@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
@@ -20,7 +19,6 @@ import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeConfigurationBuilder;
@@ -57,12 +55,10 @@ public class RequestScheduledNoticeService {
       return succeeded(relatedRecords);
     }
 
-    RequestLevel requestLevel = relatedRecords.getRequest().getRequestLevel();
-    if (requestLevel == TITLE) {
-      scheduleTlrRequestNotices(relatedRecords.getRequest());
-    }
-    else if (requestLevel == ITEM) {
+    if (request.hasItemId()) {
       scheduleRequestNotices(relatedRecords.getRequest());
+    } else if (request.getRequestLevel() == TITLE) {
+      scheduleTlrRequestNotices(relatedRecords.getRequest());
     }
 
     return succeeded(relatedRecords);

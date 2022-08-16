@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.Objects.isNull;
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.domain.RequestStatus.openStates;
@@ -34,6 +35,8 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
@@ -254,6 +257,13 @@ public class RequestRepository {
     RequestBatch requestBatch = new RequestBatch(requests);
     return requestsBatchStorageClient.post(requestBatch.toJson())
       .thenApply(interpreter::flatMap);
+  }
+
+  public CompletableFuture<Result<Collection<Request>>> fetchRequests(Collection<String> requestIds) {
+    return new CqlIndexValuesFinder<>(new CqlQueryFinder<>(requestsStorageClient, "requests", identity()))
+      .findByIds(requestIds)
+      .thenApply(mapResult(records -> records.mapRecords(Request::from)))
+      .thenApply(mapResult(MultipleRecords::getRecords));
   }
 
   private CompletableFuture<Result<Request>> fetchRequester(Result<Request> result) {

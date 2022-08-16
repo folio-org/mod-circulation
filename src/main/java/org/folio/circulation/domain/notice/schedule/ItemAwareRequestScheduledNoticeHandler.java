@@ -10,9 +10,9 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
-public class TitleLevelRequestScheduledNoticeHandler extends RequestScheduledNoticeHandler {
+public class ItemAwareRequestScheduledNoticeHandler extends RequestScheduledNoticeHandler {
 
-  public TitleLevelRequestScheduledNoticeHandler(Clients clients,
+  public ItemAwareRequestScheduledNoticeHandler(Clients clients,
     RequestRepository requestRepository, LoanRepository loanRepository) {
 
     super(clients, loanRepository, requestRepository);
@@ -24,14 +24,15 @@ public class TitleLevelRequestScheduledNoticeHandler extends RequestScheduledNot
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
-      .thenCompose(r -> r.after(this::fetchRequest));
+      .thenCompose(r -> r.after(this::fetchRequest))
+      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(
     ScheduledNoticeContext context) {
 
-    return requestRepository.getByIdWithoutItem(context.getNotice().getRequestId())
+    return requestRepository.getById(context.getNotice().getRequestId())
       .thenApply(mapResult(context::withRequest))
-      .thenApply(this::failWhenTitleLevelRequestIsIncomplete);
+      .thenApply(this::failWhenRequestIsIncomplete);
   }
 }

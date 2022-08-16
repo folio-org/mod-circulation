@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
@@ -10,13 +11,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.ItemLevelRequestScheduledNoticeHandler;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.notice.schedule.InstanceAwareRequestScheduledNoticeHandler;
+import org.folio.circulation.domain.notice.schedule.ItemAwareRequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.domain.notice.schedule.TitleLevelRequestScheduledNoticeHandler;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
@@ -30,6 +34,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import io.vertx.core.http.HttpClient;
 
 public class RequestScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+
 
   public RequestScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/request-scheduled-notices-processing", client);
@@ -50,43 +55,57 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
     MultipleRecords<ScheduledNotice> scheduledNotices) {
 
-    Collection<ScheduledNotice> records = scheduledNotices.getRecords();
-    Map<Boolean, List<ScheduledNotice>> noticesByRequestLevel = records
+    Set<String> requestIds = scheduledNotices.getRecords()
       .stream()
-      .collect(Collectors.groupingBy(this::isTitleLevelRequestNotice));
+      .map(ScheduledNotice::getRequestId)
+      .filter(StringUtils::isNotBlank)
+      .collect(Collectors.toSet());
+    
+    return requestRepository.fetchRequests(requestIds)
+      .thenCompose(r -> r.after(requests -> handleNotices(clients, requestRepository, loanRepository, scheduledNotices, requests)));
+  }
 
-    return handleItemLevelRequestNotices(clients,
-      noticesByRequestLevel.get(false), requestRepository, loanRepository)
-      .thenCompose(v -> handleTitleLevelRequestNotices(clients,
-        requestRepository, loanRepository, noticesByRequestLevel.get(true)))
+  private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
+    Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
+    MultipleRecords<ScheduledNotice> scheduledNotices, Collection<Request> requests) {
+
+    Map<String, Boolean> requestIdToItemIdPresence = requests.stream()
+      .collect(Collectors.toMap(Request::getId, Request::hasItemId));
+
+    Map<Boolean, List<ScheduledNotice>> groupedNotices = scheduledNotices.getRecords()
+      .stream()
+      .collect(groupingBy(notice -> requestIdToItemIdPresence.getOrDefault(notice.getRequestId(), false)));
+
+    List<ScheduledNotice> noticesWithItemId = groupedNotices.get(true);
+    List<ScheduledNotice> noticesWithoutItemId = groupedNotices.get(false);
+
+    return handleNoticesForRequestsWithItemId(clients, requestRepository, loanRepository, noticesWithItemId)
+      .thenCompose(v -> handleNoticesForRequestsWithoutItemId(clients, requestRepository, loanRepository, noticesWithoutItemId))
       .thenApply(mapResult(v -> scheduledNotices));
   }
 
-  private CompletableFuture<Result<List<ScheduledNotice>>> handleItemLevelRequestNotices(
-    Clients clients, List<ScheduledNotice> itemLevelNotices, RequestRepository requestRepository,
-    LoanRepository loanRepository) {
-
-    if (itemLevelNotices == null || itemLevelNotices.isEmpty()) {
-      return ofAsync(() -> null);
-    }
-
-    return new ItemLevelRequestScheduledNoticeHandler(clients, requestRepository, loanRepository)
-      .handleNotices(itemLevelNotices);
-  }
-
-  private CompletableFuture<Result<List<ScheduledNotice>>> handleTitleLevelRequestNotices(
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticesForRequestsWithItemId(
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
-    List<ScheduledNotice> titleLevelNotices) {
+    List<ScheduledNotice> notices) {
 
-    if (titleLevelNotices == null || titleLevelNotices.isEmpty()) {
+    if (notices == null || notices.isEmpty()) {
       return ofAsync(() -> null);
     }
 
-    return new TitleLevelRequestScheduledNoticeHandler(clients, requestRepository, loanRepository)
-      .handleNotices(titleLevelNotices);
+    return new ItemAwareRequestScheduledNoticeHandler(clients, requestRepository, loanRepository)
+      .handleNotices(notices);
   }
 
-  private boolean isTitleLevelRequestNotice(ScheduledNotice notice) {
-    return notice.getTriggeringEvent() == TITLE_LEVEL_REQUEST_EXPIRATION;
+  private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticesForRequestsWithoutItemId(
+    Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
+    List<ScheduledNotice> notices) {
+
+    if (notices == null || notices.isEmpty()) {
+      return ofAsync(() -> null);
+    }
+
+    return new InstanceAwareRequestScheduledNoticeHandler(clients, requestRepository, loanRepository)
+      .handleNotices(notices);
   }
+
 }
