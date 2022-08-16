@@ -38,7 +38,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +59,7 @@ import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -70,10 +70,11 @@ import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
-import org.folio.circulation.services.ItemForPageTlrService;
+import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -96,17 +97,18 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
+  private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
   private final CirculationErrorHandler errorHandler;
   private final ItemByInstanceIdFinder itemByInstanceIdFinder;
-  private final ItemForPageTlrService itemForPageTlrService;
+  private final ItemForTlrService itemForTlrService;
 
   public RequestFromRepresentationService(Request.Operation operation,
     RequestRelatedRepositories repositories, ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler, ItemByInstanceIdFinder itemByInstanceIdFinder,
-    ItemForPageTlrService itemForPageTlrService) {
+    ItemForTlrService itemForTlrService) {
 
     this.operation = operation;
 
@@ -118,12 +120,13 @@ class RequestFromRepresentationService {
     this.loanRepository = repositories.getLoanRepository();
     this.servicePointRepository = repositories.getServicePointRepository();
     this.configurationRepository = repositories.getConfigurationRepository();
+    this.requestPolicyRepository = repositories.getRequestPolicyRepository();
 
     this.proxyRelationshipValidator = proxyRelationshipValidator;
     this.pickupLocationValidator = pickupLocationValidator;
     this.errorHandler = errorHandler;
     this.itemByInstanceIdFinder = itemByInstanceIdFinder;
-    this.itemForPageTlrService = itemForPageTlrService;
+    this.itemForTlrService = itemForTlrService;
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
@@ -145,10 +148,10 @@ class RequestFromRepresentationService {
         Request::truncateRequestExpirationDateToTheEndOfTheDay))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
-      .thenComposeAsync(r -> r.after(when(
-        this::shouldFetchInstanceItems, this::findInstanceItems, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getUser, Request::withRequester))
       .thenComposeAsync(r -> r.combineAfter(userRepository::getProxyUser, Request::withProxy))
+      .thenComposeAsync(r -> r.after(when(
+        this::shouldFetchInstanceItems, this::findInstanceItemsAndPolicies, req -> ofAsync(() -> req))))
       .thenComposeAsync(r -> r.combineAfter(servicePointRepository::getServicePointForRequest,
         Request::withPickupServicePoint))
       .thenApply(r -> r.map(RequestAndRelatedRecords::new))
@@ -260,7 +263,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrCreation(Request request) {
-    return fromFutureResult(itemForPageTlrService.findItem(request)
+    return fromFutureResult(itemForTlrService.findClosestAvailablePageableItem(request)
       .thenApply(r -> r.mapFailure(err -> errorHandler.handleValidationError(err,
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
@@ -288,8 +291,14 @@ class RequestFromRepresentationService {
     RequestQueue requestQueue = records.getRequestQueue();
     List<String> recalledLoansIds = requestQueue.getRecalledLoansIds();
 
-    return loanRepository.findLoanWithClosestDueDate(mapToItemIds(request.getInstanceItems()),
-        recalledLoansIds)
+    List<String> recallableItemIds = request.getInstanceItems()
+      .stream()
+      .map(Item::getItemId)
+      .filter(itemId -> request.getInstanceItemsRequestPolicies().get(itemId)
+        .allowsType(RequestType.RECALL))
+      .collect(toList());
+
+    return loanRepository.findLoanWithClosestDueDate(recallableItemIds, recalledLoansIds)
       //Loan is null means that we have no items that haven't been recalled. In this case we
       //take the loan that has been recalled the least times
       .thenComposeAsync(r -> r.after(when(loan -> shouldLookForTheLeastRecalledLoan(loan,
@@ -331,15 +340,10 @@ class RequestFromRepresentationService {
       .thenApply(r -> r.map(request::withItem));
   }
 
-  private CompletableFuture<Result<Request>> findInstanceItems(Request request) {
+  private CompletableFuture<Result<Request>> findInstanceItemsAndPolicies(Request request) {
     return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
-      .thenApply(r -> r.map(request::withInstanceItems));
-  }
-
-  private List<String> mapToItemIds(Collection<Item> items) {
-    return items.stream()
-      .map(Item::getItemId)
-      .collect(toList());
+      .thenApply(r -> r.map(request::withInstanceItems))
+      .thenCompose(r -> r.after(requestPolicyRepository::lookupRequestPolicies));
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {

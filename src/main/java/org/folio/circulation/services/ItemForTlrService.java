@@ -1,12 +1,13 @@
 package org.folio.circulation.services;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.results.Result.of;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,43 +17,61 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
-import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ItemForPageTlrService {
+public class ItemForTlrService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final LocationRepository locationRepository;
 
-  public static ItemForPageTlrService using(Clients clients) {
-    return new ItemForPageTlrService(LocationRepository.using(clients));
+  public static ItemForTlrService using(RequestRelatedRepositories repositories) {
+    return new ItemForTlrService(repositories.getLocationRepository());
   }
 
-  public CompletableFuture<Result<Request>> findItem(Request request) {
-    List<Item> availableItems = request.getInstanceItems()
+  public List<Item> findAvailableRequestableItems(Request request, RequestType type) {
+
+    return request.getInstanceItems()
       .stream()
       .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
+      .filter(item -> request.getInstanceItemsRequestPolicies().get(item.getItemId()).allowsType(type))
       .collect(toList());
-
-    if (availableItems.isEmpty()) {
-      return completedFuture(failedValidation(
-        "Cannot create page TLR for this instance ID - no available items found",
-        INSTANCE_ID, request.getInstanceId()));
-    }
-
-    return locationRepository.fetchLocationsForServicePoint(request.getPickupServicePointId())
-      .thenApply(r -> r.map(locations -> findItem(locations, availableItems)))
-      .thenApply(r -> r.map(request::withItem));
   }
 
-  private static Item findItem(Collection<Location> requestedLocations, List<Item> availableItems) {
+  public CompletableFuture<Result<Request>> findClosestAvailablePageableItem(Request request) {
+    List<Item> availablePageableItems = findAvailableRequestableItems(request, RequestType.PAGE);
+
+    return refusePageRequestWhenNoAvailablePageableItemsExist(request, availablePageableItems)
+      .after(items ->
+        locationRepository.fetchLocationsForServicePoint(request.getPickupServicePointId())
+          .thenApply(rl -> rl.map(locations -> pickClosestItem(locations, items)))
+          .thenApply(ri -> ri.map(request::withItem)));
+  }
+
+  private Result<List<Item>> refusePageRequestWhenNoAvailablePageableItemsExist(Request request,
+    List<Item> availablePageableItems) {
+
+    if (availablePageableItems.isEmpty()) {
+      String message = "Cannot create page TLR for this instance ID - no available items found";
+      log.info(message);
+      return failedValidation(message, INSTANCE_ID, request.getInstanceId());
+    }
+
+    return of(() -> availablePageableItems);
+  }
+
+  private static Item pickClosestItem(Collection<Location> requestedLocations, List<Item> availableItems) {
     Map<Location, List<Item>> availableItemsByLocation = availableItems.stream()
       .filter(item -> item.getLocation() != null)
       .collect(groupingBy(Item::getLocation));

@@ -2,11 +2,15 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Item;
@@ -14,6 +18,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.support.AsyncCoordinationUtil;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -44,6 +49,13 @@ public class RequestPolicyRepository {
 
     return lookupRequestPolicy(request.getItem(), request.getRequester())
       .thenApply(result -> result.map(relatedRecords::withRequestPolicy));
+  }
+
+  public CompletableFuture<Result<Request>> lookupRequestPolicies(Request request) {
+
+    return allOf(request.getInstanceItems(), Item::getItemId,
+      item -> lookupRequestPolicy(item, request.getRequester()))
+      .thenApply(r -> r.map(request::withInstanceItemsRequestPolicies));
   }
 
   private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {

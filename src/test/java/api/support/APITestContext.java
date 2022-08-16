@@ -50,7 +50,7 @@ public class APITestContext {
   private static final int PORT = nextFreePort();
 
   private static String fakeOkapiDeploymentId;
-  private static Boolean useOkapiForStorage;
+  private static Boolean useOkapiForStorage = true;
   private static Boolean useOkapiForInitialRequests;
 
   static String getToken() {

@@ -41,7 +41,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.services.ItemForPageTlrService;
+import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -104,7 +104,7 @@ public class RequestCollectionResource extends CollectionResource {
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
-      ItemForPageTlrService.using(clients));
+      ItemForTlrService.using(repositories));
 
     final var scheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
@@ -159,7 +159,7 @@ public class RequestCollectionResource extends CollectionResource {
       Request.Operation.REPLACE, repositories, createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
-      ItemForPageTlrService.using(clients));
+      ItemForTlrService.using(repositories));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 

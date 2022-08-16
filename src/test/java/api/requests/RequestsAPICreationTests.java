@@ -30,6 +30,7 @@ import static api.support.matchers.ValidationErrorMatchers.isInsufficientPermiss
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -107,6 +108,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -543,8 +545,13 @@ public class RequestsAPICreationTests extends APITests {
   void canCreateTitleLevelRequestWhenTlrEnabled() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-    UUID instanceId = item.getInstanceId();
+//    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+//    UUID instanceId = item.getInstanceId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+//    checkInFixture.checkInByBarcode(items.get(0).getBarcode(), pickupServicePointId);
 
     configurationsFixture.enableTlrFeature();
 
@@ -808,7 +815,7 @@ public class RequestsAPICreationTests extends APITests {
         .by(steve)
         .withStatus(status));
 
-    assertThat(String.format("Should not create request: %s", response.getBody()),
+    assertThat(format("Should not create request: %s", response.getBody()),
       response, hasStatus(HTTP_BAD_REQUEST));
 
     assertThat(response.getBody(),
@@ -838,7 +845,7 @@ public class RequestsAPICreationTests extends APITests {
         .by(steve)
         .withStatus(status));
 
-    assertThat(String.format("Should not create request: %s", response.getBody()),
+    assertThat(format("Should not create request: %s", response.getBody()),
       response, hasStatus(HTTP_BAD_REQUEST));
 
     assertThat(response.getBody(),
@@ -1313,8 +1320,9 @@ public class RequestsAPICreationTests extends APITests {
     itemsClient.create(new ItemBuilder()
       .forHolding(defaultWithHoldings.getId())
       .checkOut()
-      .withMaterialType(UUID.randomUUID())
-      .withPermanentLoanType(UUID.randomUUID())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(locationsFixture.mainFloor())
       .create());
 
     Response postResponse = requestsClient.attemptCreate(
@@ -1350,11 +1358,9 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(request.getResponse(), hasStatus(HTTP_CREATED));
 
     JsonObject json = request.getJson();
-    assertThat(json, hasJsonPath("requestType", RequestType.RECALL.getValue()));
+    assertThat(json, hasJsonPath("requestType", RECALL.getValue()));
     assertThat(json, hasJsonPath("instanceId", instanceId.toString()));
     assertThat(json, hasJsonPath("requestLevel", RequestLevel.TITLE.getValue()));
-    assertThat(json, hasJsonPath("requestType", RequestType.RECALL.getValue()));
-    assertThat(json, hasJsonPath("requestType", RequestType.RECALL.getValue()));
   }
 
   @Test
@@ -1388,6 +1394,39 @@ public class RequestsAPICreationTests extends APITests {
       .getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
+
+//  @Test
+//  void canCreateTitleLevelPagedRequestWhenItemAtClosestLocationIsNotRequestable() {
+//    UUID patronId = usersFixture.charlotte().getId();
+//    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+//    final UUID anotherSP = servicePointsFixture.cd2().getId();
+//    configurationsFixture.enableTlrFeature();
+//
+//    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+//    UUID instanceId = uponDunkirkInstance.getId();
+//    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+//    IndividualResource item = itemsClient.create(new ItemBuilder()
+//      .forHolding(defaultWithHoldings.getId())
+//      .withMaterialType(UUID.randomUUID())
+//      .withPermanentLoanType(UUID.randomUUID())
+//      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+//      .withMaterialType(materialTypesFixture.book().getId())
+//      .withPermanentLocation(locationsFixture.mainFloor())
+//      .create());
+//
+//    IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
+//      pickupServicePointId, instanceId));
+//
+//    JsonObject json = pagedRequest.getJson();
+//    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
+//    assertThat(json.getString("holdingsRecordId"), is(defaultWithHoldings.getId().toString()));
+//    assertThat(json.getString("itemId"), is(item.getId()));
+//    assertThat(json.getString("instanceId"), is(instanceId));
+//    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
+//    assertThat(json.getJsonObject("item")
+//      .getString("status"), is(ItemStatus.PAGED.getValue()));
+//    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+//  }
 
   @Test
   void cannotCreateItemLevelRequestIfTitleLevelRequestForInstanceAlreadyCreated() {
@@ -3152,19 +3191,34 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrRequestShouldBeAppliedToLoanWithClosestDueDate() {
+    configurationsFixture.enableTlrFeature();
+
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
-    ItemResource firstItem = buildItem(instanceId, "111");
-    ItemResource secondItem = buildItem(instanceId, "222");
 
+    // This item is non-recallable due to the request policy
+    ItemResource firstItem = buildItem(instanceId, "111", materialTypesFixture.book());
+
+    // Recallable item
+    ItemResource secondItem = buildItem(instanceId, "222", materialTypesFixture.videoRecording());
+
+    // Available item that is non-pageable
+    ItemResource thirdItem = buildItem(instanceId, "333", materialTypesFixture.book());
+
+    // Closest due date but the item is non-recallable
     updateCirculationRulesWithLoanPeriod("One day loan policy", Period.days(1));
     CheckOutResource firstLoan = checkOutFixture.checkOutByBarcode(firstItem,
       usersFixture.jessica());
 
+    // Closest loan due date among the recallable items
     updateCirculationRulesWithLoanPeriod("Five days loan policy", Period.days(5));
     CheckOutResource secondLoan = checkOutFixture.checkOutByBarcode(secondItem,
       usersFixture.charlotte());
+
+    // Available non-pageable item to make sure recall is not refused
+    checkInFixture.checkInByBarcode(thirdItem, pickupServicePointId);
+
+    circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
     IndividualResource requester = usersFixture.steve();
     ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
@@ -3185,8 +3239,10 @@ public class RequestsAPICreationTests extends APITests {
       .withTags(new RequestBuilder.Tags(asList("new", "important")))
       .withPatronComments("I need this book"));
 
-    var recalledLoanJson = loansFixture.getLoanById(firstLoan.getId()).getJson();
-    var notRecalledLoanJson = loansFixture.getLoanById(secondLoan.getId()).getJson();
+    var recalledLoanJson = loansFixture.getLoanById(secondLoan.getId()).getJson();
+    var notRecalledLoanJson = loansFixture.getLoanById(firstLoan.getId()).getJson();
+    var recalledItem = secondItem;
+
     assertThat(recalledLoanJson.getBoolean("dueDateChangedByRecall"), is(true));
     assertThat(notRecalledLoanJson.getBoolean("dueDateChangedByRecall"), nullValue());
 
@@ -3194,7 +3250,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestJson.getString("requestType"), is("Recall"));
     assertThat(requestJson.getString("requestLevel"), is("Title"));
     assertThat(requestJson.getString("requestDate"), isEquivalentTo(requestDate));
-    assertThat(requestJson.getString("itemId"), is(firstItem.getId().toString()));
+    assertThat(requestJson.getString("itemId"), is(recalledItem.getId().toString()));
     assertThat(requestJson.getString("instanceId"), is(instanceId));
     assertThat(requestJson.getString("requesterId"), is(requester.getId().toString()));
     assertThat(requestJson.getString("requestExpirationDate"), is("2021-07-30T23:59:59.000Z"));
@@ -3469,6 +3525,216 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void pageTlrSucceedsWhenClosestAvailableItemIsNotPageable() {
+    // Page TLR should succeed when multiple available items exist, but the closest item to the
+    // pickup service point is not requestable. At the same time, other available and requestable
+    // items exist.
+
+    configurationsFixture.enableTlrFeature();
+    circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
+
+    UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
+        "Pickup service point", "PICKUP", "Display name")
+        .withPickupLocation(Boolean.TRUE))
+      .getId();
+
+    UUID anotherServicePointId = servicePointsFixture.create(new ServicePointBuilder(
+        "Another service point", "OTHER", "Display name")
+        .withPickupLocation(Boolean.TRUE))
+      .getId();
+
+    UUID institutionId = locationsFixture.createInstitution("Institution").getId();
+    UUID campusIdA = locationsFixture.createCampus("Campus A", institutionId).getId();
+    UUID campusIdB = locationsFixture.createCampus("Campus B", institutionId).getId();
+    UUID libraryIdA1 = locationsFixture.createLibrary("Library A1", campusIdA).getId();
+    UUID libraryIdA2 = locationsFixture.createLibrary("Library A2", campusIdA).getId();
+    UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
+
+    var pickupLocation = locationsFixture.createLocation(new LocationBuilder()
+      .withName("Pickup location")
+      .withCode("2")
+      .forInstitution(institutionId)
+      .forCampus(campusIdA)
+      .forLibrary(libraryIdA1)
+      .withPrimaryServicePoint(pickupServicePointId)
+      .servedBy(pickupServicePointId));
+
+    var anotherLocation = locationsFixture.createLocation(new LocationBuilder()
+      .withName("Location in different library of same campus")
+      .withCode("4")
+      .forInstitution(institutionId)
+      .forCampus(campusIdA)
+      .forLibrary(libraryIdA2)
+      .withPrimaryServicePoint(anotherServicePointId)
+      .servedBy(anotherServicePointId));
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource closestHoldingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      pickupServicePointId);
+    IndividualResource anotherHoldingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      anotherServicePointId);
+
+    IndividualResource closestNonRequestableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("closestItem")
+      .forHolding(closestHoldingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(pickupLocation.getId())
+      .create());
+
+    IndividualResource anotherRequestableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("anotherItem")
+      .forHolding(anotherHoldingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(anotherLocation.getId())
+      .create());
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(closestNonRequestableItem)
+      .at(pickupServicePointId));
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(anotherRequestableItem)
+      .at(anotherServicePointId));
+
+    IndividualResource pageRequest = requestsClient.create(buildPageTitleLevelRequest(
+      usersFixture.steve().getId(), pickupServicePointId, instanceId));
+
+    assertThat(pageRequest.getResponse(), hasStatus(HTTP_CREATED));
+
+    JsonObject json = pageRequest.getJson();
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
+    assertThat(json.getString("itemId"), is(anotherRequestableItem.getId()));
+  }
+
+  @Test
+  void holdTlrShouldSucceedWhenAvailableItemsExistButTheyAreNotPageable() {
+    // Hold TLR should be created when available items of the same instance exist, but all of them
+    // are not pageable due to the request policy
+
+    configurationsFixture.enableTlrFeature();
+    circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instance.getId(),
+      locationsFixture.mainFloor().getId());
+
+    // Checked-out item
+    IndividualResource nonAvailableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("nonAvailableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    // Available non-requestable item
+    itemsClient.create(new ItemBuilder()
+      .withBarcode("availableNonRequestableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    checkOutFixture.checkOutByBarcode(nonAvailableItem, usersFixture.jessica());
+
+    IndividualResource holdRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instance.getId(), usersFixture.steve());
+
+    assertThat(holdRequest.getResponse(), hasStatus(HTTP_CREATED));
+
+    JsonObject json = holdRequest.getJson();
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
+  void holdAndRecallTlrShouldFailWhenAvailablePageableItemsExist(RequestType type) {
+    // Hold TLR should fail when available items of the same instance exist and some of those
+    // items are pageable (request policy allows page requests)
+
+    configurationsFixture.enableTlrFeature();
+    circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      locationsFixture.mainFloor().getId());
+
+    // Checked-out requestable item
+    IndividualResource nonAvailableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("checkedOutItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    // Available non-requestable item
+    itemsClient.create(new ItemBuilder()
+      .withBarcode("availableNonRequestableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    // Available pageable item that should prevent a hold/recall request
+    IndividualResource availableRequestableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("availableRequestableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    checkOutFixture.checkOutByBarcode(nonAvailableItem, usersFixture.jessica());
+
+    Response response = requestsFixture.attemptPlaceHoldOrRecallTLR(instance.getId(),
+      usersFixture.steve(), type);
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
+        hasUUIDParameter("instanceId", instanceId),
+        hasUUIDParameter("itemId", availableRequestableItem.getId())
+      ))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
+  void holdAndRecallTlrShouldFailWhenNotAllowedByPolicy(RequestType type) {
+    configurationsFixture.enableTlrFeature();
+    circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      locationsFixture.mainFloor().getId());
+
+    // Checked-out item that is not requestable (holds and recalls are not allowed by the policy)
+    IndividualResource nonAvailableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("checkedOutItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+  }
+
+  @Test
+  void holdShouldSucceedWhenAvailableItemsExistButNotRequestable() {
+    // TODO: move this test to the old instance level request tests. It's needed to check that we
+    //  don't need to remove validation that prevents holds and recalls when available requestable
+    //  items exist because we changed the order of request types.
+  }
+
+  @Test
+  void pageTlrShouldBeCreatedWhenAvailableRequestableItemsExist() {
+    // TODO: move this test to the old instance level request tests. It probably alreay exists.
+  }
+
+  @Test
   void shouldFillInMissingRequestProperties() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -3635,6 +3901,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   private ItemResource buildItem(UUID instanceId, String barcode) {
+    return buildItem(instanceId, barcode, materialTypesFixture.book());
+  }
+
+  private ItemResource buildItem(UUID instanceId, String barcode, IndividualResource materialType) {
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
 
     return itemsFixture.basedUponSmallAngryPlanet(
@@ -3642,7 +3912,7 @@ public class RequestsAPICreationTests extends APITests {
       instanceBuilder -> instanceBuilder
         .addIdentifier(isbnIdentifierId, "9780866989732")
         .withId(instanceId),
-      itemBuilder -> itemBuilder.withBarcode(barcode));
+      itemBuilder -> itemBuilder.withBarcode(barcode).withMaterialType(materialType.getId()));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {
@@ -3858,5 +4128,32 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
     assertThat(firstPublication.getString("place"), is("New York"));
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
+  }
+
+  private String differentRequestPoliciesBasedOnMaterialType() {
+    final String loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final String allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String allowNothingRequestPolicy = requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString();
+    final String noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    var book = materialTypesFixture.book().getId();
+    var videoRecording = materialTypesFixture.videoRecording().getId();
+
+    return String.join("\n", "priority: t, s, c, b, a, m, g",
+      createRule("fallback-policy", loanPolicy, allowAllRequestPolicy, noticePolicy,
+        overdueFinePolicy, lostItemFeePolicy),
+      createRule(format("m %s", book), loanPolicy, allowNothingRequestPolicy, noticePolicy,
+        overdueFinePolicy, lostItemFeePolicy),
+      createRule(format("m %s", videoRecording), loanPolicy, allowAllRequestPolicy,
+        noticePolicy, overdueFinePolicy, lostItemFeePolicy));
+  }
+
+  private String createRule(String condition, String loanPolicy, String requestPolicy,
+    String noticePolicy, String overdueFinePolicy, String lostItemFeePolicy) {
+
+    return format("%s: l %s r %s n %s o %s i %s", condition, loanPolicy, requestPolicy,
+      noticePolicy, overdueFinePolicy, lostItemFeePolicy);
   }
 }

@@ -978,6 +978,9 @@ class InstanceRequestsAPICreationTests extends APITests {
     ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
     checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
+    // Hold should be created even when available non-pageable items exist
+
+
     JsonObject requestBody = createInstanceRequestObject(checkedOutItem.getInstanceId(),
       usersFixture.undergradHenry().getId(), servicePointsFixture.cd1().getId(),
       ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC),
