@@ -198,7 +198,7 @@ public class TemplateContextUtil {
   private static JsonObject createInstanceContext(Instance instance) {
     JsonObject instanceContext = new JsonObject();
 
-    if (instance != null && instance.isFound()) {
+    if (instance != null) {
       instanceContext
         .put("title", instance.getTitle())
         .put("primaryContributor", instance.getPrimaryContributorName())

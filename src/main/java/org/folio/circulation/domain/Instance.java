@@ -39,8 +39,4 @@ public class Instance {
     return id == null;
   }
 
-  public boolean isFound() {
-    return !isNotFound();
-  }
-
 }
