@@ -6,6 +6,7 @@ import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
+import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -17,9 +18,11 @@ import static org.hamcrest.core.Is.is;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -424,5 +427,42 @@ public abstract class APITests {
     else {
       configurationsFixture.deleteTlrFeatureConfig();
     }
+  }
+
+  /**
+   *
+   * @param policies Map of policies - (materialTypeId, requestPolicyId)
+   * @return String circulation rules
+   */
+  public String buildRequestPoliciesBasedOnMaterialType(Map<String, String> policies) {
+    final String loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final String allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    String nonFallbackRules = policies.keySet().stream()
+      .map(materialTypeId -> createRule(format("m %s", materialTypeId), loanPolicy,
+        policies.get(materialTypeId), noticePolicy, overdueFinePolicy, lostItemFeePolicy))
+      .collect(Collectors.joining("\n"));
+
+    return String.join("\n", "priority: t, s, c, b, a, m, g",
+      createRule("fallback-policy", loanPolicy, allowAllRequestPolicy, noticePolicy,
+        overdueFinePolicy, lostItemFeePolicy), nonFallbackRules);
+  }
+
+  public String differentRequestPoliciesBasedOnMaterialType() {
+    return buildRequestPoliciesBasedOnMaterialType(Map.of(
+      materialTypesFixture.book().getId().toString(),
+      requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString(),
+      materialTypesFixture.videoRecording().getId().toString(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId().toString()));
+  }
+
+  private String createRule(String condition, String loanPolicy, String requestPolicy,
+    String noticePolicy, String overdueFinePolicy, String lostItemFeePolicy) {
+
+    return format("%s: l %s r %s n %s o %s i %s", condition, loanPolicy, requestPolicy,
+      noticePolicy, overdueFinePolicy, lostItemFeePolicy);
   }
 }

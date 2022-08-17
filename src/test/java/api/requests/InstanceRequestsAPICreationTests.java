@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,14 +38,14 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
+import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
-import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
@@ -958,8 +959,27 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"HOLD,PAGE", "PAGE", ""})
-  void canCreateHoldTLRWhenNotAllowedByRequestPolicy(String allowedRequestTypes) {
+  @CsvSource({
+    "'', false, Hold",
+    "'PAGE', false, Hold",
+    "'RECALL', false, Recall",
+    "'HOLD', false, Hold",
+    "'PAGE,HOLD', false, Hold",
+    "'PAGE,RECALL', false, Recall",
+    "'RECALL,HOLD', false, Recall",
+    "'PAGE,RECALL,HOLD', false, Recall",
+    "'', true, Hold",
+    "'PAGE', true, Page",
+    "'RECALL', true, Recall",
+    "'HOLD', true, Hold",
+    "'PAGE,HOLD', true, Page",
+    "'PAGE,RECALL', true, Page",
+    "'RECALL,HOLD', true, Recall",
+    "'PAGE,RECALL,HOLD', true, Page",
+  })
+  void canCreateTlrWhenAvailableItemExists(String allowedRequestTypes,
+    boolean availableItemIsPageable, String requestTypeShouldBeCreated) {
+
     UUID confirmationTemplateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
@@ -968,30 +988,50 @@ class InstanceRequestsAPICreationTests extends APITests {
       .map(RequestType::from)
       .collect(Collectors.toList());
 
-    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
-        "Request policy name", "Request policy description").getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
+    UUID requestPolicyId = requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
+      "Request policy name", "Request policy description").getId();
 
-    ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    circulationRulesFixture.updateCirculationRules(buildRequestPoliciesBasedOnMaterialType(Map.of(
+      materialTypesFixture.book().getId().toString(),
+      requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString(),
+      materialTypesFixture.videoRecording().getId().toString(), requestPolicyId.toString())));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      locationsFixture.mainFloor().getId());
+
+    // Checked out item with the request policy allowing allowedRequestTypes
+    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("checkedOutItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    // Available item
+    itemsClient.create(new ItemBuilder()
+      .withBarcode("availableNonPageableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(availableItemIsPageable
+        ? materialTypesFixture.videoRecording().getId()
+        : materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
     checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
-    // Hold should be created even when available non-pageable items exist
-
-
-    JsonObject requestBody = createInstanceRequestObject(checkedOutItem.getInstanceId(),
+    JsonObject requestBody = createInstanceRequestObject(instanceId,
       usersFixture.undergradHenry().getId(), servicePointsFixture.cd1().getId(),
       ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC),
       ZonedDateTime.of(2022, 5, 5, 10, 22, 54, 0, UTC));
 
     Response requestResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
     assertThat(requestResponse, hasStatus(HTTP_CREATED));
-    assertEquals(checkedOutItem.getInstanceId().toString(),
+    assertEquals(instanceId.toString(),
       requestResponse.getJson().getString("instanceId"));
     assertThat(requestResponse.getJson().getString("requestType"),
-      is(RequestType.HOLD.getValue()));
+      is(requestTypeShouldBeCreated));
     assertThat(requestResponse.getJson().getString("status"),
       is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }

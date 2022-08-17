@@ -3782,18 +3782,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void holdShouldSucceedWhenAvailableItemsExistButNotRequestable() {
-    // TODO: move this test to the old instance level request tests. It's needed to check that we
-    //  don't need to remove validation that prevents holds and recalls when available requestable
-    //  items exist because we changed the order of request types.
-  }
-
-  @Test
-  void pageTlrShouldBeCreatedWhenAvailableRequestableItemsExist() {
-    // TODO: move this test to the old instance level request tests. It probably alreay exists.
-  }
-
-  @Test
   void shouldFillInMissingRequestProperties() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -4187,32 +4175,5 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
     assertThat(firstPublication.getString("place"), is("New York"));
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
-  }
-
-  private String differentRequestPoliciesBasedOnMaterialType() {
-    final String loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
-    final String allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
-    final String allowNothingRequestPolicy = requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString();
-    final String noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
-    final String lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
-
-    var book = materialTypesFixture.book().getId();
-    var videoRecording = materialTypesFixture.videoRecording().getId();
-
-    return String.join("\n", "priority: t, s, c, b, a, m, g",
-      createRule("fallback-policy", loanPolicy, allowAllRequestPolicy, noticePolicy,
-        overdueFinePolicy, lostItemFeePolicy),
-      createRule(format("m %s", book), loanPolicy, allowNothingRequestPolicy, noticePolicy,
-        overdueFinePolicy, lostItemFeePolicy),
-      createRule(format("m %s", videoRecording), loanPolicy, allowAllRequestPolicy,
-        noticePolicy, overdueFinePolicy, lostItemFeePolicy));
-  }
-
-  private String createRule(String condition, String loanPolicy, String requestPolicy,
-    String noticePolicy, String overdueFinePolicy, String lostItemFeePolicy) {
-
-    return format("%s: l %s r %s n %s o %s i %s", condition, loanPolicy, requestPolicy,
-      noticePolicy, overdueFinePolicy, lostItemFeePolicy);
   }
 }
