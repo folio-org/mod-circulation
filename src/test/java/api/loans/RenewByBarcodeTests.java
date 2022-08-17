@@ -15,8 +15,8 @@ class RenewByBarcodeTests extends RenewalAPITests {
   }
 
   @Override
-  IndividualResource renew(IndividualResource user, IndividualResource item) {
-    return loansFixture.renewLoan(user, item);
+  IndividualResource renew(IndividualResource item, IndividualResource user) {
+    return loansFixture.renewLoan(item, user);
   }
 
   @Override
