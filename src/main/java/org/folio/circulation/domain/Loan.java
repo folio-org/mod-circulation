@@ -266,6 +266,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("proxyUserId");
   }
 
+  @Override
   public Item getItem() {
     return item;
   }
@@ -286,6 +287,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts);
   }
 
+  @Override
   public User getUser() {
     return user;
   }

@@ -25,7 +25,7 @@ public class ItemAwareRequestScheduledNoticeHandler extends RequestScheduledNoti
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchRequest))
-      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
+      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForRequest));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(
@@ -33,6 +33,8 @@ public class ItemAwareRequestScheduledNoticeHandler extends RequestScheduledNoti
 
     return requestRepository.getById(context.getNotice().getRequestId())
       .thenApply(mapResult(context::withRequest))
-      .thenApply(this::failWhenRequestIsIncomplete);
+      .thenApply(r -> r.next(this::failWhenRequestHasNoUser))
+      .thenApply(r -> r.next(this::failWhenRequestHasNoItem));
   }
+
 }

@@ -5,7 +5,6 @@ import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
@@ -18,7 +17,6 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -33,23 +31,6 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
     super(clients, loanRepository);
     this.requestRepository = requestRepository;
-  }
-
-  @Override
-  protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
-    ScheduledNoticeContext context);
-
-  @Override
-  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyId(
-    ScheduledNoticeContext context) {
-
-    if (isNoticeIrrelevant(context)) {
-      return ofAsync(() -> context);
-    }
-
-    return patronNoticePolicyRepository.lookupPolicyId(context.getRequest())
-      .thenApply(mapResult(CirculationRuleMatch::getPolicyId))
-      .thenApply(mapResult(context::withPatronNoticePolicyId));
   }
 
   @Override
@@ -151,4 +132,15 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
     return requestExpirationDate != null && isAfterMillis(nextRunTime, requestExpirationDate) ||
       holdShelfExpirationDate != null && isAfterMillis(nextRunTime, holdShelfExpirationDate);
   }
+
+  protected Result<ScheduledNoticeContext> failWhenRequestHasNoUser(ScheduledNoticeContext context) {
+    return failWhenUserIsMissing(context.getRequest())
+      .map(v -> context);
+  }
+
+  protected Result<ScheduledNoticeContext> failWhenRequestHasNoItem(ScheduledNoticeContext context) {
+    return failWhenItemIsMissing(context.getRequest())
+      .map(v -> context);
+  }
+
 }

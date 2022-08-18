@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
@@ -59,7 +60,7 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     Set<String> requestIds = notices.stream()
       .map(ScheduledNotice::getRequestId)
       .filter(Objects::nonNull)
-      .collect(Collectors.toSet());
+      .collect(toSet());
 
     // TODO: avoid fetching requests twice
     return requestRepository.fetchRequests(requestIds)
@@ -72,11 +73,11 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
     Collection<ScheduledNotice> notices, Collection<Request> requests) {
 
-    Map<String, Boolean> requestIdToItemIdPresence = requests.stream()
+    Map<String, Boolean> requestHasItemId = requests.stream()
       .collect(Collectors.toMap(Request::getId, Request::hasItemId));
 
     Map<Boolean, List<ScheduledNotice>> groupedNotices = notices.stream()
-      .collect(groupingBy(notice -> requestIdToItemIdPresence.getOrDefault(notice.getRequestId(), false)));
+      .collect(groupingBy(notice -> requestHasItemId.getOrDefault(notice.getRequestId(), false)));
 
     return handleNoticesForRequestsWithItemId(clients, requestRepository, loanRepository,
       groupedNotices.get(true))

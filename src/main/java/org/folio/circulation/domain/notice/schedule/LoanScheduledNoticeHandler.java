@@ -56,7 +56,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchLoan))
       .thenCompose(r -> r.after(this::fetchLostItemFeesForAgedToLostNotice))
-      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
+      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForLoan));
   }
 
   private Result<ScheduledNoticeContext> failWhenNoticeHasNoLoanId(ScheduledNoticeContext context) {
@@ -119,7 +119,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return loanRepository.getById(context.getNotice().getLoanId())
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
       .thenApply(mapResult(context::withLoan))
-      .thenApply(this::failWhenLoanIsIncomplete);
+      .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLostItemFeesForAgedToLostNotice(

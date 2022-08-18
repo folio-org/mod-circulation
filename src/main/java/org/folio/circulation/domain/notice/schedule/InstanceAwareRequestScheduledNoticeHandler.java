@@ -38,7 +38,7 @@ public class InstanceAwareRequestScheduledNoticeHandler extends RequestScheduled
     return requestRepository.getByIdWithoutItem(context.getNotice().getRequestId())
       .thenCompose(r -> r.after(this::fetchInstance))
       .thenApply(mapResult(context::withRequest))
-      .thenApply(this::failWhenTitleLevelRequestIsIncomplete);
+      .thenApply(r -> r.next(this::failWhenRequestHasNoUser));
   }
 
   private CompletableFuture<Result<Request>> fetchInstance(Request request) {

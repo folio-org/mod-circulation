@@ -17,8 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
+import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
@@ -84,7 +86,7 @@ public abstract class ScheduledNoticeHandler {
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
-      .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.notice)));
+      .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.getNotice())));
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
@@ -122,42 +124,23 @@ public abstract class ScheduledNoticeHandler {
   }
 
   protected Result<ScheduledNoticeContext> failWhenLoanIsIncomplete(
-    Result<ScheduledNoticeContext> contextResult)  {
+    ScheduledNoticeContext context) {
 
-    return contextResult
-      .map(ScheduledNoticeContext::getLoan)
-      .failWhen(
-        loan -> succeeded(loan.getUser() == null),
-        loan -> new RecordNotFoundFailure("user", loan.getUserId()))
-      .failWhen(
-        loan -> succeeded(loan.getItem() == null || loan.getItem().isNotFound()),
-        loan -> new RecordNotFoundFailure("item", loan.getItemId()))
-      .next(context -> contextResult);
+    return failWhenUserIsMissing(context.getLoan())
+      .next(r -> failWhenItemIsMissing(context.getLoan()))
+      .map(v -> context);
   }
 
-  protected Result<ScheduledNoticeContext> failWhenRequestIsIncomplete(
-    Result<ScheduledNoticeContext> contextResult)  {
-
-    return contextResult
-      .map(ScheduledNoticeContext::getRequest)
-      .failWhen(
-        request -> succeeded(request.getRequester() == null),
-        request -> new RecordNotFoundFailure("user", request.getRequesterId()))
-      .failWhen(
-        request -> succeeded(request.getItem() == null || request.getItem().isNotFound()),
-        request -> new RecordNotFoundFailure("item", request.getItemId()))
-      .next(context -> contextResult);
+  protected Result<Void> failWhenUserIsMissing(UserRelatedRecord record) {
+    return record.getUser() == null
+      ? failed(new RecordNotFoundFailure("user", record.getUserId()))
+      : succeeded(null);
   }
 
-  protected Result<ScheduledNoticeContext> failWhenTitleLevelRequestIsIncomplete(
-    Result<ScheduledNoticeContext> contextResult)  {
-
-    return contextResult
-      .map(ScheduledNoticeContext::getRequest)
-      .failWhen(
-        request -> succeeded(request.getRequester() == null),
-        request -> new RecordNotFoundFailure("user", request.getRequesterId()))
-      .next(context -> contextResult);
+  protected Result<Void> failWhenItemIsMissing(ItemRelatedRecord record) {
+    return record.getItem() == null || record.getItem().isNotFound()
+      ? failed(new RecordNotFoundFailure("item", record.getItemId()))
+      : succeeded(null);
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
@@ -175,14 +158,27 @@ public abstract class ScheduledNoticeHandler {
       .thenApply(r -> r.map(v -> context));
   }
 
-  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyId(
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForLoan(
     ScheduledNoticeContext context) {
+
+    return fetchPatronNoticePolicyId(context, context.getLoan());
+  }
+
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForRequest(
+    ScheduledNoticeContext context) {
+
+    return fetchPatronNoticePolicyId(context, context.getRequest());
+  }
+
+  protected <T extends UserRelatedRecord & ItemRelatedRecord>
+  CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyId(
+    ScheduledNoticeContext context, T record) {
 
     if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
     }
 
-    return patronNoticePolicyRepository.lookupPolicyId(context.getLoan())
+    return patronNoticePolicyRepository.lookupPolicyId(record)
       .thenApply(mapResult(CirculationRuleMatch::getPolicyId))
       .thenApply(mapResult(context::withPatronNoticePolicyId));
   }

@@ -207,6 +207,11 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getString("proxyUserId");
   }
 
+  @Override
+  public User getUser() {
+    return getRequester();
+  }
+
   public String getFulfilmentPreferenceName() {
     return requestRepresentation.getString("fulfilmentPreference");
   }
