@@ -282,13 +282,10 @@ public class RequestByInstanceIdResource extends Resource {
         UpdateRequestQueue.using(clients, requestRepository,
           requestQueueRepository));
 
-    final RequestNoticeSender requestNoticeSender = tlrConfig.isTitleLevelRequestsFeatureEnabled()
-      ? new TitleLevelRequestNoticeSender(clients)
-      : new ItemLevelRequestNoticeSender(clients);
-
     final CreateRequestService createRequestService = new CreateRequestService(repositories,
-      updateUponRequest, new RequestLoanValidator(itemFinder, loanRepository), requestNoticeSender,
-      regularRequestBlockValidators(clients), eventPublisher, new FailFastErrorHandler());
+      updateUponRequest, new RequestLoanValidator(itemFinder, loanRepository),
+      new RequestNoticeSender(clients), regularRequestBlockValidators(clients), eventPublisher,
+      new FailFastErrorHandler());
 
     return placeRequest(requestRepresentations, 0, createRequestService,
       clients, new ArrayList<>(), repositories);

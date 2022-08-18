@@ -63,8 +63,7 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleItemLevelRequestNotices(
-    Clients clients,
-    List<ScheduledNotice> itemLevelNotices, RequestRepository requestRepository,
+    Clients clients, List<ScheduledNotice> itemLevelNotices, RequestRepository requestRepository,
     LoanRepository loanRepository) {
 
     if (itemLevelNotices == null || itemLevelNotices.isEmpty()) {
@@ -76,9 +75,8 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleTitleLevelRequestNotices(
-    Clients clients,
-    RequestRepository requestRepository,
-    LoanRepository loanRepository, List<ScheduledNotice> titleLevelNotices) {
+    Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
+    List<ScheduledNotice> titleLevelNotices) {
 
     if (titleLevelNotices == null || titleLevelNotices.isEmpty()) {
       return ofAsync(() -> null);

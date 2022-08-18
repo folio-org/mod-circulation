@@ -365,13 +365,15 @@ class CancelRequestTests extends APITests {
   }
 
   private RequestBuilder buildTitleLevelRequest() {
-    ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    holdingsFixture.defaultWithHoldings(instanceId);
+
     return new RequestBuilder()
-      .page()
+      .hold()
       .titleRequestLevel()
       .withNoItemId()
       .withNoHoldingsRecordId()
-      .withInstanceId(itemResource.getInstanceId())
+      .withInstanceId(instanceId)
       .withRequesterId(usersFixture.charlotte().getId())
       .withRequestDate(getZonedDateTime())
       .withStatus(OPEN_NOT_YET_FILLED)
