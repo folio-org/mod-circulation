@@ -1,3 +1,6 @@
+## 23.1.2 2022-08-18
+* Add support for more loan date formats (CIRC-1577)
+
 ## 23.1.1 2022-07-22
 * Request record is not correctly stored in the log (CIRC-1565)
 

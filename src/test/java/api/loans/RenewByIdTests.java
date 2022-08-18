@@ -15,8 +15,8 @@ class RenewByIdTests extends RenewalAPITests {
   }
 
   @Override
-  IndividualResource renew(IndividualResource user, IndividualResource item) {
-    return loansFixture.renewLoanById(user, item);
+  IndividualResource renew(IndividualResource item, IndividualResource user) {
+    return loansFixture.renewLoanById(item, user);
   }
 
   @Override
