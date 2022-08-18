@@ -62,7 +62,6 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
       .filter(Objects::nonNull)
       .collect(toSet());
 
-    // TODO: avoid fetching requests twice
     return requestRepository.fetchRequests(requestIds)
       .thenCompose(r -> r.after(requests -> handleNotices(clients, requestRepository,
         loanRepository, notices, requests)))

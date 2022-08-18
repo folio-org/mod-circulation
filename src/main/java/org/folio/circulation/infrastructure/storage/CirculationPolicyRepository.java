@@ -74,9 +74,9 @@ public abstract class CirculationPolicyRepository<T> {
   }
 
   public <R extends UserRelatedRecord & ItemRelatedRecord>
-  CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(R record) {
+  CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(R userAndItemRelatedRecord) {
 
-    return lookupPolicyId(record.getItem(), record.getUser());
+    return lookupPolicyId(userAndItemRelatedRecord.getItem(), userAndItemRelatedRecord.getUser());
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(PatronNoticeEvent noticeEvent) {

@@ -131,15 +131,15 @@ public abstract class ScheduledNoticeHandler {
       .map(v -> context);
   }
 
-  protected Result<Void> failWhenUserIsMissing(UserRelatedRecord record) {
-    return record.getUser() == null
-      ? failed(new RecordNotFoundFailure("user", record.getUserId()))
+  protected Result<Void> failWhenUserIsMissing(UserRelatedRecord userRelatedRecord) {
+    return userRelatedRecord.getUser() == null
+      ? failed(new RecordNotFoundFailure("user", userRelatedRecord.getUserId()))
       : succeeded(null);
   }
 
-  protected Result<Void> failWhenItemIsMissing(ItemRelatedRecord record) {
-    return record.getItem() == null || record.getItem().isNotFound()
-      ? failed(new RecordNotFoundFailure("item", record.getItemId()))
+  protected Result<Void> failWhenItemIsMissing(ItemRelatedRecord itemRelatedRecord) {
+    return itemRelatedRecord.getItem() == null || itemRelatedRecord.getItem().isNotFound()
+      ? failed(new RecordNotFoundFailure("item", itemRelatedRecord.getItemId()))
       : succeeded(null);
   }
 
@@ -172,13 +172,13 @@ public abstract class ScheduledNoticeHandler {
 
   protected <T extends UserRelatedRecord & ItemRelatedRecord>
   CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyId(
-    ScheduledNoticeContext context, T record) {
+    ScheduledNoticeContext context, T userAndItemRelatedRecord) {
 
     if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
     }
 
-    return patronNoticePolicyRepository.lookupPolicyId(record)
+    return patronNoticePolicyRepository.lookupPolicyId(userAndItemRelatedRecord)
       .thenApply(mapResult(CirculationRuleMatch::getPolicyId))
       .thenApply(mapResult(context::withPatronNoticePolicyId));
   }
