@@ -1,9 +1,9 @@
 package api.requests;
 
 import static api.support.fakes.FakeModNotify.getFirstSentPatronNotice;
+import static api.support.fixtures.TemplateContextMatchers.getInstanceContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.RequestMatchers.isTitleLevel;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,6 +36,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -952,9 +954,9 @@ class InstanceRequestsAPICreationTests extends APITests {
 
     verifyNumberOfSentNotices(1);
     JsonObject sentNotice = getFirstSentPatronNotice();
-    assertThat(sentNotice, hasNoJsonPath("context.item"));
-    assertThat(sentNotice, hasEmailNoticeProperties(requesterId, confirmationTemplateId,
-      getUserContextMatchers(requester)));
+    Map<String, Matcher<String>> matchers = getUserContextMatchers(requester);
+    matchers.putAll(getInstanceContextMatchers(instance));
+    assertThat(sentNotice, hasEmailNoticeProperties(requesterId, confirmationTemplateId, matchers));
   }
 
   @ParameterizedTest

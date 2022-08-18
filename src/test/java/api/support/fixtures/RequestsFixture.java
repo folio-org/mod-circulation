@@ -182,6 +182,19 @@ public class RequestsFixture {
       .withPickupServicePointId(pickupServicePointId));
   }
 
+  public IndividualResource placeTitleLevelRequest(RequestType requestType, UUID instanceId,
+    IndividualResource requester) {
+
+    return place(new RequestBuilder()
+      .withRequestType(requestType.getValue())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requester.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+  }
+
   public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,
       IndividualResource by, ZonedDateTime on, UUID pickupServicePointId, String type) {
 
