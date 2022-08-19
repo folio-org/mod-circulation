@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -24,16 +23,15 @@ public class ItemAwareRequestScheduledNoticeHandler extends RequestScheduledNoti
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
-      .thenCompose(r -> r.after(this::fetchRequest))
+      .thenCompose(r -> r.after(this::fetchRequestRelatedRecords))
       .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForRequest));
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(
+  @Override
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchRequestRelatedRecords(
     ScheduledNoticeContext context) {
 
-    return requestRepository.getById(context.getNotice().getRequestId())
-      .thenApply(mapResult(context::withRequest))
-      .thenApply(r -> r.next(this::failWhenRequestHasNoUser))
+    return super.fetchRequestRelatedRecords(context)
       .thenApply(r -> r.next(this::failWhenRequestHasNoItem));
   }
 

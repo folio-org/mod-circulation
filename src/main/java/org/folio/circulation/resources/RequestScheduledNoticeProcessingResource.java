@@ -1,6 +1,8 @@
 package org.folio.circulation.resources;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
@@ -13,15 +15,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.notice.schedule.InstanceAwareRequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ItemAwareRequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.domain.notice.schedule.ScheduledNoticeContext;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
@@ -72,40 +75,48 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
     Collection<ScheduledNotice> notices, Collection<Request> requests) {
 
-    Map<String, Boolean> requestHasItemId = requests.stream()
-      .collect(Collectors.toMap(Request::getId, Request::hasItemId));
+    Map<String, Request> requestsById = requests.stream()
+      .collect(toMap(Request::getId, identity()));
 
-    Map<Boolean, List<ScheduledNotice>> groupedNotices = notices.stream()
-      .collect(groupingBy(notice -> requestHasItemId.getOrDefault(notice.getRequestId(), false)));
+    Map<Boolean, List<ScheduledNoticeContext>> groupedContexts = notices.stream()
+      .map(notice -> new ScheduledNoticeContext(notice)
+        .withRequest(requestsById.get(notice.getRequestId())))
+      .collect(groupingBy(RequestScheduledNoticeProcessingResource::requestHasItemId));
 
     return handleNoticesForRequestsWithItemId(clients, requestRepository, loanRepository,
-      groupedNotices.get(true))
+      groupedContexts.get(true))
       .thenCompose(v -> handleNoticesForRequestsWithoutItemId(clients, requestRepository,
-        loanRepository, groupedNotices.get(false)));
+        loanRepository, groupedContexts.get(false)));
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticesForRequestsWithItemId(
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
-    List<ScheduledNotice> notices) {
+    Collection<ScheduledNoticeContext> contexts) {
 
-    if (notices == null || notices.isEmpty()) {
+    if (contexts == null || contexts.isEmpty()) {
       return ofAsync(() -> null);
     }
 
     return new ItemAwareRequestScheduledNoticeHandler(clients, requestRepository, loanRepository)
-      .handleNotices(notices);
+      .handleContexts(contexts);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticesForRequestsWithoutItemId(
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
-    List<ScheduledNotice> notices) {
+    Collection<ScheduledNoticeContext> contexts) {
 
-    if (notices == null || notices.isEmpty()) {
+    if (contexts == null || contexts.isEmpty()) {
       return ofAsync(() -> null);
     }
 
     return new InstanceAwareRequestScheduledNoticeHandler(clients, requestRepository, loanRepository)
-      .handleNotices(notices);
+      .handleContexts(contexts);
+  }
+
+  private static boolean requestHasItemId(ScheduledNoticeContext context) {
+    return Optional.ofNullable(context.getRequest())
+      .map(Request::hasItemId)
+      .orElse(false);
   }
 
 }

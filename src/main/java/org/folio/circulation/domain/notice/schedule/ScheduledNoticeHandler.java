@@ -15,15 +15,10 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ItemRelatedRecord;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
@@ -38,10 +33,6 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.With;
 
 public abstract class ScheduledNoticeHandler {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -64,6 +55,12 @@ public abstract class ScheduledNoticeHandler {
     this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
   }
 
+  public CompletableFuture<Result<List<ScheduledNotice>>> handleContexts(
+    Collection<ScheduledNoticeContext> contexts) {
+
+    return allOf(contexts, this::handleContext);
+  }
+
   public CompletableFuture<Result<List<ScheduledNotice>>> handleNotices(
     Collection<ScheduledNotice> scheduledNotices) {
 
@@ -71,9 +68,14 @@ public abstract class ScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
+    return handleContext(new ScheduledNoticeContext(notice));
+  }
+
+  private CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
+    final ScheduledNotice notice = context.getNotice();
     log.info("Start processing scheduled notice {}", notice);
 
-    return ofAsync(() -> new ScheduledNoticeContext(notice))
+    return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(r -> r.after(this::updateNotice))
@@ -217,22 +219,6 @@ public abstract class ScheduledNoticeHandler {
       notice.getId(), throwable.getMessage());
 
     return succeeded(notice);
-  }
-
-  @With
-  @Getter
-  @RequiredArgsConstructor
-  @AllArgsConstructor
-  protected static class ScheduledNoticeContext {
-    private final ScheduledNotice notice;
-    private Account account;
-    private FeeFineAction action;
-    private Loan loan;
-    private Request request;
-    private String patronNoticePolicyId;
-    private boolean lostItemFeesForAgedToLostNoticeExist;
-    private JsonObject loanNoticeContext;
-    private NoticeLogContextItem noticeLogContextItem;
   }
 
 }

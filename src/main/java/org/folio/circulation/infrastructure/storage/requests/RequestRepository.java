@@ -155,20 +155,23 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> getById(String id) {
-    return getByIdWithoutItem(id)
-      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
-        Request::withItem))
-      .thenComposeAsync(result -> result.combineAfter(instanceRepository::fetch,
-        Request::withInstance))
-      .thenComposeAsync(this::fetchLoan);
+    return fetchRequest(id)
+      .thenCompose(r -> r.after(this::fetchRelatedRecords));
+
   }
 
-  public CompletableFuture<Result<Request>> getByIdWithoutItem(String id) {
-    return fetchRequest(id)
+  public CompletableFuture<Result<Request>> fetchRelatedRecords(Request request) {
+    return ofAsync(request)
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
       .thenComposeAsync(this::fetchPickupServicePoint)
-      .thenComposeAsync(this::fetchPatronGroups);
+      .thenComposeAsync(this::fetchPatronGroups)
+      .thenComposeAsync(result -> result.combineAfter(itemRepository::fetchFor,
+        Request::withItem))
+      // TODO: avoid fetching instance twice if item is found
+      .thenComposeAsync(result -> result.combineAfter(instanceRepository::fetch,
+        Request::withInstance))
+      .thenComposeAsync(this::fetchLoan);
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String id) {

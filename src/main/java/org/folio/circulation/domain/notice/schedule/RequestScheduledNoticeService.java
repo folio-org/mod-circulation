@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
@@ -56,9 +55,9 @@ public class RequestScheduledNoticeService {
     }
 
     if (request.hasItemId()) {
-      scheduleRequestNotices(relatedRecords.getRequest());
-    } else if (request.getRequestLevel() == TITLE) {
-      scheduleTlrRequestNotices(relatedRecords.getRequest());
+      scheduleNoticesForRequestWithItemId(request);
+    } else {
+      scheduleNoticesForRequestWithoutItemId(request);
     }
 
     return succeeded(relatedRecords);
@@ -67,7 +66,7 @@ public class RequestScheduledNoticeService {
   public Result<RequestAndRelatedRecords> rescheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
     Request request = relatedRecords.getRequest();
     scheduledNoticesRepository.deleteByRequestId(request.getId())
-      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
+      .thenAccept(r -> r.next(resp -> scheduleNoticesForRequestWithItemId(request)));
 
     return succeeded(relatedRecords);
   }
@@ -78,7 +77,7 @@ public class RequestScheduledNoticeService {
       return completedFuture(succeeded(relatedRecords));
     }
     scheduledNoticesRepository.deleteByRequestId(request.getId())
-      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
+      .thenAccept(r -> r.next(resp -> scheduleNoticesForRequestWithItemId(request)));
 
     return completedFuture(succeeded(relatedRecords));
   }
@@ -92,7 +91,7 @@ public class RequestScheduledNoticeService {
 
   private void rescheduleRequestNotices(Request request) {
     scheduledNoticesRepository.deleteByRequestId(request.getId())
-      .thenAccept(r -> r.next(resp -> scheduleRequestNotices(request)));
+      .thenAccept(r -> r.next(resp -> scheduleNoticesForRequestWithItemId(request)));
   }
 
   private Result<PatronNoticePolicy> scheduleRequestNoticesBasedOnPolicy(
@@ -167,7 +166,7 @@ public class RequestScheduledNoticeService {
       .build();
   }
 
-  private Result<Request> scheduleRequestNotices(Request request) {
+  private Result<Request> scheduleNoticesForRequestWithItemId(Request request) {
     if (!request.isClosed()) {
       noticePolicyRepository.lookupPolicy(request)
         .thenApply(r -> r.next(policy -> scheduleRequestNoticesBasedOnPolicy(request, policy)));
@@ -176,18 +175,16 @@ public class RequestScheduledNoticeService {
     return succeeded(request);
   }
 
-  private Result<Request> scheduleTlrRequestNotices(Request request) {
-    TlrSettingsConfiguration tlrSettings = request.getTlrSettingsConfiguration();
-    if (tlrSettings.isTitleLevelRequestsFeatureEnabled()) {
-      scheduleRequestNoticesBasedOnTlrSettings(request, tlrSettings);
+  private Result<Request> scheduleNoticesForRequestWithoutItemId(Request request) {
+    if (request.isTitleLevel()) {
+      scheduleRequestNoticesBasedOnTlrSettings(request);
     }
 
     return succeeded(request);
   }
 
-  private Result<TlrSettingsConfiguration> scheduleRequestNoticesBasedOnTlrSettings(
-    Request request, TlrSettingsConfiguration tlrSettingsConfiguration) {
-
+  private Result<TlrSettingsConfiguration> scheduleRequestNoticesBasedOnTlrSettings(Request request) {
+    TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
     UUID expirationTemplateId = tlrSettingsConfiguration.getExpirationPatronNoticeTemplateId();
     if (expirationTemplateId != null) {
       NoticeConfiguration noticeConfiguration = new NoticeConfigurationBuilder()

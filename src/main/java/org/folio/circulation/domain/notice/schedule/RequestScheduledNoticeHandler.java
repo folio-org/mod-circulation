@@ -1,10 +1,13 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
@@ -18,6 +21,7 @@ import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -141,6 +145,20 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
   protected Result<ScheduledNoticeContext> failWhenRequestHasNoItem(ScheduledNoticeContext context) {
     return failWhenItemIsMissing(context.getRequest())
       .map(v -> context);
+  }
+
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchRequestRelatedRecords(
+    ScheduledNoticeContext context) {
+
+    // request is expected to have been fetched before it reaches this handler
+    if (context.getRequest() == null) {
+      return completedFuture(failed(
+        new RecordNotFoundFailure("request", context.getNotice().getRequestId())));
+    }
+
+    return requestRepository.fetchRelatedRecords(context.getRequest())
+      .thenApply(mapResult(context::withRequest))
+      .thenApply(r -> r.next(this::failWhenRequestHasNoUser));
   }
 
 }
