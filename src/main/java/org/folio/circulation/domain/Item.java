@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
+import lombok.Getter;
 import lombok.NonNull;
 
 public class Item {
@@ -34,8 +35,9 @@ public class Item {
 
   private boolean changed;
 
-  @NonNull private final Holdings holdings;
+  @Getter
   @NonNull private final Instance instance;
+  @NonNull private final Holdings holdings;
   @NonNull private final MaterialType materialType;
   @NonNull private final LoanType loanType;
   @NonNull private final ItemDescription description;

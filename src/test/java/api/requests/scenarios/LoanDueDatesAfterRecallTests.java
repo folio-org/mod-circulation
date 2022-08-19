@@ -1,5 +1,6 @@
 package api.requests.scenarios;
 
+import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
@@ -30,6 +31,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 
 import java.time.Clock;
@@ -39,8 +41,11 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -56,7 +61,6 @@ import api.support.builders.LoanBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
-import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
@@ -864,7 +868,8 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     assertThat(storedLoan.getString(DUE_DATE), withinSecondsBefore(30, expectedLoanDueDate));
     // Verify published loan event type description
-    var publishedLoanLogEvents = FakePubSub.getPublishedEventsAsList(byLogEventType(LOAN));
+    List<JsonObject> publishedLoanLogEvents = Awaitility.waitAtMost(5, TimeUnit.SECONDS)
+      .until(() -> getPublishedEventsAsList(byLogEventType(LOAN)), hasSize(2));
 
     assertThat(publishedLoanLogEvents.size(), is(2));
     verifyLogEventDueDateChangedMessage(publishedLoanLogEvents.get(0), loan, expectedLoanDueDate);

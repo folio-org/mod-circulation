@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
@@ -369,6 +370,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasChangedStatus() {
     return changedStatus;
+  }
+
+  public boolean hasItemId() {
+    return isNotBlank(getItemId());
+  }
+
+  public boolean hasItem() {
+    return item != null && item.isFound();
   }
 
   public enum Operation {
