@@ -3561,10 +3561,13 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource anotherHoldingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
       anotherLocation.getId());
 
-    IndividualResource closestNonRequestableItem = itemsClient.create(new ItemBuilder()
+    var nonRequestableMaterialTypeId = materialTypesFixture.book().getId();
+    var requestableMaterialTypeId = materialTypesFixture.videoRecording().getId();
+
+    itemsClient.create(new ItemBuilder()
       .withBarcode("closestItem")
       .forHolding(closestHoldingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withPermanentLocation(pickupLocation.getId())
       .create());
@@ -3573,16 +3576,16 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource anotherRequestableItem = itemsClient.create(new ItemBuilder()
       .withBarcode("anotherItem")
       .forHolding(anotherHoldingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withMaterialType(requestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withPermanentLocation(anotherLocation.getId())
       .create());
 
     // This item shouldn't be picked because it's further away than anotherRequestableItem
-    IndividualResource yetAnotherRequestableItem = itemsClient.create(new ItemBuilder()
+    itemsClient.create(new ItemBuilder()
       .withBarcode("yetAnotherItem")
       .forHolding(anotherHoldingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withMaterialType(requestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withPermanentLocation(yetAnotherLocation.getId())
       .create());

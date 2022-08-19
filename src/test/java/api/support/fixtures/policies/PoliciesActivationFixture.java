@@ -38,6 +38,7 @@ import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.http.IndividualResource;
 import api.support.http.QueryStringParameter;
 import lombok.val;
 
@@ -237,7 +238,13 @@ public final class PoliciesActivationFixture {
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
   }
 
-  public String buildRequestPoliciesBasedOnMaterialType(Map<String, String> policies) {
+  /**
+   * @param policies Map (materialType, requestPolicy)
+   * @return circulation rules
+   */
+  public String buildRequestPoliciesBasedOnMaterialType(
+    Map<IndividualResource, IndividualResource> policies) {
+
     final String loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
     final String allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
     final String noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
@@ -245,8 +252,9 @@ public final class PoliciesActivationFixture {
     final String lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
 
     String nonFallbackRules = policies.keySet().stream()
-      .map(materialTypeId -> createRule(format("m %s", materialTypeId), loanPolicy,
-        policies.get(materialTypeId), noticePolicy, overdueFinePolicy, lostItemFeePolicy))
+      .map(materialType -> createRule(format("m %s", materialType.getId()), loanPolicy,
+        policies.get(materialType).getId().toString(), noticePolicy, overdueFinePolicy,
+        lostItemFeePolicy))
       .collect(Collectors.joining("\n"));
 
     return String.join("\n", "priority: t, s, c, b, a, m, g",
@@ -254,13 +262,12 @@ public final class PoliciesActivationFixture {
         overdueFinePolicy, lostItemFeePolicy), nonFallbackRules);
   }
 
-
   public String differentRequestPoliciesBasedOnMaterialType() {
     return buildRequestPoliciesBasedOnMaterialType(Map.of(
-      materialTypesFixture.book().getId().toString(),
-      requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString(),
-      materialTypesFixture.videoRecording().getId().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString()));
+      materialTypesFixture.book(),
+      requestPoliciesFixture.nonRequestableRequestPolicy(),
+      materialTypesFixture.videoRecording(),
+      requestPoliciesFixture.allowAllRequestPolicy()));
   }
 
   private String createRule(String condition, String loanPolicy, String requestPolicy,

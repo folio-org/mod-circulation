@@ -1043,19 +1043,17 @@ class InstanceRequestsAPICreationTests extends APITests {
       .map(RequestType::from)
       .collect(Collectors.toList());
 
-    UUID requestPolicyIdForCheckedOutItems = requestPoliciesFixture.customRequestPolicy(
+    var requestPolicyIdForCheckedOutItems = requestPoliciesFixture.customRequestPolicy(
       allowedRequestPolicyTypesForCheckedOutItems, "Request policy name for checked-out item",
-      "Request policy description").getId();
+      "Request policy description");
 
-    UUID requestPolicyIdForAvailableItems = requestPoliciesFixture.customRequestPolicy(
+    var requestPolicyIdForAvailableItems = requestPoliciesFixture.customRequestPolicy(
       allowedRequestPolicyTypesForAvailableItems, "Request policy name for available item",
-      "Request policy description").getId();
+      "Request policy description");
 
     circulationRulesFixture.updateCirculationRules(buildRequestPoliciesBasedOnMaterialType(Map.of(
-      materialTypesFixture.book().getId().toString(),
-      requestPolicyIdForAvailableItems.toString(),
-      materialTypesFixture.videoRecording().getId().toString(),
-      requestPolicyIdForCheckedOutItems.toString())));
+      materialTypesFixture.book(), requestPolicyIdForAvailableItems,
+      materialTypesFixture.videoRecording(), requestPolicyIdForCheckedOutItems)));
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     UUID instanceId = instance.getId();
