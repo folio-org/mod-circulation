@@ -14,13 +14,14 @@ public class HoldingsFixture {
   }
 
   public IndividualResource defaultWithHoldings(UUID instanceId) {
+    return createHoldingsRecord(instanceId, UUID.randomUUID());
+  }
 
-
+  public IndividualResource createHoldingsRecord(UUID instanceId, UUID permanentLocationId) {
     HoldingBuilder holdingsBuilder = new HoldingBuilder()
-                    .forInstance(instanceId)
-                    .withPermanentLocation(UUID.randomUUID());
-    IndividualResource holdingsResource = holdingsClient.create(holdingsBuilder);
+      .forInstance(instanceId)
+      .withPermanentLocation(permanentLocationId);
 
-    return holdingsResource;
+    return holdingsClient.create(holdingsBuilder);
   }
 }

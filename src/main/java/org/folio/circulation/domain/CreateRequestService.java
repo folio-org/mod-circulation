@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -23,10 +24,12 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
+import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,13 +37,13 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.resources.RequestBlockValidators;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
@@ -92,7 +95,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(when(this::shouldCheckInstance, this::checkInstance, this::doNothing)))
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(this::checkPolicy))
-      .thenApply(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
+      .thenApply(r -> r.next(this::refuseHoldOrRecallTlrWhenPageableItemExists))
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -106,52 +109,47 @@ public class CreateRequestService {
       });
   }
 
-  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
-    Result<RequestAndRelatedRecords> requestAndRelatedRecords) {
-
-    return requestAndRelatedRecords.next(this::refuseHoldOrRecallTlrWhenAvailableItemExists)
-      .mapFailure(err -> errorHandler.handleValidationError(err,
-        ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, requestAndRelatedRecords));
-  }
-
-  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenAvailableItemExists(
+  private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenPageableItemExists(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     Request request = requestAndRelatedRecords.getRequest();
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
-      Item item = getFirstAvailableItem(request);
-      if (item != null) {
-        String availableItemId = item.getItemId();
-        log.info("Available item found: {}", availableItemId);
+      List<Item> availablePageableItems = ItemForTlrService.using(repositories)
+        .findAvailablePageableItems(requestAndRelatedRecords.getRequest());
 
-        RequestPolicy policy = requestAndRelatedRecords.getRequestPolicy();
-        if (policy == null) {
-          log.info("Hold and Recall are not allowed because available item {} exists",
-            availableItemId);
-          return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
-        } else if (policy.allowsType(RequestType.PAGE)) {
-          log.info("Hold and Recall are not allowed because Page is allowed by policy {} and " +
-            "available item {} exists", policy.getId(), availableItemId);
-          return failedValidationHoldAndRecallNotAllowed(request, availableItemId);
-        }
-      }
+      return failValidationWhenPageableItemsExist(requestAndRelatedRecords, availablePageableItems)
+        .mapFailure(err -> errorHandler.handleValidationError(err,
+          ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM, requestAndRelatedRecords));
     }
-    return succeeded(requestAndRelatedRecords);
+
+    return of(() -> requestAndRelatedRecords);
+  }
+
+  private Result<RequestAndRelatedRecords> failValidationWhenPageableItemsExist(
+    RequestAndRelatedRecords requestAndRelatedRecords, List<Item> availablePageableItems) {
+
+    if (availablePageableItems.isEmpty()) {
+      return succeeded(requestAndRelatedRecords);
+    }
+
+    String availablePageableItemId = availablePageableItems.stream()
+      .map(Item::getItemId)
+      .findAny()
+      .orElse("");
+
+    return failedValidationHoldAndRecallNotAllowed(requestAndRelatedRecords.getRequest(),
+      availablePageableItemId);
   }
 
   private Result<RequestAndRelatedRecords> failedValidationHoldAndRecallNotAllowed(Request request,
     String availableItemId) {
 
-    return failedValidation("Hold/Recall TLR not allowed: available item found for instance",
-      Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
-  }
+    String errorMessage = "Hold/Recall TLR not allowed: pageable available item found for instance";
 
-  private Item getFirstAvailableItem(Request request) {
-    return request.getInstanceItems().stream()
-      .filter(Objects::nonNull)
-      .filter(Item::isAvailable)
-      .findFirst()
-      .orElse(null);
+    log.info("{}. Pageable item(s): {}", errorMessage, availableItemId);
+
+    return failedValidation(errorMessage,
+      Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
