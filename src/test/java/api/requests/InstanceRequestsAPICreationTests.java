@@ -39,14 +39,14 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
+import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.RequestByInstanceIdRequestBuilder;
 import api.support.http.IndividualResource;
-import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
@@ -960,37 +960,135 @@ class InstanceRequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"HOLD,PAGE", "PAGE", ""})
-  void canCreateHoldTLRWhenNotAllowedByRequestPolicy(String allowedRequestTypes) {
+  @CsvSource({
+    "'', '', Hold",
+    "'PAGE', '', Hold",
+    "'RECALL', '', Recall",
+    "'HOLD', '', Hold",
+    "'PAGE,HOLD', '', Hold",
+    "'PAGE,RECALL', '', Recall",
+    "'RECALL,HOLD', '', Recall",
+    "'PAGE,RECALL,HOLD', '', Recall",
+    "'', 'PAGE', Page",
+    "'PAGE', 'PAGE', Page",
+    "'RECALL', 'PAGE', Page",
+    "'HOLD', 'PAGE', Page",
+    "'PAGE,HOLD', 'PAGE', Page",
+    "'PAGE,RECALL', 'PAGE', Page",
+    "'RECALL,HOLD', 'PAGE', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE', Page",
+    "'', 'RECALL', Hold",
+    "'PAGE', 'RECALL', Hold",
+    "'RECALL', 'RECALL', Recall",
+    "'HOLD', 'RECALL', Hold",
+    "'PAGE,HOLD', 'RECALL', Hold",
+    "'PAGE,RECALL', 'RECALL', Recall",
+    "'RECALL,HOLD', 'RECALL', Recall",
+    "'PAGE,RECALL,HOLD', 'RECALL', Recall",
+    "'', 'HOLD', Hold",
+    "'PAGE', 'HOLD', Hold",
+    "'RECALL', 'HOLD', Recall",
+    "'HOLD', 'HOLD', Hold",
+    "'PAGE,HOLD', 'HOLD', Hold",
+    "'PAGE,RECALL', 'HOLD', Recall",
+    "'RECALL,HOLD', 'HOLD', Recall",
+    "'PAGE,RECALL,HOLD', 'HOLD', Recall",
+    "'', 'PAGE,HOLD', Page",
+    "'PAGE', 'PAGE,HOLD', Page",
+    "'RECALL', 'PAGE,HOLD', Page",
+    "'HOLD', 'PAGE,HOLD', Page",
+    "'PAGE,HOLD', 'PAGE,HOLD', Page",
+    "'PAGE,RECALL', 'PAGE,HOLD', Page",
+    "'RECALL,HOLD', 'PAGE,HOLD', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE,HOLD', Page",
+    "'', 'PAGE,RECALL', Page",
+    "'PAGE', 'PAGE,RECALL', Page",
+    "'RECALL', 'PAGE,RECALL', Page",
+    "'HOLD', 'PAGE,RECALL', Page",
+    "'PAGE,HOLD', 'PAGE,RECALL', Page",
+    "'PAGE,RECALL', 'PAGE,RECALL', Page",
+    "'RECALL,HOLD', 'PAGE,RECALL', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE,RECALL', Page",
+    "'', 'RECALL,HOLD', Hold",
+    "'PAGE', 'RECALL,HOLD', Hold",
+    "'RECALL', 'RECALL,HOLD', Recall",
+    "'HOLD', 'RECALL,HOLD', Hold",
+    "'PAGE,HOLD', 'RECALL,HOLD', Hold",
+    "'PAGE,RECALL', 'RECALL,HOLD', Recall",
+    "'RECALL,HOLD', 'RECALL,HOLD', Recall",
+    "'PAGE,RECALL,HOLD', 'RECALL,HOLD', Recall",
+    "'', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE', 'PAGE,RECALL,HOLD', Page",
+    "'RECALL', 'PAGE,RECALL,HOLD', Page",
+    "'HOLD', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE,HOLD', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE,RECALL', 'PAGE,RECALL,HOLD', Page",
+    "'RECALL,HOLD', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE,RECALL,HOLD', Page",
+  })
+  void canCreateTlrWhenAvailableItemExists(String allowedRequestTypesForCheckedOutItem,
+    String allowedRequestTypesForAvailableItem, String requestTypeShouldBeCreated) {
+
     UUID confirmationTemplateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
 
-    List<RequestType> allowedRequestPolicyTypes = Arrays.stream(allowedRequestTypes.split(","))
+    List<RequestType> allowedRequestPolicyTypesForCheckedOutItems = Arrays.stream(
+        allowedRequestTypesForCheckedOutItem.split(","))
       .map(RequestType::from)
       .collect(Collectors.toList());
 
-    useFallbackPolicies(loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
-        "Request policy name", "Request policy description").getId(),
-      noticePoliciesFixture.activeNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
+    List<RequestType> allowedRequestPolicyTypesForAvailableItems = Arrays.stream(
+        allowedRequestTypesForAvailableItem.split(","))
+      .map(RequestType::from)
+      .collect(Collectors.toList());
 
-    ItemResource checkedOutItem = itemsFixture.basedUponSmallAngryPlanet();
+    var requestPolicyIdForCheckedOutItems = requestPoliciesFixture.customRequestPolicy(
+      allowedRequestPolicyTypesForCheckedOutItems, "Request policy name for checked-out item",
+      "Request policy description");
+
+    var requestPolicyIdForAvailableItems = requestPoliciesFixture.customRequestPolicy(
+      allowedRequestPolicyTypesForAvailableItems, "Request policy name for available item",
+      "Request policy description");
+
+    circulationRulesFixture.updateCirculationRules(buildRequestPoliciesBasedOnMaterialType(Map.of(
+      materialTypesFixture.book(), requestPolicyIdForAvailableItems,
+      materialTypesFixture.videoRecording(), requestPolicyIdForCheckedOutItems)));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      locationsFixture.mainFloor().getId());
+
+    // Checked out item with the request policy allowing allowedRequestTypes
+    IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("checkedOutItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    // Available item
+    itemsClient.create(new ItemBuilder()
+      .withBarcode("availableNonPageableItem")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
     checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
 
-    JsonObject requestBody = createInstanceRequestObject(checkedOutItem.getInstanceId(),
+    JsonObject requestBody = createInstanceRequestObject(instanceId,
       usersFixture.undergradHenry().getId(), servicePointsFixture.cd1().getId(),
       ZonedDateTime.of(2022, 4, 22, 10, 22, 54, 0, UTC),
       ZonedDateTime.of(2022, 5, 5, 10, 22, 54, 0, UTC));
 
     Response requestResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
     assertThat(requestResponse, hasStatus(HTTP_CREATED));
-    assertEquals(checkedOutItem.getInstanceId().toString(),
+    assertEquals(instanceId.toString(),
       requestResponse.getJson().getString("instanceId"));
     assertThat(requestResponse.getJson().getString("requestType"),
-      is(RequestType.HOLD.getValue()));
+      is(requestTypeShouldBeCreated));
     assertThat(requestResponse.getJson().getString("status"),
       is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }

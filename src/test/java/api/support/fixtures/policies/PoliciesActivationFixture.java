@@ -8,16 +8,20 @@ import static api.support.http.ResourceClient.forInstitutions;
 import static api.support.http.ResourceClient.forLibraries;
 import static api.support.http.ResourceClient.forLoanPolicies;
 import static api.support.http.ResourceClient.forLocations;
+import static api.support.http.ResourceClient.forMaterialTypes;
 import static api.support.http.ResourceClient.forNoticePolicies;
 import static api.support.http.ResourceClient.forRequestPolicies;
 import static api.support.http.ResourceClient.forServicePoints;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
+import static java.lang.String.format;
 import static org.folio.circulation.support.utils.CommonUtils.getOrDefault;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,10 +33,12 @@ import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.LostItemFeePoliciesFixture;
+import api.support.fixtures.MaterialTypesFixture;
 import api.support.fixtures.NoticePoliciesFixture;
 import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.http.IndividualResource;
 import api.support.http.QueryStringParameter;
 import lombok.val;
 
@@ -49,6 +55,7 @@ public final class PoliciesActivationFixture {
   private final LostItemFeePoliciesFixture lostItemFeePoliciesFixture;
   private final CirculationRulesFixture circulationRulesFixture;
   private final LocationsFixture locationsFixture;
+  private final MaterialTypesFixture materialTypesFixture;
 
   public PoliciesActivationFixture() {
     restAssuredClient = defaultRestAssuredClient();
@@ -61,6 +68,7 @@ public final class PoliciesActivationFixture {
     circulationRulesFixture = new CirculationRulesFixture(restAssuredClient);
     locationsFixture = new LocationsFixture(forLocations(), forInstitutions(),
       forCampuses(), forLibraries(), new ServicePointsFixture(forServicePoints()));
+    materialTypesFixture = new MaterialTypesFixture(forMaterialTypes());
   }
 
   public PoliciesToActivate.PoliciesToActivateBuilder defaultRollingPolicies() {
@@ -228,5 +236,44 @@ public final class PoliciesActivationFixture {
         invalidNoticePolicyReference,
         overdueFinePoliciesFixture.facultyStandard().getId().toString(),
         lostItemFeePoliciesFixture.facultyStandard().getId().toString()));
+  }
+
+  /**
+   * @param policies Map (materialType, requestPolicy)
+   * @return circulation rules
+   */
+  public String buildRequestPoliciesBasedOnMaterialType(
+    Map<IndividualResource, IndividualResource> policies) {
+
+    final String loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final String allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
+    final String noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final String overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    String nonFallbackRules = policies.keySet().stream()
+      .map(materialType -> createRule(format("m %s", materialType.getId()), loanPolicy,
+        policies.get(materialType).getId().toString(), noticePolicy, overdueFinePolicy,
+        lostItemFeePolicy))
+      .collect(Collectors.joining("\n"));
+
+    return String.join("\n", "priority: t, s, c, b, a, m, g",
+      createRule("fallback-policy", loanPolicy, allowAllRequestPolicy, noticePolicy,
+        overdueFinePolicy, lostItemFeePolicy), nonFallbackRules);
+  }
+
+  public String differentRequestPoliciesBasedOnMaterialType() {
+    return buildRequestPoliciesBasedOnMaterialType(Map.of(
+      materialTypesFixture.book(),
+      requestPoliciesFixture.nonRequestableRequestPolicy(),
+      materialTypesFixture.videoRecording(),
+      requestPoliciesFixture.allowAllRequestPolicy()));
+  }
+
+  private String createRule(String condition, String loanPolicy, String requestPolicy,
+    String noticePolicy, String overdueFinePolicy, String lostItemFeePolicy) {
+
+    return format("%s: l %s r %s n %s o %s i %s", condition, loanPolicy, requestPolicy,
+      noticePolicy, overdueFinePolicy, lostItemFeePolicy);
   }
 }

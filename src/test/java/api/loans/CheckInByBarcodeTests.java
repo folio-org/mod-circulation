@@ -1683,8 +1683,9 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
     return new ItemBuilder()
       .forHolding(holdingRecordsId)
       .checkOut()
-      .withMaterialType(UUID.randomUUID())
-      .withPermanentLoanType(UUID.randomUUID())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(locationsFixture.mainFloor())
       .create();
   }
 

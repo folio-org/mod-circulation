@@ -89,6 +89,15 @@ public class RequestPoliciesFixture {
     return customRequestPolicy(requestTypesList);
   }
 
+  public IndividualResource nonRequestableRequestPolicy() {
+    ArrayList<RequestType> types = new ArrayList<>();
+
+    final RequestPolicyBuilder policyBuilder = new RequestPolicyBuilder(types,
+      "Nothing is allowed", "");
+
+    return requestPolicyRecordCreator.createIfAbsent(policyBuilder);
+  }
+
   public void deleteRequestPolicy(IndividualResource policyToDelete) {
       requestPolicyRecordCreator.delete(policyToDelete);
   }
