@@ -3173,14 +3173,17 @@ public class RequestsAPICreationTests extends APITests {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
 
+    var nonRequestableMaterialType = materialTypesFixture.book();
+    var requestableMaterialType = materialTypesFixture.videoRecording();
+
     // This item is non-recallable due to the request policy
-    ItemResource firstItem = buildItem(instanceId, "111", materialTypesFixture.book());
+    ItemResource firstItem = buildItem(instanceId, "111", nonRequestableMaterialType);
 
     // Recallable item
-    ItemResource secondItem = buildItem(instanceId, "222", materialTypesFixture.videoRecording());
+    ItemResource secondItem = buildItem(instanceId, "222", requestableMaterialType);
 
     // Available item that is non-pageable
-    ItemResource thirdItem = buildItem(instanceId, "333", materialTypesFixture.book());
+    ItemResource thirdItem = buildItem(instanceId, "333", nonRequestableMaterialType);
 
     // Closest due date but the item is non-recallable
     updateCirculationRulesWithLoanPeriod("One day loan policy", Period.days(1));
@@ -3613,11 +3616,14 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instance.getId(),
       locationsFixture.mainFloor().getId());
 
+    var nonRequestableMaterialTypeId = materialTypesFixture.book().getId();
+    var requestableMaterialTypeId = materialTypesFixture.videoRecording().getId();
+
     // Checked-out item
     IndividualResource nonAvailableItem = itemsClient.create(new ItemBuilder()
       .withBarcode("nonAvailableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withMaterialType(requestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3625,7 +3631,7 @@ public class RequestsAPICreationTests extends APITests {
     itemsClient.create(new ItemBuilder()
       .withBarcode("availableNonRequestableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3656,11 +3662,14 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
       locationsFixture.mainFloor().getId());
 
+    var nonRequestableMaterialTypeId = materialTypesFixture.book().getId();
+    var requestableMaterialTypeId = materialTypesFixture.videoRecording().getId();
+
     // Checked-out requestable item
     IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
       .withBarcode("checkedOutItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withMaterialType(requestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3668,7 +3677,7 @@ public class RequestsAPICreationTests extends APITests {
     itemsClient.create(new ItemBuilder()
       .withBarcode("availableNonPageableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3676,7 +3685,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource availablePageableItem = itemsClient.create(new ItemBuilder()
       .withBarcode("availablePageableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withMaterialType(requestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3705,11 +3714,13 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
       locationsFixture.mainFloor().getId());
 
+    var nonRequestableMaterialTypeId = materialTypesFixture.book().getId();
+
     // Checked-out item that is not requestable (recalls are not allowed by the policy)
     IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
       .withBarcode("checkedOutItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3717,7 +3728,7 @@ public class RequestsAPICreationTests extends APITests {
     itemsClient.create(new ItemBuilder()
       .withBarcode("availableNonPageableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3744,11 +3755,13 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
       locationsFixture.mainFloor().getId());
 
+    var nonRequestableMaterialTypeId = materialTypesFixture.book().getId();
+
     // Checked-out item that is not requestable (holds are not allowed by the policy)
     IndividualResource checkedOutItem = itemsClient.create(new ItemBuilder()
       .withBarcode("checkedOutItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
@@ -3756,7 +3769,7 @@ public class RequestsAPICreationTests extends APITests {
     itemsClient.create(new ItemBuilder()
       .withBarcode("availableNonPageableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
+      .withMaterialType(nonRequestableMaterialTypeId)
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 
