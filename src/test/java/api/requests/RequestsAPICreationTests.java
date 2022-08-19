@@ -559,13 +559,9 @@ public class RequestsAPICreationTests extends APITests {
   void canCreateTitleLevelRequestWhenTlrEnabled() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-//    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-//    UUID instanceId = item.getInstanceId();
 
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     UUID instanceId = items.get(0).getInstanceId();
-
-//    checkInFixture.checkInByBarcode(items.get(0).getBarcode(), pickupServicePointId);
 
     configurationsFixture.enableTlrFeature();
 
@@ -711,7 +707,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
+      hasMessage("Hold/Recall TLR not allowed: pageable available item found for instance"),
       hasParameter("instanceId", item.getInstanceId().toString()),
       hasParameter("itemId", items.get(1).getId().toString()))));
   }
@@ -1345,7 +1341,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Cannot create page TLR for this instance ID - no available items found")));
+      hasMessage("Cannot create page TLR for this instance ID - no pageable available items found")));
     assertThat(postResponse.getJson(), hasErrorWith(hasParameter("instanceId",
       instanceId.toString())));
   }
@@ -1408,39 +1404,6 @@ public class RequestsAPICreationTests extends APITests {
       .getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
   }
-
-//  @Test
-//  void canCreateTitleLevelPagedRequestWhenItemAtClosestLocationIsNotRequestable() {
-//    UUID patronId = usersFixture.charlotte().getId();
-//    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-//    final UUID anotherSP = servicePointsFixture.cd2().getId();
-//    configurationsFixture.enableTlrFeature();
-//
-//    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
-//    UUID instanceId = uponDunkirkInstance.getId();
-//    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-//    IndividualResource item = itemsClient.create(new ItemBuilder()
-//      .forHolding(defaultWithHoldings.getId())
-//      .withMaterialType(UUID.randomUUID())
-//      .withPermanentLoanType(UUID.randomUUID())
-//      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-//      .withMaterialType(materialTypesFixture.book().getId())
-//      .withPermanentLocation(locationsFixture.mainFloor())
-//      .create());
-//
-//    IndividualResource pagedRequest = requestsClient.create(buildPageTitleLevelRequest(patronId,
-//      pickupServicePointId, instanceId));
-//
-//    JsonObject json = pagedRequest.getJson();
-//    assertThat(json.getString("requestType"), is(RequestType.PAGE.getValue()));
-//    assertThat(json.getString("holdingsRecordId"), is(defaultWithHoldings.getId().toString()));
-//    assertThat(json.getString("itemId"), is(item.getId()));
-//    assertThat(json.getString("instanceId"), is(instanceId));
-//    assertThat(pagedRequest.getResponse(), hasStatus(HTTP_CREATED));
-//    assertThat(json.getJsonObject("item")
-//      .getString("status"), is(ItemStatus.PAGED.getValue()));
-//    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
-//  }
 
   @Test
   void cannotCreateItemLevelRequestIfTitleLevelRequestForInstanceAlreadyCreated() {
@@ -3163,7 +3126,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Cannot create page TLR for this instance ID - no available items found"),
+      hasMessage("Cannot create page TLR for this instance ID - no pageable available items found"),
       hasNullParameter("instanceId")
     )));
   }
@@ -3562,7 +3525,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID campusIdB = locationsFixture.createCampus("Campus B", institutionId).getId();
     UUID libraryIdA1 = locationsFixture.createLibrary("Library A1", campusIdA).getId();
     UUID libraryIdA2 = locationsFixture.createLibrary("Library A2", campusIdA).getId();
-    UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
+    UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdA).getId();
 
     var pickupLocation = locationsFixture.createLocation(new LocationBuilder()
       .withName("Pickup location")
@@ -3582,6 +3545,15 @@ public class RequestsAPICreationTests extends APITests {
       .withPrimaryServicePoint(anotherServicePointId)
       .servedBy(anotherServicePointId));
 
+    var yetAnotherLocation = locationsFixture.createLocation(new LocationBuilder()
+      .withName("Location in different campus")
+      .withCode("5")
+      .forInstitution(institutionId)
+      .forCampus(campusIdB)
+      .forLibrary(libraryIdB1)
+      .withPrimaryServicePoint(anotherServicePointId)
+      .servedBy(anotherServicePointId));
+
     IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
     UUID instanceId = uponDunkirkInstance.getId();
     IndividualResource closestHoldingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
@@ -3597,12 +3569,22 @@ public class RequestsAPICreationTests extends APITests {
       .withPermanentLocation(pickupLocation.getId())
       .create());
 
+    // This item should be picked as the closes item among pageable items
     IndividualResource anotherRequestableItem = itemsClient.create(new ItemBuilder()
       .withBarcode("anotherItem")
       .forHolding(anotherHoldingsRecord.getId())
       .withMaterialType(materialTypesFixture.videoRecording().getId())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withPermanentLocation(anotherLocation.getId())
+      .create());
+
+    // This item shouldn't be picked because it's further away than anotherRequestableItem
+    IndividualResource yetAnotherRequestableItem = itemsClient.create(new ItemBuilder()
+      .withBarcode("yetAnotherItem")
+      .forHolding(anotherHoldingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(yetAnotherLocation.getId())
       .create());
 
     IndividualResource pageRequest = requestsClient.create(buildPageTitleLevelRequest(
@@ -3704,7 +3686,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
-        hasMessage("Hold/Recall TLR not allowed: available item found for instance"),
+        hasMessage("Hold/Recall TLR not allowed: pageable available item found for instance"),
         hasUUIDParameter("instanceId", instanceId),
         hasUUIDParameter("itemId", availablePageableItem.getId())
       ))));

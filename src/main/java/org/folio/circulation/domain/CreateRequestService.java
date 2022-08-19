@@ -143,9 +143,9 @@ public class CreateRequestService {
   private Result<RequestAndRelatedRecords> failedValidationHoldAndRecallNotAllowed(Request request,
     String availableItemId) {
 
-    String errorMessage = "Hold/Recall TLR not allowed: available item found for instance";
+    String errorMessage = "Hold/Recall TLR not allowed: pageable available item found for instance";
 
-    log.info(format("%s. Pageable item(s): %s", errorMessage, availableItemId));
+    log.info("{}. Pageable item(s): {}", errorMessage, availableItemId);
 
     return failedValidation(errorMessage,
       Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
