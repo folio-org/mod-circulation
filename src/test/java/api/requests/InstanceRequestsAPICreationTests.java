@@ -960,41 +960,101 @@ class InstanceRequestsAPICreationTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({
-    "'', false, Hold",
-    "'PAGE', false, Hold",
-    "'RECALL', false, Recall",
-    "'HOLD', false, Hold",
-    "'PAGE,HOLD', false, Hold",
-    "'PAGE,RECALL', false, Recall",
-    "'RECALL,HOLD', false, Recall",
-    "'PAGE,RECALL,HOLD', false, Recall",
-    "'', true, Hold",
-    "'PAGE', true, Page",
-    "'RECALL', true, Recall",
-    "'HOLD', true, Hold",
-    "'PAGE,HOLD', true, Page",
-    "'PAGE,RECALL', true, Page",
-    "'RECALL,HOLD', true, Recall",
-    "'PAGE,RECALL,HOLD', true, Page",
+    "'', '', Hold",
+    "'PAGE', '', Hold",
+    "'RECALL', '', Recall",
+    "'HOLD', '', Hold",
+    "'PAGE,HOLD', '', Hold",
+    "'PAGE,RECALL', '', Recall",
+    "'RECALL,HOLD', '', Recall",
+    "'PAGE,RECALL,HOLD', '', Recall",
+    "'', 'PAGE', Page",
+    "'PAGE', 'PAGE', Page",
+    "'RECALL', 'PAGE', Page",
+    "'HOLD', 'PAGE', Page",
+    "'PAGE,HOLD', 'PAGE', Page",
+    "'PAGE,RECALL', 'PAGE', Page",
+    "'RECALL,HOLD', 'PAGE', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE', Page",
+    "'', 'RECALL', Hold",
+    "'PAGE', 'RECALL', Hold",
+    "'RECALL', 'RECALL', Recall",
+    "'HOLD', 'RECALL', Hold",
+    "'PAGE,HOLD', 'RECALL', Hold",
+    "'PAGE,RECALL', 'RECALL', Recall",
+    "'RECALL,HOLD', 'RECALL', Recall",
+    "'PAGE,RECALL,HOLD', 'RECALL', Recall",
+    "'', 'HOLD', Hold",
+    "'PAGE', 'HOLD', Hold",
+    "'RECALL', 'HOLD', Recall",
+    "'HOLD', 'HOLD', Hold",
+    "'PAGE,HOLD', 'HOLD', Hold",
+    "'PAGE,RECALL', 'HOLD', Recall",
+    "'RECALL,HOLD', 'HOLD', Recall",
+    "'PAGE,RECALL,HOLD', 'HOLD', Recall",
+    "'', 'PAGE,HOLD', Page",
+    "'PAGE', 'PAGE,HOLD', Page",
+    "'RECALL', 'PAGE,HOLD', Page",
+    "'HOLD', 'PAGE,HOLD', Page",
+    "'PAGE,HOLD', 'PAGE,HOLD', Page",
+    "'PAGE,RECALL', 'PAGE,HOLD', Page",
+    "'RECALL,HOLD', 'PAGE,HOLD', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE,HOLD', Page",
+    "'', 'PAGE,RECALL', Page",
+    "'PAGE', 'PAGE,RECALL', Page",
+    "'RECALL', 'PAGE,RECALL', Page",
+    "'HOLD', 'PAGE,RECALL', Page",
+    "'PAGE,HOLD', 'PAGE,RECALL', Page",
+    "'PAGE,RECALL', 'PAGE,RECALL', Page",
+    "'RECALL,HOLD', 'PAGE,RECALL', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE,RECALL', Page",
+    "'', 'RECALL,HOLD', Hold",
+    "'PAGE', 'RECALL,HOLD', Hold",
+    "'RECALL', 'RECALL,HOLD', Recall",
+    "'HOLD', 'RECALL,HOLD', Hold",
+    "'PAGE,HOLD', 'RECALL,HOLD', Hold",
+    "'PAGE,RECALL', 'RECALL,HOLD', Recall",
+    "'RECALL,HOLD', 'RECALL,HOLD', Recall",
+    "'PAGE,RECALL,HOLD', 'RECALL,HOLD', Recall",
+    "'', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE', 'PAGE,RECALL,HOLD', Page",
+    "'RECALL', 'PAGE,RECALL,HOLD', Page",
+    "'HOLD', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE,HOLD', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE,RECALL', 'PAGE,RECALL,HOLD', Page",
+    "'RECALL,HOLD', 'PAGE,RECALL,HOLD', Page",
+    "'PAGE,RECALL,HOLD', 'PAGE,RECALL,HOLD', Page",
   })
-  void canCreateTlrWhenAvailableItemExists(String allowedRequestTypes,
-    boolean availableItemIsPageable, String requestTypeShouldBeCreated) {
+  void canCreateTlrWhenAvailableItemExists(String allowedRequestTypesForCheckedOutItem,
+    String allowedRequestTypesForAvailableItem, String requestTypeShouldBeCreated) {
 
     UUID confirmationTemplateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(confirmationTemplateId);
     reconfigureTlrFeature(TlrFeatureStatus.ENABLED, confirmationTemplateId, null, null);
 
-    List<RequestType> allowedRequestPolicyTypes = Arrays.stream(allowedRequestTypes.split(","))
+    List<RequestType> allowedRequestPolicyTypesForCheckedOutItems = Arrays.stream(
+        allowedRequestTypesForCheckedOutItem.split(","))
       .map(RequestType::from)
       .collect(Collectors.toList());
 
-    UUID requestPolicyId = requestPoliciesFixture.customRequestPolicy(allowedRequestPolicyTypes,
-      "Request policy name", "Request policy description").getId();
+    List<RequestType> allowedRequestPolicyTypesForAvailableItems = Arrays.stream(
+        allowedRequestTypesForAvailableItem.split(","))
+      .map(RequestType::from)
+      .collect(Collectors.toList());
+
+    UUID requestPolicyIdForCheckedOutItems = requestPoliciesFixture.customRequestPolicy(
+      allowedRequestPolicyTypesForCheckedOutItems, "Request policy name for checked-out item",
+      "Request policy description").getId();
+
+    UUID requestPolicyIdForAvailableItems = requestPoliciesFixture.customRequestPolicy(
+      allowedRequestPolicyTypesForAvailableItems, "Request policy name for available item",
+      "Request policy description").getId();
 
     circulationRulesFixture.updateCirculationRules(buildRequestPoliciesBasedOnMaterialType(Map.of(
       materialTypesFixture.book().getId().toString(),
-      requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString(),
-      materialTypesFixture.videoRecording().getId().toString(), requestPolicyId.toString())));
+      requestPolicyIdForAvailableItems.toString(),
+      materialTypesFixture.videoRecording().getId().toString(),
+      requestPolicyIdForCheckedOutItems.toString())));
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     UUID instanceId = instance.getId();
@@ -1013,9 +1073,7 @@ class InstanceRequestsAPICreationTests extends APITests {
     itemsClient.create(new ItemBuilder()
       .withBarcode("availableNonPageableItem")
       .forHolding(holdingsRecord.getId())
-      .withMaterialType(availableItemIsPageable
-        ? materialTypesFixture.videoRecording().getId()
-        : materialTypesFixture.book().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .create());
 

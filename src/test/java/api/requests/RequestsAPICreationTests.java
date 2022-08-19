@@ -3571,9 +3571,9 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
     UUID instanceId = uponDunkirkInstance.getId();
     IndividualResource closestHoldingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
-      pickupServicePointId);
+      pickupLocation.getId());
     IndividualResource anotherHoldingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
-      anotherServicePointId);
+      anotherLocation.getId());
 
     IndividualResource closestNonRequestableItem = itemsClient.create(new ItemBuilder()
       .withBarcode("closestItem")
@@ -3590,13 +3590,6 @@ public class RequestsAPICreationTests extends APITests {
       .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
       .withPermanentLocation(anotherLocation.getId())
       .create());
-
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(closestNonRequestableItem)
-      .at(pickupServicePointId));
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(anotherRequestableItem)
-      .at(anotherServicePointId));
 
     IndividualResource pageRequest = requestsClient.create(buildPageTitleLevelRequest(
       usersFixture.steve().getId(), pickupServicePointId, instanceId));

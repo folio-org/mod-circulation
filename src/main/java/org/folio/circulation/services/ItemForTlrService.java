@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
@@ -23,7 +24,6 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
@@ -40,17 +40,17 @@ public class ItemForTlrService {
     return new ItemForTlrService(repositories.getLocationRepository());
   }
 
-  public List<Item> findAvailableRequestableItems(Request request, RequestType type) {
+  public List<Item> findAvailablePageableItems(Request request) {
 
     return request.getInstanceItems()
       .stream()
       .filter(item -> ItemStatus.AVAILABLE == item.getStatus())
-      .filter(item -> request.getInstanceItemsRequestPolicies().get(item.getItemId()).allowsType(type))
+      .filter(item -> request.getInstanceItemsRequestPolicies().get(item.getItemId()).allowsType(PAGE))
       .collect(toList());
   }
 
   public CompletableFuture<Result<Request>> findClosestAvailablePageableItem(Request request) {
-    List<Item> availablePageableItems = findAvailableRequestableItems(request, RequestType.PAGE);
+    List<Item> availablePageableItems = findAvailablePageableItems(request);
 
     return refusePageRequestWhenNoAvailablePageableItemsExist(request, availablePageableItems)
       .after(items ->

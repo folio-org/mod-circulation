@@ -428,41 +428,4 @@ public abstract class APITests {
       configurationsFixture.deleteTlrFeatureConfig();
     }
   }
-
-  /**
-   *
-   * @param policies Map of policies - (materialTypeId, requestPolicyId)
-   * @return String circulation rules
-   */
-  public String buildRequestPoliciesBasedOnMaterialType(Map<String, String> policies) {
-    final String loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
-    final String allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy().getId().toString();
-    final String noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
-    final String overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
-    final String lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
-
-    String nonFallbackRules = policies.keySet().stream()
-      .map(materialTypeId -> createRule(format("m %s", materialTypeId), loanPolicy,
-        policies.get(materialTypeId), noticePolicy, overdueFinePolicy, lostItemFeePolicy))
-      .collect(Collectors.joining("\n"));
-
-    return String.join("\n", "priority: t, s, c, b, a, m, g",
-      createRule("fallback-policy", loanPolicy, allowAllRequestPolicy, noticePolicy,
-        overdueFinePolicy, lostItemFeePolicy), nonFallbackRules);
-  }
-
-  public String differentRequestPoliciesBasedOnMaterialType() {
-    return buildRequestPoliciesBasedOnMaterialType(Map.of(
-      materialTypesFixture.book().getId().toString(),
-      requestPoliciesFixture.nonRequestableRequestPolicy().getId().toString(),
-      materialTypesFixture.videoRecording().getId().toString(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId().toString()));
-  }
-
-  private String createRule(String condition, String loanPolicy, String requestPolicy,
-    String noticePolicy, String overdueFinePolicy, String lostItemFeePolicy) {
-
-    return format("%s: l %s r %s n %s o %s i %s", condition, loanPolicy, requestPolicy,
-      noticePolicy, overdueFinePolicy, lostItemFeePolicy);
-  }
 }

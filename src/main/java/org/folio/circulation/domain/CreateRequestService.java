@@ -114,7 +114,7 @@ public class CreateRequestService {
     Request request = requestAndRelatedRecords.getRequest();
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
       List<Item> availablePageableItems = ItemForTlrService.using(repositories)
-        .findAvailableRequestableItems(requestAndRelatedRecords.getRequest(), RequestType.PAGE);
+        .findAvailablePageableItems(requestAndRelatedRecords.getRequest());
 
       return failValidationWhenPageableItemsExist(requestAndRelatedRecords, availablePageableItems)
         .mapFailure(err -> errorHandler.handleValidationError(err,
