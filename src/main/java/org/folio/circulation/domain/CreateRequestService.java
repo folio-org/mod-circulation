@@ -151,14 +151,6 @@ public class CreateRequestService {
       Map.of(ITEM_ID, availableItemId, INSTANCE_ID, request.getInstanceId()));
   }
 
-  private Item getFirstAvailableItem(Request request) {
-    return request.getInstanceItems().stream()
-      .filter(Objects::nonNull)
-      .filter(Item::isAvailable)
-      .findFirst()
-      .orElse(null);
-  }
-
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
     RequestAndRelatedRecords records) {
 

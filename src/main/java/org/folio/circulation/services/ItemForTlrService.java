@@ -65,7 +65,7 @@ public class ItemForTlrService {
     if (availablePageableItems.isEmpty()) {
       String message = "Cannot create page TLR for this instance ID - no pageable available " +
         "items found";
-      log.info(message + ". Instance ID: {}", request.getInstanceId());
+      log.info("{}. Instance ID: {}", message, request.getInstanceId());
       return failedValidation(message, INSTANCE_ID, request.getInstanceId());
     }
 
