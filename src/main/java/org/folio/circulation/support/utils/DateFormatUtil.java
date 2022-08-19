@@ -146,7 +146,9 @@ public class DateFormatUtil {
     return List.of(
       DateTimeFormatter.ISO_OFFSET_DATE_TIME,
       DateTimeFormatter.ISO_ZONED_DATE_TIME,
+      DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneOffset.UTC),
       DATE_TIME,
+      DATE_TIME_NANOSECONDS,
       startOfDay
     );
   }

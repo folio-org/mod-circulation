@@ -518,7 +518,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void noticeIsDeletedWhenLoanDateTimeZoneIsMissing() {
+  void individualNoticeIsDeletedWhenConstructionOfItsContextFails() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -538,17 +538,49 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(2);
 
-    loansFixture.replaceLoan(firstLoan.getId(),
-      firstLoan.getJson().put("loanDate", loanDate.toLocalDateTime().toString())); // remove time zone
+    // setting invalid loanDate should cause DateTimeParseException while building notice context
+    loansFixture.replaceLoan(firstLoan.getId(), firstLoan.getJson().put("loanDate", "invalid date"));
 
     ZonedDateTime dueDate = parseDateTime(firstLoan.getJson().getString("dueDate"));
-
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
+  void noticeIsSentWhenLoanDateTimeZoneIsMissing() {
+    JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(TEMPLATE_ID)
+      .withDueDateEvent()
+      .withUponAtTiming()
+      .sendInRealTime(false)
+      .create();
+
+    use(new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(Collections.singletonList(uponAtDueDateNoticeConfig))
+    );
+
+    ZonedDateTime loanDate = ZonedDateTime.of(2019, 8, 23, 10, 30, 59, 123, ZoneOffset.UTC);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      itemsFixture.basedUponTemeraire(), usersFixture.james(), loanDate);
+
+    verifyNumberOfScheduledNotices(1);
+
+    loansFixture.replaceLoan(loan.getId(),
+      loan.getJson().put("loanDate", loanDate.toLocalDateTime().toString())); // remove time zone
+
+    ZonedDateTime dueDate = parseDateTime(loan.getJson().getString("dueDate"));
+
+    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
