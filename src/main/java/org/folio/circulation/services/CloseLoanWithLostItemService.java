@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 
@@ -46,9 +47,9 @@ public class CloseLoanWithLostItemService {
     this.actualCostRecordRepository = actualCostRecordRepository;
   }
 
-  public CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaid(Loan loan) {
+  public CompletableFuture<Result<Void>> closeLoanAsLostAndPaid(Loan loan) {
     if (loan == null || !loan.isItemLost()) {
-      return completedFuture(Result.succeeded(null));
+      return ofAsync(null);
     }
 
     return fetchLoanFeeFineData(loan)
@@ -58,7 +59,7 @@ public class CloseLoanWithLostItemService {
   private CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaidAndPublishEvents(
     Loan loan) {
 
-    return closeLoanWithLostItemFeesPaid(loan, loanRepository, itemRepository, eventPublisher)
+    return closeLoanAsLostAndPaid(loan, loanRepository, itemRepository, eventPublisher)
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
   }
 
@@ -68,8 +69,8 @@ public class CloseLoanWithLostItemService {
       .thenComposeAsync(actualCostRecordRepository::findByLoan);
   }
 
-  private CompletableFuture<Result<Loan>> closeLoanWithLostItemFeesPaid(Loan loan,
-    LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
+  private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(Loan loan,
+                                                                 LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
 
     if (!shouldCloseLoan(loan)) {
       return completedFuture(succeeded(loan));

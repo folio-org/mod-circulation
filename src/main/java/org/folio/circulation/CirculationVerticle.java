@@ -126,6 +126,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
     new ScheduledAgeToLostResource(client).register(router);
     new ScheduledAgeToLostFeeChargingResource(client).register(router);
+    new ExpiredActualCostProcessingResource(client).register(router);
 
     // Handlers
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
@@ -139,7 +140,6 @@ public class CirculationVerticle extends AbstractVerticle {
           startFuture.fail(result.cause());
         }
       });
-    new ExpiredActualCostProcessingResource(client).register(router);
   }
 
   @Override

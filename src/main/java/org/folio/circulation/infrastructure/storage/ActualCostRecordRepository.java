@@ -1,24 +1,16 @@
 package org.folio.circulation.infrastructure.storage;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.Loan;
@@ -84,38 +76,11 @@ public class ActualCostRecordRepository {
       .thenApply(mapResult(loan::withActualCostRecord)));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> fetchActualCostRecords(
-    MultipleRecords<Loan> multipleLoans) {
-
-    if (multipleLoans.getRecords().isEmpty()) {
-      return completedFuture(succeeded(multipleLoans));
-    }
-
-    return buildLoanIdToActualCostRecordMap(multipleLoans.getRecords())
-      .thenApply(r -> r.map(actualCostRecordMap -> multipleLoans.mapRecords(
-        loan -> loan.withActualCostRecord(actualCostRecordMap.getOrDefault(loan.getId(), null)))));
-  }
-
   public CompletableFuture<Result<Collection<ActualCostRecord>>> findExpiredActualCostRecords() {
     return CqlQuery.lessThan("expirationDate", ZonedDateTime.now())
       .after(cql -> actualCostRecordStorageClient.getMany(cql, PageLimit.oneThousand())
         .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
         .thenApply(r -> r.map(MultipleRecords::getRecords)));
-  }
-
-  private CompletableFuture<Result<Map<String, ActualCostRecord>>> buildLoanIdToActualCostRecordMap(
-    Collection<Loan> loans) {
-
-    final Set<String> loanIds = loans.stream()
-      .filter(Objects::nonNull)
-      .map(Loan::getId)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toSet());
-
-    return findWithMultipleCqlIndexValues(actualCostRecordStorageClient,
-      ACTUAL_COST_RECORDS, ActualCostRecordMapper::toDomain)
-      .find(byIndex(LOAN_ID_FIELD_NAME, loanIds))
-      .thenApply(mapResult(r -> r.toMap(ActualCostRecord::getLoanId)));
   }
 
   private CqlQueryFinder<JsonObject> createActualCostRecordCqlFinder() {
