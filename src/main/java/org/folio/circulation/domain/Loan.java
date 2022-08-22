@@ -72,8 +72,12 @@ import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
 @AllArgsConstructor(access = PRIVATE)
+@Getter
+@Builder(setterPrefix = "with")
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
@@ -267,10 +271,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("proxyUserId");
   }
 
-  public Item getItem() {
-    return item;
-  }
-
   public Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
@@ -287,10 +287,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
   }
 
-  public User getUser() {
-    return user;
-  }
-
   public Loan withUser(User newUser) {
     JsonObject newRepresentation = representation.copy();
 
@@ -300,15 +296,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(newRepresentation, item, newUser, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
-  }
-
-  public Loan withActualCostRecord(ActualCostRecord actualCostRecord) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint,
-      originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
-  }
-
-  public ActualCostRecord getActualCostRecord() {
-    return actualCostRecord;
   }
 
   public Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
@@ -323,10 +310,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public User getProxy() {
-    return proxy;
-  }
-
   Loan withProxy(User newProxy) {
     JsonObject newRepresentation = representation.copy();
 
@@ -336,21 +319,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(newRepresentation, item, user, newProxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
-  }
-
-  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
-    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
-  }
-
-  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
-  }
-
-  public Loan withAccounts(Collection<Account> newAccounts) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts, actualCostRecord);
   }
 
   public Loan withLoanPolicy(LoanPolicy newLoanPolicy) {
@@ -407,10 +375,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
   }
 
-  public ServicePoint getCheckinServicePoint() {
-    return this.checkinServicePoint;
-  }
-
   public ServicePoint getCheckoutServicePoint() {
     return this.checkoutServicePoint;
   }
@@ -430,8 +394,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan overrideRenewal(ZonedDateTime dueDate,
-                              String basedUponLoanPolicyId,
-                              String actionComment) {
+   String basedUponLoanPolicyId,
+    String actionComment) {
+
     changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -687,17 +652,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getNestedStringProperty(representation, METADATA, UPDATED_BY_USER_ID);
   }
 
-  public ZonedDateTime getOriginalDueDate() {
-    return originalDueDate;
-  }
-
   public Loan setPreviousDueDate(ZonedDateTime previousDateTime) {
     this.previousDueDate = previousDateTime;
     return this;
-  }
-
-  public ZonedDateTime getPreviousDueDate() {
-    return previousDueDate;
   }
 
   public ItemStatus getItemStatus() {
