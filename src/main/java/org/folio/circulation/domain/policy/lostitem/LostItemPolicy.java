@@ -41,9 +41,6 @@ public class LostItemPolicy extends Policy {
   private static final String CHARGE_AMOUNT_ITEM = "chargeAmountItem";
   private static final String CHARGE_TYPE = "chargeType";
   private final Period lostItemChargeFeeFineInterval;
-  // There is no separate age to lost processing fee but there is a flag
-  // that turns on/off the fee, but we're modelling it as a separate fee
-  // to simplify logic.
 
   private LostItemPolicy(String id, String name,
     AutomaticallyChargeableFee declareLostProcessingFee,

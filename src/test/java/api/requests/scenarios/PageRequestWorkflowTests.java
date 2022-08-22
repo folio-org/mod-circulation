@@ -11,6 +11,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
+import static java.util.Collections.singletonList;
 import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -22,11 +23,14 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
+import api.support.builders.NoticeConfigurationBuilder;
+import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -94,9 +98,17 @@ class PageRequestWorkflowTests extends APITests {
 
   @Test
   void titleLevelRequestConfirmationNoticeWithValidLocationShouldBeSentWithEnabledTlr() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, null, null, null);
+
     UUID templateId = UUID.randomUUID();
     templateFixture.createDummyNoticeTemplate(templateId);
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, templateId, null, null);
+    use(new NoticePolicyBuilder()
+      .withName("Test patron notice policy")
+      .withLoanNotices(singletonList(
+        new NoticeConfigurationBuilder()
+          .withTemplateId(templateId)
+          .withEventType(NoticeEventType.PAGING_REQUEST.getRepresentation())
+          .create())));
 
     ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet();
     RequestBuilder requestBuilder = new RequestBuilder()

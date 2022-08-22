@@ -98,21 +98,22 @@ public class RequestServiceUtility {
   }
 
   static Result<RequestAndRelatedRecords> refuseWhenUserIsInactive(
-    RequestAndRelatedRecords request) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    User requester = request.getRequest().getRequester();
+    Request request = requestAndRelatedRecords.getRequest();
+    User requester = request.getRequester();
 
     if (requester != null && requester.isInactive()) {
       Map<String, String> parameters = new HashMap<>();
 
-      parameters.put(REQUESTER_ID, request.getRequest().getUserId());
-      parameters.put(ITEM_ID, request.getRequest().getItemId());
+      parameters.put(REQUESTER_ID, request.getUserId());
+      parameters.put(ITEM_ID, request.getItemId());
 
       String message = "Inactive users cannot make requests";
 
       return failedValidation(new ValidationError(message, parameters));
     } else {
-      return of(() -> request);
+      return of(() -> requestAndRelatedRecords);
     }
   }
 

@@ -72,12 +72,10 @@ import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 
 @AllArgsConstructor(access = PRIVATE)
 @Getter
-@Builder(setterPrefix = "with")
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
   private final Item item;
@@ -298,6 +296,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
   }
 
+  public Loan withActualCostRecord(ActualCostRecord actualCostRecord) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint,
+      originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
+  }
+
   public Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
     if (nonNull(patronGroup)) {
       JsonObject patronGroupAtCheckout = new JsonObject()
@@ -319,6 +322,21 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(newRepresentation, item, user, newProxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
+  }
+
+  public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
+    return new Loan(representation, item, user, proxy, newCheckinServicePoint,
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
+  }
+
+  public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
+  }
+
+  public Loan withAccounts(Collection<Account> newAccounts) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts, actualCostRecord);
   }
 
   public Loan withLoanPolicy(LoanPolicy newLoanPolicy) {
