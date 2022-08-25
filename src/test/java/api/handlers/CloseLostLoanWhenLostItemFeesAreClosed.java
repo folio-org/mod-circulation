@@ -2,8 +2,6 @@ package api.handlers;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.scheduledActualCostExpiration;
-import static api.support.matchers.ItemMatchers.isDeclaredLost;
-import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,7 +33,7 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
   }
 
-  protected void runScheduledActualCostExpirationAndCheckThatLoanIsOpenAsNotExpired() {
+  protected void runScheduledActualCostExpirationAndCheckThatLoanIsOpen() {
     mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(1));
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 

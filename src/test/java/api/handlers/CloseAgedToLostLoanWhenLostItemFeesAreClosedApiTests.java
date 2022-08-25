@@ -216,7 +216,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
   }
 
   @Test
-  void shouldCloseLoanIfChargingPeriodElapsedAndProcessingFeeHasBeenPaid() {
+  void shouldCloseLoanIfChargingPeriodExpiredAndProcessingFeeHasBeenPaid() {
     feeFineTypeFixture.lostItemProcessingFee();
     var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -232,7 +232,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
   }
 
   @Test
-  void shouldNotCloseLoanIfChargingPeriodHasNotElapsedAndProcessingFeeHasBeenPaid() {
+  void shouldNotCloseLoanIfChargingPeriodHasNotExpiredAndProcessingFeeHasBeenPaid() {
     feeFineTypeFixture.lostItemProcessingFee();
     var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -258,7 +258,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     item = result.getItem();
     loan = result.getLoan();
 
-    runScheduledActualCostExpirationAndCheckThatLoanIsOpenAsNotExpired();
+    runScheduledActualCostExpirationAndCheckThatLoanIsOpen();
     assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
   }
 

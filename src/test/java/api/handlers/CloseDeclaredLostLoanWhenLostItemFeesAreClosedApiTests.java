@@ -3,7 +3,6 @@ package api.handlers;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
-import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
@@ -139,7 +138,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
   }
 
   @Test
-  void shouldCloseLoanIfChargingPeriodElapsedAndProcessingFeeHasBeenPaid() {
+  void shouldCloseLoanIfChargingPeriodExpiredAndProcessingFeeHasBeenPaid() {
     UUID servicePointId = servicePointsFixture.cd2().getId();
 
     UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
@@ -176,12 +175,12 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .withServicePointId(servicePointId)
       .forLoanId(loan.getId()));
 
-    runScheduledActualCostExpirationAndCheckThatLoanIsOpenAsNotExpired();
+    runScheduledActualCostExpirationAndCheckThatLoanIsOpen();
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 
   @Test
-  void shouldNotCloseLoanIfChargingPeriodHasNotElapsedAndProcessingFeeHasBeenPaid() {
+  void shouldNotCloseLoanIfChargingPeriodHasNotExpiredAndProcessingFeeHasBeenPaid() {
     UUID servicePointId = servicePointsFixture.cd2().getId();
 
     UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
