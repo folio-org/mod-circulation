@@ -3,6 +3,7 @@ package api.handlers;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
+import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
@@ -156,6 +157,27 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
 
     payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+  }
+
+  @Test
+  void shouldNotCloseDeclaredLostLoanIfChargingPeriodExpiredAndProcessingFeeHasNotBeenPaid() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder().withName("test")
+        .chargeProcessingFeeWhenDeclaredLost(10.00)
+        .withActualCost(10.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
+
+    item = itemsFixture.basedUponNod();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+
+    runScheduledActualCostExpirationAndCheckThatLoanIsOpenAsNotExpired();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 
   @Test

@@ -35,6 +35,17 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
   }
 
+  protected void runScheduledActualCostExpirationAndCheckThatLoanIsOpenAsNotExpired() {
+    mockClockManagerToReturnFixedDateTime(ClockUtil.getZonedDateTime().plusWeeks(1));
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    timedTaskClient.start(scheduledActualCostExpiration(), 204,
+      "scheduled-actual-cost-expiration");
+    mockClockManagerToReturnDefaultDateTime();
+
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
+  }
+
   private void payProcessingFeeAndRunScheduledActualCostExpiration(ZonedDateTime dateTime) {
     mockClockManagerToReturnFixedDateTime(dateTime);
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
