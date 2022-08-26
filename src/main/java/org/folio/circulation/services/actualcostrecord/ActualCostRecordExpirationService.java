@@ -3,7 +3,7 @@ package org.folio.circulation.services.actualcostrecord;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
-import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
@@ -48,7 +48,7 @@ public class ActualCostRecordExpirationService {
 
   private CompletableFuture<Result<Void>> closeLoans(MultipleRecords<Loan> expiredLoans) {
     if (expiredLoans.isEmpty()) {
-      return ofAsync(() -> null);
+      return emptyAsync();
     }
 
     return fromFutureResult(itemRepository.fetchItems(succeeded(expiredLoans))

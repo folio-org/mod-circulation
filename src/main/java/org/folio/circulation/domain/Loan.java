@@ -75,21 +75,27 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor(access = PRIVATE)
-@Getter
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private final JsonObject representation;
+  @Getter
   private final Item item;
+  @Getter
   private final User user;
+  @Getter
   private final User proxy;
 
+  @Getter
   private final ServicePoint checkinServicePoint;
   private final ServicePoint checkoutServicePoint;
 
+  @Getter
   private final ZonedDateTime originalDueDate;
+  @Getter
   private ZonedDateTime previousDueDate;
 
   private final Policies policies;
   private final Collection<Account> accounts;
+  @Getter
   private final ActualCostRecord actualCostRecord;
 
   public static Loan from(JsonObject representation) {
