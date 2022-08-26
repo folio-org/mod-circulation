@@ -20,21 +20,21 @@ import static org.hamcrest.Matchers.hasSize;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import api.support.APITests;
 import api.support.builders.DeclareItemLostRequestBuilder;
+import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
-  private IndividualResource loan;
-  private IndividualResource item;
+class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoanWhenLostItemFeesAreClosed {
 
   @BeforeEach
   public void createLoanAndDeclareItemLost() {
+    mockClockManagerToReturnDefaultDateTime();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
 
@@ -98,17 +98,105 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends APITests {
   }
 
   @Test
-  void shouldNotCloseLoanIfActualCostFeeShouldBeCharged() {
-    useLostItemPolicy(lostItemFeePoliciesFixture.create(
-      lostItemFeePoliciesFixture.facultyStandardPolicy()
+  void shouldCloseLoanIfActualCostFeeHasBeenPaidWithoutProcessingFee() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder().withName("test")
+        .doNotChargeProcessingFeeWhenDeclaredLost()
+        .withActualCost(10.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
+
+    item = itemsFixture.basedUponNod();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+
+    payLostItemActualCostFeeAndCheckThatLoanIsClosed();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+  }
+
+  @Test
+  void shouldCloseLoanIfActualCostFeeAndProcessingFeeHaveBeenPaid() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder().withName("test")
         .chargeProcessingFeeWhenDeclaredLost(10.00)
-        .withActualCost(10.0)).getId());
+        .withActualCost(10.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
 
-    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+    item = itemsFixture.basedUponNod();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
 
-    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+    payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+  }
 
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
+  @Test
+  void shouldCloseLoanIfChargingPeriodExpiredAndProcessingFeeHasBeenPaid() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder().withName("test")
+        .chargeProcessingFeeWhenDeclaredLost(10.00)
+        .withActualCost(10.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
+
+    item = itemsFixture.basedUponNod();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+
+    payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+  }
+
+  @Test
+  void shouldNotCloseDeclaredLostLoanIfChargingPeriodExpiredAndProcessingFeeHasNotBeenPaid() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder().withName("test")
+        .chargeProcessingFeeWhenDeclaredLost(10.00)
+        .withActualCost(10.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
+
+    item = itemsFixture.basedUponNod();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+
+    runScheduledActualCostExpirationAndCheckThatLoanIsOpen();
+    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
+  }
+
+  @Test
+  void shouldNotCloseLoanIfChargingPeriodHasNotExpiredAndProcessingFeeHasBeenPaid() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder().withName("test")
+        .chargeProcessingFeeWhenDeclaredLost(10.00)
+        .withActualCost(10.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
+
+    item = itemsFixture.basedUponNod();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+
+    payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired();
     assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 

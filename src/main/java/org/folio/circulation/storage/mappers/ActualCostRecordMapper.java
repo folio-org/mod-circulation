@@ -7,6 +7,7 @@ import org.folio.circulation.domain.ItemLossType;
 import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -35,6 +36,7 @@ public class ActualCostRecordMapper {
     write(json, "feeFineTypeId", actualCostRecord.getFeeFineTypeId());
     write(json, "feeFineType", actualCostRecord.getFeeFineType());
     write(json,"permanentItemLocation", actualCostRecord.getPermanentItemLocation());
+    write(json, "expirationDate", actualCostRecord.getExpirationDate());
 
     if (actualCostRecord.getAccountId() != null) {
       write(json, "accountId", actualCostRecord.getAccountId());
@@ -44,13 +46,17 @@ public class ActualCostRecordMapper {
   }
 
   public static ActualCostRecord toDomain(JsonObject representation) {
+    if (representation == null ) {
+      return null;
+    }
+
     return new ActualCostRecord(getProperty(representation, "id"),
       getProperty(representation, "accountId"),
       getProperty(representation, "userId"),
       getProperty(representation, "userBarcode"),
       getProperty(representation, "loanId"),
       ItemLossType.from(getProperty(representation, "itemLossType")),
-      getProperty(representation, "dateOfLoss"),
+      getDateTimeProperty(representation, "dateOfLoss"),
       getProperty(representation, "title"),
       IdentifierMapper.mapIdentifiers(representation),
       getProperty(representation, "itemBarcode"),
@@ -61,7 +67,8 @@ public class ActualCostRecordMapper {
       getProperty(representation, "feeFineOwner"),
       getProperty(representation, "feeFineTypeId"),
       getProperty(representation, "feeFineType"),
-      getNestedDateTimeProperty(representation, "metadata", "createdDate")
+      getNestedDateTimeProperty(representation, "metadata", "createdDate"),
+      getDateTimeProperty(representation, "expirationDate")
     );
   }
 }

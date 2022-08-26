@@ -51,7 +51,7 @@ import org.folio.circulation.infrastructure.storage.inventory.LocationRepository
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.services.ActualCostRecordService;
+import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;

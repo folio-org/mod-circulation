@@ -13,6 +13,7 @@ import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResour
 import org.folio.circulation.resources.DeclareLostResource;
 import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
+import org.folio.circulation.resources.ExpiredActualCostProcessingResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
@@ -125,6 +126,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
     new ScheduledAgeToLostResource(client).register(router);
     new ScheduledAgeToLostFeeChargingResource(client).register(router);
+    new ExpiredActualCostProcessingResource(client).register(router);
 
     // Handlers
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
