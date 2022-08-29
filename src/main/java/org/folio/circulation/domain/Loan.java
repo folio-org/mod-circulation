@@ -275,6 +275,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return representation.getString("proxyUserId");
   }
 
+  @Override
+  public Item getItem() {
+    return item;
+  }
+
   public Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
@@ -289,6 +294,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(newRepresentation, newItem, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord);
+  }
+
+  @Override
+  public User getUser() {
+    return user;
   }
 
   public Loan withUser(User newUser) {

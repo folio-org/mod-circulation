@@ -1,12 +1,12 @@
 package org.folio.circulation.resources;
 
-import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.notice.NoticeEventType.AVAILABLE;
 import static org.folio.circulation.domain.notice.NoticeEventType.ITEM_RECALLED;
 import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCELLATION;
 import static org.folio.circulation.domain.notice.PatronNotice.buildEmail;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -213,11 +213,14 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendNoticeForRequestWithoutItemId(Request request,
     NoticeEventType eventType, Function<TlrSettingsConfiguration, UUID> templateIdExtractor) {
 
-    return ofNullable(request.getTlrSettingsConfiguration())
-      .filter(TlrSettingsConfiguration::isTitleLevelRequestsFeatureEnabled)
-      .map(templateIdExtractor)
-      .map(templateId -> sendNotice(request, templateId, eventType))
-      .orElseGet(() -> ofAsync(null));
+    TlrSettingsConfiguration tlrSettings = request.getTlrSettingsConfiguration();
+    UUID templateId = templateIdExtractor.apply(tlrSettings);
+
+    if (request.isTitleLevel() && tlrSettings.isTitleLevelRequestsFeatureEnabled() && templateId != null) {
+      return sendNotice(request, templateId, eventType);
+    }
+
+    return emptyAsync();
   }
 
   private CompletableFuture<Result<Void>> sendNotice(Request request, UUID templateId,
