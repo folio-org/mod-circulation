@@ -1,4 +1,4 @@
-package org.folio.circulation.services;
+package org.folio.circulation.services.actualcostrecord;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -89,7 +89,7 @@ public class ActualCostRecordService {
       .withUserBarcode(loan.getUser().getBarcode())
       .withLoanId(loan.getId())
       .withItemLossType(itemLossType)
-      .withDateOfLoss(dateOfLoss.toString())
+      .withDateOfLoss(dateOfLoss)
       .withTitle(item.getTitle())
       .withIdentifiers(item.getIdentifiers().collect(Collectors.toList()))
       .withItemBarcode(item.getBarcode())
@@ -99,6 +99,8 @@ public class ActualCostRecordService {
       .withFeeFineOwnerId(feeFineOwner.getId())
       .withFeeFineOwner(feeFineOwner.getOwner())
       .withFeeFineTypeId(feeFine == null ? null : feeFine.getId())
-      .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType());
+      .withFeeFineType(feeFine == null ? null : feeFine.getFeeFineType())
+      .withExpirationDate(loan.getLostItemPolicy()
+        .calculateFeeFineChargingPeriodExpirationDateTime(dateOfLoss));
   }
 }

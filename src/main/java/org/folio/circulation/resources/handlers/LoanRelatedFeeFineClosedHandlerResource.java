@@ -1,8 +1,6 @@
 package org.folio.circulation.resources.handlers;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
-import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent.fromJson;
 import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -13,26 +11,24 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.folio.circulation.StoreLoanAndItem;
-import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.Loan;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
+import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
+import org.folio.circulation.services.CloseLoanWithLostItemService;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -54,13 +50,19 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
   private void handleFeeFineClosedEvent(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final var eventPublisher = new EventPublisher(routingContext);
+    final var clients = create(context, client);
+    final var itemRepository = new ItemRepository(clients);
+    final var userRepository = new UserRepository(clients);
+    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var closeLoanWithLostItemService = new CloseLoanWithLostItemService(loanRepository,
+      itemRepository, new AccountRepository(clients), new LostItemPolicyRepository(clients),
+      eventPublisher, new ActualCostRecordRepository(clients));
 
     log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.getBodyAsString());
 
     createAndValidateRequest(routingContext)
-      .after(request -> processEvent(context, request, eventPublisher))
-      .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
+      .after(request -> processEvent(loanRepository, request, closeLoanWithLostItemService))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
@@ -71,70 +73,11 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       }));
   }
 
-  private CompletableFuture<Result<Loan>> processEvent(WebContext context,
-    LoanRelatedFeeFineClosedEvent event, EventPublisher eventPublisher) {
-
-    final Clients clients = create(context, client);
-    final var itemRepository = new ItemRepository(clients);
-    final var userRepository = new UserRepository(clients);
-    final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    final var accountRepository = new AccountRepository(clients);
-    final var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+  private CompletableFuture<Result<Void>> processEvent(LoanRepository loanRepository,
+    LoanRelatedFeeFineClosedEvent event, CloseLoanWithLostItemService closeLoanWithLostItemService) {
 
     return loanRepository.getById(event.getLoanId())
-      .thenCompose(r -> r.after(loan -> {
-        if (loan.isItemLost()) {
-          return closeLoanWithLostItemIfLostFeesResolved(loan,
-            loanRepository, itemRepository, accountRepository,
-            lostItemPolicyRepository, eventPublisher);
-        }
-
-        return completedFuture(succeeded(loan));
-      }));
-  }
-
-  private CompletableFuture<Result<Loan>> closeLoanWithLostItemIfLostFeesResolved(
-    Loan loan, LoanRepository loanRepository,
-    ItemRepository itemRepository, AccountRepository accountRepository,
-    LostItemPolicyRepository lostItemPolicyRepository, EventPublisher eventPublisher) {
-
-    return accountRepository.findAccountsForLoan(loan)
-      .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenCompose(r -> r.after(l -> closeLoanAndUpdateItem(l, loanRepository,
-        itemRepository, eventPublisher)));
-  }
-
-  public CompletableFuture<Result<Loan>> closeLoanAndUpdateItem(Loan loan,
-    LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
-
-    if (!allLostFeesClosed(loan)) {
-      return completedFuture(succeeded(loan));
-    }
-
-    boolean wasLoanOpen = loan.isOpen();
-    loan.closeLoanAsLostAndPaid();
-
-    return new StoreLoanAndItem(loanRepository, itemRepository).updateLoanAndItemInStorage(loan)
-      .thenCompose(r -> r.after(l -> publishLoanClosedEvent(l, wasLoanOpen, eventPublisher)));
-  }
-
-  private CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan, boolean wasLoanOpen,
-    EventPublisher eventPublisher) {
-
-    return wasLoanOpen && loan.isClosed()
-      ? eventPublisher.publishLoanClosedEvent(loan)
-      : completedFuture(succeeded(loan));
-  }
-
-  private boolean allLostFeesClosed(Loan loan) {
-    if (loan.getLostItemPolicy().hasActualCostFee()) {
-      // Actual cost fee is processed manually
-      return false;
-    }
-
-    return loan.getAccounts().stream()
-      .filter(account -> lostItemFeeTypes().contains(account.getFeeFineType()))
-      .allMatch(Account::isClosed);
+      .thenCompose(r -> r.after(closeLoanWithLostItemService::closeLoanAsLostAndPaid));
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {

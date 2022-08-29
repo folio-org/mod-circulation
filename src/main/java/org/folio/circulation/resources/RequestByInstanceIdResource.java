@@ -62,7 +62,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.services.ItemForPageTlrService;
+import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
@@ -85,7 +85,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class RequestByInstanceIdResource extends Resource {
 
-  private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(RECALL, HOLD, PAGE);
+  private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(PAGE, RECALL, HOLD);
   private static final RequestFulfilmentPreference DEFAULT_FULFILMENT_PREFERENCE = HOLD_SHELF;
 
   private final Logger log;
@@ -312,7 +312,7 @@ public class RequestByInstanceIdResource extends Resource {
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler(),
         new ItemByInstanceIdFinder(clients.holdingsStorage(), repositories.getItemRepository()),
-        ItemForPageTlrService.using(clients));
+        ItemForTlrService.using(repositories));
 
     return requestFromRepresentationService.getRequestFrom(currentItemRequest)
       .thenCompose(r -> r.after(createRequestService::createRequest))
