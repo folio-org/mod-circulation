@@ -745,7 +745,7 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runRequestNoticesProcessing(
       requestExpirationDate.atStartOfDay(UTC).plusDays(1));
 
-    // if request has itemId, notices are sent according to notice policy, regardless TLR settings
+    // if request has itemId, notices are sent according to notice policy, regardless of TLR settings
     if (isNoticeEnabledInNoticePolicy) {
       verifyNumberOfScheduledNotices(0);
       verifyNumberOfPublishedEvents(NOTICE, 1);
