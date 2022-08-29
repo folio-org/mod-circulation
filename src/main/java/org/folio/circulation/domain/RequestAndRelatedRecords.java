@@ -181,8 +181,18 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   }
 
   @Override
+  public User getUser() {
+    return request.getUser();
+  }
+
+  @Override
   public String getItemId() {
     return request.getItemId();
+  }
+
+  @Override
+  public Item getItem() {
+    return request.getItem();
   }
 
   ZoneId getTimeZone() {

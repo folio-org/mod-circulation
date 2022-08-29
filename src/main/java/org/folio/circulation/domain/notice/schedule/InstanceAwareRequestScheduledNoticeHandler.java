@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -10,9 +9,9 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
-public class ItemLevelRequestScheduledNoticeHandler extends RequestScheduledNoticeHandler {
+public class InstanceAwareRequestScheduledNoticeHandler extends RequestScheduledNoticeHandler {
 
-  public ItemLevelRequestScheduledNoticeHandler(Clients clients,
+  public InstanceAwareRequestScheduledNoticeHandler(Clients clients,
     RequestRepository requestRepository, LoanRepository loanRepository) {
 
     super(clients, loanRepository, requestRepository);
@@ -24,15 +23,7 @@ public class ItemLevelRequestScheduledNoticeHandler extends RequestScheduledNoti
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
-      .thenCompose(r -> r.after(this::fetchRequest))
-      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
+      .thenCompose(r -> r.after(this::fetchRequestRelatedRecords));
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchRequest(
-    ScheduledNoticeContext context) {
-
-    return requestRepository.getById(context.getNotice().getRequestId())
-      .thenApply(mapResult(context::withRequest))
-      .thenApply(this::failWhenRequestIsIncomplete);
-  }
 }

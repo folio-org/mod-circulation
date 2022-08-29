@@ -25,6 +25,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.notIn;
 import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -134,6 +135,10 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
+    if (!request.hasItemId()) {
+      return emptyAsync();
+    }
+
     return findOpenLoanForItem(request.getItem());
   }
 
