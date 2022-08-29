@@ -1319,7 +1319,12 @@
         "circulation.internal.fetch-items",
         "lost-item-fees-policies.item.get",
         "accounts.collection.get",
-        "users.item.get"
+        "users.item.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-record-storage.actual-cost-records.item.post",
+        "actual-cost-record-storage.actual-cost-records.item.put",
+        "actual-cost-record-storage.actual-cost-records.item.delete"
       ],
       "visible": false
     },
