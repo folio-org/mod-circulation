@@ -721,6 +721,7 @@
             "circulation.internal.fetch-items",
             "circulation-storage.loans.collection.get",
             "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
             "patron-notice.post",
             "users.item.get",
             "usergroups.collection.get",
