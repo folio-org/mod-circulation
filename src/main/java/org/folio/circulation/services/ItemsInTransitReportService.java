@@ -58,7 +58,7 @@ public class ItemsInTransitReportService {
   private ItemRepository itemRepository;
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
-  final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
 
   public ItemsInTransitReportService(Clients clients) {
@@ -85,28 +85,22 @@ public class ItemsInTransitReportService {
       .thenCompose(r -> r.after(this::fetchPatronGroups))
       .thenCompose(r -> r.after(this::fetchServicePoints))
       .thenApply(this::mapToJsonObject)
-      .whenComplete(this::handleResult)
-      .exceptionally(this::handleException);
+      .whenComplete(this::handleResult);
   }
 
   private void handleResult(Result<JsonObject> result, Throwable throwable) {
-    if (result.succeeded()) {
-      log.info("The report was built successfully");
-    } else if (throwable != null) {
-      log.error("Report failed {}, {}, {}, {}", result.cause(), throwable.getCause(),
-        throwable.getMessage(), throwable.getStackTrace());
+    if (throwable != null) {
+      log.error("An exception was caught while building the report", throwable);
+    } else if (result != null) {
+      if (result.failed()) {
+        log.error("Report construction failed: {}", result.cause());
+      } else {
+        log.info("Report built successfully");
+      }
     } else {
-      log.error("Report failed, throwable is null {}", result.cause());
+      log.error("Result and throwable are null");
     }
   }
-
-  private Result<JsonObject> handleException(Throwable throwable) {
-      log.error("There is an exception in build report: {}, {}, {}",
-        throwable.getCause(), throwable.getMessage(), throwable.getStackTrace());
-
-      return null;
-  }
-
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     ItemsInTransitReportContext context) {
