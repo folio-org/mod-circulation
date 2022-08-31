@@ -124,7 +124,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   }
 
   private static void enrichWithUserBarcode(JsonObject logEventPayload, Loan lastLoan) {
-    write(logEventPayload, USER_BARCODE.value(), lastLoan.getUser().getBarcode());
+    ofNullable(lastLoan.getUser()).ifPresent(user -> write(logEventPayload, USER_BARCODE.value(), user.getBarcode()));
   }
 
   private static JsonArray getUpdatedRequests(CheckInContext checkInContext) {
