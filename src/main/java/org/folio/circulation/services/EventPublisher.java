@@ -121,11 +121,11 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
-    CheckInContext checkInContext, UserRepository userRepository) {
+    CheckInContext checkInContext, UserRepository userRepository, LoanRepository loanRepository) {
 
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
-      .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
-        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckInLogEventContent(checkInContext, loggedInUser)))))));
+      .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (r, lastLoan) -> r.after(loggedInUser -> CompletableFuture.completedFuture(
+        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckInLogEventContent(checkInContext, loggedInUser, lastLoan.value())))))));
 
     if (checkInContext.getLoan() != null) {
       Loan loan = checkInContext.getLoan();
