@@ -15,6 +15,8 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -28,11 +30,13 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 public class ItemLimitValidator {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
+  private static final String ITEM_LIMIT = "itemLimit";
   private final Function<ItemLimitValidationErrorCause, ValidationErrorFailure>
     itemLimitErrorFunction;
   private final LoanRepository loanRepository;
@@ -46,8 +50,15 @@ public class ItemLimitValidator {
   }
 
   public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
-    this(cause -> singleValidationError(cause.formatMessage(), ITEM_BARCODE,
-      request.getItemBarcode(), cause.getErrorCode()), loanRepository);
+    this(cause -> {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(ITEM_BARCODE, request.getItemBarcode());
+        parameters.put(ITEM_LIMIT,
+          cause.getItemLimit() != null ? cause.getItemLimit().toString() : null);
+
+        return singleValidationError(new ValidationError(cause.formatMessage(),
+          parameters, cause.getErrorCode()));
+      }, loanRepository);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
