@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.CAN_NOT_DETERMINE;
 import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.LOAN_TYPE;
 import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.MATERIAL_TYPE;
@@ -14,6 +15,8 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -22,11 +25,16 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+
+import io.netty.util.internal.StringUtil;
 
 public class ItemLimitValidator {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -44,9 +52,16 @@ public class ItemLimitValidator {
     this.loanRepository = loanRepository;
   }
 
-  public ItemLimitValidator(LoanRepository loanRepository) {
-    this(cause -> singleValidationError(cause.formatMessage(), ITEM_LIMIT,
-      cause.getItemLimit().toString(), cause.getErrorCode()), loanRepository);
+  public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
+    this(cause -> {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(ITEM_BARCODE, request.getItemBarcode());
+        parameters.put(ITEM_LIMIT,
+          cause.getItemLimit() != null ? cause.getItemLimit().toString() : null);
+
+        return singleValidationError(new ValidationError(cause.formatMessage(),
+          parameters, cause.getErrorCode()));
+      }, loanRepository);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
