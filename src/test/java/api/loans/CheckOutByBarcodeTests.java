@@ -100,13 +100,11 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
-import org.folio.circulation.domain.validation.ItemLimitValidator;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.Spy;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
@@ -123,7 +121,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -151,9 +148,6 @@ class CheckOutByBarcodeTests extends APITests {
   private static final String PATRON_ACTION_SESSION_STORAGE_PATH =
     "/patron-action-session-storage/patron-action-sessions";
   private static final String ITEM_LIMIT = "itemLimit";
-
-  @Spy
-  private ItemLimitValidator itemLimitValidator;
 
   @Test
   void canCheckOutUsingItemAndUserBarcode() {
