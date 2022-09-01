@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.CAN_NOT_DETERMINE;
 import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.LOAN_TYPE;
 import static org.folio.circulation.domain.validation.ItemLimitValidationErrorCause.MATERIAL_TYPE;
@@ -33,6 +32,7 @@ import org.folio.circulation.support.results.Result;
 public class ItemLimitValidator {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
+  private static final String ITEM_LIMIT = "itemLimit";
   private final Function<ItemLimitValidationErrorCause, ValidationErrorFailure>
     itemLimitErrorFunction;
   private final LoanRepository loanRepository;
@@ -45,9 +45,9 @@ public class ItemLimitValidator {
     this.loanRepository = loanRepository;
   }
 
-  public ItemLimitValidator(CheckOutByBarcodeRequest request, LoanRepository loanRepository) {
-    this(cause -> singleValidationError(cause.formatMessage(), ITEM_BARCODE,
-      request.getItemBarcode(), cause.getErrorCode()), loanRepository);
+  public ItemLimitValidator(LoanRepository loanRepository) {
+    this(cause -> singleValidationError(cause.formatMessage(), ITEM_LIMIT,
+      cause.getItemLimit().toString(), cause.getErrorCode()), loanRepository);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
@@ -66,9 +66,8 @@ public class ItemLimitValidator {
           ItemLimitValidationErrorCause cause = getValidationErrorCause(ruleConditions);
 
           if (cause == null) {
-            String message = String.format("Can not determine item limit validation error cause " +
-              "for item %s, patron %s", loan.getItemId(), loan.getUserId());
-            log.warn(message);
+            log.warn("Can not determine item limit validation error cause " +
+              "for item {}, patron {}", loan.getItemId(), loan.getUserId());
             return itemLimitErrorFunction.apply(CAN_NOT_DETERMINE);
           }
 

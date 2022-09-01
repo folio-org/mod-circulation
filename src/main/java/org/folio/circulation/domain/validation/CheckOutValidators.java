@@ -278,7 +278,7 @@ public class CheckOutValidators {
     return request.getBlockOverrides().getItemLimitBlockOverride().isRequested()
       ? new OverridingLoanValidator(ITEM_LIMIT_BLOCK, request.getBlockOverrides(), permissions)
       : new BlockValidator<>(ITEM_LIMIT_IS_REACHED,
-      new ItemLimitValidator(request, loanRepository)::refuseWhenItemLimitIsReached);
+      new ItemLimitValidator(loanRepository)::refuseWhenItemLimitIsReached);
   }
 
   private BlockValidator<LoanAndRelatedRecords> createLoanPolicyValidator(CheckOutByBarcodeRequest request,

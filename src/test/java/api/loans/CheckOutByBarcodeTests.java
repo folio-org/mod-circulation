@@ -63,11 +63,11 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.ErrorCode.ITEM_HAS_OPEN_LOAN;
-import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;
+import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
@@ -145,6 +145,7 @@ class CheckOutByBarcodeTests extends APITests {
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from borrowing";
   private static final String PATRON_ACTION_SESSION_STORAGE_PATH =
     "/patron-action-session-storage/patron-action-sessions";
+  private static final String ITEM_LIMIT = "itemLimit";
 
   @Test
   void canCheckOutUsingItemAndUserBarcode() {
@@ -1113,7 +1114,8 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"),
-      hasCode(ITEM_LIMIT_MATERIAL_TYPE))));
+      hasCode(ITEM_LIMIT_MATERIAL_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1141,7 +1143,8 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for loan type"),
-      hasCode(ITEM_LIMIT_LOAN_TYPE))));
+      hasCode(ITEM_LIMIT_LOAN_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1171,7 +1174,8 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for combination of " +
         "material type and loan type"),
-      hasCode(ITEM_LIMIT_MATERIAL_TYPE_LOAN_TYPE))));
+      hasCode(ITEM_LIMIT_MATERIAL_TYPE_LOAN_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1204,7 +1208,8 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for combination of patron group," +
         " material type and loan type"),
-      hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE))));
+      hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1246,7 +1251,8 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for combination of patron group, " +
         "material type and loan type"),
-      hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE))));
+      hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
 
@@ -1275,7 +1281,8 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"),
-      hasCode(ITEM_LIMIT_MATERIAL_TYPE))));
+      hasCode(ITEM_LIMIT_MATERIAL_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
   }
@@ -1300,7 +1307,8 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"),
-      hasCode(ITEM_LIMIT_MATERIAL_TYPE))));
+      hasCode(ITEM_LIMIT_MATERIAL_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
 
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1328,7 +1336,8 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"),
-      hasCode(ITEM_LIMIT_MATERIAL_TYPE))));
+      hasCode(ITEM_LIMIT_MATERIAL_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
 
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
@@ -1801,7 +1810,8 @@ class CheckOutByBarcodeTests extends APITests {
     Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Patron has reached maximum limit of 1 items for material type"),
-      hasCode(ITEM_LIMIT_MATERIAL_TYPE))));
+      hasCode(ITEM_LIMIT_MATERIAL_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
       OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION);
