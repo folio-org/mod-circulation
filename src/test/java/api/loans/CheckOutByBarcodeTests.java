@@ -66,6 +66,7 @@ import static org.folio.circulation.support.ErrorCode.ITEM_HAS_OPEN_LOAN;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE_LOAN_TYPE;
+import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
@@ -1246,6 +1247,39 @@ class CheckOutByBarcodeTests extends APITests {
       hasMessage("Patron has reached maximum limit of 1 items for combination of patron group" +
         " and material type"),
       hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void canCheckOutWhenItemLimitIsReachedForReadingRoomLoanTypeAndPatronGroup() {
+
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+    final UUID regular = patronGroupsFixture.regular().getId();
+
+    circulationRulesFixture.updateCirculationRules(createRules("t " + readingRoom + " + g " + regular));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(
+      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(
+      itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group" +
+        " and loan type"),
+      hasCode(ITEM_LIMIT_PATRON_GROUP_LOAN_TYPE),
       hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
