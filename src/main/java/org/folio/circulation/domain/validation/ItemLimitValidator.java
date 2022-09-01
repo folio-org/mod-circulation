@@ -65,8 +65,9 @@ public class ItemLimitValidator {
           ItemLimitValidationErrorCause cause = getValidationErrorCause(ruleConditions);
 
           if (cause == null) {
-            log.warn("Can not determine item limit validation error cause " +
-              "for item {}, patron {}", loan.getItemId(), loan.getUserId());
+            String message = String.format("Can not determine item limit validation error cause " +
+              "for item %s, patron %s", loan.getItemId(), loan.getUserId());
+            log.warn(message);
             return itemLimitErrorFunction.apply(CAN_NOT_DETERMINE);
           }
 
