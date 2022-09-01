@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.support.ValidationErrorFailure;
