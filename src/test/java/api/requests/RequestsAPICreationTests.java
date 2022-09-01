@@ -1406,6 +1406,37 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void canHaveUserBarcodeInCheckInPublishedEventAfterTitleLevelRequest() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = uponDunkirkInstance.getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource item = itemsClient.create(new ItemBuilder()
+      .forHolding(defaultWithHoldings.getId())
+      .withMaterialType(UUID.randomUUID())
+      .withPermanentLoanType(UUID.randomUUID())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLocation(locationsFixture.mainFloor())
+      .create());
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte()).getJson();
+    checkInFixture.checkInByBarcode(item);
+
+    requestsClient.create(buildPageTitleLevelRequest(patronId,
+      pickupServicePointId, instanceId));
+    checkInFixture.checkInByBarcode(item);
+    checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte()).getJson();
+
+    FakePubSub.getPublishedEvents().stream().map(event ->  new JsonObject(event.getString("eventPayload")))
+      .filter(event -> event.containsKey("logEventType") && event.getString("logEventType").equals("CHECK_IN_EVENT"))
+      .forEach(event -> assertTrue(event.containsKey("userBarcode")));
+  }
+
+  @Test
   void cannotCreateItemLevelRequestIfTitleLevelRequestForInstanceAlreadyCreated() {
     UUID patronId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
