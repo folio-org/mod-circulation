@@ -66,6 +66,7 @@ import static org.folio.circulation.support.ErrorCode.ITEM_HAS_OPEN_LOAN;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE_LOAN_TYPE;
+import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.ErrorCode.USER_BARCODE_NOT_FOUND;
@@ -98,11 +99,13 @@ import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
+import org.folio.circulation.domain.validation.ItemLimitValidator;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.Spy;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
@@ -119,6 +122,7 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -146,6 +150,9 @@ class CheckOutByBarcodeTests extends APITests {
   private static final String PATRON_ACTION_SESSION_STORAGE_PATH =
     "/patron-action-session-storage/patron-action-sessions";
   private static final String ITEM_LIMIT = "itemLimit";
+
+  @Spy
+  private ItemLimitValidator itemLimitValidator;
 
   @Test
   void canCheckOutUsingItemAndUserBarcode() {
@@ -1209,6 +1216,36 @@ class CheckOutByBarcodeTests extends APITests {
       hasMessage("Patron has reached maximum limit of 1 items for combination of patron group," +
         " material type and loan type"),
       hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE),
+      hasParameter(ITEM_LIMIT, "1"))));
+    secondBookTypeItem = itemsClient.get(secondBookTypeItem);
+    assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
+
+    checkOutFixture.checkOutByBarcode(videoTypeItem, steve);
+    videoTypeItem = itemsClient.get(videoTypeItem);
+    assertThat(videoTypeItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void canCheckOutWhenItemLimitIsReachedForBookMaterialTypeAndPatronGroup() {
+    final UUID book = materialTypesFixture.book().getId();
+    final UUID regular = patronGroupsFixture.regular().getId();
+
+    circulationRulesFixture.updateCirculationRules(createRules("m " + book + " + g " + regular));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod();
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource videoTypeItem = itemsFixture.basedUponDunkirk();
+    IndividualResource steve = usersFixture.steve();
+
+    checkOutFixture.checkOutByBarcode(firstBookTypeItem, steve);
+    firstBookTypeItem = itemsClient.get(firstBookTypeItem);
+    assertThat(firstBookTypeItem, hasItemStatus(CHECKED_OUT));
+
+    Response response = checkOutFixture.attemptCheckOutByBarcode(secondBookTypeItem, steve);
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Patron has reached maximum limit of 1 items for combination of patron group" +
+        " and material type"),
+      hasCode(ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE),
       hasParameter(ITEM_LIMIT, "1"))));
     secondBookTypeItem = itemsClient.get(secondBookTypeItem);
     assertThat(secondBookTypeItem, hasItemStatus(AVAILABLE));
