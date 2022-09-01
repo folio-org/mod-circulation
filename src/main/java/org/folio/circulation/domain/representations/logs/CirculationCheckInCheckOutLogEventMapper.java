@@ -31,13 +31,13 @@ public class CirculationCheckInCheckOutLogEventMapper {
    * @param checkInContext check-in flow context {@link CheckInContext}
    * @return check-in log event payload
    */
-  public static String mapToCheckInLogEventContent(CheckInContext checkInContext, User loggedInUser, Loan lastLoan) {
+  public static String mapToCheckInLogEventContent(CheckInContext checkInContext, User loggedInUser, User userFromLastLoan) {
     JsonObject logEventPayload = new JsonObject();
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_IN.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), checkInContext.getCheckInServicePointId());
 
-    populateLoanData(checkInContext, logEventPayload, lastLoan);
+    populateLoanData(checkInContext, logEventPayload, userFromLastLoan);
     populateItemData(checkInContext, logEventPayload, loggedInUser);
 
     ofNullable(checkInContext.getCheckInRequest())
@@ -96,11 +96,11 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, SOURCE.value(), loggedInUser.getPersonalName());
   }
 
-  private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload, Loan lastLoan) {
+  private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload, User userFromLastLoan) {
     if (nonNull(checkInContext.getLoan())) {
       populateLoanData(checkInContext.getLoan(), logEventPayload);
     } else {
-      enrichWithUserBarcode(logEventPayload, lastLoan);
+      enrichWithUserBarcode(logEventPayload, userFromLastLoan);
     }
   }
 
@@ -123,8 +123,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
       .ifPresent(proxy -> write(logEventPayload, PROXY_BARCODE.value(), proxy.getBarcode()));
   }
 
-  private static void enrichWithUserBarcode(JsonObject logEventPayload, Loan lastLoan) {
-    ofNullable(lastLoan.getUser()).ifPresent(user -> write(logEventPayload, USER_BARCODE.value(), user.getBarcode()));
+  private static void enrichWithUserBarcode(JsonObject logEventPayload, User userFromLastLoan) {
+    ofNullable(userFromLastLoan).ifPresent(user -> write(logEventPayload, USER_BARCODE.value(), userFromLastLoan.getBarcode()));
   }
 
   private static JsonArray getUpdatedRequests(CheckInContext checkInContext) {
