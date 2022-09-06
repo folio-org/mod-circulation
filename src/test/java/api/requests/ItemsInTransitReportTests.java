@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.AfterEach;
@@ -467,6 +468,54 @@ class ItemsInTransitReportTests extends APITests {
     List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(itemsInTransitReport.size(), is(200));
+  }
+
+  @Test
+  void reportShouldNotFailWithoutLastServicePointId() {
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
+
+    ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
+
+    checkOutFixture.checkOutByBarcode(item);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(ClockUtil.getZonedDateTime())
+      .at(firstServicePointId));
+
+    Response response = itemsClient.getById(item.getId());
+    JsonObject checkedInItemJson = response.getJson();
+    checkedInItemJson.getJsonObject("lastCheckIn").remove("servicePointId");
+    itemsClient.replace(item.getId(), checkedInItemJson);
+
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(1));
+  }
+
+  @Test
+  void reportShouldNotFailWithoutPrimaryServicePointId() {
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
+
+    ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
+
+    checkOutFixture.checkOutByBarcode(item);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(ClockUtil.getZonedDateTime())
+      .at(firstServicePointId));
+
+    Response response = itemsClient.getById(item.getId());
+    JsonObject checkedInItemJson = response.getJson();
+    UUID permanentLocationId = UUID.fromString(checkedInItemJson.getString("permanentLocationId"));
+    JsonObject location = locationsClient.getById(permanentLocationId).getJson();
+    location.put("primaryServicePoint", null);
+    locationsClient.replace(permanentLocationId, location);
+
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(1));
   }
 
   private void createRequest(ItemResource item, IndividualResource steve,

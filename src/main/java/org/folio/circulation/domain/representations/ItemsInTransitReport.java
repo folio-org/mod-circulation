@@ -68,7 +68,9 @@ public class ItemsInTransitReport {
     Location location = reportContext.getLocations().get(item.getEffectiveLocationId());
     if (location != null) {
       ServicePoint primaryServicePoint = reportContext.getServicePoints()
-        .get(location.getPrimaryServicePointId().toString());
+        .get(location.getPrimaryServicePointId() != null
+          ? location.getPrimaryServicePointId().toString()
+          : null);
       item = item
         .withLocation(location.withPrimaryServicePoint(primaryServicePoint));
     }
@@ -76,7 +78,9 @@ public class ItemsInTransitReport {
     ServicePoint inTransitDestinationServicePoint = reportContext.getServicePoints()
       .get(item.getInTransitDestinationServicePointId());
     ServicePoint lastCheckInServicePoint = reportContext.getServicePoints()
-      .get(item.getLastCheckInServicePointId().toString());
+      .get(item.getLastCheckInServicePointId() != null
+        ? item.getLastCheckInServicePointId().toString()
+        : null);
 
     item = item
       .updateLastCheckInServicePoint(lastCheckInServicePoint)
