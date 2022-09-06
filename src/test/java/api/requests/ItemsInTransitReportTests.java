@@ -472,16 +472,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutLastServicePointId() {
-    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
-    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
-
-    ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
-
-    checkOutFixture.checkOutByBarcode(item);
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .on(ClockUtil.getZonedDateTime())
-      .at(firstServicePointId));
+    ItemResource item = checkOutAndCheckInItem();
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -495,16 +486,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutPrimaryServicePointId() {
-    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
-    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
-
-    ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
-
-    checkOutFixture.checkOutByBarcode(item);
-    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-      .forItem(item)
-      .on(ClockUtil.getZonedDateTime())
-      .at(firstServicePointId));
+    ItemResource item = checkOutAndCheckInItem();
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -516,6 +498,20 @@ class ItemsInTransitReportTests extends APITests {
     List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(itemsInTransitReport.size(), is(1));
+  }
+
+  private ItemResource checkOutAndCheckInItem() {
+    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+    final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
+
+    ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
+
+    checkOutFixture.checkOutByBarcode(item);
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .on(ClockUtil.getZonedDateTime())
+      .at(firstServicePointId));
+    return item;
   }
 
   private void createRequest(ItemResource item, IndividualResource steve,
