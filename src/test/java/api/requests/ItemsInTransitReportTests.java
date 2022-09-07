@@ -523,7 +523,6 @@ class ItemsInTransitReportTests extends APITests {
     checkOutFixture.checkOutByBarcode(item);
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
-      .on(ClockUtil.getZonedDateTime())
       .at(firstServicePointId));
     return item;
   }
