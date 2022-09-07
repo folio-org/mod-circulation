@@ -500,6 +500,20 @@ class ItemsInTransitReportTests extends APITests {
     assertThat(itemsInTransitReport.size(), is(1));
   }
 
+  @Test
+  void reportShouldNotFailWithoutLastCheckIn() {
+    ItemResource item = checkOutAndCheckInItem();
+
+    Response response = itemsClient.getById(item.getId());
+    JsonObject checkedInItemJson = response.getJson();
+    checkedInItemJson.remove("lastCheckIn");
+    itemsClient.replace(item.getId(), checkedInItemJson);
+
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(1));
+  }
+
   private ItemResource checkOutAndCheckInItem() {
     final UUID firstServicePointId = servicePointsFixture.cd1().getId();
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
