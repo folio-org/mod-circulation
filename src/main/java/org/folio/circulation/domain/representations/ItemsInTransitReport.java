@@ -10,7 +10,6 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedOb
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.Holdings;
