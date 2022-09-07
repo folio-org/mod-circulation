@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.JsonCollectionAssistant.getRecordById;
+import static api.support.matchers.ItemMatchers.isInTransit;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.StreamToListMapper.toList;
@@ -471,7 +472,7 @@ class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  void reportShouldNotFailWithoutLastServicePointId() {
+  void reportShouldNotFailWithoutLastCheckInServicePointId() {
     ItemResource item = checkOutAndCheckInItem();
 
     Response response = itemsClient.getById(item.getId());
@@ -492,7 +493,7 @@ class ItemsInTransitReportTests extends APITests {
     JsonObject checkedInItemJson = response.getJson();
     UUID permanentLocationId = UUID.fromString(checkedInItemJson.getString("permanentLocationId"));
     JsonObject location = locationsClient.getById(permanentLocationId).getJson();
-    location.put("primaryServicePoint", null);
+    location.putNull("primaryServicePoint");
     locationsClient.replace(permanentLocationId, location);
 
     List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
@@ -524,6 +525,9 @@ class ItemsInTransitReportTests extends APITests {
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
       .at(firstServicePointId));
+
+    assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
+
     return item;
   }
 
