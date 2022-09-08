@@ -207,9 +207,12 @@ public class RequestCollectionResource extends CollectionResource {
       requestRepository), requestRepository, new ServicePointRepository(clients),
       new ConfigurationRepository(clients));
 
+    UpdateItem updateItem = new UpdateItem(itemRepository);
+
     fromFutureResult(requestRepository.getById(id))
       .flatMapFuture(requestRepository::delete)
       .flatMapFuture(updateRequestQueue::onDeletion)
+      .flatMapFuture(updateItem::onRequestDeletion)
       .map(toFixedValue(NoContentResponse::noContent))
       .onComplete(context::write, context::write);
   }
