@@ -121,8 +121,8 @@ public class UpdateItem {
   public CompletableFuture<Result<Request>> onRequestDeletion(Request request) {
     // Only page request changes item status to 'Paged'
     // Other request types (Hold and Recall) don't change item status, it stays 'Checked out'
-    if (request.getRequestType().isPage() && request.getItem() != null
-      && PAGED.equals(request.getItem().getStatus())) {
+    if (request.getRequestType() != null && request.getRequestType().isPage()
+      && request.getItem() != null && PAGED.equals(request.getItem().getStatus())) {
 
       return itemRepository.updateItem(request.getItem().changeStatus(AVAILABLE))
         .thenApply(r -> r.map(item -> request));
