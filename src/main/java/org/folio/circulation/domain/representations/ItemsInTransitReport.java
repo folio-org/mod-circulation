@@ -10,6 +10,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedOb
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
@@ -67,20 +68,24 @@ public class ItemsInTransitReport {
 
     Location location = reportContext.getLocations().get(item.getEffectiveLocationId());
     if (location != null) {
-      ServicePoint primaryServicePoint = reportContext.getServicePoints()
-        .get(location.getPrimaryServicePointId().toString());
-      item = item
-        .withLocation(location.withPrimaryServicePoint(primaryServicePoint));
+      item = ofNullable(location.getPrimaryServicePointId())
+        .map(UUID::toString)
+        .map(reportContext.getServicePoints()::get)
+        .map(location::withPrimaryServicePoint)
+        .map(item::withLocation)
+        .orElse(item);
     }
 
-    ServicePoint inTransitDestinationServicePoint = reportContext.getServicePoints()
-      .get(item.getInTransitDestinationServicePointId());
-    ServicePoint lastCheckInServicePoint = reportContext.getServicePoints()
-      .get(item.getLastCheckInServicePointId().toString());
+    item = ofNullable(item.getInTransitDestinationServicePointId())
+      .map(reportContext.getServicePoints()::get)
+      .map(item::updateDestinationServicePoint)
+      .orElse(item);
 
-    item = item
-      .updateLastCheckInServicePoint(lastCheckInServicePoint)
-      .updateDestinationServicePoint(inTransitDestinationServicePoint);
+    item = ofNullable(item.getLastCheckInServicePointId())
+      .map(UUID::toString)
+      .map(reportContext.getServicePoints()::get)
+      .map(item::updateLastCheckInServicePoint)
+      .orElse(item);
 
     final JsonObject entry = new JsonObject();
 
@@ -100,6 +105,7 @@ public class ItemsInTransitReport {
     write(entry, "effectiveCallNumberComponents",
       createCallNumberComponents(item.getCallNumberComponents()));
 
+    ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {
       writeServicePoint(entry, inTransitDestinationServicePoint, "inTransitDestinationServicePoint");
     }
