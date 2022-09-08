@@ -6,6 +6,7 @@ import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
+import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -17,9 +18,11 @@ import static org.hamcrest.core.Is.is;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;

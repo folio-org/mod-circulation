@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
@@ -35,10 +36,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
+import org.folio.circulation.domain.policy.RequestPolicy;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -66,6 +70,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final Collection<Item> instanceItems;
 
+  /**
+   * A map of request policies for each item of the instance: (String itemId, RequestPolicy policy)
+   */
+  @With
+  private final Map<String, RequestPolicy> instanceItemsRequestPolicies;
+
   private final Item item;
 
   @With
@@ -91,15 +101,17 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
-    return new Request(null, null, representation, null, null, new ArrayList<>(), null, null, null,
-      null, null, null, false, null, false);
+    return new Request(null, null, representation, null, null, new ArrayList<>(), new HashMap<>(),
+    null, null, null, null, null, null, false, null,
+      false);
   }
 
   public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration, Operation operation,
     JsonObject representation) {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
-      new ArrayList<>(), null, null, null, null, null, null, false, null, false);
+      new ArrayList<>(), new HashMap<>(), null, null, null, null, null, null, false,
+      null, false);
   }
 
   public JsonObject asJson() {
@@ -191,7 +203,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Request(tlrSettingsConfiguration, operation, requestRepresentation,
-      cancellationReasonRepresentation, instance, instanceItems, newItem, requester, proxy, addressType,
+      cancellationReasonRepresentation, instance, instanceItems, instanceItemsRequestPolicies,
+      newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
       previousPosition, changedStatus);
   }
@@ -357,6 +370,14 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasChangedStatus() {
     return changedStatus;
+  }
+
+  public boolean hasItemId() {
+    return isNotBlank(getItemId());
+  }
+
+  public boolean hasItem() {
+    return item != null && item.isFound();
   }
 
   public enum Operation {
