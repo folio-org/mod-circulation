@@ -9,6 +9,8 @@ import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
@@ -87,13 +89,18 @@ class RequestsAPIDeletionTests extends APITests {
       itemAfterRequestDeletion.getStatusName(), is(ItemBuilder.AVAILABLE));
   }
 
-  @Test
-  void holdRequestDeletionDoesNotChangeItemStatus() {
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "Hold",
+    "Recall"
+  })
+  void holdAndRecallRequestsDeletionDoesNotChangeItemStatus(String requestType) {
     final var nod = itemsFixture.basedUponNod();
 
     checkOutFixture.checkOutByBarcode(nod);
 
-    final var request = requestsFixture.place(requestFor(nod, usersFixture.charlotte()));
+    final var request = requestsFixture.place(requestFor(nod, usersFixture.charlotte())
+        .withRequestType(requestType));
 
     var itemAfterRequestCreation = itemsFixture.getById(nod.getId());
     assertThat("item status is still Checked out",
