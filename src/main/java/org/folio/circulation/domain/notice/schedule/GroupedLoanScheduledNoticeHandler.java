@@ -20,7 +20,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeHandler.ScheduledNoticeContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;

@@ -7,21 +7,23 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.rules.AppliedRuleConditions;
-import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
@@ -71,12 +73,10 @@ public abstract class CirculationPolicyRepository<T> {
       .thenApply(result -> result.next(json -> mapToPolicy(json, conditionsEntity)));
   }
 
-  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Loan loan) {
-    return lookupPolicyId(loan.getItem(), loan.getUser());
-  }
+  public <R extends UserRelatedRecord & ItemRelatedRecord>
+  CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(R userAndItemRelatedRecord) {
 
-  public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(Request request) {
-    return lookupPolicyId(request.getItem(), request.getRequester());
+    return lookupPolicyId(userAndItemRelatedRecord.getItem(), userAndItemRelatedRecord.getUser());
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyId(PatronNoticeEvent noticeEvent) {

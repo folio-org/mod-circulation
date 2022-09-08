@@ -32,6 +32,17 @@ public class RequestPoliciesFixture {
     return requestPolicyRecordCreator.createIfAbsent(allowAllPolicy);
   }
 
+  public IndividualResource allowHoldAndRecallRequestPolicy() {
+    ArrayList<RequestType> types = new ArrayList<>();
+    types.add(RequestType.HOLD);
+    types.add(RequestType.RECALL);
+
+    final RequestPolicyBuilder policyBuilder = new RequestPolicyBuilder(types,
+      "Page requests not allowed", "");
+
+    return requestPolicyRecordCreator.createIfAbsent(policyBuilder);
+  }
+
   public IndividualResource allowAllRequestPolicy(UUID id) {
 
     List<RequestType> types = new ArrayList<>();
@@ -76,6 +87,15 @@ public class RequestPoliciesFixture {
     requestTypesList.add(RequestType.PAGE);
 
     return customRequestPolicy(requestTypesList);
+  }
+
+  public IndividualResource nonRequestableRequestPolicy() {
+    ArrayList<RequestType> types = new ArrayList<>();
+
+    final RequestPolicyBuilder policyBuilder = new RequestPolicyBuilder(types,
+      "Nothing is allowed", "");
+
+    return requestPolicyRecordCreator.createIfAbsent(policyBuilder);
   }
 
   public void deleteRequestPolicy(IndividualResource policyToDelete) {

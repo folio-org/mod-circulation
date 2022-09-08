@@ -45,6 +45,25 @@ public interface Result<T> {
   }
 
   /**
+   * Creates a completed future with successful result with the supplied value
+   *
+   * @param value the result value
+   * @return completed future with successful result
+   */
+  static <T> CompletableFuture<Result<T>> ofAsync(T value) {
+    return ofAsync(() -> value);
+  }
+
+  /**
+   * Creates a completed future with successful empty result
+   *
+   * @return completed future with successful empty result
+   */
+  static <T> CompletableFuture<Result<T>> emptyAsync() {
+    return ofAsync((T) null);
+  }
+
+  /**
    * Combines results from all the lists of results, of all elements succeed.
    * Otherwise, returns  failure, first failed element takes precedence
    *

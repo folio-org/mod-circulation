@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.representations.logs;
 
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.*;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
@@ -30,13 +31,13 @@ public class CirculationCheckInCheckOutLogEventMapper {
    * @param checkInContext check-in flow context {@link CheckInContext}
    * @return check-in log event payload
    */
-  public static String mapToCheckInLogEventContent(CheckInContext checkInContext, User loggedInUser) {
+  public static String mapToCheckInLogEventContent(CheckInContext checkInContext, User loggedInUser, User userFromLastLoan) {
     JsonObject logEventPayload = new JsonObject();
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), CHECK_IN.value());
     write(logEventPayload, SERVICE_POINT_ID.value(), checkInContext.getCheckInServicePointId());
 
-    populateLoanData(checkInContext, logEventPayload);
+    populateLoanData(checkInContext, logEventPayload, userFromLastLoan);
     populateItemData(checkInContext, logEventPayload, loggedInUser);
 
     ofNullable(checkInContext.getCheckInRequest())
@@ -95,8 +96,12 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, SOURCE.value(), loggedInUser.getPersonalName());
   }
 
-  private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload) {
-    populateLoanData(checkInContext.getLoan(), logEventPayload);
+  private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload, User userFromLastLoan) {
+    if (nonNull(checkInContext.getLoan())) {
+      populateLoanData(checkInContext.getLoan(), logEventPayload);
+    } else {
+      enrichWithUserBarcode(logEventPayload, userFromLastLoan);
+    }
   }
 
   private static void populateLoanData(LoanAndRelatedRecords loanAndRelatedRecords, JsonObject logEventPayload) {
@@ -104,21 +109,22 @@ public class CirculationCheckInCheckOutLogEventMapper {
   }
 
   private static void populateLoanData(Loan checkInCheckOutLoan, JsonObject logEventPayload) {
-    ofNullable(checkInCheckOutLoan)
-      .ifPresent(loan -> {
-        write(logEventPayload, LOAN_ID.value(), loan.getId());
-        write(logEventPayload, IS_LOAN_CLOSED.value(), loan.isClosed());
-        write(logEventPayload, SYSTEM_RETURN_DATE.value(), loan.getSystemReturnDate());
-        write(logEventPayload, RETURN_DATE.value(), loan.getReturnDate());
-        write(logEventPayload, DUE_DATE.value(), loan.getDueDate());
-        ofNullable(loan.getUser())
-          .ifPresent(user -> {
-            write(logEventPayload, USER_ID.value(), user.getId());
-            write(logEventPayload, USER_BARCODE.value(), user.getBarcode());
-          });
-        ofNullable(loan.getProxy())
-          .ifPresent(proxy -> write(logEventPayload, PROXY_BARCODE.value(), proxy.getBarcode()));
+    write(logEventPayload, LOAN_ID.value(), checkInCheckOutLoan.getId());
+    write(logEventPayload, IS_LOAN_CLOSED.value(), checkInCheckOutLoan.isClosed());
+    write(logEventPayload, SYSTEM_RETURN_DATE.value(), checkInCheckOutLoan.getSystemReturnDate());
+    write(logEventPayload, RETURN_DATE.value(), checkInCheckOutLoan.getReturnDate());
+    write(logEventPayload, DUE_DATE.value(), checkInCheckOutLoan.getDueDate());
+    ofNullable(checkInCheckOutLoan.getUser())
+      .ifPresent(user -> {
+        write(logEventPayload, USER_ID.value(), user.getId());
+        write(logEventPayload, USER_BARCODE.value(), user.getBarcode());
       });
+    ofNullable(checkInCheckOutLoan.getProxy())
+      .ifPresent(proxy -> write(logEventPayload, PROXY_BARCODE.value(), proxy.getBarcode()));
+  }
+
+  private static void enrichWithUserBarcode(JsonObject logEventPayload, User userFromLastLoan) {
+    ofNullable(userFromLastLoan).ifPresent(user -> write(logEventPayload, USER_BARCODE.value(), userFromLastLoan.getBarcode()));
   }
 
   private static JsonArray getUpdatedRequests(CheckInContext checkInContext) {

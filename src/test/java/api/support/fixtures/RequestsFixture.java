@@ -12,6 +12,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.function.Function.identity;
 
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -180,6 +181,26 @@ public class RequestsFixture {
       .withRequestDate(on)
       .withRequesterId(by.getId())
       .withPickupServicePointId(pickupServicePointId));
+  }
+
+  public IndividualResource placeTitleLevelRequest(RequestType requestType, UUID instanceId,
+    IndividualResource requester) {
+
+    return placeTitleLevelRequest(requestType, instanceId, requester, null);
+  }
+
+  public IndividualResource placeTitleLevelRequest(RequestType requestType, UUID instanceId,
+    IndividualResource requester, LocalDate expirationDate) {
+
+    return place(new RequestBuilder()
+      .withRequestType(requestType.getValue())
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(requester.getId())
+      .withRequestExpiration(expirationDate)
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 
   public IndividualResource placeItemLevelHoldShelfRequest(IndividualResource item,

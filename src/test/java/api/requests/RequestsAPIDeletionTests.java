@@ -9,8 +9,11 @@ import static org.hamcrest.core.Is.is;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.builders.ItemBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
@@ -63,6 +66,72 @@ class RequestsAPIDeletionTests extends APITests {
 
     assertThat(allRequests.size(), is(0));
     assertThat(allRequests.totalRecords(), is(0));
+  }
+
+  @Test
+  void pageRequestDeletionChangesItemStatusFromPagedToAvailable() {
+    final var nod = itemsFixture.basedUponNod();
+
+    final var request = requestsFixture.placeItemLevelPageRequest(nod,
+      nod.getInstanceId(), usersFixture.jessica());
+
+    var itemAfterRequestCreation = itemsFixture.getById(nod.getId());
+    assertThat("item status is changed to Paged",
+      itemAfterRequestCreation.getStatusName(), is(ItemBuilder.PAGED));
+
+    requestsFixture.deleteRequest(request.getId());
+
+    assertThat("deleted request cannot be fetched",
+      requestsFixture.getById(request.getId()), hasStatus(HTTP_NOT_FOUND));
+
+    var itemAfterRequestDeletion = itemsFixture.getById(nod.getId());
+    assertThat("item status is changed back to Available",
+      itemAfterRequestDeletion.getStatusName(), is(ItemBuilder.AVAILABLE));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "Hold",
+    "Recall"
+  })
+  void holdAndRecallRequestsDeletionDoesNotChangeItemStatus(String requestType) {
+    final var nod = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(nod);
+
+    final var request = requestsFixture.place(requestFor(nod, usersFixture.charlotte())
+        .withRequestType(requestType));
+
+    var itemAfterRequestCreation = itemsFixture.getById(nod.getId());
+    assertThat("item status is still Checked out",
+      itemAfterRequestCreation.getStatusName(), is(ItemBuilder.CHECKED_OUT));
+
+    requestsFixture.deleteRequest(request.getId());
+
+    assertThat("deleted request cannot be fetched",
+      requestsFixture.getById(request.getId()), hasStatus(HTTP_NOT_FOUND));
+
+    var itemAfterRequestDeletion = itemsFixture.getById(nod.getId());
+    assertThat("item status is still Checked out",
+      itemAfterRequestDeletion.getStatusName(), is(ItemBuilder.CHECKED_OUT));
+  }
+
+  @Test
+  void canDeletePageRequestAfterAssociatedItemIsDeleted() {
+    final var nod = itemsFixture.basedUponNod();
+
+    final var request = requestsFixture.placeItemLevelPageRequest(nod,
+      nod.getInstanceId(), usersFixture.jessica());
+
+    var itemAfterRequestCreation = itemsFixture.getById(nod.getId());
+    assertThat("item status is changed back to Available",
+      itemAfterRequestCreation.getStatusName(), is(ItemBuilder.PAGED));
+
+    itemsClient.delete(nod.getId());
+    requestsFixture.deleteRequest(request.getId());
+
+    assertThat("deleted request cannot be fetched",
+      requestsFixture.getById(request.getId()), hasStatus(HTTP_NOT_FOUND));
   }
 
   private RequestBuilder requestFor(ItemResource item) {

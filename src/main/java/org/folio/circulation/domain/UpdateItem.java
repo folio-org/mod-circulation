@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.time.ZonedDateTime;
@@ -115,6 +116,19 @@ public class UpdateItem {
     return onLoanUpdate(loanAndRelatedRecords.getLoan(),
       loanAndRelatedRecords.getRequestQueue())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
+  }
+
+  public CompletableFuture<Result<Request>> onRequestDeletion(Request request) {
+    // Only page request changes item status to 'Paged'
+    // Other request types (Hold and Recall) don't change item status, it stays 'Checked out'
+    if (request.getRequestType() != null && request.getRequestType().isPage()
+      && request.getItem() != null && PAGED.equals(request.getItem().getStatus())) {
+
+      return itemRepository.updateItem(request.getItem().changeStatus(AVAILABLE))
+        .thenApply(r -> r.map(item -> request));
+    }
+
+    return ofAsync(request);
   }
 
   private CompletableFuture<Result<Item>> onLoanUpdate(

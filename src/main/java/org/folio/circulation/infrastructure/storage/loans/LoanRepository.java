@@ -25,8 +25,10 @@ import static org.folio.circulation.support.http.client.CqlQuery.notIn;
 import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -133,6 +135,10 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
+    if (!request.hasItemId()) {
+      return emptyAsync();
+    }
+
     return findOpenLoanForItem(request.getItem());
   }
 
@@ -410,6 +416,11 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds,
     List<String> loanIds) {
+
+    if (itemIds == null || itemIds.isEmpty()) {
+      return ofAsync(() -> null);
+    }
+
     Result<CqlQuery> cqlQuery = exactMatchAny(ITEM_ID, itemIds)
       .combine(getStatusCQLQuery("Open"), CqlQuery::and);
     if (!loanIds.isEmpty()) {

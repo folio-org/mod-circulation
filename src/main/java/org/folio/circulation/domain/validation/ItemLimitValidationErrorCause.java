@@ -9,6 +9,9 @@ import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MA
 
 import org.folio.circulation.support.ErrorCode;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public enum ItemLimitValidationErrorCause {
   CAN_NOT_DETERMINE("can not determine item limit validation error cause", null),
   PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE("for combination of patron group, material type and loan type",
@@ -22,8 +25,11 @@ public enum ItemLimitValidationErrorCause {
   MATERIAL_TYPE("for material type", ITEM_LIMIT_MATERIAL_TYPE),
   LOAN_TYPE("for loan type", ITEM_LIMIT_LOAN_TYPE);
 
+  @Setter
+  @Getter
   private Integer itemLimit;
   private String description;
+  @Getter
   private ErrorCode errorCode;
 
   ItemLimitValidationErrorCause(String description, ErrorCode errorCode) {
@@ -33,13 +39,5 @@ public enum ItemLimitValidationErrorCause {
 
   public String formatMessage() {
     return String.format("Patron has reached maximum limit of %d items %s", itemLimit, description);
-  }
-
-  public ErrorCode getErrorCode() {
-    return errorCode;
-  }
-
-  public void setItemLimit(Integer itemLimit) {
-    this.itemLimit = itemLimit;
   }
 }

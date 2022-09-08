@@ -1,8 +1,13 @@
 package api.requests;
 
+import static api.support.TlrFeatureStatus.ENABLED;
 import static api.support.builders.RequestBuilder.CLOSED_FILLED;
 import static api.support.builders.RequestBuilder.CLOSED_PICKUP_EXPIRED;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.fixtures.TemplateContextMatchers.getInstanceContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getRequestContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -15,6 +20,9 @@ import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -26,6 +34,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.nullValue;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -43,8 +52,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runners.MethodSorters;
@@ -63,11 +72,14 @@ import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
+import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class RequestScheduledNoticesProcessingTests extends APITests {
   private static final UUID TEMPLATE_ID = UUID.randomUUID();
+  private static final UUID EXPIRATION_TEMPLATE_ID_FROM_NOTICE_POLICY = UUID.randomUUID();
+  private static final UUID EXPIRATION_TEMPLATE_ID_FROM_TLR_SETTINGS = UUID.randomUUID();
   private ItemResource item;
   private UserResource requester;
   private IndividualResource pickupServicePoint;
@@ -592,7 +604,8 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     final LocalDate localDate = getLocalDate().minusDays(1);
     final var requestExpiration = LocalDate.of(localDate.getYear(),
       localDate.getMonthValue(), localDate.getDayOfMonth());
-    IndividualResource request = requestsFixture.place(buildTitleLevelRequest(requestExpiration).page());
+    checkOutFixture.checkOutByBarcode(item); // make item unavailable to allow hold request
+    IndividualResource request = requestsFixture.place(buildTitleLevelRequest(requestExpiration));
 
     verifyNumberOfScheduledNotices(1);
 
@@ -703,6 +716,130 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "true,  true",
+    "false, true",
+    "true,  false",
+    "false, false"
+  })
+  void expirationNoticeForTitleLevelRequestWithItemIdIsScheduledAccordingToNoticePolicy(
+    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
+
+    setUpPatronNotices(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
+
+    UserResource requester = usersFixture.james();
+    LocalDate requestExpirationDate = getLocalDate().plusDays(1);
+    IndividualResource request = requestsFixture.placeTitleLevelRequest(
+      PAGE, item.getInstanceId(), requester, requestExpirationDate);
+
+    assertThat(request.getJson().getString("itemId"), UUIDMatcher.is(item.getId()));
+    verifyNumberOfScheduledNotices(isNoticeEnabledInNoticePolicy ? 1 : 0);
+
+    IndividualResource requestInStorage = requestsStorageClient.get(request);
+    requestsStorageClient.replace(request.getId(),
+      requestInStorage.getJson().put("status", "Closed - Unfilled"));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      requestExpirationDate.atStartOfDay(UTC).plusDays(1));
+
+    // if request has itemId, notices are sent according to notice policy, regardless of TLR settings
+    if (isNoticeEnabledInNoticePolicy) {
+      verifyNumberOfScheduledNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 1);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+      JsonObject sentNotice = verifyNumberOfSentNotices(1).get(0);
+
+      Map<String, Matcher<String>> matchers = new HashMap<>();
+      matchers.putAll(getUserContextMatchers(requester));
+      matchers.putAll(getRequestContextMatchers(request));
+      matchers.putAll(getItemContextMatchers(item, true));
+
+      assertThat(sentNotice, hasEmailNoticeProperties(requester.getId(),
+        EXPIRATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
+    } else {
+      verifyNumberOfSentNotices(0);
+      verifyNumberOfScheduledNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 0);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "true,  true",
+    "false, true",
+    "true,  false",
+    "false, false"
+  })
+  void expirationNoticeForTitleLevelRequestWithoutItemIdIsScheduledAccordingToTlrSettings(
+    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
+
+    setUpPatronNotices(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
+
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca()); // make item unavailable
+    UserResource requester = usersFixture.james();
+    LocalDate requestExpirationDate = getLocalDate().plusDays(1);
+    IndividualResource request = requestsFixture.placeTitleLevelRequest(
+      HOLD, item.getInstanceId(), requester, requestExpirationDate);
+
+    assertThat(request.getJson().getString("itemId"), nullValue());
+    verifyNumberOfScheduledNotices(isNoticeEnabledInTlrSettings ? 1 : 0);
+
+    IndividualResource requestInStorage = requestsStorageClient.get(request);
+    requestsStorageClient.replace(request.getId(),
+      requestInStorage.getJson().put("status", "Closed - Unfilled"));
+
+    scheduledNoticeProcessingClient.runRequestNoticesProcessing(
+      requestExpirationDate.atStartOfDay(UTC).plusDays(1));
+
+    // if request has no itemId, notices are sent according to TLR settings, regardless of notice policy
+    if (isNoticeEnabledInTlrSettings) {
+      verifyNumberOfScheduledNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 1);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+      JsonObject sentNotice = verifyNumberOfSentNotices(1).get(0);
+
+      JsonObject instance = instancesClient.getById(item.getInstanceId()).getJson();
+      Map<String, Matcher<String>> matchers = new HashMap<>();
+      matchers.putAll(getUserContextMatchers(requester));
+      matchers.putAll(getRequestContextMatchers(request));
+      matchers.putAll(getInstanceContextMatchers(instance));
+
+      assertThat(sentNotice, hasEmailNoticeProperties(requester.getId(),
+        EXPIRATION_TEMPLATE_ID_FROM_TLR_SETTINGS, matchers));
+    } else {
+      verifyNumberOfSentNotices(0);
+      verifyNumberOfPublishedEvents(NOTICE, 0);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    }
+  }
+
+  private void setUpPatronNotices(boolean isNoticeEnabledInTlrSettings,
+    boolean isNoticeEnabledInNoticePolicy) {
+
+    // set up TLR settings
+    if (isNoticeEnabledInTlrSettings) {
+      templateFixture.createDummyNoticeTemplate(EXPIRATION_TEMPLATE_ID_FROM_TLR_SETTINGS);
+      reconfigureTlrFeature(ENABLED, null, null, EXPIRATION_TEMPLATE_ID_FROM_TLR_SETTINGS);
+    } else {
+      reconfigureTlrFeature(ENABLED, null, null, null);
+    }
+
+    // set up patron notice policy
+    if (isNoticeEnabledInNoticePolicy) {
+      templateFixture.createDummyNoticeTemplate(EXPIRATION_TEMPLATE_ID_FROM_NOTICE_POLICY);
+      use(new NoticePolicyBuilder()
+        .withName("Test patron notice policy")
+        .withRequestNotices(List.of(
+          new NoticeConfigurationBuilder()
+            .withTemplateId(EXPIRATION_TEMPLATE_ID_FROM_NOTICE_POLICY)
+            .withEventType(REQUEST_EXPIRATION.getRepresentation())
+            .create()
+        )));
+    }
   }
 
   private static Stream<UUID> templatesId() {

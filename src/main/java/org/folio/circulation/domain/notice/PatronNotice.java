@@ -1,5 +1,9 @@
 package org.folio.circulation.domain.notice;
 
+import static org.folio.circulation.domain.notice.NoticeFormat.EMAIL;
+
+import java.util.UUID;
+
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeConfig;
 
 import io.vertx.core.json.JsonObject;
@@ -26,6 +30,14 @@ public class PatronNotice {
 
   private PatronNotice(String recipientId, JsonObject context, String templateId, NoticeFormat format) {
     this(recipientId, templateId, format.getDeliveryChannel(), format.getOutputFormat(), context);
+  }
+
+  public static PatronNotice buildEmail(String recipientId, UUID templateId, JsonObject context) {
+    return buildEmail(recipientId, templateId.toString(), context);
+  }
+
+  public static PatronNotice buildEmail(String recipientId, String templateId, JsonObject context) {
+    return new PatronNotice(recipientId, context, templateId, EMAIL);
   }
 
   @Override

@@ -2,13 +2,16 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -18,11 +21,9 @@ import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 
@@ -44,6 +45,13 @@ public class RequestPolicyRepository {
 
     return lookupRequestPolicy(request.getItem(), request.getRequester())
       .thenApply(result -> result.map(relatedRecords::withRequestPolicy));
+  }
+
+  public CompletableFuture<Result<Request>> lookupRequestPolicies(Request request) {
+
+    return allOf(request.getInstanceItems(), Item::getItemId,
+      item -> lookupRequestPolicy(item, request.getRequester()))
+      .thenApply(r -> r.map(request::withInstanceItemsRequestPolicies));
   }
 
   private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
