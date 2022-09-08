@@ -1,3 +1,8 @@
+## 23.1.4 2022-09-08
+* Fix NPE in Items In Transit report (CIRC-1588)
+* Change item status on request deletion (CIRC-1569)
+* Send scheduled notices for TLR linked to item according to Patron Notice Policy (CIRC-1593)
+
 ## 23.1.3 2022-08-30
 * Allow to create a recall TLR when available item exists but page requests are not allowed by the policy (CIRC-1575)
 * Request policies for all items of the instance should be considered during TLR creation (CIRC-1576)
