@@ -37,7 +37,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchAction))
       .thenCompose(r -> r.after(this::fetchAccount))
       .thenCompose(r -> r.after(this::fetchLoan))
-      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyId));
+      .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForLoan));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchAction(
@@ -64,7 +64,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
     // this also fetches user and item
     return loanRepository.findLoanForAccount(context.getAccount())
       .thenApply(mapResult(context::withLoan))
-      .thenApply(this::failWhenLoanIsIncomplete);
+      .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
 
   @Override
