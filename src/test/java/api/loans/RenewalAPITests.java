@@ -2117,8 +2117,9 @@ public abstract class RenewalAPITests extends APITests {
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.james();
     checkOutFixture.checkOutByBarcode(item, borrower);
+    // create a hold request so that the recall we create next does not end up at the top of the queue,
+    // just to make sure we traverse the whole queue when looking for existing recalls
     requestsFixture.placeItemLevelHoldShelfRequest(item, usersFixture.steve());
-
     IndividualResource titleLevelRecall = requestsFixture.placeTitleLevelRecallRequest(
       item.getInstanceId(), usersFixture.jessica());
 
