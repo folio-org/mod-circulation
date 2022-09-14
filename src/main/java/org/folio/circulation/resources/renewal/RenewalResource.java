@@ -6,7 +6,6 @@ import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.RequestType.HOLD;
-import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.domain.override.OverridableBlockType.RENEWAL_BLOCK;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
@@ -611,13 +610,14 @@ public abstract class RenewalResource extends Resource {
 
     final List<ValidationError> errors = new ArrayList<>();
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
-    final Request firstRequest = getFirstRequestInQueue(requestQueue);
 
-    if (hasRecallRequest(firstRequest)) {
-      errors.add(errorForRecallRequest(
-        "items cannot be renewed when there is an active recall request",
-        firstRequest.getId()));
-    }
+    requestQueue.getRequests()
+      .stream()
+      .filter(Request::isRecall)
+      .findFirst()
+      .ifPresent(recall -> errors.add(errorForRecallRequest(
+        "items cannot be renewed when there is an active recall request", recall.getId())));
+
     if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),
         loan.getItemId()));
@@ -665,10 +665,6 @@ public abstract class RenewalResource extends Resource {
   private Request getFirstRequestInQueue(RequestQueue requestQueue) {
     return requestQueue.getRequests().stream()
       .findFirst().orElse(null);
-  }
-
-  private boolean hasRecallRequest(Request firstRequest) {
-    return firstRequest != null && firstRequest.getRequestType() == RECALL;
   }
 
   private boolean isHold(Request request) {
