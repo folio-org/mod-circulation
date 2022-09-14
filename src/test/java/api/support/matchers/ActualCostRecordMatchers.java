@@ -31,6 +31,7 @@ public class ActualCostRecordMatchers {
   public static Matcher<JsonObject> isActualCostRecord(IndividualResource loan, ItemResource item,
     UserResource user, ItemLossType itemLossType, String permanentLocationName,
     IndividualResource feeFineOwner, IndividualResource feeFine) {
+
     JsonObject instanceJson = item.getInstance().getJson();
     JsonObject itemJson = item.getJson();
     JsonArray identifiers = instanceJson.getJsonArray("identifiers");
@@ -38,7 +39,7 @@ public class ActualCostRecordMatchers {
     List<Matcher<? super String>> identifierMatchers = IntStream.range(0, identifiers.size())
       .mapToObj(i -> {
         Map<String, Matcher<String>> matchers = new HashMap<>();
-        String currentIdentifierString = String.format("identifiers[%d]", i);
+        String currentIdentifierString = String.format("instance.identifiers[%d]", i);
         JsonObject currentIdentifierObject = (JsonObject) identifiers.getValue(i);
         matchers.put(currentIdentifierString + ".identifierTypeId",
           Is.is(currentIdentifierObject.getString("identifierTypeId")));
@@ -51,27 +52,30 @@ public class ActualCostRecordMatchers {
 
     JsonObject effectiveCallNumberComponents = itemJson.getJsonObject(
       "effectiveCallNumberComponents");
-    return allOf(hasJsonPath("userId", is(user.getId())),
-      hasJsonPath("userBarcode", user.getBarcode()),
-      hasJsonPath("loanId", is(loan.getId())),
-      hasJsonPath("itemLossType", itemLossType.getValue()),
-      hasJsonPath("dateOfLoss", loan.getJson().getJsonObject("agedToLostDelayedBilling")
+    return allOf(hasJsonPath("user.id", is(user.getId())),
+      hasJsonPath("user.barcode", user.getBarcode()),
+      hasJsonPath("loan.id", is(loan.getId())),
+      hasJsonPath("lossType", itemLossType.getValue()),
+      hasJsonPath("lossDate", loan.getJson().getJsonObject("agedToLostDelayedBilling")
         .getString("agedToLostDate")),
-      hasJsonPath("title", instanceJson.getString("title")),
-      hasJsonPath("itemBarcode", item.getBarcode()),
-      hasJsonPath("loanType", "Can Circulate"),
-      hasJsonPath("effectiveCallNumberComponents.callNumber",
+      hasJsonPath("instance.title", instanceJson.getString("title")),
+      hasJsonPath("item.barcode", item.getBarcode()),
+      hasJsonPath("item.materialTypeId", item.getJson().getString("materialTypeId")),
+      hasJsonPath("item.materialType", "Book"),
+      hasJsonPath("item.loanTypeId", item.getJson().getString("permanentLoanTypeId")),
+      hasJsonPath("item.loanType", "Can Circulate"),
+      hasJsonPath("item.effectiveCallNumber.callNumber",
         effectiveCallNumberComponents.getString("callNumber")),
       allOfPaths(identifierMatchers),
-      hasJsonPath("effectiveCallNumberComponents.prefix",
+      hasJsonPath("item.effectiveCallNumber.prefix",
         effectiveCallNumberComponents.getString("prefix")),
-      hasJsonPath("effectiveCallNumberComponents.suffix",
+      hasJsonPath("item.effectiveCallNumber.suffix",
         effectiveCallNumberComponents.getString("suffix")),
-      hasJsonPath("permanentItemLocation", permanentLocationName),
-      hasJsonPath("feeFineOwnerId", is(feeFineOwner.getId())),
-      hasJsonPath("feeFineOwner", feeFineOwner.getJson().getString("owner")),
-      hasJsonPath("feeFineTypeId", is(feeFine.getId())),
-      hasJsonPath("feeFineType", feeFine.getJson().getString("feeFineType")));
+      hasJsonPath("item.permanentLocation", permanentLocationName),
+      hasJsonPath("feeFine.ownerId", is(feeFineOwner.getId())),
+      hasJsonPath("feeFine.owner", feeFineOwner.getJson().getString("owner")),
+      hasJsonPath("feeFine.typeId", is(feeFine.getId())),
+      hasJsonPath("feeFine.type", feeFine.getJson().getString("feeFineType")));
   }
 
 }

@@ -14,22 +14,13 @@ import lombok.With;
 @Getter
 public class ActualCostRecord {
   private String id;
-  private String accountId;
-  private String userId;
-  private String userBarcode;
-  private String loanId;
-  private ItemLossType itemLossType;
-  private ZonedDateTime dateOfLoss;
-  private String title;
-  private Collection<Identifier> identifiers;
-  private String itemBarcode;
-  private String loanType;
-  private CallNumberComponents callNumberComponents;
-  private String permanentItemLocation;
-  private String feeFineOwnerId;
-  private String feeFineOwner;
-  private String feeFineTypeId;
-  private String feeFineType;
-  private ZonedDateTime creationDate;
+  private ItemLossType lossType;
+  private ZonedDateTime lossDate;
   private ZonedDateTime expirationDate;
+  private ActualCostRecordUser user;
+  private ActualCostRecordLoan loan;
+  private ActualCostRecordItem item;
+  private ActualCostRecordInstance instance;
+  private ActualCostRecordFeeFine feeFine;
+  private ZonedDateTime creationDate;
 }

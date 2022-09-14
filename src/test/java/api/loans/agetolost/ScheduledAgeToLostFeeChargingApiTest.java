@@ -406,7 +406,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
 
     Optional<JsonObject> actualCostRecordById = actualCostRecordsClient.getMany(
-      CqlQuery.exactMatch("loanId", checkOut.getId().toString())).stream().findFirst();
+      CqlQuery.exactMatch("loan.id", checkOut.getId().toString())).stream().findFirst();
 
     assertTrue(actualCostRecordById.isPresent());
     JsonObject actual = actualCostRecordById.get();
@@ -438,7 +438,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(actualCostRecordsClient.getAll(), hasSize(1));
     Optional<JsonObject> actualCostRecordById = actualCostRecordsClient.getMany(
-      CqlQuery.exactMatch("loanId", checkOut.getId().toString())).stream().findFirst();
+      CqlQuery.exactMatch("loan.id", checkOut.getId().toString())).stream().findFirst();
 
     assertTrue(actualCostRecordById.isPresent());
     JsonObject actual = actualCostRecordById.get();
