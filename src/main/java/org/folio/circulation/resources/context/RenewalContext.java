@@ -6,6 +6,7 @@ import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 
 import io.vertx.core.json.JsonObject;
 import lombok.Value;
@@ -23,6 +24,7 @@ public class RenewalContext {
   String loggedInUserId;
   JsonObject renewalRequest;
   FeeFineAction overdueFeeFineAction;
+  TlrSettingsConfiguration tlrSettings;
 
   public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
@@ -32,6 +34,6 @@ public class RenewalContext {
       ? loan.getItem().getStatus() : null;
 
     return new RenewalContext(loan, null, null, loanBeforeRenewal, itemStatusBeforeRenew,
-      loggedInUserId, renewalRequest, null);
+      loggedInUserId, renewalRequest, null, null);
   }
 }
