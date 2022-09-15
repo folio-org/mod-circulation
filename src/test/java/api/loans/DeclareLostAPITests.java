@@ -317,6 +317,8 @@ class DeclareLostAPITests extends APITests {
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
       Is.is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"), Is.is(isbnValue));
+    assertThat(identifiers.getJsonObject(0).getString("identifierType"),
+      Is.is("ISBN"));
 
     assertThat(actualCostRecord, hasJsonPath("item.barcode", item.getBarcode()));
     assertThat(actualCostRecord, hasJsonPath("item.loanType", loanType.getJson().getString("name")));
@@ -324,7 +326,7 @@ class DeclareLostAPITests extends APITests {
     JsonObject actualCallNumberComponents = item.getJson()
       .getJsonObject("effectiveCallNumberComponents");
     JsonObject callNumberComponentsToCompare = actualCostRecord.getJsonObject("item")
-      .getJsonObject("effectiveCallNumber");
+      .getJsonObject("effectiveCallNumberComponents");
     assertThat(callNumberComponentsToCompare,
       hasJsonPath("callNumber", actualCallNumberComponents.getString("callNumber")));
     assertThat(callNumberComponentsToCompare,

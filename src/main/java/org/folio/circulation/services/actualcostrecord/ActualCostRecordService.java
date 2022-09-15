@@ -7,6 +7,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import org.folio.circulation.domain.ActualCostRecordLoan;
 import org.folio.circulation.domain.ActualCostRecordUser;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.IdentifierType;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemLossType;
@@ -27,19 +29,27 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
+import org.folio.circulation.infrastructure.storage.inventory.IdentifierTypeRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.With;
+
 public class ActualCostRecordService {
   private final ActualCostRecordRepository actualCostRecordRepository;
   private final LocationRepository locationRepository;
+  private final IdentifierTypeRepository identifierTypeRepository;
 
   public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository,
-    LocationRepository locationRepository) {
+    LocationRepository locationRepository, IdentifierTypeRepository identifierTypeRepository) {
     this.actualCostRecordRepository = actualCostRecordRepository;
     this.locationRepository = locationRepository;
+    this.identifierTypeRepository = identifierTypeRepository;
   }
 
   public CompletableFuture<Result<ReferenceDataContext>> createIfNecessaryForDeclaredLostItem(
@@ -80,25 +90,48 @@ public class ActualCostRecordService {
       return completedFuture(succeeded(null));
     }
 
-    return locationRepository.getPermanentLocation(loan.getItem())
-      .thenCompose(r -> r.after(location -> actualCostRecordRepository.createActualCostRecord(
-        buildActualCostRecord(loan, feeFineOwner, itemLossType, dateOfLoss, feeFine, location))));
-  }
-
-  private ActualCostRecord buildActualCostRecord(Loan loan, FeeFineOwner feeFineOwner,
-    ItemLossType itemLossType, ZonedDateTime dateOfLoss, FeeFine feeFine,
-    Location itemPermanentLocation) {
-
-    User user = loan.getUser();
-    loan = loan.withItem(loan.getItem().withPermanentLocation(itemPermanentLocation));
-    Item item = loan.getItem();
-    Instance instance = item.getInstance();
-
-    return new ActualCostRecord()
+    ActualCostCreationContext context = new ActualCostCreationContext()
       .withLossType(itemLossType)
       .withLossDate(dateOfLoss)
+      .withLoan(loan)
+      .withFeeFineOwner(feeFineOwner)
+      .withFeeFine(feeFine);
+
+    return lookupPermanentLocation(context)
+      .thenCompose(r -> r.after(this::lookupIdentifierTypes))
+      .thenCompose(r -> r.after(ctx -> actualCostRecordRepository.createActualCostRecord(buildActualCostRecord(ctx))));
+  }
+
+  private CompletableFuture<Result<ActualCostCreationContext>> lookupPermanentLocation(
+    ActualCostCreationContext context) {
+
+    return locationRepository.getPermanentLocation(context.getLoan().getItem())
+      .thenApply(r -> r.map(context::withItemPermanentLocation));
+  }
+
+  private CompletableFuture<Result<ActualCostCreationContext>> lookupIdentifierTypes(
+    ActualCostCreationContext context) {
+
+    return identifierTypeRepository.fetchFor(context.getLoan().getItem())
+      .thenApply(r -> r.map(context::withIdentifierTypes));
+  }
+
+  private ActualCostRecord buildActualCostRecord(ActualCostCreationContext context) {
+
+    User user = context.getLoan().getUser();
+    Loan loan = context.getLoan()
+      .withItem(context.getLoan().getItem()
+        .withPermanentLocation(context.getItemPermanentLocation()));
+    Item item = loan.getItem();
+    Instance instance = item.getInstance();
+    FeeFineOwner feeFineOwner = context.getFeeFineOwner();
+    FeeFine feeFine = context.getFeeFine();
+
+    return new ActualCostRecord()
+      .withLossType(context.getLossType())
+      .withLossDate(context.getLossDate())
       .withExpirationDate(loan.getLostItemPolicy()
-        .calculateFeeFineChargingPeriodExpirationDateTime(dateOfLoss))
+        .calculateFeeFineChargingPeriodExpirationDateTime(context.getLossDate()))
       .withUser(new ActualCostRecordUser()
         .withId(loan.getUserId())
         .withBarcode(user.getBarcode())
@@ -117,12 +150,12 @@ public class ActualCostRecordService {
         .withLoanTypeId(item.getLoanTypeId())
         .withLoanType(item.getLoanTypeName())
         .withHoldingsRecordId(item.getHoldingsRecordId())
-        .withEffectiveCallNumber(item.getCallNumberComponents()))
+        .withEffectiveCallNumberComponents(item.getCallNumberComponents()))
       .withInstance(new ActualCostRecordInstance()
         .withId(instance.getId())
         .withTitle(instance.getTitle())
         .withIdentifiers(item.getIdentifiers()
-          .map(ActualCostRecordIdentifier::fromIdentifier)
+          .map(i -> ActualCostRecordIdentifier.fromIdentifier(i, context.getIdentifierTypes()))
           .collect(Collectors.toList())))
       .withFeeFine(new ActualCostRecordFeeFine()
         .withAccountId(null)
@@ -130,5 +163,19 @@ public class ActualCostRecordService {
         .withOwner(feeFineOwner.getOwner())
         .withTypeId(feeFine == null ? null : feeFine.getId())
         .withType(feeFine == null ? null : feeFine.getFeeFineType()));
+  }
+
+  @AllArgsConstructor
+  @NoArgsConstructor(force = true)
+  @With
+  @Getter
+  private class ActualCostCreationContext {
+    private final ItemLossType lossType;
+    private final ZonedDateTime lossDate;
+    private final Loan loan;
+    private final FeeFineOwner feeFineOwner;
+    private final FeeFine feeFine;
+    private final Location itemPermanentLocation;
+    private final Collection<IdentifierType> identifierTypes;
   }
 }

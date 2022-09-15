@@ -30,7 +30,7 @@ public class ActualCostRecordMatchers {
 
   public static Matcher<JsonObject> isActualCostRecord(IndividualResource loan, ItemResource item,
     UserResource user, ItemLossType itemLossType, String permanentLocationName,
-    IndividualResource feeFineOwner, IndividualResource feeFine) {
+    IndividualResource feeFineOwner, IndividualResource feeFine, String identifierType) {
 
     JsonObject instanceJson = item.getInstance().getJson();
     JsonObject itemJson = item.getJson();
@@ -45,6 +45,8 @@ public class ActualCostRecordMatchers {
           Is.is(currentIdentifierObject.getString("identifierTypeId")));
         matchers.put(currentIdentifierString + ".value",
           Is.is(currentIdentifierObject.getString("value")));
+        matchers.put(currentIdentifierString + ".identifierType",
+          Is.is(identifierType));
 
         return toStringMatcher(matchers);
       })
@@ -64,12 +66,12 @@ public class ActualCostRecordMatchers {
       hasJsonPath("item.materialType", "Book"),
       hasJsonPath("item.loanTypeId", item.getJson().getString("permanentLoanTypeId")),
       hasJsonPath("item.loanType", "Can Circulate"),
-      hasJsonPath("item.effectiveCallNumber.callNumber",
+      hasJsonPath("item.effectiveCallNumberComponents.callNumber",
         effectiveCallNumberComponents.getString("callNumber")),
       allOfPaths(identifierMatchers),
-      hasJsonPath("item.effectiveCallNumber.prefix",
+      hasJsonPath("item.effectiveCallNumberComponents.prefix",
         effectiveCallNumberComponents.getString("prefix")),
-      hasJsonPath("item.effectiveCallNumber.suffix",
+      hasJsonPath("item.effectiveCallNumberComponents.suffix",
         effectiveCallNumberComponents.getString("suffix")),
       hasJsonPath("item.permanentLocation", permanentLocationName),
       hasJsonPath("feeFine.ownerId", is(feeFineOwner.getId())),

@@ -13,6 +13,7 @@ import org.folio.circulation.domain.ItemLossType;
 import io.vertx.core.json.JsonObject;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -64,8 +65,8 @@ public class ActualCostRecordMapper {
       write(itemJson, "loanTypeId", item.getLoanTypeId());
       write(itemJson, "loanType", item.getLoanType());
       write(itemJson, "holdingsRecordId", item.getHoldingsRecordId());
-      write(itemJson, "effectiveCallNumber",
-        createCallNumberComponents(item.getEffectiveCallNumber()));
+      write(itemJson, "effectiveCallNumberComponents",
+        createCallNumberComponents(item.getEffectiveCallNumberComponents()));
 
       write(json, "item", itemJson);
     }
@@ -131,12 +132,13 @@ public class ActualCostRecordMapper {
         .withLoanTypeId(getProperty(item, "loanTypeId"))
         .withLoanType(getProperty(item, "loanType"))
         .withHoldingsRecordId(getProperty(item, "holdingsRecordId"))
-        .withEffectiveCallNumber(CallNumberComponents.fromItemJson(item)),
+        .withEffectiveCallNumberComponents(CallNumberComponents.fromItemJson(item)),
       new ActualCostRecordInstance()
         .withId(getProperty(instance, "id"))
-        .withTitle(getProperty(instance, "id"))
-        .withIdentifiers(IdentifierMapper.mapIdentifiers(instance).stream()
-          .map(ActualCostRecordIdentifier::fromIdentifier)
+        .withTitle(getProperty(instance, "title"))
+        .withIdentifiers(getArrayProperty(instance, "identifiers").stream()
+          .map(JsonObject.class::cast)
+          .map(ActualCostRecordIdentifier::fromRepresentation)
           .collect(Collectors.toList())),
       new ActualCostRecordFeeFine()
         .withAccountId(getProperty(feeFine, "accountId"))

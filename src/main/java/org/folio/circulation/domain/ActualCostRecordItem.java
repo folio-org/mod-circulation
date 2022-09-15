@@ -19,5 +19,5 @@ public class ActualCostRecordItem {
   private String loanTypeId;
   private String loanType;
   private String holdingsRecordId;
-  private CallNumberComponents effectiveCallNumber;
+  private CallNumberComponents effectiveCallNumberComponents;
 }

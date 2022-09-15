@@ -379,8 +379,9 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   @Test
   void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
-    UUID typeId = UUID.randomUUID();
+    UUID typeId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9781466636897";
+
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .doNotChargeOverdueFineWhenReturned()
@@ -412,7 +413,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     JsonObject actual = actualCostRecordById.get();
     assertThat(actual, isActualCostRecord(loanFromStorage, item, steve, ItemLossType.AGED_TO_LOST,
       locationsFixture.thirdFloor().getJson().getString("name"), feeFineOwnerFixture.cd1Owner(),
-      feeFineTypeFixture.lostItemActualCostFee()));
+      feeFineTypeFixture.lostItemActualCostFee(), "ISBN"));
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
@@ -444,7 +445,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     JsonObject actual = actualCostRecordById.get();
     assertThat(actual, isActualCostRecord(loanFromStorage, item, usersFixture.jessica(),
       ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor().getJson().getString("name"),
-      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee()));
+      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN"));
     assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
   }
