@@ -13,6 +13,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +22,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
@@ -60,24 +62,34 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
-    return getByItemId(renewalContext.getLoan().getItemId())
+    return getByItemId(renewalContext.getLoan().getItemId(), List.of(ITEM, TITLE))
       .thenApply(result -> result.map(renewalContext::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
-    return get("instanceId", instanceId, List.of(ITEM.getValue(), TITLE.getValue()));
+    return get("instanceId", instanceId, List.of(ITEM, TITLE));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
-    return get("itemId", itemId, List.of(ITEM.getValue()));
+    return getByItemId(itemId, List.of(ITEM));
+  }
+
+  public CompletableFuture<Result<RequestQueue>> getByItemId(
+    String itemId, Collection<RequestLevel> requestLevels) {
+
+    return get("itemId", itemId, requestLevels);
   }
 
   private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,
-    List<String> requestLevels) {
+    Collection<RequestLevel> requestLevels) {
+
+    List<String> requestLevelStrings = requestLevels.stream()
+      .map(RequestLevel::getValue)
+      .collect(Collectors.toList());
 
     final Result<CqlQuery> itemIdQuery = exactMatch(idFieldName, id);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
-    final Result<CqlQuery> requestLevelQuery = exactMatchAny("requestLevel", requestLevels);
+    final Result<CqlQuery> requestLevelQuery = exactMatchAny("requestLevel", requestLevelStrings);
 
     return itemIdQuery.combine(statusQuery, CqlQuery::and)
       .combine(requestLevelQuery, CqlQuery::and)

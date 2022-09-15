@@ -89,6 +89,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -111,6 +112,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -2107,6 +2109,25 @@ public abstract class RenewalAPITests extends APITests {
     mockClockManagerToReturnDefaultDateTime();
 
     assertThat(response.getString("dueDate"), is(formatDateTime(expectedDueDate)));
+  }
+
+  @Test
+  void canNotRenewLoanWhenTitleLevelRecallRequestExistsForItem() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.james();
+    checkOutFixture.checkOutByBarcode(item, borrower);
+    // create a hold request so that the recall we create next does not end up at the top of the queue,
+    // just to make sure we traverse the whole queue when looking for existing recalls
+    requestsFixture.placeItemLevelHoldShelfRequest(item, usersFixture.steve());
+    IndividualResource titleLevelRecall = requestsFixture.placeTitleLevelRecallRequest(
+      item.getInstanceId(), usersFixture.jessica());
+
+    Response renewalResponse = loansFixture.attemptRenewal(422, item, borrower);
+
+    assertThat(renewalResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("items cannot be renewed when there is an active recall request"),
+      hasUUIDParameter("requestId", titleLevelRecall.getId()))));
   }
 
   private void checkRenewalAttempt(ZonedDateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
