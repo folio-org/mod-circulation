@@ -93,19 +93,6 @@ public class ActualCostRecord {
     private final String identifierTypeId;
     private final String identifierType;
 
-    public static ActualCostRecordIdentifier fromIdentifier(Identifier identifier,
-      Collection<IdentifierType> identifierTypes) {
-
-      return new ActualCostRecordIdentifier()
-        .withIdentifierTypeId(identifier.getIdentifierTypeId())
-        .withIdentifierType(identifierTypes.stream()
-          .filter(type -> type.getId().equals(identifier.getIdentifierTypeId()))
-          .findFirst()
-          .map(IdentifierType::getName)
-          .orElse(""))
-        .withValue(identifier.getValue());
-    }
-
     public static ActualCostRecordIdentifier fromRepresentation(JsonObject representation) {
       return new ActualCostRecordIdentifier()
         .withIdentifierTypeId(representation.getString("identifierTypeId"))

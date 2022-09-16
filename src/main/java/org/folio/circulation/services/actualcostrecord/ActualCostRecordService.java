@@ -22,6 +22,7 @@ import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordLoan;
 import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordUser;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Identifier;
 import org.folio.circulation.domain.IdentifierType;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -120,8 +121,21 @@ public class ActualCostRecordService {
 
   private ActualCostRecordContext buildIdentifiersList(ActualCostRecordContext context) {
     return context.withIdentifiers(context.getLoan().getItem().getIdentifiers()
-      .map(i -> ActualCostRecordIdentifier.fromIdentifier(i, context.getIdentifierTypes()))
+      .map(i -> buildActualCostRecordIdentifier(i, context.getIdentifierTypes()))
       .collect(Collectors.toList()));
+  }
+
+  private ActualCostRecordIdentifier buildActualCostRecordIdentifier(Identifier identifier,
+    Collection<IdentifierType> identifierTypes) {
+
+    return new ActualCostRecordIdentifier()
+      .withIdentifierTypeId(identifier.getIdentifierTypeId())
+      .withIdentifierType(identifierTypes.stream()
+        .filter(type -> type.getId().equals(identifier.getIdentifierTypeId()))
+        .findFirst()
+        .map(IdentifierType::getName)
+        .orElse(""))
+      .withValue(identifier.getValue());
   }
 
   private ActualCostRecord buildActualCostRecord(ActualCostRecordContext context) {
