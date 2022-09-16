@@ -74,9 +74,9 @@ public class ActualCostRecordMatchers {
       hasJsonPath("item.effectiveCallNumberComponents.suffix",
         effectiveCallNumberComponents.getString("suffix")),
       hasJsonPath("item.permanentLocation", permanentLocationName),
-      hasJsonPath("feeFine.ownerId", is(feeFineOwner.getId())),
+      hasJsonPath("feeFine.ownerId", feeFineOwner.getId()),
       hasJsonPath("feeFine.owner", feeFineOwner.getJson().getString("owner")),
-      hasJsonPath("feeFine.typeId", is(feeFine.getId())),
+      hasJsonPath("feeFine.typeId", feeFine.getId()),
       hasJsonPath("feeFine.type", feeFine.getJson().getString("feeFineType")));
   }
 

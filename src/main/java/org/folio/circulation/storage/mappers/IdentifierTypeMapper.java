@@ -9,7 +9,7 @@ import io.vertx.core.json.JsonObject;
 public class IdentifierTypeMapper {
   public IdentifierType toDomain(JsonObject representation) {
     return new IdentifierType(
-      getProperty(representation,"id"),
+      getProperty(representation, "id"),
       getProperty(representation, "name"),
       getProperty(representation, "source"));
   }
