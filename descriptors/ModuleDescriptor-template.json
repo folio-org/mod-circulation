@@ -1324,8 +1324,7 @@
         "actual-cost-record-storage.actual-cost-records.item.get",
         "actual-cost-record-storage.actual-cost-records.item.post",
         "actual-cost-record-storage.actual-cost-records.item.put",
-        "actual-cost-record-storage.actual-cost-records.item.delete",
-        "actual-cost-record-storage.actual-cost-records.item.post"
+        "actual-cost-record-storage.actual-cost-records.item.delete"
       ],
       "visible": false
     },

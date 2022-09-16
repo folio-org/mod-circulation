@@ -8,6 +8,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -90,7 +91,7 @@ public class ActualCostRecordService {
       return completedFuture(succeeded(null));
     }
 
-    ActualCostCreationContext context = new ActualCostCreationContext()
+    ActualCostRecordContext context = new ActualCostRecordContext()
       .withLossType(itemLossType)
       .withLossDate(dateOfLoss)
       .withLoan(loan)
@@ -102,21 +103,28 @@ public class ActualCostRecordService {
       .thenCompose(r -> r.after(ctx -> actualCostRecordRepository.createActualCostRecord(buildActualCostRecord(ctx))));
   }
 
-  private CompletableFuture<Result<ActualCostCreationContext>> lookupPermanentLocation(
-    ActualCostCreationContext context) {
+  private CompletableFuture<Result<ActualCostRecordContext>> lookupPermanentLocation(
+    ActualCostRecordContext context) {
 
     return locationRepository.getPermanentLocation(context.getLoan().getItem())
       .thenApply(r -> r.map(context::withItemPermanentLocation));
   }
 
-  private CompletableFuture<Result<ActualCostCreationContext>> lookupIdentifierTypes(
-    ActualCostCreationContext context) {
+  private CompletableFuture<Result<ActualCostRecordContext>> lookupIdentifierTypes(
+    ActualCostRecordContext context) {
 
     return identifierTypeRepository.fetchFor(context.getLoan().getItem())
-      .thenApply(r -> r.map(context::withIdentifierTypes));
+      .thenApply(r -> r.map(context::withIdentifierTypes))
+      .thenApply(r -> r.map(this::buildIdentifiersList));
   }
 
-  private ActualCostRecord buildActualCostRecord(ActualCostCreationContext context) {
+  private ActualCostRecordContext buildIdentifiersList(ActualCostRecordContext context) {
+    return context.withIdentifiers(context.getLoan().getItem().getIdentifiers()
+      .map(i -> ActualCostRecordIdentifier.fromIdentifier(i, context.getIdentifierTypes()))
+      .collect(Collectors.toList()));
+  }
+
+  private ActualCostRecord buildActualCostRecord(ActualCostRecordContext context) {
 
     User user = context.getLoan().getUser();
     Loan loan = context.getLoan()
@@ -154,9 +162,7 @@ public class ActualCostRecordService {
       .withInstance(new ActualCostRecordInstance()
         .withId(instance.getId())
         .withTitle(instance.getTitle())
-        .withIdentifiers(item.getIdentifiers()
-          .map(i -> ActualCostRecordIdentifier.fromIdentifier(i, context.getIdentifierTypes()))
-          .collect(Collectors.toList())))
+        .withIdentifiers(context.getIdentifiers()))
       .withFeeFine(new ActualCostRecordFeeFine()
         .withAccountId(null)
         .withOwnerId(feeFineOwner.getId())
@@ -169,7 +175,7 @@ public class ActualCostRecordService {
   @NoArgsConstructor(force = true)
   @With
   @Getter
-  private static class ActualCostCreationContext {
+  private static class ActualCostRecordContext {
     private final ItemLossType lossType;
     private final ZonedDateTime lossDate;
     private final Loan loan;
@@ -177,5 +183,6 @@ public class ActualCostRecordService {
     private final FeeFine feeFine;
     private final Location itemPermanentLocation;
     private final Collection<IdentifierType> identifierTypes;
+    private final List<ActualCostRecordIdentifier> identifiers;
   }
 }
