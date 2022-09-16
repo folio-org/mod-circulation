@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

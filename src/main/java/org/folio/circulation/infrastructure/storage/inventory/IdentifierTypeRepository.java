@@ -25,13 +25,17 @@ import org.folio.circulation.support.results.Result;
 
 import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public class IdentifierTypeRepository {
   private final CollectionResourceClient identifierTypeClient;
+
+  public IdentifierTypeRepository(CollectionResourceClient identifierTypeClient) {
+    this.identifierTypeClient = identifierTypeClient;
+  }
 
   public IdentifierTypeRepository(Clients clients) {
     this(clients.identifierTypesStorage());
   }
+
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
