@@ -1,17 +1,5 @@
 package org.folio.circulation.storage.mappers;
 
-import org.folio.circulation.domain.ActualCostRecord;
-import org.folio.circulation.domain.ActualCostRecordFeeFine;
-import org.folio.circulation.domain.ActualCostRecordIdentifier;
-import org.folio.circulation.domain.ActualCostRecordInstance;
-import org.folio.circulation.domain.ActualCostRecordItem;
-import org.folio.circulation.domain.ActualCostRecordLoan;
-import org.folio.circulation.domain.ActualCostRecordUser;
-import org.folio.circulation.domain.CallNumberComponents;
-import org.folio.circulation.domain.ItemLossType;
-
-import io.vertx.core.json.JsonObject;
-
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -21,6 +9,18 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.stream.Collectors;
+
+import org.folio.circulation.domain.ActualCostRecord;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordFeeFine;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordIdentifier;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordInstance;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordItem;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordLoan;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordUser;
+import org.folio.circulation.domain.CallNumberComponents;
+import org.folio.circulation.domain.ItemLossType;
+
+import io.vertx.core.json.JsonObject;
 
 public class ActualCostRecordMapper {
 

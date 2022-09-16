@@ -13,12 +13,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.ActualCostRecord;
-import org.folio.circulation.domain.ActualCostRecordFeeFine;
-import org.folio.circulation.domain.ActualCostRecordIdentifier;
-import org.folio.circulation.domain.ActualCostRecordInstance;
-import org.folio.circulation.domain.ActualCostRecordItem;
-import org.folio.circulation.domain.ActualCostRecordLoan;
-import org.folio.circulation.domain.ActualCostRecordUser;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordFeeFine;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordIdentifier;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordInstance;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordItem;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordLoan;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordUser;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.IdentifierType;
@@ -169,7 +169,7 @@ public class ActualCostRecordService {
   @NoArgsConstructor(force = true)
   @With
   @Getter
-  private class ActualCostCreationContext {
+  private static class ActualCostCreationContext {
     private final ItemLossType lossType;
     private final ZonedDateTime lossDate;
     private final Loan loan;

@@ -9,7 +9,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ActualCostRecord;
-import org.folio.circulation.domain.ActualCostRecordLoan;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordLoan;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
