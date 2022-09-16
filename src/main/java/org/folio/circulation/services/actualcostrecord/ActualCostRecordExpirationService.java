@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.ActualCostRecord;
+import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordLoan;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
@@ -42,7 +43,8 @@ public class ActualCostRecordExpirationService {
     return actualCostRecordRepository.findExpiredActualCostRecords()
       .thenCompose(r -> r.after(actualCostRecords -> loanRepository.findByIds(
         actualCostRecords.stream()
-          .map(ActualCostRecord::getLoanId)
+          .map(ActualCostRecord::getLoan)
+          .map(ActualCostRecordLoan::getId)
           .collect(toList()))));
   }
 

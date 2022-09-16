@@ -1,28 +1,50 @@
 {
   "id": "89105c06-dbdb-4aa0-9695-d4d19c733270",
-  "accountId": "89905c06-dbdb-4aa0-9695-d4d19c735623",
-  "userId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
-  "userBarcode": "777",
-  "loanId": "98805c06-dbdb-4aa0-9695-d4d19c733221",
-  "itemLossType": "Aged to lost",
-  "dateOfLoss": "2022-01-01T22:25:37Z",
-  "title": "Test Title",
-  "identifiers": [
-    {
-      "identifierTypeId": "8261054f-be78-422d-bd51-4ed9f33c3422",
-      "value": "9781466636897"
-    }
-  ],
-  "itemBarcode": "888",
-  "loanType": "Can Circulate",
-  "effectiveCallNumberComponents": {
-    "callNumber": "TX809.M17J66",
-    "suffix": "1993",
-    "prefix": "f"
+  "lossType": "Aged to lost",
+  "lossDate": "2022-01-01T22:25:37Z",
+  "expirationDate": "2022-02-01T23:59:59Z",
+  "user": {
+    "id": "88805c06-dbdb-4aa0-9695-d4d19c733221",
+    "barcode": "777",
+    "firstName": "John",
+    "lastName": "Doe",
+    "middleName": "Robert"
   },
-  "permanentItemLocation": "UC/HP/JCL/Sci",
-  "feeFineOwnerId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
-  "feeFineOwner": "Main circ desk",
-  "feeFineTypeId": "88805c06-dbdb-4aa0-9695-d4d19c733221",
-  "feeFineType": "Lost item fee (actual cost)"
+  "loan": {
+    "id": "65de6432-be11-48ba-9686-a65101634040"
+  },
+  "item": {
+    "id": "b7bee7e9-f41d-4136-b7eb-af00c2f6d274",
+    "barcode": "123456",
+    "materialTypeId": "57a578ab-4dde-4f75-909c-edc74772d09b",
+    "materialType": "book",
+    "permanentLocationId": "9da9dcdd-474f-4e16-bb83-21e64e5eb288",
+    "permanentLocation": "Main library",
+    "loanTypeId": "e1e17294-dd52-44ae-8a94-b96aa08ef3b5",
+    "loanType": "Can circulate",
+    "holdingsRecordId": "68190dd4-9a88-4dbe-af1a-9048be222ac8",
+    "effectiveCallNumberComponents": {
+      "callNumber": "TX809.M17J66",
+      "suffix": "1993",
+      "prefix": "f"
+    }
+  },
+  "instance": {
+    "id": "9dfe10e5-6db9-4f80-b574-7edc0f960288",
+    "title": "Nod",
+    "identifiers": [
+      {
+        "identifierTypeId": "8261054f-be78-422d-bd51-4ed9f33c3422",
+        "identifierType": "ISBN",
+        "value": "9781466636897"
+      }
+    ]
+  },
+  "feeFine": {
+    "accountId": "306339a5-539b-4652-be7c-ab041a286c8c",
+    "ownerId": "a2e1729a-2593-4a2a-8069-2fee39d9ae31",
+    "owner": "Default owner",
+    "typeId": "92ef9706-f1af-430d-9edd-78035689efa2",
+    "type": "Overdue fine"
+  }
 }
