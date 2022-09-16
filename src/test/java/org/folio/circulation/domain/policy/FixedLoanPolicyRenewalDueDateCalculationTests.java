@@ -51,6 +51,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
     "renewal would not change the due date";
   private static final String LOAN_AT_MAXIMUM_RENEWAL_NUMBER = "loan at maximum renewal number";
+  private static final UUID ITEM_ID = UUID.randomUUID();
 
   @Test
   void shouldFailWhenLoanDateIsBeforeOnlyScheduleAvailable() {
@@ -556,12 +557,14 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
       .withLoanDate(ZonedDateTime.of(2018, 1, 20, 13, 45, 21, 0, UTC))
       .withDueDate(ZonedDateTime.of(2018, 1, 31, 23, 59, 59, 0, UTC))
       .withCheckoutServicePointId(checkoutServicePointId)
+      .withItemId(ITEM_ID)
       .asDomainObject();
   }
 
   private RequestQueue creteRequestQueue(String requestId, RequestType requestType) {
     JsonObject requestRepresentation = new JsonObject()
       .put("id", requestId)
+      .put("itemId", ITEM_ID)
       .put("requestType", requestType.getValue());
 
     RequestQueue requestQueue = new RequestQueue(new ArrayList<>());

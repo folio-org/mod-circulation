@@ -17,13 +17,16 @@ import static org.hamcrest.Matchers.is;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -31,6 +34,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
+import api.support.matchers.RequestMatchers;
 import io.vertx.core.json.JsonObject;
 
 class RequestsAPILoanRenewalTests extends APITests {
@@ -412,28 +416,32 @@ class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
-  void forbidRenewalOverrideWhenFirstRequestIsNotRecall() {
-
-    final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+  void forbidRenewalOverrideWhenRecallIsForDifferentItemOfSameInstance() {
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+    UUID instanceId = firstItem.getInstanceId();
     final IndividualResource rebecca = usersFixture.rebecca();
 
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 4, 21, 11, 21, 43, 0, UTC);
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca, loanDate);
+    checkOutFixture.checkOutByBarcode(firstItem, rebecca, loanDate);
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.steve(), loanDate.minusDays(1));
 
     requestsFixture.place(new RequestBuilder()
       .hold()
-      .forItem(smallAngryPlanet)
+      .forItem(firstItem)
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .by(usersFixture.steve()));
 
-    requestsFixture.place(new RequestBuilder()
-      .recall()
-      .forItem(smallAngryPlanet)
-      .withPickupServicePointId(servicePointsFixture.cd1().getId())
-      .by(usersFixture.charlotte()));
+    IndividualResource recall = requestsFixture.placeTitleLevelRequest(
+      RequestType.RECALL, instanceId, usersFixture.charlotte());
+
+    // make sure that recall was created for a DIFFERENT item of the same instance
+    assertThat(recall.getJson().getString("itemId"), is(secondItem.getId().toString()));
 
     Response overrideResponse = loansFixture.attemptOverride(
-      smallAngryPlanet,
+      firstItem,
       rebecca,
       "Renewal override",
       "2018-12-21T13:30:00Z");
