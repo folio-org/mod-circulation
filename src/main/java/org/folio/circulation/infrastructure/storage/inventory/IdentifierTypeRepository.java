@@ -23,8 +23,6 @@ import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.results.Result;
 
-import lombok.AllArgsConstructor;
-
 public class IdentifierTypeRepository {
   private final CollectionResourceClient identifierTypeClient;
 
