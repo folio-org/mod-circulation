@@ -2111,25 +2111,6 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getString("dueDate"), is(formatDateTime(expectedDueDate)));
   }
 
-  @Test
-  void canNotRenewLoanWhenTitleLevelRecallRequestExistsForItem() {
-    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
-    ItemResource item = itemsFixture.basedUponNod();
-    UserResource borrower = usersFixture.james();
-    checkOutFixture.checkOutByBarcode(item, borrower);
-    // create a hold request so that the recall we create next does not end up at the top of the queue,
-    // just to make sure we traverse the whole queue when looking for existing recalls
-    requestsFixture.placeItemLevelHoldShelfRequest(item, usersFixture.steve());
-    IndividualResource titleLevelRecall = requestsFixture.placeTitleLevelRecallRequest(
-      item.getInstanceId(), usersFixture.jessica());
-
-    Response renewalResponse = loansFixture.attemptRenewal(422, item, borrower);
-
-    assertThat(renewalResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("items cannot be renewed when there is an active recall request"),
-      hasUUIDParameter("requestId", titleLevelRecall.getId()))));
-  }
-
   private void checkRenewalAttempt(ZonedDateTime expectedDueDate, UUID dueDateLimitedPolicyId) {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
