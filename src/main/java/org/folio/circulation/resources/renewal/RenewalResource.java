@@ -672,7 +672,7 @@ public abstract class RenewalResource extends Resource {
   private static boolean firstRequestForLoanedItemIsHold(RequestQueue requestQueue, Loan loan) {
     return requestQueue.getRequests()
       .stream()
-      .filter(req -> req.isTitleLevel() || (req.isItemLevel() && req.isFor(loan)))
+      .filter(r -> r.isFor(loan) || (r.isTitleLevel() && r.isHold() && !r.hasItemId()))
       .findFirst()
       .filter(Request::isHold)
       .isPresent();
