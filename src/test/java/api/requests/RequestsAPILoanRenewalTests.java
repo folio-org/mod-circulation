@@ -1,14 +1,17 @@
 package api.requests;
 
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
+import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
+import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.utils.ClockUtil.getLocalDate;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -32,6 +35,7 @@ import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -43,7 +47,8 @@ class RequestsAPILoanRenewalTests extends APITests {
   private static final String ITEMS_CANNOT_BE_RENEWED_MSG = "items cannot be renewed when there is an active recall request";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE = "loan is not renewable";
   private static final String EXPECTED_REASON_LOAN_IS_NOT_LOANABLE = "item is not loanable";
-  private static final int DEFAULT_HOLD_RENEWAL_PERIOD = 4;
+  private static final int DEFAULT_LOAN_PERIOD_WEEKS = 3;
+  private static final int ALTERNATE_RENEWAL_LOAN_PERIOD_WEEKS = 4;
 
   @Test
   void forbidRenewalLoanByBarcodeWhenFirstRequestInQueueIsRecall() {
@@ -67,12 +72,10 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalLoanByBarcodeWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
-    final ZonedDateTime expectedDueDate = getZonedDateTime()
-      .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    CheckOutResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     useRollingPolicyWithRenewingAllowedForHoldingRequest();
 
@@ -88,8 +91,8 @@ class RequestsAPILoanRenewalTests extends APITests {
     // Assert no validation issues, so the renewal is allowed
     assertThat(response.getJson().getJsonArray("errors"), nullValue());
 
-    assertThat(response.getJson().getString("dueDate"),
-      is(withinSecondsAfter(15, expectedDueDate)));
+    assertThat(getDateTimeProperty(response.getJson(), "dueDate"),
+      isEquivalentTo(initialLoan.getDueDate().plusWeeks(ALTERNATE_RENEWAL_LOAN_PERIOD_WEEKS)));
   }
 
   @Test
@@ -228,12 +231,10 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalLoanByIdWhenProfileIsRollingFirstRequestInQueueIsHoldAndRenewingIsAllowedInLoanPolicy() {
-    final ZonedDateTime expectedDueDate = getZonedDateTime()
-      .plusWeeks(DEFAULT_HOLD_RENEWAL_PERIOD);
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource rebecca = usersFixture.rebecca();
 
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
+    CheckOutResource initialLoan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     useRollingPolicyWithRenewingAllowedForHoldingRequest();
 
@@ -250,8 +251,8 @@ class RequestsAPILoanRenewalTests extends APITests {
     // Assert no validation issues, so the renewal is allowed
     assertThat(response.getJson().getJsonArray("error"), nullValue());
 
-    assertThat(response.getJson().getString("dueDate"),
-      is(withinSecondsAfter(15, expectedDueDate)));
+    assertThat(getDueDate(response),
+      isEquivalentTo(initialLoan.getDueDate().plusWeeks(ALTERNATE_RENEWAL_LOAN_PERIOD_WEEKS)));
   }
 
   @Test
@@ -327,7 +328,6 @@ class RequestsAPILoanRenewalTests extends APITests {
     checkInFixture.checkInByBarcode(itemForRequest);
     assertThat(requestsFixture.getById(hold.getId()).getJson().getString("itemId"),
       is(itemForRequest.getId().toString()));
-
     loansFixture.renewLoan(itemForLoan, borrower);
   }
 
@@ -343,6 +343,95 @@ class RequestsAPILoanRenewalTests extends APITests {
 
     assertThat(renewalResponse.getJson(), hasErrorWith(hasMessage(
       "Items with this loan policy cannot be renewed when there is an active, pending hold request")));
+  }
+
+  @Test
+  void alternateLoanPeriodIsNotUsedWhenFirstRequestInQueueIsItemLevelHoldForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    useRollingPolicyWithRenewingAllowedForHoldingRequest(); // base loan period - 3 weeks, alternate - 4 weeks
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource itemForLoan = items.get(0);
+    ItemResource itemForRequest = items.get(1);
+    UserResource borrower = usersFixture.charlotte();
+    CheckOutResource initialLoan = checkOutFixture.checkOutByBarcode(itemForLoan, borrower);
+    checkOutFixture.checkOutByBarcode(itemForRequest, usersFixture.jessica()); // to allow Hold
+    requestsFixture.placeItemLevelHoldShelfRequest(itemForRequest, usersFixture.steve());
+    IndividualResource renewedLoan = loansFixture.renewLoan(itemForLoan, borrower);
+    assertThat(getDueDate(renewedLoan),
+      isEquivalentTo(initialLoan.getDueDate().plusWeeks(DEFAULT_LOAN_PERIOD_WEEKS)));
+  }
+
+  @Test
+  void alternateLoanPeriodIsNotUsedForRenewalWhenFirstRequestInQueueIsTitleLevelHoldForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    useRollingPolicyWithRenewingAllowedForHoldingRequest();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource itemForLoan = items.get(0);
+    ItemResource itemForRequest = items.get(1);
+    UUID instanceId = itemForLoan.getInstanceId(); // same for both items
+    UserResource borrower = usersFixture.charlotte();
+    CheckOutResource initialLoan = checkOutFixture.checkOutByBarcode(itemForLoan, borrower);
+    checkOutFixture.checkOutByBarcode(itemForRequest, usersFixture.jessica()); // to allow Hold
+    IndividualResource hold = requestsFixture.placeTitleLevelRequest(HOLD, instanceId, usersFixture.steve());
+    checkInFixture.checkInByBarcode(itemForRequest);
+    assertThat(requestsFixture.getById(hold.getId()).getJson().getString("itemId"),
+      is(itemForRequest.getId().toString()));
+    IndividualResource renewedLoan = loansFixture.renewLoan(itemForLoan, borrower);
+    assertThat(getDueDate(renewedLoan),
+      isEquivalentTo(initialLoan.getDueDate().plusWeeks(DEFAULT_LOAN_PERIOD_WEEKS)));
+  }
+
+  @Test
+  void alternateLoanPeriodIsUsedForRenewalWhenFirstRequestInQueueIsTitleLevelHoldWithoutItemId() {
+    configurationsFixture.enableTlrFeature();
+    useRollingPolicyWithRenewingAllowedForHoldingRequest(); // base loan period - 3 weeks, alternate - 4 weeks
+    ItemResource item = itemsFixture.basedUponNod();
+    UUID instanceId = item.getInstanceId();
+    UserResource borrower = usersFixture.charlotte();
+    UserResource requester = usersFixture.steve();
+    ZonedDateTime loanDate = getZonedDateTime();
+    CheckOutResource initialLoan = checkOutFixture.checkOutByBarcode(item, borrower, loanDate);
+    requestsFixture.placeTitleLevelRequest(HOLD, instanceId, requester);
+    IndividualResource renewedLoan = loansFixture.renewLoan(item, borrower);
+    assertThat(getDueDate(renewedLoan),
+      isEquivalentTo(initialLoan.getDueDate().plusWeeks(ALTERNATE_RENEWAL_LOAN_PERIOD_WEEKS)));
+  }
+
+  @Test
+  void forbidRenewalWhenTitleLevelRecallRequestExistsForSameItem() {
+    configurationsFixture.enableTlrFeature();
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.james();
+    checkOutFixture.checkOutByBarcode(item, borrower);
+    // create a hold request so that the recall we create next does not end up at the top of the queue,
+    // just to make sure we traverse the whole queue when looking for existing recalls
+    requestsFixture.placeItemLevelHoldShelfRequest(item, usersFixture.steve());
+    IndividualResource titleLevelRecall = requestsFixture.placeTitleLevelRecallRequest(
+      item.getInstanceId(), usersFixture.jessica());
+    Response renewalResponse = loansFixture.attemptRenewal(422, item, borrower);
+
+    assertThat(renewalResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("items cannot be renewed when there is an active recall request"),
+      hasUUIDParameter("requestId", titleLevelRecall.getId()))));
+  }
+
+  @Test
+  void allowRenewalWhenTitleLevelRecallRequestExistsForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource itemForLoan = items.get(0);
+    ItemResource itemForRequest = items.get(1);
+    UUID instanceId = itemForLoan.getInstanceId(); // same for both items
+    UserResource borrower = usersFixture.james();
+    checkOutFixture.checkOutByBarcode(itemForLoan, borrower);
+    checkOutFixture.checkOutByBarcode(itemForRequest, usersFixture.rebecca(),
+      getZonedDateTime().minusMonths(1)); // so that this loan is recalled first
+    IndividualResource titleLevelRecall = requestsFixture.placeTitleLevelRecallRequest(
+      instanceId, usersFixture.jessica());
+    // make sure that recall was placed on the second item
+    assertThat(requestsFixture.getById(titleLevelRecall.getId()).getJson().getString("itemId"),
+      is(itemForRequest.getId().toString()));
+    loansFixture.renewLoan(itemForLoan, borrower);
   }
 
   @Test
@@ -676,17 +765,21 @@ class RequestsAPILoanRenewalTests extends APITests {
   private void useRollingPolicyWithRenewingAllowedForHoldingRequest() {
     JsonObject holds = new JsonObject();
     holds.put("alternateRenewalLoanPeriod", Period
-      .weeks(DEFAULT_HOLD_RENEWAL_PERIOD).asJson());
+      .weeks(ALTERNATE_RENEWAL_LOAN_PERIOD_WEEKS).asJson());
     holds.put("renewItemsWithRequest", true);
 
     final LoanPolicyBuilder rollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling with holding renewal")
       .withDescription("Can circulate item")
       .withHolds(holds)
-      .rolling(Period.weeks(3))
+      .rolling(Period.weeks(DEFAULT_LOAN_PERIOD_WEEKS))
       .unlimitedRenewals()
-      .renewFromSystemDate();
+      .renewFromCurrentDueDate();
 
     useWithActiveNotice(rollingPolicy);
+  }
+
+  private static ZonedDateTime getDueDate(IndividualResource loan) {
+    return getDateTimeProperty(loan.getJson(), "dueDate");
   }
 }
