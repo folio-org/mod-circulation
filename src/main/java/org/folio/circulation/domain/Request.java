@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_FILLED;
@@ -166,12 +167,20 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getStatus() == OPEN_AWAITING_PICKUP;
   }
 
-  boolean isFor(User user) {
+  public boolean isFor(User user) {
     return StringUtils.equals(getUserId(), user.getId());
   }
 
-  boolean isFor(Item item) {
-    return StringUtils.equals(getItemId(), item.getItemId());
+  public boolean isFor(Item item) {
+    return isFor(item.getItemId());
+  }
+
+  public boolean isFor(Loan loan) {
+    return isFor(loan.getItemId());
+  }
+
+  public boolean isFor(String itemId) {
+    return StringUtils.equals(getItemId(), itemId);
   }
 
   public String getInstanceId() {
@@ -184,6 +193,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean isTitleLevel() {
     return getRequestLevel() == TITLE;
+  }
+
+  public boolean isItemLevel() {
+    return getRequestLevel() == ITEM;
   }
 
   @Override
