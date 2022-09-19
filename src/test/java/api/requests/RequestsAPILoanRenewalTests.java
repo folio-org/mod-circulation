@@ -595,6 +595,37 @@ class RequestsAPILoanRenewalTests extends APITests {
   }
 
   @Test
+  void forbidRenewalOverrideWhenTitleLevelRecallRequestExistsForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource itemForLoan = items.get(0);
+    ItemResource itemForRequest = items.get(1);
+    UUID instanceId = itemForLoan.getInstanceId(); // same for both items
+    UserResource borrower = usersFixture.james();
+    checkOutFixture.checkOutByBarcode(itemForLoan, borrower);
+    checkOutFixture.checkOutByBarcode(itemForRequest, usersFixture.rebecca(),
+      getZonedDateTime().minusMonths(1)); // so that this loan is recalled first
+    IndividualResource titleLevelRecall = requestsFixture.placeTitleLevelRecallRequest(
+      instanceId, usersFixture.jessica());
+    // make sure that recall was placed on the second item
+    assertThat(requestsFixture.getById(titleLevelRecall.getId()).getJson().getString("itemId"),
+      is(itemForRequest.getId().toString()));
+
+    Response overrideResponse = loansFixture.attemptOverride(itemForLoan, borrower,
+      "Renewal override", "2018-12-21T13:30:00Z");
+
+    assertThat(overrideResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Override renewal does not match any of expected cases: " +
+        "item is not loanable, " +
+        "item is not renewable, " +
+        "reached number of renewals limit," +
+        "renewal date falls outside of the date ranges in the loan policy, " +
+        "items cannot be renewed when there is an active recall request, " +
+        "item is Declared lost, item is Aged to lost, " +
+        "renewal would not change the due date"))));
+  }
+
+  @Test
   void multipleRenewalFailuresWhenItemHasOpenRecallRequestAndLoanIsNotRenewable() {
 
     final ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
