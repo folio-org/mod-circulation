@@ -7,6 +7,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
 import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.folio.circulation.support.utils.ClockUtil.getLocalDate;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -34,7 +35,7 @@ import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
-import api.support.matchers.RequestMatchers;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 
 class RequestsAPILoanRenewalTests extends APITests {
@@ -295,6 +296,53 @@ class RequestsAPILoanRenewalTests extends APITests {
 
     String message = response.getJson().getJsonArray("errors").getJsonObject(0).getString("message");
     assertThat(message, is(CAN_NOT_RENEW_ITEM_ERROR));
+  }
+
+  @Test
+  void allowRenewalWhenFirstRequestInQueueIsItemLevelHoldForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource itemForLoan = items.get(0);
+    ItemResource itemForRequest = items.get(1);
+    UserResource borrower = usersFixture.charlotte();
+    checkOutFixture.checkOutByBarcode(itemForLoan, borrower);
+    checkOutFixture.checkOutByBarcode(itemForRequest, usersFixture.jessica()); // to allow Hold
+    requestsFixture.placeItemLevelHoldShelfRequest(itemForRequest, usersFixture.steve());
+    loansFixture.renewLoan(itemForLoan, borrower);
+  }
+
+  @Test
+  void allowRenewalWhenFirstRequestInQueueIsTitleLevelHoldForDifferentItemOfSameInstance() {
+    configurationsFixture.enableTlrFeature();
+    loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource itemForLoan = items.get(0);
+    ItemResource itemForRequest = items.get(1);
+    UUID instanceId = itemForLoan.getInstanceId(); // same for both items
+    UserResource borrower = usersFixture.charlotte();
+    checkOutFixture.checkOutByBarcode(itemForLoan, borrower);
+    checkOutFixture.checkOutByBarcode(itemForRequest, usersFixture.jessica()); // to allow Hold
+    IndividualResource hold = requestsFixture.placeTitleLevelRequest(HOLD, instanceId, usersFixture.steve());
+    checkInFixture.checkInByBarcode(itemForRequest);
+    assertThat(requestsFixture.getById(hold.getId()).getJson().getString("itemId"),
+      is(itemForRequest.getId().toString()));
+
+    loansFixture.renewLoan(itemForLoan, borrower);
+  }
+
+  @Test
+  void forbidRenewalWhenFirstRequestInQueueIsTitleLevelHoldWithoutItemId() {
+    configurationsFixture.enableTlrFeature();
+    loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
+    ItemResource item = itemsFixture.basedUponNod();
+    UserResource borrower = usersFixture.charlotte();
+    checkOutFixture.checkOutByBarcode(item, borrower);
+    requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(), usersFixture.steve());
+    Response renewalResponse = loansFixture.attemptRenewal(422, item, borrower);
+
+    assertThat(renewalResponse.getJson(), hasErrorWith(hasMessage(
+      "Items with this loan policy cannot be renewed when there is an active, pending hold request")));
   }
 
   @Test
