@@ -61,9 +61,12 @@ public class RequestQueueRepository {
       : getByItemId(itemId);
   }
 
-  public CompletableFuture<Result<RenewalContext>> get(RenewalContext renewalContext) {
-    return getByItemId(renewalContext.getLoan().getItemId(), List.of(ITEM, TITLE))
-      .thenApply(result -> result.map(renewalContext::withRequestQueue));
+  public CompletableFuture<Result<RenewalContext>> get(RenewalContext context) {
+    return getQueue(
+      context.getTlrSettings(),
+      context.getLoan().getItem().getInstanceId(),
+      context.getLoan().getItemId()
+    ).thenApply(result -> result.map(context::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
@@ -71,13 +74,7 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
-    return getByItemId(itemId, List.of(ITEM));
-  }
-
-  public CompletableFuture<Result<RequestQueue>> getByItemId(
-    String itemId, Collection<RequestLevel> requestLevels) {
-
-    return get("itemId", itemId, requestLevels);
+    return get("itemId", itemId, List.of(ITEM));
   }
 
   private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,

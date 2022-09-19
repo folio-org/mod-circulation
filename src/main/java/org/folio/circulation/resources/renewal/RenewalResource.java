@@ -5,7 +5,6 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.domain.override.OverridableBlockType.RENEWAL_BLOCK;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
@@ -54,7 +53,6 @@ import org.folio.circulation.domain.OverdueFineService;
 import org.folio.circulation.domain.OverduePeriodCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
@@ -181,6 +179,8 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
+      .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+        RenewalContext::withTlrSettings))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
@@ -204,9 +204,15 @@ public abstract class RenewalResource extends Resource {
     RenewalContext renewalContext) {
 
     Loan loan = renewalContext.getLoan();
-    RequestQueue queue = renewalContext.getRequestQueue();
 
-    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+    boolean loanIsRecalled = renewalContext.getRequestQueue()
+      .getRequests()
+      .stream()
+      .filter(Request::isRecall)
+      .filter(Request::isNotYetFilled)
+      .noneMatch(request -> request.isFor(loan));
+
+    if (loan.wasDueDateChangedByRecall() && loanIsRecalled) {
       return renewalContext.withLoan(loan.unsetDueDateChangedByRecall());
     }
     else {
@@ -398,13 +404,15 @@ public abstract class RenewalResource extends Resource {
       RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK), DUE_DATE);
 
     Loan loan = context.getLoan();
-    boolean hasRecallRequest =
-      context.getRequestQueue().getRequests().stream().findFirst()
-        .map(r -> r.getRequestType() == RequestType.RECALL)
-        .orElse(false);
+
+    boolean loanIsRecalled = context.getRequestQueue()
+      .getRequests()
+      .stream()
+      .filter(Request::isRecall)
+      .anyMatch(request -> request.isFor(loan));
 
     return completedFuture(overrideRenewal(loan, ClockUtil.getZonedDateTime(),
-      overrideDueDate, comment, hasRecallRequest))
+      overrideDueDate, comment, loanIsRecalled))
       .thenApply(mapResult(context::withLoan));
   }
 
@@ -554,11 +562,10 @@ public abstract class RenewalResource extends Resource {
 
   private Result<RenewalContext> renew(RenewalContext context, ZonedDateTime renewDate) {
     final var loan = context.getLoan();
-    final var requestQueue = context.getRequestQueue();
     final var loanPolicy = loan.getLoanPolicy();
 
-    final Result<ZonedDateTime> proposedDueDateResult = calculateNewDueDate(loan, requestQueue,
-      renewDate);
+    final Result<ZonedDateTime> proposedDueDateResult = calculateNewDueDate(loan,
+      context.getRequestQueue(), renewDate);
     final List<ValidationError> errors = new ArrayList<>();
     addErrorsIfDueDateResultFailed(loan, errors, proposedDueDateResult);
 
@@ -599,7 +606,7 @@ public abstract class RenewalResource extends Resource {
     ZonedDateTime systemDate) {
 
     final var loanPolicy = loan.getLoanPolicy();
-    final var isRenewalWithHoldRequest = isHold(getFirstRequestInQueue(requestQueue));
+    final var isRenewalWithHoldRequest = firstRequestForLoanedItemIsHold(requestQueue, loan);
 
     return loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
       .calculateDueDate(loan);
@@ -614,6 +621,7 @@ public abstract class RenewalResource extends Resource {
     requestQueue.getRequests()
       .stream()
       .filter(Request::isRecall)
+      .filter(request -> request.isFor(loan))
       .findFirst()
       .ifPresent(recall -> errors.add(errorForRecallRequest(
         "items cannot be renewed when there is an active recall request", recall.getId())));
@@ -635,14 +643,13 @@ public abstract class RenewalResource extends Resource {
 
     final List<ValidationError> errors = new ArrayList<>();
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
-    final Request firstRequest = getFirstRequestInQueue(requestQueue);
 
     if (loanPolicy.isNotLoanable()) {
       errors.add(loanPolicyValidationError(loanPolicy, "item is not loanable"));
     } else if (loanPolicy.isNotRenewable()) {
       errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
     }
-    if (isHold(firstRequest)) {
+    if (firstRequestForLoanedItemIsHold(requestQueue, loan)) {
       if (!loanPolicy.isHoldRequestRenewable()) {
         errors.add(loanPolicyValidationError(loanPolicy, CAN_NOT_RENEW_ITEM_ERROR));
       }
@@ -662,12 +669,13 @@ public abstract class RenewalResource extends Resource {
     return errors;
   }
 
-  private Request getFirstRequestInQueue(RequestQueue requestQueue) {
-    return requestQueue.getRequests().stream()
-      .findFirst().orElse(null);
+  private static boolean firstRequestForLoanedItemIsHold(RequestQueue requestQueue, Loan loan) {
+    return requestQueue.getRequests()
+      .stream()
+      .filter(r -> r.isFor(loan) || (r.isTitleLevel() && r.isHold() && !r.hasItemId()))
+      .findFirst()
+      .filter(Request::isHold)
+      .isPresent();
   }
 
-  private boolean isHold(Request request) {
-    return request != null && request.getRequestType() == HOLD;
-  }
 }

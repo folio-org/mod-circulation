@@ -43,6 +43,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     "the loan period in the loan policy is not recognised";
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
     "renewal would not change the due date";
+  private static final UUID ITEM_ID = UUID.randomUUID();
 
   @ParameterizedTest
   @ValueSource(strings = {
@@ -465,6 +466,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
       .open()
       .withLoanDate(loanDate)
       .withDueDate(dueDate)
+      .withItemId(ITEM_ID)
       .asDomainObject()
       .withLoanPolicy(loanPolicy);
   }
@@ -472,6 +474,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
   private RequestQueue creteRequestQueue(String requestId, RequestType requestType) {
     JsonObject requestRepresentation = new JsonObject()
       .put("id", requestId)
+      .put("itemId", ITEM_ID)
       .put("requestType", requestType.getValue());
 
     RequestQueue requestQueue = new RequestQueue(new ArrayList<>());
