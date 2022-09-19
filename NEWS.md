@@ -1,3 +1,7 @@
+## 23.1.5 2022-09-19
+* Forbid renewal when item is assigned to title-level recall (CIRC-1610)
+* Forbid renewal for item with pending hold request when loan policy is configured accordingly (CIRC-1611)
+
 ## 23.1.4 2022-09-08
 * Fix NPE in Items In Transit report (CIRC-1588)
 * Change item status on request deletion (CIRC-1569)
