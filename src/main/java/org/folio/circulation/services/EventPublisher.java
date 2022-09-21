@@ -146,9 +146,6 @@ public class EventPublisher {
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
         .handle((result, error) -> handlePublishEventError(error, checkInContext));
     }
-    else {
-      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_IN.name());
-    }
 
     return completedFuture(succeeded(checkInContext));
   }
