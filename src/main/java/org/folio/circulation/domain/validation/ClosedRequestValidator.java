@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ErrorCode.REQUEST_ALREADY_CLOSED;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
@@ -29,7 +30,8 @@ public class ClosedRequestValidator {
 
     return requestRepository.getById(requestId)
       .thenApply(r -> r.failWhen(existing -> succeeded(existing.isClosed()),
-        v -> singleValidationError("The Request has already been closed", "id", requestId)));
+        v -> singleValidationError("The Request has already been closed", "id", requestId,
+          REQUEST_ALREADY_CLOSED)));
   }
 
 }
