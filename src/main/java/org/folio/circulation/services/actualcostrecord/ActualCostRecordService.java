@@ -1,5 +1,6 @@
 package org.folio.circulation.services.actualcostrecord;
 
+import static java.util.UUID.randomUUID;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.services.LostItemFeeChargingService.ReferenceDataContext;
@@ -150,6 +151,7 @@ public class ActualCostRecordService {
     FeeFine feeFine = context.getFeeFine();
 
     return new ActualCostRecord()
+      .withId(randomUUID().toString())
       .withLossType(context.getLossType())
       .withLossDate(context.getLossDate())
       .withExpirationDate(loan.getLostItemPolicy()

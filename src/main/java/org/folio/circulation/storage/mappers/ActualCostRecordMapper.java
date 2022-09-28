@@ -29,6 +29,7 @@ public class ActualCostRecordMapper {
 
   public static JsonObject toJson(ActualCostRecord actualCostRecord) {
     JsonObject json = new JsonObject();
+    write(json, "id", actualCostRecord.getId());
     write(json, "lossType", actualCostRecord.getLossType().getValue());
     write(json, "lossDate", actualCostRecord.getLossDate());
     write(json, "expirationDate", actualCostRecord.getExpirationDate());

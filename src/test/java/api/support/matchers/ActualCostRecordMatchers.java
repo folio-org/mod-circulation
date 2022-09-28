@@ -23,6 +23,7 @@ import static api.support.matchers.UUIDMatcher.is;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.notNullValue;
 
 public class ActualCostRecordMatchers {
   private ActualCostRecordMatchers() {
@@ -52,14 +53,20 @@ public class ActualCostRecordMatchers {
       })
       .collect(Collectors.toList());
 
+    JsonObject userPersonal = user.getJson().getJsonObject("personal");
     JsonObject effectiveCallNumberComponents = itemJson.getJsonObject(
       "effectiveCallNumberComponents");
-    return allOf(hasJsonPath("user.id", is(user.getId())),
-      hasJsonPath("user.barcode", user.getBarcode()),
-      hasJsonPath("loan.id", is(loan.getId())),
+
+    return allOf(
+      hasJsonPath("id", notNullValue()),
       hasJsonPath("lossType", itemLossType.getValue()),
       hasJsonPath("lossDate", loan.getJson().getJsonObject("agedToLostDelayedBilling")
         .getString("agedToLostDate")),
+      hasJsonPath("user.id", is(user.getId())),
+      hasJsonPath("user.barcode", user.getBarcode()),
+      hasJsonPath("user.firstName", userPersonal.getString("firstName")),
+      hasJsonPath("user.lastName", userPersonal.getString("lastName")),
+      hasJsonPath("loan.id", is(loan.getId())),
       hasJsonPath("instance.title", instanceJson.getString("title")),
       hasJsonPath("item.barcode", item.getBarcode()),
       hasJsonPath("item.materialTypeId", item.getJson().getString("materialTypeId")),
