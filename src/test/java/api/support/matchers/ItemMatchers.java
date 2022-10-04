@@ -51,7 +51,7 @@ public final class ItemMatchers {
     return hasStatus("Aged to lost");
   }
 
-  private static Matcher<JsonObject> hasStatus(String status) {
+  public static Matcher<JsonObject> hasStatus(String status) {
     return describedAs("Item with status [%0]",
       hasJsonPath("status.name", status), status);
   }

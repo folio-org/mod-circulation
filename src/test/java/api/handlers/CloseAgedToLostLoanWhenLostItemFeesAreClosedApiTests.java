@@ -4,7 +4,6 @@ import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
-import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
@@ -19,6 +18,7 @@ import static org.hamcrest.Matchers.hasSize;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
@@ -31,6 +31,10 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoanWhenLostItemFeesAreClosed {
+
+  public CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests() {
+    super(ItemStatus.AGED_TO_LOST);
+  }
 
   @BeforeEach
   public void createLoanAndAgeToLost() {
@@ -45,8 +49,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    assertThatLoanIsClosedAsLostAndPaid();
 
     List<JsonObject> loanClosedEvents = getPublishedEventsAsList(byEventType(LOAN_CLOSED));
     assertThat(loanClosedEvents, hasSize(1));
@@ -74,22 +77,16 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
   void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
     createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
+    assertThatLoanIsOpenAndLost();
   }
 
   @Test
   void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
+    assertThatLoanIsOpenAndLost();
   }
 
   @Test
@@ -107,9 +104,7 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
+    assertThatLoanIsOpenAndLost();
   }
 
   @Test
@@ -160,7 +155,6 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payLostItemActualCostFeeAndCheckThatLoanIsClosed();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -175,7 +169,6 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -191,7 +184,6 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -207,7 +199,6 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
   }
 
   @Test
@@ -222,7 +213,6 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     loan = result.getLoan();
 
     runScheduledActualCostExpirationAndCheckThatLoanIsOpen();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isAgedToLost());
   }
 
   private void updateLostPolicyToUseActualCost() {
