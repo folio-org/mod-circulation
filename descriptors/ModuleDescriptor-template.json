@@ -1025,6 +1025,10 @@
     {
       "id": "notes",
       "version": "1.0 2.0 3.0"
+    },
+    {
+      "id": "actual-cost-record-storage",
+      "version": "0.3"
     }
   ],
   "permissionSets": [
