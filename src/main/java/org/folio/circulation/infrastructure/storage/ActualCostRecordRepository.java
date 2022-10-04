@@ -31,7 +31,7 @@ public class ActualCostRecordRepository {
   private final CollectionResourceClient actualCostRecordStorageClient;
 
   private static final String ACTUAL_COST_RECORDS = "actualCostRecords";
-  private static final String LOAN_ID_FIELD_NAME = "loanId";
+  private static final String LOAN_ID_FIELD_NAME = "loan.id";
 
   public ActualCostRecordRepository(Clients clients) {
     actualCostRecordStorageClient = clients.actualCostRecordsStorage();

@@ -32,6 +32,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
+import org.folio.circulation.infrastructure.storage.inventory.IdentifierTypeRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
@@ -71,7 +72,8 @@ public class LostItemFeeChargingService {
     this.refundService = refundService;
     this.accountRepository = new AccountRepository(clients);
     this.actualCostRecordService = new ActualCostRecordService(
-      new ActualCostRecordRepository(clients), locationRepository);
+      new ActualCostRecordRepository(clients), locationRepository,
+      new IdentifierTypeRepository(clients));
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(

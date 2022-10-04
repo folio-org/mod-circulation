@@ -54,6 +54,8 @@ class RegularRenewalTest {
   private static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE =
     "renewal would not change the due date";
 
+  private static final UUID ITEM_ID = UUID.randomUUID();
+
   @Test
   void canRenewLoan() {
     final var rollingPeriod = days(10);
@@ -75,10 +77,10 @@ class RegularRenewalTest {
 
   @Test
   void cannotRenewWhenRecallRequestedAndPolicyNorLoanableAndItemLost() {
-    final var recallRequest = new RequestBuilder().recall().asDomainObject();
+    final var recallRequest = new RequestBuilder().recall().withItemId(ITEM_ID).asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .withLoanable(false).withRenewable(false).asDomainObject();
-    final var loan = new LoanBuilder().asDomainObject()
+    final var loan = new LoanBuilder().withItemId(ITEM_ID).asDomainObject()
       .changeItemStatusForItemAndLoan(AGED_TO_LOST)
       .withLoanPolicy(loanPolicy);
 
@@ -94,11 +96,11 @@ class RegularRenewalTest {
 
   @Test
   void cannotRenewWhenRecallRequested() {
-    final var recallRequest = new RequestBuilder().recall().asDomainObject();
-    final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
+    final var recallRequest = new RequestBuilder().recall().withItemId(ITEM_ID).asDomainObject();
+    final var loan = new LoanBuilder().withItemId(ITEM_ID).asDomainObject();
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loanPolicy, recallRequest, errorHandler);
+    renew(loan, recallRequest, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
@@ -126,13 +128,18 @@ class RegularRenewalTest {
 
   @Test
   void cannotRenewWhenHoldRequestIsNotRenewable() {
-    final var request = new RequestBuilder().hold().asDomainObject();
+    final var request = new RequestBuilder().hold().withItemId(ITEM_ID).asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .withHolds(null, false, null)
       .asDomainObject();
 
+    final var loan = new LoanBuilder()
+      .withItemId(ITEM_ID)
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
+
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loanPolicy, request, errorHandler);
+    renew(loan, request, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       ITEMS_CANNOT_BE_RENEWED_ACTIVE_PENDING_HOLD_REQUEST));
@@ -140,14 +147,19 @@ class RegularRenewalTest {
 
   @Test
   void cannotRenewWhenHoldRequestedAndFixedPolicyHasAlternativeRenewPeriod() {
-    final var request = new RequestBuilder().hold().asDomainObject();
+    final var request = new RequestBuilder().hold().withItemId(ITEM_ID).asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .withHolds(null, true, days(1))
       .asDomainObject();
 
+    final var loan = new LoanBuilder()
+      .withItemId(ITEM_ID)
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
+
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loanPolicy, request, errorHandler);
+    renew(loan, request, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       ALTERNATIVE_RENEWAL_PERIOD_FOR_HOLDS_IS_SPECIFIED));
@@ -155,15 +167,20 @@ class RegularRenewalTest {
 
   @Test
   void cannotRenewWhenHoldRequestedAndFixedPolicyHasRenewPeriod() {
-    final var request = new RequestBuilder().hold().asDomainObject();
+    final var request = new RequestBuilder().hold().withItemId(ITEM_ID).asDomainObject();
     final var loanPolicy = new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
       .renewWith(days(10))
       .withHolds(null, true, null)
       .asDomainObject();
 
+    final var loan = new LoanBuilder()
+      .withItemId(ITEM_ID)
+      .asDomainObject()
+      .withLoanPolicy(loanPolicy);
+
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
-    renew(loanPolicy, request, errorHandler);
+    renew(loan, request, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler,
       POLICY_HAS_FIXED_PROFILE_BUT_RENEWAL_PERIOD_IS_SPECIFIED));
