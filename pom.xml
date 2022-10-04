@@ -253,6 +253,12 @@
       <version>${rmb.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.folio.okapi</groupId>
+      <artifactId>okapi-testing</artifactId>
+      <version>4.14.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <distributionManagement>

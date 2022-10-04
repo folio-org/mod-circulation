@@ -6,7 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.nio.charset.StandardCharsets;
 
-import org.folio.rest.testing.UtilityClassTester;
+import org.folio.okapi.testing.UtilityClassTester;
 import org.junit.jupiter.api.Test;
 
 class StringUtilTests {
