@@ -35,6 +35,8 @@ public class ActualCostRecord {
     private final String firstName;
     private final String lastName;
     private final String middleName;
+    private final String patronGroupId;
+    private final String patronGroup;
   }
 
   @NoArgsConstructor(force = true)
@@ -60,6 +62,10 @@ public class ActualCostRecord {
     private final String loanType;
     private final String holdingsRecordId;
     private final CallNumberComponents effectiveCallNumberComponents;
+    private final String volume;
+    private final String enumeration;
+    private final String chronology;
+    private final String copyNumber;
   }
 
   @NoArgsConstructor(force = true)

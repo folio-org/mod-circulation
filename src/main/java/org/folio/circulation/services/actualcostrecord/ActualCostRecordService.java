@@ -1,8 +1,10 @@
 package org.folio.circulation.services.actualcostrecord;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.services.LostItemFeeChargingService.ReferenceDataContext;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -29,10 +31,12 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.PatronGroup;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.inventory.IdentifierTypeRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -46,12 +50,15 @@ public class ActualCostRecordService {
   private final ActualCostRecordRepository actualCostRecordRepository;
   private final LocationRepository locationRepository;
   private final IdentifierTypeRepository identifierTypeRepository;
+  private final PatronGroupRepository patronGroupRepository;
 
   public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository,
-    LocationRepository locationRepository, IdentifierTypeRepository identifierTypeRepository) {
+    LocationRepository locationRepository, IdentifierTypeRepository identifierTypeRepository,
+    PatronGroupRepository patronGroupRepository) {
     this.actualCostRecordRepository = actualCostRecordRepository;
     this.locationRepository = locationRepository;
     this.identifierTypeRepository = identifierTypeRepository;
+    this.patronGroupRepository = patronGroupRepository;
   }
 
   public CompletableFuture<Result<ReferenceDataContext>> createIfNecessaryForDeclaredLostItem(
@@ -101,6 +108,7 @@ public class ActualCostRecordService {
 
     return lookupPermanentLocation(context)
       .thenCompose(r -> r.after(this::lookupIdentifierTypes))
+      .thenCompose(r -> r.after(this::lookupPatronGroup))
       .thenCompose(r -> r.after(ctx -> actualCostRecordRepository.createActualCostRecord(buildActualCostRecord(ctx))));
   }
 
@@ -109,6 +117,19 @@ public class ActualCostRecordService {
 
     return locationRepository.getPermanentLocation(context.getLoan().getItem())
       .thenApply(r -> r.map(context::withItemPermanentLocation));
+  }
+
+  private CompletableFuture<Result<ActualCostRecordContext>> lookupPatronGroup(
+    ActualCostRecordContext context) {
+
+    User user = context.getLoan().getUser();
+    if (user.getPatronGroup() != null) {
+      return ofAsync(context);
+    }
+
+    return patronGroupRepository.findGroupForUser(user)
+      .thenApply(r -> r.map(context.getLoan()::withUser))
+      .thenApply(r -> r.map(context::withLoan));
   }
 
   private CompletableFuture<Result<ActualCostRecordContext>> lookupIdentifierTypes(
@@ -139,7 +160,6 @@ public class ActualCostRecordService {
   }
 
   private ActualCostRecord buildActualCostRecord(ActualCostRecordContext context) {
-
     User user = context.getLoan().getUser();
     Loan loan = context.getLoan()
       .withItem(context.getLoan().getItem()
@@ -148,6 +168,9 @@ public class ActualCostRecordService {
     Instance instance = item.getInstance();
     FeeFineOwner feeFineOwner = context.getFeeFineOwner();
     FeeFine feeFine = context.getFeeFine();
+    String patronGroup = ofNullable(user.getPatronGroup())
+      .map(PatronGroup::getGroup)
+      .orElse(null);
 
     return new ActualCostRecord()
       .withLossType(context.getLossType())
@@ -159,7 +182,9 @@ public class ActualCostRecordService {
         .withBarcode(user.getBarcode())
         .withFirstName(user.getFirstName())
         .withLastName(user.getLastName())
-        .withMiddleName(user.getMiddleName()))
+        .withMiddleName(user.getMiddleName())
+        .withPatronGroupId(user.getPatronGroupId())
+        .withPatronGroup(patronGroup))
       .withLoan(new ActualCostRecordLoan()
         .withId(loan.getId()))
       .withItem(new ActualCostRecordItem()
@@ -172,7 +197,11 @@ public class ActualCostRecordService {
         .withLoanTypeId(item.getLoanTypeId())
         .withLoanType(item.getLoanTypeName())
         .withHoldingsRecordId(item.getHoldingsRecordId())
-        .withEffectiveCallNumberComponents(item.getCallNumberComponents()))
+        .withEffectiveCallNumberComponents(item.getCallNumberComponents())
+        .withVolume(item.getVolume())
+        .withChronology(item.getChronology())
+        .withEnumeration(item.getEnumeration())
+        .withCopyNumber(item.getCopyNumber()))
       .withInstance(new ActualCostRecordInstance()
         .withId(instance.getId())
         .withTitle(instance.getTitle())
