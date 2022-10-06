@@ -1,6 +1,6 @@
 package org.folio.circulation.support.http;
 
-import org.folio.rest.testing.UtilityClassTester;
+import org.folio.okapi.testing.UtilityClassTester;
 import org.junit.jupiter.api.Test;
 
 class ContentTypeTest {

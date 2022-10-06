@@ -35,6 +35,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineReposito
 import org.folio.circulation.infrastructure.storage.inventory.IdentifierTypeRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
@@ -73,7 +74,7 @@ public class LostItemFeeChargingService {
     this.accountRepository = new AccountRepository(clients);
     this.actualCostRecordService = new ActualCostRecordService(
       new ActualCostRecordRepository(clients), locationRepository,
-      new IdentifierTypeRepository(clients));
+      new IdentifierTypeRepository(clients), new PatronGroupRepository(clients));
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
@@ -118,7 +119,7 @@ public class LostItemFeeChargingService {
       }));
   }
 
-  private CompletableFuture<Result<Loan>> applyFees (ReferenceDataContext referenceData, Loan loan) {
+  private CompletableFuture<Result<Loan>> applyFees(ReferenceDataContext referenceData, Loan loan) {
     return fetchFeeFineOwner(referenceData)
     .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
     .thenComposeAsync(this::fetchFeeFineTypes)

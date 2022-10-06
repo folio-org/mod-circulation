@@ -51,6 +51,15 @@
         "middleName": {
           "description": "User middle name",
           "type": "string"
+        },
+        "patronGroupId": {
+          "description": "Patron group ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "patronGroup": {
+          "description": "Patron group name",
+          "type": "string"
         }
       },
       "additionalProperties": false,
@@ -139,6 +148,22 @@
             }
           },
           "additionalProperties": false
+        },
+        "volume": {
+          "type": "string",
+          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes)."
+        },
+        "enumeration": {
+          "type": "string",
+          "description": "Enumeration is the descriptive information for the numbering scheme of a serial."
+        },
+        "chronology": {
+          "type": "string",
+          "description": "Chronology is the descriptive information for the dating scheme of a serial."
+        },
+        "copyNumber": {
+          "type": "string",
+          "description": "Copy number is the piece identifier. The copy number reflects if the library has a copy of a single-volume monograph; one copy of a multi-volume, (e.g. Copy 1, or C.7.)"
         }
       },
       "additionalProperties": false,
@@ -247,7 +272,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "id",
     "lossType",
     "lossDate",
     "expirationDate",

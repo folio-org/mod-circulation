@@ -123,6 +123,11 @@ public class PatronGroupRepository {
       getPatronGroupById(loan.getPatronGroupIdAtCheckout()), Loan::withPatronGroupAtCheckout);
   }
 
+  public CompletableFuture<Result<User>> findGroupForUser(User user) {
+    return getPatronGroupById(user.getPatronGroupId())
+      .thenApply(r -> r.map(user::withPatronGroup));
+  }
+
   private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {
     if(isNull(groupId)) {
       return ofAsync(() -> unknown(null));

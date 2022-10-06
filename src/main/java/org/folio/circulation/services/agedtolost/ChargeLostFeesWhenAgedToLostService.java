@@ -51,6 +51,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.EventPublisher;
@@ -96,7 +97,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
     this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients),
       LocationRepository.using(clients, new ServicePointRepository(clients)),
-      new IdentifierTypeRepository(clients));
+      new IdentifierTypeRepository(clients), new PatronGroupRepository(clients));
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {

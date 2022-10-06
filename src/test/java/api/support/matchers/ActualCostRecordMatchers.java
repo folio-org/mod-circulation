@@ -1,7 +1,6 @@
 package api.support.matchers;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,8 +9,6 @@ import java.util.stream.IntStream;
 import org.folio.circulation.domain.ItemLossType;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.Is;
-
-import com.jayway.jsonpath.matchers.JsonPathMatchers;
 
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -30,7 +27,8 @@ public class ActualCostRecordMatchers {
 
   public static Matcher<JsonObject> isActualCostRecord(IndividualResource loan, ItemResource item,
     UserResource user, ItemLossType itemLossType, String permanentLocationName,
-    IndividualResource feeFineOwner, IndividualResource feeFine, String identifierType) {
+    IndividualResource feeFineOwner, IndividualResource feeFine, String identifierType,
+    IndividualResource patronGroup) {
 
     JsonObject instanceJson = item.getInstance().getJson();
     JsonObject itemJson = item.getJson();
@@ -56,15 +54,17 @@ public class ActualCostRecordMatchers {
       "effectiveCallNumberComponents");
     return allOf(hasJsonPath("user.id", is(user.getId())),
       hasJsonPath("user.barcode", user.getBarcode()),
+      hasJsonPath("user.patronGroupId", user.getJson().getString("patronGroup")),
+      hasJsonPath("user.patronGroup", patronGroup.getJson().getString("group")),
       hasJsonPath("loan.id", is(loan.getId())),
       hasJsonPath("lossType", itemLossType.getValue()),
       hasJsonPath("lossDate", loan.getJson().getJsonObject("agedToLostDelayedBilling")
         .getString("agedToLostDate")),
       hasJsonPath("instance.title", instanceJson.getString("title")),
       hasJsonPath("item.barcode", item.getBarcode()),
-      hasJsonPath("item.materialTypeId", item.getJson().getString("materialTypeId")),
+      hasJsonPath("item.materialTypeId", itemJson.getString("materialTypeId")),
       hasJsonPath("item.materialType", "Book"),
-      hasJsonPath("item.loanTypeId", item.getJson().getString("permanentLoanTypeId")),
+      hasJsonPath("item.loanTypeId", itemJson.getString("permanentLoanTypeId")),
       hasJsonPath("item.loanType", "Can Circulate"),
       hasJsonPath("item.effectiveCallNumberComponents.callNumber",
         effectiveCallNumberComponents.getString("callNumber")),
@@ -74,6 +74,10 @@ public class ActualCostRecordMatchers {
       hasJsonPath("item.effectiveCallNumberComponents.suffix",
         effectiveCallNumberComponents.getString("suffix")),
       hasJsonPath("item.permanentLocation", permanentLocationName),
+      hasJsonPath("item.volume", itemJson.getString("volume")),
+      hasJsonPath("item.chronology", itemJson.getString("chronology")),
+      hasJsonPath("item.enumeration", itemJson.getString("enumeration")),
+      hasJsonPath("item.copyNumber", itemJson.getString("copyNumber")),
       hasJsonPath("feeFine.ownerId", is(feeFineOwner.getId())),
       hasJsonPath("feeFine.owner", feeFineOwner.getJson().getString("owner")),
       hasJsonPath("feeFine.typeId", is(feeFine.getId())),

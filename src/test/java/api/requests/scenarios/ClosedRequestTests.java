@@ -5,10 +5,12 @@ import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.ErrorCode.REQUEST_ALREADY_CLOSED;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -87,7 +89,8 @@ class ClosedRequestTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Request has already been closed"),
-      hasUUIDParameter("id", request.getId()))));
+      hasUUIDParameter("id", request.getId()),
+      hasCode(REQUEST_ALREADY_CLOSED))));
   }
 
   @Test
@@ -119,7 +122,8 @@ class ClosedRequestTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("The Request has already been closed"),
-      hasUUIDParameter("id", request.getId()))));
+      hasUUIDParameter("id", request.getId()),
+      hasCode(REQUEST_ALREADY_CLOSED))));
   }
 
   @Test
