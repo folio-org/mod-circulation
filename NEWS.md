@@ -1,3 +1,7 @@
+## 23.2.0 IN-PROGRESS
+
+* Supports users interface 14.2, 15.0, 16.0 (CIRC-1572)
+
 ## 23.1.0 2022-06-28
 
 * Create Actual Cost Record when item declared lost if Actual Cost is selected in Lost Item Policy (CIRC-714)
