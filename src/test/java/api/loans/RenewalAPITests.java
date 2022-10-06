@@ -85,8 +85,11 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -109,6 +112,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -127,7 +131,7 @@ public abstract class RenewalAPITests extends APITests {
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
-  abstract IndividualResource renew(IndividualResource user, IndividualResource item);
+  abstract IndividualResource renew(IndividualResource item, IndividualResource user);
 
   abstract Matcher<ValidationError> hasUserRelatedParameter(IndividualResource user);
 
@@ -2073,6 +2077,25 @@ public abstract class RenewalAPITests extends APITests {
       hasJsonPath("amount", 10.0), hasJsonPath("remaining", 0.0)));
   }
 
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "2020-01-13T12:34:56.123456+0000",
+    "2020-01-13T12:34:56.123456",
+    "2020-01-13T12:34:56+00:00",
+    "2020-01-13T12:34:56.123Z",
+    "2020-01-13T12:34:56Z",
+    "2020-01-13T12:34:56"
+  })
+  void canRenewLoanWithVariousLoanDateFormats(String loanDate) {
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica,
+      ZonedDateTime.of(2020, 1, 13, 12, 34, 56, 0, UTC));
+    JsonObject loanFromStorage = loansClient.get(loan.getId()).getJson();
+    loansClient.attemptReplace(loan.getId(), loanFromStorage.put("loanDate", loanDate));
+    renew(smallAngryPlanet, jessica);
+  }
   private void checkOutItem(ZonedDateTime loanDate, IndividualResource item, ZonedDateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 

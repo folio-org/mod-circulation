@@ -121,11 +121,19 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
-    CheckInContext checkInContext, UserRepository userRepository) {
+    CheckInContext checkInContext, UserRepository userRepository, LoanRepository loanRepository) {
 
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
-      .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
-        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckInLogEventContent(checkInContext, loggedInUser)))))));
+      .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
+        if (nonNull(lastLoan.value())) {
+          return userRepository.getUser(lastLoan.value().getUserId())
+            .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+              mapToCheckInLogEventContent(checkInContext, userResult.value(), userFromLastLoan.value()))));
+        }
+        return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
+        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+          mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
+      }));
 
     if (checkInContext.getLoan() != null) {
       Loan loan = checkInContext.getLoan();
@@ -137,9 +145,6 @@ public class EventPublisher {
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
         .handle((result, error) -> handlePublishEventError(error, checkInContext));
-    }
-    else {
-      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_IN.name());
     }
 
     return completedFuture(succeeded(checkInContext));

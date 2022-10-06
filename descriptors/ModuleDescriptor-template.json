@@ -101,8 +101,7 @@
             "circulation.loans.declare-item-lost.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.declare-item-lost.post",
-            "actual-cost-record-storage.actual-cost-records.item.post"
+            "modperms.circulation.loans.declare-item-lost.post"
           ]
         }
       ]
@@ -640,6 +639,24 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/actual-cost-expiration-by-timeout",
+          "modulePermissions": [
+            "circulation-storage.loans.item.put",
+            "inventory-storage.items.item.put",
+            "actual-cost-record-storage.actual-cost-records.collection.get",
+            "accounts.collection.get",
+            "circulation.internal.fetch-items",
+            "lost-item-fees-policies.collection.get",
+            "circulation-storage.loans.collection.get",
+            "pubsub.publish.post"
+          ],
+          "unit": "minute",
+          "delay": "20"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loan-scheduled-notices-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
@@ -703,6 +720,7 @@
             "circulation.internal.fetch-items",
             "circulation-storage.loans.collection.get",
             "circulation-storage.requests.item.get",
+            "circulation-storage.requests.collection.get",
             "patron-notice.post",
             "users.item.get",
             "usergroups.collection.get",
@@ -827,6 +845,8 @@
             "pubsub.publish.post",
             "users.item.get",
             "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
             "circulation-storage.circulation-rules.get",
             "circulation-storage.patron-notice-policies.item.get",
             "circulation-storage.patron-notice-policies.collection.get",
@@ -894,15 +914,15 @@
     },
     {
       "id": "item-storage",
-      "version": "8.7 9.0"
+      "version": "8.7 9.0 10.0"
     },
     {
       "id": "instance-storage",
-      "version": "4.0 5.0 6.0 7.0 8.0"
+      "version": "4.0 5.0 6.0 7.0 8.0 9.0"
     },
     {
       "id": "holdings-storage",
-      "version": "1.3 2.0 3.0 4.0 5.0"
+      "version": "1.3 2.0 3.0 4.0 5.0 6.0"
     },
     {
       "id": "request-storage",
@@ -914,7 +934,7 @@
     },
     {
       "id": "users",
-      "version": "14.2 15.0"
+      "version": "14.2 15.0 16.0"
     },
     {
       "id": "locations",
@@ -1007,6 +1027,10 @@
     {
       "id": "notes",
       "version": "1.0 2.0 3.0"
+    },
+    {
+      "id": "actual-cost-record-storage",
+      "version": "0.4"
     }
   ],
   "permissionSets": [
@@ -1301,7 +1325,12 @@
         "circulation.internal.fetch-items",
         "lost-item-fees-policies.item.get",
         "accounts.collection.get",
-        "users.item.get"
+        "users.item.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-record-storage.actual-cost-records.item.post",
+        "actual-cost-record-storage.actual-cost-records.item.put",
+        "actual-cost-record-storage.actual-cost-records.item.delete"
       ],
       "visible": false
     },
@@ -1371,6 +1400,8 @@
         "proxiesfor.collection.get",
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
+        "scheduled-notice-storage.scheduled-notices.item.delete",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
         "patron-action-session-storage.patron-action-sessions.item.post",
         "overdue-fines-policies.item.get",
         "overdue-fines-policies.collection.get",
@@ -1527,6 +1558,8 @@
         "circulation-storage.request-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
+        "scheduled-notice-storage.scheduled-notices.item.delete",
+        "scheduled-notice-storage.scheduled-notices.collection.delete",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "inventory-storage.items.item.put",
@@ -1796,11 +1829,14 @@
         "feefines.collection.get",
         "accounts.item.post",
         "users.item.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
         "feefineactions.item.post",
         "pubsub.publish.post",
         "note.types.collection.get",
         "notes.item.post",
-        "notes.domain.all"
+        "notes.domain.all",
+        "actual-cost-record-storage.actual-cost-records.item.post"
       ],
       "visible": false
     },
@@ -1942,7 +1978,9 @@
         "inventory-storage.location-units.campuses.item.get",
         "inventory-storage.location-units.campuses.collection.get",
         "inventory-storage.location-units.institutions.item.get",
-        "inventory-storage.location-units.institutions.collection.get"
+        "inventory-storage.location-units.institutions.collection.get",
+        "inventory-storage.identifier-types.item.get",
+        "inventory-storage.identifier-types.collection.get"
       ],
       "visible": false
     },

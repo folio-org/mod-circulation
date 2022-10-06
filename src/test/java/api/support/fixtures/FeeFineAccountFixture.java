@@ -77,6 +77,13 @@ public final class FeeFineAccountFixture {
     pay(accountId, amount);
   }
 
+  public void payLostItemActualCostFee(UUID loanId) {
+    final JsonObject lostItemFeeActualCostAccount = getAccount(loanId, LOST_ITEM_ACTUAL_COST_FEE_TYPE);
+    final String accountId = lostItemFeeActualCostAccount.getString("id");
+
+    pay(accountId, lostItemFeeActualCostAccount.getDouble("amount"));
+  }
+
   public void payLostItemProcessingFee(UUID loanId) {
     final JsonObject lostItemProcessingFeeAccount = getAccount(
       loanId, LOST_ITEM_PROCESSING_FEE_TYPE);
@@ -129,6 +136,12 @@ public final class FeeFineAccountFixture {
       .createdAt("Circ Desk 1"));
 
     return account;
+  }
+
+  private JsonObject getLostItemFeeAccount(UUID loanId) {
+    return accountsClient.getMany(exactMatch("loanId", loanId.toString())
+        .and(exactMatch("feeFineType", "Lost item fee")))
+      .getFirst();
   }
 
   private JsonObject getAccount(UUID loanId, String feeFineType) {

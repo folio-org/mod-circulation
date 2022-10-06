@@ -84,4 +84,9 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loan.getProxyUserId();
   }
 
+  @Override
+  public User getUser() {
+    return loan.getUser();
+  }
+
 }

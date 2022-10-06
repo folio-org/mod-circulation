@@ -303,37 +303,42 @@ class DeclareLostAPITests extends APITests {
     assertThat(loan.getJson(), isOpen());
     assertNotNull(actualCostRecord);
     assertThat(actualCostRecord.getString("id"), notNullValue());
-    assertThat(actualCostRecord, hasJsonPath("userId", user.getId().toString()));
-    assertThat(actualCostRecord, hasJsonPath("userBarcode", user.getBarcode()));
-    assertThat(actualCostRecord, hasJsonPath("loanId", loan.getId().toString()));
-    assertThat(actualCostRecord, hasJsonPath("itemLossType", "Declared lost"));
-    assertThat(actualCostRecord.getString("dateOfLoss"), notNullValue());
-    assertThat(actualCostRecord, hasJsonPath("title",
+    assertThat(actualCostRecord, hasJsonPath("user.id", user.getId().toString()));
+    assertThat(actualCostRecord, hasJsonPath("user.barcode", user.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("loan.id", loan.getId().toString()));
+    assertThat(actualCostRecord, hasJsonPath("lossType", "Declared lost"));
+    assertThat(actualCostRecord.getString("lossDate"), notNullValue());
+    assertThat(actualCostRecord, hasJsonPath("instance.title",
       item.getInstance().getJson().getString("title")));
 
-    JsonArray identifiers = item.getInstance().getJson().getJsonArray("identifiers");
+    JsonArray identifiers = actualCostRecord.getJsonObject("instance").getJsonArray("identifiers");
     assertThat(identifiers, CoreMatchers.notNullValue());
     assertThat(identifiers.size(), is(1));
     assertThat(identifiers.getJsonObject(0).getString("identifierTypeId"),
       Is.is(isbnIdentifierId.toString()));
     assertThat(identifiers.getJsonObject(0).getString("value"), Is.is(isbnValue));
+    assertThat(identifiers.getJsonObject(0).getString("identifierType"),
+      Is.is("ISBN"));
 
-    assertThat(actualCostRecord, hasJsonPath("itemBarcode", item.getBarcode()));
-    assertThat(actualCostRecord, hasJsonPath("loanType", loanType.getJson().getString("name")));
+    assertThat(actualCostRecord, hasJsonPath("item.barcode", item.getBarcode()));
+    assertThat(actualCostRecord, hasJsonPath("item.loanType", loanType.getJson().getString("name")));
 
-    JsonObject callNumberComponents = item.getJson().getJsonObject("effectiveCallNumberComponents");
-    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
-      hasJsonPath("callNumber", callNumberComponents.getString("callNumber")));
-    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
-      hasJsonPath("prefix", callNumberComponents.getString("prefix")));
-    assertThat(actualCostRecord.getJsonObject("effectiveCallNumberComponents"),
-      hasJsonPath("suffix", callNumberComponents.getString("suffix")));
+    JsonObject actualCallNumberComponents = item.getJson()
+      .getJsonObject("effectiveCallNumberComponents");
+    JsonObject callNumberComponentsToCompare = actualCostRecord.getJsonObject("item")
+      .getJsonObject("effectiveCallNumberComponents");
+    assertThat(callNumberComponentsToCompare,
+      hasJsonPath("callNumber", actualCallNumberComponents.getString("callNumber")));
+    assertThat(callNumberComponentsToCompare,
+      hasJsonPath("prefix", actualCallNumberComponents.getString("prefix")));
+    assertThat(callNumberComponentsToCompare,
+      hasJsonPath("suffix", actualCallNumberComponents.getString("suffix")));
 
-    assertThat(actualCostRecord, hasJsonPath("permanentItemLocation","2nd Floor - Economics"));
-    assertThat(actualCostRecord, hasJsonPath("feeFineOwnerId", notNullValue()));
-    assertThat(actualCostRecord, hasJsonPath("feeFineOwner", notNullValue()));
-    assertThat(actualCostRecord.getString("feeFineTypeId"), notNullValue());
-    assertThat(actualCostRecord, hasJsonPath("feeFineType", "Lost item fee (actual cost)"));
+    assertThat(actualCostRecord, hasJsonPath("item.permanentLocation","2nd Floor - Economics"));
+    assertThat(actualCostRecord, hasJsonPath("feeFine.ownerId", notNullValue()));
+    assertThat(actualCostRecord, hasJsonPath("feeFine.owner", notNullValue()));
+    assertThat(actualCostRecord, hasJsonPath("feeFine.typeId", notNullValue()));
+    assertThat(actualCostRecord, hasJsonPath("feeFine.type", "Lost item fee (actual cost)"));
     assertThat(actualCostRecord, hasNoJsonPath("accountId"));
   }
 
@@ -827,56 +832,56 @@ class DeclareLostAPITests extends APITests {
 
   @Test
   void shouldClearExistingFeesAndCloseLoanAsLostAndPaidIfLostandPaidItemDeclaredLostAndPolicySetNotToChargeFees() {
-	  final double lostItemProcessingFee = 20.0;
-	  UUID servicePointId = servicePointsFixture.cd1().getId();
+    final double lostItemProcessingFee = 20.0;
+    UUID servicePointId = servicePointsFixture.cd1().getId();
 
-	  final LostItemFeePolicyBuilder lostPolicyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
-	    .withName("age to lost with processing fees")
-	    .billPatronImmediatelyWhenAgedToLost()
-	    .withNoFeeRefundInterval()
-	    .withNoChargeAmountItem()
-	    .doNotChargeProcessingFeeWhenDeclaredLost()
-	    .chargeProcessingFeeWhenAgedToLost(lostItemProcessingFee);
+    final LostItemFeePolicyBuilder lostPolicyBuilder = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("age to lost with processing fees")
+      .billPatronImmediatelyWhenAgedToLost()
+      .withNoFeeRefundInterval()
+      .withNoChargeAmountItem()
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .chargeProcessingFeeWhenAgedToLost(lostItemProcessingFee);
 
-	  useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostPolicyBuilder).getId());
 
-	  AgeToLostResult agedToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(lostPolicyBuilder);
-	  UUID testLoanId = agedToLostResult.getLoanId();
-	  UUID itemId = agedToLostResult.getItemId();
+    AgeToLostResult agedToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(lostPolicyBuilder);
+    UUID testLoanId = agedToLostResult.getLoanId();
+    UUID itemId = agedToLostResult.getItemId();
 
-	  JsonObject AgeToLostItem = itemsFixture.getById(itemId).getJson();
+    JsonObject AgeToLostItem = itemsFixture.getById(itemId).getJson();
 
-	  assertThat(AgeToLostItem, isAgedToLost());
+    assertThat(AgeToLostItem, isAgedToLost());
 
-	  JsonObject itemFee = getAccountForLoan(testLoanId, "Lost item processing fee");
+    JsonObject itemFee = getAccountForLoan(testLoanId, "Lost item processing fee");
 
-	  assertThat(itemFee, hasJsonPath("amount", lostItemProcessingFee));
+    assertThat(itemFee, hasJsonPath("amount", lostItemProcessingFee));
 
-	  final ZonedDateTime declareLostDate = getZonedDateTime().plusWeeks(1);
-	  mockClockManagerToReturnFixedDateTime(declareLostDate);
+    final ZonedDateTime declareLostDate = getZonedDateTime().plusWeeks(1);
+    mockClockManagerToReturnFixedDateTime(declareLostDate);
 
-	  final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-	    .forLoanId(testLoanId)
-	    .withServicePointId(servicePointId)
-	    .on(declareLostDate)
-	    .withNoComment();
+    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(testLoanId)
+      .withServicePointId(servicePointId)
+      .on(declareLostDate)
+      .withNoComment();
 
-	  FakePubSub.clearPublishedEvents();
+    FakePubSub.clearPublishedEvents();
 
-	  declareLostFixtures.declareItemLost(builder);
+    declareLostFixtures.declareItemLost(builder);
 
-	  JsonObject declareLostLoan = loansClient.getById(testLoanId).getJson();
-	  JsonObject declareLostItem = itemsFixture.getById(itemId).getJson();
+    JsonObject declareLostLoan = loansClient.getById(testLoanId).getJson();
+    JsonObject declareLostItem = itemsFixture.getById(itemId).getJson();
 
-	  assertThat(declareLostItem, isLostAndPaid());
+    assertThat(declareLostItem, isLostAndPaid());
 
-	  Double finalAmountRemaining = declareLostLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
-	  assertEquals(finalAmountRemaining, 0.0, 0.01);
+    Double finalAmountRemaining = declareLostLoan.getJsonObject("feesAndFines").getDouble("amountRemainingToPay");
+    assertEquals(finalAmountRemaining, 0.0, 0.01);
 
-	  List<JsonObject> accounts = getAccountsForLoan(testLoanId);
+    List<JsonObject> accounts = getAccountsForLoan(testLoanId);
 
-	  assertThat(accounts, hasSize(1));
-	  assertThat(getOpenAccounts(accounts), hasSize(0));
+    assertThat(accounts, hasSize(1));
+    assertThat(getOpenAccounts(accounts), hasSize(0));
 
     verifyNumberOfPublishedEvents(LOAN_CLOSED, 1);
     verifyNumberOfPublishedEvents(ITEM_DECLARED_LOST, 0);
@@ -978,7 +983,7 @@ class DeclareLostAPITests extends APITests {
 
   private JsonObject getActualCostRecordForLoan(UUID loanId) {
     return actualCostRecordsClient.getAll().stream()
-      .filter(record -> record.getString("loanId").equals(loanId.toString()))
+      .filter(record -> record.getJsonObject("loan").getString("id").equals(loanId.toString()))
       .findFirst()
       .orElse(null);
   }

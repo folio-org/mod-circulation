@@ -156,7 +156,7 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
     return requestQueue;
   }
 
-  RequestPolicy getRequestPolicy() { return requestPolicy; }
+  public RequestPolicy getRequestPolicy() { return requestPolicy; }
 
   String getSourceItemId() {
     return moveRequestRecord != null ? moveRequestRecord.getSourceItemId() : null;
@@ -181,8 +181,18 @@ public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedR
   }
 
   @Override
+  public User getUser() {
+    return request.getUser();
+  }
+
+  @Override
   public String getItemId() {
     return request.getItemId();
+  }
+
+  @Override
+  public Item getItem() {
+    return request.getItem();
   }
 
   ZoneId getTimeZone() {

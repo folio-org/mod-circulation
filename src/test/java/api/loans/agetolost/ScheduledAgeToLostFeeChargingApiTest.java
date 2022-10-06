@@ -379,8 +379,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   @Test
   void shouldAgeToLostAndChargeLostItemProcessingFeeWhenActualFeeSet() {
     final double agedToLostLostProcessingFee = 10.00;
-    UUID typeId = UUID.randomUUID();
-    String isbnValue = "9781466636897";
+
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
         .doNotChargeOverdueFineWhenReturned()
@@ -392,11 +391,15 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     useLostItemPolicy(lostItemPolicy.getId());
 
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(identity(),
-      instanceBuilder -> instanceBuilder.addIdentifier(typeId, isbnValue),
+      builder -> builder.addIdentifier(identifierTypesFixture.isbn().getId(), "9781466636897"),
       itemBuilder -> itemBuilder
         .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
         .withPermanentLocation(locationsFixture.thirdFloor())
-        .withCallNumber("callNumber", "prefix", "suffix"));
+        .withCallNumber("callNumber", "prefix", "suffix")
+        .withVolume("volume")
+        .withChronology("chronology")
+        .withEnumeration("enumeration")
+        .withCopyNumber("copyNumber"));
 
     UserResource steve = usersFixture.steve();
     final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item, steve);
@@ -406,13 +409,13 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     final IndividualResource loanFromStorage = loansStorageClient.get(checkOut.getId());
 
     Optional<JsonObject> actualCostRecordById = actualCostRecordsClient.getMany(
-      CqlQuery.exactMatch("loanId", checkOut.getId().toString())).stream().findFirst();
+      CqlQuery.exactMatch("loan.id", checkOut.getId().toString())).stream().findFirst();
 
     assertTrue(actualCostRecordById.isPresent());
     JsonObject actual = actualCostRecordById.get();
     assertThat(actual, isActualCostRecord(loanFromStorage, item, steve, ItemLossType.AGED_TO_LOST,
       locationsFixture.thirdFloor().getJson().getString("name"), feeFineOwnerFixture.cd1Owner(),
-      feeFineTypeFixture.lostItemActualCostFee()));
+      feeFineTypeFixture.lostItemActualCostFee(), "ISBN", patronGroupsFixture.regular()));
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
     assertThat(loanFromStorage, hasLostItemProcessingFee(isOpen(agedToLostLostProcessingFee)));
   }
@@ -429,7 +432,17 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     useLostItemPolicy(lostItemPolicy.getId());
 
-    final ItemResource item = itemsFixture.basedUponNod();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(identity(),
+      builder -> builder.addIdentifier(identifierTypesFixture.isbn().getId(), "9781466636897"),
+      itemBuilder -> itemBuilder
+        .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+        .withPermanentLocation(locationsFixture.thirdFloor())
+        .withCallNumber("callNumber", "prefix", "suffix")
+        .withVolume("volume")
+        .withChronology("chronology")
+        .withEnumeration("enumeration")
+        .withCopyNumber("copyNumber"));
+
     final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item);
 
     ageToLostFixture.ageToLostAndChargeFees();
@@ -438,13 +451,14 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     assertThat(actualCostRecordsClient.getAll(), hasSize(1));
     Optional<JsonObject> actualCostRecordById = actualCostRecordsClient.getMany(
-      CqlQuery.exactMatch("loanId", checkOut.getId().toString())).stream().findFirst();
+      CqlQuery.exactMatch("loan.id", checkOut.getId().toString())).stream().findFirst();
 
     assertTrue(actualCostRecordById.isPresent());
     JsonObject actual = actualCostRecordById.get();
     assertThat(actual, isActualCostRecord(loanFromStorage, item, usersFixture.jessica(),
       ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor().getJson().getString("name"),
-      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee()));
+      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN",
+      patronGroupsFixture.regular()));
     assertThat(loanFromStorage.getJson(), isLostItemHasBeenBilled());
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
   }

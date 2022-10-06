@@ -1,15 +1,11 @@
 package api.support.builders;
-
-
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-
 import java.util.UUID;
 
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class AccountBuilder extends JsonBuilder implements Builder {
-
   private String id;
   private String loanId;
   private Double remainingAmount;
@@ -40,7 +36,6 @@ public class AccountBuilder extends JsonBuilder implements Builder {
   @Override
   public JsonObject create() {
     JsonObject accountRequest = new JsonObject();
-
     write(accountRequest, "id", id);
     write(accountRequest, "loanId", loanId);
     write(accountRequest, "amount", amount);

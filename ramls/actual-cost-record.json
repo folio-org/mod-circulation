@@ -8,21 +8,7 @@
       "type": "string",
       "$ref": "raml-util/schemas/uuid.schema"
     },
-    "userId": {
-      "description": "ID of the patron the actual cost record was created for",
-      "type": "string",
-      "$ref": "raml-util/schemas/uuid.schema"
-    },
-    "userBarcode": {
-      "description": "Barcode of the patron the actual cost record was created for",
-      "type": "string"
-    },
-    "loanId": {
-      "description": "Unique ID (generated UUID) of the loan",
-      "type": "string",
-      "$ref": "raml-util/schemas/uuid.schema"
-    },
-    "itemLossType": {
+    "lossType": {
       "description": "Type of the item loss",
       "type": "string",
       "enum": [
@@ -30,93 +16,253 @@
         "Declared lost"
       ]
     },
-    "dateOfLoss": {
+    "lossDate": {
       "description": "Date and time when the item was lost",
       "type": "string",
       "format": "date-time"
     },
-    "title": {
-      "description": "The primary title (or label) associated with the resource",
-      "type": "string"
+    "expirationDate": {
+      "description": "Expiration date and time of actual cost record",
+      "type": "string",
+      "format": "date-time"
     },
-    "identifiers": {
-      "type": "array",
-      "description": "An extensible set of name-value pairs of identifiers associated with the resource",
-      "minItems": 0,
-      "items": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "description": "Resource identifier value"
-          },
-          "identifierTypeId": {
-            "type": "string",
-            "description": "UUID of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)",
-            "$ref": "raml-util/schemas/uuid.schema"
-          }
-        },
-        "additionalProperties": false,
-        "required": [
-          "value",
-          "identifierTypeId"
-        ]
-      }
-    },
-    "itemBarcode": {
-      "description": "Barcode of the lost item",
-      "type": "string"
-    },
-    "loanType": {
-      "description": "Loan type of the lost item",
-      "type": "string"
-    },
-    "effectiveCallNumberComponents": {
+    "user": {
+      "description": "User info",
       "type": "object",
-      "description": "Elements of a full call number generated from the item or holding",
+      "javaType": "org.folio.rest.jaxrs.model.ActualCostRecordUser",
       "properties": {
-        "callNumber": {
+        "id": {
+          "description": "User ID",
           "type": "string",
-          "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item.",
-          "readonly": true
+          "$ref": "raml-util/schemas/uuid.schema"
         },
-        "prefix": {
-          "type": "string",
-          "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item.",
-          "readonly": true
+        "barcode": {
+          "description": "User barcode",
+          "type": "string"
         },
-        "suffix": {
+        "firstName": {
+          "description": "User first name",
+          "type": "string"
+        },
+        "lastName": {
+          "description": "User last name",
+          "type": "string"
+        },
+        "middleName": {
+          "description": "User middle name",
+          "type": "string"
+        },
+        "patronGroupId": {
+          "description": "Patron group ID",
           "type": "string",
-          "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item.",
-          "readonly": true
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "patronGroup": {
+          "description": "Patron group name",
+          "type": "string"
         }
-      }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "lastName"
+      ]
     },
-    "permanentItemLocation": {
-      "description": "Permanent item location of the lost item",
-      "type": "string"
+    "loan": {
+      "description": "Loan info",
+      "type": "object",
+      "javaType": "org.folio.rest.jaxrs.model.ActualCostRecordLoan",
+      "properties": {
+        "id": {
+          "description": "Loan ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ]
     },
-    "accountId": {
-      "description": "ID of the fee/fine created based on the actual cost record during its manual processing",
-      "$ref": "raml-util/schemas/uuid.schema"
+    "item": {
+      "description": "Item info",
+      "type": "object",
+      "javaType": "org.folio.rest.jaxrs.model.ActualCostRecordItem",
+      "properties": {
+        "id": {
+          "description": "Item ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "barcode": {
+          "description": "Item barcode",
+          "type": "string"
+        },
+        "materialTypeId": {
+          "description": "Material type ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "materialType": {
+          "description": "Material type name",
+          "type": "string"
+        },
+        "permanentLocationId": {
+          "description": "Permanent location ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "permanentLocation": {
+          "description": "Permanent location name",
+          "type": "string"
+        },
+        "loanTypeId": {
+          "description": "Loan type ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "loanType": {
+          "description": "Loan type name",
+          "type": "string"
+        },
+        "holdingsRecordId": {
+          "description": "Holdings record ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "effectiveCallNumberComponents": {
+          "type": "object",
+          "description": "Elements of a full call number generated from the item or holding",
+          "properties": {
+            "callNumber": {
+              "type": "string",
+              "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item."
+            },
+            "prefix": {
+              "type": "string",
+              "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item."
+            },
+            "suffix": {
+              "type": "string",
+              "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item."
+            }
+          },
+          "additionalProperties": false
+        },
+        "volume": {
+          "type": "string",
+          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes)."
+        },
+        "enumeration": {
+          "type": "string",
+          "description": "Enumeration is the descriptive information for the numbering scheme of a serial."
+        },
+        "chronology": {
+          "type": "string",
+          "description": "Chronology is the descriptive information for the dating scheme of a serial."
+        },
+        "copyNumber": {
+          "type": "string",
+          "description": "Copy number is the piece identifier. The copy number reflects if the library has a copy of a single-volume monograph; one copy of a multi-volume, (e.g. Copy 1, or C.7.)"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "materialTypeId",
+        "materialType",
+        "loanTypeId",
+        "loanType",
+        "holdingsRecordId"
+      ]
     },
-    "feeFineOwnerId": {
-      "description": "Fee/fine owner ID",
-      "type": "string",
-      "$ref": "raml-util/schemas/uuid.schema"
+    "instance": {
+      "description": "Instance info",
+      "type": "object",
+      "javaType": "org.folio.rest.jaxrs.model.ActualCostRecordInstance",
+      "properties": {
+        "id": {
+          "description": "Instance ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "title": {
+          "description": "Instance title",
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "array",
+          "description": "An extensible set of name-value pairs of identifiers associated with the resource",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "javaType": "org.folio.rest.jaxrs.model.ActualCostRecordIdentifier",
+            "properties": {
+              "value": {
+                "type": "string",
+                "description": "Resource identifier value"
+              },
+              "identifierType": {
+                "type": "string",
+                "description": "Name of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)"
+              },
+              "identifierTypeId": {
+                "type": "string",
+                "description": "UUID of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)",
+                "$ref": "raml-util/schemas/uuid.schema"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "identifierType",
+              "identifierTypeId"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ]
     },
-    "feeFineOwner": {
-      "description": "Fee/fine owner name",
-      "type": "string"
-    },
-    "feeFineTypeId": {
-      "description": "Fee/fine type ID",
-      "type": "string",
-      "$ref": "raml-util/schemas/uuid.schema"
-    },
-    "feeFineType": {
-      "description": "Fee/fine type name",
-      "type": "string"
+    "feeFine": {
+      "description": "Fee/fine info",
+      "type": "object",
+      "javaType": "org.folio.rest.jaxrs.model.ActualCostRecordFeeFine",
+      "properties": {
+        "accountId": {
+          "description": "ID of the fee/fine (\"account\") instance",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "ownerId": {
+          "description": "Fee/fine owner ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "owner": {
+          "description": "Fee/fine owner name",
+          "type": "string"
+        },
+        "typeId": {
+          "description": "Fee/fine type ID",
+          "type": "string",
+          "$ref": "raml-util/schemas/uuid.schema"
+        },
+        "type": {
+          "description": "Fee/fine type name",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "ownerId",
+        "owner",
+        "typeId",
+        "type"
+      ]
     },
     "metadata": {
       "description": "Metadata about creation and changes, provided by the server (client should not provide)",
@@ -126,20 +272,13 @@
   },
   "additionalProperties": false,
   "required": [
-    "userId",
-    "userBarcode",
-    "loanId",
-    "itemLossType",
-    "dateOfLoss",
-    "title",
-    "identifiers",
-    "itemBarcode",
-    "loanType",
-    "effectiveCallNumberComponents",
-    "permanentItemLocation",
-    "feeFineOwnerId",
-    "feeFineOwner",
-    "feeFineTypeId",
-    "feeFineType"
+    "lossType",
+    "lossDate",
+    "expirationDate",
+    "user",
+    "loan",
+    "item",
+    "instance",
+    "feeFine"
   ]
 }

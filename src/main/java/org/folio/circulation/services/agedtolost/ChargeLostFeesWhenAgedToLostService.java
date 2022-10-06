@@ -46,12 +46,14 @@ import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
+import org.folio.circulation.infrastructure.storage.inventory.IdentifierTypeRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.services.ActualCostRecordService;
+import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -94,7 +96,8 @@ public class ChargeLostFeesWhenAgedToLostService {
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
     this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients),
-      LocationRepository.using(clients, new ServicePointRepository(clients)));
+      LocationRepository.using(clients, new ServicePointRepository(clients)),
+      new IdentifierTypeRepository(clients), new PatronGroupRepository(clients));
   }
 
   public CompletableFuture<Result<Void>> chargeFees() {

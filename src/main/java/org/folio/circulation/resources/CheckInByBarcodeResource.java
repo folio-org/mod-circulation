@@ -117,7 +117,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(processAdapter::refundLostItemFees))
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
-      .thenComposeAsync(r -> r.after(v -> eventPublisher.publishItemCheckedInEvents(v, userRepository)))
+      .thenComposeAsync(r -> r.after(v -> eventPublisher.publishItemCheckedInEvents(v, userRepository, loanRepository)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
