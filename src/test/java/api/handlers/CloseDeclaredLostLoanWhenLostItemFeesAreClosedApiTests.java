@@ -5,8 +5,6 @@ import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
 import static api.support.matchers.ItemMatchers.isCheckedOut;
-import static api.support.matchers.ItemMatchers.isDeclaredLost;
-import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
@@ -20,6 +18,7 @@ import static org.hamcrest.Matchers.hasSize;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +30,10 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoanWhenLostItemFeesAreClosed {
+
+  public CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests() {
+    super(ItemStatus.DECLARED_LOST);
+  }
 
   @BeforeEach
   public void createLoanAndDeclareItemLost() {
@@ -52,9 +55,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    assertThatLoanIsClosedAsLostAndPaid();
 
     List<JsonObject> loanClosedEvents = getPublishedEventsAsList(byEventType(LOAN_CLOSED));
     assertThat(loanClosedEvents, hasSize(1));
@@ -70,9 +71,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .createManualFeeForLoan(loan, 10.00);
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    assertThatLoanIsClosedAsLostAndPaid();
 
     assertThat(accountsClient.getById(manualFee.getId()).getJson(), isOpen());
   }
@@ -80,21 +79,15 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
   @Test
   void shouldNotCloseLoanWhenProcessingFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
+    assertThatLoanIsOpenAndLost();
   }
 
   @Test
   void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
+    assertThatLoanIsOpenAndLost();
   }
 
   @Test
@@ -114,7 +107,6 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     payLostItemActualCostFeeAndCheckThatLoanIsClosed();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -134,7 +126,6 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -155,7 +146,6 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     payProcessingFeeAndCheckThatLoanIsClosedAsExpired();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
   @Test
@@ -176,7 +166,6 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     runScheduledActualCostExpirationAndCheckThatLoanIsOpen();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 
   @Test
@@ -197,7 +186,6 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
       .forLoanId(loan.getId()));
 
     payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired();
-    assertThat(itemsClient.getById(item.getId()).getJson(), isDeclaredLost());
   }
 
   @Test
@@ -259,9 +247,7 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
     loansStorageClient.replace(loan.getId(), loanToClose);
 
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
-    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    assertThatLoanIsClosedAsLostAndPaid();
 
     assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), empty());
   }
