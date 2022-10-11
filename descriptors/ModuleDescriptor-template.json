@@ -845,6 +845,8 @@
             "pubsub.publish.post",
             "users.item.get",
             "users.collection.get",
+            "usergroups.collection.get",
+            "usergroups.item.get",
             "circulation-storage.circulation-rules.get",
             "circulation-storage.patron-notice-policies.item.get",
             "circulation-storage.patron-notice-policies.collection.get",
@@ -932,7 +934,7 @@
     },
     {
       "id": "users",
-      "version": "14.2 15.0"
+      "version": "14.2 15.0 16.0"
     },
     {
       "id": "locations",
@@ -1025,6 +1027,10 @@
     {
       "id": "notes",
       "version": "1.0 2.0 3.0"
+    },
+    {
+      "id": "actual-cost-record-storage",
+      "version": "0.4"
     }
   ],
   "permissionSets": [
@@ -1823,6 +1829,8 @@
         "feefines.collection.get",
         "accounts.item.post",
         "users.item.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
         "feefineactions.item.post",
         "pubsub.publish.post",
         "note.types.collection.get",

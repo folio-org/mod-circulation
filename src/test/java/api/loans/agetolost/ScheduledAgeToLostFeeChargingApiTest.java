@@ -381,8 +381,6 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   @Test
   void shouldCreateActualCostRecordAndChargeLostItemProcessingFee() {
     final double agedToLostLostProcessingFee = 10.00;
-    UUID typeId = identifierTypesFixture.isbn().getId();
-    String isbnValue = "9781466636897";
 
     IndividualResource lostItemPolicy = lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
@@ -395,11 +393,15 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     useLostItemPolicy(lostItemPolicy.getId());
 
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(identity(),
-      instanceBuilder -> instanceBuilder.addIdentifier(typeId, isbnValue),
+      builder -> builder.addIdentifier(identifierTypesFixture.isbn().getId(), "9781466636897"),
       itemBuilder -> itemBuilder
         .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
         .withPermanentLocation(locationsFixture.thirdFloor())
-        .withCallNumber("callNumber", "prefix", "suffix"));
+        .withCallNumber("callNumber", "prefix", "suffix")
+        .withVolume("volume")
+        .withChronology("chronology")
+        .withEnumeration("enumeration")
+        .withCopyNumber("copyNumber"));
 
     final UserResource user = usersFixture.steve();
     final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item, user);
@@ -416,7 +418,8 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(actualCostRecords, hasSize(1));
     assertThat(actualCostRecords.get(0), isActualCostRecord(loan, item, user,
       ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor().getJson().getString("name"),
-      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN"));
+      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN",
+      patronGroupsFixture.regular()));
   }
 
   @Test
@@ -431,8 +434,18 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     useLostItemPolicy(lostItemPolicy.getId());
 
-    final ItemResource item = itemsFixture.basedUponNod();
     final UserResource user = usersFixture.steve();
+    final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(identity(),
+      builder -> builder.addIdentifier(identifierTypesFixture.isbn().getId(), "9781466636897"),
+      itemBuilder -> itemBuilder
+        .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+        .withPermanentLocation(locationsFixture.thirdFloor())
+        .withCallNumber("callNumber", "prefix", "suffix")
+        .withVolume("volume")
+        .withChronology("chronology")
+        .withEnumeration("enumeration")
+        .withCopyNumber("copyNumber"));
+
     final CheckOutResource checkOut = checkOutFixture.checkOutByBarcode(item, user);
 
     ageToLostFixture.ageToLostAndChargeFees();
@@ -447,7 +460,8 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(actualCostRecords, hasSize(1));
     assertThat(actualCostRecords.get(0), isActualCostRecord(loan, item, user,
       ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor().getJson().getString("name"),
-      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN"));
+      feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN",
+      patronGroupsFixture.regular()));
   }
 
   @Test

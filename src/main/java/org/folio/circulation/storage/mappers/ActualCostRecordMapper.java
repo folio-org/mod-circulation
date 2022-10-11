@@ -41,6 +41,8 @@ public class ActualCostRecordMapper {
       write(userJson, "firstName", user.getFirstName());
       write(userJson, "lastName", user.getLastName());
       write(userJson, "middleName", user.getMiddleName());
+      write(userJson, "patronGroupId", user.getPatronGroupId());
+      write(userJson, "patronGroup", user.getPatronGroup());
 
       write(json, "user", userJson);
     }
@@ -65,6 +67,10 @@ public class ActualCostRecordMapper {
       write(itemJson, "loanTypeId", item.getLoanTypeId());
       write(itemJson, "loanType", item.getLoanType());
       write(itemJson, "holdingsRecordId", item.getHoldingsRecordId());
+      write(itemJson, "volume", item.getVolume());
+      write(itemJson, "enumeration", item.getEnumeration());
+      write(itemJson, "chronology", item.getChronology());
+      write(itemJson, "copyNumber", item.getCopyNumber());
       write(itemJson, "effectiveCallNumberComponents",
         createCallNumberComponents(item.getEffectiveCallNumberComponents()));
 
