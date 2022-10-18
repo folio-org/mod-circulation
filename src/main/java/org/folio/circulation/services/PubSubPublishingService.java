@@ -1,9 +1,5 @@
 package org.folio.circulation.services;
 
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
-
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -36,20 +32,17 @@ public class PubSubPublishingService {
   }
 
   public CompletableFuture<Boolean> publishEvent(String eventType, String payload) {
+    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
     Event event = new Event()
       .withId(UUID.randomUUID().toString())
       .withEventType(eventType)
       .withEventPayload(payload)
       .withEventMetadata(new EventMetadata()
         .withPublishedBy(PubSubClientUtils.getModuleId())
-        .withTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER))
+        .withTenantId(params.getTenantId())
         .withEventTTL(1));
 
     final CompletableFuture<Boolean> publishResult = new CompletableFuture<>();
-    OkapiConnectionParams params = new OkapiConnectionParams();
-    params.setOkapiUrl(okapiHeaders.get(OKAPI_URL_HEADER));
-    params.setTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER));
-    params.setToken(okapiHeaders.get(OKAPI_TOKEN_HEADER));
 
     vertxContext.runOnContext(v -> PubSubClientUtils.sendEventMessage(event, params)
       .whenComplete((result, throwable) -> {
