@@ -216,6 +216,18 @@ public class UpdateRequestQueue {
     }
   }
 
+  CompletableFuture<Result<RequestAndRelatedRecords>> onExpiration(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+    if(requestAndRelatedRecords.getRequest().isPickupExpired()) {
+      return requestQueueRepository.updateRequestsWithChangedPositions(
+          requestAndRelatedRecords.getRequestQueue())
+        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+    }
+    else {
+      return completedFuture(succeeded(requestAndRelatedRecords));
+    }
+  }
+
   CompletableFuture<Result<RequestAndRelatedRecords>> onMovedFrom(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 

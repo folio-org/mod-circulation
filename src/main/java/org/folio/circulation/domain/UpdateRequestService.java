@@ -6,6 +6,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -41,9 +42,11 @@ public class UpdateRequestService {
     return requestRepository.getById(updated.getId())
       .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
-        .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
+        .thenApply(r -> r.next(records -> removeRequestQueuePositionIfNeeded(records, Request::isCancelled)))
+        .thenApply(r -> r.next(records -> removeRequestQueuePositionIfNeeded(records, Request::isPickupExpired)))
         .thenComposeAsync(r -> r.after(requestRepository::update))
         .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
+        .thenComposeAsync(r -> r.after(updateRequestQueue::onExpiration))
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
         .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))));
@@ -59,12 +62,12 @@ public class UpdateRequestService {
     );
   }
 
-  private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
+  private Result<RequestAndRelatedRecords> removeRequestQueuePositionIfNeeded(
+    RequestAndRelatedRecords requestAndRelatedRecords, Predicate<Request> removeRequestPredicate) {
 
     final Request request = requestAndRelatedRecords.getRequest();
 
-    if(request.isCancelled()) {
+    if(removeRequestPredicate.test(request)) {
       requestAndRelatedRecords.getRequestQueue().remove(request);
     }
 

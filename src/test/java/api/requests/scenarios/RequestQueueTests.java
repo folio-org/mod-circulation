@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import io.vertx.core.json.Json;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
@@ -128,6 +129,43 @@ class RequestQueueTests extends APITests {
 
     assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
 
+    retainsStoredSummaries(requestByRebecca);
+  }
+
+  @Test
+  void pickupExpiredRequestShouldBeRemovedFromQueue() {
+    var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    var james = usersFixture.james();
+    var jessica = usersFixture.jessica();
+    var steve = usersFixture.steve();
+    var charlotte = usersFixture.charlotte();
+    var rebecca = usersFixture.rebecca();
+
+    checkOutFixture.checkOutByBarcode(smallAngryPlanet, james);
+
+    var requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
+      smallAngryPlanet, jessica, ZonedDateTime.of(2022, 7, 22, 10, 22, 54, 0, UTC));
+    var requestBySteve = requestsFixture.placeItemLevelHoldShelfRequest(
+      smallAngryPlanet, steve, ZonedDateTime.of(2022, 10, 27, 11, 54, 37, 0, UTC));
+    var requestByCharlotte = requestsFixture.placeItemLevelHoldShelfRequest(
+      smallAngryPlanet, charlotte, ZonedDateTime.of(2022, 1, 10, 15, 34, 21, 0, UTC));
+    var requestByRebecca = requestsFixture.placeItemLevelHoldShelfRequest(
+      smallAngryPlanet, rebecca, ZonedDateTime.of(2022, 2, 4, 7, 4, 53, 0, UTC));
+
+    requestsClient.replace(requestByCharlotte.getId(),
+      requestByCharlotte.getJson().put("status", "Closed - Pickup expired"));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getInteger("position"), is(1));
+
+    retainsStoredSummaries(requestByJessica);
+    requestBySteve = requestsClient.get(requestBySteve);
+
+    assertThat(requestBySteve.getJson().getInteger("position"), is(2));
+    retainsStoredSummaries(requestBySteve);
+
+    requestByRebecca = requestsClient.get(requestByRebecca);
+    assertThat(requestByRebecca.getJson().getInteger("position"), is(3));
     retainsStoredSummaries(requestByRebecca);
   }
 
