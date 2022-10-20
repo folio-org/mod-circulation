@@ -4030,6 +4030,39 @@ public class RequestsAPICreationTests extends APITests {
     }
   }
 
+  @Test
+  void pickupExpiredTitleLevelRequestShouldBeRemovedFromQueue() {
+    configurationsFixture.enableTlrFeature();
+    var jessica = usersFixture.jessica();
+    var steve = usersFixture.steve();
+    var charlotte = usersFixture.charlotte();
+    var rebecca = usersFixture.rebecca();
+
+    UUID instanceId = UUID.randomUUID();
+    buildItem(instanceId, "111");
+    buildItem(instanceId, "222");
+    buildItem(instanceId, "333");
+    buildItem(instanceId, "444");
+    var requestByJessica = requestsFixture.placeTitleLevelPageRequest(
+      instanceId, jessica, servicePointsFixture.cd1().getId());
+    var requestBySteve = requestsFixture.placeTitleLevelPageRequest(
+      instanceId, steve, servicePointsFixture.cd1().getId());
+    var requestByCharlotte = requestsFixture.placeTitleLevelPageRequest(
+      instanceId, charlotte, servicePointsFixture.cd1().getId());
+    var requestByRebecca = requestsFixture.placeTitleLevelPageRequest(
+      instanceId, rebecca, servicePointsFixture.cd1().getId());
+
+    requestsClient.replace(requestByCharlotte.getId(),
+      requestByCharlotte.getJson().put("status", "Closed - Pickup expired"));
+
+    requestByJessica = requestsClient.get(requestByJessica);
+    assertThat(requestByJessica.getJson().getInteger("position"), CoreMatchers.is(1));
+    requestBySteve = requestsClient.get(requestBySteve);
+    assertThat(requestBySteve.getJson().getInteger("position"), CoreMatchers.is(2));
+    requestByRebecca = requestsClient.get(requestByRebecca);
+    assertThat(requestByRebecca.getJson().getInteger("position"), CoreMatchers.is(3));
+  }
+
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
     boolean isNoticeEnabledInNoticePolicy) {
 
