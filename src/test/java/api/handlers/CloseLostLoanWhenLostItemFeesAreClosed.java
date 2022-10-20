@@ -2,35 +2,40 @@ package api.handlers;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.scheduledActualCostExpiration;
+import static api.support.matchers.ItemMatchers.hasStatus;
+import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.ZonedDateTime;
 
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.TimedTaskClient;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
+  private final ItemStatus lostItemStatus;
   protected IndividualResource loan;
   protected IndividualResource item;
   private final TimedTaskClient timedTaskClient =  new TimedTaskClient(getOkapiHeadersFromContext());
 
   protected void payProcessingFeeAndCheckThatLoanIsClosedAsExpired() {
     payProcessingFeeAndRunScheduledActualCostExpiration(ClockUtil.getZonedDateTime().plusMonths(2));
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    assertThatLoanIsClosedAsLostAndPaid();
   }
 
   protected void payProcessingFeeAndCheckThatLoanIsOpenAsNotExpired() {
     payProcessingFeeAndRunScheduledActualCostExpiration(ClockUtil.getZonedDateTime().plusWeeks(1));
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
+    assertThatLoanIsOpenAndLost();
   }
 
   protected void runScheduledActualCostExpirationAndCheckThatLoanIsOpen() {
@@ -41,7 +46,7 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
       "scheduled-actual-cost-expiration");
     mockClockManagerToReturnDefaultDateTime();
 
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
+    assertThatLoanIsOpenAndLost();
   }
 
   private void payProcessingFeeAndRunScheduledActualCostExpiration(ZonedDateTime dateTime) {
@@ -58,8 +63,7 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     createLostItemFeeActualCostAccount(10.0, loan);
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    assertThatLoanIsClosedAsLostAndPaid();
   }
 
   protected void payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed() {
@@ -67,8 +71,7 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    assertThatLoanIsClosedAsLostAndPaid();
   }
 
   protected void createLostItemFeeActualCostAccount(double amount, IndividualResource loan) {
@@ -87,5 +90,15 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
       .withBalance(amount)
       .withActionAmount(amount)
       .withActionType("Lost item fee (actual cost)"));
+  }
+
+  protected void assertThatLoanIsClosedAsLostAndPaid() {
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+  }
+
+  protected void assertThatLoanIsOpenAndLost() {
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
+    assertThat(itemsClient.getById(item.getId()).getJson(), hasStatus(lostItemStatus.getValue()));
   }
 }
