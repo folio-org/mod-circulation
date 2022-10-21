@@ -1,7 +1,37 @@
-## 23.2.0 IN PROGRESS
+## 23.3.0 IN PROGRESS
 
-* Supports users interface 14.2, 15.0, 16.0 (CIRC-1572)
 * Upgrade `calendar` interface to `5.0`
+
+## 23.2.0 2022-10-19
+
+* Do not close the loan when Actual Cost Record is created (CIRC-1624)
+* Additional fields for Actual Cost Record (CIRC-1632)
+* Upgrade to RMB 35.0.0 and Vertx 4.3.3 (CIRC-1628)
+* Add dependency on actual-cost-record-storage interface (CIRC-1631)
+* Add error code to request already closed error for PUT endpoint (CIRC-1553)
+* Add missing permissions for deleting scheduled patron notices (CIRC-1615)
+* Consider TLRs during renewal (CIRC-1611)
+* Update actual cost record schema (CIRC-1607)
+* Refuse renewal when title-level recall exists (CIRC-1610)
+* Change item status on request deletion (CIRC-1569)
+* Fix NPE in Items In Transit Report (CIRC-1588)
+* Add itemLimit parameter to the item limit error (CIRC-1574)
+* Add missing user barcode to requests in Circ Log (CIRC-1604)
+* Send scheduled notices for TLR linked to item according to Patron Notice Policy (CIRC-1593)
+* Aged to lost: Closing "Lost and paid" status - ACTUAL COST (CIRC-1566)
+* Support instance-storage 9.0, holdings-storage 6.0, item-storage 10.0 (CIRC-1596)
+* TLR - check policies for all items of the instance (CIRC-1576)
+* Send immediate notices for TLR linked to item according to Patron Notice Policy (CIRC-1558)
+* Add support for more loan date formats (CIRC-1577)
+* Allow to create a recall TLR when available item exists but page requests are not allowed by the policy (CIRC-1575)
+* Support users interface 14.2, 15.0, 16.0 (CIRC-1572)
+* Add notes v3.0 interface support (CIRC-1564)
+* Actual cost - close aged to lost loan as paid when no processing fee should be charged (CIRC-1432)
+* Request record is not correctly stored in the log (CIRC-1565)
+* Declared lost/aged to lost item: renewal (effect on lost item fees) - ACTUAL COST (CIRC-728)
+* Update check-in logic for actual cost fee refund (CIRC-730)
+* Fix NPE when creating TLR Recall for instance without an open loan (CIRC-1548)
+* Re-enable actual cost functionality (CIRC-1555)
 
 ## 23.1.0 2022-06-28
 

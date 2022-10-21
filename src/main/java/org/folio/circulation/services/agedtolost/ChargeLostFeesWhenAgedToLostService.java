@@ -128,14 +128,8 @@ public class ChargeLostFeesWhenAgedToLostService {
     Result<List<LoanToChargeFees>> loansToChargeFeesResult) {
 
     return loansToChargeFeesResult
-      .after(loans -> allOf(loans, this::processLoan))
+      .after(loans -> allOf(loans, this::chargeLostFees))
       .thenApply(Result::mapEmpty);
-  }
-
-  private CompletableFuture<Result<Void>> processLoan(LoanToChargeFees loan) {
-    return loan.shouldCloseLoanWhenActualCostUsed()
-      ? closeLoanAsLostAndPaid(loan).thenApply(Result::mapEmpty)
-      : chargeLostFees(loan);
   }
 
   private CompletableFuture<Result<Void>> chargeLostFees(
