@@ -1,3 +1,8 @@
+## 23.2.1 2022-10-21
+
+* Upgrade vulnerable dependencies (CIRC-1639)
+* commons-text 1.10.0 (CIRC-1637)
+
 ## 23.2.0 2022-10-19
 
 * Do not close the loan when Actual Cost Record is created (CIRC-1624)
