@@ -85,6 +85,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+      <version>2.13.4.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -94,7 +95,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
-      <version>1.9</version>
+      <version>1.10.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -121,6 +122,11 @@
       <artifactId>xstream</artifactId>
       <version>1.4.19</version>
     </dependency>
+    <dependency> <!-- patch drools' commons-codec: https://app.snyk.io/vuln/SNYK-JAVA-COMMONSCODEC-561518 -->
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.15</version>
+    </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
@@ -140,21 +146,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>2.4.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest-all</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>joda-time</groupId>
-          <artifactId>joda-time</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>2.7.0</version>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
