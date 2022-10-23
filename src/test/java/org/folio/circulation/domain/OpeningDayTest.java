@@ -42,10 +42,7 @@ class OpeningDayTest {
 
   private void assertOpeningDaysEqual(OpeningDay first, OpeningDay second) {
     assertEquals(first.isAllDay(), second.isAllDay());
-    assertEquals(
-      first.getDayWithTimeZone().toString(),
-      second.getDayWithTimeZone().toString()
-    );
+    assertEquals(first.getDayWithTimeZone().toString(), second.getDayWithTimeZone().toString());
     assertEquals(first.isOpen(), second.isOpen());
     assertEquals(first.getOpeningHour().size(), second.getOpeningHour().size());
 

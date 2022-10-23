@@ -17,9 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 public class FakeCalendarOkapi {
 
-  private static final Logger log = LogManager.getLogger(
-    MethodHandles.lookup().lookupClass()
-  );
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static void registerCalendarAllDates(Router router) {
     router
@@ -30,9 +28,7 @@ public class FakeCalendarOkapi {
             .response()
             .setStatusCode(200)
             .putHeader("content-type", "application/json")
-            .end(
-              OpeningDayCollectionExamples.oneDayPeriod().create().toString()
-            );
+            .end(OpeningDayCollectionExamples.oneDayPeriod().create().toString());
         }
       );
   }

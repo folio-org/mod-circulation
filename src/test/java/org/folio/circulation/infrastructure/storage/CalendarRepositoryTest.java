@@ -19,15 +19,12 @@ import org.mockito.ArgumentCaptor;
 
 class CalendarRepositoryTest {
 
-  private static final String EXPECTED_PATH =
-    "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=2147483647";
+  private static final String EXPECTED_PATH = "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=2147483647";
 
   @Test
   void testCreateCorrectRawQueryStringParameters() {
     Clients clients = mock(Clients.class);
-    CollectionResourceClient collectionResourceClient = mock(
-      CollectionResourceClient.class
-    );
+    CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
     when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);
     when(collectionResourceClient.get(any(String.class)))
       .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
@@ -37,24 +34,13 @@ class CalendarRepositoryTest {
     ZonedDateTime endDate = ZonedDateTime.of(2020, 10, 22, 15, 30, 0, 0, UTC);
 
     CalendarRepository calendarRepository = new CalendarRepository(clients);
-    calendarRepository.fetchOpeningDaysBetweenDates(
-      servicePointId,
-      startDate,
-      endDate
-    );
+    calendarRepository.fetchOpeningDaysBetweenDates(servicePointId, startDate, endDate);
 
-    ArgumentCaptor<String> paramsArgumentCaptor = ArgumentCaptor.forClass(
-      String.class
-    );
+    ArgumentCaptor<String> paramsArgumentCaptor = ArgumentCaptor.forClass(String.class);
     verify(collectionResourceClient).get(paramsArgumentCaptor.capture());
 
     String actualPath = paramsArgumentCaptor.getValue();
-    String expectedPath = String.format(
-      EXPECTED_PATH,
-      servicePointId,
-      startDate.toLocalDate(),
-      endDate.toLocalDate()
-    );
+    String expectedPath = String.format(EXPECTED_PATH, servicePointId, startDate.toLocalDate(), endDate.toLocalDate());
     assertThat(actualPath, is(expectedPath));
   }
 }

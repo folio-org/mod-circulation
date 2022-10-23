@@ -23,10 +23,6 @@ public class AdjacentOpeningDays {
   }
 
   public List<OpeningDay> toList() {
-    return Arrays.asList(
-      this.getPreviousDay(),
-      this.getRequestedDay(),
-      this.getNextDay()
-    );
+    return Arrays.asList(this.getPreviousDay(), this.getRequestedDay(), this.getNextDay());
   }
 }

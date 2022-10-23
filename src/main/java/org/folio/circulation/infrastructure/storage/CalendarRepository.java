@@ -26,8 +26,7 @@ public class CalendarRepository {
   private static final String OPENING_INFO_RECORD_TYPE = "openingInfo";
 
   private static final String SURROUNDING_DATES_KEY = "openings";
-  private static final String SURROUNDING_DATES_PATH =
-    "%s/surrounding-openings?date=%s";
+  private static final String SURROUNDING_DATES_PATH = "%s/surrounding-openings?date=%s";
 
   private static final String ALL_DATES_KEY = "dates";
   private static final String ALL_DATES_PATH =
@@ -45,11 +44,7 @@ public class CalendarRepository {
     LocalDate requestedDate,
     String servicePointId
   ) {
-    String path = String.format(
-      SURROUNDING_DATES_PATH,
-      servicePointId,
-      requestedDate
-    );
+    String path = String.format(SURROUNDING_DATES_PATH, servicePointId, requestedDate);
 
     // TODO: Validation error should have parameters
     return FetchSingleRecord
@@ -58,10 +53,7 @@ public class CalendarRepository {
       .mapTo(CalendarRepository::convertToOpeningDays)
       .whenNotFound(
         failedValidation(
-          new ValidationError(
-            "Calendar open periods are not found",
-            Collections.emptyMap()
-          )
+          new ValidationError("Calendar open periods are not found", Collections.emptyMap())
         )
       )
       .fetch(path);
@@ -84,9 +76,7 @@ public class CalendarRepository {
       .get(path)
       .thenCombineAsync(
         configurationRepository.findTimeZoneConfiguration(),
-        Result.combined(
-          CalendarRepository::getOpeningDaysFromOpeningDayCollection
-        )
+        Result.combined(CalendarRepository::getOpeningDaysFromOpeningDayCollection)
       );
   }
 
@@ -106,9 +96,7 @@ public class CalendarRepository {
   // Sonar does not like the use of `2` as a literal, however,
   // we know the JSON array will always have exactly three elements
   @SuppressWarnings("java:S109")
-  private static AdjacentOpeningDays convertToOpeningDays(
-    JsonObject jsonObject
-  ) {
+  private static AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
       return AdjacentOpeningDays.createClosedOpeningDays();
     }

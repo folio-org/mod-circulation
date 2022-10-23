@@ -35,12 +35,7 @@ public class OpeningDay {
   private final boolean open;
   private final ZonedDateTime dayWithTimeZone;
 
-  public OpeningDay(
-    List<OpeningHour> openingHour,
-    LocalDate date,
-    boolean allDay,
-    boolean open
-  ) {
+  public OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
     this.openingHour = openingHour;
     this.date = date;
     this.allDay = allDay;
@@ -55,13 +50,7 @@ public class OpeningDay {
     boolean open,
     ZoneId zone
   ) {
-    this(
-      openingHour,
-      date,
-      allDay,
-      open,
-      DateTimeUtil.atStartOfDay(date, zone)
-    );
+    this(openingHour, date, allDay, open, DateTimeUtil.atStartOfDay(date, zone));
   }
 
   /**
@@ -85,10 +74,7 @@ public class OpeningDay {
       getLocalDateProperty(jsonObject, DATE_KEY),
       getBooleanProperty(jsonObject, ALL_DAY_KEY),
       getBooleanProperty(jsonObject, OPEN_KEY),
-      DateTimeUtil.atStartOfDay(
-        getLocalDateProperty(jsonObject, DATE_KEY),
-        zone
-      )
+      DateTimeUtil.atStartOfDay(getLocalDateProperty(jsonObject, DATE_KEY), zone)
     );
   }
 
