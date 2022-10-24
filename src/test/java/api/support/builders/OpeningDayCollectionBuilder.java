@@ -1,10 +1,12 @@
 package api.support.builders;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.util.List;
 import java.util.stream.Collector;
+
 import org.folio.circulation.domain.OpeningDay;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class OpeningDayCollectionBuilder extends JsonBuilder implements Builder {
 

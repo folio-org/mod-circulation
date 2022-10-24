@@ -47,8 +47,7 @@ public class OpeningDay {
   }
 
   public OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay,
-    boolean open, ZoneId zone
-  ) {
+    boolean open, ZoneId zone) {
     this(openingHour, date, allDay, open, DateTimeUtil.atStartOfDay(date, zone));
   }
 
@@ -85,8 +84,7 @@ public class OpeningDay {
    * Convert the opening hours to JSON for re-packaging
    */
   private JsonArray openingHourToJsonArray() {
-    return openingHour
-      .stream()
+    return openingHour.stream()
       .map(OpeningHour::toJson)
       .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
   }

@@ -2,8 +2,9 @@ package org.folio.circulation.domain;
 
 import static org.folio.circulation.support.utils.DateFormatUtil.TIME_MINUTES;
 
-import io.vertx.core.json.JsonObject;
 import java.time.LocalTime;
+
+import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

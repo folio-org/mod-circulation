@@ -6,13 +6,15 @@ import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAIL
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_IN_THU_SERVICE_POINT_ID;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CLOSED_LIBRARY_SERVICE_POINT_ID;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import api.support.fixtures.OpeningDayCollectionExamples;
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import java.lang.invoke.MethodHandles;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class FakeCalendarOkapi {
 
@@ -84,8 +86,8 @@ public class FakeCalendarOkapi {
     // repackage openingDays property into new object as {openings: ...}
     return new JsonObject()
       .put("openings",  getCalendarById(servicePointId, queries)
-      .create()
-      .getJsonArray("openingDays"))
+        .create()
+        .getJsonArray("openingDays"))
       .encodePrettily();
   }
 }

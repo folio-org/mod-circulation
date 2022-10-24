@@ -2,8 +2,6 @@ package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -11,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
+
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.OpeningDay;
@@ -20,6 +19,9 @@ import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 public class CalendarRepository {
 
@@ -45,8 +47,7 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(
-    LocalDate requestedDate, String servicePointId
-  ) {
+    LocalDate requestedDate, String servicePointId) {
     String path = String.format(SURROUNDING_DATES_PATH, servicePointId, requestedDate);
 
     // TODO: Validation error should have parameters
@@ -63,8 +64,7 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<Collection<OpeningDay>>> fetchOpeningDaysBetweenDates(
-    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate
-  ) {
+    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate) {
     String path = String.format(
       ALL_DATES_PATH,
       servicePointId,

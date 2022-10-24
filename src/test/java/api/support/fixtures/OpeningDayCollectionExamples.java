@@ -4,10 +4,12 @@ import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.morning;
 import static java.time.ZoneOffset.UTC;
 
-import api.support.builders.OpeningDayCollectionBuilder;
 import java.time.LocalDate;
 import java.util.Arrays;
+
 import org.folio.circulation.domain.OpeningDay;
+
+import api.support.builders.OpeningDayCollectionBuilder;
 
 public class OpeningDayCollectionExamples {
 

@@ -1,9 +1,10 @@
 package api.support.builders;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
