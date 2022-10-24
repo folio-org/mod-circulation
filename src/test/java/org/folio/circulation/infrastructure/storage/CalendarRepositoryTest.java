@@ -19,7 +19,8 @@ import org.mockito.ArgumentCaptor;
 
 class CalendarRepositoryTest {
 
-  private static final String EXPECTED_PATH = "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=2147483647";
+  private static final String EXPECTED_PATH =
+    "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=2147483647";
 
   @Test
   void testCreateCorrectRawQueryStringParameters() {
@@ -40,7 +41,8 @@ class CalendarRepositoryTest {
     verify(collectionResourceClient).get(paramsArgumentCaptor.capture());
 
     String actualPath = paramsArgumentCaptor.getValue();
-    String expectedPath = String.format(EXPECTED_PATH, servicePointId, startDate.toLocalDate(), endDate.toLocalDate());
+    String expectedPath =
+      String.format(EXPECTED_PATH, servicePointId, startDate.toLocalDate(), endDate.toLocalDate());
     assertThat(actualPath, is(expectedPath));
   }
 }

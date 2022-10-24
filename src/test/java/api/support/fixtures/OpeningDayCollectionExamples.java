@@ -13,7 +13,9 @@ public class OpeningDayCollectionExamples {
 
   public static OpeningDayCollectionBuilder oneDayPeriod() {
     return new OpeningDayCollectionBuilder(
-      Arrays.asList(new OpeningDay(Arrays.asList(morning(), afternoon()), LocalDate.of(2020, 1, 22), false, true, UTC))
+      Arrays.asList(new OpeningDay(
+        Arrays.asList(morning(), afternoon()), LocalDate.of(2020, 1, 22), false, true, UTC
+      ))
     );
   }
 }

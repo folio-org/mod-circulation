@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 class OpeningDayTest {
@@ -24,20 +26,12 @@ class OpeningDayTest {
     assertOpeningDaysEqual(original, fromJson);
   }
 
-  private OpeningDay createOpeningDay(
-    boolean allDay,
-    LocalDate date,
-    ZoneId dateTimeZone
-  ) {
-    return new OpeningDay(
-      allDay
-        ? Collections.singletonList(allDay())
-        : Arrays.asList(morning(), afternoon()),
-      date,
-      allDay,
-      true,
-      dateTimeZone
-    );
+  private OpeningDay createOpeningDay(boolean allDay, LocalDate date, ZoneId dateTimeZone) {
+    List<OpeningHour> openings = allDay
+      ? Collections.singletonList(allDay())
+      : Arrays.asList(morning(), afternoon());
+    
+    return new OpeningDay(openings, date, allDay, true, dateTimeZone);
   }
 
   private void assertOpeningDaysEqual(OpeningDay first, OpeningDay second) {

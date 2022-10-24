@@ -126,8 +126,12 @@ class OverduePeriodCalculatorServiceTest {
     LocalTime now = getLocalTime();
 
     List<OpeningDay> invalid = Arrays.asList(
-      new OpeningDay(singletonList(new OpeningHour(null, null)), LocalDate.parse("2020-04-08"), false, true, UTC),
-      new OpeningDay(singletonList(new OpeningHour(now, now.minusHours(1))), LocalDate.parse("2020-04-09"), false, true, UTC)
+      new OpeningDay(
+        singletonList(new OpeningHour(null, null)), LocalDate.parse("2020-04-08"), false, true, UTC
+      ),
+      new OpeningDay(
+        singletonList(new OpeningHour(now, now.minusHours(1))), LocalDate.parse("2020-04-09"),
+      false, true, UTC)
     );
 
     List<OpeningDay> allDaysClosed = Arrays.asList(

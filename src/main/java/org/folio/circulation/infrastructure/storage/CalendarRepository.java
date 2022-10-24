@@ -23,6 +23,10 @@ import org.folio.circulation.support.results.Result;
 
 public class CalendarRepository {
 
+  private static final int PREV_OPENING_INDEX = 0;
+  private static final int CURR_OPENING_INDEX = 1;
+  private static final int NEXT_OPENING_INDEX = 2;
+
   private static final String OPENING_INFO_RECORD_TYPE = "openingInfo";
 
   private static final String SURROUNDING_DATES_KEY = "openings";
@@ -41,8 +45,7 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(
-    LocalDate requestedDate,
-    String servicePointId
+    LocalDate requestedDate, String servicePointId
   ) {
     String path = String.format(SURROUNDING_DATES_PATH, servicePointId, requestedDate);
 
@@ -60,9 +63,7 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<Collection<OpeningDay>>> fetchOpeningDaysBetweenDates(
-    String servicePointId,
-    ZonedDateTime startDate,
-    ZonedDateTime endDate
+    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate
   ) {
     String path = String.format(
       ALL_DATES_PATH,
@@ -72,8 +73,7 @@ public class CalendarRepository {
       Integer.MAX_VALUE
     );
 
-    return calendarClient
-      .get(path)
+    return calendarClient.get(path)
       .thenCombineAsync(
         configurationRepository.findTimeZoneConfiguration(),
         Result.combined(CalendarRepository::getOpeningDaysFromOpeningDayCollection)
@@ -81,11 +81,8 @@ public class CalendarRepository {
   }
 
   private static Result<Collection<OpeningDay>> getOpeningDaysFromOpeningDayCollection(
-    Response openingDayCollection,
-    ZoneId zone
-  ) {
-    return MultipleRecords
-      .from(
+    Response openingDayCollection, ZoneId zone) {
+    return MultipleRecords.from(
         openingDayCollection,
         openingPeriod -> new OpeningDay(openingPeriod, zone),
         ALL_DATES_KEY
@@ -93,9 +90,6 @@ public class CalendarRepository {
       .next(r -> Result.succeeded(r.toKeys(UnaryOperator.identity())));
   }
 
-  // Sonar does not like the use of `2` as a literal, however,
-  // we know the JSON array will always have exactly three elements
-  @SuppressWarnings("java:S109")
   private static AdjacentOpeningDays convertToOpeningDays(JsonObject jsonObject) {
     if (jsonObject.isEmpty()) {
       return AdjacentOpeningDays.createClosedOpeningDays();
@@ -103,9 +97,9 @@ public class CalendarRepository {
 
     JsonArray openingDaysJson = jsonObject.getJsonArray(SURROUNDING_DATES_KEY);
 
-    OpeningDay previousDate = new OpeningDay(openingDaysJson.getJsonObject(0));
-    OpeningDay requestedDate = new OpeningDay(openingDaysJson.getJsonObject(1));
-    OpeningDay nextDate = new OpeningDay(openingDaysJson.getJsonObject(2));
+    OpeningDay previousDate = new OpeningDay(openingDaysJson.getJsonObject(PREV_OPENING_INDEX));
+    OpeningDay requestedDate = new OpeningDay(openingDaysJson.getJsonObject(CURR_OPENING_INDEX));
+    OpeningDay nextDate = new OpeningDay(openingDaysJson.getJsonObject(NEXT_OPENING_INDEX));
 
     return new AdjacentOpeningDays(previousDate, requestedDate, nextDate);
   }

@@ -11,7 +11,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import java.lang.invoke.MethodHandles;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -80,26 +79,13 @@ public class FakeCalendarOkapi {
       );
   }
 
-  private static String findFakeCalendarById(
-    String servicePointId,
-    MultiMap queries
-  ) {
-    log.info(
-      String.format(
-        "GET: /calendar/dates/%s/surrounding-openings, queries=%s",
-        servicePointId,
-        queries
-      )
-    );
+  private static String findFakeCalendarById(String servicePointId, MultiMap queries) {
+    log.info("GET: /calendar/dates/{}/surrounding-openings, queries={}", servicePointId, queries);
     // repackage openingDays property into new object as {openings: ...}
-    return new JsonObject(
-      Map.of(
-        "openings",
-        getCalendarById(servicePointId, queries)
-          .create()
-          .getJsonArray("openingDays")
-      )
-    )
-      .toString();
+    return new JsonObject()
+      .put("openings",  getCalendarById(servicePointId, queries)
+      .create()
+      .getJsonArray("openingDays"))
+      .encodePrettily();
   }
 }

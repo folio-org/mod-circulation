@@ -6,18 +6,21 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collector;
+
+import org.folio.circulation.support.utils.DateTimeUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
-import org.folio.circulation.support.utils.DateTimeUtil;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 @Getter
 @ToString
@@ -43,12 +46,8 @@ public class OpeningDay {
     this.dayWithTimeZone = null;
   }
 
-  public OpeningDay(
-    List<OpeningHour> openingHour,
-    LocalDate date,
-    boolean allDay,
-    boolean open,
-    ZoneId zone
+  public OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay,
+    boolean open, ZoneId zone
   ) {
     this(openingHour, date, allDay, open, DateTimeUtil.atStartOfDay(date, zone));
   }
@@ -109,9 +108,7 @@ public class OpeningDay {
   /**
    * Create a list of {@link OpeningHour OpeningHour} from the provided daily opening object
    */
-  private static List<OpeningHour> createOpeningTimes(
-    JsonObject representation
-  ) {
+  private static List<OpeningHour> createOpeningTimes(JsonObject representation) {
     return mapToList(representation, OPENING_HOUR_KEY, OpeningHour::new);
   }
 }
