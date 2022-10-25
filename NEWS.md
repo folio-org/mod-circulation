@@ -1,3 +1,7 @@
+## 23.3.0 IN PROGRESS
+
+* Upgrade `calendar` interface to `5.0`
+
 ## 23.2.0 2022-10-19
 
 * Do not close the loan when Actual Cost Record is created (CIRC-1624)

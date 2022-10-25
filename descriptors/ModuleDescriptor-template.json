@@ -962,7 +962,7 @@
     },
     {
       "id": "calendar",
-      "version": "3.0 4.0"
+      "version": "5.0"
     },
     {
       "id": "patron-notice-policy-storage",
@@ -1363,7 +1363,7 @@
         "proxiesfor.collection.get",
         "patron-notice.post",
         "configuration.entries.collection.get",
-        "calendar.opening-hours.collection.get",
+        "calendar.endpoint.dates.get",
         "pubsub.publish.post"
       ],
       "visible": false
@@ -1373,7 +1373,7 @@
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "calendar.opening-hours.collection.get",
+        "calendar.endpoint.dates.get",
         "circulation-storage.loans.item.post",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
@@ -1458,7 +1458,7 @@
         "accounts.refund.post",
         "accounts.cancel.post",
         "configuration.entries.collection.get",
-        "calendar.opening-hours.collection.get"
+        "calendar.endpoint.dates.get"
       ],
       "visible": false
     },
@@ -1487,7 +1487,7 @@
         "users.item.get",
         "users.collection.get",
         "proxiesfor.collection.get",
-        "calendar.opening-hours.collection.get",
+        "calendar.endpoint.dates.get",
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
@@ -1654,7 +1654,7 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "calendar.opening-hours.collection.get",
+        "calendar.endpoint.dates.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "configuration.entries.collection.get",
@@ -1705,7 +1705,7 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "calendar.opening-hours.collection.get",
+        "calendar.endpoint.dates.get",
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
@@ -1804,7 +1804,7 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "calendar.opening-hours.collection.get",
+        "calendar.endpoint.dates.get",
         "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
