@@ -40,49 +40,42 @@ class FixedLoanPolicyCheckOutDueDateCalculationTests {
   }
 
   @Test
-  void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnight() {
-    LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
-      .fixed(UUID.randomUUID())
-      .create())
-      .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
-        .addSchedule(new FixedDueDateSchedule(ZonedDateTime.of(2020, 11, 1, 0, 0, 0, 0, UTC),
-          ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, UTC),
-          ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, UTC)))
-        .create());
-
-    ZonedDateTime loanDate = ZonedDateTime.of(2020, 11, 2, 12, 30, 30, 0, UTC);
-
-    Loan loan = loanFor(loanDate);
-
-    final Result<ZonedDateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan, null);
-
-    final var expectedInitialDueDate = ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, UTC);
-
-    assertThat(calculationResult.succeeded(), is(true));
-    assertThat(calculationResult.value(), is(expectedInitialDueDate));
-  }
-
-  @Test
-  void shouldUseOnlyScheduleAvailableWhenLoanDateTimeAfterMidnightAndTimeZoneIsNotUTC() {
-    ZoneOffset zone = ZoneOffset.ofHours(4);
-    final ZonedDateTime fromDate = ZonedDateTime.of(2020, 11, 1, 0, 0, 0, 0, zone);
-    final ZonedDateTime toDate = ZonedDateTime.of(2020, 11, 2, 0, 0, 0, 0, zone);
-    final ZonedDateTime loanDate = ZonedDateTime.of(2020, 11, 2, 12, 30, 30, 0, zone);
+  void shouldPickCorrectDueDateFromAdjacentSchedulesWithNegativeTimeZoneOffset() {
+    /* This is a schedule as seen in the request sent to fixed-due-date-schedule-storage when a
+    schedule is created via UI for a tenant in a timezone with -4h offset:
+    {
+      "from":"2020-01-01T00:00:00-04:00",
+      "to":"2020-02-02T23:59:59-04:00",
+      "due":"2020-02-02T23:59:59-04:00"
+    }, {
+      "from":"2020-10-03T00:00:00-04:00",
+      "to":"2020-10-04T23:59:59-04:00",
+      "due":"2020-10-04T23:59:59-04:00"
+    }
+    But the schedules are actually persisted in UTC with dates and hours adjusted accordingly as
+    shown below. Note how end dates and due dates roll over to the next day. */
 
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
-      .fixed(UUID.randomUUID())
-      .create())
+        .fixed(UUID.randomUUID())
+        .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
-        .addSchedule(new FixedDueDateSchedule(fromDate, toDate, toDate))
+        .addSchedule(new FixedDueDateSchedule(
+          ZonedDateTime.of(2020, 1, 3, 4, 0, 0, 0, UTC),
+          ZonedDateTime.of(2020, 1, 5, 3, 59, 59, 0, UTC),
+          ZonedDateTime.of(2020, 1, 5, 3, 59, 59, 0, UTC))) // expected due date
+        .addSchedule(new FixedDueDateSchedule(
+          ZonedDateTime.of(2020, 1, 1, 4, 0, 0, 0, UTC),
+          ZonedDateTime.of(2020, 1, 3, 3, 59, 59, 0, UTC),
+          ZonedDateTime.of(2020, 1, 3, 3, 59, 59, 0, UTC)))
         .create());
 
-    Loan loan = loanFor(loanDate);
+    ZonedDateTime loanDate = ZonedDateTime.of(2020, 1, 3, 12, 0, 0, 0, ZoneOffset.ofHours(-4));
 
-    final Result<ZonedDateTime> calculationResult = loanPolicy
-      .calculateInitialDueDate(loan, null);
+    final Result<ZonedDateTime> dueDateResult =
+      loanPolicy.calculateInitialDueDate(loanFor(loanDate), null);
 
-    assertThat(calculationResult.value(), is(toDate));
+    assertThat(dueDateResult.succeeded(), is(true));
+    assertThat(dueDateResult.value(), is(ZonedDateTime.of(2020, 1, 5, 3, 59, 59, 0, UTC)));
   }
 
   @Test

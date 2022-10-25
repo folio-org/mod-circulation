@@ -5,7 +5,6 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
-import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.time.ZonedDateTime;
@@ -52,7 +51,7 @@ public class FixedDueDateSchedules {
   private Predicate<? super JsonObject> isWithin(ZonedDateTime date) {
     return schedule -> {
       ZonedDateTime from = parseDateTime(schedule.getString("from"));
-      ZonedDateTime to = atEndOfDay(parseDateTime(schedule.getString("to")));
+      ZonedDateTime to = parseDateTime(schedule.getString("to"));
 
       return DateTimeUtil.isWithinMillis(date, from, to);
     };
