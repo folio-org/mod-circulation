@@ -15,7 +15,7 @@ circulation_storage_module_id="mod-circulation-storage-6.3.0-SNAPSHOT"
 users_storage_module_id="mod-users-15.3.1-SNAPSHOT"
 
 #Needs to be the specific version of mod-calendar you want to use for testing
-calendar_storage_module_id="mod-calendar-1.3.0-SNAPSHOT"
+calendar_storage_module_id="mod-calendar-2.0.0-SNAPSHOT"
 
 #remove log output
 rm test-via-okapi.log

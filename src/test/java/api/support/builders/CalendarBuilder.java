@@ -5,11 +5,12 @@ import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collector;
 
-import api.support.OpeningDayPeriod;
+import org.folio.circulation.AdjacentOpeningDays;
+import org.folio.circulation.domain.OpeningDay;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -58,9 +59,10 @@ public class CalendarBuilder extends JsonBuilder implements Builder {
       .put(OPENING_DAYS_KEY, new JsonArray());
   }
 
-  private JsonArray openingDaysToJsonArray(List<OpeningDayPeriod> openingDays) {
-    return openingDays.stream()
-      .map(OpeningDayPeriod::toJson)
+  private JsonArray openingDaysToJsonArray(AdjacentOpeningDays openings) {
+    return openings.toList()
+      .stream()
+      .map(OpeningDay::toJson)
       .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
   }
 

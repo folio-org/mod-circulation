@@ -593,7 +593,7 @@ public class Clients {
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context, "/calendar/periods");
+    return getCollectionResourceClient(client, context, "/calendar/dates");
   }
 
   private CollectionResourceClient createPatronNoticePolicesStorageClient(

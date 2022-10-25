@@ -82,10 +82,10 @@ public class LibraryTimetableConverter {
   }
 
   private static List<Interval> getOpenIntervalsForDay(OpeningDay day, ZoneId zone) {
-    if (!day.getOpen()) {
+    if (!day.isOpen()) {
       return Collections.emptyList();
     }
-    if (day.getAllDay()) {
+    if (day.isAllDay()) {
       return Collections.singletonList(buildAllDayOpenInterval(day, zone));
     }
     return day.getOpeningHour().stream()
