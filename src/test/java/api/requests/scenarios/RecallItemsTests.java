@@ -60,14 +60,13 @@ class RecallItemsTests extends APITests {
   void whenPolicyHasTwoDifferentFixedSchedulesRecallShouldApplyToTheScheduleForTheDueDateAfterRenew() {
     ZoneId londonZoneId = ZoneId.of("Europe/London");
 
-    ZonedDateTime fromFirst = ZonedDateTime.of(2022, 1, 2, 10, 2, 3, 0,
-      londonZoneId);
-    ZonedDateTime toFirst = fromFirst.plusDays(2);
-    ZonedDateTime dueFirst = toFirst.plusDays(5);
-    ZonedDateTime fromSecond = ZonedDateTime.of(2022, 1, 17, 10, 2, 3, 0,
-      londonZoneId);
-    ZonedDateTime toSecond = fromSecond.plusDays(3);
-    ZonedDateTime dueSecond = toSecond.plusDays(7);
+    ZonedDateTime fromFirst = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, londonZoneId);
+    ZonedDateTime toFirst = ZonedDateTime.of(2022, 1, 4, 23, 59, 59, 0, londonZoneId);
+    ZonedDateTime dueFirst = ZonedDateTime.of(2022, 1, 9, 23, 59, 59, 0, londonZoneId);
+
+    ZonedDateTime fromSecond = ZonedDateTime.of(2022, 1, 17, 0, 0, 0, 0, londonZoneId);
+    ZonedDateTime toSecond = ZonedDateTime.of(2022, 1, 20, 23, 59, 59, 0, londonZoneId);
+    ZonedDateTime dueSecond = ZonedDateTime.of(2022, 1, 27, 23, 59, 59, 0, londonZoneId);
 
     FixedDueDateSchedulesBuilder builder = new FixedDueDateSchedulesBuilder()
       .addSchedule(new FixedDueDateSchedule(fromFirst, toFirst, dueFirst))
