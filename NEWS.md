@@ -1,6 +1,7 @@
-## 23.3.0 IN PROGRESS
+## 23.3.0 2022-10-27
 
-* Upgrade `calendar` interface to `5.0`
+* Upgrade `calendar` interface to `5.0` (CIRC-1648)
+* Fix incorrect calculation of due date when fixed schedule is used (CIRC-1625)
 
 ## 23.2.0 2022-10-19
 
