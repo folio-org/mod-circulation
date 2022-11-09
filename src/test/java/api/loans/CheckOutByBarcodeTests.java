@@ -62,6 +62,7 @@ import static org.folio.circulation.domain.policy.Period.months;
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.infrastructure.storage.loans.LoanRepository.DUE_DATE_CHANGED_BY_HOLD;
 import static org.folio.circulation.support.ErrorCode.ITEM_HAS_OPEN_LOAN;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_MATERIAL_TYPE;
@@ -85,7 +86,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -390,6 +391,9 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
+
+    assertNotNull(loan.getBoolean(DUE_DATE_CHANGED_BY_HOLD));
+    assertTrue(loan.getBoolean(DUE_DATE_CHANGED_BY_HOLD).equals(true));
 
     loanHasPatronGroupProperties(loan, "Regular Group");
 

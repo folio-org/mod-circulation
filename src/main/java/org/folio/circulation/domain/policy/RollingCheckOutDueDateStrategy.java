@@ -41,6 +41,10 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
     final ZonedDateTime loanDate = loan.getLoanDate();
 
+    if(!loan.wasDueDateChangedByHold()) {
+      loan.setDueDateChangedByHold();
+    }
+
     return initialDueDate(loanDate)
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
   }

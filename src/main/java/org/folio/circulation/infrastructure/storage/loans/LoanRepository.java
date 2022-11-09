@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -72,6 +73,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String RECORDS_PROPERTY_NAME = "loans";
+  public static final String DUE_DATE_CHANGED_BY_HOLD = "dueDateChangedByHold";
 
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
@@ -104,7 +106,20 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     return loansStorageClient.post(storageLoan)
       .thenApply(interpreter::flatMap)
+      .thenApply(setHoldFlagIfNotPresent(loan))
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
+  }
+
+  private Function<Result<Loan>, Result<Loan>> setHoldFlagIfNotPresent(Loan loan) {
+    return loanResult -> {
+      loanResult.map(loanData -> {
+        if (loan.wasDueDateChangedByHold()) {
+          loanData.setDueDateChangedByHold();
+        }
+        return loanData;
+      });
+      return loanResult;
+    };
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
@@ -265,6 +280,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     removeProperty(storageLoan, FEESANDFINES);
     removeProperty(storageLoan, OVERDUE_FINE_POLICY);
     removeProperty(storageLoan, LOST_ITEM_POLICY);
+    removeProperty(storageLoan, DUE_DATE_CHANGED_BY_HOLD);
 
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
