@@ -300,6 +300,10 @@
       "type": "boolean",
       "readonly": true
     },
+    "dueDateChangedByExpiredUser": {
+      "description": "Indicates whether or not this loan had its due date modified by a expired user",
+      "type": "boolean"
+    },
     "checkoutServicePointId": {
       "description": "ID of the Service Point where the last checkout occured",
       "type": "string",

@@ -84,6 +84,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalTime;
@@ -2161,6 +2162,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(parseDateTime(response.getString("dueDate")),
       is(ZonedDateTime.of(FIRST_DAY_OPEN, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    assertNotNull(response.getString("dueDateChangedByExpiredUser"));
+    assertTrue(Boolean.parseBoolean(response.getString("dueDateChangedByExpiredUser")));
   }
 
   @Test

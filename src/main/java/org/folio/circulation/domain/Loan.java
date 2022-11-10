@@ -142,6 +142,18 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
+  public Loan setDueDateChangedByExpiredUser() {
+    write(representation, "dueDateChangedByExpiredUser", TRUE);
+
+    return this;
+  }
+
+  public Loan unsetDueDateChangedByExpiredUser() {
+    write(representation, "dueDateChangedByExpiredUser", FALSE);
+
+    return this;
+  }
+
   private void changeReturnDate(ZonedDateTime returnDate) {
     write(representation, RETURN_DATE, returnDate);
   }
@@ -239,6 +251,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean wasDueDateChangedByRecall() {
     return getBooleanProperty(representation, "dueDateChangedByRecall");
+  }
+
+  public boolean wasDueDateChangedByExpiredUser() {
+    return getBooleanProperty(representation, "dueDateChangedByExpiredUser");
   }
 
   private LoanStatus getStatus() {
