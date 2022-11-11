@@ -392,9 +392,6 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat("loan date should be as supplied",
       loan.getString("loanDate"), isEquivalentTo(loanDate));
 
-    assertNotNull(loan.getBoolean(DUE_DATE_CHANGED_BY_HOLD));
-    assertTrue(loan.getBoolean(DUE_DATE_CHANGED_BY_HOLD).equals(true));
-
     loanHasPatronGroupProperties(loan, "Regular Group");
 
     loanHasLoanPolicyProperties(loan, loanPolicy);

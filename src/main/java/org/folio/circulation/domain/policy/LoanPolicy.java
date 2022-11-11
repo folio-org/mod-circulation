@@ -145,6 +145,7 @@ public class LoanPolicy extends Policy {
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
     final JsonObject holds = getHolds();
+    boolean isHoldRequest = false;
 
     if(loansPolicy == null) {
       return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
@@ -161,10 +162,11 @@ public class LoanPolicy extends Policy {
         Period rollingPeriod = getPeriod(loansPolicy);
         if(isAlternatePeriod(requestQueue)) {
           rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
+          isHoldRequest = true;
         }
 
         return new RollingCheckOutDueDateStrategy(getId(), getName(),
-          rollingPeriod, fixedDueDateSchedules, this::loanPolicyValidationError);
+          rollingPeriod, fixedDueDateSchedules, this::loanPolicyValidationError,isHoldRequest);
       }
     }
     else if(isFixed(loansPolicy)) {
@@ -176,7 +178,7 @@ public class LoanPolicy extends Policy {
         if(isAlternatePeriod(requestQueue)) {
           return new RollingCheckOutDueDateStrategy(getId(), getName(),
             getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY),
-              fixedDueDateSchedules, this::loanPolicyValidationError);
+              fixedDueDateSchedules, this::loanPolicyValidationError,false);
         }
         else {
           return new FixedScheduleCheckOutDueDateStrategy(getId(), getName(),
