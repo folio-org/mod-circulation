@@ -2144,8 +2144,8 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void dueDateShouldBeTruncatedToTheEndOfPreviousOpenDayBeforePatronExpiration() {
-    ZonedDateTime loanDate = atStartOfDay(SECOND_DAY_CLOSED, UTC).plusHours(10);
-    use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, loanDate.plusDays(1)));
+    ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(10);
+    use(buildLoanPolicyWithFixedLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, loanDate.plusDays(3)));
 
     IndividualResource item = itemsFixture.basedUponNod();
     ZonedDateTime patronExpirationDate = loanDate.plusHours(2);
@@ -2162,6 +2162,8 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(parseDateTime(response.getString("dueDate")),
       is(ZonedDateTime.of(FIRST_DAY_OPEN, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
+    assertNotNull(response.getString("dueDateChangedByExpiredUser"));
+    assertTrue(Boolean.parseBoolean(response.getString("dueDateChangedByExpiredUser")));
   }
 
   @Test
