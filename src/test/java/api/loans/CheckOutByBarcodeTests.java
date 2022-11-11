@@ -2162,8 +2162,6 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat(parseDateTime(response.getString("dueDate")),
       is(ZonedDateTime.of(FIRST_DAY_OPEN, LocalTime.MIDNIGHT.minusSeconds(1), UTC)));
-    assertNotNull(response.getString("dueDateChangedByExpiredUser"));
-    assertTrue(Boolean.parseBoolean(response.getString("dueDateChangedByExpiredUser")));
   }
 
   @Test
