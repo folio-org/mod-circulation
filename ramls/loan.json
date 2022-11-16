@@ -300,7 +300,7 @@
       "type": "boolean",
       "readonly": true
     },
-    "dueDateChangedByExpiredUser": {
+    "dueDateChangedByNearExpireUser": {
       "description": "Indicates whether or not this loan had its due date modified by a expired user",
       "type": "boolean"
     },

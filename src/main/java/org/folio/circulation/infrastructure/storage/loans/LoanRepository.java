@@ -84,7 +84,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String ID = "id";
   private static final String USER_ID = "userId";
 
-  public static final String DUE_DATE_CHANGED_BY_EXPIRED_USER = "dueDateChangedByExpiredUser";
+  public static final String DUE_DATE_CHANGED_BY_EXPIRED_USER = "dueDateChangedByNearExpireUser";
 
   public LoanRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository) {
@@ -107,7 +107,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     return loansStorageClient.post(storageLoan)
       .thenApply(interpreter::flatMap)
-      .thenApply(setDueDateChangedByExpiredUserFlag(loan))
+      .thenApply(setdueDateChangedByNearExpireUserFlag(loan))
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
@@ -257,11 +257,11 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
 
-  private Function<Result<Loan>, Result<Loan>> setDueDateChangedByExpiredUserFlag(Loan loan) {
+  private Function<Result<Loan>, Result<Loan>> setdueDateChangedByNearExpireUserFlag(Loan loan) {
     return loanResult -> {
       loanResult.map(loanItem -> {
-        if (loan.wasDueDateChangedByExpiredUser()) {
-          loanItem.setDueDateChangedByExpiredUser();
+        if (loan.wasdueDateChangedByNearExpireUser()) {
+          loanItem.setdueDateChangedByNearExpireUser();
         }
         return loanItem;
       });
