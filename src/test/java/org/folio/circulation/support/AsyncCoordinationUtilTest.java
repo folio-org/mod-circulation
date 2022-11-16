@@ -5,6 +5,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +33,7 @@ class AsyncCoordinationUtilTest {
       CompletableFuture.supplyAsync(() -> mappingResults.add(number))
         .thenApply(r -> succeeded(number));
 
-    List<Integer> invocationResults = mapSequentially(numbers, mapper)
+    Collection<Integer> invocationResults = mapSequentially(numbers, mapper)
       .get(5, TimeUnit.SECONDS)
       .value();
 

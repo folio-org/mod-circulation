@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
 import java.time.ZonedDateTime;
+import java.util.Random;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ActualCostRecord;
@@ -114,7 +115,7 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
   }
 
   private JsonObject generateActualCostRecord(ActualCostRecord.Status status) {
-    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(String.valueOf(new Random().nextInt()));
     CheckOutResource loan = checkOutFixture.checkOutByBarcode(item,
       usersFixture.jessica());
 
