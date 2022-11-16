@@ -2323,7 +2323,7 @@ class CheckOutByBarcodeTests extends APITests {
     JsonObject secondLoan = checkOutResource.getJson();
 
     assertTrue(secondLoan.containsKey(DUE_DATE_CHANGED_BY_HOLD));
-    assertEquals(secondLoan.getBoolean(DUE_DATE_CHANGED_BY_HOLD),true);
+    assertTrue(secondLoan.getBoolean(DUE_DATE_CHANGED_BY_HOLD));
 
   }
 
