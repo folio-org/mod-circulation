@@ -77,13 +77,13 @@ public class AsyncCoordinationUtil {
     });
   }
 
-  public static <T, R> CompletableFuture<Result<List<R>>> mapSequentially(
-    Collection<T> collection, Function<T, CompletableFuture<Result<R>>> mapper) {
+  public static <E, R> CompletableFuture<Result<Collection<R>>> mapSequentially(
+    Collection<E> collection, Function<E, CompletableFuture<Result<R>>> mapper) {
 
     final List<R> results = new ArrayList<>();
     CompletableFuture<Result<Boolean>> future = completedFuture(null);
 
-    for (T element : collection) {
+    for (E element : collection) {
       future = future.thenCompose(ignored -> mapper.apply(element)
         .thenApply(r -> r.map(results::add)));
     }

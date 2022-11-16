@@ -93,17 +93,15 @@ public class ActualCostRecordRepository {
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<List<ActualCostRecord>>> update(
+  public CompletableFuture<Result<Collection<ActualCostRecord>>> update(
     Collection<ActualCostRecord> records) {
 
     return mapSequentially(records, this::update);
   }
 
   public CompletableFuture<Result<ActualCostRecord>> update(ActualCostRecord rec) {
-    log.info("Updating actual cost record {}", rec.getId());
     return actualCostRecordStorageClient.put(rec.getId(), toJson(rec))
-      .thenApply(noContentRecordInterpreter(rec)::flatMap)
-      .whenComplete((r, t) -> log.info("Updated actual cost record {}", r.value().getId()));
+      .thenApply(noContentRecordInterpreter(rec)::flatMap);
   }
 
   private CqlQueryFinder<JsonObject> createActualCostRecordCqlFinder() {
