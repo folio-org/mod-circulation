@@ -148,12 +148,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan unsetdueDateChangedByNearExpireUser() {
-    write(representation, "dueDateChangedByNearExpireUser", FALSE);
-
-    return this;
-  }
-
   private void changeReturnDate(ZonedDateTime returnDate) {
     write(representation, RETURN_DATE, returnDate);
   }
