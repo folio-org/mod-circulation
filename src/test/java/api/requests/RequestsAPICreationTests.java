@@ -3300,7 +3300,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void noticeShouldBeSentDuringCheckInWhenItemCreatedAfterTlrRequest() {
+  void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemCreatedAfterHoldTlr() {
     configurationsFixture.enableTlrFeature();
 
     JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
@@ -3323,6 +3323,37 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(request.getJson().getString("itemId"), nullValue());
 
     ItemResource item = buildItem(instanceId, "111");
+    checkInFixture.checkInByBarcode(item);
+
+    var updatedRequest = requestsFixture.getRequests(
+      exactMatch("itemId", item.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(updatedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    verifyNumberOfSentNotices(1);
+  }
+
+  @Test
+  void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemIsReturnedAndTlrHoldExists() {
+    configurationsFixture.enableTlrFeature();
+
+    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withAvailableEvent()
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+    use(noticePolicy);
+
+    UUID instanceId = UUID.randomUUID();
+    ItemResource item = buildItem(instanceId, "111");
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
+
+    IndividualResource request = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.steve());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
     checkInFixture.checkInByBarcode(item);
 
     var updatedRequest = requestsFixture.getRequests(
