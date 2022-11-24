@@ -3303,13 +3303,12 @@ public class RequestsAPICreationTests extends APITests {
   void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemCreatedAfterHoldTlr() {
     configurationsFixture.enableTlrFeature();
 
-    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
-      .withAvailableEvent()
-      .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with available notice")
-      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+      .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+        .withTemplateId(UUID.randomUUID())
+        .withAvailableEvent()
+        .create()));
     use(noticePolicy);
 
     UUID instanceId = UUID.randomUUID();
@@ -3336,13 +3335,12 @@ public class RequestsAPICreationTests extends APITests {
   void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemIsReturnedAndTlrHoldExists() {
     configurationsFixture.enableTlrFeature();
 
-    JsonObject availableNoticeConfig = new NoticeConfigurationBuilder()
-      .withTemplateId(UUID.randomUUID())
-      .withAvailableEvent()
-      .create();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with available notice")
-      .withLoanNotices(Collections.singletonList(availableNoticeConfig));
+      .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+        .withTemplateId(UUID.randomUUID())
+        .withAvailableEvent()
+        .create()));
     use(noticePolicy);
 
     UUID instanceId = UUID.randomUUID();
