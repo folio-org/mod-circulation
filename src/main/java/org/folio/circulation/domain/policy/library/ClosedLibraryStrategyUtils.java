@@ -42,6 +42,24 @@ public final class ClosedLibraryStrategyUtils {
     }
   }
 
+  public static ClosedLibraryStrategy determineClosedLibraryStrategyForHoldSelfExpirationDate(
+    DueDateManagement dueDateManagement, ZonedDateTime requestedDate, ZoneId zone) {
+
+    switch (dueDateManagement) {
+      case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
+        return new EndOfPreviousDayStrategy(zone);
+      case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
+        return new EndOfNextOpenDayStrategy(zone);
+      case MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS:
+        return new EndOfCurrentHoursStrategy(requestedDate, zone);
+      case KEEP_THE_CURRENT_DUE_DATE:
+        return new KeepCurrentDateStrategy(zone);
+      case KEEP_THE_CURRENT_DUE_DATE_TIME:
+      default:
+        return new KeepCurrentDateTimeStrategy();
+    }
+  }
+
   public static ClosedLibraryStrategy determineStrategyForMovingBackward(
     LoanPolicy loanPolicy, ZonedDateTime startDate, ZoneId zone) {
     LoanPolicyPeriod loanPeriod = loanPolicy.getPeriodInterval();

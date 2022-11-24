@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.policy.library;
 
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategy;
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForTruncatedDueDate;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.*;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -18,6 +17,7 @@ import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -138,5 +138,15 @@ public class ClosedLibraryStrategyService {
       ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
         loanPolicy, currentDateTime, timeZone);
     return strategy.calculateDueDate(dueDateLimit, openingDays);
+  }
+
+  public CompletableFuture<Result<ZonedDateTime>> applyClosedLibraryStrategyForHoldSelfExpirationDate(
+    DueDateManagement dueDateManagement, ZonedDateTime holdShelfExpirationDate,
+    ZoneId tenantTimeZone, String servicePointId) {
+
+    return calendarRepository.lookupOpeningDays(holdShelfExpirationDate.toLocalDate(), servicePointId)
+      .thenApply(r -> r.next(openingDays -> determineClosedLibraryStrategyForHoldSelfExpirationDate(
+      dueDateManagement, holdShelfExpirationDate, tenantTimeZone)
+      .calculateDueDate(holdShelfExpirationDate, openingDays)));
   }
 }

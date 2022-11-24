@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -31,6 +33,8 @@ public class UpdateRequestQueue {
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
+
+  private final ClosedLibraryStrategyService closedLibraryStrategyService;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
@@ -153,6 +157,8 @@ public class UpdateRequestQueue {
   private Result<Request> populateHoldShelfExpirationDate(Request request, ZoneId tenantTimeZone) {
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
+    DueDateManagement dueDateManagement = null;
+    boolean isServicePointOpen = true;
 
     log.debug("Using time zone {} and period {}",
       tenantTimeZone,
@@ -161,6 +167,12 @@ public class UpdateRequestQueue {
 
     ZonedDateTime holdShelfExpirationDate =
       calculateHoldShelfExpirationDate(holdShelfExpiryPeriod, tenantTimeZone);
+
+    if (!isServicePointOpen) {
+      holdShelfExpirationDate = closedLibraryStrategyService.applyClosedLibraryStrategyForHoldSelfExpirationDate(
+        dueDateManagement, holdShelfExpirationDate, tenantTimeZone, pickupServicePoint.getId()
+      ).thenApply(r -> r);
+    }
 
     request.changeHoldShelfExpirationDate(holdShelfExpirationDate);
 
