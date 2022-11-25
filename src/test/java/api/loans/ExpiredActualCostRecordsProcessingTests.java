@@ -4,6 +4,7 @@ import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.http.InterfaceUrls.scheduledActualCostExpiration;
 import static api.support.matchers.ActualCostRecordMatchers.isInStatus;
 import static api.support.matchers.LoanMatchers.hasStatus;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.circulation.domain.ActualCostRecord.Status.EXPIRED;
 import static org.folio.circulation.domain.ActualCostRecord.Status.OPEN;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -132,11 +133,9 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
     assertThat(actualCostRecords.size(), is(1));
     assertThat(record, is(isInStatus(OPEN)));
 
-    UUID recordId = UUID.fromString(record.getString("id"));
-
     if (status != OPEN) {
       record = record.put("status", status.getValue());
-      actualCostRecordsClient.replace(recordId, record);
+      actualCostRecordsClient.replace(UUID.fromString(record.getString("id")), record);
     }
 
     return record;
@@ -176,7 +175,8 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
 
   private void runProcessing(ZonedDateTime processingTime) {
     mockClockManagerToReturnFixedDateTime(processingTime);
-    timedTaskClient.start(scheduledActualCostExpiration(), 204, "scheduled-actual-cost-expiration");
+    timedTaskClient.start(scheduledActualCostExpiration(), HTTP_NO_CONTENT.toInt(),
+      "scheduled-actual-cost-expiration");
     mockClockManagerToReturnDefaultDateTime();
   }
 

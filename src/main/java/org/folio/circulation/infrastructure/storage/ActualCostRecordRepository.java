@@ -93,9 +93,9 @@ public class ActualCostRecordRepository {
     return mapSequentially(records, this::update);
   }
 
-  public CompletableFuture<Result<ActualCostRecord>> update(ActualCostRecord rec) {
-    return actualCostRecordStorageClient.put(rec.getId(), toJson(rec))
-      .thenApply(noContentRecordInterpreter(rec)::flatMap);
+  private CompletableFuture<Result<ActualCostRecord>> update(ActualCostRecord actualCostRecord) {
+    return actualCostRecordStorageClient.put(actualCostRecord.getId(), toJson(actualCostRecord))
+      .thenApply(noContentRecordInterpreter(actualCostRecord)::flatMap);
   }
 
   private CqlQueryFinder<JsonObject> createActualCostRecordCqlFinder() {
