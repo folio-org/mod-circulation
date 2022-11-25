@@ -58,7 +58,7 @@ class UpdateRequestQueueTest {
       RequestRepository.using(clients, itemRepository, userRepository, loanRepository)));
 
     updateRequestQueue =
-      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null);
+      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null, null, null);
   }
 
   @Test

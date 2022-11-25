@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import org.folio.circulation.domain.policy.DueDateManagement;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -42,10 +43,10 @@ public final class ClosedLibraryStrategyUtils {
     }
   }
 
-  public static ClosedLibraryStrategy determineClosedLibraryStrategyForHoldSelfExpirationDate(
-    DueDateManagement dueDateManagement, ZonedDateTime requestedDate, ZoneId zone) {
+  public static ClosedLibraryStrategy determineClosedLibraryStrategyForHoldShelfExpirationDate(
+    ExpirationDateManagement expirationDateManagement, ZonedDateTime requestedDate, ZoneId zone) {
 
-    switch (dueDateManagement) {
+    switch (expirationDateManagement) {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
         return new EndOfPreviousDayStrategy(zone);
       case MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY:
