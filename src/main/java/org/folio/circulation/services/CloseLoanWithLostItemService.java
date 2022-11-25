@@ -3,7 +3,7 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
-import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 
@@ -49,7 +49,7 @@ public class CloseLoanWithLostItemService {
 
   public CompletableFuture<Result<Void>> closeLoanAsLostAndPaid(Loan loan) {
     if (loan == null || !loan.isItemLost()) {
-      return ofAsync(null);
+      return emptyAsync();
     }
 
     return fetchLoanFeeFineData(loan)

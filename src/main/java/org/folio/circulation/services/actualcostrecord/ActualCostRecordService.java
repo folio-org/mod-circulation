@@ -173,6 +173,7 @@ public class ActualCostRecordService {
       .orElse(null);
 
     return new ActualCostRecord()
+      .withStatus(ActualCostRecord.Status.OPEN)
       .withLossType(context.getLossType())
       .withLossDate(context.getLossDate())
       .withExpirationDate(loan.getLostItemPolicy()
