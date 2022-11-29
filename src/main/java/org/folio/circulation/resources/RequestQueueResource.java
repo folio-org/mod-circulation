@@ -123,7 +123,7 @@ public class RequestQueueResource extends Resource {
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      configurationRepository, null, null);
+      configurationRepository);
 
     getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 
