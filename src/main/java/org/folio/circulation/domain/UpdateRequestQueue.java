@@ -36,16 +36,19 @@ public class UpdateRequestQueue {
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
 
-  private final CalendarRepository calendarRepository;
+  private CalendarRepository calendarRepository;
 
-  private final ClosedLibraryStrategyService closedLibraryStrategyService;
+  private ClosedLibraryStrategyService closedLibraryStrategyService;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
     ConfigurationRepository configurationRepository) {
-    this(requestQueueRepository, requestRepository, servicePointRepository, configurationRepository, calendarRepository, closedLibraryStrategyService);
+    this.requestQueueRepository = requestQueueRepository;
+    this.requestRepository = requestRepository;
+    this.servicePointRepository = servicePointRepository;
+    this.configurationRepository = configurationRepository;
   }
 
   public UpdateRequestQueue(
@@ -160,9 +163,7 @@ public class UpdateRequestQueue {
                         expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
                         tenantTimeZone, adjacentOpeningDaysResult.value()
                         );
-                    } catch (ExecutionException e) {
-                      throw new RuntimeException(e);
-                    } catch (InterruptedException e) {
+                    } catch (ExecutionException | InterruptedException e) {
                       throw new RuntimeException(e);
                     }
                   }).thenApply(calculatedDate -> {
@@ -171,9 +172,7 @@ public class UpdateRequestQueue {
                   });
                 return calculatedRequest;
               });
-            } catch (ExecutionException e) {
-              throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } catch (ExecutionException | InterruptedException e) {
               throw new RuntimeException(e);
             }
           })
