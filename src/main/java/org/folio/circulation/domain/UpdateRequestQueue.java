@@ -8,6 +8,7 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.lang.invoke.MethodHandles;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -155,13 +156,14 @@ public class UpdateRequestQueue {
               )
               .map(calculatedRequest-> {
                 ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
+                Duration intervalDuration = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalDuration();
                 calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
                     calculatedRequest.getPickupServicePoint().getId())
                   .thenApply(adjacentOpeningDaysResult -> {
                     try {
                       return closedLibraryStrategyService.applyClosedLibraryStrategyForHoldShelfExpirationDate(
                         expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
-                        tenantTimeZone, adjacentOpeningDaysResult.value()
+                        tenantTimeZone, adjacentOpeningDaysResult.value(), intervalDuration
                         );
                     } catch (ExecutionException | InterruptedException e) {
                       throw new RuntimeException(e);
@@ -199,7 +201,6 @@ public class UpdateRequestQueue {
   private Result<Request> populateHoldShelfExpirationDate(Request request, ZoneId tenantTimeZone) throws ExecutionException, InterruptedException {
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
-    ExpirationDateManagement expirationDateManagement = pickupServicePoint.getHoldShelfClosedLibraryDateManagement();
 
     log.debug("Using time zone {} and period {}",
       tenantTimeZone,

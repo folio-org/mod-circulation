@@ -7,7 +7,9 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.domain.policy.LoanPolicyPeriod;
 import org.folio.circulation.support.results.Result;
 
@@ -19,6 +21,11 @@ public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy
     LoanPolicyPeriod offsetInterval, int offsetDuration, ZoneId zone) {
     super(zone);
     duration = LoanPolicyPeriod.calculateDuration(offsetInterval, offsetDuration);
+  }
+
+  public BeginningOfNextOpenHoursStrategy(Duration intervalDuration, ZoneId zone) {
+    super(zone);
+    duration = intervalDuration;
   }
 
   @Override
