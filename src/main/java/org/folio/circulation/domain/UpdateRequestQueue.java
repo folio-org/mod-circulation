@@ -158,8 +158,14 @@ public class UpdateRequestQueue {
                 tenantTimeZone
               )
               .map(calculatedRequest-> {
+                final Duration intervalDuration;
                 ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
-                Duration intervalDuration = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalDuration();
+                if(ExpirationDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.name().equals(expirationDateManagement.name())) {
+                  intervalDuration = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalDuration();
+                }
+                else {
+                  intervalDuration = new TimePeriod(1,"DAYS").getIntervalDuration();
+                }
                 calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
                     calculatedRequest.getPickupServicePoint().getId())
                   .thenApply(adjacentOpeningDaysResult -> {
