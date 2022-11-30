@@ -56,7 +56,9 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository, CalendarRepository calendarRepository, ClosedLibraryStrategyService closedLibraryStrategyService) {
+    ConfigurationRepository configurationRepository,
+    CalendarRepository calendarRepository,
+    ClosedLibraryStrategyService closedLibraryStrategyService) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
@@ -71,7 +73,8 @@ public class UpdateRequestQueue {
                                          RequestQueueRepository requestQueueRepository) {
 
     return new UpdateRequestQueue(requestQueueRepository,
-      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
+      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients),
+      new CalendarRepository(clients), new ClosedLibraryStrategyService(new CalendarRepository(clients), getZonedDateTime(), false));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
