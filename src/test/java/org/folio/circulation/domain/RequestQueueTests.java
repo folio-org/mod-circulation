@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,6 +39,23 @@ class RequestQueueTests {
       assertEquals(requestAfterUpdate.getPosition(), expectedPosition);
       assertEquals(requestBeforeUpdate.getId(), requestAfterUpdate.getId());
     }
+  }
+
+  @Test
+  void replaceRequestShouldHandleRequestsWithNullId() {
+    String requestId = randomId();
+    List<Request> requests = List.of(
+      buildRequest(1, OPEN_NOT_YET_FILLED, requestId));
+    RequestQueue requestQueue = new RequestQueue(requests);
+
+    requestQueue.replaceRequest(buildRequest(1, OPEN_NOT_YET_FILLED, null));
+
+    String firstInQueueRequestId = requestQueue.getRequests().stream()
+      .findFirst()
+      .orElse(null)
+      .getId();
+
+    assertEquals(requestId, firstInQueueRequestId);
   }
 
   private static Stream<Arguments> argumentsForUpdateRequestPositionOnCheckIn() {
