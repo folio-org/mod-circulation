@@ -4,10 +4,10 @@ import static java.util.Collections.emptyMap;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -45,7 +45,7 @@ public final class ClosedLibraryStrategyUtils {
   }
 
   public static ClosedLibraryStrategy determineClosedLibraryStrategyForHoldShelfExpirationDate(
-    ExpirationDateManagement expirationDateManagement, ZonedDateTime requestedDate, ZoneId zone, Duration intervalDuration) {
+    ExpirationDateManagement expirationDateManagement, ZonedDateTime requestedDate, ZoneId zone, TimePeriod intervalPeriod) {
 
     switch (expirationDateManagement) {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:
@@ -57,7 +57,7 @@ public final class ClosedLibraryStrategyUtils {
       case KEEP_THE_CURRENT_DUE_DATE:
         return new KeepCurrentDateStrategy(zone);
       case MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS:
-        return new BeginningOfNextOpenHoursStrategy(intervalDuration, zone);
+        return new BeginningOfNextOpenHoursStrategy(intervalPeriod.getIntervalDuration(), zone);
       case KEEP_THE_CURRENT_DUE_DATE_TIME:
       default:
         return new KeepCurrentDateTimeStrategy();

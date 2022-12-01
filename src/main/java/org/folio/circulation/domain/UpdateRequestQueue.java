@@ -157,32 +157,7 @@ public class UpdateRequestQueue {
                 request.withPickupServicePoint(servicePoint),
                 tenantTimeZone
               )
-              .map(calculatedRequest-> {
-                final Duration intervalDuration;
-                ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
-                if(ExpirationDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.name().equals(expirationDateManagement.name())) {
-                  intervalDuration = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalDuration();
-                }
-                else {
-                  intervalDuration = new TimePeriod(1,"DAYS").getIntervalDuration();
-                }
-                calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
-                    calculatedRequest.getPickupServicePoint().getId())
-                  .thenApply(adjacentOpeningDaysResult -> {
-                    try {
-                      return closedLibraryStrategyService.applyClosedLibraryStrategyForHoldShelfExpirationDate(
-                        expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
-                        tenantTimeZone, adjacentOpeningDaysResult.value(), intervalDuration
-                        );
-                    } catch (ExecutionException | InterruptedException e) {
-                      throw new RuntimeException(e);
-                    }
-                  }).thenApply(calculatedDate -> {
-                    calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
-                    return calculatedRequest;
-                  });
-                return calculatedRequest;
-              });
+              .map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest));
             } catch (ExecutionException | InterruptedException e) {
               throw new RuntimeException(e);
             }
@@ -191,6 +166,26 @@ public class UpdateRequestQueue {
     } else {
       return completedFuture(succeeded(request));
     }
+  }
+
+  private Request modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest) {
+    ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
+    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
+        calculatedRequest.getPickupServicePoint().getId())
+      .thenApply(adjacentOpeningDaysResult -> {
+        try {
+          return closedLibraryStrategyService.applyClosedLibraryStrategyForHoldShelfExpirationDate(
+            expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
+            tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
+          );
+        } catch (ExecutionException | InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }).thenApply(calculatedDate -> {
+        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
+        return calculatedRequest;
+      });
+    return calculatedRequest;
   }
 
   private CompletableFuture<Result<Request>> putInTransit(Request request) {
