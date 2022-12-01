@@ -1,3 +1,6 @@
+## 23.1.6 2022-12-01
+* Send TLR awaiting pickup notice on check in (CIRC-1655)
+
 ## 23.1.5 2022-09-19
 * Forbid renewal when item is assigned to title-level recall (CIRC-1610)
 * Forbid renewal for item with pending hold request when loan policy is configured accordingly (CIRC-1611)
