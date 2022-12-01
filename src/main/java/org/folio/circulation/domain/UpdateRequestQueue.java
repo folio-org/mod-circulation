@@ -84,6 +84,9 @@ public class UpdateRequestQueue {
     Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
     if (requestBeingFulfilled.getItemId() == null || !requestBeingFulfilled.isFor(item)) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
+
+      // Replacing request in the queue because another instance of it has been created
+      requestQueue.replaceRequest(requestBeingFulfilled);
     }
 
     requestQueue.updateRequestPositionOnCheckIn(requestBeingFulfilled.getId());

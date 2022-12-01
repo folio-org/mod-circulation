@@ -1,3 +1,7 @@
+## 23.3.1 2022-12-01
+
+* Send TLR awaiting pickup notice on check in (CIRC-1655)
+
 ## 23.3.0 2022-10-27
 
 * Upgrade `calendar` interface to `5.0` (CIRC-1648)
@@ -41,7 +45,7 @@
 * Add tests for aging overdue items to lost (CIRC-895)
 * Disable actual cost record creation (CIRC-1554)
 * Update loan schema according to actual json response (CIRC-915)
-* Do not fail when nonexistent location ID is passed to GET /circulation/rules/request-policy (CIRC-1169) 
+* Do not fail when nonexistent location ID is passed to GET /circulation/rules/request-policy (CIRC-1169)
 * Pull inventory repository creation up (CIRC-1418)
 * POST /circulation/requests/instances must create `true` TLR when feature is enabled (CIRC-1442)
 * Fix checkout closing request for different item of the same instance (CIRC-1450)
@@ -60,8 +64,8 @@
 * Fix two recall-related automated patron blocks that do not enforce (CIRC-1471)
 * Publish LOAN_CLOSED event when last Lost Item Fee for loan is closed (CIRC-1474)
 * TLR Recall should pick item with loan with next closest due date if another recall request exists, and the one with the least recalls if there are no not recalled loans (CIRC-1475)
-* Extend due date of a loan after recall (CIRC-1476) 
-* Do not check request policy for TLR Holds and create Recalls first when placing instance level requests (CIRC-1479) 
+* Extend due date of a loan after recall (CIRC-1476)
+* Do not check request policy for TLR Holds and create Recalls first when placing instance level requests (CIRC-1479)
 * Refuse ILR creation when TLR for the same instance already exists (CIRC-1481)
 * Truncate loan due date during checkout only if there is a recall request on the same item (CIRC-1488)
 * Use fixed date time during refund processing tests (CIRC-1494)
@@ -71,7 +75,7 @@
 * Pick item closest to pickup service point for Page TLR (CIRC-1500)
 * Log request id and tenant id (CIRC-1501)
 * Update logic for publishing LOAN_DUE_DATE_CHANGED events (CIRC-1503)
-* Do not send Request Expiration notices for `Closed - Filled` requests (CIRC-1504) 
+* Do not send Request Expiration notices for `Closed - Filled` requests (CIRC-1504)
 * Display correct previous date in circulation log when item is recalled (CIRC-1505)
 * Fix instance level request endpoint, create ILRs when TLR feature is disabled (CIRC-1507)
 * Replace deprecated logger (CIRC-1510)
