@@ -6,7 +6,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -18,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -144,10 +144,10 @@ public class ClosedLibraryStrategyService {
 
   public Result<ZonedDateTime> applyClosedLibraryStrategyForHoldShelfExpirationDate(
     ExpirationDateManagement expirationDateManagement, ZonedDateTime holdShelfExpirationDate,
-    ZoneId tenantTimeZone, AdjacentOpeningDays openingDays, Duration intervalDuration) throws ExecutionException, InterruptedException {
+    ZoneId tenantTimeZone, AdjacentOpeningDays openingDays, TimePeriod intervalPeriod) throws ExecutionException, InterruptedException {
 
     return determineClosedLibraryStrategyForHoldShelfExpirationDate(expirationDateManagement,
-      holdShelfExpirationDate, tenantTimeZone, intervalDuration)
+      holdShelfExpirationDate, tenantTimeZone, intervalPeriod)
       .calculateDueDate(holdShelfExpirationDate, openingDays);
   }
 }
