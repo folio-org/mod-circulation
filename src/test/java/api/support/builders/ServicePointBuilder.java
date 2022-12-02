@@ -17,7 +17,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
   private final Boolean pickupLocation;
   private final JsonObject holdShelfExpiryPeriod;
 
-  private final ExpirationDateManagement holdShelfExpirationDateManagement;
+  private final String holdShelfExpirationDateManagement;
 
   public ServicePointBuilder(
       UUID id,
@@ -28,7 +28,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       Integer shelvingLagTime,
       Boolean pickupLocation,
       JsonObject holdShelfExpiryPeriod,
-      ExpirationDateManagement holdShelfExpirationDateManagement) {
+      String holdShelfExpirationDateManagement) {
     this.id = id;
     this.name = name;
     this.code = code;
@@ -64,8 +64,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
         getIntegerProperty(representation, "shelvingLagTime", null),
         getBooleanProperty(representation, "pickupLocation"),
         getObjectProperty(representation, "holdShelfExpiryPeriod"),
-        ExpirationDateManagement.getExpirationDateManagement(
-        getProperty(representation, "holdShelfClosedLibraryDateManagement"))
+        getProperty(representation, "holdShelfClosedLibraryDateManagement")
     );
   }
 
@@ -193,7 +192,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.holdShelfExpirationDateManagement);
   }
 
-  public ServicePointBuilder withHoldShelfExpirationDateManagement(ExpirationDateManagement expirationDateManagement) {
+  public ServicePointBuilder withHoldShelfExpirationDateManagement(String expirationDateManagement) {
     return new ServicePointBuilder(
       this.id,
       this.name,
