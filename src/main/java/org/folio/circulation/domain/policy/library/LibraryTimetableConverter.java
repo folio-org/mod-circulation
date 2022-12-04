@@ -38,7 +38,7 @@ public class LibraryTimetableConverter {
     return mergeOpenPeriods(openIntervals);
   }
 
-  private static LibraryTimetable mergeOpenPeriods(List<Interval> openIntervals) {
+  static LibraryTimetable mergeOpenPeriods(List<Interval> openIntervals) {
     if (openIntervals.isEmpty()) {
       return new LibraryTimetable();
     }
@@ -56,6 +56,7 @@ public class LibraryTimetableConverter {
         Interval newInterval = mergeIntervals(curr, next);
         mergedOpenIntervals.set(i, newInterval);
         mergedOpenIntervals.remove(i + 1);
+        i--;  // to merge three (or more) intervals that abut each other
       }
     }
 
