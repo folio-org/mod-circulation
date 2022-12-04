@@ -23,15 +23,15 @@
   </repositories>
 
   <properties>
-    <antlr4.version>4.7.2</antlr4.version>
-    <drools.version>7.53.0.Final</drools.version>
-    <rmb.version>35.0.0</rmb.version>
-    <vertx.version>4.3.3</vertx.version>
-    <log4j2.version>2.17.1</log4j2.version>
+    <antlr4.version>4.11.1</antlr4.version>
+    <drools.version>8.31.0.Final</drools.version>
+    <rmb.version>35.0.4</rmb.version>
+    <vertx.version>4.3.5</vertx.version>
+    <log4j2.version>2.19.0</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <lombok.version>1.18.22</lombok.version>
-    <spring.version>5.2.22.RELEASE</spring.version>
+    <lombok.version>1.18.24</lombok.version>
+    <spring.version>5.3.24</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
   </properties>
 
@@ -47,7 +47,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.7.0</version>
+        <version>5.9.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -85,12 +85,11 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.4.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.9</version>
+      <version>3.12.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -117,25 +116,15 @@
       <artifactId>drools-mvel</artifactId>
       <version>${drools.version}</version>
     </dependency>
-    <dependency> <!-- patch drools' xstream: https://x-stream.github.io/security.html#CVEs -->
-      <groupId>com.thoughtworks.xstream</groupId>
-      <artifactId>xstream</artifactId>
-      <version>1.4.19</version>
-    </dependency>
-    <dependency> <!-- patch drools' commons-codec: https://app.snyk.io/vuln/SNYK-JAVA-COMMONSCODEC-561518 -->
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-    </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <version>${antlr4.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.everit-org.json-schema</groupId>
-      <artifactId>org.everit.json.schema</artifactId>
-      <version>1.12.1</version>
+      <groupId>com.github.erosb</groupId>
+      <artifactId>everit-json-schema</artifactId>
+      <version>1.14.1</version>
       <exclusions>
         <exclusion>
           <groupId>joda-time</groupId>
@@ -194,31 +183,31 @@
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
-      <version>4.3.1</version>
+      <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <version>3.11.2</version>
+      <version>4.9.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>3.1.6</version>
+      <version>4.2.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path-assert</artifactId>
-      <version>2.4.0</version>
+      <version>2.7.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.tomakehurst</groupId>
-      <artifactId>wiremock</artifactId>
-      <version>2.25.1</version>
+      <artifactId>wiremock-jre8</artifactId>
+      <version>2.35.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -248,7 +237,7 @@
     <dependency>
       <groupId>org.folio.okapi</groupId>
       <artifactId>okapi-testing</artifactId>
-      <version>4.14.1</version>
+      <version>4.14.8</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
