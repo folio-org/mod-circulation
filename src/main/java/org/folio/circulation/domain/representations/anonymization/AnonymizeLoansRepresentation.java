@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.support.results.Result;
-import org.json.JSONArray;
-
 import io.vertx.core.json.JsonObject;
 
 public class AnonymizeLoansRepresentation {
@@ -40,7 +38,7 @@ public class AnonymizeLoansRepresentation {
       .stream()
       .map(k -> new Error().withMessage(k)
         .withParameters(Collections.singletonList(new Parameter().withKey("loanIds")
-          .withValue(new JSONArray(multiMap.get(k)).toString()))))
+          .withValue(multiMap.get(k).toString()))))
       .collect(Collectors.toList());
 
   }
