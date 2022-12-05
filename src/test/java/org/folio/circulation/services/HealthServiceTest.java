@@ -10,6 +10,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.folio.circulation.CirculationVerticle;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -18,9 +19,10 @@ class HealthServiceTest {
 
   @Test
   void health(Vertx vertx, VertxTestContext vtc) {
-    var options = new DeploymentOptions().setConfig(new JsonObject().put("port", 8081));
+    var port = NetworkUtils.nextFreePort();
+    var options = new DeploymentOptions().setConfig(new JsonObject().put("port", port));
     vertx.deployVerticle(new CirculationVerticle(), options)
-    .compose(x -> WebClient.create(vertx).getAbs("http://localhost:8081/admin/health").send())
+    .compose(x -> WebClient.create(vertx).getAbs("http://localhost:" + port + "/admin/health").send())
     .onComplete(vtc.succeeding(httpResponse -> {
       assertThat(httpResponse.statusCode(), is(200));
       assertThat(httpResponse.bodyAsString(), is("OK"));
