@@ -11,7 +11,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -149,18 +148,11 @@ public class UpdateRequestQueue {
       return servicePointRepository.getServicePointById(pickupServicePointId)
         .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
           Result.combined((servicePoint, tenantTimeZone) ->
-          {
-            try {
-              return populateHoldShelfExpirationDate(
-                request.withPickupServicePoint(servicePoint),
-                tenantTimeZone
-              )
-              .map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest));
-            } catch (ExecutionException | InterruptedException ex) {
-              Thread.currentThread().interrupt();
-              return null;
-            }
-          })
+            populateHoldShelfExpirationDate(
+              request.withPickupServicePoint(servicePoint),
+              tenantTimeZone
+            )
+              .map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest)))
         );
     } else {
       return completedFuture(succeeded(request));
@@ -175,7 +167,7 @@ public class UpdateRequestQueue {
         expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
         tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
       )).thenApply(calculatedDate -> {
-        calculatedRequest.changeHoldShelfExpirationDate((ZonedDateTime) calculatedDate.value());
+        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
         return calculatedRequest;
       });
     return calculatedRequest;
@@ -195,7 +187,7 @@ public class UpdateRequestQueue {
     return completedFuture(succeeded(request));
   }
 
-  private Result<Request> populateHoldShelfExpirationDate(Request request, ZoneId tenantTimeZone) throws ExecutionException, InterruptedException {
+  private Result<Request> populateHoldShelfExpirationDate(Request request, ZoneId tenantTimeZone) {
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
 

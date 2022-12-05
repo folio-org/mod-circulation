@@ -12,7 +12,6 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.Loan;
