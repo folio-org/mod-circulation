@@ -163,7 +163,8 @@ public class UpdateRequestQueue {
               )
               .map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest));
             } catch (ExecutionException | InterruptedException ex) {
-              return failed(new ServerErrorFailure(ex.getMessage()));
+              Thread.currentThread().interrupt();
+              return null;
             }
           })
         );
@@ -183,7 +184,8 @@ public class UpdateRequestQueue {
             tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
           );
         } catch (ExecutionException | InterruptedException ex) {
-          return failed(new ServerErrorFailure(ex.getMessage()));
+          Thread.currentThread().interrupt();
+          return null;
         }
       }).thenApply(calculatedDate -> {
         calculatedRequest.changeHoldShelfExpirationDate((ZonedDateTime) calculatedDate.value());
