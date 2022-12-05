@@ -2,8 +2,8 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static java.util.concurrent.CompletableFuture.failedFuture;
+import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
@@ -26,7 +26,11 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.results.Result;
 
 public class UpdateRequestQueue {
@@ -158,8 +162,8 @@ public class UpdateRequestQueue {
                 tenantTimeZone
               )
               .map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest));
-            } catch (ExecutionException | InterruptedException e) {
-              throw new RuntimeException(e);
+            } catch (ExecutionException | InterruptedException ex) {
+              return failed(new ServerErrorFailure(ex.getMessage()));
             }
           })
         );
@@ -178,11 +182,11 @@ public class UpdateRequestQueue {
             expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
             tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
           );
-        } catch (ExecutionException | InterruptedException e) {
-          throw new RuntimeException(e);
+        } catch (ExecutionException | InterruptedException ex) {
+          return failed(new ServerErrorFailure(ex.getMessage()));
         }
       }).thenApply(calculatedDate -> {
-        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
+        calculatedRequest.changeHoldShelfExpirationDate((ZonedDateTime) calculatedDate.value());
         return calculatedRequest;
       });
     return calculatedRequest;

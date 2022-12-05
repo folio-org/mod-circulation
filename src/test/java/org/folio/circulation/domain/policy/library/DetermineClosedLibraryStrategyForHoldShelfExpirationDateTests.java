@@ -25,13 +25,13 @@ public class DetermineClosedLibraryStrategyForHoldShelfExpirationDateTests {
     JsonObject representation = new ServicePointBuilder("Circ Desk 2", "cd2",
       "Circulation Desk -- Back Entrance").withPickupLocation(TRUE)
       .withHoldShelfExpriyPeriod(6, "Days")
-      .withHoldShelfExpirationDateManagement(expirationDateManagement.getValue())
+      .withholdShelfClosedLibraryDateManagement(expirationDateManagement.getValue())
       .create();
 
     ZonedDateTime startDate = ZonedDateTime.of(2019, 1, 1, 0, 0, 0, 0, UTC);
-    Duration duration = new TimePeriod(6, "Days").getIntervalDuration();
+    TimePeriod period = new TimePeriod(6, "Days");
     closedLibraryStrategy = ClosedLibraryStrategyUtils
-      .determineClosedLibraryStrategyForHoldShelfExpirationDate(expirationDateManagement, startDate, UTC, duration);
+      .determineClosedLibraryStrategyForHoldShelfExpirationDate(expirationDateManagement, startDate, UTC, period);
 
     Assert.assertEquals(expectedClass, closedLibraryStrategy.getClass());
   }
