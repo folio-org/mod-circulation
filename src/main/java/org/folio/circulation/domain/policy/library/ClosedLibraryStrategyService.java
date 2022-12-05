@@ -144,7 +144,7 @@ public class ClosedLibraryStrategyService {
 
   public Result<ZonedDateTime> applyClosedLibraryStrategyForHoldShelfExpirationDate(
     ExpirationDateManagement expirationDateManagement, ZonedDateTime holdShelfExpirationDate,
-    ZoneId tenantTimeZone, AdjacentOpeningDays openingDays, TimePeriod intervalPeriod) throws ExecutionException, InterruptedException {
+    ZoneId tenantTimeZone, AdjacentOpeningDays openingDays, TimePeriod intervalPeriod) {
 
     return determineClosedLibraryStrategyForHoldShelfExpirationDate(expirationDateManagement,
       holdShelfExpirationDate, tenantTimeZone, intervalPeriod)

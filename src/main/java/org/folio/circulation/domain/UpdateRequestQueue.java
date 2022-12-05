@@ -2,13 +2,11 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.lang.invoke.MethodHandles;
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -26,11 +24,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
-import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.http.server.ServerErrorResponse;
 import org.folio.circulation.support.results.Result;
 
 public class UpdateRequestQueue {
@@ -177,17 +171,10 @@ public class UpdateRequestQueue {
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
         calculatedRequest.getPickupServicePoint().getId())
-      .thenApply(adjacentOpeningDaysResult -> {
-        try {
-          return closedLibraryStrategyService.applyClosedLibraryStrategyForHoldShelfExpirationDate(
-            expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
-            tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-          );
-        } catch (ExecutionException | InterruptedException ex) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
-      }).thenApply(calculatedDate -> {
+      .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategyService.applyClosedLibraryStrategyForHoldShelfExpirationDate(
+        expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
+        tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
+      )).thenApply(calculatedDate -> {
         calculatedRequest.changeHoldShelfExpirationDate((ZonedDateTime) calculatedDate.value());
         return calculatedRequest;
       });

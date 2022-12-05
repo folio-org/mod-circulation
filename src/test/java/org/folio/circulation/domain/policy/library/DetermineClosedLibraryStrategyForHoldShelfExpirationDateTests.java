@@ -16,7 +16,7 @@ import java.util.List;
 import static java.lang.Boolean.TRUE;
 import static java.time.ZoneOffset.UTC;
 
-public class DetermineClosedLibraryStrategyForHoldShelfExpirationDateTests {
+class DetermineClosedLibraryStrategyForHoldShelfExpirationDateTests {
   private ClosedLibraryStrategy closedLibraryStrategy;
 
   @ParameterizedTest
