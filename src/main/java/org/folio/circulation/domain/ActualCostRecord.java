@@ -63,6 +63,8 @@ public class ActualCostRecord {
     private final String materialType;
     private final String permanentLocationId;
     private final String permanentLocation;
+    private final String effectiveLocationId;
+    private final String effectiveLocation;
     private final String loanTypeId;
     private final String loanType;
     private final String holdingsRecordId;
@@ -81,6 +83,7 @@ public class ActualCostRecord {
     private final String id;
     private final String title;
     private final Collection<ActualCostRecordIdentifier> identifiers;
+    private final Collection<Contributor> contributors;
   }
 
   @NoArgsConstructor(force = true)
