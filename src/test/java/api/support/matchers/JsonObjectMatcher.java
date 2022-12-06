@@ -37,7 +37,7 @@ public class JsonObjectMatcher {
           return false;
         }
 
-         if (!valueMatcher.matches(actual)) {
+        if (!valueMatcher.matches(actual)) {
           mismatchDescription.appendText("Expected json path [")
             .appendValue(jsonPath).appendText("] evaluated to ")
             .appendDescriptionOf(valueMatcher).appendText(" but actual [")
