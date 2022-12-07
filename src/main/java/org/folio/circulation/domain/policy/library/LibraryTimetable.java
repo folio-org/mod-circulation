@@ -31,6 +31,7 @@ class LibraryTimetable {
       currNode.setPrevious(prevNode);
       prevNode = currNode;
     }
+    prevNode.setNext(null);  // needed if the node was not at the end before
     return new ImmutablePair<>(head, prevNode);
   }
 
