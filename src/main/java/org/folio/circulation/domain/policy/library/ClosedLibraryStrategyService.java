@@ -16,9 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -139,14 +137,5 @@ public class ClosedLibraryStrategyService {
       ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
         loanPolicy, currentDateTime, timeZone);
     return strategy.calculateDueDate(dueDateLimit, openingDays);
-  }
-
-  public Result<ZonedDateTime> applyClosedLibraryStrategyForHoldShelfExpirationDate(
-    ExpirationDateManagement expirationDateManagement, ZonedDateTime holdShelfExpirationDate,
-    ZoneId tenantTimeZone, AdjacentOpeningDays openingDays, TimePeriod intervalPeriod) {
-
-    return determineClosedLibraryStrategyForHoldShelfExpirationDate(expirationDateManagement,
-      holdShelfExpirationDate, tenantTimeZone, intervalPeriod)
-      .calculateDueDate(holdShelfExpirationDate, openingDays);
   }
 }

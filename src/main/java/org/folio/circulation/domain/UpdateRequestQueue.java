@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
@@ -16,7 +17,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
-import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -36,8 +36,6 @@ public class UpdateRequestQueue {
 
   private CalendarRepository calendarRepository;
 
-  private ClosedLibraryStrategyService closedLibraryStrategyService;
-
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
@@ -54,15 +52,13 @@ public class UpdateRequestQueue {
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
     ConfigurationRepository configurationRepository,
-    CalendarRepository calendarRepository,
-    ClosedLibraryStrategyService closedLibraryStrategyService) {
+    CalendarRepository calendarRepository) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
     this.configurationRepository = configurationRepository;
     this.calendarRepository = calendarRepository;
-    this.closedLibraryStrategyService = closedLibraryStrategyService;
   }
 
   public static UpdateRequestQueue using(Clients clients,
@@ -71,7 +67,7 @@ public class UpdateRequestQueue {
 
     return new UpdateRequestQueue(requestQueueRepository,
       requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients),
-      new CalendarRepository(clients), new ClosedLibraryStrategyService(new CalendarRepository(clients), getZonedDateTime(), false));
+      new CalendarRepository(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -163,10 +159,10 @@ public class UpdateRequestQueue {
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
         calculatedRequest.getPickupServicePoint().getId())
-      .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategyService.applyClosedLibraryStrategyForHoldShelfExpirationDate(
+      .thenApply(adjacentOpeningDaysResult -> determineClosedLibraryStrategyForHoldShelfExpirationDate(
         expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
-        tenantTimeZone, adjacentOpeningDaysResult.value(), calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-      )).thenApply(calculatedDate -> {
+        tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
+      ).calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value())).thenApply(calculatedDate -> {
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
         return calculatedRequest;
       });
