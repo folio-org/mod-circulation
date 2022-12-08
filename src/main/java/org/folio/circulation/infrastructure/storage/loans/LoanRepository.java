@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -84,8 +83,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String ID = "id";
   private static final String USER_ID = "userId";
 
-  public static final String DUE_DATE_CHANGED_BY_EXPIRED_USER = "dueDateChangedByNearExpireUser";
-
   public LoanRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository) {
 
@@ -107,7 +104,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     return loansStorageClient.post(storageLoan)
       .thenApply(interpreter::flatMap)
-      .thenApply(setdueDateChangedByNearExpireUserFlag(loan))
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
 
@@ -257,18 +253,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
 
-  private Function<Result<Loan>, Result<Loan>> setdueDateChangedByNearExpireUserFlag(Loan loan) {
-    return loanResult -> {
-      loanResult.map(loanItem -> {
-        if (loan.wasdueDateChangedByNearExpireUser()) {
-          loanItem.setdueDateChangedByNearExpireUser();
-        }
-        return loanItem;
-      });
-      return loanResult;
-    };
-  }
-
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     JsonObject storageLoan = loan.asJson();
 
@@ -281,7 +265,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     removeProperty(storageLoan, FEESANDFINES);
     removeProperty(storageLoan, OVERDUE_FINE_POLICY);
     removeProperty(storageLoan, LOST_ITEM_POLICY);
-    removeProperty(storageLoan, DUE_DATE_CHANGED_BY_EXPIRED_USER);
 
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");

@@ -99,7 +99,7 @@ public class ClosedLibraryStrategyService {
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
       isBeforeMillis(user.getExpirationDate(), dueDate)) {
-      loan.setdueDateChangedByNearExpireUser();
+      loan.setDueDateChangedByNearExpireUser();
 
       return calendarRepository.lookupOpeningDays(user.getExpirationDate().toLocalDate(),
         loan.getCheckoutServicePointId())

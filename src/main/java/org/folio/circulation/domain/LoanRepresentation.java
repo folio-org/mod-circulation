@@ -29,6 +29,10 @@ public class LoanRepresentation {
 
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
 
+    if(loan.isDueDateChangedByNearExpireUser()) {
+      extendedRepresentation.put("dueDateChangedByNearExpireUser",loan.isDueDateChangedByNearExpireUser());
+    }
+
     if(loan.getCheckinServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }
