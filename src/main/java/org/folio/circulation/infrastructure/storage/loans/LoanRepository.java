@@ -266,7 +266,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     removeProperty(storageLoan, FEESANDFINES);
     removeProperty(storageLoan, OVERDUE_FINE_POLICY);
     removeProperty(storageLoan, LOST_ITEM_POLICY);
-    removeProperty(storageLoan, DUE_DATE_CHANGED_BY_HOLD);
 
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
