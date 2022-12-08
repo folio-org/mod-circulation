@@ -171,6 +171,9 @@ public class ActualCostRecordService {
     String patronGroup = ofNullable(user.getPatronGroup())
       .map(PatronGroup::getGroup)
       .orElse(null);
+    String effectiveLocationName = ofNullable(item.getLocation())
+      .map(Location::getName)
+      .orElse(null);
 
     return new ActualCostRecord()
       .withStatus(ActualCostRecord.Status.OPEN)
@@ -195,6 +198,8 @@ public class ActualCostRecordService {
         .withMaterialType(item.getMaterialTypeName())
         .withPermanentLocationId(item.getPermanentLocationId())
         .withPermanentLocation(item.getPermanentLocationName())
+        .withEffectiveLocationId(item.getEffectiveLocationId())
+        .withEffectiveLocation(effectiveLocationName)
         .withLoanTypeId(item.getLoanTypeId())
         .withLoanType(item.getLoanTypeName())
         .withHoldingsRecordId(item.getHoldingsRecordId())
@@ -206,7 +211,8 @@ public class ActualCostRecordService {
       .withInstance(new ActualCostRecordInstance()
         .withId(instance.getId())
         .withTitle(instance.getTitle())
-        .withIdentifiers(context.getIdentifiers()))
+        .withIdentifiers(context.getIdentifiers())
+        .withContributors(instance.getContributors()))
       .withFeeFine(new ActualCostRecordFeeFine()
         .withAccountId(null)
         .withOwnerId(feeFineOwner.getId())

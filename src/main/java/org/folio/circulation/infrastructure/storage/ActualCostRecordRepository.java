@@ -59,7 +59,7 @@ public class ActualCostRecordRepository {
       return ofAsync(() -> null);
     }
 
-    return CqlQuery.exactMatch("accountId", accountId)
+    return CqlQuery.exactMatch("feeFine.accountId", accountId)
       .after(query -> actualCostRecordStorageClient.getMany(query, PageLimit.one()))
       .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
       .thenApply(r -> r.map(multipleRecords -> multipleRecords.getRecords().stream()
