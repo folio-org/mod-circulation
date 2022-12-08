@@ -32,6 +32,7 @@ public class ActualCostRecordMapper {
     write(json, "lossType", actualCostRecord.getLossType().getValue());
     write(json, "lossDate", actualCostRecord.getLossDate());
     write(json, "expirationDate", actualCostRecord.getExpirationDate());
+    write(json, "status", actualCostRecord.getStatus().getValue());
 
     JsonObject userJson = new JsonObject();
     ActualCostRecordUser user = actualCostRecord.getUser();
@@ -117,6 +118,7 @@ public class ActualCostRecordMapper {
     JsonObject feeFine = getObjectProperty(representation, "feeFine");
 
     return new ActualCostRecord(getProperty(representation, "id"),
+      ActualCostRecord.Status.from(getProperty(representation, "status")),
       ItemLossType.from(getProperty(representation, "lossType")),
       getDateTimeProperty(representation, "lossDate"),
       getDateTimeProperty(representation, "expirationDate"),
@@ -150,8 +152,8 @@ public class ActualCostRecordMapper {
         .withAccountId(getProperty(feeFine, "accountId"))
         .withOwnerId(getProperty(feeFine, "ownerId"))
         .withOwner(getProperty(feeFine, "owner"))
-        .withOwnerId(getProperty(feeFine, "typeId"))
-        .withOwner(getProperty(feeFine, "type")),
+        .withTypeId(getProperty(feeFine, "typeId"))
+        .withType(getProperty(feeFine, "type")),
       getNestedDateTimeProperty(representation, "metadata", "createdDate"));
   }
 }

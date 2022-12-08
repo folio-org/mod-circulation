@@ -117,7 +117,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
-import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -3301,6 +3300,68 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemCreatedAfterHoldTlr() {
+    configurationsFixture.enableTlrFeature();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+        .withTemplateId(UUID.randomUUID())
+        .withAvailableEvent()
+        .create()));
+    use(noticePolicy);
+
+    UUID instanceId = UUID.randomUUID();
+    createInstanceAndHoldingRecord(instanceId);
+
+    // Placing TLR on an instance without any items
+    IndividualResource request = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.steve());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(request.getJson().getString("itemId"), nullValue());
+
+    ItemResource item = buildItem(instanceId, "111");
+    checkInFixture.checkInByBarcode(item);
+
+    var updatedRequest = requestsFixture.getRequests(
+      exactMatch("itemId", item.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(updatedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    verifyNumberOfSentNotices(1);
+  }
+
+  @Test
+  void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemIsReturnedAndTlrHoldExists() {
+    configurationsFixture.enableTlrFeature();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+        .withTemplateId(UUID.randomUUID())
+        .withAvailableEvent()
+        .create()));
+    use(noticePolicy);
+
+    UUID instanceId = UUID.randomUUID();
+    ItemResource item = buildItem(instanceId, "111");
+    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
+
+    IndividualResource request = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.steve());
+
+    assertThat(request.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+
+    checkInFixture.checkInByBarcode(item);
+
+    var updatedRequest = requestsFixture.getRequests(
+      exactMatch("itemId", item.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(updatedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    verifyNumberOfSentNotices(1);
+  }
+
+  @Test
   void pageRequestShouldNotChangeItemStatusIfFailsWithoutRequestDate() {
     var item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -4109,6 +4170,16 @@ public class RequestsAPICreationTests extends APITests {
         .addIdentifier(isbnIdentifierId, "9780866989732")
         .withId(instanceId),
       itemBuilder -> itemBuilder.withBarcode(barcode).withMaterialType(materialType.getId()));
+  }
+
+  private void createInstanceAndHoldingRecord(UUID instanceId) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    itemsFixture.basedUponSmallAngryPlanetWithNoItem(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .addIdentifier(isbnIdentifierId, "9780866989732")
+        .withId(instanceId));
   }
 
   private static void assertOverrideResponseSuccess(Response response) {

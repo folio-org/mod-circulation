@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -18,8 +19,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class RequestQueue {
+  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private List<Request> requests;
   private final List<UpdatedRequestPair> updatedRequests;
 
@@ -210,5 +215,19 @@ public class RequestQueue {
     }
   }
 
+  public void replaceRequest(Request newRequest) {
+    if (newRequest.getId() == null) {
+      log.warn("Failed attempt to replace request in the queue");
+      return;
+    }
 
+    requests = requests.stream()
+      .map(request -> {
+        if (request.getId() != null && request.getId().equals(newRequest.getId())) {
+          return newRequest;
+        }
+        return request;
+      })
+      .collect(toList());
+  }
 }

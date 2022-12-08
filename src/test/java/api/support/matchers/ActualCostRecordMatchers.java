@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.ItemLossType;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.Is;
@@ -82,6 +83,10 @@ public class ActualCostRecordMatchers {
       hasJsonPath("feeFine.owner", feeFineOwner.getJson().getString("owner")),
       hasJsonPath("feeFine.typeId", is(feeFine.getId())),
       hasJsonPath("feeFine.type", feeFine.getJson().getString("feeFineType")));
+  }
+
+  public static Matcher<JsonObject> isInStatus(ActualCostRecord.Status status) {
+    return hasJsonPath("status", status.getValue());
   }
 
 }

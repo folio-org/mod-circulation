@@ -1,12 +1,16 @@
 package org.folio.circulation.domain;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Collection;
+
+import org.apache.commons.lang3.StringUtils;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.With;
 
 @NoArgsConstructor(force = true)
@@ -15,6 +19,7 @@ import lombok.With;
 @Getter
 public class ActualCostRecord {
   private final String id;
+  private final Status status;
   private final ItemLossType lossType;
   private final ZonedDateTime lossDate;
   private final ZonedDateTime expirationDate;
@@ -104,6 +109,24 @@ public class ActualCostRecord {
         .withIdentifierTypeId(representation.getString("identifierTypeId"))
         .withIdentifierType(representation.getString("identifierType"))
         .withValue(representation.getString("value"));
+    }
+  }
+
+  @Getter
+  @RequiredArgsConstructor
+  public enum Status {
+    OPEN("Open"),
+    BILLED("Billed"),
+    EXPIRED("Expired"),
+    CANCELLED("Cancelled");
+
+    private final String value;
+
+    public static Status from(String statusValue) {
+      return Arrays.stream(values())
+        .filter(status -> StringUtils.equals(status.getValue(), statusValue))
+        .findFirst()
+        .orElse(null);
     }
   }
 }
