@@ -106,20 +106,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     return loansStorageClient.post(storageLoan)
       .thenApply(interpreter::flatMap)
-      .thenApply(setHoldFlagIfNotPresent(loan))
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
-  }
-
-  private Function<Result<Loan>, Result<Loan>> setHoldFlagIfNotPresent(Loan loan) {
-    return loanResult -> {
-      loanResult.map(loanData -> {
-        if (loan.wasDueDateChangedByHold()) {
-          loanData.setDueDateChangedByHold();
-        }
-        return loanData;
-      });
-      return loanResult;
-    };
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
