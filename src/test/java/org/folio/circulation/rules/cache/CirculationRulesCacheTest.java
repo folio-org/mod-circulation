@@ -23,6 +23,9 @@ import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
 public class CirculationRulesCacheTest {
+  private boolean thread1Finished = false;
+  private boolean thread2Finished = false;
+
   @Test
   void concurrencyTest() throws Exception {
     CollectionResourceClient circulationRulesClient1 = createCirculationRulesClientMock(
@@ -33,13 +36,13 @@ public class CirculationRulesCacheTest {
     Thread thread1 = new Thread(() -> {
       CirculationRulesCache.getInstance().getDrools("tenant1", circulationRulesClient1);
       System.out.println("finished building Drools 1");
-      Thread.currentThread().interrupt();
+      thread1Finished = true;
     });
 
     Thread thread2 = new Thread(() -> {
       CirculationRulesCache.getInstance().getDrools("tenant2", circulationRulesClient2);
       System.out.println("finished building Drools 2");
-      Thread.currentThread().interrupt();
+      thread2Finished = true;
     });
 
     System.out.println("starting thread 1");
@@ -48,9 +51,9 @@ public class CirculationRulesCacheTest {
     thread2.start();
 
     System.out.println("waiting for thread 1");
-    await().atMost(30, TimeUnit.SECONDS).until(thread1::isInterrupted);
+    await().atMost(3, TimeUnit.SECONDS).until(() -> thread1Finished);
     System.out.println("waiting for thread 2");
-    await().atMost(30, TimeUnit.SECONDS).until(thread2::isInterrupted);
+    await().atMost(3, TimeUnit.SECONDS).until(() -> thread2Finished);
     System.out.println("done waiting");
 
     String loanPolicyId1 = getLoanPolicyId("tenant1", circulationRulesClient1);
