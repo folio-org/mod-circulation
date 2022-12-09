@@ -32,19 +32,26 @@ public class CirculationRulesCacheTest {
 
     Thread thread1 = new Thread(() -> {
       CirculationRulesCache.getInstance().getDrools("tenant1", circulationRulesClient1);
+      System.out.println("finished building Drools 1");
       Thread.currentThread().interrupt();
     });
 
     Thread thread2 = new Thread(() -> {
       CirculationRulesCache.getInstance().getDrools("tenant2", circulationRulesClient2);
+      System.out.println("finished building Drools 2");
       Thread.currentThread().interrupt();
     });
 
+    System.out.println("starting thread 1");
     thread1.start();
+    System.out.println("starting thread 1");
     thread2.start();
 
-    await().atMost(3, TimeUnit.SECONDS).until(thread1::isInterrupted);
-    await().atMost(3, TimeUnit.SECONDS).until(thread2::isInterrupted);
+    System.out.println("waiting for thread 1");
+    await().atMost(30, TimeUnit.SECONDS).until(thread1::isInterrupted);
+    System.out.println("waiting for thread 2");
+    await().atMost(30, TimeUnit.SECONDS).until(thread2::isInterrupted);
+    System.out.println("done waiting");
 
     String loanPolicyId1 = getLoanPolicyId("tenant1", circulationRulesClient1);
     String loanPolicyId2 = getLoanPolicyId("tenant2", circulationRulesClient2);
