@@ -18,6 +18,7 @@ import java.util.Map;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.OpeningHour;
+import org.folio.circulation.support.utils.ClockUtil;
 
 public class CalendarExamples {
 
@@ -63,9 +64,9 @@ public class CalendarExamples {
   public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = LocalDate.of(2019, 2, 2);
   public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = LocalDate.of(2019, 2, 4);
 
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = LocalDate.of(2018, 12, 14);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = LocalDate.of(2018, 12, 15);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = LocalDate.of(2018, 12, 17);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = ClockUtil.getLocalDate().minusDays(1L);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = ClockUtil.getLocalDate();
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = ClockUtil.getLocalDate().plusDays(1L);
 
   public static final LocalDate FIRST_DAY_OPEN = LocalDate.of(2020, 10, 29);
   public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);

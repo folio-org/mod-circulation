@@ -4,6 +4,9 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
 import api.support.builders.ServicePointBuilder;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
+
+import java.util.UUID;
 
 public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk1() {
@@ -38,6 +41,8 @@ public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk6() {
     return new ServicePointBuilder("Circ Desk 6", "cd6",
         "Circulation Desk -- Igloo").withPickupLocation(TRUE)
-        .withHoldShelfExpriyPeriod(9, "Hours");
+        .withId(UUID.fromString(CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID))
+        .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue())
+        .withHoldShelfExpriyPeriod(6, "Hours");
   }
 }
