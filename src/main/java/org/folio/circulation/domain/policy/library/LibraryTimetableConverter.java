@@ -38,7 +38,9 @@ public class LibraryTimetableConverter {
     return mergeOpenPeriods(openIntervals);
   }
 
-  private static LibraryTimetable mergeOpenPeriods(List<Interval> openIntervals) {
+  @SuppressWarnings("java:S127")  // suppress "not assign this loop counter from within loop body".
+  // incrementing loop counter in for loop body is more easy to understand in this case
+  static LibraryTimetable mergeOpenPeriods(List<Interval> openIntervals) {
     if (openIntervals.isEmpty()) {
       return new LibraryTimetable();
     }
@@ -49,13 +51,16 @@ public class LibraryTimetableConverter {
     }
 
     List<Interval> mergedOpenIntervals = new LinkedList<>(openIntervals);
-    for (int i = 0; i < mergedOpenIntervals.size() - 1; i++) {
+    for (int i = 0; i < mergedOpenIntervals.size() - 1; ) {
       Interval curr = mergedOpenIntervals.get(i);
       Interval next = mergedOpenIntervals.get(i + 1);
       if (curr.abuts(next)) {
         Interval newInterval = mergeIntervals(curr, next);
         mergedOpenIntervals.set(i, newInterval);
         mergedOpenIntervals.remove(i + 1);
+        // don't increment i to merge three (or more) intervals that abut each other
+      } else {
+        i++;
       }
     }
 
