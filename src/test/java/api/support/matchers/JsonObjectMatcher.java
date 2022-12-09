@@ -16,7 +16,9 @@ import org.hamcrest.TypeSafeMatcher;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.matchers.JsonPathMatchers;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import net.minidev.json.JSONArray;
 
 public class JsonObjectMatcher {
 
@@ -24,9 +26,12 @@ public class JsonObjectMatcher {
     return new TypeSafeDiagnosingMatcher<JsonObject>() {
       @Override
       protected boolean matchesSafely(JsonObject item, Description mismatchDescription) {
-        T actual;
+        Object actual;
         try {
           actual = JsonPath.parse(item.toString()).read(jsonPath);
+          if (actual instanceof JSONArray) {
+            actual = new JsonArray(((JSONArray) actual).toJSONString());
+          }
         } catch (Exception ex) {
           mismatchDescription.appendText("Exception occurred: ").appendValue(ex);
           return false;

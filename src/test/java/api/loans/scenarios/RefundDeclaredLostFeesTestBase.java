@@ -389,7 +389,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
       .withActionType("Lost item fee (actual cost)"));
 
     JsonObject actualCostRecord = actualCostRecordsClient.getById(recordId).getJson();
-    actualCostRecord.put("accountId", account.getId());
+    actualCostRecord.getJsonObject("feeFine").put("accountId", account.getId());
     actualCostRecordsClient.replace(recordId, actualCostRecord);
   }
 

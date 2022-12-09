@@ -1,6 +1,7 @@
 package org.folio.circulation.storage.mappers;
 
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
@@ -65,6 +66,8 @@ public class ActualCostRecordMapper {
       write(itemJson, "materialType", item.getMaterialType());
       write(itemJson, "permanentLocationId", item.getPermanentLocationId());
       write(itemJson, "permanentLocation", item.getPermanentLocation());
+      write(itemJson, "effectiveLocationId", item.getEffectiveLocationId());
+      write(itemJson, "effectiveLocation", item.getEffectiveLocation());
       write(itemJson, "loanTypeId", item.getLoanTypeId());
       write(itemJson, "loanType", item.getLoanType());
       write(itemJson, "holdingsRecordId", item.getHoldingsRecordId());
@@ -84,6 +87,7 @@ public class ActualCostRecordMapper {
       write(instanceJson, "id", instance.getId());
       write(instanceJson, "title", instance.getTitle());
       write(instanceJson, "identifiers", instance.getIdentifiers());
+      write(instanceJson, "contributors", mapContributorNamesToJson(instance.getContributors()));
 
       write(json, "instance", instanceJson);
     }
@@ -135,8 +139,10 @@ public class ActualCostRecordMapper {
         .withBarcode(getProperty(item, "barcode"))
         .withMaterialTypeId(getProperty(item, "materialTypeId"))
         .withMaterialType(getProperty(item, "materialType"))
-        .withPermanentLocationId(getProperty(item, "permanentItemLocationId"))
-        .withPermanentLocation(getProperty(item, "permanentItemLocation"))
+        .withPermanentLocationId(getProperty(item, "permanentLocationId"))
+        .withPermanentLocation(getProperty(item, "permanentLocation"))
+        .withEffectiveLocationId(getProperty(item, "effectiveLocationId"))
+        .withEffectiveLocation(getProperty(item, "effectiveLocation"))
         .withLoanTypeId(getProperty(item, "loanTypeId"))
         .withLoanType(getProperty(item, "loanType"))
         .withHoldingsRecordId(getProperty(item, "holdingsRecordId"))
@@ -147,6 +153,10 @@ public class ActualCostRecordMapper {
         .withIdentifiers(getArrayProperty(instance, "identifiers").stream()
           .map(JsonObject.class::cast)
           .map(ActualCostRecordIdentifier::fromRepresentation)
+          .collect(Collectors.toList()))
+        .withContributors(getArrayProperty(instance, "contributors").stream()
+          .map(JsonObject.class::cast)
+          .map(new ContributorMapper()::toDomain)
           .collect(Collectors.toList())),
       new ActualCostRecordFeeFine()
         .withAccountId(getProperty(feeFine, "accountId"))
