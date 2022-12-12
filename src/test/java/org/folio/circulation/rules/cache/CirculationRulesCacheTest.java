@@ -23,7 +23,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class CirculationRulesCacheTest {
+class CirculationRulesCacheTest {
   private boolean thread1Finished = false;
   private boolean thread2Finished = false;
 
