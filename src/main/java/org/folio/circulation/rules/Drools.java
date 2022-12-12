@@ -17,6 +17,7 @@ import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.Message.Level;
+import org.kie.api.builder.ReleaseId;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
@@ -36,20 +37,25 @@ public class Drools {
 
   /**
    * Create the Drools kieSession based on a String containing a drools file.
+   * @param tenantId Used for releaseId, which helps to avoid cross-tenant concurrency issues.
    * @param drools A file in Drools syntax with the circulation rules.
    */
-  public Drools(String drools) {
+  public Drools(String tenantId, String drools) {
     // if KieServices.Factory.get() returns null add AppendingTransformer for META-INF/kie.conf
     // to maven-shade-plugin configuration (CIRC-309, CIRC-1147)
     KieServices kieServices = KieServices.Factory.get();
-    KieFileSystem kfs = kieServices.newKieFileSystem();
+
+    // Creating tenant-specific releaseId. Using default release ID causes concurrency issues.
+    ReleaseId releaseId = kieServices.newReleaseId("circulation-rules", tenantId, "1.0.0");
+
+    KieFileSystem kfs = kieServices.newKieFileSystem().generateAndWritePomXML(releaseId);
     kfs.write("src/main/resources/circulationrules/circulation-rules.drl", drools);
     KieBuilder kieBuilder = kieServices.newKieBuilder(kfs);
     kieBuilder.buildAll();
     if (kieBuilder.getResults().hasMessages(Level.ERROR)) {
       throw new IllegalArgumentException("Drools build errors:\n" + kieBuilder.getResults().toString());
     }
-    kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
+    kieContainer = kieServices.newKieContainer(releaseId);
   }
 
   private KieSession createSession(MultiMap params, Location location, Match match) {
@@ -306,7 +312,7 @@ public class Drools {
    * @return loan policy
    */
   public static String loanPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).loanPolicy(params, location).getPolicyId();
+    return new Drools("test-tenant-id", droolsFile).loanPolicy(params, location).getPolicyId();
   }
 
   /**
@@ -317,7 +323,7 @@ public class Drools {
    * @return request policy
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools(droolsFile).requestPolicy(params, location).getPolicyId();
+    return new Drools("test-tenant-id", droolsFile).requestPolicy(params, location).getPolicyId();
   }
 
   private boolean isRuleItemTypePresent(Set<String> conditions) {
