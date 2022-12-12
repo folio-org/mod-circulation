@@ -113,7 +113,7 @@ public class UpdateRequestQueue {
     switch (requestBeingFulfilled.getFulfilmentPreference()) {
       case HOLD_SHELF:
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
-          updatedReq = awaitPickup(requestBeingFulfilled);
+        return awaitPickup(requestBeingFulfilled,requestQueue);
         } else {
           updatedReq = putInTransit(requestBeingFulfilled);
         }
@@ -135,7 +135,8 @@ public class UpdateRequestQueue {
       .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
   }
 
-  private CompletableFuture<Result<Request>> awaitPickup(Request request) {
+  private CompletableFuture<Result<RequestQueue>> awaitPickup(Request request, RequestQueue requestQueue) {
+    Request originalRequest = Request.from(request.asJson());
     request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
     if (request.getHoldShelfExpirationDate() == null) {
@@ -147,26 +148,35 @@ public class UpdateRequestQueue {
             populateHoldShelfExpirationDate(
               request.withPickupServicePoint(servicePoint),
               tenantTimeZone
-            )
-              .map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest)))
+            ).map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest,
+              requestQueue, originalRequest)))
+
+
         );
     } else {
-      return completedFuture(succeeded(request));
+      return completedFuture(succeeded(requestQueue));
     }
   }
 
-  private Request modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest) {
+  private RequestQueue modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest,
+                                                                                RequestQueue requestQueue, Request originalRequest) {
+    System.out.println("Before HSED " + calculatedRequest.getHoldShelfExpirationDate().toString());
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
         calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> determineClosedLibraryStrategyForHoldShelfExpirationDate(
         expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
         tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-      ).calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value())).thenApply(calculatedDate -> {
+      ).calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
+      .thenApply(calculatedDate -> {
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
+        System.out.println("After HSED " + calculatedRequest.getHoldShelfExpirationDate().toString());
+        requestQueue.update(originalRequest,calculatedRequest);
+        requestRepository.update(calculatedRequest);
+        requestQueueRepository.updateRequestsWithChangedPositions(requestQueue);
         return calculatedRequest;
       });
-    return calculatedRequest;
+    return requestQueue;
   }
 
   private CompletableFuture<Result<Request>> putInTransit(Request request) {

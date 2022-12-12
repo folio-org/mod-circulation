@@ -195,6 +195,7 @@ public class RequestRepository {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
+    System.out.println("HSED update " + request.getHoldShelfExpirationDate().toString());
     final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
       .on(204, of(() -> request))
       .otherwise(forwardOnFailure());
@@ -202,6 +203,7 @@ public class RequestRepository {
     return requestsStorageClient.put(request.getId(), representation)
       .thenApply(interpreter::flatMap);
   }
+
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
     RequestAndRelatedRecords requestAndRelatedRecords) {

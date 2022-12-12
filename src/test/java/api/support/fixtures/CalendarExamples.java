@@ -26,6 +26,8 @@ public class CalendarExamples {
   public static final String ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID = "33311111-2f09-4bc9-8924-3734882d44a3";
 
   public static final String CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID = "11111111-2f09-4bc9-8924-3734882d44a3";
+
+  public static final String CASE_CURRENT_CLOSE_SERVICE_POINT_ID = "11111111-2f09-4bc9-8924-4544882d44a3";
   public static final String CASE_FRI_SAT_MON_SERVICE_POINT_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID = "33333333-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_WED_THU_FRI_SERVICE_POINT_ID = "44444444-2f09-4bc9-8924-3734882d44a3";
@@ -63,10 +65,13 @@ public class CalendarExamples {
   public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY = LocalDate.of(2019, 2, 1);
   public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = LocalDate.of(2019, 2, 2);
   public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = LocalDate.of(2019, 2, 4);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = LocalDate.of(2018, 12, 14);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = LocalDate.of(2018, 12, 15);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = LocalDate.of(2018, 12, 17);
 
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = ClockUtil.getLocalDate().minusDays(1L);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = ClockUtil.getLocalDate();
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = ClockUtil.getLocalDate().plusDays(1L);
+  public static final LocalDate CASE_PREV_DATE_OPEN = ClockUtil.getLocalDate().minusDays(1L);
+  public static final LocalDate CASE_CURRENT_DATE_CLOSE = ClockUtil.getLocalDate();
+  public static final LocalDate CASE_NEXT_DATE_OPEN = ClockUtil.getLocalDate().plusDays(1L);
 
   public static final LocalDate FIRST_DAY_OPEN = LocalDate.of(2020, 10, 29);
   public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);
@@ -157,6 +162,20 @@ public class CalendarExamples {
           new OpeningDay(new ArrayList<>(), CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE, false, false),
           // next day
           new OpeningDay(new ArrayList<>(), CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE, true, true)
+        )
+      )
+    );
+    fakeOpeningPeriods.put(
+      CASE_CURRENT_CLOSE_SERVICE_POINT_ID,
+      new OpeningDayPeriodBuilder(
+        CASE_CURRENT_CLOSE_SERVICE_POINT_ID,
+        new AdjacentOpeningDays(
+          // prev day
+          new OpeningDay(new ArrayList<>(), CASE_PREV_DATE_OPEN, true, true),
+          // current day
+          new OpeningDay(new ArrayList<>(), CASE_CURRENT_DATE_CLOSE, false, false),
+          // next day
+          new OpeningDay(new ArrayList<>(), CASE_NEXT_DATE_OPEN, true, true)
         )
       )
     );
@@ -366,6 +385,8 @@ public class CalendarExamples {
       case CASE_FRI_SAT_MON_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+      case CASE_CURRENT_CLOSE_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));

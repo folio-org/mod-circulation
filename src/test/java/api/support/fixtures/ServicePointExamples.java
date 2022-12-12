@@ -41,8 +41,24 @@ public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk6() {
     return new ServicePointBuilder("Circ Desk 6", "cd6",
         "Circulation Desk -- Igloo").withPickupLocation(TRUE)
-        .withId(UUID.fromString(CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID))
+        .withId(UUID.fromString(CalendarExamples.CASE_CURRENT_CLOSE_SERVICE_POINT_ID))
         .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS.getValue())
         .withHoldShelfExpriyPeriod(9, "Hours");
+  }
+
+  static ServicePointBuilder basedUponCircDesk7() {
+    return new ServicePointBuilder("Circ Desk 7", "cd7",
+      "Circulation Desk -- Igloo").withPickupLocation(TRUE)
+      .withId(UUID.fromString(CalendarExamples.CASE_CURRENT_CLOSE_SERVICE_POINT_ID))
+      .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
+      .withHoldShelfExpriyPeriod(5, "Hours");
+  }
+
+  static ServicePointBuilder basedUponCircDesk8() {
+    return new ServicePointBuilder("Circ Desk 8", "cd8",
+      "Circulation Desk -- Igloo").withPickupLocation(TRUE)
+      .withId(UUID.fromString(CalendarExamples.CASE_CURRENT_CLOSE_SERVICE_POINT_ID))
+      .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
+      .withHoldShelfExpriyPeriod(5, "Minutes");
   }
 }
