@@ -133,7 +133,7 @@ class Text2DroolsTest {
 
   @Test
   void test1() {
-    Drools drools = new Drools("default", Text2Drools.convert(test1));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(test1));
 
     for (String [] s : loanTestCases) {
         assertThat(first4(s), drools.loanPolicy(params(s[0], s[1], s[2], s[3]),

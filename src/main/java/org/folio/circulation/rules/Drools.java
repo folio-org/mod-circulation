@@ -312,7 +312,7 @@ public class Drools {
    * @return loan policy
    */
   public static String loanPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools("default", droolsFile).loanPolicy(params, location).getPolicyId();
+    return new Drools("test-tenant-id", droolsFile).loanPolicy(params, location).getPolicyId();
   }
 
   /**
@@ -323,7 +323,7 @@ public class Drools {
    * @return request policy
    */
   static String requestPolicy(String droolsFile, MultiMap params, Location location) {
-    return new Drools("default", droolsFile).requestPolicy(params, location).getPolicyId();
+    return new Drools("test-tenant-id", droolsFile).requestPolicy(params, location).getPolicyId();
   }
 
   private boolean isRuleItemTypePresent(Set<String> conditions) {
