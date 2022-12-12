@@ -1,3 +1,6 @@
+## 23.1.7 2022-12-19
+* Fix cross-tenant policy id causing 500 errors (CIRC-1668)
+
 ## 23.1.6 2022-12-01
 * Send TLR awaiting pickup notice on check in (CIRC-1655)
 
