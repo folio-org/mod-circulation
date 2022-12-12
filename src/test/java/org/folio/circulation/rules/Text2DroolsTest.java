@@ -45,7 +45,7 @@ class Text2DroolsTest {
   @Test
   void headerFallbackPolicy() {
     String droolsText = Text2Drools.convert(HEADER);
-    Drools drools = new Drools(droolsText);
+    Drools drools = new Drools("test-tenant-id", droolsText);
 
     assertThat(drools.loanPolicy(params("foo", "bar", "biz", "shelf"),
       createLocation(FIRST_INSTITUTION_ID, FIRST_LIBRARY_ID, FIRST_CAMPUS_ID)).getPolicyId(),
@@ -133,7 +133,7 @@ class Text2DroolsTest {
 
   @Test
   void test1() {
-    Drools drools = new Drools(Text2Drools.convert(test1));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(test1));
 
     for (String [] s : loanTestCases) {
         assertThat(first4(s), drools.loanPolicy(params(s[0], s[1], s[2], s[3]),
@@ -243,7 +243,7 @@ class Text2DroolsTest {
 
   @Test
   void twoPriorities() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
         "priority: number-of-criteria, first-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
         "m book: l policy-a r no-hold n basic-notice o overdue i lost-item",
@@ -261,7 +261,7 @@ class Text2DroolsTest {
 
   @Test
   void threePriorities() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
         "priority: criterium(t, s, c, b, a, m, g), number-of-criteria, first-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
         "m book: l policy-a r no-hold n basic-notice o overdue i lost-item",
@@ -314,7 +314,7 @@ class Text2DroolsTest {
 
   @Test
   void noSpaceAroundColon() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
         "priority:last-line",
         "fallback-policy:l no-loan r no-hold n basic-notice o overdue i lost-item",
         "s new:l policy-a r no-hold n basic-notice o overdue i lost-item",
@@ -335,7 +335,7 @@ class Text2DroolsTest {
 
  @Test
   void multiSpaceAroundColon() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
         "priority   :   last-line",
         "fallback-policy   :   l no-loan r no-hold n basic-notice o overdue i lost-item",
         "s new   :   l policy-a r no-hold n basic-notice o overdue i lost-item",
@@ -356,7 +356,7 @@ class Text2DroolsTest {
 
   @Test
   void negation() {
-    Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd !music: l policy-a r no-hold n basic-notice o overdue i lost-item"));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(HEADER + "m !dvd !music: l policy-a r no-hold n basic-notice o overdue i lost-item"));
     assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf"),
       createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("no-loan"));
     assertThat(drools.loanPolicy(params("music",     "regular", "student", "shelf"),
@@ -367,7 +367,7 @@ class Text2DroolsTest {
 
   @Test
   void negationSingle() {
-    Drools drools = new Drools(Text2Drools.convert(HEADER + "m !dvd: l policy-a r no-hold n basic-notice o overdue i lost-item"));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(HEADER + "m !dvd: l policy-a r no-hold n basic-notice o overdue i lost-item"));
     assertThat(drools.loanPolicy(params("dvd",       "regular", "student", "shelf"),
       createLocation(SECOND_INSTITUTION_ID, SECOND_LIBRARY_ID, SECOND_CAMPUS_ID)).getPolicyId(), is("no-loan"));
     assertThat(drools.loanPolicy(params("newspaper", "regular", "student", "shelf"),
@@ -376,7 +376,7 @@ class Text2DroolsTest {
 
   @Test
   void shelvingLocation() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
         "priority: last-line",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
         "s new: l policy-a r no-hold n basic-notice o overdue i lost-item",
@@ -399,7 +399,7 @@ class Text2DroolsTest {
 
   @Test
   void shelvingLocationDefaultPriority() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
         "priority: t, s, c, b, a, m, g",
         "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item",
         "s new: l policy-new r no-hold n basic-notice o overdue i lost-item",
@@ -431,7 +431,7 @@ class Text2DroolsTest {
 
   @Test
   void overdueFinePolicy() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
       "priority: last-line",
       "fallback-policy: l no-loan r no-hold n basic-notice o fallback i lost-item",
       "s new: l policy-a r no-hold n basic-notice o overdue-a i lost-item",
@@ -456,7 +456,7 @@ class Text2DroolsTest {
 
   @Test
   void lostItemFeePolicy() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
       "priority: last-line",
       "fallback-policy: l no-loan r no-hold n basic-notice o fallback i lost-item",
       "s new: l policy-a r no-hold n basic-notice o overdue-a i lost-item-a",
@@ -537,7 +537,7 @@ class Text2DroolsTest {
 
   @Test
   void run100() {
-    Drools drools = new Drools(Text2Drools.convert(test1));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(test1));
     long start = getInstant().toEpochMilli();
     int n = 0;
     while (n < 100) {
@@ -600,7 +600,7 @@ class Text2DroolsTest {
 
   @Test
   void alternatePolicyOrder() {
-    Drools drools = new Drools(Text2Drools.convert(String.join("\n",
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(String.join("\n",
       "priority: first-line",
       "m book: r allow-hold n general-notice o overdue l two-week i lost-item",
       "fallback-policy: l no-loan r no-hold n basic-notice o overdue i lost-item")));
@@ -624,7 +624,7 @@ class Text2DroolsTest {
    * the other parameters are the expected result.
    */
   private void testLoanPolicies(String circulationRules, String [][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
       JsonArray array = drools.loanPolicies(params(s[0], s[1], s[2], s[3]),
         createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
@@ -637,7 +637,7 @@ class Text2DroolsTest {
   }
 
   private void testRequestPolicies(String circulationRules, String[][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
       JsonArray array = drools.requestPolicies(params(s[0], s[1], s[2], s[3]),
         createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
@@ -650,7 +650,7 @@ class Text2DroolsTest {
   }
 
   private void testOverdueFinePolicies(String circulationRules, String[][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
       JsonArray array = drools.overduePolicies(params(s[0], s[1], s[2], s[3]),
         createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
@@ -663,7 +663,7 @@ class Text2DroolsTest {
   }
 
   private void testLostItemFeePolicies(String circulationRules, String[][] cases) {
-    Drools drools = new Drools(Text2Drools.convert(circulationRules));
+    Drools drools = new Drools("test-tenant-id", Text2Drools.convert(circulationRules));
     for (String [] s : cases) {
       JsonArray array = drools.lostItemPolicies(params(s[0], s[1], s[2], s[3]),
         createLocation(s[3], SECOND_LIBRARY_ID, SECOND_CAMPUS_ID));
