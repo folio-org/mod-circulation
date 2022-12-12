@@ -70,11 +70,11 @@ public final class CirculationRulesCache {
       return false;
     }
 
-    boolean isCurrent = rules.reloadTimestamp + MAX_AGE_IN_MILLISECONDS >
-      System.currentTimeMillis();
+    long currentTimestamp = System.currentTimeMillis();
+    boolean isCurrent = rules.reloadTimestamp + MAX_AGE_IN_MILLISECONDS > currentTimestamp;
     log.info("Rules object is current for tenant {}: {}. " +
         "Reload timestamp is {}, current timestamp is {}",
-      tenantId, isCurrent, rules.reloadTimestamp, System.currentTimeMillis());
+      tenantId, isCurrent, rules.reloadTimestamp, currentTimestamp);
     return isCurrent;
   }
 
@@ -90,20 +90,21 @@ public final class CirculationRulesCache {
       return false;
     }
 
-    boolean reloadNeeded = rules.reloadTimestamp + TRIGGER_AGE_IN_MILLISECONDS <
-      System.currentTimeMillis();
+    long currentTimestamp = System.currentTimeMillis();
+    boolean reloadNeeded = rules.reloadTimestamp + TRIGGER_AGE_IN_MILLISECONDS < currentTimestamp;
     log.info("Rules reload is needed for tenant {}: {}. " +
         "Reload timestamp is {}, current timestamp is {}",
-      tenantId, reloadNeeded, rules.reloadTimestamp, System.currentTimeMillis());
+      tenantId, reloadNeeded, rules.reloadTimestamp, currentTimestamp);
     return reloadNeeded;
   }
 
   private boolean rebuildNeeded(String tenantId, Rules rules) {
+    long currentTimestamp = System.currentTimeMillis();
     boolean rebuildNeeded = rules.rebuildTimestamp + DROOLS_OBJECT_LIFETIME_IN_MILLISECONDS <
-      System.currentTimeMillis();
+      currentTimestamp;
     log.info("Drools object rebuild is needed for tenant {}: {}. " +
         "Rebuild timestamp is {}, current timestamp is {}",
-      tenantId, rebuildNeeded, rules.rebuildTimestamp, System.currentTimeMillis());
+      tenantId, rebuildNeeded, rules.rebuildTimestamp, currentTimestamp);
     return rebuildNeeded;
   }
 

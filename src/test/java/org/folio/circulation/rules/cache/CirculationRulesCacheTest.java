@@ -5,6 +5,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.awaitility.Awaitility.await;
 import static org.folio.circulation.support.http.ContentType.APPLICATION_JSON;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,31 +36,24 @@ public class CirculationRulesCacheTest {
 
     Thread thread1 = new Thread(() -> {
       CirculationRulesCache.getInstance().getDrools("tenant1", circulationRulesClient1);
-      System.out.println("finished building Drools 1");
       thread1Finished = true;
     });
 
     Thread thread2 = new Thread(() -> {
       CirculationRulesCache.getInstance().getDrools("tenant2", circulationRulesClient2);
-      System.out.println("finished building Drools 2");
       thread2Finished = true;
     });
 
-    System.out.println("starting thread 1");
     thread1.start();
-    System.out.println("starting thread 1");
     thread2.start();
 
-    System.out.println("waiting for thread 1");
     await().atMost(3, TimeUnit.SECONDS).until(() -> thread1Finished);
-    System.out.println("waiting for thread 2");
     await().atMost(3, TimeUnit.SECONDS).until(() -> thread2Finished);
-    System.out.println("done waiting");
 
     String loanPolicyId1 = getLoanPolicyId("tenant1", circulationRulesClient1);
     String loanPolicyId2 = getLoanPolicyId("tenant2", circulationRulesClient2);
 
-    assert !loanPolicyId1.equals(loanPolicyId2);
+    assertNotEquals(loanPolicyId1, loanPolicyId2);
   }
 
   private String getLoanPolicyId(String tenantId, CollectionResourceClient client) throws Exception {
