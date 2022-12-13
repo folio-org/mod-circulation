@@ -182,7 +182,6 @@ public class UpdateRequestQueue {
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
         requestQueue.update(originalRequest,calculatedRequest);
 
-        requestRepository.update(calculatedRequest);
         return requestRepository.update(calculatedRequest)
           .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
       });
