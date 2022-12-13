@@ -17,6 +17,7 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
+import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -214,6 +215,12 @@ class HoldShelfExpirationDateTests extends APITests {
       .addTo(getInstant().atZone(tenantTimeZone), amount)
       .toInstant()
       .atZone(ZoneOffset.UTC);
+
+    //as default KEEP_THE_CURRENT_DUE_DATE will be applied
+    expectedExpirationDate = atStartOfDay(expectedExpirationDate, tenantTimeZone)
+      .plusDays(1)
+      .minusSeconds(1)
+      .truncatedTo(ChronoUnit.SECONDS);
 
     assertThat(storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
     assertThat(storedRequest.getString("holdShelfExpirationDate"),
