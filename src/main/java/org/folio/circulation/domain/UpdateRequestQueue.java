@@ -150,17 +150,19 @@ public class UpdateRequestQueue {
               tenantTimeZone
             ).map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest,
               requestQueue, originalRequest)))
-
-
         );
     } else {
-      return completedFuture(succeeded(requestQueue));
+      Request updatedRequest = Request.from(request.asJson());
+      requestQueue.update(originalRequest, updatedRequest);
+
+      return requestRepository.update(request)
+        .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
     }
   }
 
   private RequestQueue modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest,
                                                                                 RequestQueue requestQueue, Request originalRequest) {
-    System.out.println("Before HSED " + calculatedRequest.getHoldShelfExpirationDate().toString());
+
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
         calculatedRequest.getPickupServicePoint().getId())
@@ -170,11 +172,11 @@ public class UpdateRequestQueue {
       ).calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenApply(calculatedDate -> {
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
-        System.out.println("After HSED " + calculatedRequest.getHoldShelfExpirationDate().toString());
         requestQueue.update(originalRequest,calculatedRequest);
+
         requestRepository.update(calculatedRequest);
-        requestQueueRepository.updateRequestsWithChangedPositions(requestQueue);
-        return calculatedRequest;
+        return requestRepository.update(calculatedRequest)
+          .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
       });
     return requestQueue;
   }

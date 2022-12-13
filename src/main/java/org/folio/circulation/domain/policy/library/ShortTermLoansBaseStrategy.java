@@ -24,20 +24,14 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
     Objects.requireNonNull(openingDays);
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
-    System.out.println("TimeTable is " + libraryTimetable.getHead().getInterval().toString());
-    System.out.println("Requested date is " +  requestedDate.toString());
 
     LibraryInterval requestedInterval = libraryTimetable.findInterval(requestedDate);
     if (requestedInterval == null) {
-      System.out.println("NUll if ");
       return failed(failureForAbsentTimetable());
     }
     if (requestedInterval.isOpen()) {
-      System.out.println("requestedInterval is open " + requestedInterval.getInterval().toString());
       return succeeded(requestedDate);
     }
-
-    System.out.println("Interval is closed "+ requestedInterval.getInterval().toString());
     return calculateIfClosed(libraryTimetable, requestedInterval);
   }
 

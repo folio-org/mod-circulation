@@ -95,7 +95,6 @@ class HoldShelfExpirationDateTests extends APITests {
     assertThat("request status snapshot in storage is " + OPEN_AWAITING_PICKUP,
       storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
 
-    System.out.println("request hold shelf expiration date is " + storedRequest.getString("holdShelfExpirationDate"));
 //    assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
 //      storedRequest.getString("holdShelfExpirationDate"),
 //      isEquivalentTo(interval.addTo(ClockUtil.getZonedDateTime(), amount)));

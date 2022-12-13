@@ -195,7 +195,6 @@ public class RequestRepository {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
-    System.out.println("HSED update " + request.getHoldShelfExpirationDate().toString());
     final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
       .on(204, of(() -> request))
       .otherwise(forwardOnFailure());
