@@ -164,10 +164,18 @@ public class UpdateRequestQueue {
                                                                                 RequestQueue requestQueue, Request originalRequest) {
 
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
+    String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId().toUpperCase();
+    //Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
+    if(ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name().equals(expirationDateManagement.name()) && checkShortTerm(intervalId)) {
+      expirationDateManagement = ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
+    }
+    // due to usage of final val in lamda
+    ExpirationDateManagement finalExpirationDateManagement = expirationDateManagement;
+
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
         calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> determineClosedLibraryStrategyForHoldShelfExpirationDate(
-        expirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
+        finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
         tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
       ).calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenApply(calculatedDate -> {
@@ -181,6 +189,10 @@ public class UpdateRequestQueue {
     return requestQueue;
   }
 
+  private boolean checkShortTerm(String intervalId) {
+
+    return List.of("MINUTES", "HOURS").contains(intervalId);
+  }
   private CompletableFuture<Result<Request>> putInTransit(Request request) {
     request.changeStatus(RequestStatus.OPEN_IN_TRANSIT);
     request.removeHoldShelfExpirationDate();

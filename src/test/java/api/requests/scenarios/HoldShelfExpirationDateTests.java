@@ -216,12 +216,6 @@ class HoldShelfExpirationDateTests extends APITests {
       .toInstant()
       .atZone(ZoneOffset.UTC);
 
-    //as default KEEP_THE_CURRENT_DUE_DATE will be applied
-    expectedExpirationDate = atStartOfDay(expectedExpirationDate, tenantTimeZone)
-      .plusDays(1)
-      .minusSeconds(1)
-      .truncatedTo(ChronoUnit.SECONDS);
-
     assertThat(storedRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
     assertThat(storedRequest.getString("holdShelfExpirationDate"),
       isEquivalentTo(expectedExpirationDate));
