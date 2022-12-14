@@ -59,6 +59,6 @@ public class ServicePointExamples {
       "Circulation Desk -- Igloo").withPickupLocation(TRUE)
       .withId(UUID.fromString(CalendarExamples.CASE_CURRENT_CLOSE_SERVICE_POINT_ID))
       .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
-      .withHoldShelfExpriyPeriod(5, "Minutes");
+      .withHoldShelfExpriyPeriod(10, "Minutes");
   }
 }
