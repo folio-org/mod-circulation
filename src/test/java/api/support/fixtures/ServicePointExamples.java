@@ -12,12 +12,16 @@ public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk1() {
     return new ServicePointBuilder("Circ Desk 1", "cd1",
         "Circulation Desk -- Hallway").withPickupLocation(TRUE)
+        .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID))
+        .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
         .withHoldShelfExpriyPeriod(30, "Days");
   }
 
   static ServicePointBuilder basedUponCircDesk2() {
     return new ServicePointBuilder("Circ Desk 2", "cd2",
         "Circulation Desk -- Back Entrance").withPickupLocation(TRUE)
+        .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID))
+        .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
         .withHoldShelfExpriyPeriod(6, "Months");
   }
 
@@ -29,6 +33,8 @@ public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk4() {
     return new ServicePointBuilder("Circ Desk 4", "cd4",
         "Circulation Desk -- Basement").withPickupLocation(TRUE)
+        .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_WEEKS_CURRENT_CLOSE_SERVICE_POINT_ID))
+        .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY.getValue())
         .withHoldShelfExpriyPeriod(2, "Weeks");
   }
 

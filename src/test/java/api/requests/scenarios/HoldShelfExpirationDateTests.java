@@ -140,6 +140,16 @@ class HoldShelfExpirationDateTests extends APITests {
 
     ZonedDateTime expectedExpirationDate = atEndOfDay(interval.addTo(ClockUtil.getZonedDateTime(), amount));
 
+    switch (servicePoint) {
+      case "cd1":
+      case "cd2":
+        expectedExpirationDate = expectedExpirationDate.plusDays(1L);
+        break;
+      case "cd4":
+        expectedExpirationDate = expectedExpirationDate.minusDays(1L);
+        break;
+    }
+
     assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
       storedRequest.getString("holdShelfExpirationDate"),
       isEquivalentTo(expectedExpirationDate));

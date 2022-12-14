@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
@@ -9,6 +10,7 @@ import io.vertx.core.MultiMap;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +30,12 @@ public class CalendarExamples {
   public static final String CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID = "11111111-2f09-4bc9-8924-3734882d44a3";
 
   public static final String CASE_CURRENT_CLOSE_SERVICE_POINT_ID = "11111111-2f09-4bc9-8924-4544882d44a3";
+
+  public static final String CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID = "66655555-2f09-4bc9-8924-3734882d89a3";
+
+  public static final String CASE_LONG_TERM_WEEKS_CURRENT_CLOSE_SERVICE_POINT_ID = "66655555-2f09-4bc9-8924-3734882d90a3";
+
+  public static final String CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID = "66655555-2f09-4bc9-8924-3734882d91a3";
   public static final String CASE_FRI_SAT_MON_SERVICE_POINT_ID = "22222222-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID = "33333333-2f09-4bc9-8924-3734882d44a3";
   public static final String CASE_WED_THU_FRI_SERVICE_POINT_ID = "44444444-2f09-4bc9-8924-3734882d44a3";
@@ -72,6 +80,8 @@ public class CalendarExamples {
   public static final LocalDate CASE_PREV_DATE_OPEN = ClockUtil.getLocalDate().minusDays(1L);
   public static final LocalDate CASE_CURRENT_DATE_CLOSE = ClockUtil.getLocalDate();
   public static final LocalDate CASE_NEXT_DATE_OPEN = ClockUtil.getLocalDate().plusDays(1L);
+
+  public static final LocalDate CASE_LONG_TERM_DAYS_PREV_OPEN = ClockUtil.getLocalDate().plusDays(1L);
 
   public static final LocalDate FIRST_DAY_OPEN = LocalDate.of(2020, 10, 29);
   public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);
@@ -176,6 +186,48 @@ public class CalendarExamples {
           new OpeningDay(new ArrayList<>(), CASE_CURRENT_DATE_CLOSE, false, false),
           // next day
           new OpeningDay(new ArrayList<>(), CASE_NEXT_DATE_OPEN, true, true)
+        )
+      )
+    );
+    fakeOpeningPeriods.put(
+      CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID,
+      new OpeningDayPeriodBuilder(
+        CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID,
+        new AdjacentOpeningDays(
+          // prev day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.DAYS, 29), true, true),
+          // current day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.DAYS, 30), false, false),
+          // next day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.DAYS, 31), true, true)
+        )
+      )
+    );
+    fakeOpeningPeriods.put(
+      CASE_LONG_TERM_WEEKS_CURRENT_CLOSE_SERVICE_POINT_ID,
+      new OpeningDayPeriodBuilder(
+        CASE_LONG_TERM_WEEKS_CURRENT_CLOSE_SERVICE_POINT_ID,
+        new AdjacentOpeningDays(
+          // prev day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.WEEKS, 2).minusDays(1L), true, true),
+          // current day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.WEEKS, 2), false, false),
+          // next day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.WEEKS, 2).plusDays(1L), true, true)
+        )
+      )
+    );
+    fakeOpeningPeriods.put(
+      CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID,
+      new OpeningDayPeriodBuilder(
+        CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID,
+        new AdjacentOpeningDays(
+          // prev day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.MONTHS, 6).minusDays(1L), true, true),
+          // current day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.MONTHS, 6), false, false),
+          // next day
+          new OpeningDay(new ArrayList<>(), getLocalDate(ChronoUnit.MONTHS, 6).plusDays(1L), true, true)
         )
       )
     );
@@ -388,6 +440,12 @@ public class CalendarExamples {
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_CURRENT_CLOSE_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+      case CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+      case CASE_LONG_TERM_WEEKS_CURRENT_CLOSE_SERVICE_POINT_ID:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+      case CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID:
+        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_WED_THU_FRI_DAY_ALL_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_WED_THU_FRI_SERVICE_POINT_ID:
@@ -439,6 +497,10 @@ public class CalendarExamples {
         LocalDate requestedDate = LocalDate.parse(queries.get(REQUESTED_DATE_PARAM));
         return new CalendarBuilder(buildAllDayOpenCalenderResponse(requestedDate, serviceId));
     }
+  }
+
+  private static LocalDate getLocalDate(ChronoUnit interval, int amount) {
+    return interval.addTo(ClockUtil.getLocalDate(), amount);
   }
 
   public static List<OpeningDay> getCurrentAndNextFakeOpeningDayByServId(String serviceId) {
