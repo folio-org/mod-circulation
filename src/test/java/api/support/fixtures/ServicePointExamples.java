@@ -12,16 +12,12 @@ public class ServicePointExamples {
   static ServicePointBuilder basedUponCircDesk1() {
     return new ServicePointBuilder("Circ Desk 1", "cd1",
         "Circulation Desk -- Hallway").withPickupLocation(TRUE)
-        .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID))
-        .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
         .withHoldShelfExpriyPeriod(30, "Days");
   }
 
   static ServicePointBuilder basedUponCircDesk2() {
     return new ServicePointBuilder("Circ Desk 2", "cd2",
         "Circulation Desk -- Back Entrance").withPickupLocation(TRUE)
-        .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID))
-        .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
         .withHoldShelfExpriyPeriod(6, "Months");
   }
 
@@ -66,5 +62,21 @@ public class ServicePointExamples {
       .withId(UUID.fromString(CalendarExamples.CASE_CURRENT_CLOSE_SERVICE_POINT_ID))
       .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS.getValue())
       .withHoldShelfExpriyPeriod(5, "Minutes");
+  }
+
+  static ServicePointBuilder basedUponCircDesk9() {
+    return new ServicePointBuilder("Circ Desk 9", "cd9",
+      "Circulation Desk -- Hallway").withPickupLocation(TRUE)
+      .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID))
+      .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+      .withHoldShelfExpriyPeriod(30, "Days");
+  }
+
+  static ServicePointBuilder basedUponCircDesk10() {
+    return new ServicePointBuilder("Circ Desk 10", "cd10",
+      "Circulation Desk -- Back Entrance").withPickupLocation(TRUE)
+      .withId(UUID.fromString(CalendarExamples.CASE_LONG_TERM_MONTHS_CURRENT_CLOSE_SERVICE_POINT_ID))
+      .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.getValue())
+      .withHoldShelfExpriyPeriod(6, "Months");
   }
 }

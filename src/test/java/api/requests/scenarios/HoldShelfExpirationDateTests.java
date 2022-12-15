@@ -17,7 +17,6 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.folio.circulation.support.utils.ClockUtil.setDefaultClock;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
-import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -103,9 +102,9 @@ class HoldShelfExpirationDateTests extends APITests {
 
   @ParameterizedTest
   @CsvSource(value = {
-    "cd1,DAYS,30",
-    "cd2,MONTHS,6",
-    "cd4,WEEKS,2"
+    "cd4,WEEKS,2",
+    "cd9,DAYS,30",
+    "cd10,MONTHS,6"
   })
   void requestWithShelfExpirationDateForSpExpiryInDaysWeeksMonths(
     String servicePoint, ChronoUnit interval, int amount) {
@@ -141,13 +140,14 @@ class HoldShelfExpirationDateTests extends APITests {
     ZonedDateTime expectedExpirationDate = atEndOfDay(interval.addTo(ClockUtil.getZonedDateTime(), amount));
 
     switch (servicePoint) {
-      case "cd1":
-      case "cd2":
-        expectedExpirationDate = expectedExpirationDate.plusDays(1L);
-        break;
       case "cd4":
         expectedExpirationDate = expectedExpirationDate.minusDays(1L);
         break;
+      case "cd9":
+      case "cd10":
+        expectedExpirationDate = expectedExpirationDate.plusDays(1L);
+        break;
+
     }
 
     assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
