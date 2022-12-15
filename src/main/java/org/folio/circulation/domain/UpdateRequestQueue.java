@@ -169,7 +169,7 @@ public class UpdateRequestQueue {
     if(ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name().equals(expirationDateManagement.name()) && checkShortTerm(intervalId)) {
       expirationDateManagement = ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
     }
-    // due to usage of final val in lamda
+
     ExpirationDateManagement finalExpirationDateManagement = expirationDateManagement;
 
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
