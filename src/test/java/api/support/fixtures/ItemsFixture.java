@@ -176,6 +176,18 @@ public class ItemsFixture {
         loanTypesFixture.canCirculate().getId()));
   }
 
+  public void basedUponSmallAngryPlanetWithNoItem(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties) {
+
+    applyAdditionalProperties(
+      additionalHoldingsRecordProperties,
+      additionalInstanceProperties,
+      InstanceExamples.basedUponSmallAngryPlanet(booksInstanceTypeId(),
+        getPersonalContributorNameTypeId()),
+      thirdFloorHoldings());
+  }
+
   public ItemResource basedUponSmallAngryPlanet(
     Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
     Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
@@ -288,6 +300,16 @@ public class ItemsFixture {
       additionalItemProperties.apply(itemBuilder));
   }
 
+  private void applyAdditionalProperties(
+    Function<HoldingBuilder, HoldingBuilder> additionalHoldingsRecordProperties,
+    Function<InstanceBuilder, InstanceBuilder> additionalInstanceProperties,
+    InstanceBuilder instanceBuilder, HoldingBuilder holdingsRecordBuilder) {
+
+    createHoldingAndInstanceWithNoItem(
+      additionalInstanceProperties.apply(instanceBuilder),
+      additionalHoldingsRecordProperties.apply(holdingsRecordBuilder));
+  }
+
   private ItemResource create(
     InstanceBuilder instanceBuilder,
     HoldingBuilder holdingsRecordBuilder,
@@ -304,6 +326,16 @@ public class ItemsFixture {
         .create());
 
     return new ItemResource(item, holding, instance);
+  }
+
+  private void createHoldingAndInstanceWithNoItem(
+    InstanceBuilder instanceBuilder,
+    HoldingBuilder holdingsRecordBuilder) {
+
+    IndividualResource instance = instancesClient.create(
+      instanceBuilder.withInstanceTypeId(booksInstanceTypeId()));
+
+    holdingsClient.create(holdingsRecordBuilder.forInstance(instance.getId()));
   }
 
   public HoldingBuilder thirdFloorHoldings() {

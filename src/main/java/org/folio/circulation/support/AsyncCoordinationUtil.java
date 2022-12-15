@@ -1,7 +1,9 @@
 package org.folio.circulation.support;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -73,5 +75,19 @@ public class AsyncCoordinationUtil {
       m.put(p.getKey(), p.getValue());
       return m;
     });
+  }
+
+  public static <E, R> CompletableFuture<Result<Collection<R>>> mapSequentially(
+    Collection<E> collection, Function<E, CompletableFuture<Result<R>>> mapper) {
+
+    final List<R> results = new ArrayList<>();
+    CompletableFuture<Result<Boolean>> future = completedFuture(null);
+
+    for (E element : collection) {
+      future = future.thenCompose(ignored -> mapper.apply(element)
+        .thenApply(r -> r.map(results::add)));
+    }
+
+    return future.thenApply(r -> r.map(ignored -> results));
   }
 }

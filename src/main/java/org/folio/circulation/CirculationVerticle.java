@@ -16,6 +16,7 @@ import org.folio.circulation.resources.EndPatronActionSessionResource;
 import org.folio.circulation.resources.ExpiredActualCostProcessingResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.HealthResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -68,6 +69,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     router.route().handler(rc -> LogHelper.logRequest(rc, log));
 
+    new HealthResource().register(router);
     new TenantActivationResource().register(router);
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
