@@ -95,38 +95,35 @@ class HoldShelfExpirationDateTests extends APITests {
     ZonedDateTime zdtWithZoneOffset  = ZonedDateTime.parse(storedRequest.getString("holdShelfExpirationDate"),
       DateTimeFormatter.ISO_ZONED_DATE_TIME);
 
-    System.out.println("zdtWithZoneOffset " + zdtWithZoneOffset);
-
-
     if(interval.addTo(getZonedDateTime(), amount).toLocalDate().equals(LocalDate.now(zdtWithZoneOffset.getZone()))){
 
-      if(amount == 9){
-        assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
-          storedRequest.getString("holdShelfExpirationDate"),
-          isEquivalentTo(ClockUtil.getZonedDateTime().plusDays(2).with(LocalTime. of(23, 59, 59).plusSeconds(1))));
-      }
-      if(amount == 42){
-        assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
-          storedRequest.getString("holdShelfExpirationDate"),
-          isEquivalentTo(ClockUtil.getZonedDateTime().plusMinutes(42)));
-      }
-      if(amount == 5){
-        assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
-          storedRequest.getString("holdShelfExpirationDate"),
-          isEquivalentTo(ClockUtil.getZonedDateTime().plusDays(1).with(LocalTime. of(5, 00, 00))));
-      }
-
-      if(amount == 10){
-        assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
-          storedRequest.getString("holdShelfExpirationDate"),
-          isEquivalentTo(ClockUtil.getZonedDateTime().plusDays(1).with(LocalTime. of(00, 10, 00))));
-      }
-
-   }else{
-      System.out.println("Inside else");
+      assertHoldShelfExpirationDateBasedOnStrategy(storedRequest,servicePoint,amount,interval);
+   }
+    else {
       assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
       storedRequest.getString("holdShelfExpirationDate"),
       isEquivalentTo(interval.addTo(ClockUtil.getZonedDateTime(), amount)));
+    }
+  }
+
+  private void assertHoldShelfExpirationDateBasedOnStrategy(JsonObject storedRequest, String servicePoint, int amount, ChronoUnit interval) {
+    switch (servicePoint) {
+      case "cd5" : assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
+        storedRequest.getString("holdShelfExpirationDate"),
+        isEquivalentTo(ClockUtil.getZonedDateTime().plusMinutes(42)));
+        break;
+      case "cd6": assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
+        storedRequest.getString("holdShelfExpirationDate"),
+        isEquivalentTo(ClockUtil.getZonedDateTime().plusDays(2).with(LocalTime. of(23, 59, 59).plusSeconds(1))));
+        break;
+      case "cd7" : assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
+        storedRequest.getString("holdShelfExpirationDate"),
+        isEquivalentTo(ClockUtil.getZonedDateTime().plusDays(1).with(LocalTime. of(5, 0, 0))));
+        break;
+      case "cd8" : assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
+        storedRequest.getString("holdShelfExpirationDate"),
+        isEquivalentTo(ClockUtil.getZonedDateTime().plusDays(1).with(LocalTime. of(0, 10, 0))));
+
     }
   }
 
