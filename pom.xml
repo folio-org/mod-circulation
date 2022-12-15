@@ -24,7 +24,7 @@
 
   <properties>
     <antlr4.version>4.11.1</antlr4.version>
-    <drools.version>8.31.0.Final</drools.version>
+    <drools.version>7.73.0.Final</drools.version>
     <rmb.version>35.0.4</rmb.version>
     <vertx.version>4.3.5</vertx.version>
     <log4j2.version>2.19.0</log4j2.version>
@@ -48,6 +48,13 @@
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
         <version>5.9.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>1.17.6</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -108,17 +115,7 @@
     </dependency>
     <dependency>
       <groupId>org.drools</groupId>
-      <artifactId>drools-core</artifactId>
-      <version>${drools.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-compiler</artifactId>
-      <version>${drools.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.drools</groupId>
-      <artifactId>drools-mvel</artifactId>
+      <artifactId>drools-engine-classic</artifactId>
       <version>${drools.version}</version>
     </dependency>
     <dependency>
@@ -244,6 +241,17 @@
       <groupId>org.folio.okapi</groupId>
       <artifactId>okapi-testing</artifactId>
       <version>4.14.8</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>${log4j2.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
