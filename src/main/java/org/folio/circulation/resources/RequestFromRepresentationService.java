@@ -293,6 +293,7 @@ class RequestFromRepresentationService {
 
     List<String> recallableItemIds = request.getInstanceItems()
       .stream()
+      .filter(item -> canCreateRequestForItem(item.getStatus(), RECALL))
       .map(Item::getItemId)
       .filter(itemId -> request.getInstanceItemsRequestPolicies().get(itemId)
         .allowsType(RequestType.RECALL))
@@ -318,9 +319,13 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> findItemForRecall(Request request) {
-    return request.getLoan() == null
-      ? completedFuture(findRecallableItemOrFail(request))
-      : fetchItemForLoan(request);
+    Loan loan = request.getLoan();
+    if (loan != null) {
+      return itemRepository.fetchFor(loan)
+        .thenApply(r -> r.map(request::withItem));
+    }
+
+    return completedFuture(findRecallableItemOrFail(request));
   }
 
   private Result<Request> findRecallableItemOrFail(Request request) {
@@ -333,11 +338,6 @@ class RequestFromRepresentationService {
       .orElseGet(() -> failedValidation("Request has no loan or recallable item", "loan", null))
       .mapFailure(err -> errorHandler.handleValidationError(err,
         TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM, request));
-  }
-
-  private CompletableFuture<Result<Request>> fetchItemForLoan(Request request) {
-    return itemRepository.fetchFor(request.getLoan())
-      .thenApply(r -> r.map(request::withItem));
   }
 
   private CompletableFuture<Result<Request>> findInstanceItemsAndPolicies(Request request) {

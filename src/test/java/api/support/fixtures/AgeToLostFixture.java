@@ -24,6 +24,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import api.support.http.TimedTaskClient;
 import lombok.Getter;
@@ -87,6 +88,16 @@ public final class AgeToLostFixture {
     assertThat(ageToLostResult.getItem().getJson(), isAgedToLost());
 
     return ageToLostResult;
+  }
+
+  public void createAgedToLostLoan(ItemResource item, IndividualResource user) {
+    policiesActivation.use(PoliciesToActivate.builder().lostItemPolicy(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinute()));
+    checkOutFixture.checkOutByBarcode(item, user);
+    ageToLost();
+    var itemById = itemsFixture.getById(item.getId());
+
+    assertThat(itemById.getJson(), isAgedToLost());
   }
 
   public AgeToLostResult createLoanAgeToLostAndChargeFeesWithOverdues(IndividualResource lostPolicy, IndividualResource overduePolicy) {
