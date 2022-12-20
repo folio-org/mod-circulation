@@ -322,7 +322,7 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> findItemForRecall(Request request, Item item) {
-    if (!ITEM_STATUSES_UNABLE_FOR_RECALL.contains(item.getStatus())) {
+    if (canCreateRequestForItem(item.getStatus(), RECALL)) {
       return succeeded(request.withItem(item));
     }
 
