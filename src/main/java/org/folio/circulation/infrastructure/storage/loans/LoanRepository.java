@@ -72,6 +72,7 @@ import io.vertx.core.json.JsonObject;
 
 public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String RECORDS_PROPERTY_NAME = "loans";
+  public static final String DUE_DATE_CHANGED_BY_HOLD = "dueDateChangedByHold";
 
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
