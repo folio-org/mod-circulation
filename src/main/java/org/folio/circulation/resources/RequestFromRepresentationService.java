@@ -5,8 +5,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
@@ -88,6 +91,9 @@ class RequestFromRepresentationService {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
     Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
+
+  private static final Set<ItemStatus> ITEM_STATUSES_UNABLE_FOR_RECALL =
+    Set.of(AGED_TO_LOST, DECLARED_LOST, CLAIMED_RETURNED);
   private final Request.Operation operation;
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
@@ -318,9 +324,21 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> findItemForRecall(Request request) {
-    return request.getLoan() == null
-      ? completedFuture(findRecallableItemOrFail(request))
-      : fetchItemForLoan(request);
+    Loan loan = request.getLoan();
+    if (loan != null) {
+      return itemRepository.fetchFor(loan)
+        .thenApply(r -> r.next(item -> findItemForRecall(request, item)));
+    }
+
+    return completedFuture(findRecallableItemOrFail(request));
+  }
+
+  private Result<Request> findItemForRecall(Request request, Item item) {
+    if (!ITEM_STATUSES_UNABLE_FOR_RECALL.contains(item.getStatus())) {
+      return succeeded(request.withItem(item));
+    }
+
+    return findRecallableItemOrFail(request);
   }
 
   private Result<Request> findRecallableItemOrFail(Request request) {
@@ -333,11 +351,6 @@ class RequestFromRepresentationService {
       .orElseGet(() -> failedValidation("Request has no loan or recallable item", "loan", null))
       .mapFailure(err -> errorHandler.handleValidationError(err,
         TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM, request));
-  }
-
-  private CompletableFuture<Result<Request>> fetchItemForLoan(Request request) {
-    return itemRepository.fetchFor(request.getLoan())
-      .thenApply(r -> r.map(request::withItem));
   }
 
   private CompletableFuture<Result<Request>> findInstanceItemsAndPolicies(Request request) {
