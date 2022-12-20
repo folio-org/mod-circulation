@@ -24,22 +24,28 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
 
   private final Period period;
   private final FixedDueDateSchedules dueDateLimitSchedules;
+  private final boolean useAlternatePeriod;
 
   RollingCheckOutDueDateStrategy(
     String loanPolicyId,
     String loanPolicyName,
     Period period,
     FixedDueDateSchedules dueDateLimitSchedules,
-    Function<String, ValidationError> errorForPolicy) {
+    Function<String, ValidationError> errorForPolicy, boolean useAlternatePeriod) {
 
     super(loanPolicyId, loanPolicyName, errorForPolicy);
     this.period = period;
     this.dueDateLimitSchedules = dueDateLimitSchedules;
+    this.useAlternatePeriod = useAlternatePeriod;
   }
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
     final ZonedDateTime loanDate = loan.getLoanDate();
+
+    if(useAlternatePeriod && !loan.isDueDateChangedByHold()) {
+      loan.setDueDateChangedByHold();
+    }
 
     return initialDueDate(loanDate)
       .next(dueDate -> truncateDueDateBySchedule(loanDate, dueDate));
