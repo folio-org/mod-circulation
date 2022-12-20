@@ -5,11 +5,10 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
-import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
-import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
+import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -41,7 +40,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -50,7 +48,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -59,7 +56,6 @@ import org.folio.circulation.domain.RequestFulfilmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
@@ -86,8 +82,6 @@ import io.vertx.core.json.JsonObject;
 class RequestFromRepresentationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
-  private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
-    Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
   private final Request.Operation operation;
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
@@ -296,7 +290,7 @@ class RequestFromRepresentationService {
       .filter(item -> canCreateRequestForItem(item.getStatus(), RECALL))
       .map(Item::getItemId)
       .filter(itemId -> request.getInstanceItemsRequestPolicies().get(itemId)
-        .allowsType(RequestType.RECALL))
+        .allowsType(RECALL))
       .collect(toList());
 
     return loanRepository.findLoanWithClosestDueDate(recallableItemIds, recalledLoansIds)
@@ -331,7 +325,7 @@ class RequestFromRepresentationService {
   private Result<Request> findRecallableItemOrFail(Request request) {
     return request.getInstanceItems()
       .stream()
-      .filter(item -> RECALLABLE_ITEM_STATUSES.contains(item.getStatus()))
+      .filter(item -> canCreateRequestForItem(item.getStatus(), RECALL))
       .findFirst()
       .map(request::withItem)
       .map(Result::succeeded)
