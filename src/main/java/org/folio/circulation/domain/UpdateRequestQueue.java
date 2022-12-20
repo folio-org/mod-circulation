@@ -149,7 +149,7 @@ public class UpdateRequestQueue {
             populateHoldShelfExpirationDate(
               request.withPickupServicePoint(servicePoint),
               tenantTimeZone
-            ).map(calculatedRequest-> modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(tenantTimeZone, calculatedRequest,
+            ).map(calculatedRequest-> setHoldShelfExpirationDateWithExpirationDateManagement(tenantTimeZone, calculatedRequest,
               requestQueue, originalRequest)))
         );
     } else {
@@ -161,13 +161,13 @@ public class UpdateRequestQueue {
     }
   }
 
-  private RequestQueue modifyHoldShelfExpirationDateBasedOnExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest,
+  private RequestQueue setHoldShelfExpirationDateWithExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest,
                                                                                 RequestQueue requestQueue, Request originalRequest) {
 
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
     String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId().toUpperCase();
-    //Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
-    if(ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name().equals(expirationDateManagement.name()) && checkShortTerm(intervalId)) {
+    // Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
+    if (ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name().equals(expirationDateManagement.name()) && isShortTerm(intervalId)) {
       expirationDateManagement = ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
     }
 
@@ -189,7 +189,7 @@ public class UpdateRequestQueue {
     return requestQueue;
   }
 
-  private boolean checkShortTerm(String intervalId) {
+  private boolean isShortTerm(String intervalId) {
 
     return List.of("MINUTES", "HOURS").contains(intervalId);
   }

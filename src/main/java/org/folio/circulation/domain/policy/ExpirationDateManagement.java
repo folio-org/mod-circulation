@@ -30,7 +30,7 @@ public enum ExpirationDateManagement {
   MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS("MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS"),
   MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS("MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS");
 
-  String value;
+  final String value;
 
   ExpirationDateManagement(String value) {
     this.value = value;
