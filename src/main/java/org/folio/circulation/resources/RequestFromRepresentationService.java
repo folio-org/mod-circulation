@@ -91,7 +91,6 @@ class RequestFromRepresentationService {
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
     Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
-
   private static final Set<ItemStatus> ITEM_STATUSES_UNABLE_FOR_RECALL =
     Set.of(AGED_TO_LOST, DECLARED_LOST, CLAIMED_RETURNED);
   private final Request.Operation operation;
