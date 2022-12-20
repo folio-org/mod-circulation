@@ -928,11 +928,11 @@
     },
     {
       "id": "request-storage",
-      "version": "4.0"
+      "version": "5.0"
     },
     {
       "id": "request-storage-batch",
-      "version": "1.0"
+      "version": "2.0"
     },
     {
       "id": "users",
