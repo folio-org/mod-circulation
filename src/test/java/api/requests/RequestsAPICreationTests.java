@@ -18,6 +18,7 @@ import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.ItemMatchers.isClaimedReturned;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
@@ -3832,6 +3833,27 @@ public class RequestsAPICreationTests extends APITests {
     declareLostFixtures.declareItemLost(loan.getJson());
     var itemById = itemsFixture.getById(item.getId());
     assertThat(itemById.getJson(), isDeclaredLost());
+
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), servicePointsFixture.cd1().getId(), instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyClaimedReturnedItem() {
+    configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+    UUID instanceId = UUID.randomUUID();
+
+    var item = buildItem(instanceId, "111");
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    claimItemReturnedFixture.claimItemReturned(loan.getId());
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getJson(), isClaimedReturned());
 
     Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
       usersFixture.steve().getId(), servicePointsFixture.cd1().getId(), instanceId));
