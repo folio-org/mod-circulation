@@ -300,6 +300,11 @@
       "type": "boolean",
       "readonly": true
     },
+    "dueDateChangedByHold": {
+      "description": "Is due date changed by hold request",
+      "type": "boolean",
+      "readonly": true
+    },
     "checkoutServicePointId": {
       "description": "ID of the Service Point where the last checkout occured",
       "type": "string",
