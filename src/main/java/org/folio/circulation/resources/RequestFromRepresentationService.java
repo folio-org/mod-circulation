@@ -287,6 +287,7 @@ class RequestFromRepresentationService {
 
     List<String> recallableItemIds = request.getInstanceItems()
       .stream()
+      .filter(item -> canCreateRequestForItem(item.getStatus(), RECALL))
       .map(Item::getItemId)
       .filter(itemId -> request.getInstanceItemsRequestPolicies().get(itemId)
         .allowsType(RECALL))
@@ -315,18 +316,10 @@ class RequestFromRepresentationService {
     Loan loan = request.getLoan();
     if (loan != null) {
       return itemRepository.fetchFor(loan)
-        .thenApply(r -> r.next(item -> findItemForRecall(request, item)));
+        .thenApply(r -> r.map(request::withItem));
     }
 
     return completedFuture(findRecallableItemOrFail(request));
-  }
-
-  private Result<Request> findItemForRecall(Request request, Item item) {
-    if (canCreateRequestForItem(item.getStatus(), RECALL)) {
-      return succeeded(request.withItem(item));
-    }
-
-    return findRecallableItemOrFail(request);
   }
 
   private Result<Request> findRecallableItemOrFail(Request request) {
