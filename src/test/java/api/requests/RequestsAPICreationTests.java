@@ -18,6 +18,8 @@ import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.ItemMatchers.isClaimedReturned;
+import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -3766,6 +3768,64 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyAgedToLostItem() {
+    configurationsFixture.enableTlrFeature();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+
+    ageToLostFixture.createAgedToLostLoan(buildItem(instanceId, "111"), usersFixture.charlotte());
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), pickupServicePointId, instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyDeclaredLostItem() {
+    configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+    UUID instanceId = UUID.randomUUID();
+
+    var item = buildItem(instanceId, "111");
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    declareLostFixtures.declareItemLost(loan.getJson());
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getJson(), isDeclaredLost());
+
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), servicePointsFixture.cd1().getId(), instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyClaimedReturnedItem() {
+    configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+    UUID instanceId = UUID.randomUUID();
+
+    var item = buildItem(instanceId, "111");
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    claimItemReturnedFixture.claimItemReturned(loan.getId());
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getJson(), isClaimedReturned());
+
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), servicePointsFixture.cd1().getId(), instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
   void recallTlrShouldFailWhenNotAllowedByPolicy() {
     configurationsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
@@ -4336,14 +4396,26 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(patronId);
   }
 
+  private RequestBuilder buildRecallTitleLevelRequest(UUID patronId, UUID pickupServicePointId,
+    UUID instanceId) {
+    return new RequestBuilder()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId);
+  }
+
   private RequestBuilder buildItemLevelRequest(UUID patronId, UUID pickupServicePointId,
-    UUID instanceId, ItemResource secondItem) {
+    UUID instanceId, ItemResource item) {
 
     return new RequestBuilder()
       .page()
       .itemRequestLevel()
       .withInstanceId(instanceId)
-      .withItemId(secondItem.getId())
+      .withItemId(item.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId);
   }
