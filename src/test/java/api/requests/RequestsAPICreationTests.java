@@ -1703,7 +1703,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @ParameterizedTest
   @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery", "In transit", "In process",
-    "On order"})
+    "On order", "Checked out", "Restricted"})
   void tlrRecallWithoutLoanShouldPickRecallableItemFromRequestedInstance(String itemStatus) {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     IndividualResource inTransitPickupServicePoint = servicePointsFixture.cd2();
@@ -1746,10 +1746,9 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"Available", "Checked out", "Missing", "Long missing", "Withdrawn",
-    "Claimed returned", "Declared lost", "Aged to lost", "Lost and paid",
-    "In process (non-requestable)", "Intellectual item", "Unavailable", "Restricted", "Unknown",
-    "Order closed"})
+  @CsvSource({"Available", "Missing", "Long missing", "Withdrawn", "Claimed returned",
+    "Declared lost", "Aged to lost", "Lost and paid", "In process (non-requestable)",
+    "Intellectual item", "Unavailable", "Unknown", "Order closed"})
   void tlrRecallShouldFailWhenRequestHasNoLoanOrRecallableItem(String itemStatus) {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
@@ -3842,7 +3841,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
-        hasMessage("Request has no loan or recallable item")
+        hasMessage("Recall requests are not allowed for this patron and item combination")
       ))));
   }
 
