@@ -117,6 +117,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -1701,9 +1702,11 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery"})
+  @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery", "In transit", "In process",
+    "On order"})
   void tlrRecallWithoutLoanShouldPickRecallableItemFromRequestedInstance(String itemStatus) {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    IndividualResource inTransitPickupServicePoint = servicePointsFixture.cd2();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     configurationsFixture.enableTlrFeature();
@@ -1719,11 +1722,17 @@ public class RequestsAPICreationTests extends APITests {
       requestsClient.create(buildPageTitleLevelRequest(usersFixture.james().getId(),
         servicePointsFixture.cd1().getId(), instanceId));
     } else {
-      itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      ItemResource item = itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
         instanceBuilder -> instanceBuilder.withId(instanceId),
         itemBuilder -> itemBuilder
           .forHolding(defaultWithHoldings.getId())
           .withStatus(itemStatus));
+
+      if (itemStatus.equals("In transit")) {
+        checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+          .forItem(item)
+          .at(inTransitPickupServicePoint));
+      }
     }
     IndividualResource response = requestsFixture.placeTitleLevelRecallRequest(
       instanceId, usersFixture.jessica());
@@ -1737,10 +1746,10 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"On order", "In process", "Available", "Checked out", "In transit", "Missing",
-    "Long missing", "Withdrawn", "Claimed returned", "Declared lost", "Aged to lost",
-    "Lost and paid", "In process (non-requestable)", "Intellectual item", "Unavailable",
-    "Restricted", "Unknown", "Order closed"})
+  @CsvSource({"Available", "Checked out", "Missing", "Long missing", "Withdrawn",
+    "Claimed returned", "Declared lost", "Aged to lost", "Lost and paid",
+    "In process (non-requestable)", "Intellectual item", "Unavailable", "Restricted", "Unknown",
+    "Order closed"})
   void tlrRecallShouldFailWhenRequestHasNoLoanOrRecallableItem(String itemStatus) {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();

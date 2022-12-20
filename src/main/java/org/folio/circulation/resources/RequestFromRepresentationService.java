@@ -7,6 +7,9 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_DELIVERY;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
+import static org.folio.circulation.domain.ItemStatus.IN_PROCESS;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
+import static org.folio.circulation.domain.ItemStatus.ON_ORDER;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
@@ -87,7 +90,7 @@ class RequestFromRepresentationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private static final Set<ItemStatus> RECALLABLE_ITEM_STATUSES =
-    Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY);
+    Set.of(PAGED, AWAITING_PICKUP, AWAITING_DELIVERY, IN_TRANSIT, IN_PROCESS, ON_ORDER);
   private final Request.Operation operation;
   private final InstanceRepository instanceRepository;
   private final ItemRepository itemRepository;
