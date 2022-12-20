@@ -25,7 +25,7 @@ class DetermineClosedLibraryStrategyForHoldShelfExpirationDateTests {
     JsonObject representation = new ServicePointBuilder("Circ Desk 2", "cd2",
       "Circulation Desk -- Back Entrance").withPickupLocation(TRUE)
       .withHoldShelfExpriyPeriod(6, "Days")
-      .withholdShelfClosedLibraryDateManagement(expirationDateManagement.getValue())
+      .withholdShelfClosedLibraryDateManagement(expirationDateManagement.name())
       .create();
 
     ZonedDateTime startDate = ZonedDateTime.of(2019, 1, 1, 0, 0, 0, 0, UTC);
