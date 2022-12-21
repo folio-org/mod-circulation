@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -56,6 +59,8 @@ public class ItemsInTransitReportService {
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
   private final InstanceRepository instanceRepository;
+  final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
 
   public ItemsInTransitReportService(Clients clients) {
     this.itemReportRepository = new ItemReportRepository(clients);
@@ -81,8 +86,29 @@ public class ItemsInTransitReportService {
       .thenCompose(r -> r.after(this::fetchUsers))
       .thenCompose(r -> r.after(this::fetchPatronGroups))
       .thenCompose(r -> r.after(this::fetchServicePoints))
-      .thenApply(this::mapToJsonObject);
+      .thenApply(this::mapToJsonObject)
+      .whenComplete(this::handleResult)
+      .exceptionally(this::handleException);
   }
+
+  private void handleResult(Result<JsonObject> result, Throwable throwable) {
+    if (result.succeeded()) {
+      log.info("The report was built successfully");
+    } else if (throwable != null) {
+      log.error("Report failed {}, {}, {}, {}", result.cause(), throwable.getCause(),
+        throwable.getMessage(), throwable.getStackTrace());
+    } else {
+      log.error("Report failed, throwable is null {}", result.cause());
+    }
+  }
+
+  private Result<JsonObject> handleException(Throwable throwable) {
+      log.error("There is an exception in build report: {}, {}, {}",
+        throwable.getCause(), throwable.getMessage(), throwable.getStackTrace());
+
+      return null;
+  }
+
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     ItemsInTransitReportContext context) {
