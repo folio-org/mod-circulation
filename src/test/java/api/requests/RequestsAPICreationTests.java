@@ -18,6 +18,8 @@ import static api.support.http.CqlQuery.notEqual;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.ItemMatchers.isClaimedReturned;
+import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
@@ -117,6 +119,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.Address;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanPolicyBuilder;
@@ -1670,9 +1673,11 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery"})
+  @CsvSource({"Awaiting pickup", "Paged", "Awaiting delivery", "In transit", "In process",
+    "On order", "Checked out", "Restricted"})
   void tlrRecallWithoutLoanShouldPickRecallableItemFromRequestedInstance(String itemStatus) {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
+    IndividualResource inTransitPickupServicePoint = servicePointsFixture.cd2();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     configurationsFixture.enableTlrFeature();
@@ -1688,11 +1693,17 @@ public class RequestsAPICreationTests extends APITests {
       requestsClient.create(buildPageTitleLevelRequest(usersFixture.james().getId(),
         servicePointsFixture.cd1().getId(), instanceId));
     } else {
-      itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
+      ItemResource item = itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
         instanceBuilder -> instanceBuilder.withId(instanceId),
         itemBuilder -> itemBuilder
           .forHolding(defaultWithHoldings.getId())
           .withStatus(itemStatus));
+
+      if (itemStatus.equals("In transit")) {
+        checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+          .forItem(item)
+          .at(inTransitPickupServicePoint));
+      }
     }
     IndividualResource response = requestsFixture.placeTitleLevelRecallRequest(
       instanceId, usersFixture.jessica());
@@ -1706,10 +1717,9 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource({"On order", "In process", "Available", "Checked out", "In transit", "Missing",
-    "Long missing", "Withdrawn", "Claimed returned", "Declared lost", "Aged to lost",
-    "Lost and paid", "In process (non-requestable)", "Intellectual item", "Unavailable",
-    "Restricted", "Unknown", "Order closed"})
+  @CsvSource({"Available", "Missing", "Long missing", "Withdrawn", "Claimed returned",
+    "Declared lost", "Aged to lost", "Lost and paid", "In process (non-requestable)",
+    "Intellectual item", "Unavailable", "Unknown", "Order closed"})
   void tlrRecallShouldFailWhenRequestHasNoLoanOrRecallableItem(String itemStatus) {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
@@ -3766,6 +3776,64 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyAgedToLostItem() {
+    configurationsFixture.enableTlrFeature();
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+
+    ageToLostFixture.createAgedToLostLoan(buildItem(instanceId, "111"), usersFixture.charlotte());
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), pickupServicePointId, instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyDeclaredLostItem() {
+    configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+    UUID instanceId = UUID.randomUUID();
+
+    var item = buildItem(instanceId, "111");
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    declareLostFixtures.declareItemLost(loan.getJson());
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getJson(), isDeclaredLost());
+
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), servicePointsFixture.cd1().getId(), instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
+  void recallTlrShouldNotBeCreatedForInstanceWithOnlyClaimedReturnedItem() {
+    configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+    UUID instanceId = UUID.randomUUID();
+
+    var item = buildItem(instanceId, "111");
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    claimItemReturnedFixture.claimItemReturned(loan.getId());
+    var itemById = itemsFixture.getById(item.getId());
+    assertThat(itemById.getJson(), isClaimedReturned());
+
+    Response response = requestsClient.attemptCreate(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), servicePointsFixture.cd1().getId(), instanceId));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), hasErrors(1));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      "Request has no loan or recallable item")));
+  }
+
+  @Test
   void recallTlrShouldFailWhenNotAllowedByPolicy() {
     configurationsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
@@ -3802,7 +3870,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
-        hasMessage("Request has no loan or recallable item")
+        hasMessage("Recall requests are not allowed for this patron and item combination")
       ))));
   }
 
@@ -4336,14 +4404,26 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(patronId);
   }
 
+  private RequestBuilder buildRecallTitleLevelRequest(UUID patronId, UUID pickupServicePointId,
+    UUID instanceId) {
+    return new RequestBuilder()
+      .recall()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId);
+  }
+
   private RequestBuilder buildItemLevelRequest(UUID patronId, UUID pickupServicePointId,
-    UUID instanceId, ItemResource secondItem) {
+    UUID instanceId, ItemResource item) {
 
     return new RequestBuilder()
       .page()
       .itemRequestLevel()
       .withInstanceId(instanceId)
-      .withItemId(secondItem.getId())
+      .withItemId(item.getId())
       .withPickupServicePointId(pickupServicePointId)
       .withRequesterId(patronId);
   }
