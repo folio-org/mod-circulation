@@ -114,7 +114,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, null, null, null, null, null,
       getDateTimeProperty(representation, DUE_DATE), getDateTimeProperty(representation, DUE_DATE),
-      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList(), null, false);
+      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList(), null, false, false);
   }
 
   public JsonObject asJson() {
