@@ -33,6 +33,10 @@ public class LoanRepresentation {
       extendedRepresentation.put("dueDateChangedByNearExpireUser",loan.isDueDateChangedByNearExpireUser());
     }
 
+    if(loan.isDueDateChangedByHold()) {
+      extendedRepresentation.put("dueDateChangedByHold",loan.isDueDateChangedByHold());
+    }
+
     if(loan.getCheckinServicePoint() != null) {
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }

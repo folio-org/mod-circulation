@@ -304,6 +304,11 @@
       "description": "Indicates whether or not this loan had its due date modified by a expired user",
       "type": "boolean"
     },
+    "dueDateChangedByHold": {
+      "description": "Is due date changed by hold request",
+      "type": "boolean",
+      "readonly": true
+    },
     "checkoutServicePointId": {
       "description": "ID of the Service Point where the last checkout occured",
       "type": "string",
