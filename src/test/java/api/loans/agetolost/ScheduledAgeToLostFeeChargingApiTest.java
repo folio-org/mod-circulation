@@ -2,8 +2,6 @@ package api.loans.agetolost;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.DeclareItemLostRequestBuilder.forLoan;
-import api.support.http.CqlQuery;
-import api.support.http.UserResource;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.ActualCostRecordMatchers.isActualCostRecord;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
@@ -27,7 +25,6 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -36,7 +33,6 @@ import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -56,11 +52,10 @@ import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
-import api.support.matchers.LoanMatchers;
+import api.support.http.UserResource;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
@@ -397,6 +392,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       itemBuilder -> itemBuilder
         .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
         .withPermanentLocation(locationsFixture.thirdFloor())
+        .withTemporaryLocation(locationsFixture.mainFloor())
         .withCallNumber("callNumber", "prefix", "suffix")
         .withVolume("volume")
         .withChronology("chronology")
@@ -417,7 +413,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
     assertThat(actualCostRecords, hasSize(1));
     assertThat(actualCostRecords.get(0), isActualCostRecord(loan, item, user,
-      ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor().getJson().getString("name"),
+      ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor(), locationsFixture.mainFloor(),
       feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN",
       patronGroupsFixture.regular()));
   }
@@ -440,6 +436,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       itemBuilder -> itemBuilder
         .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
         .withPermanentLocation(locationsFixture.thirdFloor())
+        .withTemporaryLocation(locationsFixture.mainFloor())
         .withCallNumber("callNumber", "prefix", "suffix")
         .withVolume("volume")
         .withChronology("chronology")
@@ -459,7 +456,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(itemsFixture.getById(item.getId()).getJson(), isAgedToLost());
     assertThat(actualCostRecords, hasSize(1));
     assertThat(actualCostRecords.get(0), isActualCostRecord(loan, item, user,
-      ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor().getJson().getString("name"),
+      ItemLossType.AGED_TO_LOST, locationsFixture.thirdFloor(), locationsFixture.mainFloor(),
       feeFineOwnerFixture.cd1Owner(), feeFineTypeFixture.lostItemActualCostFee(), "ISBN",
       patronGroupsFixture.regular()));
   }

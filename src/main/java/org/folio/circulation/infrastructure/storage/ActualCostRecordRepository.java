@@ -1,6 +1,9 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.function.Function.identity;
+import static org.folio.circulation.storage.mappers.ActualCostRecordMapper.toJson;
+import static org.folio.circulation.support.AsyncCoordinationUtil.mapSequentially;
+import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -8,7 +11,6 @@ import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
@@ -24,6 +26,7 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
@@ -45,7 +48,7 @@ public class ActualCostRecordRepository {
         .flatMapOn(201, mapUsingJson(ActualCostRecordMapper::toDomain))
         .otherwise(forwardOnFailure());
 
-    return actualCostRecordStorageClient.post(ActualCostRecordMapper.toJson(actualCostRecord))
+    return actualCostRecordStorageClient.post(toJson(actualCostRecord))
       .thenApply(interpreter::flatMap);
   }
 
@@ -56,7 +59,7 @@ public class ActualCostRecordRepository {
       return ofAsync(() -> null);
     }
 
-    return CqlQuery.exactMatch("accountId", accountId)
+    return CqlQuery.exactMatch("feeFine.accountId", accountId)
       .after(query -> actualCostRecordStorageClient.getMany(query, PageLimit.one()))
       .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
       .thenApply(r -> r.map(multipleRecords -> multipleRecords.getRecords().stream()
@@ -77,10 +80,22 @@ public class ActualCostRecordRepository {
   }
 
   public CompletableFuture<Result<Collection<ActualCostRecord>>> findExpiredActualCostRecords() {
-    return CqlQuery.lessThan("expirationDate", ZonedDateTime.now())
-      .after(cql -> actualCostRecordStorageClient.getMany(cql, PageLimit.oneThousand())
-        .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
-        .thenApply(r -> r.map(MultipleRecords::getRecords)));
+    return CqlQuery.lessThan("expirationDate", ClockUtil.getZonedDateTime())
+      .combine(CqlQuery.exactMatch("status", "Open"), CqlQuery::and)
+      .after(cql -> actualCostRecordStorageClient.getMany(cql, PageLimit.oneThousand()))
+      .thenApply(r -> r.next(this::mapResponseToActualCostRecords))
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
+  public CompletableFuture<Result<Collection<ActualCostRecord>>> update(
+    Collection<ActualCostRecord> records) {
+
+    return mapSequentially(records, this::update);
+  }
+
+  private CompletableFuture<Result<ActualCostRecord>> update(ActualCostRecord actualCostRecord) {
+    return actualCostRecordStorageClient.put(actualCostRecord.getId(), toJson(actualCostRecord))
+      .thenApply(noContentRecordInterpreter(actualCostRecord)::flatMap);
   }
 
   private CqlQueryFinder<JsonObject> createActualCostRecordCqlFinder() {

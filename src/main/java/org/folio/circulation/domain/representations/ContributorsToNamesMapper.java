@@ -1,8 +1,10 @@
 package org.folio.circulation.domain.representations;
 
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 
@@ -18,6 +20,10 @@ public class ContributorsToNamesMapper {
 
   public static JsonArray mapContributorNamesToJson(Instance instance) {
     return mapContributorNamesToJson(instance.getContributorNames());
+  }
+
+  public static JsonArray mapContributorNamesToJson(Collection<Contributor> contributors) {
+    return mapContributorNamesToJson(contributors.stream().map(Contributor::getName));
   }
 
   public static JsonArray mapContributorNamesToJson(Stream<String> contributorNames) {

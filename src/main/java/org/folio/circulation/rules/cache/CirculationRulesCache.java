@@ -32,6 +32,8 @@ public final class CirculationRulesCache {
   /** after this time the circulation rules engine is executed first for a fast reply
    * and then the circulation rules get reloaded */
   private static final long TRIGGER_AGE_IN_MILLISECONDS = 4000;
+  /** after this time the Drools object will be rebuilt even if rulesAsText has not changed */
+  private static final long DROOLS_OBJECT_LIFETIME_IN_MILLISECONDS = 30000;
   /** rules and Drools for each tenantId */
   private final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
@@ -62,11 +64,18 @@ public final class CirculationRulesCache {
     rules.reloadTimestamp = 0;
   }
 
-  private boolean isCurrent(Rules rules) {
+  private boolean isCurrent(String tenantId, Rules rules) {
     if (rules == null) {
+      log.info("Rules object is null considering it not current for tenant {}", tenantId);
       return false;
     }
-    return rules.reloadTimestamp + MAX_AGE_IN_MILLISECONDS > System.currentTimeMillis();
+
+    long currentTimestamp = System.currentTimeMillis();
+    boolean isCurrent = rules.reloadTimestamp + MAX_AGE_IN_MILLISECONDS > currentTimestamp;
+    log.info("Rules object is current for tenant {}: {}. " +
+        "Reload timestamp is {}, current timestamp is {}",
+      tenantId, isCurrent, rules.reloadTimestamp, currentTimestamp);
+    return isCurrent;
   }
 
   /**
@@ -75,18 +84,38 @@ public final class CirculationRulesCache {
    * @param rules - rules to reload
    * @return whether reload is needed
    */
-  private boolean reloadNeeded(Rules rules) {
+  private boolean reloadNeeded(String tenantId, Rules rules) {
     if (rules.reloadInitiated) {
+      log.info("Rules reload is already initiated for tenant {}", tenantId);
       return false;
     }
-    return rules.reloadTimestamp + TRIGGER_AGE_IN_MILLISECONDS < System.currentTimeMillis();
+
+    long currentTimestamp = System.currentTimeMillis();
+    boolean reloadNeeded = rules.reloadTimestamp + TRIGGER_AGE_IN_MILLISECONDS < currentTimestamp;
+    log.info("Rules reload is needed for tenant {}: {}. " +
+        "Reload timestamp is {}, current timestamp is {}",
+      tenantId, reloadNeeded, rules.reloadTimestamp, currentTimestamp);
+    return reloadNeeded;
   }
 
-  private CompletableFuture<Result<Rules>> reloadRules(Rules rules,
+  private boolean rebuildNeeded(String tenantId, Rules rules) {
+    long currentTimestamp = System.currentTimeMillis();
+    boolean rebuildNeeded = rules.rebuildTimestamp + DROOLS_OBJECT_LIFETIME_IN_MILLISECONDS <
+      currentTimestamp;
+    log.info("Drools object rebuild is needed for tenant {}: {}. " +
+        "Rebuild timestamp is {}, current timestamp is {}",
+      tenantId, rebuildNeeded, rules.rebuildTimestamp, currentTimestamp);
+    return rebuildNeeded;
+  }
+
+  private CompletableFuture<Result<Rules>> reloadRules(String tenantId, Rules rules,
     CollectionResourceClient circulationRulesClient) {
+
+    log.info("Reloading rules for tenant {}", tenantId);
 
     return circulationRulesClient.get()
       .thenCompose(r -> r.after(response -> {
+        log.info("Fetched rules for tenant {}", tenantId);
         JsonObject circulationRules = new JsonObject(response.getBody());
 
         rules.reloadTimestamp = System.currentTimeMillis();
@@ -99,19 +128,25 @@ public final class CirculationRulesCache {
         String rulesAsText = circulationRules.getString("rulesAsText");
 
         if (isBlank(rulesAsText)) {
+          log.info("Rules text is blank for tenant {}", tenantId);
           return completedFuture(failed(new ServerErrorFailure(
             "Cannot apply blank circulation rules")));
         }
 
-        if (rules.rulesAsText.equals(rulesAsText)) {
+        if (rules.rulesAsText.equals(rulesAsText) && !rebuildNeeded(tenantId, rules)) {
+          log.info("Rules have not changed for tenant {} and rebuild is not needed",
+            tenantId);
           return ofAsync(() -> rules);
         }
 
         rules.rulesAsText = rulesAsText;
-        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
 
+        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
         log.info("rulesAsDrools = {}", rules.rulesAsDrools);
-        rules.drools = new Drools(rules.rulesAsDrools);
+
+        rules.drools = new Drools(tenantId, rules.rulesAsDrools);
+        rules.rebuildTimestamp = System.currentTimeMillis();
+        log.info("Done building Drools object for tenant {}", tenantId);
 
         return ofAsync(() -> rules);
       }));
@@ -128,15 +163,22 @@ public final class CirculationRulesCache {
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,
     CollectionResourceClient circulationRulesClient) {
 
+    log.info("Getting Drools for tenant {}", tenantId);
+
     final CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
     Rules rules = rulesMap.get(tenantId);
 
-    if (isCurrent(rules)) {
+    if (isCurrent(tenantId, rules)) {
+      log.info("Rules for tenant {} are current, returning immediately: {}", tenantId,
+        rules.rulesAsText);
+
       cfDrools.complete(succeeded(rules.drools));
 
-      if (reloadNeeded(rules)) {
+      if (reloadNeeded(tenantId, rules)) {
+        log.info("Need to reload rules for tenant {}", tenantId);
+
         rules.reloadInitiated = true;
-        reloadRules(rules, circulationRulesClient)
+        reloadRules(tenantId, rules, circulationRulesClient)
           .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
       }
 
@@ -144,11 +186,12 @@ public final class CirculationRulesCache {
     }
 
     if (rules == null) {
+      log.info("Rules are null for tenant {}, initializing", tenantId);
       rules = new Rules();
       rulesMap.put(tenantId, rules);
     }
 
-    return reloadRules(rules, circulationRulesClient)
+    return reloadRules(tenantId, rules, circulationRulesClient)
       .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
   }
 
@@ -158,6 +201,8 @@ public final class CirculationRulesCache {
     private volatile Drools drools;
     /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
     private volatile long reloadTimestamp;
+    /** System.currentTimeMillis() of the last rebuild of the Drools object */
+    private volatile long rebuildTimestamp;
     private volatile boolean reloadInitiated = false;
   }
 }

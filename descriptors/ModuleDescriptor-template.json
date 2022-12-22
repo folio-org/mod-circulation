@@ -643,7 +643,9 @@
           "modulePermissions": [
             "circulation-storage.loans.item.put",
             "inventory-storage.items.item.put",
+            "actual-cost-record-storage.actual-cost-records.item.get",
             "actual-cost-record-storage.actual-cost-records.collection.get",
+            "actual-cost-record-storage.actual-cost-records.item.put",
             "accounts.collection.get",
             "circulation.internal.fetch-items",
             "lost-item-fees-policies.collection.get",
@@ -926,11 +928,11 @@
     },
     {
       "id": "request-storage",
-      "version": "4.0"
+      "version": "5.0"
     },
     {
       "id": "request-storage-batch",
-      "version": "1.0"
+      "version": "2.0"
     },
     {
       "id": "users",
@@ -1030,7 +1032,7 @@
     },
     {
       "id": "actual-cost-record-storage",
-      "version": "0.4"
+      "version": "0.6"
     }
   ],
   "permissionSets": [
