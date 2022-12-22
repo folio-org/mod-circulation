@@ -101,7 +101,7 @@ class HoldShelfExpirationDateTests extends APITests {
     ZonedDateTime zdtWithZoneOffset  = ZonedDateTime.parse(storedRequest.getString("holdShelfExpirationDate"),
       DateTimeFormatter.ISO_ZONED_DATE_TIME);
 
-    if(interval.addTo(getZonedDateTime(), amount).toLocalDate().equals(LocalDate.now(zdtWithZoneOffset.getZone()))){
+    if (isSameDay(interval, amount, zdtWithZoneOffset)) {
 
       assertHoldShelfExpirationDateBasedOnStrategy(storedRequest,servicePoint,amount,interval);
    }
@@ -110,6 +110,10 @@ class HoldShelfExpirationDateTests extends APITests {
       storedRequest.getString("holdShelfExpirationDate"),
       isEquivalentTo(interval.addTo(ClockUtil.getZonedDateTime(), amount)));
     }
+  }
+
+  private boolean isSameDay(ChronoUnit interval, int amount, ZonedDateTime zdtWithZoneOffset) {
+    return interval.addTo(getZonedDateTime(), amount).toLocalDate().equals(LocalDate.now(zdtWithZoneOffset.getZone()));
   }
 
   private void assertHoldShelfExpirationDateBasedOnStrategy(JsonObject storedRequest, String servicePoint, int amount, ChronoUnit interval) {

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -173,12 +174,11 @@ public class UpdateRequestQueue {
 
     ExpirationDateManagement finalExpirationDateManagement = expirationDateManagement;
 
-    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(),
-        calculatedRequest.getPickupServicePoint().getId())
-      .thenApply(adjacentOpeningDaysResult -> determineClosedLibraryStrategyForHoldShelfExpirationDate(
-        finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(),
-        tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-      ).calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
+    ClosedLibraryStrategy closedLibraryStrategy = determineClosedLibraryStrategyForHoldShelfExpirationDate
+      (finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(), tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod());
+
+    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
+      .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenApply(calculatedDate -> {
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
         requestQueue.update(originalRequest,calculatedRequest);
