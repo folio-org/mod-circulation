@@ -3826,6 +3826,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void recallTlrShouldBeCreatedForOnOrderItemIfInstanceHasOnOrderAndDeclaredLostItems() {
     configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
 
@@ -3841,11 +3842,12 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstRequestJson.getString("instanceId"), is(instanceId.toString()));
     assertThat(firstRequestJson.getString("itemId"), is(item.getId()));
     assertThat(firstRequestJson.getJsonObject("item").getString("status"), is("Checked out"));
+
     declareLostFixtures.declareItemLost(loan.getJson());
+    assertThat(itemsFixture.getById(item.getId()).getJson(), isDeclaredLost());
 
     ItemResource onOrderItem = buildItem(instanceId, itemBuilder -> itemBuilder
       .withBarcode("222")
-      .withMaterialType(materialTypesFixture.book().getId())
       .onOrder());
 
     IndividualResource secondRequest = requestsClient.create(buildRecallTitleLevelRequest(
@@ -4286,7 +4288,6 @@ public class RequestsAPICreationTests extends APITests {
     return itemsFixture.basedUponSmallAngryPlanet(
       holdingBuilder -> holdingBuilder.forInstance(instanceId),
       instanceBuilder -> instanceBuilder
-        .addIdentifier(isbnIdentifierId, "9780866989732")
         .withId(instanceId),
       additionalItemProperties);
   }
