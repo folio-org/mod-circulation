@@ -2,7 +2,6 @@ package api.support.fixtures;
 
 import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
 import static java.time.ZoneOffset.UTC;
-import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import api.support.builders.CalendarBuilder;
 import api.support.builders.OpeningDayPeriodBuilder;
