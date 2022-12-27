@@ -473,7 +473,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutLastCheckInServicePointId() {
-    ItemResource item = checkOutAndCheckInItem();
+    ItemResource item = checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -487,7 +487,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutPrimaryServicePointId() {
-    ItemResource item = checkOutAndCheckInItem();
+    ItemResource item = checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -503,7 +503,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutLastCheckIn() {
-    ItemResource item = checkOutAndCheckInItem();
+    ItemResource item = checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -515,8 +515,15 @@ class ItemsInTransitReportTests extends APITests {
     assertThat(itemsInTransitReport.size(), is(1));
   }
 
-  private ItemResource checkOutAndCheckInItem() {
-    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+  @Test
+  void reportShouldNotFailWithoutServicePoint() {
+    checkOutAndCheckInItem(UUID.randomUUID());
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(1));
+  }
+
+  private ItemResource checkOutAndCheckInItem(UUID checkInServicePointId) {
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
     ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
@@ -524,13 +531,12 @@ class ItemsInTransitReportTests extends APITests {
     checkOutFixture.checkOutByBarcode(item);
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
-      .at(firstServicePointId));
+      .at(checkInServicePointId));
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
 
     return item;
   }
-
   private void createRequest(ItemResource item, IndividualResource steve,
     UUID secondServicePointId, ZonedDateTime requestDate, LocalDate requestExpirationDate) {
 
