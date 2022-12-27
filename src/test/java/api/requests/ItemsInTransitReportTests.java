@@ -516,7 +516,7 @@ class ItemsInTransitReportTests extends APITests {
   }
 
   @Test
-  void reportShouldNotFailWithoutServicePoint() {
+  void reportShouldNotFailWithNonExistentServicePoint() {
     checkOutAndCheckInItem(UUID.randomUUID());
     List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
 
