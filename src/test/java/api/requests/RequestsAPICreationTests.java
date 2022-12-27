@@ -86,6 +86,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -3823,6 +3824,45 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void recallTlrShouldBeCreatedForOnOrderItemIfInstanceHasOnOrderAndDeclaredLostItems() {
+    configurationsFixture.enableTlrFeature();
+    useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UUID instanceId = UUID.randomUUID();
+
+    var item = buildItem(instanceId, "111");
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    IndividualResource firstRequest = requestsClient.create(buildRecallTitleLevelRequest(
+      usersFixture.steve().getId(), pickupServicePointId, instanceId));
+
+    assertThat(firstRequest.getResponse(), hasStatus(HTTP_CREATED));
+    JsonObject firstRequestJson = firstRequest.getJson();
+    assertThat(firstRequestJson.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(firstRequestJson.getString("requestType"), is(RECALL.getValue()));
+    assertThat(firstRequestJson.getString("instanceId"), is(instanceId.toString()));
+    assertThat(firstRequestJson.getString("itemId"), is(item.getId()));
+    assertThat(firstRequestJson.getJsonObject("item").getString("status"), is("Checked out"));
+
+    declareLostFixtures.declareItemLost(loan.getJson());
+    assertThat(itemsFixture.getById(item.getId()).getJson(), isDeclaredLost());
+
+    ItemResource onOrderItem = buildItem(instanceId, itemBuilder -> itemBuilder
+      .withBarcode("222")
+      .onOrder());
+
+    IndividualResource secondRequest = requestsClient.create(buildRecallTitleLevelRequest(
+      usersFixture.jessica().getId(), pickupServicePointId, instanceId));
+
+    assertThat(secondRequest.getResponse(), hasStatus(HTTP_CREATED));
+    JsonObject secondRequestJson = secondRequest.getJson();
+    assertThat(secondRequestJson.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(secondRequestJson.getString("requestType"), is(RECALL.getValue()));
+    assertThat(secondRequestJson.getString("instanceId"), is(instanceId.toString()));
+    assertThat(secondRequestJson.getString("itemId"), is(onOrderItem.getId()));
+    assertThat(secondRequestJson.getJsonObject("item").getString("status"), is("On order"));
+  }
+
+  @Test
   void recallTlrShouldNotBeCreatedForInstanceWithOnlyDeclaredLostItem() {
     configurationsFixture.enableTlrFeature();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
@@ -4238,6 +4278,18 @@ public class RequestsAPICreationTests extends APITests {
         .addIdentifier(isbnIdentifierId, "9780866989732")
         .withId(instanceId),
       itemBuilder -> itemBuilder.withBarcode(barcode).withMaterialType(materialType.getId()));
+  }
+
+  private ItemResource buildItem(UUID instanceId,
+    Function<ItemBuilder, ItemBuilder> additionalItemProperties) {
+
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId),
+      instanceBuilder -> instanceBuilder
+        .withId(instanceId),
+      additionalItemProperties);
   }
 
   private void createInstanceAndHoldingRecord(UUID instanceId) {
