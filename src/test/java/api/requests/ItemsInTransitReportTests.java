@@ -523,14 +523,6 @@ class ItemsInTransitReportTests extends APITests {
     assertThat(itemsInTransitReport.size(), is(1));
   }
 
-  @Test
-  void reportShouldBeCreatedWithInTransitItem() {
-    checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
-    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
-
-    assertThat(itemsInTransitReport.size(), is(1));
-  }
-
   private ItemResource checkOutAndCheckInItem(UUID checkInServicePointId) {
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
