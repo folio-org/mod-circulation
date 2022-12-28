@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.services.ItemsInTransitReportService;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -69,6 +70,8 @@ class ItemsInTransitReportTests extends APITests {
   private static final String SERVICE_POINT_CODE_2 = "cd2";
   private static final String COPY_NUMBER = "copyNumber";
   private static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
+//  @Mock
+//  private ItemsInTransitReportService itemsInTransitReportService;
 
   @AfterEach
   public void afterEach() {
@@ -521,6 +524,14 @@ class ItemsInTransitReportTests extends APITests {
     List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
 
     assertThat(itemsInTransitReport.size(), is(1));
+  }
+
+  @Test
+  void reportBuildShouldFailAndLogTheError() {
+    new ItemsInTransitReportService(null, null, null, null, null, null, null, null, null)
+      .buildReport();
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+    assertThat(itemsInTransitReport.size(), is(0));
   }
 
   private ItemResource checkOutAndCheckInItem(UUID checkInServicePointId) {
