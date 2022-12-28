@@ -70,8 +70,6 @@ class ItemsInTransitReportTests extends APITests {
   private static final String SERVICE_POINT_CODE_2 = "cd2";
   private static final String COPY_NUMBER = "copyNumber";
   private static final String EFFECTIVE_CALL_NUMBER_COMPONENTS = "effectiveCallNumberComponents";
-//  @Mock
-//  private ItemsInTransitReportService itemsInTransitReportService;
 
   @AfterEach
   public void afterEach() {
