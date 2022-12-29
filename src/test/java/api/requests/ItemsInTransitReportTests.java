@@ -546,6 +546,7 @@ class ItemsInTransitReportTests extends APITests {
 
     return item;
   }
+
   private void createRequest(ItemResource item, IndividualResource steve,
     UUID secondServicePointId, ZonedDateTime requestDate, LocalDate requestExpirationDate) {
 
