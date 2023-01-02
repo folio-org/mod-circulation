@@ -171,7 +171,7 @@ public class UpdateRequestQueue {
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
     String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId().toUpperCase();
     // Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
-    if (ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name().equals(expirationDateManagement.name()) && isShortTerm(intervalId)) {
+    if (ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE == expirationDateManagement && isShortTerm(intervalId)) {
       expirationDateManagement = ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
     }
 

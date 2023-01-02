@@ -7,6 +7,8 @@ import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
+import static api.support.fixtures.CalendarExamples.CASE_CURRENT_DATE_CLOSE;
+import static api.support.fixtures.CalendarExamples.CASE_NEXT_DATE_OPEN;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -22,13 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 
 import java.lang.reflect.Method;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.LocalTime;
-import java.time.LocalDate;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
@@ -133,12 +129,14 @@ class HoldShelfExpirationDateTests extends APITests {
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(endOfServicePointHours));
         break;
       case "cd7" :
-        ZonedDateTime moveToBeginningOfNextServicePointHours1 = getZonedDateTime().plusDays(1).with(LocalTime.of(5, 0, 0));
+        long daysToAddCd7 = Duration.between(CASE_CURRENT_DATE_CLOSE.atStartOfDay(),CASE_NEXT_DATE_OPEN.atStartOfDay()).toDays();
+        ZonedDateTime moveToBeginningOfNextServicePointHours1 = getZonedDateTime().plusDays(daysToAddCd7).with(LocalTime.of(5, 0, 0));
         assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(moveToBeginningOfNextServicePointHours1));
         break;
       case "cd8" :
-        ZonedDateTime moveToBeginningOfNextServicePointHours2 = getZonedDateTime().plusDays(1).with(LocalTime.of(0, 10, 0));
+        long daysToAddCd8 = Duration.between(CASE_CURRENT_DATE_CLOSE.atStartOfDay(),CASE_NEXT_DATE_OPEN.atStartOfDay()).toDays();
+        ZonedDateTime moveToBeginningOfNextServicePointHours2 = getZonedDateTime().plusDays(daysToAddCd8).with(LocalTime.of(0, 10, 0));
         assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(moveToBeginningOfNextServicePointHours2));
         break;
