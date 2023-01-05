@@ -56,7 +56,9 @@ public class EventMatchers {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(
         hasJsonPath("logEventType", is(logEventType.value())),
-        hasJsonPath("servicePointId", is(checkedOutLoan.getString("checkoutServicePointId"))),
+        hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
+          hasJsonPath("payload", allOf(
+            hasJsonPath("servicePointId", is(checkedOutLoan.getString("checkoutServicePointId"))),
         hasJsonPath("loanId", is(checkedOutLoan.getString("id"))),
         hasJsonPath("isLoanClosed", is(checkedOutLoan.getJsonObject("status").getString("name").equals("Closed"))),
         hasJsonPath("dueDate", is(checkedOutLoan.getString("dueDate"))),
@@ -65,7 +67,7 @@ public class EventMatchers {
         hasJsonPath("source", is("Admin, Admin")),
         hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
         hasJsonPath("itemStatusName", is(checkedOutLoan.getJsonObject("item").getJsonObject("status").getString("name")))
-      ))),
+          ))))),
       isLogRecordEventType());
   }
 
