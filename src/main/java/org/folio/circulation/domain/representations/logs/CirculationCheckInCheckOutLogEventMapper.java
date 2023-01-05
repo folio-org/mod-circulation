@@ -70,7 +70,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     ofNullable(loanAndRelatedRecords.getLoan().getItem())
       .ifPresent(item-> write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode()));
 
-    write(payload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
+    write(logEventPayload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
     logEventPayload.put(PAYLOAD,payload);
 
     return logEventPayload.encode();
