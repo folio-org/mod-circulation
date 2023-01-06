@@ -100,6 +100,7 @@ public class UpdateRequestQueue {
 
   private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
+    log.info("updateOutstandingRequestOnCheckIn :: checkInServicePointId:{} ",checkInServicePointId);
 
     Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
     if (requestBeingFulfilled.getItemId() == null || !requestBeingFulfilled.isFor(item)) {
@@ -115,11 +116,17 @@ public class UpdateRequestQueue {
 
     CompletableFuture<Result<Request>> updatedReq;
 
+    log.info("updateOutstandingRequestOnCheckIn :: preference:{} ",requestBeingFulfilled.getFulfilmentPreference());
+    log.info("updateOutstandingRequestOnCheckIn :: requestBeingFulfilled.pickupServicePointId:{} "
+      ,requestBeingFulfilled.getPickupServicePointId());
+
     switch (requestBeingFulfilled.getFulfilmentPreference()) {
       case HOLD_SHELF:
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
+          log.info("updateOutstandingRequestOnCheckIn :: Updating to awaitingPickUp");
         return awaitPickup(requestBeingFulfilled,requestQueue);
         } else {
+          log.info("updateOutstandingRequestOnCheckIn :: Updating to inTransit");
           updatedReq = putInTransit(requestBeingFulfilled);
         }
 
