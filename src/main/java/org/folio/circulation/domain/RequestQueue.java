@@ -6,6 +6,8 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -123,6 +125,7 @@ public class RequestQueue {
       //Counting the amount of recalls for each loan
       .collect(collectingAndThen(groupingBy(Request::getLoan, counting()), m -> m.entrySet()
         .stream()
+        .filter(entry -> canCreateRequestForItem(entry.getKey().getItemStatus(), RECALL))
         .min(Comparator.comparingLong(Map.Entry<Loan, Long>::getValue)
           .thenComparing(o -> o.getKey().getDueDate()))
         .map(Map.Entry::getKey)

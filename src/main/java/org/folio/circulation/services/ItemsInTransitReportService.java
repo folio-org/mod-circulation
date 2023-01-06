@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -56,6 +59,7 @@ public class ItemsInTransitReportService {
   private UserRepository userRepository;
   private PatronGroupRepository patronGroupRepository;
   private final InstanceRepository instanceRepository;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public ItemsInTransitReportService(Clients clients) {
     this.itemReportRepository = new ItemReportRepository(clients);
@@ -81,7 +85,22 @@ public class ItemsInTransitReportService {
       .thenCompose(r -> r.after(this::fetchUsers))
       .thenCompose(r -> r.after(this::fetchPatronGroups))
       .thenCompose(r -> r.after(this::fetchServicePoints))
-      .thenApply(this::mapToJsonObject);
+      .thenApply(this::mapToJsonObject)
+      .whenComplete(this::handleResult);
+  }
+
+  private void handleResult(Result<JsonObject> result, Throwable throwable) {
+    if (throwable != null) {
+      log.error("An exception was caught while building the report", throwable);
+    } else if (result != null) {
+      if (result.failed()) {
+        log.error("Report construction failed: {}", result.cause());
+      } else {
+        log.info("Report built successfully");
+      }
+    } else {
+      log.error("Result and throwable are null");
+    }
   }
 
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
