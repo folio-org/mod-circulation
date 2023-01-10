@@ -89,6 +89,10 @@ public class User {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "firstName");
   }
 
+  public String getPreferredFirstName() {
+    return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "preferredFirstName");
+  }
+
   public String getMiddleName() {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
   }
