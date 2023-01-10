@@ -31,6 +31,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.resources.context.RequestQueueType;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -123,7 +124,7 @@ public class RequestQueueResource extends Resource {
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      configurationRepository);
+      configurationRepository, RequestQueueService.using(clients));
 
     getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 

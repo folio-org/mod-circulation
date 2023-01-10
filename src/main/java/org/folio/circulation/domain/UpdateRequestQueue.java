@@ -21,6 +21,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -31,17 +32,20 @@ public class UpdateRequestQueue {
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
+  private final RequestQueueService requestQueueService;
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository) {
+    ConfigurationRepository configurationRepository,
+    RequestQueueService requestQueueService) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
     this.configurationRepository = configurationRepository;
+    this.requestQueueService = requestQueueService;
   }
 
   public static UpdateRequestQueue using(Clients clients,
@@ -49,7 +53,8 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository) {
 
     return new UpdateRequestQueue(requestQueueRepository,
-      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients));
+      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients),
+      RequestQueueService.using(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -71,17 +76,18 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
-    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
-      return updateOutstandingRequestOnCheckIn(requestQueue, item, checkInServicePointId);
-    } else {
-      return completedFuture(succeeded(requestQueue));
-    }
+    return requestQueueService.findRequestFulfillableByItem(item, requestQueue)
+      .thenCompose(r -> r.after(request -> updateOutstandingRequestOnCheckIn(
+        request, requestQueue, item, checkInServicePointId)));
   }
 
   private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
-    RequestQueue requestQueue, Item item, String checkInServicePointId) {
+    Request requestBeingFulfilled, RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
-    Request requestBeingFulfilled = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
+    if (requestBeingFulfilled == null) {
+      return ofAsync(requestQueue);
+    }
+
     if (requestBeingFulfilled.getItemId() == null || !requestBeingFulfilled.isFor(item)) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
 
@@ -170,15 +176,19 @@ public class UpdateRequestQueue {
     return succeeded(request);
   }
 
-  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(LoanAndRelatedRecords relatedRecords) {
-    Item item = relatedRecords.getItem();
-    RequestQueue requestQueue = relatedRecords.getRequestQueue();
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(LoanAndRelatedRecords records) {
+    return requestQueueService.findRequestFulfillableByItem(records.getItem(), records.getRequestQueue())
+      .thenCompose(r -> r.after(request -> onCheckOut(records, request)));
+  }
 
-    Request firstRequest = relatedRecords.getRequestQueue().getHighestPriorityRequestFulfillableByItem(item);
+  public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
+    LoanAndRelatedRecords relatedRecords, Request firstRequest) {
+
     if (firstRequest == null) {
       return completedFuture(succeeded(relatedRecords));
     }
 
+    RequestQueue requestQueue = relatedRecords.getRequestQueue();
     Request originalRequest = Request.from(firstRequest.asJson());
 
     log.info("Closing request '{}'", firstRequest.getId());

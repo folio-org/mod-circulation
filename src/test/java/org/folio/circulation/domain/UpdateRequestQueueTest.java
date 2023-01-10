@@ -26,6 +26,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestQueueReposit
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
@@ -58,7 +59,8 @@ class UpdateRequestQueueTest {
       RequestRepository.using(clients, itemRepository, userRepository, loanRepository)));
 
     updateRequestQueue =
-      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null);
+      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null,
+        RequestQueueService.using(clients));
   }
 
   @Test
