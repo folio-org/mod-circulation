@@ -35,11 +35,9 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
 
     LibraryInterval requestedInterval = libraryTimetable.findInterval(requestedDate);
     if (requestedInterval == null) {
-      log.info("requestedInterval is null");
       return failed(failureForAbsentTimetable());
     }
     if (requestedInterval.isOpen()) {
-      log.info("requestedInterval is open");
       return succeeded(requestedDate);
     }
     log.info("requestedInterval is close so going as per strategy");

@@ -137,14 +137,14 @@ class HoldShelfExpirationDateTests extends APITests {
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(endOfServicePointHours));
         break;
       case "cd7" :
-        long daysToAddCd7 = Duration.between(CASE_CURRENT_DATE_CLOSE.atStartOfDay(),CASE_NEXT_DATE_OPEN.atStartOfDay()).toDays();
-        ZonedDateTime moveToBeginningOfNextServicePointHours1 = getZonedDateTime().plusDays(daysToAddCd7).with(LocalTime.of(5, 0, 0));
+        long spanToNextServicePointHours1 = Duration.between(CASE_CURRENT_DATE_CLOSE.atStartOfDay(),CASE_NEXT_DATE_OPEN.atStartOfDay()).toDays();
+        ZonedDateTime moveToBeginningOfNextServicePointHours1 = getZonedDateTime().plusDays(spanToNextServicePointHours1).with(LocalTime.of(5, 0, 0));
         assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(moveToBeginningOfNextServicePointHours1));
         break;
       case "cd8" :
-        long daysToAddCd8 = Duration.between(CASE_CURRENT_DATE_CLOSE.atStartOfDay(),CASE_NEXT_DATE_OPEN.atStartOfDay()).toDays();
-        ZonedDateTime moveToBeginningOfNextServicePointHours2 = getZonedDateTime().plusDays(daysToAddCd8).with(LocalTime.of(0, 10, 0));
+        long spanToNextServicePointHours2 = Duration.between(CASE_CURRENT_DATE_CLOSE.atStartOfDay(),CASE_NEXT_DATE_OPEN.atStartOfDay()).toDays();
+        ZonedDateTime moveToBeginningOfNextServicePointHours2 = getZonedDateTime().plusDays(spanToNextServicePointHours2).with(LocalTime.of(0, 10, 0));
         assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(moveToBeginningOfNextServicePointHours2));
         break;

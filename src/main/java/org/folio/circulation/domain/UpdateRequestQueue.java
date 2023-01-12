@@ -191,7 +191,7 @@ public class UpdateRequestQueue {
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenApply(calculatedDate -> {
-        log.info("calculatedDate after :{}",calculatedDate);
+        log.info("calculatedDate after :{}",calculatedDate.value());
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
         requestQueue.update(originalRequest,calculatedRequest);
 
