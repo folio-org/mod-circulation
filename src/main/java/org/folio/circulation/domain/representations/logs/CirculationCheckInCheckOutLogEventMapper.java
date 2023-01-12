@@ -23,6 +23,8 @@ import io.vertx.core.json.JsonObject;
 
 public class CirculationCheckInCheckOutLogEventMapper {
 
+  public static final String PAYLOAD = "payload";
+
   private CirculationCheckInCheckOutLogEventMapper() {
   }
 
@@ -56,16 +58,20 @@ public class CirculationCheckInCheckOutLogEventMapper {
    */
   public static String mapToCheckOutLogEventContent(LoanAndRelatedRecords loanAndRelatedRecords, User loggedInUser) {
     JsonObject logEventPayload = new JsonObject();
+    JsonObject payload = new JsonObject();
 
     var logEventType = loanAndRelatedRecords.getLoan().getAction().equalsIgnoreCase(LoanAction.CHECKED_OUT_THROUGH_OVERRIDE.getValue()) ? CHECK_OUT_THROUGH_OVERRIDE : CHECK_OUT;
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), logEventType.value());
-    write(logEventPayload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
+    write(payload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
 
-    populateLoanData(loanAndRelatedRecords, logEventPayload);
-    populateItemData(loanAndRelatedRecords, logEventPayload, loggedInUser);
+    populateLoanData(loanAndRelatedRecords, payload);
+    populateItemData(loanAndRelatedRecords, payload, loggedInUser);
+    ofNullable(loanAndRelatedRecords.getLoan().getItem())
+      .ifPresent(item-> write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode()));
 
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
+    logEventPayload.put(PAYLOAD,payload);
 
     return logEventPayload.encode();
   }
