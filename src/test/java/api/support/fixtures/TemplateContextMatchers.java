@@ -63,6 +63,7 @@ public class TemplateContextMatchers {
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put(prefix + ".firstName", is(personal.getString("firstName")));
     tokenMatchers.put(prefix + ".lastName", is(personal.getString("lastName")));
+    tokenMatchers.put(prefix + ".preferredFirstName", is(personal.getString("preferredFirstName")));
     tokenMatchers.put(prefix + ".barcode", is(userJson.getString("barcode")));
     return tokenMatchers;
   }
