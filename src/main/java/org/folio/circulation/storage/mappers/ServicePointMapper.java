@@ -8,6 +8,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import org.folio.circulation.domain.ServicePoint;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
 
 public class ServicePointMapper {
   public ServicePoint toDomain(JsonObject representation) {
@@ -22,6 +23,8 @@ public class ServicePointMapper {
       getIntegerProperty(representation, "shelvingLagTime",
         null),
       timePeriodMapper.toDomain(
-        getObjectProperty(representation, "holdShelfExpiryPeriod")));
+        getObjectProperty(representation, "holdShelfExpiryPeriod")),
+      ExpirationDateManagement.getExpirationDateManagement(
+        getProperty(representation, "holdShelfClosedLibraryDateManagement")));
   }
 }

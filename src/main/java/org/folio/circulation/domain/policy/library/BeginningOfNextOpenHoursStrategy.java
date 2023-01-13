@@ -21,6 +21,11 @@ public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy
     duration = LoanPolicyPeriod.calculateDuration(offsetInterval, offsetDuration);
   }
 
+  public BeginningOfNextOpenHoursStrategy(Duration intervalDuration, ZoneId zone) {
+    super(zone);
+    duration = intervalDuration;
+  }
+
   @Override
   protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval nextInterval = requestedInterval.getNext();
