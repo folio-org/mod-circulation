@@ -15,6 +15,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final String lastName;
   private final String firstName;
   private final String middleName;
+  private final String preferredFirstName;
   private final String barcode;
   private final UUID patronGroupId;
   private final Boolean active;
@@ -22,7 +23,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final Collection<Address> addresses;
 
   public UserBuilder() {
-    this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, "785493025613",
+    this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, null,"785493025613",
       null, true, null, new ArrayList<>());
   }
 
@@ -32,6 +33,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     String lastName,
     String firstName,
     String middleName,
+    String preferredFirstName,
     String barcode,
     UUID patronGroupId,
     Boolean active,
@@ -43,6 +45,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
     this.lastName = lastName;
     this.middleName = middleName;
+    this.preferredFirstName = preferredFirstName;
     this.firstName = firstName;
 
     this.barcode = barcode;
@@ -82,6 +85,10 @@ public class UserBuilder extends JsonBuilder implements Builder {
         personalInformation.put("middleName", this.middleName);
       }
 
+      if(this.preferredFirstName != null) {
+        personalInformation.put("preferredFirstName", this.preferredFirstName);
+      }
+
       if(this.addresses != null && !this.addresses.isEmpty()) {
         JsonArray mappedAddresses = new JsonArray();
 
@@ -115,6 +122,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       lastName,
       firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -129,6 +137,37 @@ public class UserBuilder extends JsonBuilder implements Builder {
       lastName,
       firstName,
       middleName,
+      this.preferredFirstName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses);
+  }
+
+  public UserBuilder withPreferredFirstName(String lastName, String firstName,String preferredFirstName) {
+    return new UserBuilder(
+      this.id,
+      firstName.substring(0, 1).concat(lastName).toLowerCase(),
+      lastName,
+      firstName,
+      this.middleName,
+      preferredFirstName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses);
+  }
+
+  public UserBuilder withPreferredFirstName(String lastName, String firstName,String middleName,String preferredFirstName) {
+    return new UserBuilder(
+      this.id,
+      firstName.substring(0, 1).concat(lastName).toLowerCase(),
+      lastName,
+      firstName,
+      middleName,
+      preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -143,6 +182,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       null,
       null,
       null,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -157,6 +197,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       barcode,
       this.patronGroupId,
       this.active,
@@ -171,6 +212,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       null,
       this.patronGroupId,
       this.active,
@@ -185,6 +227,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -203,6 +246,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       patronGroupId,
       this.active,
@@ -229,6 +273,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       active,
@@ -243,6 +288,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -257,6 +303,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -284,6 +331,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
@@ -298,6 +346,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.lastName,
       this.firstName,
       this.middleName,
+      this.preferredFirstName,
       this.barcode,
       this.patronGroupId,
       this.active,
