@@ -32,6 +32,11 @@
       "description": "Is this a pickup location",
       "type": "boolean",
       "readonly": true
+    },
+    "holdShelfClosedLibraryDateManagement": {
+      "description": "Hold shelf closed date strategy",
+      "type": "string",
+      "readonly": true
     }
   }
 }
