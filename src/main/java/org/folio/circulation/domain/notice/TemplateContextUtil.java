@@ -148,6 +148,7 @@ public class TemplateContextUtil {
   public static JsonObject createUserContext(User user) {
     return new JsonObject()
     .put("firstName", user.getFirstName())
+    .put("preferredFirstName",user.getPreferredFirstName())
     .put("lastName", user.getLastName())
     .put("middleName", user.getMiddleName())
     .put("barcode", user.getBarcode());
