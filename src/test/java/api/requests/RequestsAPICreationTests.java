@@ -1931,7 +1931,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void canCreateHoldRequestWhenItemIsAwaitingPickup() {
     //Setting up an item with AWAITING_PICKUP status
-    final IndividualResource servicePoint = servicePointsFixture.cd1();
+    final IndividualResource servicePoint = servicePointsFixture.cd6();
     final IndividualResource awaitingPickupItem = setupItemAwaitingPickup(servicePoint, requestsClient, itemsClient,
       itemsFixture, usersFixture, checkInFixture);
     // create a hold request

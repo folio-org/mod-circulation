@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -29,5 +30,9 @@ public class TimePeriod {
 
     return chronoUnit == ChronoUnit.DAYS || chronoUnit == ChronoUnit.WEEKS
       || chronoUnit == ChronoUnit.MONTHS;
+  }
+
+  public Duration getIntervalDuration(){
+    return Duration.of(getDuration(),getInterval());
   }
 }
