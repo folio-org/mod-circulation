@@ -112,7 +112,7 @@ class RequestRepresentationTests {
 
     final var servicePoint
       = new ServicePoint(SERVICE_POINT_ID.toString(), "Circ Desk", "cd1", true,
-      "Circulation Desk", null, null, null);
+      "Circulation Desk", null, null, null, null);
 
     Instance instance = new Instance(UUID.randomUUID().toString(), null,
       List.of(new Identifier(IDENTIFIER_ID.toString(), IDENTIFIER_VALUE)),

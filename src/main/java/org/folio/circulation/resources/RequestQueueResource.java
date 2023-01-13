@@ -21,6 +21,7 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -124,7 +125,7 @@ public class RequestQueueResource extends Resource {
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      configurationRepository, RequestQueueService.using(clients));
+      configurationRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
 
     getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 

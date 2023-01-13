@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.reorder.ReorderRequest;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -60,7 +61,7 @@ class UpdateRequestQueueTest {
 
     updateRequestQueue =
       new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null,
-        RequestQueueService.using(clients));
+        RequestQueueService.using(clients), new CalendarRepository(clients));
   }
 
   @Test

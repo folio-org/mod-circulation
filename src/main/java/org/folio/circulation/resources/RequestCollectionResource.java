@@ -27,6 +27,7 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -208,7 +209,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestQueueService = RequestQueueService.using(clients);
     final var updateRequestQueue = new UpdateRequestQueue(new RequestQueueRepository(
       requestRepository), requestRepository, new ServicePointRepository(clients),
-      new ConfigurationRepository(clients), requestQueueService);
+      new ConfigurationRepository(clients), requestQueueService, new CalendarRepository(clients));
 
     UpdateItem updateItem = new UpdateItem(itemRepository, requestQueueService);
 
