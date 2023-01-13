@@ -9,16 +9,18 @@ import static api.support.matchers.LoanMatchers.isOpen;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.TimedTaskClient;
+import io.vertx.core.json.JsonObject;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -100,5 +102,13 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
   protected void assertThatLoanIsOpenAndLost() {
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isOpen());
     assertThat(itemsClient.getById(item.getId()).getJson(), hasStatus(lostItemStatus.getValue()));
+  }
+
+  protected void cancelActualCostRecord() {
+    JsonObject record = actualCostRecordsClient.getAll().get(0);
+    record = record.put("status", ActualCostRecord.Status.CANCELLED.getValue());
+    actualCostRecordsClient.replace(UUID.fromString(record.getString("id")), record);
+
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEventForActualCostFee(loan.getId());
   }
 }

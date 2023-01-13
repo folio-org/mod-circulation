@@ -251,4 +251,24 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
 
     assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), empty());
   }
+
+  @Test
+  void shouldCloseLoanWhenActualCostRecordIsCancelled() {
+    UUID servicePointId = servicePointsFixture.cd2().getId();
+    UUID actualCostLostItemFeePolicyId = lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder()
+        .withName("test")
+        .withActualCost(0.0)
+        .withLostItemChargeFeeFine(Period.weeks(2))).getId();
+    useLostItemPolicy(actualCostLostItemFeePolicyId);
+
+    item = itemsFixture.basedUponDunkirk();
+    loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+    cancelActualCostRecord();
+
+    assertThatLoanIsClosedAsLostAndPaid();
+  }
 }

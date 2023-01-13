@@ -215,6 +215,20 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     runScheduledActualCostExpirationAndCheckThatLoanIsOpen();
   }
 
+  @Test
+  void shouldCloseLoanWhenActualCostRecordIsCancelled() {
+    var result = ageToLostFixture.createLoanAgeToLostAndChargeFees(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withActualCost(10.0));
+
+    item = result.getItem();
+    loan = result.getLoan();
+    cancelActualCostRecord();
+
+    assertThatLoanIsClosedAsLostAndPaid();
+  }
+
   private void updateLostPolicyToUseActualCost() {
     val lostItemPolicyId = getUUIDProperty(loan.getJson(), "lostItemPolicyId");
     val lostItemPolicy = lostItemFeePolicyClient.getById(lostItemPolicyId).getJson();
