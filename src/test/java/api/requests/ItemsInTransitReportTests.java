@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.services.ItemsInTransitReportService;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -473,7 +474,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutLastCheckInServicePointId() {
-    ItemResource item = checkOutAndCheckInItem();
+    ItemResource item = checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -487,7 +488,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutPrimaryServicePointId() {
-    ItemResource item = checkOutAndCheckInItem();
+    ItemResource item = checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -503,7 +504,7 @@ class ItemsInTransitReportTests extends APITests {
 
   @Test
   void reportShouldNotFailWithoutLastCheckIn() {
-    ItemResource item = checkOutAndCheckInItem();
+    ItemResource item = checkOutAndCheckInItem(servicePointsFixture.cd1().getId());
 
     Response response = itemsClient.getById(item.getId());
     JsonObject checkedInItemJson = response.getJson();
@@ -515,8 +516,23 @@ class ItemsInTransitReportTests extends APITests {
     assertThat(itemsInTransitReport.size(), is(1));
   }
 
-  private ItemResource checkOutAndCheckInItem() {
-    final UUID firstServicePointId = servicePointsFixture.cd1().getId();
+  @Test
+  void reportShouldNotFailWithNonExistentServicePoint() {
+    checkOutAndCheckInItem(UUID.randomUUID());
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+
+    assertThat(itemsInTransitReport.size(), is(1));
+  }
+
+  @Test
+  void reportBuildShouldFailAndLogTheError() {
+    new ItemsInTransitReportService(null, null, null, null, null, null, null, null, null)
+      .buildReport();
+    List<JsonObject> itemsInTransitReport = ResourceClient.forItemsInTransitReport().getAll();
+    assertThat(itemsInTransitReport.size(), is(0));
+  }
+
+  private ItemResource checkOutAndCheckInItem(UUID checkInServicePointId) {
     final UUID forthServicePointLocationId = locationsFixture.fourthServicePoint().getId();
 
     ItemResource item = createSmallAngryPlanetCopy(forthServicePointLocationId, "111");
@@ -524,7 +540,7 @@ class ItemsInTransitReportTests extends APITests {
     checkOutFixture.checkOutByBarcode(item);
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
-      .at(firstServicePointId));
+      .at(checkInServicePointId));
 
     assertThat(itemsClient.getById(item.getId()).getJson(), isInTransit());
 

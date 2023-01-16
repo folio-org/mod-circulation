@@ -10,7 +10,7 @@ public class JsonToCheckOutLogEventMapper {
     final var changedRequestMapper = new JsonToChangedRequestMapper();
 
     return CheckOutLogEvent.builder()
-      .loanId(getProperty(json, "loanId"))
+      .loanId(getProperty(json.getJsonObject("payload"), "loanId"))
       .changedRequests(changedRequestMapper.fromJson(getArrayProperty(json, "requests")))
       .build();
   }
