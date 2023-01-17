@@ -67,6 +67,14 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
     populateLoanData(loanAndRelatedRecords, payload);
     populateItemData(loanAndRelatedRecords, payload, loggedInUser);
+
+    //
+
+    write(logEventPayload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
+
+    populateLoanData(loanAndRelatedRecords, logEventPayload);
+    populateItemData(loanAndRelatedRecords, logEventPayload, loggedInUser);
+
     ofNullable(loanAndRelatedRecords.getLoan().getItem())
       .ifPresent(item-> write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode()));
 
