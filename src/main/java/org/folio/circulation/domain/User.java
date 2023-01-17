@@ -127,4 +127,8 @@ public class User {
   public static User from(JsonObject representation) {
     return new User(representation);
   }
+
+  public JsonObject getPersonal() {
+    return getObjectProperty(representation,PERSONAL_PROPERTY_NAME);
+  }
 }
