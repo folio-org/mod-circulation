@@ -9,30 +9,22 @@ import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCrite
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
@@ -65,6 +57,8 @@ public class PickSlipsResource extends Resource {
 
   private final String rootPath;
 
+  private PatronGroupRepository patronGroupRepository;
+
   public PickSlipsResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
@@ -76,6 +70,7 @@ public class PickSlipsResource extends Resource {
     routeRegistration.getMany(this::getMany);
   }
 
+
   private void getMany(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -84,7 +79,7 @@ public class PickSlipsResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-
+    patronGroupRepository = new PatronGroupRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
@@ -196,16 +191,45 @@ public class PickSlipsResource extends Resource {
     ));
   }
 
+  private static final String REQUESTER = "requester";
   private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
-    List<JsonObject> representations = requests.getRecords().stream()
-      .map(TemplateContextUtil::createStaffSlipContext)
-      .collect(Collectors.toList());
+//    List<JsonObject> representations = requests.getRecords().stream()
+//      .map(TemplateContextUtil::createStaffSlipContext)
+//      .map(json -> json.getJsonObject(REQUESTER).put("patronGroup", patronGroupRepository.findGroupForUser(request)))
+//      .collect(Collectors.toList());
+
+    List<JsonObject> representations = new ArrayList<>();
+      requests.getRecords()
+      .forEach(request ->{
+        JsonObject jsonObject = TemplateContextUtil.createStaffSlipContext(request);
+        if(request.getRequester()!=null){
+          String patronGroup = determinePatronGroup(request.getRequester());
+          if(patronGroup != null) {
+            JsonObject requesterJson = jsonObject.getJsonObject(REQUESTER);
+            requesterJson.put("patronGroup", patronGroup);
+            jsonObject.put(REQUESTER, requesterJson);
+            System.out.println("Changed Json" + jsonObject);
+          }
+        }
+        representations.add(jsonObject);
+      } );
 
     JsonObject jsonRepresentations = new JsonObject()
       .put(PICK_SLIPS_KEY, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
 
     return succeeded(jsonRepresentations);
+  }
+
+  private String determinePatronGroup(User requester) {
+    try {
+      return patronGroupRepository.findGroupForUser(requester)
+        .thenApply(r -> r.map(User::getPatronGroup)).get().value().getGroup();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

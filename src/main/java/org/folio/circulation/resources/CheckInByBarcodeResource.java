@@ -17,6 +17,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -74,6 +75,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
+
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
@@ -119,7 +122,7 @@ public class CheckInByBarcodeResource extends Resource {
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenComposeAsync(r -> r.after(v -> eventPublisher.publishItemCheckedInEvents(v, userRepository, loanRepository)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
+      .thenApply(r -> r.map(records1 -> CheckInByBarcodeResponse.fromRecords(records1,patronGroupRepository)))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
       .thenAccept(context::writeResultToHttpResponse);
   }
