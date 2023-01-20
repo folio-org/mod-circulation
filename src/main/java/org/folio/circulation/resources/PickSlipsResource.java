@@ -17,7 +17,14 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.circulation.domain.*;
+import java.util.stream.Collectors;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.Location;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -191,13 +198,9 @@ public class PickSlipsResource extends Resource {
   }
 
   private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
-    List<JsonObject> representations = new ArrayList<>();
-      requests.getRecords()
-      .forEach(request ->{
-        JsonObject jsonObject = TemplateContextUtil.createStaffSlipContext(request);
-        representations.add(jsonObject);
-      } );
-
+    List<JsonObject> representations = requests.getRecords().stream()
+      .map(TemplateContextUtil::createStaffSlipContext)
+      .collect(Collectors.toList());
     JsonObject jsonRepresentations = new JsonObject()
       .put(PICK_SLIPS_KEY, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
