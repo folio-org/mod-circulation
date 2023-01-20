@@ -215,7 +215,7 @@ class CheckInProcessAdapter {
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
-    return userRepository.getUser(firstRequest)
+    return userRepository.getUserWithPatronGroup(firstRequest)
       .thenApply(r -> r.map(firstRequest::withRequester));
   }
 

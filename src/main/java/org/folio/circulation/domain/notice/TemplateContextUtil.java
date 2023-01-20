@@ -151,7 +151,8 @@ public class TemplateContextUtil {
     .put("preferredFirstName",user.getPreferredFirstName())
     .put("lastName", user.getLastName())
     .put("middleName", user.getMiddleName())
-    .put("barcode", user.getBarcode());
+    .put("barcode", user.getBarcode())
+      .put("patronGroup", user.getPatronGroup().getGroup());
   }
 
   private static JsonObject createItemContext(Item item) {

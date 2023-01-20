@@ -75,8 +75,6 @@ public class CheckInByBarcodeResource extends Resource {
 
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
 
-    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
-
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
@@ -122,7 +120,7 @@ public class CheckInByBarcodeResource extends Resource {
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenComposeAsync(r -> r.after(v -> eventPublisher.publishItemCheckedInEvents(v, userRepository, loanRepository)))
       .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.map(records1 -> CheckInByBarcodeResponse.fromRecords(records1,patronGroupRepository)))
+      .thenApply(r -> r.map(records1 -> CheckInByBarcodeResponse.fromRecords(records1)))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
       .thenAccept(context::writeResultToHttpResponse);
   }

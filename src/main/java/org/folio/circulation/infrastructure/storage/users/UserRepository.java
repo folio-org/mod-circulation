@@ -22,11 +22,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRelatedRecord;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -42,12 +38,19 @@ public class UserRepository {
 
   private final CollectionResourceClient usersStorageClient;
 
+  private final PatronGroupRepository patronGroupRepository;
+
   public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
+    patronGroupRepository = new PatronGroupRepository(clients);
   }
 
   public CompletableFuture<Result<User>> getUser(UserRelatedRecord userRelatedRecord) {
     return getUser(userRelatedRecord.getUserId());
+  }
+
+  public CompletableFuture<Result<User>> getUserWithPatronGroup(UserRelatedRecord userRelatedRecord) {
+    return getUserWithPatronGroup(userRelatedRecord.getUserId());
   }
 
   public CompletableFuture<Result<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
@@ -68,6 +71,26 @@ public class UserRepository {
       .mapTo(User::new)
       .whenNotFound(succeeded(null))
       .fetch(userId);
+  }
+
+  public CompletableFuture<Result<User>> getUserWithPatronGroup(String userId) {
+    if(isNull(userId)) {
+      return ofAsync(() -> null);
+    }
+
+    return FetchSingleRecord.<User>forRecord("user")
+      .using(usersStorageClient)
+      .mapTo(User::new)
+      .whenNotFound(succeeded(null))
+      .fetch(userId)
+      .thenComposeAsync(this::findUserGroup);
+  }
+
+  private CompletableFuture<Result<User>> findUserGroup(Result<User> user){
+    if(isNull(user)){
+      return completedFuture(succeeded(null));
+    }
+    return patronGroupRepository.findGroupForUser(user);
   }
 
   public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {

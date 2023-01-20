@@ -202,15 +202,15 @@ public class PickSlipsResource extends Resource {
       requests.getRecords()
       .forEach(request ->{
         JsonObject jsonObject = TemplateContextUtil.createStaffSlipContext(request);
-        if(request.getRequester()!=null){
-          String patronGroup = determinePatronGroup(request.getRequester());
-          if(patronGroup != null) {
-            JsonObject requesterJson = jsonObject.getJsonObject(REQUESTER);
-            requesterJson.put("patronGroup", patronGroup);
-            jsonObject.put(REQUESTER, requesterJson);
-            System.out.println("Changed Json" + jsonObject);
-          }
-        }
+//        if(request.getRequester()!=null){
+//          String patronGroup = determinePatronGroup(request.getRequester());
+//          if(patronGroup != null) {
+//            JsonObject requesterJson = jsonObject.getJsonObject(REQUESTER);
+//            requesterJson.put("patronGroup", patronGroup);
+//            jsonObject.put(REQUESTER, requesterJson);
+//            System.out.println("Changed Json" + jsonObject);
+//          }
+//        }
         representations.add(jsonObject);
       } );
 
