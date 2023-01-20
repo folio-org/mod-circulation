@@ -53,8 +53,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -212,7 +211,7 @@ class CheckInByBarcodeTests extends APITests {
   }
 
 @Test
-public void verifyItemEffectiveLocationIdAtCheckOut() {
+void verifyItemEffectiveLocationIdAtCheckOut() {
   final IndividualResource james = usersFixture.james();
 
   final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -758,7 +757,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     usersClient.delete(steve);
 
-    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+    CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    JsonObject staffSlipContext = response.getStaffSlipContext();
+    JsonObject userContext = staffSlipContext.getJsonObject("requester");
+    assertNull(userContext);
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);

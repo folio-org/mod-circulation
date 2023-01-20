@@ -87,7 +87,7 @@ public class UserRepository {
   }
 
   private CompletableFuture<Result<User>> findUserGroup(Result<User> user){
-    if(isNull(user)){
+    if(Objects.isNull(user.value())){
       return completedFuture(succeeded(null));
     }
     return patronGroupRepository.findGroupForUser(user);
@@ -150,7 +150,6 @@ public class UserRepository {
       .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
-  //TODO: Replace this with validator
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
     if(isNull(userId)) {
       return completedFuture(failedValidation("user is not found", "userId", userId));

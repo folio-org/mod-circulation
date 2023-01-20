@@ -9,13 +9,12 @@ import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCrite
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.*;
@@ -57,7 +56,6 @@ public class PickSlipsResource extends Resource {
 
   private final String rootPath;
 
-  private PatronGroupRepository patronGroupRepository;
 
   public PickSlipsResource(String rootPath, HttpClient client) {
     super(client);
@@ -79,7 +77,7 @@ public class PickSlipsResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    patronGroupRepository = new PatronGroupRepository(clients);
+    PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
@@ -88,6 +86,7 @@ public class PickSlipsResource extends Resource {
         itemRepository, LocationRepository.using(clients, servicePointRepository))))
       .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
       .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
@@ -191,26 +190,11 @@ public class PickSlipsResource extends Resource {
     ));
   }
 
-  private static final String REQUESTER = "requester";
   private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
-//    List<JsonObject> representations = requests.getRecords().stream()
-//      .map(TemplateContextUtil::createStaffSlipContext)
-//      .map(json -> json.getJsonObject(REQUESTER).put("patronGroup", patronGroupRepository.findGroupForUser(request)))
-//      .collect(Collectors.toList());
-
     List<JsonObject> representations = new ArrayList<>();
       requests.getRecords()
       .forEach(request ->{
         JsonObject jsonObject = TemplateContextUtil.createStaffSlipContext(request);
-//        if(request.getRequester()!=null){
-//          String patronGroup = determinePatronGroup(request.getRequester());
-//          if(patronGroup != null) {
-//            JsonObject requesterJson = jsonObject.getJsonObject(REQUESTER);
-//            requesterJson.put("patronGroup", patronGroup);
-//            jsonObject.put(REQUESTER, requesterJson);
-//            System.out.println("Changed Json" + jsonObject);
-//          }
-//        }
         representations.add(jsonObject);
       } );
 
@@ -221,15 +205,5 @@ public class PickSlipsResource extends Resource {
     return succeeded(jsonRepresentations);
   }
 
-  private String determinePatronGroup(User requester) {
-    try {
-      return patronGroupRepository.findGroupForUser(requester)
-        .thenApply(r -> r.map(User::getPatronGroup)).get().value().getGroup();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
 }
