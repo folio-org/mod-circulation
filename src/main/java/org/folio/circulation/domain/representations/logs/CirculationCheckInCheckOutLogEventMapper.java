@@ -63,25 +63,22 @@ public class CirculationCheckInCheckOutLogEventMapper {
     var logEventType = loanAndRelatedRecords.getLoan().getAction().equalsIgnoreCase(LoanAction.CHECKED_OUT_THROUGH_OVERRIDE.getValue()) ? CHECK_OUT_THROUGH_OVERRIDE : CHECK_OUT;
 
     write(logEventPayload, LOG_EVENT_TYPE.value(), logEventType.value());
+
     write(payload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
-
-    populateLoanData(loanAndRelatedRecords, payload);
-    populateItemData(loanAndRelatedRecords, payload, loggedInUser);
-
-    //
-
     write(logEventPayload, SERVICE_POINT_ID.value(), loanAndRelatedRecords.getLoan().getCheckoutServicePointId());
 
-    populateLoanData(loanAndRelatedRecords, logEventPayload);
-    populateItemData(loanAndRelatedRecords, logEventPayload, loggedInUser);
-
-    ofNullable(loanAndRelatedRecords.getLoan().getItem())
-      .ifPresent(item-> write(logEventPayload, ITEM_BARCODE.value(), item.getBarcode()));
+    populateLoanAndItemInCheckoutEvent(loanAndRelatedRecords, loggedInUser, payload);
+    populateLoanAndItemInCheckoutEvent(loanAndRelatedRecords, loggedInUser, logEventPayload);
 
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
     logEventPayload.put(PAYLOAD,payload);
 
     return logEventPayload.encode();
+  }
+
+  private static void populateLoanAndItemInCheckoutEvent(LoanAndRelatedRecords loanAndRelatedRecords, User loggedInUser, JsonObject data) {
+    populateLoanData(loanAndRelatedRecords, data);
+    populateItemData(loanAndRelatedRecords, data, loggedInUser);
   }
 
   private static void populateItemData(CheckInContext checkInContext, JsonObject logEventPayload, User loggedInUser) {
