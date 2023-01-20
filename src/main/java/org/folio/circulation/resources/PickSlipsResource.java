@@ -13,7 +13,11 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
@@ -84,7 +88,7 @@ public class PickSlipsResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
