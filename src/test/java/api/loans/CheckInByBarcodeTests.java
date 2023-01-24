@@ -289,7 +289,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(userContext.getString("firstName"), is(requesterUser.getFirstName()));
     assertThat(userContext.getString("lastName"), is(requesterUser.getLastName()));
-    assertThat(userContext.getString("preferredFirstName"), is(requesterUser.getPreferredFirstName()));
+    assertThat(userContext.getString("preferredFirstName"), isPreferredName(requesterUser.getPersonal()));
     assertThat(userContext.getString("patronGroup"), is("Regular Group"));
     assertThat(userContext.getString("middleName"), is(requesterUser.getMiddleName()));
     assertThat(userContext.getString("barcode"), is(requesterUser.getBarcode()));
