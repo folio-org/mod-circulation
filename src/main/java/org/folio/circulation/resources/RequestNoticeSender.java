@@ -249,7 +249,7 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<User>> fetchRequester(Request request) {
     String requesterId = request.getRequesterId();
 
-    return userRepository.getUser(requesterId)
+    return userRepository.getUserWithPatronGroup(requesterId)
       .thenApply(r -> r.failWhen(this::isNull,
         user -> new RecordNotFoundFailure("user", requesterId)));
   }

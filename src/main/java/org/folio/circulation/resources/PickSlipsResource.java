@@ -9,18 +9,19 @@ import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCrite
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import java.util.stream.Collectors;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -33,6 +34,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
@@ -65,6 +67,7 @@ public class PickSlipsResource extends Resource {
 
   private final String rootPath;
 
+
   public PickSlipsResource(String rootPath, HttpClient client) {
     super(client);
     this.rootPath = rootPath;
@@ -76,6 +79,7 @@ public class PickSlipsResource extends Resource {
     routeRegistration.getMany(this::getMany);
   }
 
+
   private void getMany(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -84,7 +88,7 @@ public class PickSlipsResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-
+    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
@@ -93,6 +97,7 @@ public class PickSlipsResource extends Resource {
         itemRepository, LocationRepository.using(clients, servicePointRepository))))
       .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
       .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
@@ -200,12 +205,12 @@ public class PickSlipsResource extends Resource {
     List<JsonObject> representations = requests.getRecords().stream()
       .map(TemplateContextUtil::createStaffSlipContext)
       .collect(Collectors.toList());
-
     JsonObject jsonRepresentations = new JsonObject()
       .put(PICK_SLIPS_KEY, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
 
     return succeeded(jsonRepresentations);
   }
+
 
 }

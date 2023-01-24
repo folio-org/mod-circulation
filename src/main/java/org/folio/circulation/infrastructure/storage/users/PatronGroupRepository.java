@@ -128,6 +128,12 @@ public class PatronGroupRepository {
       .thenApply(r -> r.map(user::withPatronGroup));
   }
 
+  public CompletableFuture<Result<User>> findGroupForUser(Result<User> user) {
+      return user.combineAfter(user1 -> isNull(user1) ? completedFuture(succeeded(unknown(null))) :
+        getPatronGroupById(user1.getPatronGroupId()), User::withPatronGroup);
+
+  }
+
   private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {
     if(isNull(groupId)) {
       return ofAsync(() -> unknown(null));
