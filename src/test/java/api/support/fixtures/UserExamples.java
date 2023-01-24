@@ -5,7 +5,7 @@ import api.support.builders.UserBuilder;
 public class UserExamples {
   public static UserBuilder basedUponStevenJones() {
     return new UserBuilder()
-      .withPreferredFirstName("Jones", "Steven", "Jacob","Jon")
+      .withName("Jones","Steven","Jacob")
       .withBarcode("5694596854")
       .withActive(true);
   }
