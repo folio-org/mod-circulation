@@ -235,7 +235,6 @@
       <groupId>org.folio</groupId>
       <artifactId>cql2pgjson</artifactId>
       <version>${rmb.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.folio.okapi</groupId>
