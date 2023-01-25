@@ -34,6 +34,8 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
+import javax.validation.constraints.NotNull;
+
 public class TemplateContextMatchers {
 
   private static final String ITEM_REPRESENTATION_PREFIX = "itemLevel%s";
@@ -63,9 +65,15 @@ public class TemplateContextMatchers {
     Map<String, Matcher<String>> tokenMatchers = new HashMap<>();
     tokenMatchers.put(prefix + ".firstName", is(personal.getString("firstName")));
     tokenMatchers.put(prefix + ".lastName", is(personal.getString("lastName")));
-    tokenMatchers.put(prefix + ".preferredFirstName", is(personal.getString("preferredFirstName")));
+    tokenMatchers.put(prefix + ".preferredFirstName", isPreferredName(personal));
     tokenMatchers.put(prefix + ".barcode", is(userJson.getString("barcode")));
     return tokenMatchers;
+  }
+
+  @NotNull
+  public static Matcher<String> isPreferredName(JsonObject personal) {
+    return personal.getString("preferredFirstName") == null ?
+      is(personal.getString("firstName")) : is(personal.getString("preferredFirstName"));
   }
 
   public static Map<String, Matcher<String>> getItemContextMatchers(ItemResource itemResource,

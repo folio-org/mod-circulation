@@ -54,20 +54,18 @@ public class EventMatchers {
 
   public static Matcher<JsonObject> isValidCheckOutLogEvent(JsonObject checkedOutLoan, LogEventType logEventType) {
     return allOf(JsonObjectMatcher.allOfPaths(
-      hasJsonPath("eventPayload", allOf(
-        hasJsonPath("logEventType", is(logEventType.value())),
-        hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
-          hasJsonPath("payload", allOf(
-            hasJsonPath("servicePointId", is(checkedOutLoan.getString("checkoutServicePointId"))),
-        hasJsonPath("loanId", is(checkedOutLoan.getString("id"))),
-        hasJsonPath("isLoanClosed", is(checkedOutLoan.getJsonObject("status").getString("name").equals("Closed"))),
-        hasJsonPath("dueDate", is(checkedOutLoan.getString("dueDate"))),
-        hasJsonPath("userId", is(checkedOutLoan.getString("userId"))),
-        hasJsonPath("itemId", is(checkedOutLoan.getString("itemId"))),
-        hasJsonPath("source", is("Admin, Admin")),
-        hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
-        hasJsonPath("itemStatusName", is(checkedOutLoan.getJsonObject("item").getJsonObject("status").getString("name")))
-          ))))),
+        hasJsonPath("eventPayload", allOf(
+          hasJsonPath("logEventType", is(logEventType.value())),
+          hasJsonPath("servicePointId", is(checkedOutLoan.getString("checkoutServicePointId"))),
+          hasJsonPath("loanId", is(checkedOutLoan.getString("id"))),
+          hasJsonPath("isLoanClosed", is(checkedOutLoan.getJsonObject("status").getString("name").equals("Closed"))),
+          hasJsonPath("dueDate", is(checkedOutLoan.getString("dueDate"))),
+          hasJsonPath("userId", is(checkedOutLoan.getString("userId"))),
+          hasJsonPath("itemId", is(checkedOutLoan.getString("itemId"))),
+          hasJsonPath("source", is("Admin, Admin")),
+          hasJsonPath("itemBarcode", is(checkedOutLoan.getJsonObject("item").getString("barcode"))),
+          hasJsonPath("itemStatusName", is(checkedOutLoan.getJsonObject("item").getJsonObject("status").getString("name")))
+        ))),
       isLogRecordEventType());
   }
 

@@ -8,6 +8,7 @@ import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.isPreferredName;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
@@ -57,6 +58,8 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -216,7 +219,7 @@ class CheckInByBarcodeTests extends APITests {
   }
 
 @Test
-public void verifyItemEffectiveLocationIdAtCheckOut() {
+void verifyItemEffectiveLocationIdAtCheckOut() {
   final IndividualResource james = usersFixture.james();
 
   final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
@@ -290,7 +293,8 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(userContext.getString("firstName"), is(requesterUser.getFirstName()));
     assertThat(userContext.getString("lastName"), is(requesterUser.getLastName()));
-    assertThat(userContext.getString("preferredFirstName"), is(requesterUser.getPreferredFirstName()));
+    assertThat(userContext.getString("preferredFirstName"), isPreferredName(requesterUser.getPersonal()));
+    assertThat(userContext.getString("patronGroup"), is("Regular Group"));
     assertThat(userContext.getString("middleName"), is(requesterUser.getMiddleName()));
     assertThat(userContext.getString("barcode"), is(requesterUser.getBarcode()));
     assertThat(userContext.getString("addressLine1"), is(address.getAddressLineOne()));
@@ -761,7 +765,11 @@ public void verifyItemEffectiveLocationIdAtCheckOut() {
 
     usersClient.delete(steve);
 
-    checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+    CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
+
+    JsonObject staffSlipContext = response.getStaffSlipContext();
+    JsonObject userContext = staffSlipContext.getJsonObject("requester");
+    assertNull(userContext);
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
