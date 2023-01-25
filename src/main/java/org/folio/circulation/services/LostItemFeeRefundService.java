@@ -113,8 +113,7 @@ public class LostItemFeeRefundService {
       refundFeeContext.getCancelReason());
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
-      log.info("refundLostItemFees:: no need to refund fees for loan {}",
-        refundFeeContext.getLoan().getId());
+      log.info("refundLostItemFees:: no need to refund fees for loan {}", refundFeeContext.getLoanId());
       return completedFuture(succeeded(refundFeeContext));
     }
 
@@ -125,7 +124,7 @@ public class LostItemFeeRefundService {
 
         if (!lostItemPolicy.shouldRefundFees(context.getItemLostDate())) {
           log.info("refundLostItemFees:: refund interval was exceeded for loan {}",
-            context.getLoan().getId());
+            context.getLoanId());
           return completedFuture(succeeded(context));
         }
 
@@ -259,8 +258,7 @@ public class LostItemFeeRefundService {
       feeFineTypes.add(LOST_ITEM_PROCESSING_FEE_TYPE);
     }
 
-    final Loan loan = context.getLoan();
-    final Result<CqlQuery> fetchQuery = exactMatch("loanId", loan.getId())
+    final Result<CqlQuery> fetchQuery = exactMatch("loanId", context.getLoanId())
       .combine(exactMatchAny("feeFineType", feeFineTypes), CqlQuery::and);
 
       return accountRepository.findAccountsAndActionsForLoanByQuery(fetchQuery)
