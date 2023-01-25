@@ -105,15 +105,20 @@ public class LostItemFeeRefundService {
       .thenApply(r -> r.map(context -> renewalContext.withLoan(context.getLoan())));
   }
 
+  /**
+   * Refund lost item fee(s) and cancel the actual cost record associated with the loan
+   * when requirements for a refund are met
+   * @param refundFeeContext an aggregate object with all the data required to perform a refund
+   * @return refund context wrapped in an asynchronous result
+   */
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
     log.debug("refundLostItemFees:: loanId={}, itemId={}, cancelReason={}",
-      refundFeeContext.getLoanId(), refundFeeContext.getItemId(),
-      refundFeeContext.getCancelReason());
+      refundFeeContext::getLoanId, refundFeeContext::getItemId, refundFeeContext::getCancelReason);
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
-      log.info("refundLostItemFees:: no need to refund fees for loan {}", refundFeeContext.getLoanId());
+      log.info("refundLostItemFees:: no need to refund fees for loan {}", refundFeeContext::getLoanId);
       return completedFuture(succeeded(refundFeeContext));
     }
 
@@ -123,8 +128,7 @@ public class LostItemFeeRefundService {
         final LostItemPolicy lostItemPolicy = context.getLostItemPolicy();
 
         if (!lostItemPolicy.shouldRefundFees(context.getItemLostDate())) {
-          log.info("refundLostItemFees:: refund interval was exceeded for loan {}",
-            context.getLoanId());
+          log.info("refundLostItemFees:: refund interval was exceeded for loan {}", context::getLoanId);
           return completedFuture(succeeded(context));
         }
 
@@ -138,7 +142,7 @@ public class LostItemFeeRefundService {
     LostItemFeeRefundContext context) {
 
     log.debug("processRefund:: loanId={}, itemId={}, cancelReason={}",
-      context.getLoanId(), context.getItemId(), context.getCancelReason());
+      context::getLoanId, context::getItemId, context::getCancelReason);
 
     return refundAccounts(context)
       .thenCompose(r -> r.after(this::cancelActualCostFee))
@@ -156,7 +160,7 @@ public class LostItemFeeRefundService {
     LostItemFeeRefundContext context) {
 
     log.info("cancelActualCostFee:: attempting to find and cancel actual cost fee for loan {}",
-      context.getLoanId());
+      context::getLoanId);
 
     if (!context.getLostItemPolicy().hasActualCostFee()) {
       log.info("cancelActualCostFee:: lost item fee policy {} has no actual cost fee configured",

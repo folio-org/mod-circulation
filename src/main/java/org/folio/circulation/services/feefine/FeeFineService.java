@@ -73,7 +73,7 @@ public class FeeFineService {
 
     return actualCostFeeFineCancelClient.post(request.toJson())
       .thenApply(r -> r.next(actualCostFeeFineResponseInterpreter::apply))
-      .thenApply(r -> r.peek(rec -> log.info("Actual cost record {} was cancelled", rec.getId())));
+      .thenApply(r -> r.peek(rec -> log.info("Actual cost record {} was cancelled", rec::getId)));
   }
 
 }
