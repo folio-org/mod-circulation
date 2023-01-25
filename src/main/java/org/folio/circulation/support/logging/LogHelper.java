@@ -1,11 +1,15 @@
 package org.folio.circulation.support.logging;
 
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 import io.vertx.ext.web.RoutingContext;
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.function.Function;
 
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 import org.apache.logging.log4j.LogManager;
@@ -54,5 +58,19 @@ public class LogHelper {
     }
 
     log.error("{}. Cause: {}", errorMessage, errorCause);
+  }
+
+  public static <T> String asString(MultipleRecords<T> records, Function<T, String> elementMapper) {
+    return asString(records.getRecords(), elementMapper);
+  }
+
+  public static <T> String asString(Collection<T> collection, Function<T, String> elementMapper) {
+    if (collection == null) {
+      return "null collection";
+    }
+
+    return String.format("%d object(s): %s",
+        collection.size(),
+        collection.stream().map(elementMapper).collect(toList()));
   }
 }

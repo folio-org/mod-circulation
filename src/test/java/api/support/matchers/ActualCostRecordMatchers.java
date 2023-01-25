@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.allOf;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.ActualCostRecord;
@@ -103,6 +104,14 @@ public class ActualCostRecordMatchers {
 
   public static Matcher<JsonObject> isInStatus(ActualCostRecord.Status status) {
     return hasJsonPath("status", status.getValue());
+  }
+
+  public static Matcher<JsonObject> hasAdditionalInfoForStaff(String additionalInfoForStaff) {
+    return hasJsonPath("additionalInfoForStaff", additionalInfoForStaff);
+  }
+
+  public static Matcher<JsonObject> isForLoan(UUID loanId) {
+    return hasJsonPath("loan.id", loanId.toString());
   }
 
 }

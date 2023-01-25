@@ -1,7 +1,6 @@
 package api.loans.scenarios;
 
 import static api.support.matchers.AccountMatchers.isClosedCancelled;
-import static api.support.matchers.AccountMatchers.isRefundedFully;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
@@ -19,7 +18,7 @@ import io.vertx.core.json.JsonObject;
 
 class CheckInAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   public CheckInAgedToLostItemTest() {
-    super("Cancelled item returned");
+    super("Cancelled item returned", "Lost item was returned");
   }
 
   @Override

@@ -3,25 +3,36 @@ package api.loans.scenarios;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;
 import static api.support.matchers.AccountMatchers.isTransferredFully;
+import static api.support.matchers.ActualCostRecordMatchers.hasAdditionalInfoForStaff;
+import static api.support.matchers.ActualCostRecordMatchers.isInStatus;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
+import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
 import static api.support.matchers.LoanMatchers.isClosed;
+import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
+import static org.folio.circulation.domain.ActualCostRecord.Status.OPEN;
 import static org.folio.circulation.support.utils.ClockUtil.getClock;
+import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.AccountBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
@@ -34,10 +45,14 @@ import io.vertx.core.json.JsonObject;
 public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   protected final IndividualResource item = itemsFixture.basedUponNod();
   protected final String cancellationReason;
+  protected final String actualCostFeeCancellationReason;
   protected IndividualResource loan;
 
-  public RefundDeclaredLostFeesTestBase(String cancellationReason) {
+  public RefundDeclaredLostFeesTestBase(String cancellationReason,
+    String actualCostFeeCancellationReason) {
+
     this.cancellationReason = cancellationReason;
+    this.actualCostFeeCancellationReason = actualCostFeeCancellationReason;
   }
 
   protected void performActionThatRequiresRefund() {
@@ -320,6 +335,70 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
 
     assertThat(loan, hasLostItemProcessingFee(isOpen(processingFee)));
     assertThat(loan, hasNoOverdueFine());
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.0, 1.0})
+  void shouldCancelActualCostLostItemFeeWhenRefundPeriodWasNotExceeded(double processingFeeAmount) {
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("test policy")
+        .withActualCost(0.0)
+        .chargeProcessingFeeWhenDeclaredLost(processingFeeAmount)
+        .withFeeRefundInterval(Period.months(6))).getId());
+
+    declareItemLost();
+
+    List<JsonObject> actualCostRecordsBeforeAction = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecordsBeforeAction, hasSize(1));
+    JsonObject recordBeforeAction = actualCostRecordsBeforeAction.get(0);
+    assertThat(recordBeforeAction, isInStatus(OPEN));
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(isOpen(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
+
+    performActionThatRequiresRefund();
+
+    UUID actualCostRecordId = UUID.fromString(recordBeforeAction.getString("id"));
+    JsonObject recordAfterAction = actualCostRecordsClient.get(actualCostRecordId).getJson();
+    assertThat(recordAfterAction, isInStatus(CANCELLED));
+    assertThat(recordAfterAction, hasAdditionalInfoForStaff(actualCostFeeCancellationReason));
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(isClosedCancelled(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.0, 1.0})
+  void shouldNotCancelActualCostLostItemFeeWhenRefundPeriodWasExceeded(double processingFeeAmount) {
+    final int refundPeriodDurationDays = 3;
+
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      lostItemFeePoliciesFixture.facultyStandardPolicy()
+        .withName("test policy")
+        .withActualCost(0.0)
+        .chargeProcessingFeeWhenDeclaredLost(processingFeeAmount)
+        .withFeeRefundInterval(Period.days(refundPeriodDurationDays))).getId());
+
+    declareItemLost();
+
+    List<JsonObject> actualCostRecordsBeforeAction = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecordsBeforeAction, hasSize(1));
+    JsonObject recordBeforeAction = actualCostRecordsBeforeAction.get(0);
+    assertThat(recordBeforeAction, isInStatus(OPEN));
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(isOpen(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
+
+    performActionThatRequiresRefund(
+      getZonedDateTime().plusDays(refundPeriodDurationDays).plusMinutes(1));
+
+    UUID actualCostRecordId = UUID.fromString(recordBeforeAction.getString("id"));
+    JsonObject recordAfterAction = actualCostRecordsClient.get(actualCostRecordId).getJson();
+    assertThat(recordAfterAction, isInStatus(OPEN));
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(isOpen(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
   }
 
   protected void resolveLostItemFee() {
