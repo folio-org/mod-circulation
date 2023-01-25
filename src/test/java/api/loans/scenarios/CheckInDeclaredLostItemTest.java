@@ -31,7 +31,7 @@ import io.vertx.core.json.JsonObject;
 
 class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
   public CheckInDeclaredLostItemTest() {
-    super("Cancelled item returned");
+    super("Cancelled item returned", "Lost item was returned");
   }
 
   @Override

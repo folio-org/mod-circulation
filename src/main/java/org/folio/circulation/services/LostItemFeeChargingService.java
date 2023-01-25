@@ -1,5 +1,7 @@
 package org.folio.circulation.services;
 
+import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST;
+import static org.folio.circulation.domain.ActualCostFeeCancelReason.AGED_TO_LOST_ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
@@ -18,7 +20,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.AccountCancelReason;
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
@@ -129,19 +130,13 @@ public class LostItemFeeChargingService {
     .thenApply(r -> r.map(notUsed -> loan));
   }
 
-  private CompletableFuture<Result<Loan>> removeAndRefundFees(
-    String userId,
-    String servicePointId,
-    Loan loan
-    ) {
+  private CompletableFuture<Result<Loan>> removeAndRefundFees(String userId, String servicePointId,
+    Loan loan) {
+
     final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
-      loan.getItem().getStatus(),
-      loan.getItem().getItemId(),
-      userId,
-      servicePointId,
-      loan,
-      AccountCancelReason.CANCELLED_ITEM_DECLARED_LOST
-    );
+      loan.getItem().getStatus(), loan.getItem().getItemId(), userId, servicePointId, loan,
+      CANCELLED_ITEM_DECLARED_LOST, AGED_TO_LOST_ITEM_DECLARED_LOST);
+
     return refundService.refundLostItemFees(refundContext)
       .thenCompose(refundResult -> {
         if (refundResult.failed()) {
