@@ -43,7 +43,6 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -81,8 +80,7 @@ public class LoanCollectionResource extends CollectionResource {
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
       requestRepository, requestQueueRepository);
-    final var requestQueueService = RequestQueueService.using(clients);
-    final UpdateItem updateItem = new UpdateItem(itemRepository, requestQueueService);
+    final UpdateItem updateItem = new UpdateItem(itemRepository);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
@@ -94,7 +92,7 @@ public class LoanCollectionResource extends CollectionResource {
           loan.getProxyUserId()));
 
     final RequestedByAnotherPatronValidator requestedByAnotherPatronValidator = new RequestedByAnotherPatronValidator(
-      message -> singleValidationError(message, "userId", loan.getUserId()), requestQueueService);
+      message -> singleValidationError(message, "userId", loan.getUserId()));
 
     final AlreadyCheckedOutValidator alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> singleValidationError(message, "itemId", loan.getItemId()));
@@ -122,7 +120,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.getByItemId(loan.getItemId()), this::addRequestQueue)
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
-      .thenCompose(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
+      .thenApply(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
@@ -158,7 +156,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
       requestRepository, requestQueueRepository);
-    final UpdateItem updateItem = new UpdateItem(itemRepository, RequestQueueService.using(clients));
+    final UpdateItem updateItem = new UpdateItem(itemRepository);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError("proxyUserId is not valid", "proxyUserId",

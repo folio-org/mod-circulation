@@ -40,8 +40,6 @@ import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
-import static org.folio.circulation.domain.RequestType.HOLD;
-import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -57,9 +55,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -98,12 +95,10 @@ import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fixtures.TemplateContextMatchers;
-import api.support.http.CheckOutResource;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
-import api.support.matchers.RequestMatchers;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -1690,139 +1685,6 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     CheckInByBarcodeResponse thirdCheckInResponse = checkInFixture.checkInByBarcode(thirdItem);
     assertThat(thirdCheckInResponse.getItem(), isAvailable());
-  }
-
-  @Test
-  void shouldNotLinkTitleLevelHoldRequestToAnItemUponCheckInWhenItemIsNonRequestable() {
-    configurationsFixture.enableTlrFeature();
-    ItemResource item = itemsFixture.basedUponNod();
-    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
-    IndividualResource request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(),
-      usersFixture.steve());
-
-    useFallbackPolicies(
-      loanPoliciesFixture.canCirculateRolling().getId(),
-      requestPoliciesFixture.nonRequestableRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId(),
-      overdueFinePoliciesFixture.noOverdueFine().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
-
-    checkInFixture.checkInByBarcode(item);
-    JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
-
-    assertThat(requestAfterCheckIn.getString("itemId"), nullValue());
-    assertThat(requestAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
-  }
-
-  @Test
-  void shouldNotLinkTitleLevelHoldRequestToAnItemUponCheckInWhenItemIsNonLoanable() {
-    configurationsFixture.enableTlrFeature();
-    ItemResource item = itemsFixture.basedUponNod();
-    checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
-    IndividualResource request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(),
-      usersFixture.steve());
-
-    use(new LoanPolicyBuilder().withLoanable(false));
-    checkInFixture.checkInByBarcode(item);
-    JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
-
-    assertThat(requestAfterCheckIn.getString("itemId"), nullValue());
-    assertThat(requestAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
-  }
-
-  @Test
-  void shouldNotLinkTitleLevelRecallRequestToNewItemUponCheckInWhenItemIsNonRequestable() {
-    configurationsFixture.enableTlrFeature();
-
-    UUID canCirculateLoanTypeId = loanTypesFixture.canCirculate().getId();
-    UUID readingRoomLoanTypeId = loanTypesFixture.readingRoom().getId();
-
-    UUID allowAllRequestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID blockAllRequestPolicyId = requestPoliciesFixture.nonRequestableRequestPolicy().getId();
-    UUID loanPolicyId = loanPoliciesFixture.canCirculateRolling().getId();
-    UUID noticePolicyId = noticePoliciesFixture.inactiveNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.noOverdueFine().getId();
-    UUID lostItemPolicyId = lostItemFeePoliciesFixture.facultyStandard().getId();
-
-    circulationRulesFixture.updateCirculationRules(String.join("\n",
-      "priority: t, g, s, c, b, a, m",
-      "fallback-policy: r " + allowAllRequestPolicyId + " l " + loanPolicyId + " n " + noticePolicyId  + " o " + overdueFinePolicyId + " i " + lostItemPolicyId,
-      "t " + canCirculateLoanTypeId + ": r " + allowAllRequestPolicyId + " l " + loanPolicyId + " n " + noticePolicyId  + " o " + overdueFinePolicyId + " i " + lostItemPolicyId,
-      "t " + readingRoomLoanTypeId + ": r " + blockAllRequestPolicyId + " l " + loanPolicyId + " n " + noticePolicyId  + " o " + overdueFinePolicyId + " i " + lostItemPolicyId
-    ));
-
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    ItemResource requestableItem = items.get(0);
-    ItemResource nonRequestableItem = items.get(1);
-
-    itemsClient.replace(requestableItem.getId(),
-      requestableItem.getJson().put("permanentLoanTypeId", canCirculateLoanTypeId.toString()));
-    itemsClient.replace(nonRequestableItem.getId(),
-      nonRequestableItem.getJson().put("permanentLoanTypeId", readingRoomLoanTypeId.toString()));
-
-    checkOutFixture.checkOutByBarcode(requestableItem, usersFixture.steve());
-    checkOutFixture.checkOutByBarcode(nonRequestableItem, usersFixture.james());
-
-    IndividualResource recall = requestsFixture.placeTitleLevelRequest(RECALL,
-      requestableItem.getInstanceId(), usersFixture.jessica());
-
-    assertThat(recall.getJson(), RequestMatchers.isOpenNotYetFilled());
-    assertThat(recall.getJson().getString("itemId"), is(requestableItem.getId()));
-
-    checkInFixture.checkInByBarcode(nonRequestableItem);
-    JsonObject recallAfterCheckIn = requestsFixture.getById(recall.getId()).getJson();
-
-    assertThat(recallAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
-    assertThat(recallAfterCheckIn.getString("itemId"), is(requestableItem.getId()));
-  }
-
-  @Test
-  void shouldNotLinkTitleLevelRecallRequestToNewItemUponCheckInWhenItemIsNonLoanable() {
-    configurationsFixture.enableTlrFeature();
-
-    UUID canCirculateLoanTypeId = loanTypesFixture.canCirculate().getId();
-    UUID readingRoomLoanTypeId = loanTypesFixture.readingRoom().getId();
-
-    UUID loanableLoanPolicyId = loanPoliciesFixture.canCirculateRolling().getId();
-    UUID nonLoanableLoanPolicyId = loanPoliciesFixture.create(
-      new LoanPolicyBuilder().withLoanable(false)).getId();
-    UUID requestPolicyId = requestPoliciesFixture.allowAllRequestPolicy().getId();
-    UUID noticePolicyId = noticePoliciesFixture.inactiveNotice().getId();
-    UUID overdueFinePolicyId = overdueFinePoliciesFixture.noOverdueFine().getId();
-    UUID lostItemPolicyId = lostItemFeePoliciesFixture.facultyStandard().getId();
-
-    circulationRulesFixture.updateCirculationRules(String.join("\n",
-      "priority: t, g, s, c, b, a, m",
-      "fallback-policy: l " + loanableLoanPolicyId + " r " + requestPolicyId + " n " + noticePolicyId  + " o " + overdueFinePolicyId + " i " + lostItemPolicyId,
-      "t " + canCirculateLoanTypeId + ": l " + loanableLoanPolicyId + " r " + requestPolicyId + " n " + noticePolicyId  + " o " + overdueFinePolicyId + " i " + lostItemPolicyId,
-      "t " + readingRoomLoanTypeId + ": l " + nonLoanableLoanPolicyId + " r " + requestPolicyId + " n " + noticePolicyId  + " o " + overdueFinePolicyId + " i " + lostItemPolicyId
-    ));
-
-    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    ItemResource loanableItem = items.get(0);
-    ItemResource nonLoanableItem = items.get(1);
-    UUID loanableItemId = loanableItem.getId();
-    UUID nonLoanableItemId = nonLoanableItem.getId();
-
-    checkOutFixture.checkOutByBarcode(loanableItem, usersFixture.steve());
-    checkOutFixture.checkOutByBarcode(nonLoanableItem, usersFixture.james());
-
-    itemsClient.replace(loanableItemId, itemsFixture.getById(
-      loanableItemId).getJson().put("permanentLoanTypeId", canCirculateLoanTypeId.toString()));
-    itemsClient.replace(nonLoanableItemId, itemsFixture.getById(
-      nonLoanableItemId).getJson().put("permanentLoanTypeId", readingRoomLoanTypeId.toString()));
-
-    IndividualResource recall = requestsFixture.placeTitleLevelRequest(RECALL,
-      loanableItem.getInstanceId(), usersFixture.jessica());
-
-    assertThat(recall.getJson(), RequestMatchers.isOpenNotYetFilled());
-    assertThat(recall.getJson().getString("itemId"), is(loanableItemId));
-
-    checkInFixture.checkInByBarcode(nonLoanableItem);
-    JsonObject recallAfterCheckIn = requestsFixture.getById(recall.getId()).getJson();
-
-    assertThat(recallAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
-    assertThat(recallAfterCheckIn.getString("itemId"), is(loanableItemId));
   }
 
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {

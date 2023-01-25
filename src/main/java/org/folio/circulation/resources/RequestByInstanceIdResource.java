@@ -63,7 +63,6 @@ import org.folio.circulation.infrastructure.storage.requests.RequestQueueReposit
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
-import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
@@ -277,7 +276,7 @@ public class RequestByInstanceIdResource extends Resource {
     final var requestQueueRepository = repositories.getRequestQueueRepository();
 
     final UpdateUponRequest updateUponRequest = new UpdateUponRequest(
-      new UpdateItem(itemRepository, RequestQueueService.using(clients)),
+      new UpdateItem(itemRepository),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
         UpdateRequestQueue.using(clients, requestRepository,
           requestQueueRepository));

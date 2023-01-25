@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.RequestTypeItemStatusWhiteList.canCreateRequestForItem;
 
@@ -51,8 +52,53 @@ public class RequestQueue {
       .collect(toList()));
   }
 
+  ItemStatus checkedInItemStatus(Item item) {
+    return hasOutstandingRequestsFulfillableByItem(item)
+      ? getHighestPriorityRequestFulfillableByItem(item).checkedInItemStatus()
+      : AVAILABLE;
+  }
+
+  boolean hasOutstandingFulfillableRequests() {
+    return !fulfillableRequests().isEmpty();
+  }
+
+  boolean hasOutstandingRequestsFulfillableByItem(Item item) {
+    return  fulfillableRequests().stream()
+      .anyMatch(request -> requestIsFulfillableByItem(request, item));
+  }
+
   Request getHighestPriorityFulfillableRequest() {
     return fulfillableRequests().get(0);
+  }
+
+  Request getHighestPriorityRequestFulfillableByItem(Item item) {
+    return fulfillableRequests().stream()
+      .filter(request -> requestIsFulfillableByItem(request, item))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private boolean requestIsFulfillableByItem(Request request, Item item) {
+    if (request.getRequestLevel() == RequestLevel.TITLE) {
+      String itemInstanceId = item.getInstanceId();
+      String requestInstanceId = request.getInstanceId();
+      if(request.isRecall() && request.isNotYetFilled()) {
+        return requestInstanceId.equals(itemInstanceId);
+      }
+
+      String requestItemId = request.getItemId();
+      String itemId = item.getItemId();
+      return requestInstanceId.equals(itemInstanceId) && (requestItemId == null ^
+        (item.isFound() && itemId.equals(requestItemId)));
+    }
+    else if (request.getRequestLevel() == RequestLevel.ITEM) {
+      String itemId = item.getItemId();
+      String requestItemId = request.getItemId();
+
+      return itemId != null && itemId.equals(requestItemId);
+    }
+
+    return false;
   }
 
   boolean containsRequestOfTypeForItem(RequestType type, Item item) {
@@ -86,7 +132,13 @@ public class RequestQueue {
         .orElse(null)));
   }
 
-  public List<Request> fulfillableRequests() {
+  public boolean isRequestedByAnotherPatron(User requestingUser, Item item) {
+    Request request = getHighestPriorityRequestFulfillableByItem(item);
+
+    return !(request == null || request.isFor(requestingUser));
+  }
+
+  private List<Request> fulfillableRequests() {
     return requests
       .stream()
       .filter(Request::isFulfillable)

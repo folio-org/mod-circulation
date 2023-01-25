@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.results.Result;
 
 import lombok.AllArgsConstructor;
@@ -25,12 +24,11 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UpdateItem {
   private final ItemRepository itemRepository;
-  private final RequestQueueService requestQueueService;
 
-  public CompletableFuture<Result<Item>> onCheckIn(Item item, Request request,
-    UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
+  public CompletableFuture<Result<Item>> onCheckIn(Item item, RequestQueue requestQueue,
+      UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
 
-    return changeItemOnCheckIn(item, request, checkInServicePointId)
+    return changeItemOnCheckIn(item, requestQueue, checkInServicePointId)
       .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
       .after(this::storeItem);
   }
@@ -41,10 +39,11 @@ public class UpdateItem {
       new LastCheckIn(dateTime, checkInServicePointId, loggedInUserId)));
   }
 
-  private Result<Item> changeItemOnCheckIn(Item item, Request request, UUID checkInServicePointId) {
+  private Result<Item> changeItemOnCheckIn(Item item, RequestQueue requestQueue,
+    UUID checkInServicePointId) {
 
-    if (request != null) {
-      return changeItemWithOutstandingRequest(item, request, checkInServicePointId);
+    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
+      return changeItemWithOutstandingRequest(item, requestQueue, checkInServicePointId);
     } else {
       if(Optional.ofNullable(item.getLocation())
         .map(location -> location.homeLocationIsServedBy(checkInServicePointId))
@@ -57,19 +56,22 @@ public class UpdateItem {
     }
   }
 
-  private Result<Item> changeItemWithOutstandingRequest(Item item, Request request,
+  private Result<Item> changeItemWithOutstandingRequest(Item item, RequestQueue requestQueue,
     UUID checkInServicePointId) {
 
+    Request req = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
+
     Result<Item> itemResult;
-    switch (request.getFulfilmentPreference()) {
+    switch (req.getFulfilmentPreference()) {
       case HOLD_SHELF:
-        itemResult = changeItemWithHoldRequest(item, checkInServicePointId, request);
+        itemResult = changeItemWithHoldRequest(item, checkInServicePointId, req);
         break;
       case DELIVERY:
-        itemResult = changeItemWithDeliveryRequest(item, request);
+        itemResult = changeItemWithDeliveryRequest(item, req);
         break;
       default:
-        throw new IllegalStateException("Unexpected value: " + request.getFulfilmentPreference());
+        throw new IllegalStateException("Unexpected value: " +
+          req.getFulfilmentPreference());
     }
 
     return itemResult;
@@ -129,10 +131,13 @@ public class UpdateItem {
     return ofAsync(request);
   }
 
-  private CompletableFuture<Result<Item>> onLoanUpdate(Loan loan, RequestQueue requestQueue) {
-    return itemStatusOnLoanUpdate(loan, requestQueue)
-      .thenCompose(r -> r.after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
-        loan.getItem())));
+  private CompletableFuture<Result<Item>> onLoanUpdate(
+    Loan loan,
+    RequestQueue requestQueue) {
+
+    return of(() -> itemStatusOnLoanUpdate(loan, requestQueue))
+      .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
+        loan.getItem()));
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
@@ -153,7 +158,8 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> updateItemWhenNotSameStatus(
-    ItemStatus prospectiveStatus, Item item) {
+    ItemStatus prospectiveStatus,
+    Item item) {
 
     if(item.isNotSameStatus(prospectiveStatus)) {
       item.changeStatus(prospectiveStatus);
@@ -207,20 +213,17 @@ public class UpdateItem {
       : item.getStatus();
   }
 
-  private CompletableFuture<Result<ItemStatus>> itemStatusOnLoanUpdate(Loan loan,
-    RequestQueue requestQueue) {
-
-    if (loan.isClosed()) {
-      return requestQueueService.findRequestFulfillableByItem(loan.getItem(), requestQueue)
-        .thenApply(r -> r.map(request -> Optional.ofNullable(request)
-          .map(Request::checkedInItemStatus)
-          .orElse(AVAILABLE)));
+  private ItemStatus itemStatusOnLoanUpdate(Loan loan, RequestQueue requestQueue) {
+    if(loan.isClosed()) {
+      return itemStatusOnCheckIn(requestQueue, loan.getItem());
     }
-    else if (loan.getItem().isDeclaredLost()) {
-      return ofAsync(loan.getItem().getStatus());
+    else if(loan.getItem().isDeclaredLost()) {
+      return loan.getItem().getStatus();
     }
-
-    return ofAsync(CHECKED_OUT);
+    return CHECKED_OUT;
   }
 
+  private ItemStatus itemStatusOnCheckIn(RequestQueue requestQueue, Item item) {
+    return requestQueue.checkedInItemStatus(item);
+  }
 }

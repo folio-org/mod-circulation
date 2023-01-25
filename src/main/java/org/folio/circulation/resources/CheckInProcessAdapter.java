@@ -36,7 +36,6 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.LogCheckInService;
 import org.folio.circulation.services.LostItemFeeRefundService;
-import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
@@ -58,7 +57,6 @@ class CheckInProcessAdapter {
   private final OverdueFineService overdueFineService;
   private final FeeFineScheduledNoticeService feeFineScheduledNoticeService;
   private final LostItemFeeRefundService lostItemFeeRefundService;
-  private final RequestQueueService requestQueueService;
   protected final EventPublisher eventPublisher;
 
   @SuppressWarnings("squid:S00107")
@@ -75,7 +73,6 @@ class CheckInProcessAdapter {
     OverdueFineService overdueFineService,
     FeeFineScheduledNoticeService feeFineScheduledNoticeService,
     LostItemFeeRefundService lostItemFeeRefundService,
-    RequestQueueService requestQueueService,
     EventPublisher eventPublisher) {
 
     this.itemFinder = itemFinder;
@@ -92,7 +89,6 @@ class CheckInProcessAdapter {
     this.overdueFineService = overdueFineService;
     this.feeFineScheduledNoticeService = feeFineScheduledNoticeService;
     this.lostItemFeeRefundService = lostItemFeeRefundService;
-    this.requestQueueService = requestQueueService;
     this.eventPublisher = eventPublisher;
   }
 
@@ -115,13 +111,11 @@ class CheckInProcessAdapter {
         new LoanPolicyRepository(clients)),
       new FeeFineFacade(clients));
 
-    final var requestQueueService = RequestQueueService.using(clients);
-
     return new CheckInProcessAdapter(itemFinder,
       singleOpenLoanFinder,
       new LoanCheckInService(),
       requestQueueRepository,
-      new UpdateItem(itemRepository, requestQueueService),
+      new UpdateItem(itemRepository),
       UpdateRequestQueue.using(clients, requestRepository,
         requestQueueRepository),
       loanRepository,
@@ -133,7 +127,6 @@ class CheckInProcessAdapter {
       FeeFineScheduledNoticeService.using(clients),
       new LostItemFeeRefundService(clients, itemRepository,
         userRepository, loanRepository),
-      requestQueueService,
       new EventPublisher(clients.pubSubPublishingService()));
   }
 
@@ -165,7 +158,7 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
-    return updateItem.onCheckIn(context.getItem(), context.getHighestPriorityFulfillableRequest(),
+    return updateItem.onCheckIn(context.getItem(), context.getRequestQueue(),
       context.getCheckInServicePointId(), context.getLoggedInUserId(),
       context.getCheckInProcessedDateTime());
   }
@@ -256,10 +249,5 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<CheckInContext>> refundLostItemFees(CheckInContext context) {
     return lostItemFeeRefundService.refundLostItemFees(context);
-  }
-
-  CompletableFuture<Result<CheckInContext>> findFulfillableRequest(CheckInContext context) {
-    return requestQueueService.findRequestFulfillableByItem(context.getItem(), context.getRequestQueue())
-      .thenApply(r -> r.map(context::withHighestPriorityFulfillableRequest));
   }
 }

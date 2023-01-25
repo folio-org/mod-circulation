@@ -54,7 +54,7 @@ public class RequestPolicyRepository {
       .thenApply(r -> r.map(request::withInstanceItemsRequestPolicies));
   }
 
-  public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
+  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
     return lookupRequestPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
       .thenApply(result -> result.map(RequestPolicy::from));

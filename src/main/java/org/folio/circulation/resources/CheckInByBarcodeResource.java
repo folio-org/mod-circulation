@@ -86,7 +86,6 @@ public class CheckInByBarcodeResource extends Resource {
         CheckInContext::withTlrSettings))
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
-      .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
       .thenApply(findRequestQueueResult -> findRequestQueueResult.map(
         processAdapter::setInHouseUse))
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
@@ -97,7 +96,6 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::checkInLoan, CheckInContext::withLoan))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
-        .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInContext::withItem))
       .thenApply(handleItemStatus -> handleItemStatus.next(
