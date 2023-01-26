@@ -217,6 +217,7 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("region"), is(address.getRegion()));
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
+    assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
 
     JsonObject requestContext = pickSlip.getJsonObject("request");
 

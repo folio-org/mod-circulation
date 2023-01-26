@@ -346,6 +346,14 @@ public interface Result<T> {
     }
   }
 
+  default Result<T> peek(Consumer<T> onSuccess) {
+    if (succeeded()) {
+      onSuccess.accept(value());
+    }
+
+    return this;
+  }
+
   default Result<Void> mapEmpty() {
     return map(value -> null);
   }

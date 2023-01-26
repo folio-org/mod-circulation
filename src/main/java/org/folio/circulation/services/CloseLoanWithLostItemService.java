@@ -67,11 +67,11 @@ public class CloseLoanWithLostItemService {
   private CompletableFuture<Result<Loan>> fetchLoanFeeFineData(Loan loan) {
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
-      .thenComposeAsync(actualCostRecordRepository::findByLoan);
+      .thenComposeAsync(r -> r.after(actualCostRecordRepository::findByLoan));
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(Loan loan,
-                                                                 LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
+    LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
 
     if (!shouldCloseLoan(loan)) {
       return completedFuture(succeeded(loan));
