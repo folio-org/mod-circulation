@@ -1,12 +1,10 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
@@ -215,7 +213,7 @@ class CheckInProcessAdapter {
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
     }
-    return userRepository.getUser(firstRequest)
+    return userRepository.getUserWithPatronGroup(firstRequest)
       .thenApply(r -> r.map(firstRequest::withRequester));
   }
 
