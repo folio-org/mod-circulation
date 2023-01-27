@@ -1,6 +1,7 @@
 package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.lostItemFeeTypes;
 import static org.folio.circulation.support.results.Result.emptyAsync;
@@ -100,7 +101,7 @@ public class CloseLoanWithLostItemService {
   private boolean shouldCloseLoan(Loan loan) {
     if (allLostFeesClosed(loan)) {
       ActualCostRecord actualCostRecord = loan.getActualCostRecord();
-      if (actualCostRecord == null) {
+      if (actualCostRecord == null || actualCostRecord.getStatus() == CANCELLED) {
         return true;
       }
       if (loan.getAccounts().stream().noneMatch(account ->
