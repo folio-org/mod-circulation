@@ -13,6 +13,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.logging.LogHelper.asString;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
@@ -38,7 +39,6 @@ import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
-import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -114,43 +114,46 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
-    log.debug("refundLostItemFees:: loanId={}, itemId={}, cancelReason={}",
-      refundFeeContext::getLoanId, refundFeeContext::getItemId, refundFeeContext::getCancelReason);
+    log.info("refundLostItemFees::Attempting to refund lost item fees: loanId={}, cancelReason={}",
+      refundFeeContext::getLoanId, refundFeeContext::getCancelReason);
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
       log.info("refundLostItemFees:: no need to refund fees for loan {}", refundFeeContext::getLoanId);
-      return completedFuture(succeeded(refundFeeContext));
+      return ofAsync(refundFeeContext);
     }
 
     return lookupLoan(succeeded(refundFeeContext))
       .thenCompose(this::fetchLostItemPolicy)
-      .thenCompose(contextResult -> contextResult.after(context -> {
-        final LostItemPolicy lostItemPolicy = context.getLostItemPolicy();
-
-        if (!lostItemPolicy.shouldRefundFees(context.getItemLostDate())) {
-          log.info("refundLostItemFees:: refund interval was exceeded for loan {}", context::getLoanId);
-          return completedFuture(succeeded(context));
-        }
-
-        return fetchAccountsAndActionsForLoan(context)
-          .thenCompose(r -> r.after(this::processRefund))
-          .exceptionally(CommonFailures::failedDueToServerError);
-      }));
+      .thenCompose(r -> r.after(this::processRefund))
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  public CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
+  private CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
     LostItemFeeRefundContext context) {
 
-    log.debug("processRefund:: loanId={}, itemId={}, cancelReason={}",
-      context::getLoanId, context::getItemId, context::getCancelReason);
+    if (!context.getLostItemPolicy().shouldRefundFees(context.getItemLostDate())) {
+      log.info("refundLostItemFees:: refund interval was exceeded for loan {}", context::getLoanId);
+      return completedFuture(succeeded(context));
+    }
 
-    return refundAccounts(context)
+    return fetchAccountsAndActionsForLoan(context)
+      .thenCompose(r -> r.after(this::refundAccounts))
       .thenCompose(r -> r.after(this::cancelActualCostFee))
       .thenApply(r -> r.map(ignored -> context));
   }
 
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundAccounts(
     LostItemFeeRefundContext context) {
+
+    Collection<Account> accounts = context.getLoan().getAccounts();
+
+    if (accounts == null || accounts.isEmpty()) {
+      log.info("No accounts to refund for loan {}", context.getLoanId());
+      return ofAsync(context);
+    }
+
+    log.info("Refunding {} accounts for loan {}: {}", accounts::size, context::getLoanId,
+      () -> asString(accounts, Account::getId));
 
     return allOf(context.accountRefundCommands(), command -> refundAndCloseAccount(context, command))
       .thenApply(r -> r.map(ignored -> context));
