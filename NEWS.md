@@ -1,3 +1,8 @@
+## 23.3.3 2023-01-27
+
+* Allow to place a TLR recall on an `In transit`, `In process` or `On order` item (CIRC-1720)
+* Refuse to place a TLR recall on an `Aged to lost`, `Declared lost` or `Claimed returned` item (CIRC-1721)
+
 ## 23.3.2 2022-12-13
 
 * Fix cross-tenant policy id causing 500 errors (CIRC-1680)
