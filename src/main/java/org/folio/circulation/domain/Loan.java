@@ -286,7 +286,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String getUserId() {
-    return representation.getString("userId");
+    return getProperty(representation, "userId");
   }
 
   @Override
@@ -724,5 +724,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return getProperty(representation, ITEM_STATUS);
+  }
+
+  @Override
+  public String toString() {
+    return "Loan{" +
+      "id=" + getId() +
+      ", itemId=" + getItemId() +
+      ", userId=" + getUserId() +
+      '}';
   }
 }

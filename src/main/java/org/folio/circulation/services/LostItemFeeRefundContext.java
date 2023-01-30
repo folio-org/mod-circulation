@@ -26,11 +26,13 @@ import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.With;
 
 @With(AccessLevel.PACKAGE)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
+@ToString
 public final class LostItemFeeRefundContext {
   private final ItemStatus initialItemStatus;
   private final String itemId;
