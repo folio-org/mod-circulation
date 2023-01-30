@@ -132,6 +132,8 @@ public class LostItemFeeRefundService {
   private CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
     LostItemFeeRefundContext context) {
 
+    log.debug("processRefund:: context={}", context);
+
     if (!context.getLostItemPolicy().shouldRefundFees(context.getItemLostDate())) {
       log.info("processRefund:: refund interval was exceeded for loan {}", context::getLoanId);
       return ofAsync(context);
@@ -146,6 +148,7 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundAccounts(
     LostItemFeeRefundContext context) {
 
+    log.debug("refundAccounts:: context={}", context);
     Collection<Account> accounts = context.getLoan().getAccounts();
 
     if (isEmpty(accounts)) {

@@ -44,6 +44,7 @@ import org.folio.circulation.support.results.Result;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.With;
 
 public class LostItemFeeChargingService {
@@ -109,8 +110,9 @@ public class LostItemFeeChargingService {
   }
 
   private CompletableFuture<Result<Loan>> applyLostItemFeePolicy(ReferenceDataContext context) {
-    Loan loan = context.getLoan();
+    log.debug("applyLostItemFeePolicy:: context={}", context);
 
+    Loan loan = context.getLoan();
     if (shouldCloseLoan(context.getLostItemPolicy())) {
       log.info("applyLostItemFeePolicy:: closing loan {} as lost and paid", loan.getId());
       return closeLoanAsLostAndPaidAndPublishEvent(loan);
@@ -237,9 +239,13 @@ public class LostItemFeeChargingService {
   @AllArgsConstructor
   @NoArgsConstructor
   @With
+  @ToString(onlyExplicitlyIncluded = true)
   public static final class ReferenceDataContext {
+    @ToString.Include
     private Loan loan;
+    @ToString.Include
     private String servicePointId;
+    @ToString.Include
     private String staffUserId;
     private LostItemPolicy lostItemPolicy;
     private FeeFineOwner feeFineOwner;
