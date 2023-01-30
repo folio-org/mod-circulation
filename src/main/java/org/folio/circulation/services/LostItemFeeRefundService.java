@@ -120,7 +120,7 @@ public class LostItemFeeRefundService {
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
       log.info("refundLostItemFees:: no need to refund fees for loan {}", refundFeeContext::getLoanId);
-      return ofAsync(refundFeeContext);
+      return completedFuture(succeeded(refundFeeContext));
     }
 
     return lookupLoan(succeeded(refundFeeContext))
@@ -134,7 +134,7 @@ public class LostItemFeeRefundService {
 
     if (!context.getLostItemPolicy().shouldRefundFees(context.getItemLostDate())) {
       log.info("processRefund:: refund interval was exceeded for loan {}", context::getLoanId);
-      return completedFuture(succeeded(context));
+      return ofAsync(context);
     }
 
     return fetchAccountsAndActionsForLoan(context)

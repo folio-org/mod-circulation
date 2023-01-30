@@ -1055,8 +1055,7 @@ class DeclareLostAPITests extends APITests {
       .forLoanId(loanId)
       .withComment("declared lost")
       .withServicePointId(servicePointsFixture.cd1().getId())
-      .on(realCurrentDateTime)
-    );
+      .on(realCurrentDateTime));
     mockClockManagerToReturnDefaultDateTime();
 
     assertThat(loan, processingFeeAmount > 0
