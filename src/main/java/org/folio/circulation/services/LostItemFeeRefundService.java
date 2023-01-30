@@ -2,6 +2,7 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.circulation.domain.AccountCancelReason.CANCELLED_ITEM_RETURNED;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_ACTUAL_COST_FEE_TYPE;
@@ -114,7 +115,7 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
-    log.info("refundLostItemFees::Attempting to refund lost item fees: loanId={}, cancelReason={}",
+    log.info("refundLostItemFees:: attempting to refund lost item fees: loanId={}, cancelReason={}",
       refundFeeContext::getLoanId, refundFeeContext::getCancelReason);
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {
@@ -132,7 +133,7 @@ public class LostItemFeeRefundService {
     LostItemFeeRefundContext context) {
 
     if (!context.getLostItemPolicy().shouldRefundFees(context.getItemLostDate())) {
-      log.info("refundLostItemFees:: refund interval was exceeded for loan {}", context::getLoanId);
+      log.info("processRefund:: refund interval was exceeded for loan {}", context::getLoanId);
       return completedFuture(succeeded(context));
     }
 
@@ -147,13 +148,13 @@ public class LostItemFeeRefundService {
 
     Collection<Account> accounts = context.getLoan().getAccounts();
 
-    if (accounts == null || accounts.isEmpty()) {
-      log.info("No accounts to refund for loan {}", context.getLoanId());
+    if (isEmpty(accounts)) {
+      log.info("refundAccounts:: no accounts to refund for loan {}", context.getLoanId());
       return ofAsync(context);
     }
 
-    log.info("Refunding {} accounts for loan {}: {}", accounts::size, context::getLoanId,
-      () -> asString(accounts, Account::getId));
+    log.info("refundAccounts:: refunding {} accounts for loan {}: {}", accounts::size,
+      context::getLoanId, () -> asString(accounts, Account::getId));
 
     return allOf(context.accountRefundCommands(), command -> refundAndCloseAccount(context, command))
       .thenApply(r -> r.map(ignored -> context));
