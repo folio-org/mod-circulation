@@ -93,6 +93,8 @@ public class LostItemFeeChargingService {
   private CompletableFuture<Result<ReferenceDataContext>> buildReferenceDataContext(
     LostItemFeeRefundContext refundContext) {
 
+    log.debug("buildReferenceDataContext:: context={}", refundContext);
+
     Loan loan = refundContext.getLoan();
     LostItemPolicy lostItemPolicy = refundContext.getLostItemPolicy();
 
@@ -102,6 +104,8 @@ public class LostItemFeeChargingService {
       .withStaffUserId(refundContext.getStaffUserId());
 
     if (lostItemPolicy != null) {
+      log.debug("buildReferenceDataContext:: skip fetching lost item fee policy {}",
+        lostItemPolicy.getId());
       return ofAsync(referenceDataContext.withLostItemPolicy(lostItemPolicy));
     }
 
