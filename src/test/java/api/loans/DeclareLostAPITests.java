@@ -6,6 +6,8 @@ import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
+import static api.support.matchers.AccountMatchers.isClosedCancelled;
+import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.ActualCostRecordMatchers.hasAdditionalInfoForStaff;
 import static api.support.matchers.ActualCostRecordMatchers.isForLoan;
 import static api.support.matchers.ActualCostRecordMatchers.isInStatus;
@@ -16,6 +18,7 @@ import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFees;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
@@ -67,6 +70,7 @@ import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -82,7 +86,6 @@ import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
-import api.support.matchers.AccountMatchers;
 import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -981,13 +984,20 @@ class DeclareLostAPITests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = {0.0, 1.0})
-  void shouldCancelActualCostLostItemFeeWhenRefundPeriodWasNotExceeded(double processingFeeAmount) {
+  @CsvSource(value = {
+    "0.0, 1",
+    "0.0, 9999999",
+    "1.0, 1",
+    "1.0, 9999999"
+  })
+  void shouldCancelActualCostLostItemFee(double processingFeeAmount, int feeRefundIntervalMinutes) {
     LostItemFeePolicyBuilder policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
       .withName("test policy")
       .withActualCost(0.0)
       .withLostItemProcessingFee(processingFeeAmount)
-      .withFeeRefundInterval(Period.months(6));
+      .withChargeAmountItemSystem(true) // charge processing fee when item is aged to lost
+      .withChargeAmountItemPatron(true) // charge processing fee when item is declared lost
+      .withFeeRefundInterval(Period.minutes(feeRefundIntervalMinutes));
 
     AgeToLostResult ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
     IndividualResource loan = ageToLostResult.getLoan();
@@ -1000,9 +1010,10 @@ class DeclareLostAPITests extends APITests {
 
     assertThat(loan, hasNoLostItemFee());
     assertThat(loan, processingFeeAmount > 0
-      ? hasLostItemProcessingFee(AccountMatchers.isOpen(processingFeeAmount))
+      ? hasLostItemProcessingFee(isOpen(processingFeeAmount))
       : hasNoLostItemProcessingFee());
 
+    // should cancel initial processing fee and actual cost record regardless of fee refund interval
     declareLostFixtures.declareItemLost(loanId);
 
     List<JsonObject> actualCostRecordsAfterDeclaringLost = actualCostRecordsClient.getAll();
@@ -1017,57 +1028,14 @@ class DeclareLostAPITests extends APITests {
         assertThat(actualCostRecord, isInStatus(OPEN));
       }
     }
-  }
 
-  @ParameterizedTest
-  @ValueSource(doubles = {0.0, 1.0})
-  void shouldNotCancelActualCostLostItemFeeWhenRefundPeriodWasExceeded(double processingFeeAmount) {
-    final int refundPeriodDurationDays = 3;
-
-    LostItemFeePolicyBuilder policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
-      .withName("test policy")
-      .chargeProcessingFeeWhenAgedToLost(processingFeeAmount)
-      .withActualCost(0.0)
-      .withFeeRefundInterval(Period.days(refundPeriodDurationDays));
-
-    AgeToLostResult ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
-    IndividualResource loan = ageToLostResult.getLoan();
-    UUID loanId = ageToLostResult.getLoanId();
-
-    List<JsonObject> actualCostRecordsAfterAgingToLost = actualCostRecordsClient.getAll();
-    assertThat(actualCostRecordsAfterAgingToLost, hasSize(1));
-    JsonObject firstActualCostRecord = actualCostRecordsAfterAgingToLost.get(0);
-    assertThat(firstActualCostRecord, isInStatus(OPEN));
-
-    assertThat(loan, hasNoLostItemFee());
-    assertThat(loan, processingFeeAmount > 0
-      ? hasLostItemProcessingFee(AccountMatchers.isOpen(processingFeeAmount))
-      : hasNoLostItemProcessingFee());
-
-    ZonedDateTime realCurrentDateTime = getZonedDateTime();
-    ZonedDateTime declareLostDateTime = getZonedDateTime()
-      .plusWeeks(8) // lost item fees are charged when loan is 8 weeks overdue
-      .plusDays(refundPeriodDurationDays)
-      .plusMinutes(1);
-
-    mockClockManagerToReturnFixedDateTime(declareLostDateTime);
-    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
-      .forLoanId(loanId)
-      .withComment("declared lost")
-      .withServicePointId(servicePointsFixture.cd1().getId())
-      .on(realCurrentDateTime));
-    mockClockManagerToReturnDefaultDateTime();
-
-    assertThat(loan, processingFeeAmount > 0
-      ? hasLostItemProcessingFee(AccountMatchers.isOpen(processingFeeAmount))
-      : hasNoLostItemProcessingFee());
-
-    List<JsonObject> actualCostRecordsAfterDeclaringLost = actualCostRecordsClient.getAll();
-    assertThat(actualCostRecordsAfterDeclaringLost, hasSize(2));
-
-    for (JsonObject actualCostRecord : actualCostRecordsAfterDeclaringLost) {
-      assertThat(actualCostRecord, isForLoan(loanId));
-      assertThat(actualCostRecord, isInStatus(OPEN));
+    if (processingFeeAmount > 0) {
+      assertThat(loan, hasLostItemProcessingFees(hasItems(
+        isOpen(processingFeeAmount),
+        isClosedCancelled("Cancelled item declared lost", processingFeeAmount)
+      )));
+    } else {
+      assertThat(loan, hasNoLostItemProcessingFee());
     }
   }
 
