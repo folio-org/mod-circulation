@@ -592,11 +592,16 @@
             "circulation.end-patron-action-session.post"
           ],
           "modulePermissions": [
+            "patron-action-session-storage.patron-action-sessions.item.get",
             "patron-action-session-storage.patron-action-sessions.collection.get",
             "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "configuration.entries.item.get",
+            "configuration.entries.collection.get",
             "circulation.internal.fetch-items",
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
+            "users.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
