@@ -78,7 +78,7 @@ public class LoanAccountMatcher extends TypeSafeMatcher<IndividualResource> {
     return hasLostItemProcessingFees(iterableWithSize(0));
   }
 
-  private static LoanAccountMatcher hasLostItemProcessingFees(
+  public static LoanAccountMatcher hasLostItemProcessingFees(
     Matcher<Iterable<JsonObject>> accountMatcher) {
 
     return new LoanAccountMatcher("Lost item processing fee", accountMatcher);
