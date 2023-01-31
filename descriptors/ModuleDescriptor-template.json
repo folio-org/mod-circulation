@@ -623,6 +623,7 @@
           "pathPattern": "/circulation/notice-session-expiration-by-timeout",
           "modulePermissions": [
             "patron-action-session-storage.expired-session-patron-ids.collection.get",
+            "patron-action-session-storage.patron-action-sessions.item.get",
             "patron-action-session-storage.patron-action-sessions.collection.get",
             "circulation-storage.loans.collection.get",
             "circulation.internal.fetch-items",
