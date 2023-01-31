@@ -148,9 +148,11 @@ public class TemplateContextUtil {
   public static JsonObject createUserContext(User user) {
     return new JsonObject()
     .put("firstName", user.getFirstName())
+    .put("preferredFirstName", user.getPreferredFirstName() == null ? user.getFirstName() : user.getPreferredFirstName())
     .put("lastName", user.getLastName())
     .put("middleName", user.getMiddleName())
-    .put("barcode", user.getBarcode());
+    .put("barcode", user.getBarcode())
+    .put("patronGroup", user.getPatronGroup()!=null ? user.getPatronGroup().getGroup():"");
   }
 
   private static JsonObject createItemContext(Item item) {

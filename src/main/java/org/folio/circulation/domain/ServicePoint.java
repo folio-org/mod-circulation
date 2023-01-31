@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import lombok.Value;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
 
 @Value
 public class ServicePoint {
@@ -8,7 +9,7 @@ public class ServicePoint {
     return unknown(null);
   }
   public static ServicePoint unknown(String id) {
-    return new ServicePoint(id, null, null, false, null, null, null, null);
+    return new ServicePoint(id, null, null, false, null, null, null, null, null);
   }
 
   String id;
@@ -19,4 +20,5 @@ public class ServicePoint {
   String description;
   Integer shelvingLagTime;
   TimePeriod holdShelfExpiryPeriod;
+  ExpirationDateManagement holdShelfClosedLibraryDateManagement;
 }

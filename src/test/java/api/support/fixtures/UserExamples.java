@@ -5,14 +5,14 @@ import api.support.builders.UserBuilder;
 public class UserExamples {
   public static UserBuilder basedUponStevenJones() {
     return new UserBuilder()
-      .withName("Jones", "Steven", "Jacob")
+      .withName("Jones","Steven","Jacob")
       .withBarcode("5694596854")
       .withActive(true);
   }
 
   public static UserBuilder basedUponJessicaPontefract() {
     return new UserBuilder()
-      .withName("Pontefract", "Jessica")
+      .withPreferredFirstName("Pontefract", "Jessica","Jess")
       .withBarcode("7697595697")
       .withActive(true);
   }

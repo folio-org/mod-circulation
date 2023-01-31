@@ -726,6 +726,7 @@
             "patron-notice.post",
             "users.item.get",
             "usergroups.collection.get",
+            "usergroups.item.get",
             "configuration.entries.collection.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
@@ -1438,6 +1439,7 @@
         "users.item.get",
         "users.collection.get",
         "usergroups.collection.get",
+        "usergroups.item.get",
         "addresstypes.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
@@ -1460,7 +1462,10 @@
         "accounts.refund.post",
         "accounts.cancel.post",
         "configuration.entries.collection.get",
-        "calendar.endpoint.dates.get"
+        "calendar.endpoint.dates.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },
@@ -1505,7 +1510,10 @@
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.item.get",
         "manualblocks.collection.get",
-        "manualblocks.item.get"
+        "manualblocks.item.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },
@@ -1838,7 +1846,10 @@
         "note.types.collection.get",
         "notes.item.post",
         "notes.domain.all",
-        "actual-cost-record-storage.actual-cost-records.item.post"
+        "actual-cost-record-storage.actual-cost-records.item.post",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },

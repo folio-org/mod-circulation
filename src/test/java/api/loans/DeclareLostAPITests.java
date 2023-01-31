@@ -6,12 +6,18 @@ import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
+import static api.support.matchers.ActualCostRecordMatchers.hasAdditionalInfoForStaff;
+import static api.support.matchers.ActualCostRecordMatchers.isForLoan;
+import static api.support.matchers.ActualCostRecordMatchers.isInStatus;
 import static api.support.matchers.EventMatchers.isValidItemDeclaredLostEvent;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
+import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
+import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.hasStatus;
@@ -26,6 +32,8 @@ import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Function.identity;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
+import static org.folio.circulation.domain.ActualCostRecord.Status.OPEN;
 import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -51,6 +59,7 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.EventType;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -73,6 +82,7 @@ import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
+import api.support.matchers.AccountMatchers;
 import api.support.matchers.EventTypeMatchers;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -968,6 +978,97 @@ class DeclareLostAPITests extends APITests {
     declareLostFixtures.declareItemLost(builder);
 
     assertEquals(0, notesClient.getAll().size());
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.0, 1.0})
+  void shouldCancelActualCostLostItemFeeWhenRefundPeriodWasNotExceeded(double processingFeeAmount) {
+    LostItemFeePolicyBuilder policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("test policy")
+      .withActualCost(0.0)
+      .withLostItemProcessingFee(processingFeeAmount)
+      .withFeeRefundInterval(Period.months(6));
+
+    AgeToLostResult ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    IndividualResource loan = ageToLostResult.getLoan();
+    UUID loanId = ageToLostResult.getLoanId();
+
+    List<JsonObject> actualCostRecordsAfterAgingToLost = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecordsAfterAgingToLost, hasSize(1));
+    JsonObject actualCostRecordBeforeDeclaringLost = actualCostRecordsAfterAgingToLost.get(0);
+    assertThat(actualCostRecordBeforeDeclaringLost, isInStatus(OPEN));
+
+    assertThat(loan, hasNoLostItemFee());
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(AccountMatchers.isOpen(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
+
+    declareLostFixtures.declareItemLost(loanId);
+
+    List<JsonObject> actualCostRecordsAfterDeclaringLost = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecordsAfterDeclaringLost, hasSize(2));
+
+    for (JsonObject actualCostRecord : actualCostRecordsAfterDeclaringLost) {
+      assertThat(actualCostRecord, isForLoan(loanId));
+      if (actualCostRecord.getString("id").equals(actualCostRecordBeforeDeclaringLost.getString("id"))) {
+        assertThat(actualCostRecord, isInStatus(CANCELLED));
+        assertThat(actualCostRecord, hasAdditionalInfoForStaff("Aged to lost item was declared lost"));
+      } else {
+        assertThat(actualCostRecord, isInStatus(OPEN));
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.0, 1.0})
+  void shouldNotCancelActualCostLostItemFeeWhenRefundPeriodWasExceeded(double processingFeeAmount) {
+    final int refundPeriodDurationDays = 3;
+
+    LostItemFeePolicyBuilder policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("test policy")
+      .chargeProcessingFeeWhenAgedToLost(processingFeeAmount)
+      .withActualCost(0.0)
+      .withFeeRefundInterval(Period.days(refundPeriodDurationDays));
+
+    AgeToLostResult ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    IndividualResource loan = ageToLostResult.getLoan();
+    UUID loanId = ageToLostResult.getLoanId();
+
+    List<JsonObject> actualCostRecordsAfterAgingToLost = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecordsAfterAgingToLost, hasSize(1));
+    JsonObject firstActualCostRecord = actualCostRecordsAfterAgingToLost.get(0);
+    assertThat(firstActualCostRecord, isInStatus(OPEN));
+
+    assertThat(loan, hasNoLostItemFee());
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(AccountMatchers.isOpen(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
+
+    ZonedDateTime realCurrentDateTime = getZonedDateTime();
+    ZonedDateTime declareLostDateTime = getZonedDateTime()
+      .plusWeeks(8) // lost item fees are charged when loan is 8 weeks overdue
+      .plusDays(refundPeriodDurationDays)
+      .plusMinutes(1);
+
+    mockClockManagerToReturnFixedDateTime(declareLostDateTime);
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .forLoanId(loanId)
+      .withComment("declared lost")
+      .withServicePointId(servicePointsFixture.cd1().getId())
+      .on(realCurrentDateTime));
+    mockClockManagerToReturnDefaultDateTime();
+
+    assertThat(loan, processingFeeAmount > 0
+      ? hasLostItemProcessingFee(AccountMatchers.isOpen(processingFeeAmount))
+      : hasNoLostItemProcessingFee());
+
+    List<JsonObject> actualCostRecordsAfterDeclaringLost = actualCostRecordsClient.getAll();
+    assertThat(actualCostRecordsAfterDeclaringLost, hasSize(2));
+
+    for (JsonObject actualCostRecord : actualCostRecordsAfterDeclaringLost) {
+      assertThat(actualCostRecord, isForLoan(loanId));
+      assertThat(actualCostRecord, isInStatus(OPEN));
+    }
   }
 
   private List<JsonObject> getAccountsForLoan(UUID loanId) {

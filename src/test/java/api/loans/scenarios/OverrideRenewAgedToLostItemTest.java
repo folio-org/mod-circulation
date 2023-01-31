@@ -29,7 +29,7 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   private OverrideRenewalFixture overrideRenewalFixture;
 
   public OverrideRenewAgedToLostItemTest() {
-    super("Cancelled item renewed");
+    super("Cancelled item renewed", "Lost item was renewed");
   }
 
   @Override

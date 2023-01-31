@@ -1,7 +1,9 @@
 package org.folio.circulation.services;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -12,6 +14,8 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.ActualCostFeeCancelReason;
+import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ServicePoint;
@@ -25,6 +29,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRe
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.feefine.AccountActionResponse;
 import org.folio.circulation.services.feefine.CancelAccountCommand;
+import org.folio.circulation.services.feefine.CancelActualCostFeeRequest;
 import org.folio.circulation.services.feefine.FeeFineService;
 import org.folio.circulation.services.feefine.RefundAccountCommand;
 import org.folio.circulation.services.support.CreateAccountCommand;
@@ -149,5 +154,25 @@ public class FeeFineFacade {
 
     return fetchServicePoint(command.getCurrentServicePointId())
       .thenApply(r -> r.map(builder::withCreatedAt));
+  }
+
+  public CompletableFuture<Result<ActualCostRecord>> cancelActualCostFee(
+    ActualCostRecord actualCostRecord, ActualCostFeeCancelReason reason) {
+
+    if (actualCostRecord == null) {
+      log.info("cancelActualCostFee:: actual cost record is null, aborting");
+      return emptyAsync();
+    }
+
+    String cancellationReason = ofNullable(reason)
+      .map(ActualCostFeeCancelReason::getValue)
+      .orElse(null);
+
+    CancelActualCostFeeRequest request = CancelActualCostFeeRequest.builder()
+      .actualCostRecordId(actualCostRecord.getId())
+      .additionalInfoForStaff(cancellationReason)
+      .build();
+
+    return feeFineService.cancelActualCostFeeFine(request);
   }
 }
