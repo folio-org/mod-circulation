@@ -592,11 +592,16 @@
             "circulation.end-patron-action-session.post"
           ],
           "modulePermissions": [
+            "patron-action-session-storage.patron-action-sessions.item.get",
             "patron-action-session-storage.patron-action-sessions.collection.get",
             "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "configuration.entries.item.get",
+            "configuration.entries.collection.get",
             "circulation.internal.fetch-items",
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
+            "users.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
@@ -618,6 +623,7 @@
           "pathPattern": "/circulation/notice-session-expiration-by-timeout",
           "modulePermissions": [
             "patron-action-session-storage.expired-session-patron-ids.collection.get",
+            "patron-action-session-storage.patron-action-sessions.item.get",
             "patron-action-session-storage.patron-action-sessions.collection.get",
             "circulation-storage.loans.collection.get",
             "circulation.internal.fetch-items",
@@ -726,6 +732,7 @@
             "patron-notice.post",
             "users.item.get",
             "usergroups.collection.get",
+            "usergroups.item.get",
             "configuration.entries.collection.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
@@ -920,7 +927,7 @@
     },
     {
       "id": "instance-storage",
-      "version": "4.0 5.0 6.0 7.0 8.0 9.0"
+      "version": "4.0 5.0 6.0 7.0 8.0 9.0 10.0"
     },
     {
       "id": "holdings-storage",
@@ -1440,6 +1447,7 @@
         "users.item.get",
         "users.collection.get",
         "usergroups.collection.get",
+        "usergroups.item.get",
         "addresstypes.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
@@ -1462,7 +1470,10 @@
         "accounts.refund.post",
         "accounts.cancel.post",
         "configuration.entries.collection.get",
-        "calendar.endpoint.dates.get"
+        "calendar.endpoint.dates.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },
@@ -1507,7 +1518,10 @@
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.item.get",
         "manualblocks.collection.get",
-        "manualblocks.item.get"
+        "manualblocks.item.get",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },
@@ -1841,7 +1855,10 @@
         "note.types.collection.get",
         "notes.item.post",
         "notes.domain.all",
-        "actual-cost-record-storage.actual-cost-records.item.post"
+        "actual-cost-record-storage.actual-cost-records.item.post",
+        "actual-cost-record-storage.actual-cost-records.collection.get",
+        "actual-cost-record-storage.actual-cost-records.item.get",
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },

@@ -3,11 +3,9 @@ package org.folio.circulation.domain.representations;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createCheckInContext;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
-
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.support.http.server.HttpResponse;
-
 import io.vertx.core.json.JsonObject;
 
 public class CheckInByBarcodeResponse {
@@ -30,7 +28,6 @@ public class CheckInByBarcodeResponse {
     final ItemSummaryRepresentation itemRepresentation = new ItemSummaryRepresentation();
 
     final JsonObject json = new JsonObject();
-
     write(json, "loan", loanRepresentation.extendedLoan(context.getLoan()));
     write(json, "item", itemRepresentation.createItemSummary(context.getItem()));
     write(json, "staffSlipContext", createCheckInContext(context));
@@ -38,4 +35,5 @@ public class CheckInByBarcodeResponse {
 
     return json;
   }
+
 }

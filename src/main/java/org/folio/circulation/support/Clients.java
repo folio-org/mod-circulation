@@ -63,6 +63,7 @@ public class Clients {
   private final CollectionResourceClient accountsRefundClient;
   private final CollectionResourceClient accountsCancelClient;
   private final CollectionResourceClient actualCostRecordsStorageClient;
+  private final CollectionResourceClient actualCostFeeFineCancelClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -124,6 +125,7 @@ public class Clients {
       accountsRefundClient = createAccountsRefundClient(client, context);
       accountsCancelClient = createAccountsCancelClient(client, context);
       actualCostRecordsStorageClient = createActualCostRecordClient(client, context);
+      actualCostFeeFineCancelClient = createActualCostFeeFineCancelClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -336,6 +338,10 @@ public class Clients {
 
   public CollectionResourceClient accountsCancelClient() {
     return accountsCancelClient;
+  }
+
+  public CollectionResourceClient actualCostFeeFineCancelClient() {
+    return actualCostFeeFineCancelClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -733,5 +739,11 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/actual-cost-record-storage/actual-cost-records");
+  }
+
+  private CollectionResourceClient createActualCostFeeFineCancelClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/actual-cost-fee-fine/cancel");
   }
 }

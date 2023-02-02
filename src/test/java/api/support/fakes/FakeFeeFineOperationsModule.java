@@ -3,6 +3,7 @@ package api.support.fakes;
 import static api.support.fakes.Storage.getStorage;
 import static api.support.fakes.StorageSchema.validatorForFeeFineCancelOperationSchema;
 import static api.support.fakes.StorageSchema.validatorForFeeFineOperationSchema;
+import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
@@ -33,6 +34,7 @@ public class FakeFeeFineOperationsModule {
     router.post("/accounts/:accountId/cancel")
       .handler(validateRequest(validatorForFeeFineCancelOperationSchema()));
     router.post("/accounts/:accountId/cancel").handler(this::cancelAccount);
+    router.post("/actual-cost-fee-fine/cancel").handler(this::cancelActualCostFee);
   }
 
   private void refundAccount(RoutingContext context) {
@@ -97,9 +99,24 @@ public class FakeFeeFineOperationsModule {
     created(responseJson).writeTo(context.response());
   }
 
+  private void cancelActualCostFee(RoutingContext context) {
+    JsonObject request = context.body().asJsonObject();
+
+    JsonObject response = getActualCostRecordStorage(context)
+      .get(request.getString("actualCostRecordId"))
+      .put("status", CANCELLED.getValue())
+      .put("additionalInfoForStaff", request.getString("additionalInfoForStaff"));
+
+    created(response).writeTo(context.response());
+  }
+
   private Map<String, JsonObject> getAccountsStorage(RoutingContext context) {
-    final String tenant = context.request().headers().get(OKAPI_TENANT_HEADER);
-    return getStorage().getTenantResources("/accounts", tenant);
+    return getStorage().getTenantResources("/accounts", getTenant(context));
+  }
+
+  private Map<String, JsonObject> getActualCostRecordStorage(RoutingContext context) {
+    return getStorage()
+      .getTenantResources("/actual-cost-record-storage/actual-cost-records", getTenant(context));
   }
 
   private JsonObject getAccountById(RoutingContext context) {
@@ -129,7 +146,7 @@ public class FakeFeeFineOperationsModule {
       .put("userId", account.getString("userId"))
       .put("id", feeFineActionId);
 
-    final String tenant = context.request().headers().get(OKAPI_TENANT_HEADER);
+    final String tenant = getTenant(context);
     getStorage().getTenantResources("/feefineactions", tenant)
       .put(feeFineActionId, feeFineAction);
 
@@ -147,5 +164,9 @@ public class FakeFeeFineOperationsModule {
         context.next();
       }
     };
+  }
+
+  private static String getTenant(RoutingContext context) {
+    return context.request().headers().get(OKAPI_TENANT_HEADER);
   }
 }
