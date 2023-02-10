@@ -1,29 +1,32 @@
 package org.folio.circulation.domain.validation;
 
 import static java.lang.String.format;
-import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
 
 public class RequestedByAnotherPatronValidator {
   private final Function<String, ValidationErrorFailure> errorFunction;
+  private final RequestQueueService requestQueueService;
 
-  public RequestedByAnotherPatronValidator(
-    Function<String, ValidationErrorFailure> errorFunction) {
+  public RequestedByAnotherPatronValidator(Function<String, ValidationErrorFailure> errorFunction,
+    RequestQueueService requestQueueService) {
 
     this.errorFunction = errorFunction;
+    this.requestQueueService = requestQueueService;
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenRequestedByAnotherPatron(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenRequestedByAnotherPatron(
     Result<LoanAndRelatedRecords> result) {
 
-    return result.failWhen(
+    return result.failAfter(
       this::isRequestedByAnotherPatron,
       records -> requestedByAnotherPatronError(records.getLoan()));
   }
@@ -37,10 +40,10 @@ public class RequestedByAnotherPatronValidator {
       item.getTitle(), item.getBarcode(), loan.getUser().getPersonalName()));
   }
 
-  private Result<Boolean> isRequestedByAnotherPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
-    Loan loan = loanAndRelatedRecords.getLoan();
+  private CompletableFuture<Result<Boolean>> isRequestedByAnotherPatron(
+    LoanAndRelatedRecords records) {
 
-    return succeeded(loanAndRelatedRecords.getRequestQueue()
-      .isRequestedByAnotherPatron(loan.getUser(), loan.getItem()));
+    return requestQueueService.isItemRequestedByAnotherPatron(records.getRequestQueue(),
+      records.getLoan().getUser(), records.getLoan().getItem());
   }
 }
