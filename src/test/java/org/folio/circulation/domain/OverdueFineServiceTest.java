@@ -232,7 +232,7 @@ class OverdueFineServiceTest {
     assertEquals(ACCOUNT_ID.toString(), feeFineAction.getValue().getString("accountId"));
     assertEquals(String.format("%s, %s", LOGGED_IN_USER.getLastName(),
       LOGGED_IN_USER.getFirstName()), feeFineAction.getValue().getString("source"));
-    assertEquals(CHECK_IN_SERVICE_POINT_NAME, feeFineAction.getValue().getString("createdAt"));
+    assertEquals(CHECK_IN_SERVICE_POINT_ID.toString(), feeFineAction.getValue().getString("createdAt"));
     assertEquals("-", feeFineAction.getValue().getString("transactionInformation"));
     assertEquals(correctOverdueFine, feeFineAction.getValue().getDouble("balance"));
     assertEquals(correctOverdueFine, feeFineAction.getValue().getDouble("amountAction"));
