@@ -47,7 +47,7 @@ public final class FeeFineAccountFixture {
       .withActionAmount(amount)
       .withPaymentMethod("Bursar")
       .withActionType(actionType)
-      .createdAt("Circ Desk 1"));
+      .createdAt(UUID.randomUUID().toString()));
 
     accountsClient.replace(accountUuid, account.copy()
       .put("remaining", remaining)
@@ -112,7 +112,7 @@ public final class FeeFineAccountFixture {
       .withActionAmount(amount)
       .withPaymentMethod("Cash")
       .withActionType(actionType)
-      .createdAt("Circ Desk 1"));
+      .createdAt(UUID.randomUUID().toString()));
 
     accountsClient.replace(accountUuid, account.copy()
       .put("remaining", remaining)
@@ -133,7 +133,7 @@ public final class FeeFineAccountFixture {
       .withBalance(amount)
       .withActionAmount(amount)
       .withActionType("Manual fee fine")
-      .createdAt("Circ Desk 1"));
+      .createdAt(UUID.randomUUID().toString()));
 
     return account;
   }
