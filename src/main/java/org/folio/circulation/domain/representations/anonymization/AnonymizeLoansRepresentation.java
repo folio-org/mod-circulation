@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.support.results.Result;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class AnonymizeLoansRepresentation {
@@ -33,13 +34,13 @@ public class AnonymizeLoansRepresentation {
 
   }
 
-  private static List<Error> mapToErrors(Map<String, Collection<String>> multiMap) {
+  static List<Error> mapToErrors(Map<String, Collection<String>> multiMap) {
     return multiMap.keySet()
       .stream()
       .map(k -> new Error().withMessage(k)
         .withParameters(Collections.singletonList(new Parameter().withKey("loanIds")
-          .withValue(multiMap.get(k).toString()))))
+          // errors.schema defines value as String so we need to serialize the JsonArray
+          .withValue(new JsonArray(List.copyOf(multiMap.get(k))).toString()))))
       .collect(Collectors.toList());
-
   }
 }
