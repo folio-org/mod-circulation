@@ -30,7 +30,7 @@ public class OpeningDay {
   private static final String DATE_KEY = "date";
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
-  private static final String OPENING_HOUR_KEY = "openings";
+  private static final String OPENINGS_KEY = "openings";
 
   private final List<OpeningHour> openings;
   private final LocalDate date;
@@ -98,7 +98,7 @@ public class OpeningDay {
     write(json, DATE_KEY, DateTimeUtil.atStartOfDay(date, UTC));
     write(json, ALL_DAY_KEY, allDay);
     write(json, OPEN_KEY, open);
-    write(json, OPENING_HOUR_KEY, openingHourToJsonArray());
+    write(json, OPENINGS_KEY, openingHourToJsonArray());
 
     return json;
   }
@@ -107,6 +107,6 @@ public class OpeningDay {
    * Create a list of {@link OpeningHour OpeningHour} from the provided daily opening object
    */
   private static List<OpeningHour> createOpeningTimes(JsonObject representation) {
-    return mapToList(representation, OPENING_HOUR_KEY, OpeningHour::new);
+    return mapToList(representation, OPENINGS_KEY, OpeningHour::new);
   }
 }
