@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class AnonymizeLoansRepresentationTest {
 
   @Test
-  void errors() {
+  void testLoanAnonymizationRecordsWithErrors() {
     Map<String, Set<String>> errorMap = Map.of(
         "foo", Set.of("foo1", "foo2"),
         "bar", Set.of("bar1"));
