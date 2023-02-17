@@ -34,7 +34,7 @@ public class AnonymizeLoansRepresentation {
 
   }
 
-  static List<Error> mapToErrors(Map<String, Collection<String>> multiMap) {
+  private static List<Error> mapToErrors(Map<String, Collection<String>> multiMap) {
     return multiMap.keySet()
       .stream()
       .map(k -> new Error().withMessage(k)
