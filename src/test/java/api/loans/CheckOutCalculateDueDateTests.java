@@ -682,7 +682,7 @@ class CheckOutCalculateDueDateTests extends APITests {
   }
 
   private ZonedDateTime findDateTimeInPeriod(OpeningDay currentDay, LocalTime offsetTime, LocalDate currentDate) {
-    List<OpeningHour> openingHoursList = currentDay.getOpeningHour();
+    List<OpeningHour> openingHoursList = currentDay.getOpenings();
 
     boolean isInPeriod = false;
     LocalTime newOffsetTime = null;
@@ -724,7 +724,7 @@ class CheckOutCalculateDueDateTests extends APITests {
         LocalTime offsetTime = TEST_TIME_MORNING.plusHours(duration);
         LocalDate currentDate = currentOpeningDay.getDate();
 
-        if (isInPeriodOpeningDay(currentOpeningDay.getOpeningHour(), offsetTime)) {
+        if (isInPeriodOpeningDay(currentOpeningDay.getOpenings(), offsetTime)) {
           return findDateTimeInPeriod(currentOpeningDay, offsetTime, currentDate);
         } else {
           LocalDate localDate = nextOpeningDay.getDate();
@@ -732,7 +732,7 @@ class CheckOutCalculateDueDateTests extends APITests {
           if (nextOpeningDay.isAllDay()) {
             return atStartOfDay(localDate, UTC);
           } else {
-            OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
+            OpeningHour openingHour = nextOpeningDay.getOpenings().get(0);
 
             return atStartOfDay(localDate, UTC)
               .withHour(openingHour.getStartTime().getHour())
@@ -761,7 +761,7 @@ class CheckOutCalculateDueDateTests extends APITests {
                 .withMinute(MIDNIGHT.getMinute())
                 .withSecond(MIDNIGHT.getSecond());
             } else {
-              OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
+              OpeningHour openingHour = nextOpeningDay.getOpenings().get(0);
 
               return atStartOfDay(nextDate, UTC)
                 .withHour(openingHour.getStartTime().getHour())
@@ -771,7 +771,7 @@ class CheckOutCalculateDueDateTests extends APITests {
           }
         } else {
           LocalTime offsetTime = TEST_TIME_MORNING.plusMinutes(duration);
-          if (isInPeriodOpeningDay(currentOpeningDay.getOpeningHour(), offsetTime)) {
+          if (isInPeriodOpeningDay(currentOpeningDay.getOpenings(), offsetTime)) {
             return atStartOfDay(currentDate, UTC)
               .withHour(offsetTime.getHour())
               .withMinute(offsetTime.getMinute())
@@ -785,7 +785,7 @@ class CheckOutCalculateDueDateTests extends APITests {
                 .withMinute(MIDNIGHT.getMinute())
                 .withSecond(MIDNIGHT.getSecond());
             } else {
-              OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
+              OpeningHour openingHour = nextOpeningDay.getOpenings().get(0);
 
               return atStartOfDay(nextDate, UTC)
                 .withHour(openingHour.getStartTime().getHour())
@@ -803,7 +803,7 @@ class CheckOutCalculateDueDateTests extends APITests {
             .withMinute(MIDNIGHT.getMinute())
             .withSecond(MIDNIGHT.getSecond());
         }
-        OpeningHour openingHour = nextOpeningDay.getOpeningHour().get(0);
+        OpeningHour openingHour = nextOpeningDay.getOpenings().get(0);
 
         return atStartOfDay(nextDate, UTC)
           .withHour(openingHour.getStartTime().getHour())
@@ -849,7 +849,7 @@ class CheckOutCalculateDueDateTests extends APITests {
     if (allDay) {
       return atStartOfDay(date, UTC);
     } else {
-      List<OpeningHour> openingHours = openingDay.getOpeningHour();
+      List<OpeningHour> openingHours = openingDay.getOpenings();
       if (openingHours.isEmpty()) {
         return atStartOfDay(date, UTC);
       }

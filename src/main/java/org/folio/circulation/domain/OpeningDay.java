@@ -30,25 +30,25 @@ public class OpeningDay {
   private static final String DATE_KEY = "date";
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
-  private static final String OPENING_HOUR_KEY = "openingHour";
+  private static final String OPENING_HOUR_KEY = "openings";
 
-  private final List<OpeningHour> openingHour;
+  private final List<OpeningHour> openings;
   private final LocalDate date;
   private final boolean allDay;
   private final boolean open;
   private final ZonedDateTime dayWithTimeZone;
 
-  public OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay, boolean open) {
-    this.openingHour = openingHour;
+  public OpeningDay(List<OpeningHour> openings, LocalDate date, boolean allDay, boolean open) {
+    this.openings = openings;
     this.date = date;
     this.allDay = allDay;
     this.open = open;
     this.dayWithTimeZone = null;
   }
 
-  public OpeningDay(List<OpeningHour> openingHour, LocalDate date, boolean allDay,
+  public OpeningDay(List<OpeningHour> openings, LocalDate date, boolean allDay,
     boolean open, ZoneId zone) {
-    this(openingHour, date, allDay, open, DateTimeUtil.atStartOfDay(date, zone));
+    this(openings, date, allDay, open, DateTimeUtil.atStartOfDay(date, zone));
   }
 
   /**
@@ -84,7 +84,7 @@ public class OpeningDay {
    * Convert the opening hours to JSON for re-packaging
    */
   private JsonArray openingHourToJsonArray() {
-    return openingHour.stream()
+    return openings.stream()
       .map(OpeningHour::toJson)
       .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::add));
   }
