@@ -4199,6 +4199,26 @@ public class RequestsAPICreationTests extends APITests {
     }
   }
 
+  @Test
+  void canCreateHoldTlrForInstanceWithNoHoldingsRecords() {
+    reconfigureTlrFeature(ENABLED, null, null, null);
+
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    IndividualResource response = requestsClient.create(new RequestBuilder()
+      .hold()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    JsonObject createdRequest = response.getJson();
+    assertThat(createdRequest.getString("requestLevel"), is("Title"));
+    assertThat(createdRequest.getString("instanceId"), is(instanceId));
+  }
+
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
     boolean isNoticeEnabledInNoticePolicy) {
 

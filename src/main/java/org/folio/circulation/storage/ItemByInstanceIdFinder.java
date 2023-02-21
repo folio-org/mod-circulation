@@ -2,11 +2,12 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.json.JsonKeys.byId;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -47,8 +48,7 @@ public class ItemByInstanceIdFinder {
 
     return holdingsRecordsResult.after(holdingsRecords -> {
       if (holdingsRecords == null || holdingsRecords.isEmpty()) {
-        return completedFuture(failedValidation(
-          "There are no holdings for this instance", "holdingsRecords", "null"));
+        return completedFuture(succeeded(List.of()));
       }
 
       Set<String> holdingsIds = holdingsRecords.toKeys(byId());
