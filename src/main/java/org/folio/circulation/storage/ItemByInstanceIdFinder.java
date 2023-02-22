@@ -2,6 +2,7 @@ package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -34,20 +35,26 @@ public class ItemByInstanceIdFinder {
     this.itemRepository = itemRepository;
   }
 
-  public CompletableFuture<Result<Collection<Item>>> getItemsByInstanceId(UUID instanceId) {
+  public CompletableFuture<Result<Collection<Item>>> getItemsByInstanceId(UUID instanceId,
+    boolean failWhenNoHoldingsRecordsFound) {
 
     final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(
       holdingsStorageClient, "holdingsRecords", identity());
 
     return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId.toString()))
-      .thenCompose(this::getItems);
+      .thenCompose(r -> getItems(r, failWhenNoHoldingsRecordsFound));
   }
 
   private CompletableFuture<Result<Collection<Item>>> getItems(
-    Result<MultipleRecords<JsonObject>> holdingsRecordsResult) {
+    Result<MultipleRecords<JsonObject>> holdingsRecordsResult,
+    boolean failWhenNoHoldingsRecordsFound) {
 
     return holdingsRecordsResult.after(holdingsRecords -> {
       if (holdingsRecords == null || holdingsRecords.isEmpty()) {
+        if (failWhenNoHoldingsRecordsFound) {
+          return completedFuture(failedValidation(
+            "There are no holdings for this instance", "holdingsRecords", "null"));
+        }
         return completedFuture(succeeded(List.of()));
       }
 

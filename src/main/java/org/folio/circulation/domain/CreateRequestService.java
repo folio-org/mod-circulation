@@ -195,7 +195,8 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
-    if (errorHandler.hasAny(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
+    if (errorHandler.hasAny(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST, INVALID_ITEM_ID,
+      ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
       TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
 
       return ofAsync(() -> records);
@@ -220,7 +221,8 @@ public class CreateRequestService {
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
-    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
+    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST,
+      INVALID_ITEM_ID));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> doNothing(

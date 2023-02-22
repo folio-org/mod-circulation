@@ -454,16 +454,33 @@ public class RequestsAPICreationTests extends APITests {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .withRequestType(requestType)
-      .titleRequestLevel()
-      .withNoItemId()
-      .withInstanceId(UUID.randomUUID())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
+    Response placeRequestWithoutHoldingsRecordIdResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .withRequestType(requestType)
+        .titleRequestLevel()
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .withInstanceId(UUID.randomUUID())
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("There are no holdings for this instance")));
+    assertThat(placeRequestWithoutHoldingsRecordIdResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(placeRequestWithoutHoldingsRecordIdResponse.getJson(),
+      hasErrorWith(hasMessage("Instance does not exist")));
+
+    Response placeRequestWithRandomHoldingsRecordIdResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .withRequestType(requestType)
+        .titleRequestLevel()
+        .withNoItemId()
+        .withInstanceId(UUID.randomUUID())
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(patronId));
+
+    assertThat(placeRequestWithRandomHoldingsRecordIdResponse,
+      hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(placeRequestWithRandomHoldingsRecordIdResponse.getJson(),
+      hasErrorWith(hasMessage("Instance does not exist")));
   }
 
   @ParameterizedTest
@@ -2939,7 +2956,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(4));
+    assertThat(responseJson, hasErrors(3));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("Instance does not exist"),
