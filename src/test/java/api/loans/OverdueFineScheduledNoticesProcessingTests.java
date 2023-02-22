@@ -16,6 +16,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -325,6 +327,23 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(0);
 
     verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void overdueFineReturnedNoticeShouldContainUnlimitedNumberOfRenewals() {
+    generateOverdueFine(OVERDUE_FINE_RETURNED, createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT,
+      false));
+    verifyNumberOfScheduledNotices(1);
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    verifyNumberOfScheduledNotices(0);
+    JsonObject loanInSentNotice = FakeModNotify.getSentPatronNotices().get(0)
+      .getJsonObject("context").getJsonObject("loan");
+
+    assertThat(loanInSentNotice.getString("numberOfRenewalsAllowed"), is("unlimited"));
+    assertThat(loanInSentNotice.getString("numberOfRenewalsRemaining"), is("unlimited"));
+
+    verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
