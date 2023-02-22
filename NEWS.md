@@ -1,3 +1,7 @@
+## 23.3.4 2023-02-22
+
+* Fix improper JSON key for calendar date API (CIRC-1737)
+
 ## 23.3.3 2023-01-27
 
 * Allow to place a TLR recall on an `In transit`, `In process` or `On order` item (CIRC-1720)
