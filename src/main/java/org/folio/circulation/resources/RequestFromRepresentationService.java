@@ -220,13 +220,21 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Boolean>> shouldFetchItemAndLoan(RequestAndRelatedRecords records) {
-    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
+    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID, INSTANCE_DOES_NOT_EXIST));
   }
 
   private CompletableFuture<Result<Request>> fetchInstance(Request request) {
     return succeeded(request)
-       .combineAfter(instanceRepository::fetch, Request::withInstance);
-      // TODO:  fail if instance doesn't exist
+      .combineAfter(instanceRepository::fetch, Request::withInstance)
+      .thenApply(r -> {
+        Request updatedRequest = r.value();
+        if (updatedRequest.getInstance().isNotFound()) {
+          errorHandler.handleValidationResult(failedValidation("Instance does not exist",
+              "instanceId", updatedRequest.getInstanceId()), INSTANCE_DOES_NOT_EXIST,
+            updatedRequest);
+        }
+        return succeeded(updatedRequest);
+      });
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
@@ -335,7 +343,8 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> findInstanceItemsAndPolicies(Request request) {
-    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
+    final var instanceId = UUID.fromString(request.getInstanceId());
+    return itemByInstanceIdFinder.getItemsByInstanceId(instanceId, false)
       .thenApply(r -> r.map(request::withInstanceItems))
       .thenCompose(r -> r.after(requestPolicyRepository::lookupRequestPolicies));
   }
