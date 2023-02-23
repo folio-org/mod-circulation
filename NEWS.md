@@ -1,3 +1,9 @@
+## 23.5.0 2023-02-23
+
+* Allow hold TLR for a title with no holding records (CIRC-1677)
+* Display correct numberOfRenewalsAllowed and numberOfRenewalsRemaining values in fee/fine notices (CIRC-1571)
+* Fix improper JSON key for calendar date API (CIRC-1737, CIRC-1743)
+
 ## 23.4.0 2023-02-17
 
 * Fix error message absence when clicking "Anonymize all loans" button for closed loans with associated closed fees/fines (CIRC-1731)
