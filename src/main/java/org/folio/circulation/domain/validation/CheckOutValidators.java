@@ -39,6 +39,7 @@ import org.folio.circulation.domain.validation.overriding.OverridingLoanValidato
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -79,7 +80,8 @@ public class CheckOutValidators {
       singleValidationError(message, SERVICE_POINT_ID, request.getCheckoutServicePointId()));
 
     requestedByAnotherPatronValidator = new RequestedByAnotherPatronValidator(
-      message -> singleValidationError(message, USER_BARCODE, request.getUserBarcode()));
+      message -> singleValidationError(message, USER_BARCODE, request.getUserBarcode()),
+      RequestQueueService.using(clients));
 
     alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));
@@ -232,12 +234,12 @@ public class CheckOutValidators {
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_HAS_OPEN_LOANS, l)));
   }
 
-  public Result<LoanAndRelatedRecords> refuseWhenRequestedByAnotherPatron(
+  public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenRequestedByAnotherPatron(
     Result<LoanAndRelatedRecords> result) {
 
     return requestedByAnotherPatronValidator.refuseWhenRequestedByAnotherPatron(result)
-      .mapFailure(failure -> errorHandler.handleValidationError(failure,
-        ITEM_REQUESTED_BY_ANOTHER_PATRON, result));
+      .thenApply(r -> r.mapFailure(failure -> errorHandler.handleValidationError(failure,
+        ITEM_REQUESTED_BY_ANOTHER_PATRON, result)));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(

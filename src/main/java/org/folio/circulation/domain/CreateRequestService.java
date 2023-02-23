@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -31,7 +30,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -197,7 +195,8 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
-    if (errorHandler.hasAny(INVALID_ITEM_ID, ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
+    if (errorHandler.hasAny(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST, INVALID_ITEM_ID,
+      ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
       TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
 
       return ofAsync(() -> records);
@@ -222,7 +221,8 @@ public class CreateRequestService {
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
-    return ofAsync(() -> errorHandler.hasNone(INVALID_ITEM_ID));
+    return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST,
+      INVALID_ITEM_ID));
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> doNothing(

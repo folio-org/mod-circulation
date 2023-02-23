@@ -92,12 +92,6 @@ public class CheckInContext {
   }
 
   public CheckInContext withRequestQueue(RequestQueue requestQueue) {
-    Request firstRequest = null;
-
-    if (requestQueue.hasOutstandingRequestsFulfillableByItem(item)) {
-      firstRequest = requestQueue.getHighestPriorityRequestFulfillableByItem(item);
-    }
-
     return new CheckInContext(
       this.checkInRequest,
       this.tlrSettings,
@@ -105,7 +99,7 @@ public class CheckInContext {
       this.loan,
       requestQueue,
       this.checkInServicePoint,
-      firstRequest,
+      null, // needs to be reset when requestQueue is updated
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,

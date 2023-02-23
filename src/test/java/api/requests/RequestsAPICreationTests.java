@@ -454,16 +454,33 @@ public class RequestsAPICreationTests extends APITests {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
-      .withRequestType(requestType)
-      .titleRequestLevel()
-      .withNoItemId()
-      .withInstanceId(UUID.randomUUID())
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId));
+    Response placeRequestWithoutHoldingsRecordIdResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .withRequestType(requestType)
+        .titleRequestLevel()
+        .withNoItemId()
+        .withNoHoldingsRecordId()
+        .withInstanceId(UUID.randomUUID())
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(patronId));
 
-    assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(postResponse.getJson(), hasErrorWith(hasMessage("There are no holdings for this instance")));
+    assertThat(placeRequestWithoutHoldingsRecordIdResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(placeRequestWithoutHoldingsRecordIdResponse.getJson(),
+      hasErrorWith(hasMessage("Instance does not exist")));
+
+    Response placeRequestWithRandomHoldingsRecordIdResponse = requestsClient.attemptCreate(
+      new RequestBuilder()
+        .withRequestType(requestType)
+        .titleRequestLevel()
+        .withNoItemId()
+        .withInstanceId(UUID.randomUUID())
+        .withPickupServicePointId(pickupServicePointId)
+        .withRequesterId(patronId));
+
+    assertThat(placeRequestWithRandomHoldingsRecordIdResponse,
+      hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(placeRequestWithRandomHoldingsRecordIdResponse.getJson(),
+      hasErrorWith(hasMessage("Instance does not exist")));
   }
 
   @ParameterizedTest
@@ -2939,7 +2956,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final JsonObject responseJson = postResponse.getJson();
 
-    assertThat(responseJson, hasErrors(4));
+    assertThat(responseJson, hasErrors(3));
 
     assertThat(responseJson, hasErrorWith(allOf(
       hasMessage("Instance does not exist"),
@@ -4197,6 +4214,26 @@ public class RequestsAPICreationTests extends APITests {
       verifyNumberOfPublishedEvents(NOTICE, 0);
       verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     }
+  }
+
+  @Test
+  void canCreateHoldTlrForInstanceWithNoHoldingsRecords() {
+    reconfigureTlrFeature(ENABLED, null, null, null);
+
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    IndividualResource response = requestsClient.create(new RequestBuilder()
+      .hold()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    JsonObject createdRequest = response.getJson();
+    assertThat(createdRequest.getString("requestLevel"), is("Title"));
+    assertThat(createdRequest.getString("instanceId"), is(instanceId));
   }
 
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
