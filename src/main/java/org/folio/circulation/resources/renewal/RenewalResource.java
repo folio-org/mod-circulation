@@ -521,9 +521,12 @@ public abstract class RenewalResource extends Resource {
       .next(this::validateIfRenewIsPossible)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_IS_NOT_POSSIBLE, context))
-      .next(ctx -> renew(ctx, renewDate)
-        .mapFailure(failure -> errorHandler.handleValidationError(failure,
-          RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
+      .next(ctx -> errorHandler.hasAny(RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED)
+        && ctx.getLoan().getLoanPolicy().isNotLoanable()
+          ? succeeded(ctx)
+          : renew(ctx, renewDate)
+            .mapFailure(failure -> errorHandler.handleValidationError(failure,
+              RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
