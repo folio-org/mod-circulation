@@ -4,6 +4,7 @@ import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_RENEWAL_PERMISSION;
@@ -676,9 +677,11 @@ class RequestsAPILoanRenewalTests extends APITests {
     useWithActiveNotice(limitedRenewalsPolicy);
 
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
+    JsonObject renewalResponse = response.getJson();
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE)));
+    assertThat(renewalResponse, hasErrors(2));
+    assertThat(renewalResponse, hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
+    assertThat(renewalResponse, hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE)));
   }
 
   @Test

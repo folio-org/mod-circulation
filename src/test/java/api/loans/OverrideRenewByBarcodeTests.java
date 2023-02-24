@@ -12,6 +12,7 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.utl.BlockOverridesUtils.OVERRIDE_PATRON_BLOCK_PERMISSION;
@@ -596,6 +597,7 @@ class OverrideRenewByBarcodeTests extends APITests {
     JsonObject renewalResponse = loansFixture.attemptRenewal(422,
       smallAngryPlanet, jessica).getJson();
 
+    assertThat(renewalResponse, hasErrors(1));
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
 
@@ -622,6 +624,7 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     JsonObject renewalResponse =
       loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
+    assertThat(renewalResponse, hasErrors(1));
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
 

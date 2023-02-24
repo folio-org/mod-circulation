@@ -3,9 +3,14 @@ package org.folio.circulation.resources.handlers.error;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import lombok.AccessLevel;
@@ -51,5 +56,18 @@ public abstract class CirculationErrorHandler {
   public boolean hasNone(CirculationErrorType... errorTypes) {
     return Arrays.stream(errorTypes)
       .noneMatch(errors::containsValue);
+  }
+
+  public boolean hasAny(ErrorCode... errorCodes) {
+    var validationErrorCodes = errors.keySet().stream()
+      .filter(ValidationErrorFailure.class::isInstance)
+      .map(ValidationErrorFailure.class::cast)
+      .map(ValidationErrorFailure::getErrors)
+      .flatMap(Collection::stream)
+      .map(ValidationError::getCode)
+      .collect(Collectors.toSet());
+
+    return Arrays.stream(errorCodes)
+      .anyMatch(validationErrorCodes::contains);
   }
 }

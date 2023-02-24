@@ -28,6 +28,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
+import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
@@ -39,6 +40,7 @@ import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -521,9 +523,11 @@ public abstract class RenewalResource extends Resource {
       .next(this::validateIfRenewIsPossible)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_IS_NOT_POSSIBLE, context))
-      .next(ctx -> renew(ctx, renewDate)
-        .mapFailure(failure -> errorHandler.handleValidationError(failure,
-          RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
+      .next(ctx -> errorHandler.hasAny(ITEM_NOT_LOANABLE)
+          ? succeeded(ctx)
+          : renew(ctx, renewDate)
+            .mapFailure(failure -> errorHandler.handleValidationError(failure,
+              RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
@@ -645,7 +649,8 @@ public abstract class RenewalResource extends Resource {
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
     if (loanPolicy.isNotLoanable()) {
-      errors.add(loanPolicyValidationError(loanPolicy, "item is not loanable"));
+      errors.add(loanPolicyValidationError(loanPolicy, "item is not loanable",
+        Collections.emptyMap(), ITEM_NOT_LOANABLE));
     } else if (loanPolicy.isNotRenewable()) {
       errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
     }
