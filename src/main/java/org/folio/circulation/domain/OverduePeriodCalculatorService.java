@@ -85,7 +85,7 @@ public class OverduePeriodCalculatorService {
 
     ZonedDateTime datePart = openingDay.getDayWithTimeZone();
 
-    return openingDay.getOpeningHour()
+    return openingDay.getOpenings()
       .stream()
       .mapToInt(openingHour -> getOpeningHourDurationMinutes(
         openingHour, datePart, dueDate, systemTime))

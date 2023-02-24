@@ -144,7 +144,7 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
 
   private ZonedDateTime getExpectedDateTimeOfPeriodDay(OpeningDay openingDay,
       String offsetInterval, long offsetDuration) {
-    LocalTime startTime = openingDay.getOpeningHour().get(0).getStartTime();
+    LocalTime startTime = openingDay.getOpenings().get(0).getStartTime();
 
     return getExpectedDateTimeOfOpeningDay(openingDay, startTime, offsetInterval, offsetDuration);
   }

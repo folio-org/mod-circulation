@@ -58,8 +58,9 @@ public class RequestLoanValidator {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     final Request request = requestAndRelatedRecords.getRequest();
+    final UUID instanceId = UUID.fromString(request.getInstanceId());
 
-    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()))
+    return itemByInstanceIdFinder.getItemsByInstanceId(instanceId, false)
       .thenCombine(
         loanRepository.findOpenLoansByUserIdWithItem(LOANS_PAGE_LIMIT, request.getUserId()),
         (items, loans) -> verifyNoMatchOrFailAsAlreadyLoaned(items, loans, requestAndRelatedRecords)

@@ -137,8 +137,9 @@ public class RequestByInstanceIdResource extends Resource {
 
     final var loanRepository = repositories.getLoanRepository();
     final var requestQueueRepository = repositories.getRequestQueueRepository();
+    final var instanceId = requestRelatedRecords.getInstanceLevelRequest().getInstanceId();
 
-    return finder.getItemsByInstanceId(requestRelatedRecords.getInstanceLevelRequest().getInstanceId())
+    return finder.getItemsByInstanceId(instanceId, true)
       .thenApply(r -> r.next(this::validateItems))
       .thenCompose(r -> r.after(items -> getRequestQueues(items,
         requestRelatedRecords, requestQueueRepository)))
