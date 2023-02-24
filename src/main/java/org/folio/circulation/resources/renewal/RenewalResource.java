@@ -24,6 +24,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_BLOCKED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_NOT_POSSIBLE;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_ITEM_IS_NOT_LOANABLE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_VALIDATION_ERROR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
@@ -512,18 +513,28 @@ public abstract class RenewalResource extends Resource {
   public Result<RenewalContext> regularRenew(RenewalContext context,
     CirculationErrorHandler errorHandler, ZonedDateTime renewDate) {
 
-    return validateIfRenewIsAllowed(context, false)
+    return validateIfItemIsLoanable(context)
       .mapFailure(failure -> errorHandler.handleValidationError(failure,
-        RENEWAL_IS_BLOCKED, context))
+        RENEWAL_ITEM_IS_NOT_LOANABLE, context))
+      .next(ctx -> validateIfRenewIsAllowed(context, false)
+        .mapFailure(failure -> errorHandler.handleValidationError(failure,
+          RENEWAL_IS_BLOCKED, context)))
       .next(ctx -> validateIfRenewIsAllowed(context, true)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)))
       .next(this::validateIfRenewIsPossible)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_IS_NOT_POSSIBLE, context))
-      .next(ctx -> renew(ctx, renewDate)
+      .next(ctx -> renew(ctx, renewDate, errorHandler)
         .mapFailure(failure -> errorHandler.handleValidationError(failure,
           RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, context)));
+  }
+
+  private Result<RenewalContext> validateIfItemIsLoanable(RenewalContext context) {
+    LoanPolicy loanPolicy = context.getLoan().getLoanPolicy();
+    return loanPolicy.isNotLoanable()
+      ? failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable")))
+      : succeeded(context);
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
@@ -535,10 +546,7 @@ public abstract class RenewalResource extends Resource {
       final var errors = isDueDateRequired
         ? validateIfRenewIsAllowedAndDueDateRequired(loan, requestQueue)
         : validateIfRenewIsAllowedAndDueDateNotRequired(loan, requestQueue);
-      final var loanPolicy = loan.getLoanPolicy();
-      if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
-        return failedValidation(errors);
-      }
+
       if (errors.isEmpty()) {
         return succeeded(context);
       }
@@ -560,7 +568,13 @@ public abstract class RenewalResource extends Resource {
     return succeeded(context);
   }
 
-  private Result<RenewalContext> renew(RenewalContext context, ZonedDateTime renewDate) {
+  private Result<RenewalContext> renew(RenewalContext context, ZonedDateTime renewDate,
+    CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(RENEWAL_ITEM_IS_NOT_LOANABLE)) {
+      return succeeded(context);
+    }
+
     final var loan = context.getLoan();
     final var loanPolicy = loan.getLoanPolicy();
 
@@ -644,9 +658,7 @@ public abstract class RenewalResource extends Resource {
     final List<ValidationError> errors = new ArrayList<>();
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
-    if (loanPolicy.isNotLoanable()) {
-      errors.add(loanPolicyValidationError(loanPolicy, "item is not loanable"));
-    } else if (loanPolicy.isNotRenewable()) {
+    if (loanPolicy.isNotRenewable()) {
       errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
     }
     if (firstRequestForLoanedItemIsHold(requestQueue, loan)) {
