@@ -2554,7 +2554,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void shouldNotFailIfPatronDoesNotHaveBarcodeAndItemWasAlreadyRequested() {
-    var item = itemsFixture.createMultipleItemsForTheSameInstance(1).get(0);
+    var item = itemsFixture.basedUponDunkirk();
     requestsFixture.placeItemLevelPageRequest(item, item.getInstanceId(), usersFixture.jessica());
     var steveWithNoBarcode = usersFixture.steve(UserBuilder::withNoBarcode);
 
