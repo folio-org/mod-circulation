@@ -2563,6 +2563,7 @@ class CheckOutByBarcodeTests extends APITests {
       hasMessage("Could not find user with matching barcode"),
       hasCode(USER_BARCODE_NOT_FOUND),
       hasUserBarcodeParameter(steveWithNoBarcode))));
+    assertThat(response.getJson().getJsonArray("errors").size(), is(1));
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,
