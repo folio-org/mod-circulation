@@ -42,6 +42,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
@@ -2558,12 +2559,12 @@ class CheckOutByBarcodeTests extends APITests {
     requestsFixture.placeItemLevelPageRequest(item, item.getInstanceId(), usersFixture.jessica());
     var steveWithNoBarcode = usersFixture.steve(UserBuilder::withNoBarcode);
 
-    var response = checkOutFixture.attemptCheckOutByBarcode(item, steveWithNoBarcode);
-    assertThat(response.getJson(), hasErrorWith(allOf(
+    var response = checkOutFixture.attemptCheckOutByBarcode(item, steveWithNoBarcode).getJson();
+    assertThat(response, hasErrors(1));
+    assertThat(response, hasErrorWith(allOf(
       hasMessage("Could not find user with matching barcode"),
       hasCode(USER_BARCODE_NOT_FOUND),
       hasUserBarcodeParameter(steveWithNoBarcode))));
-    assertThat(response.getJson().getJsonArray("errors").size(), is(1));
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,
