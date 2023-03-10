@@ -11,6 +11,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_LIMIT_IS_REACHED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_IS_BLOCKED;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_ITEM_IS_NOT_LOANABLE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.results.Result.failed;
@@ -40,7 +41,8 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
       entry(ITEM_LIMIT_IS_REACHED, ITEM_LIMIT_BLOCK),
       entry(ITEM_IS_NOT_LOANABLE, ITEM_NOT_LOANABLE_BLOCK),
       entry(RENEWAL_IS_BLOCKED, RENEWAL_BLOCK),
-      entry(RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, RENEWAL_DUE_DATE_REQUIRED_BLOCK)
+      entry(RENEWAL_DUE_DATE_REQUIRED_IS_BLOCKED, RENEWAL_DUE_DATE_REQUIRED_BLOCK),
+      entry(RENEWAL_ITEM_IS_NOT_LOANABLE, RENEWAL_DUE_DATE_REQUIRED_BLOCK)
     );
 
   private final OkapiPermissions okapiPermissions;

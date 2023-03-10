@@ -34,6 +34,7 @@ import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
@@ -831,8 +832,10 @@ public abstract class RenewalAPITests extends APITests {
     use(nonLoanablePolicy);
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
+    JsonObject renewalResponse = response.getJson();
 
-    assertThat(response.getJson(), hasErrorWith(allOf(
+    assertThat(renewalResponse, hasErrors(1));
+    assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
@@ -841,7 +844,7 @@ public abstract class RenewalAPITests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(2));
 
-    assertThatPublishedLoanLogRecordEventsAreValid(response.getJson());
+    assertThatPublishedLoanLogRecordEventsAreValid(renewalResponse);
     assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
   }
 
@@ -1644,8 +1647,10 @@ public abstract class RenewalAPITests extends APITests {
     automatedPatronBlocksFixture.blockAction(jessica.getId().toString(), false, true, false);
 
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
+    JsonObject renewalResponse = response.getJson();
 
-    assertThat(response.getJson(), hasErrorWith(allOf(
+    assertThat(renewalResponse, hasErrors(3));
+    assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
       hasLoanPolicyNameParameter("Non loanable policy"))));
