@@ -237,6 +237,10 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenRequestedByAnotherPatron(
     Result<LoanAndRelatedRecords> result) {
 
+    if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
+      return completedFuture(result);
+    }
+
     return requestedByAnotherPatronValidator.refuseWhenRequestedByAnotherPatron(result)
       .thenApply(r -> r.mapFailure(failure -> errorHandler.handleValidationError(failure,
         ITEM_REQUESTED_BY_ANOTHER_PATRON, result)));

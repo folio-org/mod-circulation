@@ -4,6 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.policy.Period.days;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.RENEWAL_ITEM_IS_NOT_LOANABLE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,6 +21,7 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
@@ -113,6 +115,8 @@ class RegularRenewalTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
+    assertEquals(1, errorHandler.getErrors().size());
+    assertTrue(matchErrorType(errorHandler, RENEWAL_ITEM_IS_NOT_LOANABLE));
     assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
   }
 
@@ -255,6 +259,8 @@ class RegularRenewalTest {
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);
 
+    assertEquals(1, errorHandler.getErrors().size());
+    assertTrue(matchErrorType(errorHandler, RENEWAL_ITEM_IS_NOT_LOANABLE));
     assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
   }
 
@@ -308,5 +314,11 @@ class RegularRenewalTest {
     return errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
+  }
+
+  private boolean matchErrorType(CirculationErrorHandler errorHandler,
+    CirculationErrorType errorType) {
+
+    return errorHandler.getErrors().containsValue(errorType);
   }
 }

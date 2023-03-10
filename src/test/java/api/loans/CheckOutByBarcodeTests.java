@@ -42,6 +42,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
@@ -122,6 +123,7 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -2549,6 +2551,20 @@ class CheckOutByBarcodeTests extends APITests {
         "The Long Way to a Small, Angry Planet (Barcode: %s) cannot be checked out to user " +
           "Rodwell, James because it has been requested by another patron", itemForSecondRequest.getBarcode()))
     )));
+  }
+
+  @Test
+  void shouldNotFailIfPatronDoesNotHaveBarcodeAndItemWasAlreadyRequested() {
+    var item = itemsFixture.basedUponDunkirk();
+    requestsFixture.placeItemLevelPageRequest(item, item.getInstanceId(), usersFixture.jessica());
+    var steveWithNoBarcode = usersFixture.steve(UserBuilder::withNoBarcode);
+
+    var response = checkOutFixture.attemptCheckOutByBarcode(item, steveWithNoBarcode).getJson();
+    assertThat(response, hasErrors(1));
+    assertThat(response, hasErrorWith(allOf(
+      hasMessage("Could not find user with matching barcode"),
+      hasCode(USER_BARCODE_NOT_FOUND),
+      hasUserBarcodeParameter(steveWithNoBarcode))));
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,
