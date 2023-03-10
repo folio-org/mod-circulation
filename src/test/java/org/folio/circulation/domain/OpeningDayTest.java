@@ -38,12 +38,12 @@ class OpeningDayTest {
     assertEquals(first.isAllDay(), second.isAllDay());
     assertEquals(first.getDayWithTimeZone().toString(), second.getDayWithTimeZone().toString());
     assertEquals(first.isOpen(), second.isOpen());
-    assertEquals(first.getOpeningHour().size(), second.getOpeningHour().size());
+    assertEquals(first.getOpenings().size(), second.getOpenings().size());
 
-    for (OpeningHour firstHour : first.getOpeningHour()) {
+    for (OpeningHour firstHour : first.getOpenings()) {
       boolean matched = false;
 
-      for (OpeningHour secondHour : second.getOpeningHour()) {
+      for (OpeningHour secondHour : second.getOpenings()) {
         if (firstHour.getStartTime().equals(secondHour.getStartTime())) {
           if (firstHour.getEndTime().equals(secondHour.getEndTime())) {
             matched = true;

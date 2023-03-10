@@ -752,6 +752,8 @@
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
             "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loan-policies.collection.get",
             "configuration.entries.item.get",
             "configuration.entries.collection.get",
             "patron-notice.post",
