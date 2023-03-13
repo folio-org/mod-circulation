@@ -1,3 +1,7 @@
+## 23.5.1 2023-03-13
+
+* Fix NPE when user without barcode tries to checkout an item that is already requested (CIRC-1550)
+
 ## 23.5.0 2023-02-23
 
 * Allow hold TLR for a title with no holding records (CIRC-1677)
