@@ -195,6 +195,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
+    logger.info("The publishDueDateChangedEvent is fired... ok then why ?");
     if (records.getRecalledLoanPreviousDueDate() != null) {
       loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
     }
@@ -202,6 +203,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
+    logger.info("The publishDueDateChangedEvent is fired...");
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());

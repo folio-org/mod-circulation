@@ -68,6 +68,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   @Override
   void create(RoutingContext routingContext) {
+    System.out.println("Calling from create 1");
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 

@@ -350,7 +350,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Request request) {
-    if (request.isTitleLevel()) {
+    if (request.isTitleLevel() || request.isRecall()) {
       // There can be multiple loans for items of the same title, but we're only saving one of
       // them because it is enough to determine whether the patron has open loans for any
       // of the title's items
