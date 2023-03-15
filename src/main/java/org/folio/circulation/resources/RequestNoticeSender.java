@@ -277,18 +277,10 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendNoticeOnRecall(Request request) {
     Loan loan = request.getLoan();
 
-    System.out.println("Original due date --- "+ loan.getOriginalDueDate().toString());
-    System.out.println("Due date ---- "+ loan.getDueDate());
-    System.out.println("Previous Due date ---- " + loan.getPreviousDueDate());
-
-
-   // queue.hasOpenRecalls()
-    System.out.println("check the value " + loan.wasDueDateChangedByRecall());
     System.out.println("Recall request size " + recallRequestSize);
-   // loan.unsetDueDateChangedByRecall()
 
     if (!request.isRecall() || loan == null || loan.getUser() == null || loan.getItem() == null ||
-    (recallRequestSize > 1 && loan.getDueDate().equals(loan.getPreviousDueDate()))) {
+    (recallRequestSize > 1 && (loan!=null && loan.getDueDate().equals(loan.getPreviousDueDate())))) {
       return ofAsync(null);
     }
 
