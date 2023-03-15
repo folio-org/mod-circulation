@@ -64,6 +64,10 @@ public class RequestQueue {
         .anyMatch(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled());
   }
 
+  public Long sizeOfOpenRecalls() {
+    return requests.stream()
+      .filter(request -> request.getRequestType() == RequestType.RECALL && request.isNotYetFilled()).count();
+  }
   public List<String> getRecalledLoansIds() {
     return requests.stream()
       .filter(Request::isRecall)
