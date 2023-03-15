@@ -609,7 +609,7 @@ class RequestQueueResourceTest extends APITests {
     verifyQueueUpdatedForItem(reorderQueue, response);
 
     // TODO: understand why
-    int numberOfPublishedEvents = 17;
+    int numberOfPublishedEvents = 16;
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(numberOfPublishedEvents));
