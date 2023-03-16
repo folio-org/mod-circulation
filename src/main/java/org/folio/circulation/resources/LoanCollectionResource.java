@@ -178,6 +178,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
+    log.info("From LoanCollectionResource");
     getExistingLoan(loanRepository , loan)
       .thenApply(e -> e.map(existingLoan -> new LoanAndRelatedRecords(loan, existingLoan)))
       .thenCompose(larrResult -> getServicePointsForLoanAndRelated(larrResult, servicePointRepository))
@@ -386,9 +387,10 @@ public class LoanCollectionResource extends CollectionResource {
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    log.info("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue in LCR");
     if (dueDateHasNotChanged(loanAndRelatedRecords.getExistingLoan(),
       loanAndRelatedRecords.getLoan())) {
-
+    log.info("The due date was not change if block");
       return loanAndRelatedRecords;
     }
 
@@ -405,6 +407,7 @@ public class LoanCollectionResource extends CollectionResource {
   }
 
   private boolean dueDateHasNotChanged(Loan existingLoan, Loan changedLoan) {
+    log.info("The existing loan " + existingLoan);
     return existingLoan == null || isSameMillis(existingLoan.getDueDate(), changedLoan.getDueDate());
   }
 }
