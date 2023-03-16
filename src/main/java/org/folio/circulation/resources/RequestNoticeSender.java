@@ -276,11 +276,8 @@ public class RequestNoticeSender {
 
   private CompletableFuture<Result<Void>> sendNoticeOnRecall(Request request) {
     Loan loan = request.getLoan();
-
-    System.out.println("Recall request size " + recallRequestSize);
-
-    if (!request.isRecall() || loan == null || loan.getUser() == null || loan.getItem() == null ||
-    (recallRequestSize > 1 && (loan!=null && loan.getDueDate().equals(loan.getPreviousDueDate())))) {
+//(recallRequestSize > 1 && (loan!=null && loan.getDueDate().equals(loan.getPreviousDueDate())))
+    if (!request.isRecall() || loan == null || loan.getUser() == null || loan.getItem() == null || !request.isSendRecallNotice()) {
       return ofAsync(null);
     }
 

@@ -125,7 +125,6 @@ public class LoanScheduledNoticeService {
     TriggeringEvent triggeringEvent = TriggeringEvent.from(eventType);
 
     if (!loan.isClosed()) {
-      System.out.println("Loan is not closed...");
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(), triggeringEvent)
         .thenAccept(r -> r.next(v -> scheduleLoanNotices(loan, eventType, eventTime)));
     }

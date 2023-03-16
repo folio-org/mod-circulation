@@ -455,7 +455,6 @@ public class LoanPolicy extends Policy {
     errors.addAll(combineValidationErrors(minimumDueDateResult));
 
     if (errors.isEmpty()) {
-      System.out.println("Here it is setting due date change flag to true...");
       return determineDueDate(minimumDueDateResult, recallDueDateResult, loan)
           .map(dueDate -> changeDueDate(dueDate, loan));
     } else {
@@ -484,7 +483,6 @@ public class LoanPolicy extends Policy {
 
   private Loan changeDueDate(ZonedDateTime dueDate, Loan loan) {
     if (!loan.wasDueDateChangedByRecall()) {
-      System.out.println("Again due date not changed by recall..");
       loan.changeDueDate(dueDate);
       loan.setDueDateChangedByRecall();
     }

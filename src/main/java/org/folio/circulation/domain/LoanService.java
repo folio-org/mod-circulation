@@ -23,7 +23,6 @@ public class LoanService {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanWhenItemRecalled(
     LoanAndRelatedRecords records) {
-    System.out.println("Is it coming here ?????");
     RequestQueue requestQueue = records.getRequestQueue();
     Collection<Request> requests = requestQueue.getRequests();
 
@@ -39,7 +38,6 @@ public class LoanService {
     final LoanPolicy loanPolicy = loanToRecall.getLoanPolicy();
 
     if (loanToRecall.wasDueDateChangedByRecall()) {
-      System.out.println("At truncate loan and due date changed by recall");
       return completedFuture(succeeded(records));
     }
 

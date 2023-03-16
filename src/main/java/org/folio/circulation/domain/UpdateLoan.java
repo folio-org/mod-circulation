@@ -72,11 +72,11 @@ public class UpdateLoan {
   private CompletableFuture<Result<RequestAndRelatedRecords>> recall(Loan loan,
       RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
     if (loan.wasDueDateChangedByRecall()) {
-      System.out.println("Due Date changed by recall");
+      request.setSendRecallNotice(false);
       // We don't need to apply the recall
       return completedFuture(succeeded(requestAndRelatedRecords));
     } else {
-      System.out.println("Due Date was not changed by recall");
+      request.setSendRecallNotice(true);
       return Result.of(() -> new LoanAndRelatedRecords(loan,
           requestAndRelatedRecords.getTimeZone()))
           .after(loanPolicyRepository::lookupLoanPolicy)
