@@ -279,7 +279,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   void setSendRecallNotice(boolean sendRecallNotice){
-    sendRecallNotice = sendRecallNotice;
+    this.sendRecallNotice = sendRecallNotice;
   }
   Request withRequestType(RequestType type) {
     requestRepresentation.put(REQUEST_TYPE, type.getValue());
