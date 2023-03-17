@@ -264,6 +264,9 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("does not have information taken from proxying user",
       representation.containsKey("proxy"), is(false));
 
+    assertThat("does not have search index fields",
+      representation.containsKey("searchIndex"), is(true));
+
     assertThat("should have change metadata",
       representation.containsKey("metadata"), is(true));
 

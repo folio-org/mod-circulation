@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Fields used for search",
+  "type": "object",
+  "properties": {
+    "effectiveCallNumberComponents": {
+      "properties": {
+        "callNumber": {
+          "type": "string",
+          "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item.",
+          "readonly": true
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item.",
+          "readonly": true
+        },
+        "suffix": {
+          "type": "string",
+          "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item.",
+          "readonly": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "pickupServicePointName": {
+      "description": "The name of the request pickup service point",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
