@@ -42,6 +42,7 @@ public class UpdateRequestService {
       .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
+        .thenApply(r -> r.next(this::unsetDueDateChangeByRecallFlag))
         .thenComposeAsync(r -> r.after(requestRepository::update))
         .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
@@ -66,6 +67,30 @@ public class UpdateRequestService {
 
     if(request.isCancelled()) {
       requestAndRelatedRecords.getRequestQueue().remove(request);
+    }
+
+    RequestQueue queue = requestAndRelatedRecords.getRequestQueue();
+    Loan loan = requestAndRelatedRecords.getRequest().getLoan();
+    System.out.println("Yes I cam here");
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      System.out.println("YEs I will reset the flag");
+      requestAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
+    }
+
+    return succeeded(requestAndRelatedRecords);
+  }
+
+
+
+  private Result<RequestAndRelatedRecords> unsetDueDateChangeByRecallFlag(
+    RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    RequestQueue queue = requestAndRelatedRecords.getRequestQueue();
+    Loan loan = requestAndRelatedRecords.getRequest().getLoan();
+    System.out.println("Yes I cam here");
+    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      System.out.println("YEs I will reset the flag");
+      requestAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     }
 
     return succeeded(requestAndRelatedRecords);
