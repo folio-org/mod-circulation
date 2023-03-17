@@ -80,6 +80,7 @@ public class UpdateRequestService {
     Loan loan = requestAndRelatedRecords.getRequest().getLoan();
     System.out.println("Yes I cam here");
     if (loan!=null && loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+      requestAndRelatedRecords.getRequest().setSendRecallNotice(true);
       System.out.println("YEs I will reset the flag");
       requestAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     }
