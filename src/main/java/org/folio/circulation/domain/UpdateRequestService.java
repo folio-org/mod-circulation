@@ -68,15 +68,6 @@ public class UpdateRequestService {
     if(request.isCancelled()) {
       requestAndRelatedRecords.getRequestQueue().remove(request);
     }
-
-    RequestQueue queue = requestAndRelatedRecords.getRequestQueue();
-    Loan loan = requestAndRelatedRecords.getRequest().getLoan();
-    System.out.println("Yes I cam here");
-    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
-      System.out.println("YEs I will reset the flag");
-      requestAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
-    }
-
     return succeeded(requestAndRelatedRecords);
   }
 
@@ -88,7 +79,7 @@ public class UpdateRequestService {
     RequestQueue queue = requestAndRelatedRecords.getRequestQueue();
     Loan loan = requestAndRelatedRecords.getRequest().getLoan();
     System.out.println("Yes I cam here");
-    if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
+    if (loan!=null && loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
       System.out.println("YEs I will reset the flag");
       requestAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
     }
