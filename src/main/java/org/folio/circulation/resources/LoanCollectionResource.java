@@ -178,7 +178,6 @@ public class LoanCollectionResource extends CollectionResource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
 
-
     getExistingLoan(loanRepository , loan)
       .thenApply(e -> e.map(existingLoan -> new LoanAndRelatedRecords(loan, existingLoan)))
       .thenCompose(larrResult -> getServicePointsForLoanAndRelated(larrResult, servicePointRepository))

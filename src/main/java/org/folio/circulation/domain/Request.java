@@ -99,8 +99,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private Integer previousPosition;
   private boolean changedStatus;
 
-
-
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
@@ -124,7 +122,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean isFulfillable() {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
-
   public boolean isPage() {
     return getRequestType() == RequestType.PAGE;
   }

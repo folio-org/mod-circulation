@@ -69,5 +69,4 @@ public class UpdateRequestService {
     }
     return succeeded(requestAndRelatedRecords);
   }
-
 }

@@ -75,6 +75,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -3503,21 +3505,86 @@ public class RequestsAPICreationTests extends APITests {
 
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.steve();
+    IndividualResource requester2 = usersFixture.charlotte();
+    IndividualResource borrower = usersFixture.jessica();
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
-    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(item, borrower);
     requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
+    requestsFixture.placeItemLevelHoldShelfRequest(item, requester2, requestDate, "Recall");
 
-    // notice for the recall is expected
-    verifyNumberOfSentNotices(2);
-    verifyNumberOfPublishedEvents(NOTICE, 2);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
+    // notice for the recall is expected
+    verifyNumberOfSentNotices(3);
+    var borrowerNoticeSize = verifyNumberOfSentNoticesForBorrower(noticeLogContextItemLogs, borrower);
+    assertEquals(1, borrowerNoticeSize);
+    verifyNumberOfPublishedEvents(NOTICE, 3);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
 
     // verify noticeLogContextItemLogs
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
+
+  @Test
+  void itemCheckOutRecallCancelAgainRecallRequestCreationShouldProduceNotice() {
+    configurationsFixture.enableTlrFeature();
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
+      .create();
+    JsonObject recallRequestToRequesterConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.RECALL_REQUEST.getRepresentation())
+      .create();
+
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(List.of(recallToLoaneeConfiguration, recallRequestToRequesterConfiguration));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    IndividualResource borrower = usersFixture.jessica();
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+
+    checkOutFixture.checkOutByBarcode(item, borrower);
+    var recallRequest = requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
+    requestsFixture.cancelRequest(recallRequest);
+    requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
+
+    List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
+    // notice for the recall is expected
+    verifyNumberOfSentNotices(4);
+    assertEquals(1, verifyNumberOfSentNoticesForBorrower(noticeLogContextItemLogs, borrower));
+    verifyNumberOfPublishedEvents(NOTICE, 4);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
+
+    // verify noticeLogContextItemLogs
+    validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
+    validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
+
+
+  }
+
+  private Integer verifyNumberOfSentNoticesForBorrower(List<JsonObject> noticeLogContextItemLogs, IndividualResource borrower) {
+
+    return
+       noticeLogContextItemLogs.stream()
+       .filter(request ->
+        new JsonObject(request.getString("eventPayload"))
+          .getJsonObject("payload")
+          .getString("userId").equals(borrower.getId().toString()))
+      .collect(Collectors.toList()).size();
+    }
 
   @ParameterizedTest
   @ValueSource(ints = {1, 2, 3, 4, 5})
