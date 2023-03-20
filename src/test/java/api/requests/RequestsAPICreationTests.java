@@ -3513,18 +3513,20 @@ public class RequestsAPICreationTests extends APITests {
     requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
     requestsFixture.placeItemLevelHoldShelfRequest(item, requester2, requestDate, "Recall");
 
-    List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
-    // notice for the recall is expected
-    verifyNumberOfSentNotices(3);
-    var borrowerNoticeSize = verifyNumberOfSentNoticesForBorrower(noticeLogContextItemLogs, borrower);
-    assertEquals(1, borrowerNoticeSize);
-    verifyNumberOfPublishedEvents(NOTICE, 3);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    synchronized (this) {
+      List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
+      // notice for the recall is expected
+      verifyNumberOfSentNotices(3);
+      var borrowerNoticeSize = verifyNumberOfSentNoticesForBorrower(noticeLogContextItemLogs, borrower);
+      assertEquals(1, borrowerNoticeSize);
+      verifyNumberOfPublishedEvents(NOTICE, 3);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
 
-    // verify noticeLogContextItemLogs
-    validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
-    validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
+      // verify noticeLogContextItemLogs
+      validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
+      validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
+    }
   }
 
   @Test
@@ -3560,19 +3562,19 @@ public class RequestsAPICreationTests extends APITests {
     requestsFixture.cancelRequest(recallRequest);
     requestsFixture.placeItemLevelHoldShelfRequest(item, requester, requestDate, "Recall");
 
-    List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
-    // notice for the recall is expected
-    verifyNumberOfSentNotices(4);
-    assertEquals(1, verifyNumberOfSentNoticesForBorrower(noticeLogContextItemLogs, borrower));
-    verifyNumberOfPublishedEvents(NOTICE, 4);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    synchronized (this) {
+      List<JsonObject> noticeLogContextItemLogs = FakePubSub.getPublishedEventsAsList(byLogEventType(NOTICE));
+      // notice for the recall is expected
+      verifyNumberOfSentNotices(4);
+      assertEquals(1, verifyNumberOfSentNoticesForBorrower(noticeLogContextItemLogs, borrower));
+      verifyNumberOfPublishedEvents(NOTICE, 4);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
 
-    // verify noticeLogContextItemLogs
-    validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
-    validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
-
-
+      // verify noticeLogContextItemLogs
+      validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
+      validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
+    }
   }
 
   private Integer verifyNumberOfSentNoticesForBorrower(List<JsonObject> noticeLogContextItemLogs, IndividualResource borrower) {
