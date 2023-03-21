@@ -4247,13 +4247,15 @@ public class RequestsAPICreationTests extends APITests {
     final var patron5 = usersFixture.rebecca();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    // Step 1
+    // Step 1 - Instance with two items. Both available.
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     final var itemA = items.get(0);
     final var itemB = items.get(1);
     final UUID instanceId = items.get(0).getInstanceId();
 
-    // Step 2
+    // Step 2 - TLR Page - Item A is paged. Patron 1
+    // In fact, either of the items can be paged. In further comments Item A means the item that
+    // was recalled.
     IndividualResource pageTlr = requestsClient.create(new RequestBuilder()
       .page()
       .withNoHoldingsRecordId()
@@ -4269,7 +4271,7 @@ public class RequestsAPICreationTests extends APITests {
       ? itemA : itemB;
     var notPagedItem = itemA == pagedItem ? itemB : itemA;
 
-    // Step 3
+    // Step 3 - Item A is Checked in at chosen SP and becomes Awaiting pickup for Patron 1
     checkInFixture.checkInByBarcode(pagedItem, pickupServicePointId);
 
     var pageTlrAfterCheckIn =  requestsClient.get(pageTlr.getId());
@@ -4277,10 +4279,10 @@ public class RequestsAPICreationTests extends APITests {
     var pagedItemAfterCheckIn = itemsFixture.getById(pagedItem.getId());
     assertThat(pagedItemAfterCheckIn.getStatusName(), is("Awaiting pickup"));
 
-    // Step 4
+    // Step 4 - Item B is Checked out to Patron 2
     checkOutFixture.checkOutByBarcode(notPagedItem, patron2);
 
-    // Step 5
+    // Step 5 - A TLR Recall is placed for Patron 3. The checked out item B is being recalled.
     IndividualResource recallTlr1 = requestsClient.create(new RequestBuilder()
       .recall()
       .withNoHoldingsRecordId()
@@ -4293,19 +4295,19 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(recallTlr1.getJson().getString("status"), is("Open - Not yet filled"));
     assertThat(recallTlr1.getJson().getString("itemId"), is(notPagedItem.getId().toString()));
 
-    // Step 6
+    // Step 6 - Item A that is Awaiting pickup is checked out to the patron with the request
     checkOutFixture.checkOutByBarcode(pagedItemAfterCheckIn, patron1);
     var pageTlrAfterCheckOut =  requestsClient.get(pageTlr.getId());
     assertThat(pageTlrAfterCheckOut.getJson().getString("status"), is("Closed - Filled"));
 
-    // Step 7
+    // Step 7 - Item B is checked in and becomes Awaiting pickup for the first patron in queue
     checkInFixture.checkInByBarcode(notPagedItem, pickupServicePointId);
     var notPagedItemAfterCheckIn = itemsFixture.getById(notPagedItem.getId());
     assertThat(notPagedItemAfterCheckIn.getStatusName(), is("Awaiting pickup"));
     var recallTlr1AfterCheckOut =  requestsClient.get(recallTlr1.getId());
     assertThat(recallTlr1AfterCheckOut.getJson().getString("status"), is("Open - Awaiting pickup"));
 
-    // Step 8
+    // Step 8 - A recall is placed Patron 4. The checked out Item A is being recalled.
     IndividualResource recallTlr2 = requestsClient.create(new RequestBuilder()
       .recall()
       .withNoHoldingsRecordId()
@@ -4318,7 +4320,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(recallTlr2.getJson().getString("status"), is("Open - Not yet filled"));
     assertThat(recallTlr2.getJson().getString("itemId"), is(pagedItem.getId().toString()));
 
-    // Step 9
+    // Step 9 - A recall is placed. Patron 5
     IndividualResource recallTlr3 = requestsClient.create(new RequestBuilder()
       .recall()
       .withNoHoldingsRecordId()
@@ -4440,7 +4442,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(recallTlr4.getJson().getString("itemId"), is(notRecalledItem.getId().toString()));
 
-    // Step 7 -A recall is placed. Patron 7
+    // Step 7 - A recall is placed. Patron 7
     IndividualResource recallTlr5 = requestsClient.create(new RequestBuilder()
       .recall()
       .withNoHoldingsRecordId()
