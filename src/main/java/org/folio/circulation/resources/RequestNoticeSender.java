@@ -92,13 +92,18 @@ public class RequestNoticeSender {
   private final EventPublisher eventPublisher;
   protected final LocationRepository locationRepository;
 
-  private Long recallRequestSize = 0l;
+  private boolean isRecallNoticeNeededForBorrower;
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();
-    recallRequestSize = records.getRequestQueue().sizeOfOpenRecalls();
+    if (records.getRequestQueue().getRequests()
+      .stream()
+      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled()).count() > 1)
+    {
+      isRecallNoticeNeededForBorrower = true;
+    }
 
     if (request.hasItemId()) {
       sendConfirmationNoticeForRequestWithItemId(request);
@@ -278,7 +283,7 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
 
     if (!request.isRecall() || loan == null || loan.getUser() == null
-      || loan.getItem() == null || recallRequestSize > 1) {
+      || loan.getItem() == null || !isRecallNoticeNeededForBorrower) {
       return ofAsync(null);
     }
 
