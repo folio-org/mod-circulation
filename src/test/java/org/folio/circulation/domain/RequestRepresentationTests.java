@@ -5,6 +5,7 @@ import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -30,7 +31,12 @@ class RequestRepresentationTests {
   private static final String PUBLICATION = "publication";
   private static final String IDENTIFIERS = "identifiers";
   private static final String INSTANCE = "instance";
-  public static final String IDENTIFIER_VALUE = "identifier-value";
+  private static final String IDENTIFIER_VALUE = "identifier-value";
+  private static final String SEARCH_INDEX = "searchIndex";
+  private static final String SERVICE_POINT_NAME_VALUE = "Circ Desk";
+  private static final String CALL_NUMBER_VALUE = "call number";
+  private static final String CALL_NUMBER_PREFIX_VALUE = "call number prefix";
+  private static final String CALL_NUMBER_SUFFIX_VALUE = "call number suffix";
 
   @Test
   void testExtendedRepresentation() {
@@ -67,18 +73,8 @@ class RequestRepresentationTests {
   @Test
   void testStoredRequest() {
     Request request = createMockRequest();
-
-    JsonObject extendedRepresentation
-      = new RequestRepresentation().extendedRepresentation(request);
-
-    assertThat("Extended representation should have a pickup service point",
-      extendedRepresentation.containsKey("pickupServicePoint"), is(true));
-
-    assertThat("Extended representation should have a delivery address",
-      extendedRepresentation.containsKey("deliveryAddress"), is(true));
-
     JsonObject storedRepresentation = new StoredRequestRepresentation()
-      .storedRequest(Request.from(extendedRepresentation));
+      .storedRequest(request);
 
     assertThat("Stored representation should not have a delivery address",
       storedRepresentation.containsKey("deliveryAddress"), is(false));
@@ -89,6 +85,20 @@ class RequestRepresentationTests {
       identifier.getString("value"), is(IDENTIFIER_VALUE));
     assertThat("Stored representation should contain valid identifier identifierTypeId",
       identifier.getString("identifierTypeId"), is(IDENTIFIER_ID.toString()));
+
+    JsonObject searchIndex = storedRepresentation.getJsonObject(SEARCH_INDEX);
+    assertNotNull(searchIndex);
+    assertThat("Stored representation should contain pickup service point name",
+      searchIndex.getString("pickupServicePointName"), is(SERVICE_POINT_NAME_VALUE));
+
+    JsonObject effectiveCallNumberComponents = searchIndex.getJsonObject("effectiveCallNumberComponents");
+    assertNotNull(effectiveCallNumberComponents);
+    assertThat("Stored representation should contain call number",
+      effectiveCallNumberComponents.getString("callNumber"), is(CALL_NUMBER_VALUE));
+    assertThat("Stored representation should contain call number prefix",
+      effectiveCallNumberComponents.getString("prefix"), is(CALL_NUMBER_PREFIX_VALUE));
+    assertThat("Stored representation should contain call number suffix",
+      effectiveCallNumberComponents.getString("suffix"), is(CALL_NUMBER_SUFFIX_VALUE));
   }
 
   private Request createMockRequest() {
@@ -111,7 +121,7 @@ class RequestRepresentationTests {
     final ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
     final var servicePoint
-      = new ServicePoint(SERVICE_POINT_ID.toString(), "Circ Desk", "cd1", true,
+      = new ServicePoint(SERVICE_POINT_ID.toString(), SERVICE_POINT_NAME_VALUE, "cd1", true,
       "Circulation Desk", null, null, null, null);
 
     Instance instance = new Instance(UUID.randomUUID().toString(), null,
@@ -120,7 +130,13 @@ class RequestRepresentationTests {
       List.of(new Publication("fake publisher", "fake place", "2016", null)),
       List.of("First American Edition"));
 
-    final Item item = Item.from(new JsonObject()).withInstance(instance);
+    JsonObject itemJson = new JsonObject()
+      .put("effectiveCallNumberComponents", new JsonObject()
+        .put("callNumber", CALL_NUMBER_VALUE)
+        .put("prefix", CALL_NUMBER_PREFIX_VALUE)
+        .put("suffix", CALL_NUMBER_SUFFIX_VALUE));
+    final Item item = Item.from(itemJson)
+      .withInstance(instance);
 
     JsonObject requestJsonObject = new RequestBuilder()
       .recall()

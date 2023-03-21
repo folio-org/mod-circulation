@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -22,6 +23,7 @@ public class StoredRequestRepresentation {
     addStoredInstanceProperties(representation, request.getInstance());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
+    addSearchIndexProperties(representation, request, request.getItem());
 
     removeDeliveryAddress(representation);
 
@@ -97,6 +99,28 @@ public class StoredRequestRepresentation {
     write(userSummary, "barcode", user.getBarcode());
 
     return userSummary;
+  }
+
+  private static void addSearchIndexProperties(JsonObject requestJson, Request request, Item item) {
+    JsonObject searchIndex = new JsonObject();
+
+    if (item != null && !item.isNotFound() && item.getCallNumberComponents() != null) {
+      write(searchIndex, "effectiveCallNumberComponents",
+        createCallNumberComponents(item.getCallNumberComponents()));
+    } else {
+      log.info("Unable to add callNumberComponents properties to the request: {}," +
+        " callNumberComponents are null.", request.getId());
+    }
+
+    ServicePoint pickupServicePoint = request.getPickupServicePoint();
+    if (pickupServicePoint != null) {
+      write(searchIndex, "pickupServicePointName", pickupServicePoint.getName());
+    } else {
+      log.info("Unable to add pickupServicePoint properties to the request: {}," +
+        " pickupServicePoint is null.", request.getId());
+    }
+
+    requestJson.put("searchIndex", searchIndex);
   }
 
   private static void logUnableAddItemToTheRequest(JsonObject request, Item item) {
