@@ -67,6 +67,16 @@ public class UsersFixture {
       .inGroupFor(patronGroupsFixture.regular())));
   }
 
+  public UserResource bobby() {
+    return createIfAbsent(basedUponBobbyBibbin()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource henry() {
+    return createIfAbsent(basedUponHenryHanks()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
   public UserResource undergradHenry() {
     return undergradHenry(identity());
   }

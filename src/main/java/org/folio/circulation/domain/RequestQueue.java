@@ -76,6 +76,7 @@ public class RequestQueue {
   public Loan getTheLeastRecalledLoan() {
     return requests.stream()
       .filter(Request::isRecall)
+      .filter(Request::hasLoan)
       //Counting the amount of recalls for each loan
       .collect(collectingAndThen(groupingBy(Request::getLoan, counting()), m -> m.entrySet()
         .stream()
