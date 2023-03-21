@@ -67,6 +67,7 @@ public class UpdateRequestService {
     if(request.isCancelled()) {
       requestAndRelatedRecords.getRequestQueue().remove(request);
     }
+
     return succeeded(requestAndRelatedRecords);
   }
 }

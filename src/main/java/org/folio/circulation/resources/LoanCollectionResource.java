@@ -388,6 +388,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     if (dueDateHasNotChanged(loanAndRelatedRecords.getExistingLoan(),
       loanAndRelatedRecords.getLoan())) {
+
       return loanAndRelatedRecords;
     }
 

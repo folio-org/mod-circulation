@@ -122,6 +122,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean isFulfillable() {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
+
   public boolean isPage() {
     return getRequestType() == RequestType.PAGE;
   }
