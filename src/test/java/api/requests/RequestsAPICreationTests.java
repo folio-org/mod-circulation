@@ -2904,8 +2904,8 @@ public class RequestsAPICreationTests extends APITests {
       RECALL.getValue()));
 
     // Recall notice to loan owner should be sent once
-    verifyNumberOfSentNotices(1);
-    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
