@@ -9,7 +9,6 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;

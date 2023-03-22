@@ -3515,16 +3515,11 @@ public class RequestsAPICreationTests extends APITests {
 
     List<JsonObject> noticeLogContextItemLogs = Awaitility.waitAtMost(1, TimeUnit.SECONDS)
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(3));
-
       // notice for the recall is expected
     verifyNumberOfSentNotices(3);
-    var borrowerNoticeSize = getNumberOfRecallNoticesForBorrower(noticeLogContextItemLogs, borrower);
-    assertEquals(1, borrowerNoticeSize);
+    verifyNumberOfNoticeEventsForUser(requester.getId(), 1l);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
-
-    // verify noticeLogContextItemLogs
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
@@ -3566,27 +3561,25 @@ public class RequestsAPICreationTests extends APITests {
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(4));
       // notice for the recall is expected
     verifyNumberOfSentNotices(4);
-    assertEquals(2, getNumberOfRecallNoticesForBorrower(noticeLogContextItemLogs, borrower));
+    verifyNumberOfNoticeEventsForUser(requester.getId(), 2l);
     verifyNumberOfPublishedEvents(NOTICE, 4);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
-
-      // verify noticeLogContextItemLogs
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
-
   }
 
-  private Integer getNumberOfRecallNoticesForBorrower(List<JsonObject> noticeLogContextItemLogs, IndividualResource borrower) {
-
-    return
-       noticeLogContextItemLogs.stream()
-       .filter(request ->
-        new JsonObject(request.getString("eventPayload"))
+  private void verifyNumberOfNoticeEventsForUser(UUID userId, long expectedNoticeEventsCount) {
+    long noticeEventsCount = getPublishedEventsAsList(byLogEventType(NOTICE))
+      .stream()
+      .filter(event ->
+        new JsonObject(event.getString("eventPayload"))
           .getJsonObject("payload")
-          .getString("userId").equals(borrower.getId().toString()))
-      .collect(Collectors.toList()).size();
-    }
+          .getString("userId")
+          .equals(userId.toString()))
+      .count();
+
+    assertThat(noticeEventsCount, is(expectedNoticeEventsCount));
+  }
 
   @ParameterizedTest
   @ValueSource(ints = {1, 2, 3, 4, 5})
