@@ -887,9 +887,9 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(recallTlr.getJson().getString("itemId"), is(itemA.getId().toString()));
 
     // Step 3 - Go to request queue on the instance (verify that itemA is shown)
-    JsonObject queue = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
-    assertThat(queue.getString("totalRecords"), is("1"));
-    assertThat(queue, hasJsonPath("requests[0].item.barcode", itemA.getBarcode()));
+    JsonObject queueOnStep3 = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
+    assertThat(queueOnStep3.getString("totalRecords"), is("1"));
+    assertThat(queueOnStep3, hasJsonPath("requests[0].item.barcode", itemA.getBarcode()));
 
     // Step 4 - Go to Request detail - Pay attention to item barcode under Item information
     // accordion. (Item A)
@@ -914,30 +914,21 @@ class RequestsAPIUpdatingTests extends APITests {
 
     // Expected results:
     // 1. The same item (itemA) is shown at Item information accordion
-    queue = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
-    JsonObject updatedRequest = queue.getJsonArray("requests").getJsonObject(0);
-    itemDetails = updatedRequest.getJsonObject("item");
-
-    assertThat(itemDetails.getString("barcode"), is(itemA.getBarcode()));
+    var expectedQueue = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
+    assertThat(expectedQueue, hasJsonPath("requests[0].item.barcode", itemA.getBarcode()));
 
     // 2. The patron that has itemA on loan SHOULD NOT be able to renew their loan as it's recalled
-    Response errorResponse = loansFixture.attemptRenewal(422, itemA, patron1);
-    JsonArray errors = errorResponse.getJson().getJsonArray("errors");
-
-    assertThat(errors.size(), is(1));
-
-    JsonObject error = errors.getJsonObject(0);
-    String message = "items cannot be renewed when there is an active recall request";
-
-    assertThat(error.getString("message"), is(message));
+    Response itemARenewalResponse = loansFixture.attemptRenewal(422, itemA, patron1);
+    assertThat(itemARenewalResponse.getJson(), hasJsonPath("errors[0].message",
+      "items cannot be renewed when there is an active recall request"));
+    assertThat(itemARenewalResponse.getJson().getJsonArray("errors").size(), is(1));
 
     // 3. The patron that has Item B on loan SHOULD be able to renew their loan
-    Response successResponse = loansFixture.attemptRenewal(200, itemB, patron2);
-    JsonObject response = successResponse.getJson();
-
-    assertThat(response.getString("action"), is("renewed"));
-    assertThat(response.getString("userId"), is(patron2.getId().toString()));
-    assertThat(response.getString("itemId"), is(itemB.getId().toString()));
-    assertThat(response.getString("renewalCount"), is("1"));
+    Response itemBRenewalResponse = loansFixture.attemptRenewal(200, itemB, patron2);
+    JsonObject itemBRenewalResponseJson = itemBRenewalResponse.getJson();
+    assertThat(itemBRenewalResponseJson.getString("action"), is("renewed"));
+    assertThat(itemBRenewalResponseJson.getString("userId"), is(patron2.getId().toString()));
+    assertThat(itemBRenewalResponseJson.getString("itemId"), is(itemB.getId().toString()));
+    assertThat(itemBRenewalResponseJson.getString("renewalCount"), is("1"));
   }
 }

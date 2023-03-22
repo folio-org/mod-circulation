@@ -1,7 +1,5 @@
 package api.support.fixtures;
 
-import static api.support.fixtures.UserExamples.basedUponAlanTuring;
-import static api.support.fixtures.UserExamples.basedUponBenAffleck;
 import static api.support.fixtures.UserExamples.basedUponBobbyBibbin;
 import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
 import static api.support.fixtures.UserExamples.basedUponHenryHanks;
@@ -9,16 +7,14 @@ import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
-import static api.support.fixtures.UserExamples.basedUponTomHanks;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.function.Function;
 
-import api.support.http.IndividualResource;
-
 import api.support.APITestContext;
 import api.support.builders.UserBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 
