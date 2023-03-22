@@ -92,10 +92,16 @@ public class RequestNoticeSender {
   private final EventPublisher eventPublisher;
   protected final LocationRepository locationRepository;
 
+  private long recallRequestCount = 0l;
+
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();
+    recallRequestCount = records.getRequestQueue().getRequests()
+      .stream()
+      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled())
+      .count();
 
     if (request.hasItemId()) {
       sendConfirmationNoticeForRequestWithItemId(request);
@@ -274,7 +280,8 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendNoticeOnRecall(Request request) {
     Loan loan = request.getLoan();
 
-    if (!request.isRecall() || loan == null || loan.getUser() == null || loan.getItem() == null) {
+    if (!request.isRecall() || loan == null || loan.getUser() == null
+      || loan.getItem() == null || recallRequestCount > 1) {
       return ofAsync(null);
     }
 
