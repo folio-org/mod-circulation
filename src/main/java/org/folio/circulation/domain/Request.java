@@ -398,6 +398,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return item != null && item.isFound();
   }
 
+  public boolean hasLoan() {
+    return loan != null;
+  }
+
   public enum Operation {
     CREATE, REPLACE, MOVE;
   }
