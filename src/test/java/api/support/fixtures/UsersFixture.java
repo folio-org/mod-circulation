@@ -80,21 +80,6 @@ public class UsersFixture {
       .inGroupFor(patronGroupsFixture.regular()));
   }
 
-  public UserResource alan() {
-    return createIfAbsent(basedUponAlanTuring()
-      .inGroupFor(patronGroupsFixture.regular()));
-  }
-
-  public UserResource ben() {
-    return createIfAbsent(basedUponBenAffleck()
-      .inGroupFor(patronGroupsFixture.regular()));
-  }
-
-  public UserResource tom() {
-    return createIfAbsent(basedUponTomHanks()
-      .inGroupFor(patronGroupsFixture.regular()));
-  }
-
   public UserResource undergradHenry() {
     return undergradHenry(identity());
   }

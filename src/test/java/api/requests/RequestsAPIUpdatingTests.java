@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -861,61 +862,55 @@ class RequestsAPIUpdatingTests extends APITests {
   }
 
   @Test
-  void editingRecallRequestShouldNotChangeRecalledItem() {
+  void editingRecallTlrShouldNotChangeRecalledItem() {
     configurationsFixture.enableTlrFeature();
 
-    IndividualResource alan = usersFixture.alan();
-    IndividualResource ben = usersFixture.ben();
-    IndividualResource tom = usersFixture.tom();
+    IndividualResource patron1 = usersFixture.steve();
+    IndividualResource patron2 = usersFixture.rebecca();
+    IndividualResource patron3 = usersFixture.jessica();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
-    // create an instance with two items
+    // Step 1 - An instance with two items (Item A & B). Check out item A. Check out item B.
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
 
     ItemResource itemA = items.get(0);
     ItemResource itemB = items.get(1);
     final UUID instanceId = itemA.getInstanceId();
 
-    // check out the items
-    checkOutFixture.checkOutByBarcode(itemA, alan);
-    checkOutFixture.checkOutByBarcode(itemB, ben);
+    checkOutFixture.checkOutByBarcode(itemA, patron1);
+    checkOutFixture.checkOutByBarcode(itemB, patron2);
 
-    // create TLR recall request from Inventory (itemA is recalled)
-    IndividualResource recallTLRequest = requestsFixture.placeTitleLevelRecallRequest(instanceId, tom);
+    // Step 2 - Create TLR recall request from Inventory (itemA is recalled)
+    IndividualResource recallTlr = requestsFixture.placeTitleLevelRecallRequest(instanceId,
+      patron3);
 
-    assertThat(recallTLRequest.getJson().getString("itemId"), is(itemA.getId().toString()));
+    assertThat(recallTlr.getJson().getString("itemId"), is(itemA.getId().toString()));
 
-    // go to request queue on the instance (verify that itemA is shown)
+    // Step 3 - Go to request queue on the instance (verify that itemA is shown)
     JsonObject queue = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
-
     assertThat(queue.getString("totalRecords"), is("1"));
+    assertThat(queue, hasJsonPath("requests[0].item.barcode", itemA.getBarcode()));
 
-    // Go to Request detail - Pay attention to item barcode under Item information accordion. (Item A)
-    JsonObject request = queue.getJsonArray("requests").getJsonObject(0);
-
-    assertThat(request.getString("requesterId"), is(tom.getId().toString()));
-    assertThat(request.getString("requestType"), is("Recall"));
-    assertThat(request.getString("requestLevel"), is("Title"));
-    assertThat(request.getString("position"), is("1"));
-
-    JsonObject itemDetails = request.getJsonObject("item");
-
+    // Step 4 - Go to Request detail - Pay attention to item barcode under Item information
+    // accordion. (Item A)
+    var recallTlrUpdated = requestsFixture.getById(recallTlr.getId()).getJson();
+    assertThat(recallTlrUpdated.getString("requesterId"), is(patron3.getId().toString()));
+    assertThat(recallTlrUpdated.getString("requestType"), is("Recall"));
+    assertThat(recallTlrUpdated.getString("requestLevel"), is("Title"));
+    assertThat(recallTlrUpdated.getString("position"), is("1"));
+    JsonObject itemDetails = recallTlrUpdated.getJsonObject("item");
     assertThat(itemDetails.getString("barcode"), is(itemA.getBarcode()));
 
-    // Go to Item A - verify that there is a "1" under Requests that links back to request detail
-    ItemResource itemADetails = itemsFixture.getById(itemA.getId());
-    // TODO could not find how to check this
+    // Step 5 - Go to Item A - verify that there is a "1" under Requests that links back to request
+    // detail - nothing to check on BE side
+    // Step 6 - Go to Circulation log - verify that Item A is recalled from current borrower -
+    // nothing to check on BE side
 
-    // Go to Circulation log - verify that Item A is recalled from current borrower
-    // TODO could not find how to check this
-
-    // At Request detail: Actions - Edit:
-    // Change something in the request (e.g. Request expiration date or Pickup service point)
-    UUID requestId = UUID.fromString(request.getString("id"));
-    requestsFixture.replaceRequest(requestId,
-      new RequestBuilder()
-        .from(recallTLRequest)
-        .withRequestDate(ZonedDateTime.now()));
+    // Step 7 - At Request detail: Actions - Edit:
+    // Step 8 Change something in the request (e.g. Request expiration date or Pickup service point)
+    requestsFixture.replaceRequest(recallTlr.getId(), RequestBuilder.from(recallTlr)
+      .withRequestDate(ZonedDateTime.now())
+      .withPickupServicePointId(servicePointsFixture.cd2().getId()));
 
     // Expected results:
     // 1. The same item (itemA) is shown at Item information accordion
@@ -926,7 +921,7 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(itemDetails.getString("barcode"), is(itemA.getBarcode()));
 
     // 2. The patron that has itemA on loan SHOULD NOT be able to renew their loan as it's recalled
-    Response errorResponse = loansFixture.attemptRenewal(422, itemA, alan);
+    Response errorResponse = loansFixture.attemptRenewal(422, itemA, patron1);
     JsonArray errors = errorResponse.getJson().getJsonArray("errors");
 
     assertThat(errors.size(), is(1));
@@ -937,11 +932,11 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(error.getString("message"), is(message));
 
     // 3. The patron that has Item B on loan SHOULD be able to renew their loan
-    Response successResponse = loansFixture.attemptRenewal(200, itemB, ben);
+    Response successResponse = loansFixture.attemptRenewal(200, itemB, patron2);
     JsonObject response = successResponse.getJson();
 
     assertThat(response.getString("action"), is("renewed"));
-    assertThat(response.getString("userId"), is(ben.getId().toString()));
+    assertThat(response.getString("userId"), is(patron2.getId().toString()));
     assertThat(response.getString("itemId"), is(itemB.getId().toString()));
     assertThat(response.getString("renewalCount"), is("1"));
   }
