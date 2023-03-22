@@ -248,10 +248,10 @@ class RequestFromRepresentationService {
       itemAndLoanFetchingFunction = this::fetchItemAndLoanForPageTlr;
     }
     else if (request.isTitleLevel() && request.isRecall()) {
-      if (request.getOperation() != Request.Operation.REPLACE) {
-        itemAndLoanFetchingFunction = this::fetchItemAndLoanForRecallTlr;
-      } else {
+      if (request.getOperation() == Request.Operation.REPLACE) {
         itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
+      } else {
+        itemAndLoanFetchingFunction = this::fetchItemAndLoanForRecallTlrCreation;
       }
     }
     else {
@@ -300,7 +300,7 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlr(
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrCreation(
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();

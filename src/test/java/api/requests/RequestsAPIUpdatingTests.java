@@ -918,13 +918,13 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(expectedQueue, hasJsonPath("requests[0].item.barcode", itemA.getBarcode()));
 
     // 2. The patron that has itemA on loan SHOULD NOT be able to renew their loan as it's recalled
-    Response itemARenewalResponse = loansFixture.attemptRenewal(422, itemA, patron1);
+    Response itemARenewalResponse = loansFixture.attemptRenewal(itemA, patron1);
     assertThat(itemARenewalResponse.getJson(), hasJsonPath("errors[0].message",
       "items cannot be renewed when there is an active recall request"));
     assertThat(itemARenewalResponse.getJson().getJsonArray("errors").size(), is(1));
 
     // 3. The patron that has Item B on loan SHOULD be able to renew their loan
-    Response itemBRenewalResponse = loansFixture.attemptRenewal(200, itemB, patron2);
+    var itemBRenewalResponse = loansFixture.renewLoan(itemB, patron2);
     JsonObject itemBRenewalResponseJson = itemBRenewalResponse.getJson();
     assertThat(itemBRenewalResponseJson.getString("action"), is("renewed"));
     assertThat(itemBRenewalResponseJson.getString("userId"), is(patron2.getId().toString()));
