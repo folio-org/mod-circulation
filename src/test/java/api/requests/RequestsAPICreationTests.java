@@ -2903,7 +2903,7 @@ public class RequestsAPICreationTests extends APITests {
     requestsFixture.move(new MoveRequestBuilder(recallRequest.getId(), itemToMoveTo.getId(),
       RECALL.getValue()));
 
-    // Recall notice to loan owner should be sent once
+    // Recall notice to loan owner should be sent twice without changing due date
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
