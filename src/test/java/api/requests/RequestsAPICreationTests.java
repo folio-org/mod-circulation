@@ -3515,7 +3515,6 @@ public class RequestsAPICreationTests extends APITests {
 
     List<JsonObject> noticeLogContextItemLogs = Awaitility.waitAtMost(1, TimeUnit.SECONDS)
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(3));
-      // notice for the recall is expected
     verifyNumberOfSentNotices(3);
     verifyNumberOfNoticeEventsForUser(requester.getId(), 1l);
     verifyNumberOfPublishedEvents(NOTICE, 3);
@@ -3559,7 +3558,6 @@ public class RequestsAPICreationTests extends APITests {
 
     List<JsonObject> noticeLogContextItemLogs = Awaitility.waitAtMost(1, TimeUnit.SECONDS)
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(4));
-      // notice for the recall is expected
     verifyNumberOfSentNotices(4);
     verifyNumberOfNoticeEventsForUser(requester.getId(), 2l);
     verifyNumberOfPublishedEvents(NOTICE, 4);
