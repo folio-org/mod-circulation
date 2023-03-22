@@ -3516,7 +3516,7 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> noticeLogContextItemLogs = Awaitility.waitAtMost(1, TimeUnit.SECONDS)
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(3));
     verifyNumberOfSentNotices(3);
-    verifyNumberOfNoticeEventsForUser(requester.getId(), 1l);
+    verifyNumberOfNoticeEventsForUser(requester.getId(), 1);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
@@ -3559,15 +3559,15 @@ public class RequestsAPICreationTests extends APITests {
     List<JsonObject> noticeLogContextItemLogs = Awaitility.waitAtMost(1, TimeUnit.SECONDS)
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(4));
     verifyNumberOfSentNotices(4);
-    verifyNumberOfNoticeEventsForUser(requester.getId(), 2l);
+    verifyNumberOfNoticeEventsForUser(requester.getId(), 2);
     verifyNumberOfPublishedEvents(NOTICE, 4);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
 
-  private void verifyNumberOfNoticeEventsForUser(UUID userId, long expectedNoticeEventsCount) {
-    long noticeEventsCount = getPublishedEventsAsList(byLogEventType(NOTICE))
+  private void verifyNumberOfNoticeEventsForUser(UUID userId, int expectedNoticeEventsCount) {
+    int noticeEventsCount = (int) getPublishedEventsAsList(byLogEventType(NOTICE))
       .stream()
       .filter(event ->
         new JsonObject(event.getString("eventPayload"))
