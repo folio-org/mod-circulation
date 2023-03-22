@@ -52,4 +52,25 @@ public class UserExamples {
       .withBarcode("6430777932")
       .withActive(true);
   }
+
+  static UserBuilder basedUponAlanTuring() {
+    return new UserBuilder()
+      .withName("Alan", "Turing")
+      .withBarcode("7677535617")
+      .withActive(true);
+  }
+
+  static UserBuilder basedUponBenAffleck() {
+    return new UserBuilder()
+      .withName("Ben", "Affleck")
+      .withBarcode("7671175356")
+      .withActive(true);
+  }
+
+  static UserBuilder basedUponTomHanks() {
+    return new UserBuilder()
+      .withName("Tom", "Hanks")
+      .withBarcode("7671375356")
+      .withActive(true);
+  }
 }

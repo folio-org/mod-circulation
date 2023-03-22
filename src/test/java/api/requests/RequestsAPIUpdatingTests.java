@@ -42,6 +42,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -857,5 +858,91 @@ class RequestsAPIUpdatingTests extends APITests {
     var userId = JsonPath.parse(resultStr).read(userIdPath);
 
     assertThat(userId, Matchers.equalTo(APITestContext.getUserId()));
+  }
+
+  @Test
+  void editingRecallRequestShouldNotChangeRecalledItem() {
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource alan = usersFixture.alan();
+    IndividualResource ben = usersFixture.ben();
+    IndividualResource tom = usersFixture.tom();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    // create an instance with two items
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+
+    ItemResource itemA = items.get(0);
+    ItemResource itemB = items.get(1);
+    final UUID instanceId = itemA.getInstanceId();
+
+    // check out the items
+    checkOutFixture.checkOutByBarcode(itemA, alan);
+    checkOutFixture.checkOutByBarcode(itemB, ben);
+
+    // create TLR recall request from Inventory (itemA is recalled)
+    IndividualResource recallTLRequest = requestsFixture.placeTitleLevelRecallRequest(instanceId, tom);
+
+    assertThat(recallTLRequest.getJson().getString("itemId"), is(itemA.getId().toString()));
+
+    // go to request queue on the instance (verify that itemA is shown)
+    JsonObject queue = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
+
+    assertThat(queue.getString("totalRecords"), is("1"));
+
+    // Go to Request detail - Pay attention to item barcode under Item information accordion. (Item A)
+    JsonObject request = queue.getJsonArray("requests").getJsonObject(0);
+
+    assertThat(request.getString("requesterId"), is(tom.getId().toString()));
+    assertThat(request.getString("requestType"), is("Recall"));
+    assertThat(request.getString("requestLevel"), is("Title"));
+    assertThat(request.getString("position"), is("1"));
+
+    JsonObject itemDetails = request.getJsonObject("item");
+
+    assertThat(itemDetails.getString("barcode"), is(itemA.getBarcode()));
+
+    // Go to Item A - verify that there is a "1" under Requests that links back to request detail
+    ItemResource itemADetails = itemsFixture.getById(itemA.getId());
+    // TODO could not find how to check this
+
+    // Go to Circulation log - verify that Item A is recalled from current borrower
+    // TODO could not find how to check this
+
+    // At Request detail: Actions - Edit:
+    // Change something in the request (e.g. Request expiration date or Pickup service point)
+    UUID requestId = UUID.fromString(request.getString("id"));
+    requestsFixture.replaceRequest(requestId,
+      new RequestBuilder()
+        .from(recallTLRequest)
+        .withRequestDate(ZonedDateTime.now()));
+
+    // Expected results:
+    // 1. The same item (itemA) is shown at Item information accordion
+    queue = requestQueueFixture.retrieveQueueForInstance(instanceId.toString());
+    JsonObject updatedRequest = queue.getJsonArray("requests").getJsonObject(0);
+    itemDetails = updatedRequest.getJsonObject("item");
+
+    assertThat(itemDetails.getString("barcode"), is(itemA.getBarcode()));
+
+    // 2. The patron that has itemA on loan SHOULD NOT be able to renew their loan as it's recalled
+    Response errorResponse = loansFixture.attemptRenewal(422, itemA, alan);
+    JsonArray errors = errorResponse.getJson().getJsonArray("errors");
+
+    assertThat(errors.size(), is(1));
+
+    JsonObject error = errors.getJsonObject(0);
+    String message = "items cannot be renewed when there is an active recall request";
+
+    assertThat(error.getString("message"), is(message));
+
+    // 3. The patron that has Item B on loan SHOULD be able to renew their loan
+    Response successResponse = loansFixture.attemptRenewal(200, itemB, ben);
+    JsonObject response = successResponse.getJson();
+
+    assertThat(response.getString("action"), is("renewed"));
+    assertThat(response.getString("userId"), is(ben.getId().toString()));
+    assertThat(response.getString("itemId"), is(itemB.getId().toString()));
+    assertThat(response.getString("renewalCount"), is("1"));
   }
 }

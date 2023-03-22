@@ -1,5 +1,7 @@
 package api.support.fixtures;
 
+import static api.support.fixtures.UserExamples.basedUponAlanTuring;
+import static api.support.fixtures.UserExamples.basedUponBenAffleck;
 import static api.support.fixtures.UserExamples.basedUponBobbyBibbin;
 import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
 import static api.support.fixtures.UserExamples.basedUponHenryHanks;
@@ -7,6 +9,7 @@ import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
 import static api.support.fixtures.UserExamples.basedUponStevenJones;
+import static api.support.fixtures.UserExamples.basedUponTomHanks;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
@@ -74,6 +77,21 @@ public class UsersFixture {
 
   public UserResource henry() {
     return createIfAbsent(basedUponHenryHanks()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource alan() {
+    return createIfAbsent(basedUponAlanTuring()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource ben() {
+    return createIfAbsent(basedUponBenAffleck()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource tom() {
+    return createIfAbsent(basedUponTomHanks()
       .inGroupFor(patronGroupsFixture.regular()));
   }
 
