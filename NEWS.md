@@ -1,3 +1,7 @@
+## 23.5.2 2023-03-22
+
+* Fix unexpected error message when attempting to renew loan with non-loanable item (CIRC-1592)
+
 ## 23.5.1 2023-03-13
 
 * Fix NPE when user without barcode tries to checkout an item that is already requested (CIRC-1550)
