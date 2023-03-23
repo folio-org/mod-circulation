@@ -122,7 +122,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   boolean isFulfillable() {
     return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
   }
-  
+
   public boolean isPage() {
     return getRequestType() == RequestType.PAGE;
   }
@@ -396,6 +396,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasItem() {
     return item != null && item.isFound();
+  }
+
+  public boolean hasLoan() {
+    return loan != null;
   }
 
   public enum Operation {

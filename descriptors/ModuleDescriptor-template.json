@@ -1514,6 +1514,7 @@
         "feefineactions.item.post",
         "owners.collection.get",
         "accounts.item.post",
+        "accounts.cancel.post",
         "pubsub.publish.post",
         "automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
