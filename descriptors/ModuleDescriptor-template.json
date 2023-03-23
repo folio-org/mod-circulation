@@ -1511,6 +1511,7 @@
         "patron-notice.post",
         "feefines.collection.get",
         "feefines.item.post",
+        "feefineactions.collection.get",
         "feefineactions.item.post",
         "owners.collection.get",
         "accounts.item.post",
