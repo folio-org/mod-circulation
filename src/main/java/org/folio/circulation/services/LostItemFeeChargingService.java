@@ -49,6 +49,7 @@ import lombok.With;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LogManager.getLogger(LostItemFeeChargingService.class);
+  private static final String NO_FEE_FINE_OWNER_FOUND = "No fee/fine owner found for item's permanent location";
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final FeeFineOwnerRepository feeFineOwnerRepository;
@@ -233,7 +234,7 @@ public class LostItemFeeChargingService {
 
     return contextResult.failWhen(
       context -> succeeded(context.feeFineOwner == null),
-      context -> singleValidationError("No fee/fine owner found for item's permanent location",
+      context -> singleValidationError(NO_FEE_FINE_OWNER_FOUND,
         "locationId", context.loan.getItem().getPermanentLocationId()));
   }
 
@@ -241,7 +242,7 @@ public class LostItemFeeChargingService {
     return fetchFeeFineOwner(loan)
       .thenApply(r -> r.failWhen(
         owner -> succeeded(owner == null),
-        owner -> singleValidationError("No fee/fine owner found for item's permanent location",
+        owner -> singleValidationError(NO_FEE_FINE_OWNER_FOUND,
           "locationId", loan.getItem().getPermanentLocationId())))
       .thenApply(r -> r.map(notUsed -> loan));
   }
