@@ -610,7 +610,7 @@ class OverdueFineServiceTest {
       new Contributor("Contributor 2", false));
 
     return Item.from(item)
-      .withLocation(new Location(null, LOCATION_NAME, null, emptyList(),
+      .withLocation(new Location(null, LOCATION_NAME, null, null, emptyList(),
         SERVICE_POINT_ID, Institution.unknown(), Campus.unknown(), Library.unknown(),
         ServicePoint.unknown()))
       .withInstance(new Instance(UUID.randomUUID().toString(), TITLE, emptyList(), contributors, emptyList(), emptyList()))
