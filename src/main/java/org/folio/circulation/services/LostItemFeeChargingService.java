@@ -208,12 +208,10 @@ public class LostItemFeeChargingService {
       .build();
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineOwner(ReferenceDataContext referenceData) {
-    final String permanentLocationId = referenceData.loan.getItem().getPermanentLocationId();
+  private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineOwner(
+    ReferenceDataContext referenceData) {
 
-    return locationRepository.fetchLocationById(permanentLocationId)
-      .thenApply(r -> r.map(Location::getPrimaryServicePointId))
-      .thenCompose(r -> r.after(feeFineOwnerRepository::findOwnerForServicePoint))
+    return fetchFeeFineOwner(referenceData.getLoan())
       .thenApply(ownerResult -> ownerResult.map(referenceData::withFeeFineOwner));
   }
 
@@ -237,6 +235,21 @@ public class LostItemFeeChargingService {
       context -> succeeded(context.feeFineOwner == null),
       context -> singleValidationError("No fee/fine owner found for item's permanent location",
         "locationId", context.loan.getItem().getPermanentLocationId()));
+  }
+
+  public CompletableFuture<Result<Loan>> refuseWhenFeeFineOwnerIsNotFound(Loan loan) {
+    return fetchFeeFineOwner(loan)
+      .thenApply(r -> r.failWhen(
+        owner -> succeeded(owner == null),
+        owner -> singleValidationError("No fee/fine owner found for item's permanent location",
+          "locationId", loan.getItem().getPermanentLocationId())))
+      .thenApply(r -> r.map(notUsed -> loan));
+  }
+
+  private CompletableFuture<Result<FeeFineOwner>> fetchFeeFineOwner(Loan loan) {
+    return locationRepository.fetchLocationById(loan.getItem().getPermanentLocationId())
+      .thenApply(r -> r.map(Location::getPrimaryServicePointId))
+      .thenCompose(r -> r.after(feeFineOwnerRepository::findOwnerForServicePoint));
   }
 
   @Getter

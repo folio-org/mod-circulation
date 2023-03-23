@@ -82,6 +82,7 @@ public class DeclareLostResource extends Resource {
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
+      .thenCompose(r -> r.after(lostItemFeeService::refuseWhenFeeFineOwnerIsNotFound))
       .thenCompose(declareItemLost(request, clients))
       .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenCompose(r -> r.after(loan -> lostItemFeeService
