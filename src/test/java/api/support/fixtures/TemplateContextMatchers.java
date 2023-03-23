@@ -97,6 +97,7 @@ public class TemplateContextMatchers {
     tokenMatchers.put("item.effectiveLocationLibrary", notNullValue(String.class));
     tokenMatchers.put("item.effectiveLocationCampus", notNullValue(String.class));
     tokenMatchers.put("item.effectiveLocationInstitution", notNullValue(String.class));
+    tokenMatchers.put("item.effectiveLocationDiscoveryDisplayName", notNullValue(String.class));
     return tokenMatchers;
   }
 

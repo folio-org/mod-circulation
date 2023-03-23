@@ -179,7 +179,8 @@ public class TemplateContextUtil {
         .put("effectiveLocationSpecific", location.getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
-        .put("effectiveLocationInstitution", location.getInstitutionName());
+        .put("effectiveLocationInstitution", location.getInstitutionName())
+        .put("effectiveLocationDiscoveryDisplayName", location.getDiscoveryDisplayName());
     }
 
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
