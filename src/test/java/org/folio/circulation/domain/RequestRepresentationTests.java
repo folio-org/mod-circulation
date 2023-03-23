@@ -37,6 +37,7 @@ class RequestRepresentationTests {
   private static final String CALL_NUMBER_VALUE = "call number";
   private static final String CALL_NUMBER_PREFIX_VALUE = "call number prefix";
   private static final String CALL_NUMBER_SUFFIX_VALUE = "call number suffix";
+  private static final String EFFECTIVE_SHELVING_ORDER_VALUE = "effective shelving order";
 
   @Test
   void testExtendedRepresentation() {
@@ -90,15 +91,17 @@ class RequestRepresentationTests {
     assertNotNull(searchIndex);
     assertThat("Stored representation should contain pickup service point name",
       searchIndex.getString("pickupServicePointName"), is(SERVICE_POINT_NAME_VALUE));
+    assertThat("Stored representation should contain effective shelving order value",
+      searchIndex.getString("shelvingOrder"), is(EFFECTIVE_SHELVING_ORDER_VALUE));
 
-    JsonObject effectiveCallNumberComponents = searchIndex.getJsonObject("effectiveCallNumberComponents");
-    assertNotNull(effectiveCallNumberComponents);
+    JsonObject callNumberComponents = searchIndex.getJsonObject("callNumberComponents");
+    assertNotNull(callNumberComponents);
     assertThat("Stored representation should contain call number",
-      effectiveCallNumberComponents.getString("callNumber"), is(CALL_NUMBER_VALUE));
+      callNumberComponents.getString("callNumber"), is(CALL_NUMBER_VALUE));
     assertThat("Stored representation should contain call number prefix",
-      effectiveCallNumberComponents.getString("prefix"), is(CALL_NUMBER_PREFIX_VALUE));
+      callNumberComponents.getString("prefix"), is(CALL_NUMBER_PREFIX_VALUE));
     assertThat("Stored representation should contain call number suffix",
-      effectiveCallNumberComponents.getString("suffix"), is(CALL_NUMBER_SUFFIX_VALUE));
+      callNumberComponents.getString("suffix"), is(CALL_NUMBER_SUFFIX_VALUE));
   }
 
   private Request createMockRequest() {
@@ -134,7 +137,8 @@ class RequestRepresentationTests {
       .put("effectiveCallNumberComponents", new JsonObject()
         .put("callNumber", CALL_NUMBER_VALUE)
         .put("prefix", CALL_NUMBER_PREFIX_VALUE)
-        .put("suffix", CALL_NUMBER_SUFFIX_VALUE));
+        .put("suffix", CALL_NUMBER_SUFFIX_VALUE))
+      .put("effectiveShelvingOrder", EFFECTIVE_SHELVING_ORDER_VALUE);
     final Item item = Item.from(itemJson)
       .withInstance(instance);
 

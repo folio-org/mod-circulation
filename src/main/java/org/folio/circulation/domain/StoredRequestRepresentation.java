@@ -104,12 +104,17 @@ public class StoredRequestRepresentation {
   private static void addSearchIndexProperties(JsonObject requestJson, Request request, Item item) {
     JsonObject searchIndex = new JsonObject();
 
-    if (item != null && !item.isNotFound() && item.getCallNumberComponents() != null) {
-      write(searchIndex, "effectiveCallNumberComponents",
-        createCallNumberComponents(item.getCallNumberComponents()));
-    } else {
-      log.info("Unable to add callNumberComponents properties to the request: {}," +
-        " callNumberComponents are null.", request.getId());
+    if (item != null && !item.isNotFound()) {
+      CallNumberComponents callNumberComponents = item.getCallNumberComponents();
+      if (callNumberComponents != null) {
+        write(searchIndex, "callNumberComponents",
+          createCallNumberComponents(callNumberComponents));
+      } else {
+        log.info("Unable to add callNumberComponents properties to the request: {}," +
+          " callNumberComponents are null.", request.getId());
+      }
+
+      write(searchIndex, "shelvingOrder", item.getShelvingOrder());
     }
 
     ServicePoint pickupServicePoint = request.getPickupServicePoint();

@@ -30,6 +30,8 @@ public class Item {
   @NonNull private final Location location;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
+  @Getter
+  private final String shelvingOrder;
   @NonNull private final Location permanentLocation;
   private final ServicePoint inTransitDestinationServicePoint;
 
@@ -46,17 +48,18 @@ public class Item {
     return new ItemMapper().toDomain(representation);
   }
   public Item(String id, JsonObject itemRepresentation, Location effectiveLocation,
-    LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
-    Location permanentLocation, ServicePoint inTransitDestinationServicePoint,
-    boolean changed, Holdings holdings, Instance instance,
-    MaterialType materialType, LoanType loanType,
-    ItemDescription description) {
+              LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
+              String shelvingOrder, Location permanentLocation,
+              ServicePoint inTransitDestinationServicePoint, boolean changed,
+              Holdings holdings, Instance instance, MaterialType materialType,
+              LoanType loanType, ItemDescription description) {
 
     this.id = id;
     this.itemRepresentation = itemRepresentation;
     this.location = effectiveLocation;
     this.lastCheckIn = lastCheckIn;
     this.callNumberComponents = callNumberComponents;
+    this.shelvingOrder = shelvingOrder;
     this.permanentLocation = permanentLocation;
     this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
     this.changed = changed;
@@ -335,57 +338,57 @@ public class Item {
 
   public Item withLocation(Location newLocation) {
     return new Item(this.id, this.itemRepresentation, newLocation,
-      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, this.loanType, description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, this.materialType, this.loanType, description);
   }
 
   public Item withMaterialType(@NonNull MaterialType materialType) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, materialType, this.loanType, this.description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, materialType, this.loanType, this.description);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, holdings,
-      this.instance, this.materialType, this.loanType, this.description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInstance(@NonNull Instance instance) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      instance, this.materialType, this.loanType, this.description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withLoanType(@NonNull LoanType loanType) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, loanType, this.description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, this.materialType, loanType, this.description);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, this.loanType, this.description);
+      lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      this.lastCheckIn, this.callNumberComponents, permanentLocation,
-      this.inTransitDestinationServicePoint, this.changed, this.holdings,
-      this.instance, this.materialType, this.loanType, this.description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
     return new Item(this.id, this.itemRepresentation, this.location,
-      this.lastCheckIn, this.callNumberComponents, this.permanentLocation,
-      servicePoint, this.changed, this.holdings, this.instance,
-      this.materialType, this.loanType, this.description);
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, servicePoint, this.changed, this.holdings,
+      this.instance, this.materialType, this.loanType, this.description);
   }
 }
