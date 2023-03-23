@@ -1513,6 +1513,7 @@
         "feefines.item.post",
         "feefineactions.collection.get",
         "feefineactions.item.post",
+        "feefineactions.item.get",
         "owners.collection.get",
         "accounts.item.post",
         "accounts.cancel.post",
