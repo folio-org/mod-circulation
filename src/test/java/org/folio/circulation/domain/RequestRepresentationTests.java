@@ -37,7 +37,7 @@ class RequestRepresentationTests {
   private static final String CALL_NUMBER_VALUE = "call number";
   private static final String CALL_NUMBER_PREFIX_VALUE = "call number prefix";
   private static final String CALL_NUMBER_SUFFIX_VALUE = "call number suffix";
-  private static final String EFFECTIVE_SHELVING_ORDER_VALUE = "effective shelving order";
+  private static final String SHELVING_ORDER = "shelving order";
 
   @Test
   void testExtendedRepresentation() {
@@ -74,6 +74,7 @@ class RequestRepresentationTests {
   @Test
   void testStoredRequest() {
     Request request = createMockRequest();
+
     JsonObject storedRepresentation = new StoredRequestRepresentation()
       .storedRequest(request);
 
@@ -91,8 +92,8 @@ class RequestRepresentationTests {
     assertNotNull(searchIndex);
     assertThat("Stored representation should contain pickup service point name",
       searchIndex.getString("pickupServicePointName"), is(SERVICE_POINT_NAME_VALUE));
-    assertThat("Stored representation should contain effective shelving order value",
-      searchIndex.getString("shelvingOrder"), is(EFFECTIVE_SHELVING_ORDER_VALUE));
+    assertThat("Stored representation should contain shelving order value",
+      searchIndex.getString("shelvingOrder"), is(SHELVING_ORDER));
 
     JsonObject callNumberComponents = searchIndex.getJsonObject("callNumberComponents");
     assertNotNull(callNumberComponents);
@@ -138,7 +139,7 @@ class RequestRepresentationTests {
         .put("callNumber", CALL_NUMBER_VALUE)
         .put("prefix", CALL_NUMBER_PREFIX_VALUE)
         .put("suffix", CALL_NUMBER_SUFFIX_VALUE))
-      .put("effectiveShelvingOrder", EFFECTIVE_SHELVING_ORDER_VALUE);
+      .put("effectiveShelvingOrder", SHELVING_ORDER);
     final Item item = Item.from(itemJson)
       .withInstance(instance);
 
