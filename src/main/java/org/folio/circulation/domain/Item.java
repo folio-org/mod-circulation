@@ -48,11 +48,11 @@ public class Item {
     return new ItemMapper().toDomain(representation);
   }
   public Item(String id, JsonObject itemRepresentation, Location effectiveLocation,
-              LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
-              String shelvingOrder, Location permanentLocation,
-              ServicePoint inTransitDestinationServicePoint, boolean changed,
-              Holdings holdings, Instance instance, MaterialType materialType,
-              LoanType loanType, ItemDescription description) {
+    LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
+    String shelvingOrder, Location permanentLocation,
+    ServicePoint inTransitDestinationServicePoint, boolean changed,
+    Holdings holdings, Instance instance, MaterialType materialType,
+    LoanType loanType, ItemDescription description) {
 
     this.id = id;
     this.itemRepresentation = itemRepresentation;
