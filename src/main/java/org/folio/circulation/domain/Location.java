@@ -13,6 +13,7 @@ public class Location {
   String id;
   String name;
   String code;
+  String discoveryDisplayName;
   @NonNull Collection<UUID> servicePointIds;
   UUID primaryServicePointId;
   @NonNull Institution institution;
@@ -25,7 +26,7 @@ public class Location {
   }
 
   public static Location unknown(String id) {
-    return new Location(id, null, null, List.of(), null,
+    return new Location(id, null, null, null, List.of(), null,
       Institution.unknown(null), Campus.unknown(null), Library.unknown(null),
       ServicePoint.unknown());
   }
@@ -85,22 +86,22 @@ public class Location {
   }
 
   public Location withInstitution(Institution institution) {
-    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+    return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
       institution, campus, library, primaryServicePoint);
   }
 
   public Location withCampus(Campus campus) {
-    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+    return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
       institution, campus, library, primaryServicePoint);
   }
 
   public Location withLibrary(Library library) {
-    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+    return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
       institution, campus, library, primaryServicePoint);
   }
 
   public Location withPrimaryServicePoint(ServicePoint servicePoint) {
-    return new Location(id, name, code, servicePointIds, primaryServicePointId,
+    return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
       institution, campus, library, servicePoint);
   }
 

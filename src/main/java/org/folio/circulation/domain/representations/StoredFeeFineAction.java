@@ -89,7 +89,7 @@ public class StoredFeeFineAction extends JsonObject {
     }
 
     public StoredFeeFineActionBuilder withCreatedAt(ServicePoint servicePoint) {
-      return withCreatedAt(servicePoint != null ? servicePoint.getName() : null);
+      return withCreatedAt(servicePoint != null ? servicePoint.getId() : null);
     }
 
     public StoredFeeFineActionBuilder withBalance(FeeAmount balance) {

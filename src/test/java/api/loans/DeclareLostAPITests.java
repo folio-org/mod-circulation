@@ -1118,7 +1118,7 @@ class DeclareLostAPITests extends APITests {
       hasJsonPath("amountAction", account.getDouble("amount")),
       hasJsonPath("balance", account.getDouble("amount")),
       hasJsonPath("userId", account.getString("userId")),
-      hasJsonPath("createdAt", servicePointsFixture.cd2().getJson().getString("name")),
+      hasJsonPath("createdAt", servicePointsFixture.cd2().getJson().getString("id")),
       hasJsonPath("source", "Admin, Admin"),
       hasJsonPath("typeAction", feeType),
       hasJsonPath("dateAction", withinSecondsBeforeNow(1))

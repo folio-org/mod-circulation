@@ -46,7 +46,7 @@ class LoanCheckInServiceTest {
 
     @NonNull UUID homeServicePointId = UUID.randomUUID();
     Item item = Item.from(itemRepresentation)
-      .withLocation(new Location(null, null, null,
+      .withLocation(new Location(null, null, null, null,
         List.of(checkInServicePoint), homeServicePointId, Institution.unknown(),
         Campus.unknown(), Library.unknown(),
         ServicePoint.unknown(homeServicePointId.toString())));
@@ -105,7 +105,7 @@ class LoanCheckInServiceTest {
   }
 
   private Location locationPrimarilyServing(@NonNull UUID homeServicePointId) {
-    return new Location(null, null, null,
+    return new Location(null, null, null, null,
       List.of(UUID.randomUUID()), homeServicePointId, Institution.unknown(),
       Campus.unknown(), Library.unknown(),
       ServicePoint.unknown(homeServicePointId.toString()));
