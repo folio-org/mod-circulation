@@ -72,8 +72,7 @@ public class StoredRequestRepresentation {
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
     if (requester == null) {
-      String msg = "Unable to add requester properties to the request: {}, requester is null.";
-      log.info(msg, request.getString("id"));
+      logUnableToAddNullPropertiesToTheRequest("requester", request.getString("id"));
       return;
     }
 
@@ -82,8 +81,7 @@ public class StoredRequestRepresentation {
 
   private static void addStoredProxyProperties(JsonObject request, User proxy) {
     if (proxy == null) {
-      String msg = "Unable to add proxy properties to request {}, proxy object is null";
-      log.info(msg, request.getString("id"));
+      logUnableToAddNullPropertiesToTheRequest("proxy", request.getString("id"));
       return;
     }
 
@@ -110,8 +108,7 @@ public class StoredRequestRepresentation {
         write(searchIndex, "callNumberComponents",
           createCallNumberComponents(callNumberComponents));
       } else {
-        log.info("Unable to add callNumberComponents properties to the request: {}," +
-          " callNumberComponents are null.", request.getId());
+        logUnableToAddNullPropertiesToTheRequest("callNumberComponents", request.getId());
       }
 
       write(searchIndex, "shelvingOrder", item.getShelvingOrder());
@@ -121,8 +118,7 @@ public class StoredRequestRepresentation {
     if (pickupServicePoint != null) {
       write(searchIndex, "pickupServicePointName", pickupServicePoint.getName());
     } else {
-      log.info("Unable to add pickupServicePoint properties to the request: {}," +
-        " pickupServicePoint is null.", request.getId());
+      logUnableToAddNullPropertiesToTheRequest("pickupServicePoint", request.getId());
     }
 
     requestJson.put("searchIndex", searchIndex);
@@ -132,6 +128,11 @@ public class StoredRequestRepresentation {
     String reason = isNull(item) ? "null" : "not found";
     String msg = "Unable to add item properties to the request: {}, item is {}";
     log.info(msg, request.getString("id"), reason);
+  }
+
+  private static void logUnableToAddNullPropertiesToTheRequest(String fieldName, String requestId) {
+    log.info("Unable to add {} properties to the request: {}," +
+      " {} is null.", fieldName, requestId, fieldName);
   }
 
   private static void removeDeliveryAddress(JsonObject requestRepresentation) {
