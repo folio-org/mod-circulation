@@ -7,26 +7,22 @@
       "properties": {
         "callNumber": {
           "type": "string",
-          "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item.",
-          "readonly": true
+          "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item."
         },
         "prefix": {
           "type": "string",
-          "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item.",
-          "readonly": true
+          "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item."
         },
         "suffix": {
           "type": "string",
-          "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item.",
-          "readonly": true
+          "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item."
         }
       },
       "additionalProperties": false
     },
     "shelvingOrder": {
       "type": "string",
-      "description": "A system generated normalization of the call number that allows for call number sorting in reports and search results",
-      "readonly": true
+      "description": "A system generated normalization of the call number that allows for call number sorting in reports and search results"
     },
     "pickupServicePointName": {
       "description": "The name of the request pickup service point",
