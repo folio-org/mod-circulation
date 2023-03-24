@@ -267,7 +267,7 @@ public class RequestsAPICreationTests extends APITests {
       representation.containsKey("proxy"), is(false));
 
     assertThat("does not have search index fields",
-      representation.containsKey("searchIndex"), is(true));
+      representation.containsKey("searchIndex"), is(false));
 
     assertThat("should have change metadata",
       representation.containsKey("metadata"), is(true));
