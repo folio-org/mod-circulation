@@ -378,6 +378,11 @@
           "$ref": "override-blocks.json"
         }
       }
+    },
+    "searchIndex": {
+      "description": "Request fields used for search",
+      "type": "object",
+      "$ref": "request-search-index.json"
     }
   },
   "additionalProperties": false,

@@ -34,6 +34,8 @@ public class RequestRepresentation {
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
+    removeSearchIndexFields(requestRepresentation);
+
     return requestRepresentation;
   }
 
@@ -249,6 +251,10 @@ public class RequestRepresentation {
     }
 
     return userSummary;
+  }
+
+  private static void removeSearchIndexFields(JsonObject request) {
+    request.remove("searchIndex");
   }
 }
 
