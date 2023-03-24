@@ -21,6 +21,7 @@ public class LocationMapper {
     return new Location(getProperty(representation, "id"),
       getProperty(representation, "name"),
       getProperty(representation, "code"),
+      getProperty(representation, "discoveryDisplayName"),
       getServicePointIds(representation),
       getPrimaryServicePointId(representation),
       Institution.unknown(getProperty(representation, "institutionId")),
