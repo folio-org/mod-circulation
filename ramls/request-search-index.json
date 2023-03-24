@@ -4,6 +4,8 @@
   "type": "object",
   "properties": {
     "callNumberComponents": {
+      "type": "object",
+      "description": "Effective call number components",
       "properties": {
         "callNumber": {
           "type": "string",

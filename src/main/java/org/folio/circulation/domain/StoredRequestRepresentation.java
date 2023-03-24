@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.representations.ItemProperties;
 
 import io.vertx.core.json.JsonObject;
 
@@ -102,17 +103,18 @@ public class StoredRequestRepresentation {
   private static void addSearchIndexProperties(JsonObject requestJson, Request request) {
     JsonObject searchIndex = new JsonObject();
 
-    Item item = request.getItem();
-    if (item != null && item.isFound()) {
+    if (request.hasItem()) {
+      Item item = request.getItem();
       CallNumberComponents callNumberComponents = item.getCallNumberComponents();
       if (callNumberComponents != null) {
-        write(searchIndex, "callNumberComponents",
+        write(searchIndex, ItemProperties.CALL_NUMBER_COMPONENTS,
           createCallNumberComponents(callNumberComponents));
       } else {
-        logUnableToAddNullPropertiesToTheRequest("callNumberComponents", requestJson);
+        logUnableToAddNullPropertiesToTheRequest(ItemProperties.CALL_NUMBER_COMPONENTS,
+          requestJson);
       }
 
-      write(searchIndex, "shelvingOrder", item.getShelvingOrder());
+      write(searchIndex, ItemProperties.SHELVING_ORDER, item.getShelvingOrder());
     }
 
     ServicePoint pickupServicePoint = request.getPickupServicePoint();

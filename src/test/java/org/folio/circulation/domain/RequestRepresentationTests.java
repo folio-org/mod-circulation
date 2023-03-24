@@ -32,12 +32,11 @@ class RequestRepresentationTests {
   private static final String IDENTIFIERS = "identifiers";
   private static final String INSTANCE = "instance";
   private static final String IDENTIFIER_VALUE = "identifier-value";
-  private static final String SEARCH_INDEX = "searchIndex";
   private static final String SERVICE_POINT_NAME_VALUE = "Circ Desk";
   private static final String CALL_NUMBER_VALUE = "call number";
   private static final String CALL_NUMBER_PREFIX_VALUE = "call number prefix";
   private static final String CALL_NUMBER_SUFFIX_VALUE = "call number suffix";
-  private static final String SHELVING_ORDER = "shelving order";
+  private static final String SHELVING_ORDER_VALUE = "shelving order";
 
   @Test
   void testExtendedRepresentation() {
@@ -88,12 +87,12 @@ class RequestRepresentationTests {
     assertThat("Stored representation should contain valid identifier identifierTypeId",
       identifier.getString("identifierTypeId"), is(IDENTIFIER_ID.toString()));
 
-    JsonObject searchIndex = storedRepresentation.getJsonObject(SEARCH_INDEX);
+    JsonObject searchIndex = storedRepresentation.getJsonObject("searchIndex");
     assertNotNull(searchIndex);
     assertThat("Stored representation should contain pickup service point name",
       searchIndex.getString("pickupServicePointName"), is(SERVICE_POINT_NAME_VALUE));
     assertThat("Stored representation should contain shelving order value",
-      searchIndex.getString("shelvingOrder"), is(SHELVING_ORDER));
+      searchIndex.getString("shelvingOrder"), is(SHELVING_ORDER_VALUE));
 
     JsonObject callNumberComponents = searchIndex.getJsonObject("callNumberComponents");
     assertNotNull(callNumberComponents);
@@ -139,7 +138,7 @@ class RequestRepresentationTests {
         .put("callNumber", CALL_NUMBER_VALUE)
         .put("prefix", CALL_NUMBER_PREFIX_VALUE)
         .put("suffix", CALL_NUMBER_SUFFIX_VALUE))
-      .put("effectiveShelvingOrder", SHELVING_ORDER);
+      .put("effectiveShelvingOrder", SHELVING_ORDER_VALUE);
     final Item item = Item.from(itemJson)
       .withInstance(instance);
 
