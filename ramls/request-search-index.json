@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "Fields used for search",
+  "description": "Request fields used for search",
   "type": "object",
   "properties": {
-    "effectiveCallNumberComponents": {
+    "callNumberComponents": {
       "properties": {
         "callNumber": {
           "type": "string",
@@ -22,6 +22,11 @@
         }
       },
       "additionalProperties": false
+    },
+    "shelvingOrder": {
+      "type": "string",
+      "description": "A system generated normalization of the call number that allows for call number sorting in reports and search results",
+      "readonly": true
     },
     "pickupServicePointName": {
       "description": "The name of the request pickup service point",
