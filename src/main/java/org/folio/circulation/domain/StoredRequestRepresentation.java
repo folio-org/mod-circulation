@@ -23,7 +23,7 @@ public class StoredRequestRepresentation {
     addStoredInstanceProperties(representation, request.getInstance());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
-    addSearchIndexProperties(representation, request, request.getItem());
+    addSearchIndexProperties(representation, request);
 
     removeDeliveryAddress(representation);
 
@@ -72,7 +72,7 @@ public class StoredRequestRepresentation {
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
     if (requester == null) {
-      logUnableToAddNullPropertiesToTheRequest("requester", request.getString("id"));
+      logUnableToAddNullPropertiesToTheRequest("requester", request);
       return;
     }
 
@@ -81,7 +81,7 @@ public class StoredRequestRepresentation {
 
   private static void addStoredProxyProperties(JsonObject request, User proxy) {
     if (proxy == null) {
-      logUnableToAddNullPropertiesToTheRequest("proxy", request.getString("id"));
+      logUnableToAddNullPropertiesToTheRequest("proxy", request);
       return;
     }
 
@@ -99,16 +99,17 @@ public class StoredRequestRepresentation {
     return userSummary;
   }
 
-  private static void addSearchIndexProperties(JsonObject requestJson, Request request, Item item) {
+  private static void addSearchIndexProperties(JsonObject requestJson, Request request) {
     JsonObject searchIndex = new JsonObject();
 
-    if (item != null && !item.isNotFound()) {
+    Item item = request.getItem();
+    if (item != null && item.isFound()) {
       CallNumberComponents callNumberComponents = item.getCallNumberComponents();
       if (callNumberComponents != null) {
         write(searchIndex, "callNumberComponents",
           createCallNumberComponents(callNumberComponents));
       } else {
-        logUnableToAddNullPropertiesToTheRequest("callNumberComponents", request.getId());
+        logUnableToAddNullPropertiesToTheRequest("callNumberComponents", requestJson);
       }
 
       write(searchIndex, "shelvingOrder", item.getShelvingOrder());
@@ -118,7 +119,7 @@ public class StoredRequestRepresentation {
     if (pickupServicePoint != null) {
       write(searchIndex, "pickupServicePointName", pickupServicePoint.getName());
     } else {
-      logUnableToAddNullPropertiesToTheRequest("pickupServicePoint", request.getId());
+      logUnableToAddNullPropertiesToTheRequest("pickupServicePoint", requestJson);
     }
 
     requestJson.put("searchIndex", searchIndex);
@@ -130,9 +131,11 @@ public class StoredRequestRepresentation {
     log.info(msg, request.getString("id"), reason);
   }
 
-  private static void logUnableToAddNullPropertiesToTheRequest(String fieldName, String requestId) {
+  private static void logUnableToAddNullPropertiesToTheRequest(String fieldName,
+    JsonObject requestRepresentation) {
+
     log.info("Unable to add {} properties to the request: {}," +
-      " {} is null.", fieldName, requestId, fieldName);
+      " {} is null.", fieldName, requestRepresentation.getString("id"), fieldName);
   }
 
   private static void removeDeliveryAddress(JsonObject requestRepresentation) {
