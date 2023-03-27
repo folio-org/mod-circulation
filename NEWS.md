@@ -1,3 +1,8 @@
+## 23.5.3 2023-03-27
+
+* Add required module permissions to fix aged to lost item renewal issue (CIRC-1738)
+* Fix TLR recall errors in scenarios where it's placed on the least recalled item (CIRC-1759)
+  
 ## 23.5.2 2023-03-22
 
 * Fix unexpected error message when attempting to renew loan with non-loanable item (CIRC-1592)
