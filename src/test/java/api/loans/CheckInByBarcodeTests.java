@@ -1385,7 +1385,6 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   void canCheckInLostAndPaidItem() {
     final ItemResource item = itemsFixture.basedUponNod();
     var checkOutResource = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
-    feeFineOwnerFixture.ownerForServicePoint(servicePointsFixture.cd1().getId());
     declareLostFixtures.declareItemLost(checkOutResource);
 
     checkInFixture.checkInByBarcode(item);
