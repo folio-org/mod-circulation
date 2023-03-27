@@ -79,30 +79,33 @@ public class LostItemFeeChargingService {
   }
 
   public CompletableFuture<Result<Loan>> chargeLostItemFees(
-    Loan loan, DeclareItemLostRequest request, String staffUserId) {
+    DeclareLostContext declareLostContext, String staffUserId) {
 
+    Loan loan = declareLostContext.getLoan();
     final LostItemFeeRefundContext refundContext = new LostItemFeeRefundContext(
       loan.getItem().getStatus(), loan.getItem().getItemId(), staffUserId,
-      request.getServicePointId(), loan, CANCELLED_ITEM_DECLARED_LOST,
-      AGED_TO_LOST_ITEM_DECLARED_LOST);
+      declareLostContext.getRequest().getServicePointId(), loan,
+      CANCELLED_ITEM_DECLARED_LOST, AGED_TO_LOST_ITEM_DECLARED_LOST);
 
     return refundService.refundLostItemFees(refundContext)
-      .thenCompose(r -> r.after(this::buildReferenceDataContext))
+      .thenCompose(r -> r.after(refundCtx -> buildReferenceDataContext(refundCtx,
+        declareLostContext)))
       .thenCompose(r -> r.after(this::applyLostItemFeePolicy));
   }
 
   private CompletableFuture<Result<ReferenceDataContext>> buildReferenceDataContext(
-    LostItemFeeRefundContext refundContext) {
+    LostItemFeeRefundContext refundContext, DeclareLostContext declareLostContext) {
 
     log.debug("buildReferenceDataContext:: context={}", refundContext);
 
-    Loan loan = refundContext.getLoan();
-    LostItemPolicy lostItemPolicy = refundContext.getLostItemPolicy();
+    var loan = declareLostContext.getLoan();
+    var lostItemPolicy = declareLostContext.getLoan().getLostItemPolicy();
 
     ReferenceDataContext referenceDataContext = new ReferenceDataContext()
       .withLoan(loan)
       .withServicePointId(refundContext.getServicePointId())
-      .withStaffUserId(refundContext.getStaffUserId());
+      .withStaffUserId(refundContext.getStaffUserId())
+      .withFeeFineOwner(declareLostContext.getFeeFineOwner());
 
     if (lostItemPolicy != null) {
       log.debug("buildReferenceDataContext:: skip fetching lost item fee policy {}",
@@ -128,9 +131,7 @@ public class LostItemFeeChargingService {
   }
 
   private CompletableFuture<Result<Loan>> applyFees(ReferenceDataContext referenceData, Loan loan) {
-    return fetchFeeFineOwner(referenceData)
-    .thenApply(this::refuseWhenFeeFineOwnerIsNotFound)
-    .thenComposeAsync(this::fetchFeeFineTypes)
+    return fetchFeeFineTypes(succeeded(referenceData))
     .thenComposeAsync(r -> r.after(actualCostRecordService::createIfNecessaryForDeclaredLostItem))
     .thenApply(this::buildAccountsAndActions)
     .thenCompose(r -> r.after(feeFineFacade::createAccounts))
@@ -209,13 +210,6 @@ public class LostItemFeeChargingService {
       .build();
   }
 
-  private CompletableFuture<Result<ReferenceDataContext>> fetchFeeFineOwner(
-    ReferenceDataContext referenceData) {
-
-    return fetchFeeFineOwner(referenceData.getLoan())
-      .thenApply(ownerResult -> ownerResult.map(referenceData::withFeeFineOwner));
-  }
-
   private Result<FeeFine> getFeeFineOfType(Collection<FeeFine> feeFines, String type) {
     return feeFines.stream()
       .filter(feeFine -> feeFine.getFeeFineType().equals(type))
@@ -227,30 +221,6 @@ public class LostItemFeeChargingService {
   private Result<FeeFine> createFeeFineNotFoundResult(String type) {
     return failed(singleValidationError("Expected automated fee of type " + type,
       "feeFineType", type));
-  }
-
-  private Result<ReferenceDataContext> refuseWhenFeeFineOwnerIsNotFound(
-    Result<ReferenceDataContext> contextResult) {
-
-    return contextResult.failWhen(
-      context -> succeeded(context.feeFineOwner == null),
-      context -> singleValidationError(NO_FEE_FINE_OWNER_FOUND,
-        "locationId", context.loan.getItem().getPermanentLocationId()));
-  }
-
-  public CompletableFuture<Result<Loan>> refuseWhenFeeFineOwnerIsNotFound(Loan loan) {
-    return fetchFeeFineOwner(loan)
-      .thenApply(r -> r.failWhen(
-        owner -> succeeded(owner == null),
-        owner -> singleValidationError(NO_FEE_FINE_OWNER_FOUND,
-          "locationId", loan.getItem().getPermanentLocationId())))
-      .thenApply(r -> r.map(notUsed -> loan));
-  }
-
-  private CompletableFuture<Result<FeeFineOwner>> fetchFeeFineOwner(Loan loan) {
-    return locationRepository.fetchLocationById(loan.getItem().getPermanentLocationId())
-      .thenApply(r -> r.map(Location::getPrimaryServicePointId))
-      .thenCompose(r -> r.after(feeFineOwnerRepository::findOwnerForServicePoint));
   }
 
   @Getter

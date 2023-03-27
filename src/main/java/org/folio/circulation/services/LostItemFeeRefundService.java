@@ -358,10 +358,13 @@ public class LostItemFeeRefundService {
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
     Result<LostItemFeeRefundContext> contextResult) {
 
-    return contextResult.combineAfter(
-      context -> lostItemPolicyRepository
-        .getLostItemPolicyById(context.getLoan().getLostItemPolicyId()),
-      LostItemFeeRefundContext::withLostItemPolicy);
+    return contextResult.after(context -> {
+      if (context.getLostItemPolicy() != null) {
+        return ofAsync(() -> context);
+      }
+      return lostItemPolicyRepository.getLostItemPolicyById(context.getLoan().getLostItemPolicyId())
+        .thenApply(r -> r.map(context::withLostItemPolicy));
+    });
   }
 
   private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotLost(Loan loan) {
