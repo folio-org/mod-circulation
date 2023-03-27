@@ -168,6 +168,6 @@ public class DeclareLostResource extends Resource {
 
     return declaredLostContext.getFeeFineOwner() == null
       && (lostItemPolicy.getDeclareLostProcessingFee().isChargeable()
-        || !lostItemPolicy.hasNoLostItemFee());
+        || lostItemPolicy.hasLostItemFee());
   }
 }

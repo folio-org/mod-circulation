@@ -195,6 +195,10 @@ public class LostItemPolicy extends Policy {
     return !actualCostFee.isChargeable() && !setCostFee.isChargeable();
   }
 
+  public boolean hasLostItemFee() {
+    return actualCostFee.isChargeable() || setCostFee.isChargeable();
+  }
+
   private static class UnknownLostItemPolicy extends LostItemPolicy {
     UnknownLostItemPolicy(String id) {
       super(id, null, noAutomaticallyChargeableFee(), noAutomaticallyChargeableFee(),
