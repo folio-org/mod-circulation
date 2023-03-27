@@ -49,10 +49,8 @@ import lombok.With;
 
 public class LostItemFeeChargingService {
   private static final Logger log = LogManager.getLogger(LostItemFeeChargingService.class);
-  private static final String NO_FEE_FINE_OWNER_FOUND = "No fee/fine owner found for item's permanent location";
 
   private final LostItemPolicyRepository lostItemPolicyRepository;
-  private final FeeFineOwnerRepository feeFineOwnerRepository;
   private final FeeFineRepository feeFineRepository;
   private final FeeFineFacade feeFineFacade;
   private final StoreLoanAndItem storeLoanAndItem;
@@ -65,7 +63,6 @@ public class LostItemFeeChargingService {
     StoreLoanAndItem storeLoanAndItem, LostItemFeeRefundService refundService) {
 
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.feeFineRepository = new FeeFineRepository(clients);
     this.feeFineFacade = new FeeFineFacade(clients);
     this.storeLoanAndItem = storeLoanAndItem;
@@ -99,7 +96,7 @@ public class LostItemFeeChargingService {
     log.debug("buildReferenceDataContext:: context={}", refundContext);
 
     var loan = declareLostContext.getLoan();
-    var lostItemPolicy = declareLostContext.getLoan().getLostItemPolicy();
+    var lostItemPolicy = loan.getLostItemPolicy();
 
     ReferenceDataContext referenceDataContext = new ReferenceDataContext()
       .withLoan(loan)
