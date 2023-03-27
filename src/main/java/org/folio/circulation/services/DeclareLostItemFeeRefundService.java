@@ -24,6 +24,7 @@ public class DeclareLostItemFeeRefundService extends LostItemFeeRefundService {
     super(clients, itemRepository, userRepository, loanRepository);
   }
 
+  @Override
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 

@@ -165,6 +165,7 @@ public class DeclareLostResource extends Resource {
 
   private boolean shouldDeclareLostBeRefused(DeclareLostContext declaredLostContext) {
     var lostItemPolicy = declaredLostContext.getLoan().getLostItemPolicy();
+
     return declaredLostContext.getFeeFineOwner() == null
       && (lostItemPolicy.getDeclareLostProcessingFee().isChargeable()
         || !lostItemPolicy.hasNoLostItemFee());
