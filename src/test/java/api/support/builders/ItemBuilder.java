@@ -21,6 +21,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   public static final String IN_PROCESS = "In process";
   public static final String CLAIMED_RETURNED = "Claimed returned";
   public static final String INTELLECTUAL_ITEM = "Intellectual item";
+  public static final String LOST_AND_PAID = "Lost and paid";
 
   private final UUID id;
   private final UUID holdingId;

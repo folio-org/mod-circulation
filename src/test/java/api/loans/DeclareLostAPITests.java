@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.ItemBuilder.LOST_AND_PAID;
 import static api.support.fakes.FakePubSub.getPublishedEvents;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
@@ -500,6 +501,47 @@ class DeclareLostAPITests extends APITests {
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
     final Response response = declareLostFixtures.attemptDeclareItemLost(
+      new DeclareItemLostRequestBuilder()
+        .withServicePointId(servicePointId)
+        .forLoanId(loan.getId()));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("No fee/fine owner found for item's permanent location"),
+      hasParameter("locationId", permanentLocation.getId().toString())
+    )));
+    assertThat(itemsFixture.getById(item.getId()), hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void canDeclareLostIfNotChargeableLostItemPolicyAndNoOwner() {
+    feeFineOwnerFixture.cleanUp();
+    LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .withNoChargeAmountItem();
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    ItemResource item = itemsFixture.basedUponNod();
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
+    declareLostFixtures.declareItemLost(loan);
+
+    assertThat(itemsFixture.getById(item.getId()), hasItemStatus(LOST_AND_PAID));
+  }
+
+  @Test
+  void canDeclareLostIfActualCostLostItemPolicyAndNoOwner() {
+    feeFineOwnerFixture.cleanUp();
+    LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .withActualCost(0.0);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource permanentLocation = locationsFixture.thirdFloor();
+    ItemResource item = itemsFixture.basedUponNod();
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    Response response = declareLostFixtures.attemptDeclareItemLost(
       new DeclareItemLostRequestBuilder()
         .withServicePointId(servicePointId)
         .forLoanId(loan.getId()));
