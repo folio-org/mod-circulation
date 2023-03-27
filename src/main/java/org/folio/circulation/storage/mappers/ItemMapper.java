@@ -25,6 +25,7 @@ public class ItemMapper {
       Location.unknown(getProperty(representation, "effectiveLocationId")),
       LastCheckIn.fromItemJson(representation),
       CallNumberComponents.fromItemJson(representation),
+      getProperty(representation, "effectiveShelvingOrder"),
       Location.unknown(getProperty(representation, "permanentLocationId")),
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),

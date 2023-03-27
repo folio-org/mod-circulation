@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Request fields used for search",
+  "type": "object",
+  "properties": {
+    "callNumberComponents": {
+      "type": "object",
+      "description": "Effective call number components",
+      "properties": {
+        "callNumber": {
+          "type": "string",
+          "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item."
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item."
+        },
+        "suffix": {
+          "type": "string",
+          "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item."
+        }
+      },
+      "additionalProperties": false
+    },
+    "shelvingOrder": {
+      "type": "string",
+      "description": "A system generated normalization of the call number that allows for call number sorting in reports and search results"
+    },
+    "pickupServicePointName": {
+      "description": "The name of the request pickup service point",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

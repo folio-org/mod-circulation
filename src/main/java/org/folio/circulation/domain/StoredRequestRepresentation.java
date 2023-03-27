@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -9,6 +10,7 @@ import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.representations.ItemProperties;
 
 import io.vertx.core.json.JsonObject;
 
@@ -22,6 +24,7 @@ public class StoredRequestRepresentation {
     addStoredInstanceProperties(representation, request.getInstance());
     addStoredRequesterProperties(representation, request.getRequester());
     addStoredProxyProperties(representation, request.getProxy());
+    addSearchIndexProperties(representation, request);
 
     removeDeliveryAddress(representation);
 
@@ -70,8 +73,7 @@ public class StoredRequestRepresentation {
 
   private static void addStoredRequesterProperties(JsonObject request, User requester) {
     if (requester == null) {
-      String msg = "Unable to add requester properties to the request: {}, requester is null.";
-      log.info(msg, request.getString("id"));
+      logUnableToAddNullPropertiesToTheRequest("requester", request);
       return;
     }
 
@@ -80,8 +82,7 @@ public class StoredRequestRepresentation {
 
   private static void addStoredProxyProperties(JsonObject request, User proxy) {
     if (proxy == null) {
-      String msg = "Unable to add proxy properties to request {}, proxy object is null";
-      log.info(msg, request.getString("id"));
+      logUnableToAddNullPropertiesToTheRequest("proxy", request);
       return;
     }
 
@@ -99,10 +100,44 @@ public class StoredRequestRepresentation {
     return userSummary;
   }
 
+  private static void addSearchIndexProperties(JsonObject requestJson, Request request) {
+    JsonObject searchIndex = new JsonObject();
+
+    if (request.hasItem()) {
+      Item item = request.getItem();
+      CallNumberComponents callNumberComponents = item.getCallNumberComponents();
+      if (callNumberComponents != null) {
+        write(searchIndex, ItemProperties.CALL_NUMBER_COMPONENTS,
+          createCallNumberComponents(callNumberComponents));
+      } else {
+        logUnableToAddNullPropertiesToTheRequest(ItemProperties.CALL_NUMBER_COMPONENTS,
+          requestJson);
+      }
+
+      write(searchIndex, ItemProperties.SHELVING_ORDER, item.getShelvingOrder());
+    }
+
+    ServicePoint pickupServicePoint = request.getPickupServicePoint();
+    if (pickupServicePoint != null) {
+      write(searchIndex, "pickupServicePointName", pickupServicePoint.getName());
+    } else {
+      logUnableToAddNullPropertiesToTheRequest("pickupServicePoint", requestJson);
+    }
+
+    requestJson.put("searchIndex", searchIndex);
+  }
+
   private static void logUnableAddItemToTheRequest(JsonObject request, Item item) {
     String reason = isNull(item) ? "null" : "not found";
     String msg = "Unable to add item properties to the request: {}, item is {}";
     log.info(msg, request.getString("id"), reason);
+  }
+
+  private static void logUnableToAddNullPropertiesToTheRequest(String fieldName,
+    JsonObject requestRepresentation) {
+
+    log.info("Unable to add {} properties to the request: {}," +
+      " {} is null.", fieldName, requestRepresentation.getString("id"), fieldName);
   }
 
   private static void removeDeliveryAddress(JsonObject requestRepresentation) {
