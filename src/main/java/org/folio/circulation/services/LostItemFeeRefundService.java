@@ -129,7 +129,7 @@ public class LostItemFeeRefundService {
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
+  protected CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
     LostItemFeeRefundContext context) {
 
     log.debug("processRefund:: context={}", context);
@@ -216,7 +216,7 @@ public class LostItemFeeRefundService {
       && isNotEmpty(response.getFeeFineActions());
   }
 
-  private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
+  protected CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
     Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.after(context -> {
@@ -358,13 +358,10 @@ public class LostItemFeeRefundService {
   private CompletableFuture<Result<LostItemFeeRefundContext>> fetchLostItemPolicy(
     Result<LostItemFeeRefundContext> contextResult) {
 
-    return contextResult.after(context -> {
-      if (context.getLostItemPolicy() != null) {
-        return ofAsync(() -> context);
-      }
-      return lostItemPolicyRepository.getLostItemPolicyById(context.getLoan().getLostItemPolicyId())
-        .thenApply(r -> r.map(context::withLostItemPolicy));
-    });
+    return contextResult.combineAfter(
+      context -> lostItemPolicyRepository
+        .getLostItemPolicyById(context.getLoan().getLostItemPolicyId()),
+      LostItemFeeRefundContext::withLostItemPolicy);
   }
 
   private Result<LostItemFeeRefundContext> lastLoanForLostItemIsNotLost(Loan loan) {

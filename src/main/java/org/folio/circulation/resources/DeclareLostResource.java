@@ -26,6 +26,7 @@ import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyReposito
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.DeclareLostContext;
+import org.folio.circulation.services.DeclareLostItemFeeRefundService;
 import org.folio.circulation.services.DeclareLostService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
@@ -84,7 +85,7 @@ public class DeclareLostResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem,
-      new LostItemFeeRefundService(clients, itemRepository, userRepository, loanRepository));
+      new DeclareLostItemFeeRefundService(clients, itemRepository, userRepository, loanRepository));
     final var declareLostService = new DeclareLostService(new LostItemPolicyRepository(clients),
       LocationRepository.using(clients, new ServicePointRepository(clients)),
       new FeeFineOwnerRepository(clients));
