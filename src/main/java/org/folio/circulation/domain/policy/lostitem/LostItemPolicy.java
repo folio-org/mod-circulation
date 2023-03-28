@@ -192,7 +192,15 @@ public class LostItemPolicy extends Policy {
   }
 
   public boolean hasNoLostItemFee() {
-    return !actualCostFee.isChargeable() && !setCostFee.isChargeable();
+    return !hasLostItemFee();
+  }
+
+  public boolean hasLostItemFee() {
+    return actualCostFee.isChargeable() || setCostFee.isChargeable();
+  }
+
+  public boolean hasLostItemProcessingFee() {
+    return declareLostProcessingFee.isChargeable();
   }
 
   private static class UnknownLostItemPolicy extends LostItemPolicy {

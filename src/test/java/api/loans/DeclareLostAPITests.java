@@ -1,6 +1,8 @@
 package api.loans;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.builders.ItemBuilder.CHECKED_OUT;
+import static api.support.builders.ItemBuilder.LOST_AND_PAID;
 import static api.support.fakes.FakePubSub.getPublishedEvents;
 import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
@@ -16,6 +18,7 @@ import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
+import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFees;
@@ -506,6 +509,48 @@ class DeclareLostAPITests extends APITests {
       hasMessage("No fee/fine owner found for item's permanent location"),
       hasParameter("locationId", permanentLocation.getId().toString())
     )));
+    assertThat(itemsFixture.getById(item.getId()), hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
+  void canDeclareLostIfNotChargeableLostItemPolicyAndNoOwner() {
+    feeFineOwnerFixture.cleanUp();
+    LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .withNoChargeAmountItem();
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    ItemResource item = itemsFixture.basedUponNod();
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.steve()).getJson();
+    declareLostFixtures.declareItemLost(loan);
+
+    assertThat(itemsFixture.getById(item.getId()), hasItemStatus(LOST_AND_PAID));
+  }
+
+  @Test
+  void cannotDeclareLostIfActualCostLostItemPolicyAndNoOwner() {
+    feeFineOwnerFixture.cleanUp();
+    LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
+      .facultyStandardPolicy()
+      .withName("Declared lost fee test policy")
+      .doNotChargeProcessingFeeWhenDeclaredLost()
+      .withActualCost(0.0);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemPolicy).getId());
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource permanentLocation = locationsFixture.thirdFloor();
+    ItemResource item = itemsFixture.basedUponNod();
+    var loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
+    Response response = declareLostFixtures.attemptDeclareItemLost(
+      new DeclareItemLostRequestBuilder()
+        .withServicePointId(servicePointId)
+        .forLoanId(loan.getId()));
+
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("No fee/fine owner found for item's permanent location"),
+      hasParameter("locationId", permanentLocation.getId().toString())
+    )));
+    assertThat(itemsFixture.getById(item.getId()), hasItemStatus(CHECKED_OUT));
   }
 
   @Test
