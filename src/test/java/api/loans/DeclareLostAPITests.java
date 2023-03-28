@@ -529,7 +529,7 @@ class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  void canDeclareLostIfActualCostLostItemPolicyAndNoOwner() {
+  void cannotDeclareLostIfActualCostLostItemPolicyAndNoOwner() {
     feeFineOwnerFixture.cleanUp();
     LostItemFeePolicyBuilder lostItemPolicy = lostItemFeePoliciesFixture
       .facultyStandardPolicy()
