@@ -17,13 +17,19 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notes.NoteCreator;
 import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.domain.validation.LoanValidator;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.DeclareLostContext;
+import org.folio.circulation.services.DeclareLostItemFeeRefundService;
+import org.folio.circulation.services.DeclareLostService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.LostItemFeeChargingService;
-import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -34,6 +40,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class DeclareLostResource extends Resource {
+  private static final String NO_FEE_FINE_OWNER_FOUND = "No fee/fine owner found for item's permanent location";
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -77,46 +84,56 @@ public class DeclareLostResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
     final var lostItemFeeService = new LostItemFeeChargingService(clients, storeLoanAndItem,
-      new LostItemFeeRefundService(clients, itemRepository, userRepository, loanRepository));
+      new DeclareLostItemFeeRefundService(clients, itemRepository, userRepository, loanRepository));
+    final var declareLostService = new DeclareLostService(new LostItemPolicyRepository(clients),
+      LocationRepository.using(clients, new ServicePointRepository(clients)),
+      new FeeFineOwnerRepository(clients));
 
-    return loanRepository.getById(request.getLoanId())
-      .thenApply(LoanValidator::refuseWhenLoanIsClosed)
-      .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
-      .thenCompose(declareItemLost(request, clients))
-      .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-      .thenCompose(r -> r.after(loan -> lostItemFeeService
-        .chargeLostItemFees(loan, request, context.getUserId())));
+      return loanRepository.getById(request.getLoanId())
+        .thenApply(LoanValidator::refuseWhenLoanIsClosed)
+        .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
+        .thenApply(r -> r.map(loan -> new DeclareLostContext(loan, request)))
+        .thenCompose(declareLostService::fetchLostItemPolicy)
+        .thenCompose(r -> r.after(declareLostService::fetchFeeFineOwner))
+        .thenCompose(r -> r.after(this::refuseWhenFeeFineOwnerIsNotFound))
+        .thenCompose(declareItemLost(clients))
+        .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+        .thenCompose(r -> r.after(ctx -> lostItemFeeService
+          .chargeLostItemFees(ctx, context.getUserId())));
   }
 
-  private Function<Result<Loan>, CompletionStage<Result<Loan>>> declareItemLost(
-    DeclareItemLostRequest request, Clients clients) {
+  private Function<Result<DeclareLostContext>, CompletionStage<Result<DeclareLostContext>>>
+  declareItemLost(Clients clients) {
 
-    return r -> r.after(when(loan -> ofAsync(loan::isClaimedReturned),
-      loan -> declareItemLostWhenClaimedReturned(loan, request, clients),
-      loan -> declareItemLostWhenNotClaimedReturned(loan, request)));
+    return r -> r.after(when(ctx -> ofAsync(ctx.getLoan().isClaimedReturned()),
+      ctx -> declareItemLostWhenClaimedReturned(ctx, clients),
+      this::declareItemLostWhenNotClaimedReturned));
   }
 
-  private CompletableFuture<Result<Loan>> declareItemLostWhenNotClaimedReturned(
-    Loan loan, DeclareItemLostRequest request) {
+  private CompletableFuture<Result<DeclareLostContext>> declareItemLostWhenNotClaimedReturned(
+    DeclareLostContext declareLostContext) {
 
-    return ofAsync(() -> declareItemLost(loan, request));
+    return ofAsync(() -> declareItemLost(declareLostContext));
   }
 
-  private CompletableFuture<Result<Loan>> declareItemLostWhenClaimedReturned(
-    Loan loan, DeclareItemLostRequest request, Clients clients) {
+  private CompletableFuture<Result<DeclareLostContext>> declareItemLostWhenClaimedReturned(
+    DeclareLostContext declareLostContext, Clients clients) {
 
     final NotesRepository notesRepository = NotesRepository.createUsing(clients);
     final NoteCreator creator = new NoteCreator(notesRepository);
 
-    return ofAsync(() -> declareItemLost(loan, request))
-      .thenCompose(r -> r.after(l -> creator.createGeneralUserNote(loan.getUserId(),
+    return ofAsync(() -> declareItemLost(declareLostContext))
+      .thenCompose(r -> r.after(l -> creator.createGeneralUserNote(
+        declareLostContext.getLoan().getUserId(),
         "Claimed returned item marked declared lost")))
-      .thenCompose(r -> r.after(note -> completedFuture(succeeded(loan))));
+      .thenCompose(r -> r.after(note -> completedFuture(succeeded(declareLostContext))));
   }
 
-  private Loan declareItemLost(Loan loan, DeclareItemLostRequest request) {
-    return loan.declareItemLost(defaultIfBlank(request.getComment(), ""),
-      request.getDeclaredLostDateTime());
+  private DeclareLostContext declareItemLost(DeclareLostContext declareLostContext) {
+    return declareLostContext.withLoan(
+      declareLostContext.getLoan().declareItemLost(defaultIfBlank(
+        declareLostContext.getRequest().getComment(), ""),
+        declareLostContext.getRequest().getDeclaredLostDateTime()));
   }
 
   private Result<DeclareItemLostRequest> validateDeclaredLostRequest(
@@ -131,5 +148,23 @@ public class DeclareLostResource extends Resource {
       loan -> succeeded(loan.getItem().isDeclaredLost()),
       loan -> singleValidationError("The item is already declared lost",
         "itemId", loan.getItemId()));
+  }
+
+  public CompletableFuture<Result<DeclareLostContext>> refuseWhenFeeFineOwnerIsNotFound(
+    DeclareLostContext declareLostContext) {
+
+    return ofAsync(declareLostContext::getFeeFineOwner)
+      .thenApply(r -> r.failWhen(
+        owner -> succeeded(shouldDeclareLostBeRefused(declareLostContext)),
+        owner -> singleValidationError(NO_FEE_FINE_OWNER_FOUND,
+          "locationId", declareLostContext.getLoan().getItem().getPermanentLocationId())))
+      .thenApply(r -> r.map(notUsed -> declareLostContext));
+  }
+
+  private boolean shouldDeclareLostBeRefused(DeclareLostContext declaredLostContext) {
+    var lostItemPolicy = declaredLostContext.getLoan().getLostItemPolicy();
+
+    return declaredLostContext.getFeeFineOwner() == null
+      && (lostItemPolicy.hasLostItemFee() || lostItemPolicy.hasLostItemProcessingFee());
   }
 }
