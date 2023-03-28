@@ -92,8 +92,7 @@ public class DeclareLostResource extends Resource {
       return loanRepository.getById(request.getLoanId())
         .thenApply(LoanValidator::refuseWhenLoanIsClosed)
         .thenApply(this::refuseWhenItemIsAlreadyDeclaredLost)
-        .thenApply(r -> r.map(loan -> new DeclareLostContext().withLoan(loan)))
-        .thenApply(r -> r.map(ctx -> ctx.withRequest(request)))
+        .thenApply(r -> r.map(loan -> new DeclareLostContext(loan, request)))
         .thenCompose(declareLostService::fetchLostItemPolicy)
         .thenCompose(r -> r.after(declareLostService::fetchFeeFineOwner))
         .thenCompose(r -> r.after(this::refuseWhenFeeFineOwnerIsNotFound))
@@ -166,7 +165,6 @@ public class DeclareLostResource extends Resource {
     var lostItemPolicy = declaredLostContext.getLoan().getLostItemPolicy();
 
     return declaredLostContext.getFeeFineOwner() == null
-      && (lostItemPolicy.getDeclareLostProcessingFee().isChargeable()
-        || lostItemPolicy.hasLostItemFee());
+      && (lostItemPolicy.hasLostItemFee() || lostItemPolicy.hasLostItemProcessingFee());
   }
 }

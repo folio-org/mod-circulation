@@ -19,6 +19,11 @@ public class DeclareLostContext {
   private DeclareItemLostRequest request;
   private FeeFineOwner feeFineOwner;
 
+  public DeclareLostContext(Loan loan, DeclareItemLostRequest request) {
+    this.loan = loan;
+    this.request = request;
+  }
+
   public DeclareLostContext withLostItemPolicy(LostItemPolicy lostItemPolicy) {
     return withLoan(loan.withLostItemPolicy(lostItemPolicy));
   }
