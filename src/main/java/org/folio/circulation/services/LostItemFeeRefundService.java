@@ -129,7 +129,7 @@ public class LostItemFeeRefundService {
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
-  private CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
+  protected CompletableFuture<Result<LostItemFeeRefundContext>> processRefund(
     LostItemFeeRefundContext context) {
 
     log.debug("processRefund:: context={}", context);
@@ -216,7 +216,7 @@ public class LostItemFeeRefundService {
       && isNotEmpty(response.getFeeFineActions());
   }
 
-  private CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
+  protected CompletableFuture<Result<LostItemFeeRefundContext>> lookupLoan(
     Result<LostItemFeeRefundContext> contextResult) {
 
     return contextResult.after(context -> {

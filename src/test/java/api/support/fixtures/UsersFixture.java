@@ -12,10 +12,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.function.Function;
 
-import api.support.http.IndividualResource;
-
 import api.support.APITestContext;
 import api.support.builders.UserBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 

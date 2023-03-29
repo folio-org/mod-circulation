@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -241,24 +242,40 @@ class RequestFromRepresentationService {
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();
+    Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
+      itemAndLoanFetchingFunction;
     if (request.isTitleLevel() && request.isPage()) {
-      return fetchItemAndLoanForPageTlr(records.getRequest())
-        .thenApply(mapResult(records::withRequest));
+      itemAndLoanFetchingFunction = this::fetchItemAndLoanForPageTlr;
+    }
+    else if (request.isTitleLevel() && request.isRecall()) {
+      if (request.getOperation() == Request.Operation.REPLACE) {
+        itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
+      } else {
+        itemAndLoanFetchingFunction = this::fetchItemAndLoanForRecallTlrCreation;
+      }
+    }
+    else {
+      itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
     }
 
-    if (request.isTitleLevel() && request.isRecall()) {
-      return fetchItemAndLoanForRecallTlrRequest(records)
-        .thenApply(mapResult(records::withRequest));
-    }
+    return completedFuture(records)
+      .thenCompose(itemAndLoanFetchingFunction)
+      .thenApply(mapResult(records::withRequest));
+  }
 
-    return fromFutureResult(findItemForRequest(request))
+  private CompletableFuture<Result<Request>> fetchItemAndLoanDefault(
+    RequestAndRelatedRecords records) {
+
+    return fromFutureResult(findItemForRequest(records.getRequest()))
       .flatMapFuture(this::fetchLoan)
       .flatMapFuture(this::fetchUserForLoan)
-      .map(records::withRequest)
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(Request request) {
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlr(
+    RequestAndRelatedRecords records) {
+
+    Request request = records.getRequest();
     return request.getOperation() == Request.Operation.CREATE
       ? fetchItemAndLoanForPageTlrCreation(request)
       : fetchItemAndLoanForPageTlrReplacement(request);
@@ -283,8 +300,9 @@ class RequestFromRepresentationService {
       .toCompletableFuture();
   }
 
-  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrRequest(
+  private CompletableFuture<Result<Request>> fetchItemAndLoanForRecallTlrCreation(
     RequestAndRelatedRecords records) {
+
     Request request = records.getRequest();
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
       return ofAsync(() -> request);

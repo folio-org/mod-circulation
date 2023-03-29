@@ -11,6 +11,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.services.DeclareLostContext;
 import org.folio.circulation.support.results.Result;
 
 public class StoreLoanAndItem {
@@ -27,6 +28,13 @@ public class StoreLoanAndItem {
 
     return updateLoanAndItemInStorage(relatedRecords.getLoan())
       .thenApply(mapResult(relatedRecords::withLoan));
+  }
+
+  public CompletableFuture<Result<DeclareLostContext>> updateLoanAndItemInStorage(
+    DeclareLostContext declareLostContext) {
+
+    return updateLoanAndItemInStorage(declareLostContext.getLoan())
+      .thenApply(mapResult(declareLostContext::withLoan));
   }
 
   public CompletableFuture<Result<Loan>> updateLoanAndItemInStorage(Loan loan) {

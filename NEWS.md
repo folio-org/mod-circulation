@@ -1,3 +1,9 @@
+## 23.5.4 2023-03-29
+
+* Only notify patron for recalls that change due date (CIRC-1747)
+* Make "Declare lost" fail when a fee/fine should be charged and fee/fine owner doesn't exist (CIRC-1758)
+* Make a TLR recall keep the same item when edited (CIRC-1760)
+* 
 ## 23.5.3 2023-03-27
 
 * Add required module permissions to fix aged to lost item renewal issue (CIRC-1738)
