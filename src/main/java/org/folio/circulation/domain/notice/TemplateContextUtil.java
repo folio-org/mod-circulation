@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronInfoFromComment;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -275,19 +276,21 @@ public class TemplateContextUtil {
     return loanContext;
   }
 
-  public static JsonObject createFeeFineNoticeContext(Account account, Loan loan) {
-    return createLoanNoticeContext(loan)
-      .put(FEE_CHARGE, createFeeChargeContext(account));
-  }
-
   public static JsonObject createFeeFineNoticeContext(Account account, Loan loan,
     FeeFineAction feeFineAction) {
 
-    return createFeeFineNoticeContext(account, loan)
+    return createLoanNoticeContext(loan)
+      .put(FEE_CHARGE, createFeeChargeContext(account, feeFineAction));
+  }
+
+  public static JsonObject createFeeFineChargeAndActionNoticeContext(Account account, Loan loan,
+    FeeFineAction feeFineAction) {
+
+    return createFeeFineNoticeContext(account, loan, feeFineAction)
       .put(FEE_ACTION, createFeeActionContext(feeFineAction));
   }
 
-  private static JsonObject createFeeChargeContext(Account account) {
+  private static JsonObject createFeeChargeContext(Account account, FeeFineAction feeFineAction) {
     JsonObject context = new JsonObject();
 
     write(context, "owner", account.getFeeFineOwner());
@@ -297,6 +300,8 @@ public class TemplateContextUtil {
     write(context, "remainingAmount", account.getRemaining().toScaledString());
     write(context, "chargeDate", account.getCreationDate());
     write(context, "chargeDateTime", account.getCreationDate());
+
+    write(context, "additionalInfo", getPatronInfoFromComment(feeFineAction));
 
     return context;
   }

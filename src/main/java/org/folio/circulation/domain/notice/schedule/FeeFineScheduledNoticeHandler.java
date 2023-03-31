@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
@@ -105,8 +106,9 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
-      ? createFeeFineNoticeContext(context.getAccount(), context.getLoan(), context.getAction())
-      : createFeeFineNoticeContext(context.getAccount(), context.getLoan());
+      ? TemplateContextUtil.createFeeFineChargeAndActionNoticeContext(context.getAccount(),
+      context.getLoan(), context.getAction())
+      : createFeeFineNoticeContext(context.getAccount(), context.getLoan(), context.getAction());
   }
 
   private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
