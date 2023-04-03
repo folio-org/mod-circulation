@@ -276,7 +276,7 @@ public class TemplateContextUtil {
     return loanContext;
   }
 
-  public static JsonObject createFeeFineNoticeContext(Account account, Loan loan,
+  public static JsonObject createFeeFineChargeNoticeContext(Account account, Loan loan,
     FeeFineAction feeFineAction) {
 
     return createLoanNoticeContext(loan)
@@ -286,7 +286,7 @@ public class TemplateContextUtil {
   public static JsonObject createFeeFineChargeAndActionNoticeContext(Account account, Loan loan,
     FeeFineAction feeFineAction) {
 
-    return createFeeFineNoticeContext(account, loan, feeFineAction)
+    return createFeeFineChargeNoticeContext(account, loan, feeFineAction)
       .put(FEE_ACTION, createFeeActionContext(feeFineAction));
   }
 
@@ -301,7 +301,9 @@ public class TemplateContextUtil {
     write(context, "chargeDate", account.getCreationDate());
     write(context, "chargeDateTime", account.getCreationDate());
 
-    write(context, "additionalInfo", getPatronInfoFromComment(feeFineAction));
+    if (feeFineAction != null) {
+      write(context, "additionalInfo", getPatronInfoFromComment(feeFineAction));
+    }
 
     return context;
   }

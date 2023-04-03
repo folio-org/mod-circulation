@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeNoticeContext;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -108,7 +108,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
     return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
       ? TemplateContextUtil.createFeeFineChargeAndActionNoticeContext(context.getAccount(),
       context.getLoan(), context.getAction())
-      : createFeeFineNoticeContext(context.getAccount(), context.getLoan(), context.getAction());
+      : createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(), context.getAction());
   }
 
   private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
