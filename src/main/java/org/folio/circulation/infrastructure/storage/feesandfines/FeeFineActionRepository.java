@@ -65,7 +65,7 @@ public class FeeFineActionRepository {
       return ofAsync(() -> null);
     }
 
-    Result<CqlQuery> query = CqlQuery.exactMatch("expirationDate", account.getId())
+    Result<CqlQuery> query = CqlQuery.exactMatch("accountId", account.getId())
       .combine(exactMatch("typeAction", account.getFeeFineType()), CqlQuery::and);
 
     return new CqlQueryFinder<>(feeFineActionsStorageClient, "feeFineAction", identity())
