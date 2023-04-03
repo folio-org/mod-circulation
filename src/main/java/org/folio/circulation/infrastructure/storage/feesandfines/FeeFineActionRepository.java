@@ -10,28 +10,29 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 
 public class FeeFineActionRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient feeFineActionsStorageClient;
 
   public FeeFineActionRepository(Clients clients) {
@@ -65,6 +66,8 @@ public class FeeFineActionRepository {
       return ofAsync(() -> null);
     }
 
+    log.info("findChargeActionForAccount:: account={}", account.toJson().encodePrettily());
+
     Result<CqlQuery> query = CqlQuery.exactMatch("accountId", account.getId())
       .combine(exactMatch("typeAction", account.getFeeFineType()), CqlQuery::and);
 
@@ -72,7 +75,10 @@ public class FeeFineActionRepository {
       .findByQuery(query, PageLimit.one())
       .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
       .thenApply(mapResult(MultipleRecords::getRecords))
-      .thenApply(mapResult(records -> records.stream().findFirst().orElse(null)));
+      .thenApply(mapResult(records -> {
+        log.info("findChargeActionForAccount:: records_number={}", records.size());
+        return records.stream().findFirst().orElse(null);
+      }));
   }
 
   public CompletableFuture<Result<Void>> createAll(
