@@ -277,10 +277,10 @@ public class TemplateContextUtil {
   }
 
   public static JsonObject createFeeFineChargeNoticeContext(Account account, Loan loan,
-    FeeFineAction feeFineAction) {
+    FeeFineAction chargeAction) {
 
     return createLoanNoticeContext(loan)
-      .put(FEE_CHARGE, createFeeChargeContext(account, feeFineAction));
+      .put(FEE_CHARGE, createFeeChargeContext(account, chargeAction));
   }
 
   public static JsonObject createFeeFineChargeAndActionNoticeContext(Account account, Loan loan,
@@ -303,6 +303,8 @@ public class TemplateContextUtil {
 
     if (chargeAction != null) {
       write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
+    } else {
+      write(context, "additionalInfo", "None");
     }
 
     return context;
