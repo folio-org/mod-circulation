@@ -71,7 +71,7 @@ public class FeeFineActionRepository {
     Result<CqlQuery> query = CqlQuery.exactMatch("accountId", account.getId())
       .combine(exactMatch("typeAction", account.getFeeFineType()), CqlQuery::and);
 
-    return new CqlQueryFinder<>(feeFineActionsStorageClient, "feeFineAction", identity())
+    return new CqlQueryFinder<>(feeFineActionsStorageClient, "feefineactions", identity())
       .findByQuery(query, PageLimit.one())
       .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
       .thenApply(mapResult(MultipleRecords::getRecords))
