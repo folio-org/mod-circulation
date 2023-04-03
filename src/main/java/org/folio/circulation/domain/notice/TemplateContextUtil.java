@@ -303,8 +303,6 @@ public class TemplateContextUtil {
 
     if (chargeAction != null) {
       write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
-    } else {
-      write(context, "additionalInfo", "None");
     }
 
     return context;

@@ -72,7 +72,7 @@ public class FeeFineActionRepository {
       .findByQuery(query, PageLimit.one())
       .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
       .thenApply(mapResult(MultipleRecords::getRecords))
-      .thenApply(mapResult(c -> c.stream().findFirst().orElse(null)));
+      .thenApply(mapResult(records -> records.stream().findFirst().orElse(null)));
   }
 
   public CompletableFuture<Result<Void>> createAll(
