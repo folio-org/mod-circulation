@@ -19,7 +19,8 @@ import lombok.With;
 public class ScheduledNoticeContext {
   private final ScheduledNotice notice;
   private Account account;
-  private FeeFineAction action;
+  private FeeFineAction currentAction;
+  private FeeFineAction chargeAction;
   private Loan loan;
   private Request request;
   private String patronNoticePolicyId;

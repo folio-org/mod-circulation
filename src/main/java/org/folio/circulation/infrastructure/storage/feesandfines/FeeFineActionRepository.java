@@ -2,23 +2,34 @@ package org.folio.circulation.infrastructure.storage.feesandfines;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.representations.StoredFeeFineAction;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 public class FeeFineActionRepository {
   private final CollectionResourceClient feeFineActionsStorageClient;
@@ -47,6 +58,21 @@ public class FeeFineActionRepository {
       .mapTo(FeeFineAction::from)
       .whenNotFound(failed(new RecordNotFoundFailure("feeFineAction", id)))
       .fetch(id);
+  }
+
+  public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
+    if (isNull(account)) {
+      return ofAsync(() -> null);
+    }
+
+    Result<CqlQuery> query = CqlQuery.lessThan("expirationDate", account.getId())
+      .combine(exactMatch("typeAction", account.getFeeFineType()), CqlQuery::and);
+
+    return new CqlQueryFinder<>(feeFineActionsStorageClient, "feeFineAction", identity())
+      .findByQuery(query, PageLimit.one())
+      .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
+      .thenApply(mapResult(MultipleRecords::getRecords))
+      .thenApply(mapResult(c -> c.stream().findFirst().orElse(null)));
   }
 
   public CompletableFuture<Result<Void>> createAll(

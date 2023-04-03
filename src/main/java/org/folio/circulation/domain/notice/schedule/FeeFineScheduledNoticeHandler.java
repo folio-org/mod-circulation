@@ -40,6 +40,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchAction))
       .thenCompose(r -> r.after(this::fetchAccount))
+      .thenCompose(r -> r.after(this::fetchChargeAction))
       .thenCompose(r -> r.after(this::fetchLoan))
       .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForLoan));
   }
@@ -48,14 +49,21 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
     ScheduledNoticeContext context) {
 
     return actionRepository.findById(context.getNotice().getFeeFineActionId())
-      .thenApply(mapResult(context::withAction));
+      .thenApply(mapResult(context::withCurrentAction));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchAccount(
     ScheduledNoticeContext context) {
 
-    return accountRepository.findAccountForAction(context.getAction())
+    return accountRepository.findAccountForAction(context.getCurrentAction())
       .thenApply(mapResult(context::withAccount));
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> fetchChargeAction(
+    ScheduledNoticeContext context) {
+
+    return actionRepository.findChargeActionForAccount(context.getAccount())
+      .thenApply(mapResult(context::withChargeAction));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
@@ -107,8 +115,9 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
       ? TemplateContextUtil.createFeeFineChargeAndActionNoticeContext(context.getAccount(),
-      context.getLoan(), context.getAction())
-      : createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(), context.getAction());
+      context.getLoan(), context.getCurrentAction(), context.getChargeAction())
+      : createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(),
+      context.getChargeAction());
   }
 
   private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
