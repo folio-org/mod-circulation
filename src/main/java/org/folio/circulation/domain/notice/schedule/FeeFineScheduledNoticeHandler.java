@@ -27,7 +27,6 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final FeeFineActionRepository actionRepository;
   private final LoanPolicyRepository loanPolicyRepository;
 
