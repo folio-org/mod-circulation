@@ -62,11 +62,11 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
+    log.debug("findChargeActionForAccount:: params account={}", account);
+
     if (isNull(account)) {
       return ofAsync(() -> null);
     }
-
-    log.info("findChargeActionForAccount:: account={}", account.toJson().encodePrettily());
 
     Result<CqlQuery> query = CqlQuery.exactMatch("accountId", account.getId())
       .combine(exactMatch("typeAction", account.getFeeFineType()), CqlQuery::and);
@@ -76,7 +76,8 @@ public class FeeFineActionRepository {
       .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
       .thenApply(mapResult(MultipleRecords::getRecords))
       .thenApply(mapResult(records -> {
-        log.info("findChargeActionForAccount:: records_number={}", records.size());
+        log.info("findChargeActionForAccount:: found {} fee/fine actions for account {}",
+          records.size(), account);
         return records.stream().findFirst().orElse(null);
       }));
   }

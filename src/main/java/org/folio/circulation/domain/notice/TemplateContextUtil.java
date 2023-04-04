@@ -6,11 +6,14 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronInfoFromComment;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
@@ -24,12 +27,14 @@ import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.rest.tools.utils.LogUtil;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class TemplateContextUtil {
 
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String USER = "user";
   private static final String ITEM = "item";
   private static final String REQUEST = "request";
@@ -38,7 +43,6 @@ public class TemplateContextUtil {
   private static final String LOANS = "loans";
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
-
   private static final String UNLIMITED = "unlimited";
 
   private TemplateContextUtil() {
@@ -291,8 +295,9 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createFeeChargeContext(Account account, FeeFineAction chargeAction) {
-    JsonObject context = new JsonObject();
+    log.debug("createFeeChargeContext:: params account{}, chargeAction={}", account, chargeAction);
 
+    JsonObject context = new JsonObject();
     write(context, "owner", account.getFeeFineOwner());
     write(context, "type", account.getFeeFineType());
     write(context, "paymentStatus", account.getPaymentStatus());
@@ -302,6 +307,8 @@ public class TemplateContextUtil {
     write(context, "chargeDateTime", account.getCreationDate());
 
     if (chargeAction != null) {
+      log.info("createFeeChargeContext:: adding charge action info. account={}, chargeAction={}",
+        account, chargeAction);
       write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
     }
 

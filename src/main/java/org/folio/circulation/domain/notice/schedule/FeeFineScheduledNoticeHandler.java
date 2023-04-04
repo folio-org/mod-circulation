@@ -66,8 +66,6 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchChargeAction(
     ScheduledNoticeContext context) {
 
-    log.info("fetchChargeAction:: context");
-
     return actionRepository.findChargeActionForAccount(context.getAccount())
       .thenApply(mapResult(context::withChargeAction));
   }
