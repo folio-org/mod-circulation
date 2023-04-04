@@ -66,9 +66,9 @@ abstract public class LoanAnonymizationTests extends APITests {
       .withRemainingFeeFine(150));
 
     FeefineActionsBuilder builder = new FeefineActionsBuilder()
-      .forAccount(account.getId())
-      .withBalance(150)
-      .withDate(null);
+      .withAccountId(account.getId())
+      .withBalance(150.0)
+      .withDateAction(null);
 
     feeFineActionsClient.create(builder);
   }
@@ -82,14 +82,14 @@ abstract public class LoanAnonymizationTests extends APITests {
       .withRemainingFeeFine(0));
 
     FeefineActionsBuilder builder = new FeefineActionsBuilder()
-      .forAccount(account.getId())
-      .withBalance(0)
-      .withDate(closedDate);
+      .withAccountId(account.getId())
+      .withBalance(0.0)
+      .withDateAction(closedDate);
 
     FeefineActionsBuilder builder1 = new FeefineActionsBuilder()
-      .forAccount(account.getId())
-      .withBalance(0)
-      .withDate(closedDate.minusDays(1));
+      .withAccountId(account.getId())
+      .withBalance(0.0)
+      .withDateAction(closedDate.minusDays(1));
 
     feeFineActionsClient.create(builder);
     feeFineActionsClient.create(builder1);

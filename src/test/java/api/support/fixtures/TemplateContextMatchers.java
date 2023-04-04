@@ -280,6 +280,10 @@ public class TemplateContextMatchers {
     );
   }
 
+  public static Matcher<Object> getFeeChargeAdditionalInfoContextMatcher(String additionalInfo) {
+    return hasJsonPath("feeCharge.additionalInfo", is(additionalInfo));
+  }
+
   public static Matcher<?> getFeeActionContextMatcher(FeeFineAction action) {
     return allOf(
       hasJsonPath("feeAction.type", is(action.getActionType())),

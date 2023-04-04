@@ -42,12 +42,12 @@ public final class FeeFineAccountFixture {
     final String accountStatus = remaining == 0 ? "Closed" : "Open";
 
     accountActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(accountUuid)
+      .withAccountId(accountUuid)
       .withBalance(remaining)
       .withActionAmount(amount)
       .withPaymentMethod("Bursar")
       .withActionType(actionType)
-      .createdAt(UUID.randomUUID().toString()));
+      .withCreatedAt(UUID.randomUUID().toString()));
 
     accountsClient.replace(accountUuid, account.copy()
       .put("remaining", remaining)
@@ -107,12 +107,12 @@ public final class FeeFineAccountFixture {
     final String accountStatus = remaining == 0 ? "Closed" : "Open";
 
     accountActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(accountUuid)
+      .withAccountId(accountUuid)
       .withBalance(remaining)
       .withActionAmount(amount)
       .withPaymentMethod("Cash")
       .withActionType(actionType)
-      .createdAt(UUID.randomUUID().toString()));
+      .withCreatedAt(UUID.randomUUID().toString()));
 
     accountsClient.replace(accountUuid, account.copy()
       .put("remaining", remaining)
@@ -129,11 +129,11 @@ public final class FeeFineAccountFixture {
       .manualFeeFine());
 
     accountActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(account.getId())
+      .withAccountId(account.getId())
       .withBalance(amount)
       .withActionAmount(amount)
       .withActionType("Manual fee fine")
-      .createdAt(UUID.randomUUID().toString()));
+      .withCreatedAt(UUID.randomUUID().toString()));
 
     return account;
   }

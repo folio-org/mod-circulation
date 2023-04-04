@@ -108,7 +108,7 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
       .feeFineStatusOpen());
 
     feeFineActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(account.getId())
+      .withAccountId(account.getId())
       .withBalance(amount)
       .withActionAmount(amount)
       .withActionType("Lost item fee (actual cost)"));
