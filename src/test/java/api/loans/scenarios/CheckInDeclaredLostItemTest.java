@@ -186,14 +186,8 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     assertThat(actualCostRecordsClient.getAll(), hasSize(1));
     String recordId = actualCostRecordsClient.getAll().get(0).getString("id");
     runWithTimeOffset(() -> createLostItemFeeActualCostAccount(itemFeeActualCost,
-      UUID.fromString(recordId)), ofMinutes(2));
+      UUID.fromString(recordId), "AC info for staff", "AC info for patron"), ofMinutes(2));
     assertThat(accountsClient.getAll(), hasSize(2));
-
-    var chargeAction = feeFineActionsClient.getAll().stream()
-      .filter(a -> a.getString("typeAction").equals("Lost item fee (actual cost)"))
-      .findFirst()
-      .orElseThrow();
-    var additionalInfoForPatron = chargeAction.getString("comments").split("PATRON : ")[1];
 
     checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
       .forItem(item)
@@ -206,6 +200,6 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     verifyNumberOfSentNotices(2);
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(user.getId(), templateId, getFeeChargeAdditionalInfoContextMatcher(
-        additionalInfoForPatron))));
+        "AC info for patron"))));
   }
 }
