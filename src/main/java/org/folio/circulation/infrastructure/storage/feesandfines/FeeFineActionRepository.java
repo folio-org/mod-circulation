@@ -2,10 +2,10 @@ package org.folio.circulation.infrastructure.storage.feesandfines;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.allOf;
-import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -65,15 +65,14 @@ public class FeeFineActionRepository {
     log.debug("findChargeActionForAccount:: params account={}", account);
 
     if (isNull(account)) {
-      return ofAsync(() -> null);
+      return emptyAsync();
     }
 
     Result<CqlQuery> query = CqlQuery.exactMatch("accountId", account.getId())
       .combine(exactMatch("typeAction", account.getFeeFineType()), CqlQuery::and);
 
-    return new CqlQueryFinder<>(feeFineActionsStorageClient, "feefineactions", identity())
+    return new CqlQueryFinder<>(feeFineActionsStorageClient, "feefineactions", FeeFineAction::from)
       .findByQuery(query, PageLimit.one())
-      .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
       .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 

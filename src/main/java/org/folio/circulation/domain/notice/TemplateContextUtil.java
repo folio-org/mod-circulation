@@ -294,7 +294,7 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createFeeChargeContext(Account account, FeeFineAction chargeAction) {
-    log.debug("createFeeChargeContext:: params account{}, chargeAction={}", account, chargeAction);
+    log.debug("createFeeChargeContext:: params account={}, chargeAction={}", account, chargeAction);
 
     JsonObject context = new JsonObject();
     write(context, "owner", account.getFeeFineOwner());
