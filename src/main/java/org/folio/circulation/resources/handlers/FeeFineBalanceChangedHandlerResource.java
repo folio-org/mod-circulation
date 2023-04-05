@@ -57,7 +57,7 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
         log.error("Cannot handle event [{}], error occurred {}",
-          routingContext.getBodyAsString(), failure);
+          routingContext.body().asJsonObject(), failure);
         context.write(noContent());
       }));
   }
