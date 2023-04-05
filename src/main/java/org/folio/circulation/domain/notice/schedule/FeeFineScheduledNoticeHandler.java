@@ -1,20 +1,17 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Collections.singletonList;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeAndActionNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeNoticeContext;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
-import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
@@ -117,7 +114,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
-      ? TemplateContextUtil.createFeeFineChargeAndActionNoticeContext(context.getAccount(),
+      ? createFeeFineChargeAndActionNoticeContext(context.getAccount(),
       context.getLoan(), context.getCurrentAction(), context.getChargeAction())
       : createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(),
       context.getChargeAction());

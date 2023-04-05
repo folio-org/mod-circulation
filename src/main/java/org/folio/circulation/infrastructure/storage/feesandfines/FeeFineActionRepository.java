@@ -74,12 +74,7 @@ public class FeeFineActionRepository {
     return new CqlQueryFinder<>(feeFineActionsStorageClient, "feefineactions", identity())
       .findByQuery(query, PageLimit.one())
       .thenApply(mapResult(records -> records.mapRecords(FeeFineAction::from)))
-      .thenApply(mapResult(MultipleRecords::getRecords))
-      .thenApply(mapResult(records -> {
-        log.info("findChargeActionForAccount:: found {} fee/fine actions for account {}",
-          records.size(), account);
-        return records.stream().findFirst().orElse(null);
-      }));
+      .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
   public CompletableFuture<Result<Void>> createAll(
