@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
@@ -69,5 +70,11 @@ public class FeeFineAction {
 
   public String getPaymentMethod() {
     return representation.getString("paymentMethod");
+  }
+
+  @Override
+  public String toString() {
+    return format("FeeFineAction(id=%s, accountId=%s, typeAction=%s, amount=%s)", getId(),
+      getAccountId(), getActionType(), getAmount().toScaledString());
   }
 }
