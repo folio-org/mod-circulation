@@ -53,6 +53,10 @@
     {
       "eventType": "LOAN_RELATED_FEE_FINE_CLOSED",
       "callbackAddress": "/circulation/handlers/loan-related-fee-fine-closed"
+    },
+    {
+      "eventType": "FEE_FINE_BALANCE_CHANGED",
+      "callbackAddress": "/circulation/handlers/fee-fine-balance-changed"
     }
   ]
 }

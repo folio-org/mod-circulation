@@ -36,6 +36,7 @@ import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
+import org.folio.circulation.resources.handlers.FeeFineBalanceChangedHandlerResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
@@ -132,6 +133,7 @@ public class CirculationVerticle extends AbstractVerticle {
 
     // Handlers
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
+    new FeeFineBalanceChangedHandlerResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {

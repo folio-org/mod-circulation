@@ -872,7 +872,7 @@
     },
     {
       "id": "circulation-event-handlers",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": [
@@ -884,6 +884,19 @@
           ],
           "modulePermissions": [
             "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
+            "pubsub.publish.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/handlers/fee-fine-balance-changed",
+          "permissionsRequired": [
+            "pubsub.events.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.handlers.fee-fine-balance-changed.post",
             "pubsub.publish.post"
           ]
         }

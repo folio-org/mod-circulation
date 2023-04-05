@@ -577,6 +577,41 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       is(lostItemPolicy.getId().toString()));
   }
 
+  @Test
+  void shouldScheduleNoticeWhenActualCostLostItemFeeIsCharged() {
+    var lostItemFeePolicy = lostItemFeePoliciesFixture
+      .ageToLostAfterOneMinutePolicy()
+      .withActualCost(0.00)
+      .chargeProcessingFeeWhenAgedToLost(5.0);
+    var noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    var ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
+
+    assertThat(actualCostRecordsClient.getAll(), hasSize(1));
+
+    var loan = ageToLostResult.getLoan();
+    var feeFineAccount = feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0,
+      loan, feeFineTypeFixture.lostItemProcessingFee(), feeFineOwnerFixture.cd1Owner());
+    eventSubscribersFixture.publishFeeFineBalanceChangedEvent(loan.getId(), feeFineAccount.getId());
+
+    assertThat(loan.getJson(), isLostItemHasBeenBilled());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(
+      ageToLostResult.getLoan().getId()).getJson());
+  }
+
+  @Test
+  void shouldNotScheduleNoticeIfFeeFineBalanceChangedEventWithoutFeeFineId() {
+    eventSubscribersFixture.publishFeeFineBalanceChangedEvent(UUID.randomUUID(), null);
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  void shouldNotScheduleNoticeIfFeeFineBalanceChangedEventWithoutLoanId() {
+    eventSubscribersFixture.publishFeeFineBalanceChangedEvent(null, UUID.randomUUID());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
   private Map<IndividualResource, Double> checkoutTenItems() {
     val loanToFeeMap = new LinkedHashMap<IndividualResource, Double>();
 

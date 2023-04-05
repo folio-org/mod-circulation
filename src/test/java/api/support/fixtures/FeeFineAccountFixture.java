@@ -138,6 +138,28 @@ public final class FeeFineAccountFixture {
     return account;
   }
 
+  public IndividualResource createLostItemFeeActualCostAccount(double amount,
+    IndividualResource loan, IndividualResource feeFine, IndividualResource owner) {
+
+    IndividualResource account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .feeFineStatusOpen()
+      .withFeeFineActualCostType()
+      .withFeeFine(feeFine)
+      .withOwner(owner)
+      .withPaymentStatus("Outstanding"));
+
+    accountActionsClient.create(new FeefineActionsBuilder()
+      .forAccount(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Lost item fee (actual cost)"));
+
+    return account;
+  }
+
   private JsonObject getLostItemFeeAccount(UUID loanId) {
     return accountsClient.getMany(exactMatch("loanId", loanId.toString())
         .and(exactMatch("feeFineType", "Lost item fee")))
