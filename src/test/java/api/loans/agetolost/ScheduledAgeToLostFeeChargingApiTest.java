@@ -34,8 +34,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
@@ -596,7 +598,9 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     eventSubscribersFixture.publishFeeFineBalanceChangedEvent(loan.getId(), feeFineAccount.getId());
 
     assertThat(loan.getJson(), isLostItemHasBeenBilled());
-    assertThat(scheduledNoticesClient.getAll(), hasSize(1));
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(
       ageToLostResult.getLoan().getId()).getJson());
   }
