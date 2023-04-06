@@ -582,7 +582,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     var lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
       .withActualCost(0.00)
-      .chargeProcessingFeeWhenAgedToLost(5.0);
+      .withLostItemProcessingFee(0.0);
     var noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
     var ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
       lostItemFeePolicy, noticePolicy);
@@ -591,7 +591,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
     var loan = ageToLostResult.getLoan();
     var feeFineAccount = feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0,
-      loan, feeFineTypeFixture.lostItemProcessingFee(), feeFineOwnerFixture.cd1Owner(),
+      loan, feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
       "stuffInfo", "patronInfo");
     eventSubscribersFixture.publishFeeFineBalanceChangedEvent(loan.getId(), feeFineAccount.getId());
 
