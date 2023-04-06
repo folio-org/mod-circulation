@@ -100,18 +100,10 @@ public class FeeFineScheduledNoticeService {
   public CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
     FeeFineBalanceChangedEvent event) {
 
-    return accountRepository.findById(event.getFeeFineId())
+    accountRepository.findById(event.getFeeFineId())
       .thenCompose(r -> r.after(feeFineActionRepository::findChargeActionForAccount))
-      .thenCompose(r -> r.after(feeFineAction -> scheduleNoticesForLostItemFeeActualCost(
-        feeFineAction, event.getLoanId())));
-  }
-
-  private CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
-    FeeFineAction feeFineAction, String loanId) {
-
-    loanRepository.getById(loanId)
-      .thenCompose(r -> r.after(loan -> scheduleNotices(loan, feeFineAction,
-        AGED_TO_LOST_FINE_CHARGED)));
+      .thenCombine(loanRepository.getById(event.getLoanId()), (a, l) -> a.combine(l,
+        (action, loan) -> scheduleNotices(loan, action, AGED_TO_LOST_FINE_CHARGED)));
 
     return emptyAsync();
   }
