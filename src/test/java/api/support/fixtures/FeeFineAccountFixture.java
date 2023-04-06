@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.ResourceClient.forAccounts;
 import static api.support.http.ResourceClient.forFeeFineActions;
+import static java.lang.String.format;
 
 import java.util.UUID;
 
@@ -134,6 +135,30 @@ public final class FeeFineAccountFixture {
       .withActionAmount(amount)
       .withActionType("Manual fee fine")
       .withCreatedAt(UUID.randomUUID().toString()));
+
+    return account;
+  }
+
+  public IndividualResource createLostItemFeeActualCostAccount(double amount,
+    IndividualResource loan, IndividualResource feeFine, IndividualResource owner,
+    String infoForStaff, String infoForPatron) {
+
+    var account = accountsClient.create(new AccountBuilder()
+      .withLoan(loan)
+      .withAmount(amount)
+      .withRemainingFeeFine(amount)
+      .feeFineStatusOpen()
+      .withFeeFineActualCostType()
+      .withFeeFine(feeFine)
+      .withOwner(owner)
+      .withPaymentStatus("Outstanding"));
+
+    accountActionsClient.create(new FeefineActionsBuilder()
+      .withAccountId(account.getId())
+      .withBalance(amount)
+      .withActionAmount(amount)
+      .withActionType("Lost item fee (actual cost)")
+      .withComments(format("STAFF : %s \n PATRON : %s", infoForStaff, infoForPatron)));
 
     return account;
   }

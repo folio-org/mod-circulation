@@ -462,20 +462,9 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   protected void createLostItemFeeActualCostAccount(double amount, UUID recordId,
     String infoForStaff, String infoForPatron) {
 
-    IndividualResource account = accountsClient.create(new AccountBuilder()
-      .withLoan(loan)
-      .withAmount(amount)
-      .withRemainingFeeFine(amount)
-      .withFeeFineActualCostType()
-      .feeFineStatusOpen());
-
-    feeFineActionsClient.create(new FeefineActionsBuilder()
-      .withAccountId(account.getId())
-      .withBalance(amount)
-      .withActionAmount(amount)
-      .withActionType("Lost item fee (actual cost)")
-      .withComments(format("STAFF : %s \n PATRON : %s", infoForStaff, infoForPatron))
-    );
+    var account = feeFineAccountFixture.createLostItemFeeActualCostAccount(amount, loan,
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      infoForStaff, infoForPatron);
 
     JsonObject actualCostRecord = actualCostRecordsClient.getById(recordId).getJson();
     actualCostRecord.getJsonObject("feeFine").put("accountId", account.getId());

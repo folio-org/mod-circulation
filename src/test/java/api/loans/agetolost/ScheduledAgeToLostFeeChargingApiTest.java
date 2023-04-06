@@ -34,8 +34,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.domain.policy.Period;
 import org.hamcrest.Matcher;
@@ -575,6 +577,44 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
       is(overduePolicy.getId().toString()));
     assertThat(accountsClient.getAll().get(0).getString("lostItemFeePolicyId"),
       is(lostItemPolicy.getId().toString()));
+  }
+
+  @Test
+  void shouldScheduleNoticeWhenActualCostLostItemFeeIsCharged() {
+    var lostItemFeePolicy = lostItemFeePoliciesFixture
+      .ageToLostAfterOneMinutePolicy()
+      .withActualCost(0.00)
+      .withLostItemProcessingFee(0.0);
+    var noticePolicy = createNoticePolicyWithAgedToLostChargedNotice();
+    var ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFeesWithNotice(
+      lostItemFeePolicy, noticePolicy);
+
+    assertThat(actualCostRecordsClient.getAll(), hasSize(1));
+
+    var loan = ageToLostResult.getLoan();
+    var feeFineAccount = feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0,
+      loan, feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      "stuffInfo", "patronInfo");
+    eventSubscribersFixture.publishFeeFineBalanceChangedEvent(loan.getId(), feeFineAccount.getId());
+
+    assertThat(loan.getJson(), isLostItemHasBeenBilled());
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+    assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(
+      ageToLostResult.getLoan().getId()).getJson());
+  }
+
+  @Test
+  void shouldNotScheduleNoticeIfFeeFineBalanceChangedEventWithoutFeeFineId() {
+    eventSubscribersFixture.publishFeeFineBalanceChangedEvent(UUID.randomUUID(), null);
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+  }
+
+  @Test
+  void shouldNotScheduleNoticeIfFeeFineBalanceChangedEventWithoutLoanId() {
+    eventSubscribersFixture.publishFeeFineBalanceChangedEvent(null, UUID.randomUUID());
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
   private Map<IndividualResource, Double> checkoutTenItems() {

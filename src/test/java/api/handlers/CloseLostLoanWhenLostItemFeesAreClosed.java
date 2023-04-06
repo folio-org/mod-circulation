@@ -16,8 +16,6 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import api.support.APITests;
-import api.support.builders.AccountBuilder;
-import api.support.builders.FeefineActionsBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.TimedTaskClient;
 import io.vertx.core.json.JsonObject;
@@ -62,36 +60,22 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
   }
 
   protected void payLostItemActualCostFeeAndCheckThatLoanIsClosed() {
-    createLostItemFeeActualCostAccount(10.0, loan);
+    feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0, loan,
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      "staffInfo", "patronInfo");
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
     assertThatLoanIsClosedAsLostAndPaid();
   }
 
   protected void payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed() {
-    createLostItemFeeActualCostAccount(10.0, loan);
+    feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0, loan,
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      "staffInfo", "patronInfo");
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
     assertThatLoanIsClosedAsLostAndPaid();
-  }
-
-  protected void createLostItemFeeActualCostAccount(double amount, IndividualResource loan) {
-    IndividualResource account = accountsClient.create(new AccountBuilder()
-      .withLoan(loan)
-      .withAmount(amount)
-      .withRemainingFeeFine(amount)
-      .feeFineStatusOpen()
-      .withFeeFineActualCostType()
-      .withFeeFine(feeFineTypeFixture.lostItemActualCostFee())
-      .withOwner(feeFineOwnerFixture.cd1Owner())
-      .withPaymentStatus("Outstanding"));
-
-    feeFineActionsClient.create(new FeefineActionsBuilder()
-      .withAccountId(account.getId())
-      .withBalance(amount)
-      .withActionAmount(amount)
-      .withActionType("Lost item fee (actual cost)"));
   }
 
   protected void assertThatLoanIsClosedAsLostAndPaid() {

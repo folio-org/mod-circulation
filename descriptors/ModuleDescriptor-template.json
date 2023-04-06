@@ -872,7 +872,7 @@
     },
     {
       "id": "circulation-event-handlers",
-      "version": "0.1",
+      "version": "0.2",
       "handlers": [
         {
           "methods": [
@@ -885,6 +885,18 @@
           "modulePermissions": [
             "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
             "pubsub.publish.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/handlers/fee-fine-balance-changed",
+          "permissionsRequired": [
+            "pubsub.events.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.handlers.fee-fine-balance-changed.post"
           ]
         }
       ]
@@ -1342,6 +1354,40 @@
         "actual-cost-record-storage.actual-cost-records.item.post",
         "actual-cost-record-storage.actual-cost-records.item.put",
         "actual-cost-record-storage.actual-cost-records.item.delete"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.handlers.fee-fine-balance-changed.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loans.item.put",
+        "circulation-storage.circulation-rules.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "circulation-storage.patron-notice-policies.collection.get",
+        "circulation.rules.notice-policy.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.items.collection.get",
+        "inventory-storage.items.item.put",
+        "circulation.internal.fetch-items",
+        "lost-item-fees-policies.item.get",
+        "lost-item-fees-policies.collection.get",
+        "owners.collection.get",
+        "feefines.collection.get",
+        "feefines.item.get",
+        "accounts.item.get",
+        "accounts.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "scheduled-notice-storage.scheduled-notices.item.post",
+        "feefineactions.item.get",
+        "feefineactions.collection.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
