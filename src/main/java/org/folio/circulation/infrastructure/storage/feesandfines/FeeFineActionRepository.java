@@ -92,18 +92,4 @@ public class FeeFineActionRepository {
       .thenApply(Result::succeeded)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
-
-  public CompletableFuture<Result<Collection<FeeFineAction>>> findByFeeFineId(
-    String feeFineId) {
-
-    if(isNull(feeFineId)) {
-      return ofAsync(() -> null);
-    }
-
-    return feeFineActionFetcher.find(MultipleCqlIndexValuesCriteria.builder()
-      .indexName(FEE_FINE_ID)
-      .indexOperator((index, value) -> CqlQuery.exactMatch(index, feeFineId))
-      .build())
-      .thenApply(mapResult(MultipleRecords::getRecords));
-  }
 }

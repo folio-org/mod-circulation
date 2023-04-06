@@ -5,8 +5,8 @@ import static org.folio.circulation.support.Clients.create;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -41,8 +41,7 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
       .create(this::handleFeeFineBalanceChangedEvent);
   }
 
-  private void handleFeeFineBalanceChangedEvent(
-    RoutingContext routingContext) {
+  private void handleFeeFineBalanceChangedEvent(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final var clients = create(context, client);
     final var scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
@@ -52,11 +51,11 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
         if (ACTUAL_COST_FEE_FINE_TYPE_ID.equals(event.getFeeFineTypeId())) {
           return scheduledNoticeService.scheduleNoticesForLostItemFeeActualCost(event);
         }
-        return ofAsync(() -> null);
+        return emptyAsync();
       })
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
-        log.error("Cannot handle event [{}], error occurred {}",
+        log.error("handleFeeFineBalanceChangedEvent:: cannot handle event {}, error occurred {}",
           routingContext.body().asJsonObject(), failure);
         context.write(noContent());
       }));

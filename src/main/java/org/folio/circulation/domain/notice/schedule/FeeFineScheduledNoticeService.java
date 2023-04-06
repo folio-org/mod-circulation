@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.notice.NoticeEventType.AGED_TO_LOST_R
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.NoticeEventType.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -23,6 +24,7 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.subscribers.FeeFineBalanceChangedEvent;
+import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineActionRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -39,22 +41,26 @@ public class FeeFineScheduledNoticeService {
   public static FeeFineScheduledNoticeService using(Clients clients) {
     return new FeeFineScheduledNoticeService(ScheduledNoticesRepository.using(clients),
       new PatronNoticePolicyRepository(clients), new FeeFineActionRepository(clients),
-      new LoanRepository(clients, new ItemRepository(clients), new UserRepository(clients)));
+      new LoanRepository(clients, new ItemRepository(clients), new UserRepository(clients)),
+      new AccountRepository(clients));
   }
 
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
   private final FeeFineActionRepository feeFineActionRepository;
   private final LoanRepository loanRepository;
+  private final AccountRepository accountRepository;
 
   public FeeFineScheduledNoticeService(ScheduledNoticesRepository scheduledNoticesRepository,
     PatronNoticePolicyRepository noticePolicyRepository,
-    FeeFineActionRepository feeFineActionRepository, LoanRepository loanRepository) {
+    FeeFineActionRepository feeFineActionRepository, LoanRepository loanRepository,
+    AccountRepository accountRepository) {
 
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.noticePolicyRepository = noticePolicyRepository;
     this.feeFineActionRepository = feeFineActionRepository;
     this.loanRepository = loanRepository;
+    this.accountRepository = accountRepository;
   }
 
   public Result<CheckInContext> scheduleOverdueFineNotices(CheckInContext context,
@@ -91,6 +97,31 @@ public class FeeFineScheduledNoticeService {
         scheduleNoticeBasedOnPolicy(loan, policy, action, eventType)));
   }
 
+  public CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
+    FeeFineBalanceChangedEvent event) {
+
+    return accountRepository.findById(event.getFeeFineId())
+      .thenCompose(r -> r.after(feeFineActionRepository::findChargeActionForAccount))
+      .thenCompose(r -> r.after(feeFineAction -> scheduleNoticesForLostItemFeeActualCost(
+        feeFineAction, event.getLoanId())));
+  }
+
+  private CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
+    FeeFineAction feeFineAction, String loanId) {
+
+    return loanRepository.getById(loanId)
+      .thenCompose(r -> r.after(loan -> scheduleNoticesForAgedLostFeeFineCharged(
+        loan, feeFineAction)));
+  }
+
+  public CompletableFuture<Result<Void>> scheduleNoticesForAgedLostFeeFineCharged(
+    Loan loan, FeeFineAction feeFineAction) {
+
+    scheduleNotices(loan, feeFineAction, AGED_TO_LOST_FINE_CHARGED);
+
+    return emptyAsync();
+  }
+
   public CompletableFuture<Result<Void>> scheduleNoticesForAgedLostFeeFineCharged(
     Loan loan, Collection<FeeFineAction> actions) {
 
@@ -98,22 +129,6 @@ public class FeeFineScheduledNoticeService {
       AGED_TO_LOST_FINE_CHARGED));
 
     return ofAsync(() -> null);
-  }
-
-  public CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
-    FeeFineBalanceChangedEvent event) {
-
-    return feeFineActionRepository.findByFeeFineId(event.getFeeFineId())
-      .thenCompose(r -> r.after(feeFineActions -> scheduleNoticesForLostItemFeeActualCost(
-        feeFineActions, event.getLoanId())));
-  }
-
-  private CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
-    Collection<FeeFineAction> feeFineActions, String loanId) {
-
-    return loanRepository.getById(loanId)
-      .thenCompose(r -> r.after(loan -> scheduleNoticesForAgedLostFeeFineCharged(
-        loan, feeFineActions)));
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNoticeBasedOnPolicy(

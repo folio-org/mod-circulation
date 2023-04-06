@@ -61,7 +61,8 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
 
   protected void payLostItemActualCostFeeAndCheckThatLoanIsClosed() {
     feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0, loan,
-      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner());
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      "staffInfo", "patronInfo");
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
     assertThatLoanIsClosedAsLostAndPaid();
@@ -69,7 +70,8 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
 
   protected void payLostItemActualCostFeeAndProcessingFeeAndCheckThatLoanIsClosed() {
     feeFineAccountFixture.createLostItemFeeActualCostAccount(10.0, loan,
-      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner());
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      "staffInfo", "patronInfo");
     feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
