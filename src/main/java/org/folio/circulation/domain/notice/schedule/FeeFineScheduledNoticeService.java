@@ -109,15 +109,9 @@ public class FeeFineScheduledNoticeService {
   private CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
     FeeFineAction feeFineAction, String loanId) {
 
-    return loanRepository.getById(loanId)
-      .thenCompose(r -> r.after(loan -> scheduleNoticesForAgedLostFeeFineCharged(
-        loan, feeFineAction)));
-  }
-
-  public CompletableFuture<Result<Void>> scheduleNoticesForAgedLostFeeFineCharged(
-    Loan loan, FeeFineAction feeFineAction) {
-
-    scheduleNotices(loan, feeFineAction, AGED_TO_LOST_FINE_CHARGED);
+    loanRepository.getById(loanId)
+      .thenCompose(r -> r.after(loan -> scheduleNotices(loan, feeFineAction,
+        AGED_TO_LOST_FINE_CHARGED)));
 
     return emptyAsync();
   }
@@ -128,7 +122,7 @@ public class FeeFineScheduledNoticeService {
     actions.forEach(feeFineAction -> scheduleNotices(loan, feeFineAction,
       AGED_TO_LOST_FINE_CHARGED));
 
-    return ofAsync(() -> null);
+    return emptyAsync();
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNoticeBasedOnPolicy(
