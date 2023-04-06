@@ -12,6 +12,7 @@ import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee
 import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
 import static api.support.matchers.LoanMatchers.isClosed;
+import static java.lang.String.format;
 import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
 import static org.folio.circulation.domain.ActualCostRecord.Status.OPEN;
 import static org.folio.circulation.support.utils.ClockUtil.getClock;
@@ -429,7 +430,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   protected void useChargeableRefundableLostItemFee(double itemFee, double processingFee) {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(
       lostItemFeePoliciesFixture.facultyStandardPolicy()
-        .withName(String.format("Test lost policy processing fee %s, item fee %s",
+        .withName(format("Test lost policy processing fee %s, item fee %s",
           itemFee, processingFee))
         .chargeProcessingFeeWhenDeclaredLost(processingFee)
         .withSetCost(itemFee)
@@ -439,7 +440,7 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   protected void declareItemLostWithActualCost(double itemFee, double processingFee) {
     useLostItemPolicy(lostItemFeePoliciesFixture.create(lostItemFeePoliciesFixture
       .facultyStandardPolicy()
-      .withName(String.format("Test lost policy processing fee %s, item fee %s",
+      .withName(format("Test lost policy processing fee %s, item fee %s",
         processingFee, itemFee))
       .chargeProcessingFeeWhenDeclaredLost(processingFee)
       .withActualCost(itemFee).refundFeesWithinMinutes(1)).getId());
@@ -454,6 +455,13 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
   }
 
   protected void createLostItemFeeActualCostAccount(double amount, UUID recordId) {
+    createLostItemFeeActualCostAccount(amount, recordId, "default info for staff",
+      "default info for patron");
+  }
+
+  protected void createLostItemFeeActualCostAccount(double amount, UUID recordId,
+    String infoForStaff, String infoForPatron) {
+
     IndividualResource account = accountsClient.create(new AccountBuilder()
       .withLoan(loan)
       .withAmount(amount)
@@ -462,10 +470,12 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
       .feeFineStatusOpen());
 
     feeFineActionsClient.create(new FeefineActionsBuilder()
-      .forAccount(account.getId())
+      .withAccountId(account.getId())
       .withBalance(amount)
       .withActionAmount(amount)
-      .withActionType("Lost item fee (actual cost)"));
+      .withActionType("Lost item fee (actual cost)")
+      .withComments(format("STAFF : %s \n PATRON : %s", infoForStaff, infoForPatron))
+    );
 
     JsonObject actualCostRecord = actualCostRecordsClient.getById(recordId).getJson();
     actualCostRecord.getJsonObject("feeFine").put("accountId", account.getId());

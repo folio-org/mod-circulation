@@ -9,7 +9,13 @@ import java.util.UUID;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.With;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@With
 public class FeefineActionsBuilder extends JsonBuilder implements Builder {
 
   private String id;
@@ -20,23 +26,7 @@ public class FeefineActionsBuilder extends JsonBuilder implements Builder {
   private String actionType;
   private String createdAt;
   private UUID accountId;
-
-  public FeefineActionsBuilder() {
-  }
-
-  public FeefineActionsBuilder(ZonedDateTime dateAction, Double balance,
-    UUID accountId, Double actionAmount, String paymentMethod, String actionType,
-    String createdAt) {
-
-    this.dateAction = dateAction;
-    this.balance = balance;
-    this.accountId = accountId;
-    this.id = UUID.randomUUID().toString();
-    this.actionAmount = actionAmount;
-    this.paymentMethod = paymentMethod;
-    this.actionType = actionType;
-    this.createdAt = createdAt;
-  }
+  private String comments;
 
   @Override
   public JsonObject create() {
@@ -51,42 +41,9 @@ public class FeefineActionsBuilder extends JsonBuilder implements Builder {
     write(object, "createdAt", createdAt);
     write(object, "source", "Admin, Admin");
     write(object, "accountId", accountId);
+    write(object, "comments", comments);
 
     return object;
   }
 
-  public FeefineActionsBuilder withDate(ZonedDateTime dateAction) {
-    return new FeefineActionsBuilder(dateAction, balance, accountId, actionAmount,
-      paymentMethod, actionType, createdAt);
-  }
-
-  public FeefineActionsBuilder withBalance(double remaining) {
-    return new FeefineActionsBuilder(dateAction, remaining, accountId, actionAmount,
-      paymentMethod, actionType, createdAt);
-  }
-
-  public FeefineActionsBuilder withActionAmount(double amountAction) {
-    return new FeefineActionsBuilder(dateAction, balance, accountId, amountAction,
-      paymentMethod, actionType, createdAt);
-  }
-
-  public FeefineActionsBuilder withPaymentMethod(String paymentMethod) {
-    return new FeefineActionsBuilder(dateAction, balance, accountId, actionAmount,
-      paymentMethod, actionType, createdAt);
-  }
-
-  public FeefineActionsBuilder withActionType(String actionType) {
-    return new FeefineActionsBuilder(dateAction, balance, accountId, actionAmount,
-      paymentMethod, actionType, createdAt);
-  }
-
-  public FeefineActionsBuilder forAccount(UUID accountId) {
-    return new FeefineActionsBuilder(dateAction, balance, accountId, actionAmount,
-      paymentMethod, actionType, createdAt);
-  }
-
-  public FeefineActionsBuilder createdAt(String createdAt) {
-    return new FeefineActionsBuilder(dateAction, balance, accountId, actionAmount,
-      paymentMethod, actionType, createdAt);
-  }
 }

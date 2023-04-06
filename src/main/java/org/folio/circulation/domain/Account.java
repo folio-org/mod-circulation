@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
@@ -197,4 +198,9 @@ public class Account {
     return compareToMillis(left.getDateAction(), right.getDateAction());
   }
 
+  @Override
+  public String toString() {
+    return format("Account(id=%s, feeFineType=%s, amount=%s)", id, getFeeFineType(),
+      amount.toScaledString());
+  }
 }

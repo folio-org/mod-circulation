@@ -4,12 +4,16 @@ import static java.lang.Math.max;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronInfoFromComment;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
@@ -29,6 +33,7 @@ import io.vertx.core.json.JsonObject;
 
 public class TemplateContextUtil {
 
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String USER = "user";
   private static final String ITEM = "item";
   private static final String REQUEST = "request";
@@ -37,7 +42,6 @@ public class TemplateContextUtil {
   private static final String LOANS = "loans";
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
-
   private static final String UNLIMITED = "unlimited";
 
   private TemplateContextUtil() {
@@ -275,21 +279,24 @@ public class TemplateContextUtil {
     return loanContext;
   }
 
-  public static JsonObject createFeeFineNoticeContext(Account account, Loan loan) {
+  public static JsonObject createFeeFineChargeNoticeContext(Account account, Loan loan,
+    FeeFineAction chargeAction) {
+
     return createLoanNoticeContext(loan)
-      .put(FEE_CHARGE, createFeeChargeContext(account));
+      .put(FEE_CHARGE, createFeeChargeContext(account, chargeAction));
   }
 
-  public static JsonObject createFeeFineNoticeContext(Account account, Loan loan,
-    FeeFineAction feeFineAction) {
+  public static JsonObject createFeeFineChargeAndActionNoticeContext(Account account, Loan loan,
+    FeeFineAction currentAction, FeeFineAction chargeAction) {
 
-    return createFeeFineNoticeContext(account, loan)
-      .put(FEE_ACTION, createFeeActionContext(feeFineAction));
+    return createFeeFineChargeNoticeContext(account, loan, chargeAction)
+      .put(FEE_ACTION, createFeeActionContext(currentAction));
   }
 
-  private static JsonObject createFeeChargeContext(Account account) {
+  private static JsonObject createFeeChargeContext(Account account, FeeFineAction chargeAction) {
+    log.debug("createFeeChargeContext:: params account={}, chargeAction={}", account, chargeAction);
+
     JsonObject context = new JsonObject();
-
     write(context, "owner", account.getFeeFineOwner());
     write(context, "type", account.getFeeFineType());
     write(context, "paymentStatus", account.getPaymentStatus());
@@ -297,6 +304,12 @@ public class TemplateContextUtil {
     write(context, "remainingAmount", account.getRemaining().toScaledString());
     write(context, "chargeDate", account.getCreationDate());
     write(context, "chargeDateTime", account.getCreationDate());
+
+    if (chargeAction != null) {
+      log.info("createFeeChargeContext:: adding charge action info. account={}, chargeAction={}",
+        account, chargeAction);
+      write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
+    }
 
     return context;
   }

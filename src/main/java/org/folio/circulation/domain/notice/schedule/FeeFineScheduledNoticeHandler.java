@@ -1,7 +1,8 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeAndActionNoticeContext;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeNoticeContext;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -39,6 +40,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchAction))
       .thenCompose(r -> r.after(this::fetchAccount))
+      .thenCompose(r -> r.after(this::fetchChargeAction))
       .thenCompose(r -> r.after(this::fetchLoan))
       .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForLoan));
   }
@@ -47,14 +49,21 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
     ScheduledNoticeContext context) {
 
     return actionRepository.findById(context.getNotice().getFeeFineActionId())
-      .thenApply(mapResult(context::withAction));
+      .thenApply(mapResult(context::withCurrentAction));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchAccount(
     ScheduledNoticeContext context) {
 
-    return accountRepository.findAccountForAction(context.getAction())
+    return accountRepository.findAccountForAction(context.getCurrentAction())
       .thenApply(mapResult(context::withAccount));
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> fetchChargeAction(
+    ScheduledNoticeContext context) {
+
+    return actionRepository.findChargeActionForAccount(context.getAccount())
+      .thenApply(mapResult(context::withChargeAction));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
@@ -105,8 +114,10 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
-      ? createFeeFineNoticeContext(context.getAccount(), context.getLoan(), context.getAction())
-      : createFeeFineNoticeContext(context.getAccount(), context.getLoan());
+      ? createFeeFineChargeAndActionNoticeContext(context.getAccount(),
+      context.getLoan(), context.getCurrentAction(), context.getChargeAction())
+      : createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(),
+      context.getChargeAction());
   }
 
   private static ScheduledNotice getNextRecurringNotice(ScheduledNotice notice) {
