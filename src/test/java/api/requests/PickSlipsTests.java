@@ -11,7 +11,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -46,12 +45,7 @@ import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 class PickSlipsTests extends APITests {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   private static final String TOTAL_RECORDS = "totalRecords";
   private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String ITEM_KEY = "item";
@@ -155,9 +149,6 @@ class PickSlipsTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
     ZonedDateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
-    
-    log.info("actualcheckintime: " + actualCheckinDateTime.toString());
-    
     IndividualResource requestResource = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .open()
