@@ -202,4 +202,60 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
       hasEmailNoticeProperties(user.getId(), templateId, getFeeChargeAdditionalInfoContextMatcher(
         "AC info for patron"))));
   }
+
+  @Test
+  void shouldCancelAndRefundLostItemFeeActualCostAndProcessingFee() {
+    final double itemFeeActualCost = 15.00;
+    final double itemProcessingFee = 10.00;
+    final UUID servicePointId = servicePointsFixture.cd1().getId();
+    UserResource user = usersFixture.charlotte();
+    feeFineOwnerFixture.ownerForServicePoint(servicePointId);
+
+    var templateId = UUID.randomUUID();
+    templateFixture.createDummyNoticeTemplate(templateId);
+
+    use(PoliciesToActivate.builder()
+      .lostItemPolicy(lostItemFeePoliciesFixture.create(
+        lostItemFeePoliciesFixture.facultyStandardPolicy()
+          .withName("Lost item fee actual cost policy")
+          .chargeProcessingFeeWhenDeclaredLost(itemProcessingFee)
+          .withActualCost(itemFeeActualCost)))
+      .noticePolicy(noticePoliciesFixture.create(
+        new NoticePolicyBuilder()
+          .withName("Patron notice policy with fee/fine notices")
+          .withFeeFineNotices(List.of(new NoticeConfigurationBuilder()
+            .withAgedToLostReturnedEvent()
+            .withTemplateId(templateId)
+            .withUponAtTiming()
+            .sendInRealTime(true)
+            .create())))));
+
+    loan = checkOutFixture.checkOutByBarcode(item, user);
+    declareLostFixtures.declareItemLost(new DeclareItemLostRequestBuilder()
+      .withServicePointId(servicePointId)
+      .forLoanId(loan.getId()));
+    assertThat(accountsClient.getAll(), hasSize(1));
+    assertThat(actualCostRecordsClient.getAll(), hasSize(1));
+    String recordId = actualCostRecordsClient.getAll().get(0).getString("id");
+    runWithTimeOffset(() -> createLostItemFeeActualCostAccount(itemFeeActualCost,
+      UUID.fromString(recordId), "AC info for staff", "AC info for patron"), ofMinutes(2));
+
+    resolveLostItemFeeActualCostAndProcessingFee();
+
+    checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+      .forItem(item)
+      .at(servicePointsFixture.cd1()));
+    assertThat(loan, hasLostItemFeeActualCost(isClosedCancelled(itemFeeActualCost)));
+    assertThat(loan, hasLostItemProcessingFee(isClosedCancelled(itemProcessingFee)));
+
+    verifyNumberOfScheduledNotices(4);
+    scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(ZonedDateTime.now().plusHours(1));
+    verifyNumberOfSentNotices(4);
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
+      hasEmailNoticeProperties(user.getId(), templateId, getFeeChargeAdditionalInfoContextMatcher(
+        "AC info for patron", "15.00", "Refunded fully")),
+      hasEmailNoticeProperties(user.getId(), templateId, getFeeChargeAdditionalInfoContextMatcher(
+        "AC info for patron", "15.00", "Cancelled item returned"))
+      ));
+  }
 }

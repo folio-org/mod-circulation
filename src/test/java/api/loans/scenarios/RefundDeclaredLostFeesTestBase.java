@@ -410,6 +410,15 @@ public abstract class RefundDeclaredLostFeesTestBase extends SpringApiTest {
     assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
   }
 
+  protected void resolveLostItemFeeActualCostAndProcessingFee() {
+    feeFineAccountFixture.payLostItemActualCostFee(loan.getId());
+    feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+  }
+
   protected IndividualResource declareItemLost() {
     loan = checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte());
 
