@@ -100,18 +100,9 @@ class OverrideRenewAgedToLostItemTest extends RefundAgedToLostFeesTestBase {
   }
 
   private void createLostItemFeeActualCostAccount(IndividualResource loan, double amount) {
-    IndividualResource account = accountsClient.create(new AccountBuilder()
-      .withLoan(loan)
-      .withAmount(amount)
-      .withRemainingFeeFine(amount)
-      .withFeeFineActualCostType()
-      .feeFineStatusOpen());
-
-    feeFineActionsClient.create(new FeefineActionsBuilder()
-      .withAccountId(account.getId())
-      .withBalance(amount)
-      .withActionAmount(amount)
-      .withActionType("Lost item fee (actual cost)"));
+    var account = feeFineAccountFixture.createLostItemFeeActualCostAccount(amount, loan,
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(),
+      "stuffInfo", "patronInfo");
 
     JsonObject actualCostRecord = actualCostRecordsClient.getAll().get(0);
     String recordId = actualCostRecord.getString("id");
