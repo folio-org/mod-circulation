@@ -284,6 +284,14 @@ public class TemplateContextMatchers {
     return hasJsonPath("feeCharge.additionalInfo", is(additionalInfo));
   }
 
+  public static Matcher<Object> getFeeChargeAdditionalInfoContextMatcher(String additionalInfo,
+    String amount, String actionType) {
+
+    return allOf(hasJsonPath("feeCharge.additionalInfo", is(additionalInfo)),
+      hasJsonPath("feeCharge.amount", is(amount)),
+      hasJsonPath("feeAction.type", is(actionType)));
+  }
+
   public static Matcher<?> getFeeActionContextMatcher(FeeFineAction action) {
     return allOf(
       hasJsonPath("feeAction.type", is(action.getActionType())),

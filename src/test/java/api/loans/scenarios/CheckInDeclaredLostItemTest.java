@@ -253,6 +253,9 @@ class CheckInDeclaredLostItemTest extends RefundDeclaredLostFeesTestBase {
     verifyNumberOfSentNotices(4);
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(user.getId(), templateId, getFeeChargeAdditionalInfoContextMatcher(
-        "AC info for patron"))));
+        "AC info for patron", "15.00", "Refunded fully")),
+      hasEmailNoticeProperties(user.getId(), templateId, getFeeChargeAdditionalInfoContextMatcher(
+        "AC info for patron", "15.00", "Cancelled item returned"))
+      ));
   }
 }
