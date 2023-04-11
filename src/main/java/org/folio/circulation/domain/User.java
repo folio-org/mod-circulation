@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
@@ -12,6 +13,7 @@ import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
@@ -25,6 +27,8 @@ public class User {
 
   public User(JsonObject representation) {
     this(representation, null);
+    System.out.println("representation"+representation);
+
   }
 
   public User(JsonObject representation, PatronGroup patronGroup) {
@@ -130,5 +134,9 @@ public class User {
 
   public JsonObject getPersonal() {
     return getObjectProperty(representation,PERSONAL_PROPERTY_NAME);
+  }
+
+  public JsonArray getDepartments(){
+    return getArrayProperty(representation, "departments");
   }
 }

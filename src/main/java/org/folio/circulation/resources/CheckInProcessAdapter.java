@@ -221,7 +221,10 @@ class CheckInProcessAdapter {
       return completedFuture(succeeded(null));
     }
     return userRepository.getUserWithPatronGroup(firstRequest)
-      .thenApply(r -> r.map(firstRequest::withRequester));
+      .thenApply(r -> r.map(fr->{
+        System.out.println("departments values "+fr.getDepartments());
+        return firstRequest.withRequester(fr);
+      }));
   }
 
   CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
