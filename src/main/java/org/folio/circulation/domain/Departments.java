@@ -1,19 +1,19 @@
 package org.folio.circulation.domain;
 
+import io.vertx.core.json.JsonObject;
 import lombok.Value;
 
 @Value
 public class Departments {
 
-  public static Departments unknown() {
-    return unknown(null);
+  JsonObject representation;
+  public Departments(JsonObject representation){
+    System.out.println("Department values "+representation);
+    this.representation = representation;
   }
 
-  public static Departments unknown(String id) {
-    return new Departments(id, null);
+  public String getDepartmentName(){
+    return representation.getString("name");
   }
-
-  String id;
-  String name;
 
 }

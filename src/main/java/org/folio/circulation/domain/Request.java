@@ -99,7 +99,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedPosition;
   private Integer previousPosition;
   private boolean changedStatus;
-  private List<Departments> departmentsList;
+  @With
+  private List<Departments> departments;
 
 
   public static Request from(JsonObject representation) {
@@ -222,7 +223,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       cancellationReasonRepresentation, instance, instanceItems, instanceItemsRequestPolicies,
       newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
-      previousPosition, changedStatus, departmentsList);
+      previousPosition, changedStatus, departments);
   }
 
   @Override
