@@ -100,7 +100,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private Integer previousPosition;
   private boolean changedStatus;
   @With
-  private List<Departments> departments;
+  private List<Department> departments;
 
 
   public static Request from(JsonObject representation) {

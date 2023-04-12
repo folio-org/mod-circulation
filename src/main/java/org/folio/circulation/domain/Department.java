@@ -4,15 +4,15 @@ import io.vertx.core.json.JsonObject;
 import lombok.Value;
 
 @Value
-public class Departments {
+public class Department {
 
   JsonObject representation;
-  public Departments(JsonObject representation){
+  public Department(JsonObject representation){
     System.out.println("Department values "+representation);
     this.representation = representation;
   }
 
-  public String getDepartmentName(){
+  public String getName(){
     return representation.getString("name");
   }
 

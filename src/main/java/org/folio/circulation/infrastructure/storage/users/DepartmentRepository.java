@@ -2,7 +2,7 @@ package org.folio.circulation.infrastructure.storage.users;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Departments;
+import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -24,7 +24,7 @@ public class DepartmentRepository {
     this.departmentClient = clients.departmentClient();
   }
 
-  public CompletableFuture<Result<List<Departments>>> getDepartmentByIds(List<String> departmentIds){
+  public CompletableFuture<Result<List<Department>>> getDepartmentByIds(List<String> departmentIds){
     log.info("getDepartmentByIds:: Fetching departmentByIds {}", departmentIds);
     return CqlQuery.exactMatchAny("id", departmentIds)
       .after(query -> departmentClient.getMany(query, PageLimit.noLimit()))
@@ -32,7 +32,7 @@ public class DepartmentRepository {
         .map(records -> new ArrayList<>(records.getRecords())));
   }
 
-  private Result<MultipleRecords<Departments>> mapResponseToDepartments(Response response) {
-    return MultipleRecords.from(response, Departments::new, "departments");
+  private Result<MultipleRecords<Department>> mapResponseToDepartments(Response response) {
+    return MultipleRecords.from(response, Department::new, "departments");
   }
 }

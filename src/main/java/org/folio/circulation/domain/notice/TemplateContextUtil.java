@@ -9,6 +9,7 @@ import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronI
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -17,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -125,14 +127,14 @@ public class TemplateContextUtil {
 
       User requester = request.getRequester();
       if (requester != null) {
-        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()));
+        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId(), request.getDepartments()));
       }
     }
 
     return staffSlipContext;
   }
 
-  public static JsonObject createUserContext(User user, String deliveryAddressTypeId) {
+  public static JsonObject createUserContext(User user, String deliveryAddressTypeId, List<Department> departments) {
     JsonObject address = user.getAddressByType(deliveryAddressTypeId);
 
     JsonObject userContext = createUserContext(user);
@@ -144,6 +146,9 @@ public class TemplateContextUtil {
         .put("region", address.getString("region", null))
         .put("postalCode", address.getString("postalCode", null))
         .put("countryId", address.getString("countryId", null));
+    }
+    if (departments != null && departments.size() > 0) {
+      userContext.put("departments", departments.stream().map(Department::getName).collect(joining("; ")));
     }
 
     return userContext;

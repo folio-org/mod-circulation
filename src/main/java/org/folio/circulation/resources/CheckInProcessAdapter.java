@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
@@ -236,15 +237,12 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<Request>> getDepartments(CheckInContext context) {
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
-//    if (firstRequest == null || firstRequest.getRequester() == null || firstRequest.getRequester().getDepartments() == null) {
-//      return completedFuture(succeeded(null));
-//    }
-    List<String> departmentIds = firstRequest.getRequester().getDepartments().getList();
-    return departmentRepository.getDepartmentByIds(departmentIds)
-      .thenApply(r->r.map(dep->{
-        System.out.println("Dep list value"+dep);
-        return firstRequest.withDepartments(dep);
-      }));
+    if (firstRequest == null || firstRequest.getRequester() == null || firstRequest.getRequester().getDepartments() == null) {
+      return completedFuture(succeeded(null));
+    }
+    CompletableFuture<Result<List<Department>>> departmentList = departmentRepository.getDepartmentByIds(
+      firstRequest.getRequester().getDepartments().getList());
+    return departmentList.thenApply(r->r.map(firstRequest::withDepartments));
   }
 
   CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
