@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
 public class DepartmentRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient departmentClient;
-  public static final int BATCH_SIZE = 90;
+  public static final int BATCH_SIZE = 2;
 
   public DepartmentRepository(Clients clients) {
     this.departmentClient = clients.departmentClient();
@@ -37,7 +37,9 @@ public class DepartmentRepository {
     List<Result<ArrayList<Department>>> id = splitIds(departmentIds)
       .stream()
       .map(dep -> CqlQuery.exactMatchAny("id", dep)
-        .after(query -> departmentClient.getMany(query, PageLimit.noLimit()))
+        .after(query -> {
+          log.info("departmentClient.getMany");
+          return departmentClient.getMany(query, PageLimit.noLimit());})
         .thenApply(result -> result.next(this::mapResponseToDepartments)
           .map(records -> new ArrayList<>(records.getRecords()))))
       .map(CompletableFuture::join)

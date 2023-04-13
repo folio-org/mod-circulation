@@ -3,10 +3,11 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
@@ -228,10 +229,7 @@ class CheckInProcessAdapter {
       return completedFuture(succeeded(null));
     }
     return userRepository.getUserWithPatronGroup(firstRequest)
-      .thenApply(r -> r.map(fr->{
-        System.out.println("departmentIds in user object "+fr.getDepartments());
-        return firstRequest.withRequester(fr);
-      }));
+      .thenApply(r -> r.map(firstRequest::withRequester));
   }
 
   CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
@@ -281,7 +279,11 @@ class CheckInProcessAdapter {
     if (firstRequest == null || firstRequest.getRequester() == null) {
       return completedFuture(succeeded(null));
     }
-    return CompletableFuture.completedFuture(Result.succeeded(firstRequest.withDepartments(departmentRepository.getDepartmentByIds(firstRequest.getRequester().getDepartments().getList()))));
+    List<String> departmentIds = firstRequest.getRequester().getDepartments()
+      .stream()
+      .map(String.class::cast)
+      .collect(Collectors.toList());
+    return CompletableFuture.completedFuture(Result.succeeded(firstRequest.withDepartments((departmentRepository.getDepartmentByIds(departmentIds)))));
   }
 
 }
