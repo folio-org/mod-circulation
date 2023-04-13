@@ -3,14 +3,12 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
-import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
@@ -224,6 +222,7 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Request>> getRequester(CheckInContext context) {
+    System.out.println("Thread Name requester"+Thread.currentThread().getName());
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
@@ -235,17 +234,8 @@ class CheckInProcessAdapter {
       }));
   }
 
-  CompletableFuture<Result<Request>> getDepartments(CheckInContext context) {
-    Request firstRequest = context.getHighestPriorityFulfillableRequest();
-    if (firstRequest == null || firstRequest.getRequester() == null || firstRequest.getRequester().getDepartments() == null) {
-      return completedFuture(succeeded(null));
-    }
-    CompletableFuture<Result<List<Department>>> departmentList = departmentRepository.getDepartmentByIds(
-      firstRequest.getRequester().getDepartments().getList());
-    return departmentList.thenApply(r->r.map(firstRequest::withDepartments));
-  }
-
   CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
+    System.out.println("Thread Name address type"+Thread.currentThread().getName());
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
@@ -283,4 +273,15 @@ class CheckInProcessAdapter {
     return requestQueueService.findRequestFulfillableByItem(context.getItem(), context.getRequestQueue())
       .thenApply(r -> r.map(context::withHighestPriorityFulfillableRequest));
   }
+
+
+  CompletableFuture<Result<Request>> getDepartments(CheckInContext context) {
+    System.out.println("Thread Name departments"+Thread.currentThread().getName());
+    Request firstRequest = context.getHighestPriorityFulfillableRequest();
+    if (firstRequest == null || firstRequest.getRequester() == null) {
+      return completedFuture(succeeded(null));
+    }
+    return CompletableFuture.completedFuture(Result.succeeded(firstRequest.withDepartments(departmentRepository.getDepartmentByIds(firstRequest.getRequester().getDepartments().getList()))));
+  }
+
 }
