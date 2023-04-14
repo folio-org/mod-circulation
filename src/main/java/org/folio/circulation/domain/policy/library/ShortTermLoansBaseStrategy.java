@@ -29,7 +29,7 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
   public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     log.debug("calculateDueDate:: parameters requestedDate: {}, openingDays: {}",
-      requestedDate, asJson(openingDays.toJsonList()));
+      requestedDate, openingDays);
     log.info("----- ShortTermLoansBaseStrategy -----");
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);

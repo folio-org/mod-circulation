@@ -109,7 +109,7 @@ public class ClosedLibraryStrategyService {
 
     log.debug("applyStrategy:: parameters loan: {}, loanPolicy: {}, openingDays: {}, " +
         "timeZone: {}, isRecall: {}", asJson(loan.asJson()), asJson(loanPolicy.asJson()),
-     openingDays != null ? asJson(openingDays.toJsonList()) : null, timeZone, isRecall);
+     openingDays, timeZone, isRecall);
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
@@ -149,8 +149,7 @@ public class ClosedLibraryStrategyService {
 
     log.debug("applyFixedDueDateLimit:: parameters dueDate: {}, loan: {}, " +
       "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", dueDate, asJson(loan.asJson()),
-      asJson(loanPolicy.asJson()), openingDays != null ? asJson(openingDays.toJsonList()) : null,
-      timeZone, isRecall);
+      asJson(loanPolicy.asJson()), openingDays, timeZone, isRecall);
 
     Optional<ZonedDateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,

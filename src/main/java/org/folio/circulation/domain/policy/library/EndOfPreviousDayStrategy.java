@@ -30,7 +30,7 @@ public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
   public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     log.debug("calculateDueDate:: parameters requestedDate: {}, openingDays: {}",
-      requestedDate, asJson(openingDays.toJsonList()));
+      requestedDate, openingDays);
     if (openingDays.getRequestedDay().isOpen()) {
       log.info("calculatedDueDate:: requestedDay is open");
       return succeeded(atEndOfDay(requestedDate, zone));

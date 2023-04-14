@@ -29,7 +29,7 @@ public class EndOfPreviousDayTruncateStrategy extends EndOfPreviousDayStrategy {
   public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
     log.debug("calculateDueDate:: parameters requestedDate: {}, openingDays: {}",
-      requestedDate, asJson(openingDays.toJsonList()));
+      requestedDate, openingDays);
     OpeningDay previousDay = openingDays.getPreviousDay();
     if (!previousDay.isOpen()) {
       log.error("calculateDueDate:: previousDay is closed");

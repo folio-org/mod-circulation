@@ -8,10 +8,13 @@ import java.util.stream.Collectors;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
+
 import org.folio.circulation.domain.OpeningDay;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class AdjacentOpeningDays {
 
   private final OpeningDay previousDay;
@@ -28,11 +31,5 @@ public class AdjacentOpeningDays {
 
   public List<OpeningDay> toList() {
     return Arrays.asList(this.getPreviousDay(), this.getRequestedDay(), this.getNextDay());
-  }
-
-  public List<JsonObject> toJsonList() {
-    return toList().stream()
-      .map(openingDay -> openingDay != null ? openingDay.toJson() : null)
-      .collect(Collectors.toList());
   }
 }
