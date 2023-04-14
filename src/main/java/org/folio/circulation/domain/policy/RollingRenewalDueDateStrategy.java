@@ -2,6 +2,7 @@ package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -57,7 +58,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
-    log.debug("calculateDueDate:: parameters loan: {}", loan);
+    log.debug("calculateDueDate:: parameters loan: {}", asJson(loan.asJson()));
     if(StringUtils.isBlank(renewFrom)) {
       log.error("calculateDueDate:: renewFrom is blank");
       return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));

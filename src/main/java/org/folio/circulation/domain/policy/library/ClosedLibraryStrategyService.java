@@ -70,8 +70,7 @@ public class ClosedLibraryStrategyService {
     RenewalContext renewalContext) {
 
     final Loan loan = renewalContext.getLoan();
-    log.debug("applyClosedLibraryDueDateManagement:: loan: {}",
-      loan.asJson());
+    log.debug("applyClosedLibraryDueDateManagement:: loan: {}", asJson(loan.asJson()));
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
       renewalContext.getTimeZone())
