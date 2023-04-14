@@ -6,15 +6,20 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
+import java.lang.invoke.MethodHandles;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.results.Result;
 
 public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final ZonedDateTime currentTime;
 
@@ -27,12 +32,15 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
+      log.error("calculateIfClosed:: currentTimeInterval is null");
       return failed(failureForAbsentTimetable());
     }
-    if (hasLibraryRolloverWorkingDay(libraryTimetable, requestedInterval)){
+    if (hasLibraryRolloverWorkingDay(libraryTimetable, requestedInterval)) {
+      log.info("calculateIfClosed:: hasLibraryRolloverWorkingDay is true");
       return succeeded(requestedInterval.getPrevious().getEndTime());
     }
     if (currentTimeInterval.isOpen()) {
+      log.info("calculateIfClosed:: current time interval is open");
       return succeeded(currentTimeInterval.getEndTime());
     }
     return succeeded(currentTimeInterval.getNext().getEndTime());
@@ -40,6 +48,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
 
   private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
     if (isNotSequenceOfWorkingDays(libraryTimetable, requestedInterval)) {
+      log.info("hasLibraryRolloverWorkingDay:: isNotSequenceOfWorkingDays is true");
       return false;
     }
 

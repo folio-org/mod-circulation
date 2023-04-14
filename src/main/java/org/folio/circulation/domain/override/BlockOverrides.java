@@ -4,6 +4,12 @@ package org.folio.circulation.domain.override;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
+
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
@@ -18,8 +24,11 @@ public class BlockOverrides {
   private final RenewalBlockOverride renewalBlockOverride;
   private final RenewalDueDateRequiredBlockOverride renewalDueDateRequiredBlockOverride;
   private final String comment;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static BlockOverrides from(JsonObject representation) {
+    log.debug("from:: parameters representation: {}",  () -> asJson(representation));
+
     return new BlockOverrides(
       ItemNotLoanableBlockOverride.from(getObjectProperty(representation, "itemNotLoanableBlock")),
       PatronBlockOverride.from(getObjectProperty(representation, "patronBlock")),
@@ -31,11 +40,16 @@ public class BlockOverrides {
   }
 
   public static BlockOverrides fromRequest(JsonObject requestRepresentation) {
+    log.debug("fromRequest:: parameters requestRepresentation: {}",
+      () -> asJson(requestRepresentation));
+
     return from(getNestedObjectProperty(
       requestRepresentation, "requestProcessingParameters", "overrideBlocks"));
   }
 
   public static BlockOverrides noOverrides() {
+    log.debug("noOverrides:: ");
+
     return from(null);
   }
 }

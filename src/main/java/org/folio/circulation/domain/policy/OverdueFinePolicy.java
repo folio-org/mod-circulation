@@ -5,8 +5,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
+
+import java.lang.invoke.MethodHandles;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 
@@ -14,6 +19,7 @@ public class OverdueFinePolicy extends Policy {
   private final OverdueFinePolicyFineInfo fineInfo;
   private final OverdueFinePolicyLimitInfo limitInfo;
   private final Flags flags;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private OverdueFinePolicy(String id, String name, OverdueFinePolicyFineInfo fineInfo,
     OverdueFinePolicyLimitInfo limitInfo, Flags flags) {
@@ -24,6 +30,7 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
+    log.debug("from:: parameters json: {}", asJson(json));
     String intervalId = getNestedStringProperty(json, "overdueFine", "intervalId");
     String recallIntervalId = getNestedStringProperty(json, "overdueRecallFine", "intervalId");
 
@@ -45,7 +52,10 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public OverdueFineCalculationParameters getCalculationParameters(boolean dueDateChangedByRecall) {
+    log.debug("getCalculationParameters:: parameters dueDateChangedByRecall: {}",
+      dueDateChangedByRecall);
     if (dueDateChangedByRecall) {
+      log.info("dueDateChangedByRecalld:: dueDate was changed by recall");
       if (ObjectUtils.allNotNull(fineInfo.getOverdueRecallFine(),
         fineInfo.getOverdueRecallFineInterval(), limitInfo.getMaxOverdueRecallFine())) {
 
@@ -61,6 +71,7 @@ public class OverdueFinePolicy extends Policy {
           fineInfo.getOverdueFineInterval(), limitInfo.getMaxOverdueFine());
       }
     }
+    log.info("getCalculationParameters:: result: null");
     return null;
   }
 

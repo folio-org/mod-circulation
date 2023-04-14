@@ -3,10 +3,13 @@ package org.folio.circulation.domain.policy;
 import static java.lang.String.format;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -29,6 +32,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   private static final String RENEW_FROM_UNRECOGNISED_MESSAGE =
     "cannot determine when to renew from";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final ZonedDateTime systemDate;
   private final String renewFrom;
@@ -53,10 +57,12 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
+    log.debug("calculateDueDate:: parameters loan: {}", loan);
     if(StringUtils.isBlank(renewFrom)) {
+      log.error("calculateDueDate:: renewFrom is blank");
       return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
     }
-
+    log.info("calculateDueDate:: renewFrom: {}", renewFrom);
     switch (renewFrom) {
       case RENEW_FROM_DUE_DATE:
         return calculateDueDate(loan.getDueDate());

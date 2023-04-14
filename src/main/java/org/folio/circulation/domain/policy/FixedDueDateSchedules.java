@@ -6,13 +6,17 @@ import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.DateTimeUtil;
@@ -22,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 public class FixedDueDateSchedules {
   private final List<JsonObject> schedules;
   private final String id;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   FixedDueDateSchedules(String id, List<JsonObject> schedules) {
     this.id = id;
@@ -29,6 +34,7 @@ public class FixedDueDateSchedules {
   }
 
   public static FixedDueDateSchedules from(JsonObject representation) {
+    log.debug("from:: parameters representation: {}", asJson(representation));
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {

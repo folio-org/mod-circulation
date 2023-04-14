@@ -6,7 +6,9 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 
+import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -14,6 +16,8 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -25,6 +29,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
 public class ClosedLibraryStrategyService {
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static ClosedLibraryStrategyService using(
     Clients clients, ZonedDateTime currentTime, boolean isRenewal) {
@@ -50,6 +56,8 @@ public class ClosedLibraryStrategyService {
   public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
     LoanAndRelatedRecords relatedRecords, boolean isRecall) {
 
+    log.debug("applyClosedLibraryDueDateManagement:: parameters relatedRecords: {}, isRecall: {}",
+      asJson(relatedRecords.getLoan().asJson()), isRecall);
     final Loan loan = relatedRecords.getLoan();
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
@@ -62,9 +70,17 @@ public class ClosedLibraryStrategyService {
     RenewalContext renewalContext) {
 
     final Loan loan = renewalContext.getLoan();
+    log.debug("applyClosedLibraryDueDateManagement:: loan: {}",
+      loan.asJson());
+
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
       renewalContext.getTimeZone())
       .thenApply(mapResult(loan::changeDueDate))
+      .thenApply(r -> r.next(l -> {
+        log.info("applyClosedLibraryDueDateManagement:: loan after applying closed " +
+            "library due date management: {}", asJson(l.asJson()));
+        return succeeded(l);
+      }))
       .thenApply(mapResult(renewalContext::withLoan));
   }
 
@@ -76,6 +92,9 @@ public class ClosedLibraryStrategyService {
   private CompletableFuture<Result<ZonedDateTime>> applyClosedLibraryDueDateManagement(
     Loan loan, LoanPolicy loanPolicy, ZoneId timeZone, boolean isRecall) {
 
+    log.debug("applyClosedLibraryDueDateManagement:: parameters loan: {}," +
+        "loanPolicy: {}, timeZone: {}, isRecall: {}", asJson(loan.asJson()),
+      asJson(loanPolicy.asJson()), timeZone, isRecall);
     LocalDate requestedDate = loan.getDueDate().withZoneSameInstant(timeZone).toLocalDate();
 
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
@@ -88,6 +107,10 @@ public class ClosedLibraryStrategyService {
     Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays, ZoneId timeZone,
     boolean isRecall) {
 
+    log.debug("applyStrategy:: parameters loan: {}, loanPolicy: {}, openingDays: {}, " +
+        "timeZone: {}, isRecall: {}", asJson(loan.asJson()), asJson(loanPolicy.asJson()),
+     openingDays != null ? asJson(openingDays.toJsonList()) : null, timeZone, isRecall);
+
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
       .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone, isRecall));
@@ -96,10 +119,13 @@ public class ClosedLibraryStrategyService {
   private CompletableFuture<Result<ZonedDateTime>> truncateDueDateIfPatronExpiresEarlier(
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, ZoneId timeZone) {
 
+    log.debug("truncateDueDateIfPatronExpiresEarlier:: parameters dueDate: {}, loan: {}, " +
+        "loanPolicy: {}, timeZone: {}", dueDate, asJson(loan.asJson()), asJson(loanPolicy.asJson()), timeZone);
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
       isBeforeMillis(user.getExpirationDate(), dueDate)) {
       loan.setDueDateChangedByNearExpireUser();
+      log.info("truncateDueDateIfPatronExpiresEarlier:: truncating dueDate");
 
       return calendarRepository.lookupOpeningDays(user.getExpirationDate().toLocalDate(),
         loan.getCheckoutServicePointId())
@@ -119,12 +145,18 @@ public class ClosedLibraryStrategyService {
 
   private Result<ZonedDateTime> applyFixedDueDateLimit(
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, AdjacentOpeningDays openingDays,
-    ZoneId timeZone, boolean isRecall){
+    ZoneId timeZone, boolean isRecall) {
+
+    log.debug("applyFixedDueDateLimit:: parameters dueDate: {}, loan: {}, " +
+      "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", dueDate, asJson(loan.asJson()),
+      asJson(loanPolicy.asJson()), openingDays != null ? asJson(openingDays.toJsonList()) : null,
+      timeZone, isRecall);
 
     Optional<ZonedDateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,
         currentDateTime);
     if (!optionalDueDateLimit.isPresent()) {
+      log.info("applyFixedDueDateLimit:: optionalDueDateLimit is not present");
       return succeeded(dueDate);
     }
 
@@ -132,12 +164,13 @@ public class ClosedLibraryStrategyService {
     Comparator<ZonedDateTime> dateComparator =
       Comparator.comparing(dateTime -> dateTime.withZoneSameInstant(timeZone).toLocalDate());
     if (dateComparator.compare(dueDate, dueDateLimit) <= 0) {
+      log.info("applyFixedDueDateLimit:: dueDateLimit should not be applied");
       return succeeded(dueDate);
     }
 
-    ClosedLibraryStrategy strategy =
-      ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
+    ClosedLibraryStrategy strategy = ClosedLibraryStrategyUtils.determineStrategyForMovingBackward(
         loanPolicy, currentDateTime, timeZone);
+
     return strategy.calculateDueDate(dueDateLimit, openingDays);
   }
 }

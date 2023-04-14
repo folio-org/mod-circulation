@@ -1,8 +1,13 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.utils.LogUtil.asJson;
+
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.json.JsonStringArrayPropertyFetcher;
 
@@ -10,6 +15,8 @@ import io.vertx.core.json.JsonObject;
 import lombok.Getter;
 
 public class RequestPolicy {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   @Getter
   private final String id;
 
@@ -21,6 +28,7 @@ public class RequestPolicy {
   }
 
   public static RequestPolicy from(JsonObject representation) {
+    log.debug("from:: parameters representation: {}", asJson(representation));
     return new RequestPolicy(representation.getString("id"),
       JsonStringArrayPropertyFetcher
         .toStream(representation, "requestTypes")

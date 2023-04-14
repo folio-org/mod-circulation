@@ -2,6 +2,8 @@ package org.folio.circulation;
 
 import java.util.Arrays;
 import java.util.List;
+
+import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.folio.circulation.domain.OpeningDay;
@@ -24,5 +26,10 @@ public class AdjacentOpeningDays {
 
   public List<OpeningDay> toList() {
     return Arrays.asList(this.getPreviousDay(), this.getRequestedDay(), this.getNextDay());
+  }
+
+  public List<JsonObject> toJsonList() {
+    return Arrays.asList(this.getPreviousDay().toJson(), this.getRequestedDay().toJson(),
+      this.getNextDay().toJson());
   }
 }

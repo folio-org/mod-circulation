@@ -538,4 +538,8 @@ public class LoanPolicy extends Policy {
   public AppliedRuleConditions getRuleConditions() {
     return ruleConditionsEntity;
   }
+
+  public JsonObject asJson() {
+    return representation.copy();
+  }
 }
