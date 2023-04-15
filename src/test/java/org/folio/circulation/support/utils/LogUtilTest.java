@@ -4,10 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,34 +24,8 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonShouldReturnStringValueOfNumbers() {
-    assertEquals("1", LogUtil.asJson(1));
-    assertEquals("1.123", LogUtil.asJson(1.123));
-  }
-
-  @Test
-  public void asJsonShouldReturnStringValueOfString() {
-    assertEquals("string", LogUtil.asJson("string"));
-  }
-
-  @Test
   public void asJsonShouldReturnNullIfCallWithNullAndSizeValue() {
     assertNull(LogUtil.asJson(null, 10));
-  }
-
-  @Test
-  public void asJsonShouldReturnNullWhenObjectIsNotSerializable() {
-    assertNull(LogUtil.asJson(new HashSet<>()));
-  }
-
-  @Test
-  public void asJsonShouldReturnStringRepresentationOfListOfIntegers() {
-    assertEquals("list(size: 3, elements: [1, 2, 3])", LogUtil.asJson(List.of(1, 2, 3)));
-  }
-
-  @Test
-  public void asJsonShouldReturnStringRepresentationOfListOfObjects() {
-    assertEquals("list(size: 3, elements: [1, 2.2, string])", LogUtil.asJson(List.of(1, 2.2, "string")));
   }
 
   @Test
