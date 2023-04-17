@@ -14,7 +14,6 @@ import org.folio.circulation.support.results.Result;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -31,9 +30,6 @@ public class DepartmentRepository {
 
   public List<Department> getDepartmentByIds(List<String> departmentIds) {
     log.debug("getDepartmentByIds:: Fetching departmentByIds {}", departmentIds);
-    if (departmentIds.isEmpty()) {
-      return Collections.emptyList();
-    }
     return findDepartmentList(departmentIds).stream()
       .map(Result::value)
       .map(rec -> new ArrayList<>(rec.getRecords()))
@@ -60,15 +56,15 @@ public class DepartmentRepository {
     return MultipleRecords.from(response, Department::new, "departments");
   }
 
-  private List<List<String>> splitIds(List<String> itemsIds) {
-    int size = itemsIds.size();
+  private List<List<String>> splitIds(List<String> departmentIds) {
+    int size = departmentIds.size();
     if (size == 0) {
       return new ArrayList<>();
     }
     int fullChunks = (size - 1) / BATCH_SIZE;
     return IntStream.range(0, fullChunks + 1)
       .mapToObj(n ->
-        itemsIds.subList(n * BATCH_SIZE, n == fullChunks
+        departmentIds.subList(n * BATCH_SIZE, n == fullChunks
           ? size
           : (n + 1) * BATCH_SIZE))
       .collect(Collectors.toList());

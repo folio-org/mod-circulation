@@ -147,7 +147,7 @@ public class TemplateContextUtil {
         .put("postalCode", address.getString("postalCode", null))
         .put("countryId", address.getString("countryId", null));
     }
-    if (departments != null && departments.size() > 0) {
+    if (departments != null && !departments.isEmpty()) {
       userContext.put("departments", departments.stream().map(Department::getName).collect(joining("; ")));
     }
 
