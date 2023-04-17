@@ -223,7 +223,6 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Request>> getRequester(CheckInContext context) {
-    System.out.println("Thread Name requester"+Thread.currentThread().getName());
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
@@ -233,7 +232,6 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
-    System.out.println("Thread Name address type"+Thread.currentThread().getName());
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
       return completedFuture(succeeded(null));
@@ -274,7 +272,6 @@ class CheckInProcessAdapter {
 
 
   CompletableFuture<Result<Request>> getDepartments(CheckInContext context) {
-    System.out.println("Thread Name departments"+Thread.currentThread().getName());
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null || firstRequest.getRequester() == null) {
       return completedFuture(succeeded(null));

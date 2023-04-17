@@ -135,6 +135,11 @@ public class ResourceClient {
         "addressTypes");
   }
 
+  public static ResourceClient forDepartmentStorage() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.departmentsStorageUrl(), "departments");
+  }
+
   public static ResourceClient forLoansStorage() {
     return new ResourceClient(InterfaceUrls::loansStorageUrl,
         "loans");

@@ -23,32 +23,37 @@ import java.util.stream.IntStream;
 public class DepartmentRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient departmentClient;
-  public static final int BATCH_SIZE = 2;
+  public static final int BATCH_SIZE = 90;
 
   public DepartmentRepository(Clients clients) {
     this.departmentClient = clients.departmentClient();
   }
 
   public List<Department> getDepartmentByIds(List<String> departmentIds) {
-    log.info("getDepartmentByIds:: Fetching departmentByIds {}", departmentIds);
+    log.debug("getDepartmentByIds:: Fetching departmentByIds {}", departmentIds);
     if (departmentIds.isEmpty()) {
       return Collections.emptyList();
     }
-    List<Result<ArrayList<Department>>> id = splitIds(departmentIds)
-      .stream()
-      .map(dep -> CqlQuery.exactMatchAny("id", dep)
-        .after(query -> {
-          log.info("departmentClient.getMany");
-          return departmentClient.getMany(query, PageLimit.noLimit());})
-        .thenApply(result -> result.next(this::mapResponseToDepartments)
-          .map(records -> new ArrayList<>(records.getRecords()))))
-      .map(CompletableFuture::join)
-      .collect(Collectors.toList());
-    return id.stream()
+    return findDepartmentList(departmentIds).stream()
       .map(Result::value)
+      .map(rec -> new ArrayList<>(rec.getRecords()))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
+  }
 
+  private List<Result<MultipleRecords<Department>>> findDepartmentList(List<String> departmentIds) {
+    return splitIds(departmentIds)
+      .stream()
+      .map(dep -> findDepartmentByCql(CqlQuery.exactMatchAny("id", dep),
+        departmentClient, PageLimit.noLimit()))
+      .map(CompletableFuture::join)
+      .collect(Collectors.toList());
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Department>>> findDepartmentByCql(
+    Result<CqlQuery> query, CollectionResourceClient client, PageLimit pageLimit) {
+    return query.after(cqlQuery -> client.getMany(cqlQuery, pageLimit))
+      .thenApply(resp -> resp.next(this::mapResponseToDepartments));
   }
 
   private Result<MultipleRecords<Department>> mapResponseToDepartments(Response response) {

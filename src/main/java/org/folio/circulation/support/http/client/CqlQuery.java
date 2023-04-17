@@ -64,8 +64,7 @@ public class CqlQuery implements QueryParameter {
       return failedDueToServerError(
         format("Cannot generate CQL query using index %s matching no values", indexName));
     }
-    log.info("CQL query exact match any "+ new CqlQuery(
-      format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
+
     return Result.of(() -> new CqlQuery(
       format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
   }

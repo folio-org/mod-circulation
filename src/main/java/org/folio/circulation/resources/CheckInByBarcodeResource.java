@@ -75,7 +75,7 @@ public class CheckInByBarcodeResource extends Resource {
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
 
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    System.out.println("Thread Name"+Thread.currentThread().getName());
+
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
