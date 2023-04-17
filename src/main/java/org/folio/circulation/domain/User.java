@@ -27,8 +27,6 @@ public class User {
 
   public User(JsonObject representation) {
     this(representation, null);
-    System.out.println("representation"+representation);
-
   }
 
   public User(JsonObject representation, PatronGroup patronGroup) {

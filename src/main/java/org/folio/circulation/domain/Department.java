@@ -7,12 +7,12 @@ import lombok.Value;
 public class Department {
 
   JsonObject representation;
-  public Department(JsonObject representation){
-    System.out.println("Department values "+representation);
+
+  public Department(JsonObject representation) {
     this.representation = representation;
   }
 
-  public String getName(){
+  public String getName() {
     return representation.getString("name");
   }
 
