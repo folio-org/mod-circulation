@@ -35,12 +35,13 @@ public class DepartmentRepository {
   }
 
   private CompletableFuture<Result<List<Department>>> findDepartments(User user) {
-    log.info("");
+    log.debug("findDepartments:: Fetching departments for user Id {} , department Ids {}", user.getId(), user.getDepartmentIds());
     List<String> departmentIds = user.getDepartmentIds()
       .stream()
       .map(String.class::cast)
       .collect(Collectors.toList());
-    return createDepartmentsFetcher().findByIds(departmentIds)
+    return createDepartmentsFetcher()
+      .findByIds(departmentIds)
       .thenApply(r -> r.map(rec -> new ArrayList<>(rec.getRecords())));
   }
 

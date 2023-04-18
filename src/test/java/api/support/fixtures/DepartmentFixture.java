@@ -15,7 +15,6 @@ public class DepartmentFixture {
   }
 
   public IndividualResource department(String id) {
-
     final JsonObject department = new JsonObject();
 
     write(department, "id", id);

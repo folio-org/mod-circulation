@@ -755,6 +755,7 @@ public class Clients {
 
   private CollectionResourceClient createDepartmentClient(
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
     return getCollectionResourceClient(client, context, "/departments");
   }
 
