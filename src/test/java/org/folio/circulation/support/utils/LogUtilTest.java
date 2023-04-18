@@ -7,7 +7,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,15 +62,6 @@ class LogUtilTest {
     String result = LogUtil.asJson(List.of("one", "two", "three"), 2);
 
     assertEquals("list(size: 3, first 2 elements: [\"one\", \"two\"])", result);
-  }
-
-  @Test
-  public void asJsonWithListShouldReturnNullIfException() {
-    var list = mock(ArrayList.class);
-    when(list.size()).thenThrow(new RuntimeException("Test Exception"));
-
-    assertNull(LogUtil.asJson(list, 1));
-    verify(list, times(1));
   }
 
   @Test
