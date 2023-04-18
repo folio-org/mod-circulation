@@ -2,8 +2,13 @@ package org.folio.circulation.support.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -21,6 +26,35 @@ class LogUtilTest {
     JsonObject json = new JsonObject()
       .put("key", "value");
     assertEquals("{\"key\":\"value\"}", LogUtil.asJson(json));
+  }
+
+  @Test
+  public void asJsonWithJsonObjectShouldReturnNullIfException() {
+    JsonObject jsonObject = mock(JsonObject.class);
+    when(jsonObject.encode()).thenThrow(new RuntimeException("Test Exception"));
+
+    assertNull(LogUtil.asJson(jsonObject));
+    verify(jsonObject, times(1)).encode();
+  }
+
+  @Test
+  public void asJsonWithListShouldReturnLoggedValue() {
+    String result = LogUtil.asJson(List.of(
+      new JsonObject().put("test", "one"),
+      new JsonObject().put("test", "two"),
+      new JsonObject().put("test", "three")), 2);
+
+    assertEquals(result, "list(size: 3, first 2 elements: [{\"test\":\"one\"}, {\"test\":\"two\"}])");
+  }
+
+  @Test
+  public void asJsonWithListOfJsonObjectsShouldReturnNullIfException() {
+    List<?> list = mock(List.class);
+    when(list.size()).thenThrow(new RuntimeException("Test Exception"));
+    String result = LogUtil.asJson(list, 3);
+
+    assertNull(result);
+    verify(list, times(1)).size();
   }
 
   @Test
