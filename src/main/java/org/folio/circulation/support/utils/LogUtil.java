@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.rest.persist.PostgresClient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.vertx.core.json.JsonObject;
 
@@ -40,7 +41,8 @@ public class LogUtil {
     }
 
     try {
-      return crop(PostgresClient.pojo2JsonObject(object).encode());
+//      return crop(PostgresClient.pojo2JsonObject(object).encode());
+      return crop(new ObjectMapper().writeValueAsString(object));
     } catch (JsonProcessingException jsonProcessingException) {
       log.warn("logAsJson:: Error while logging an object of type {}",
         object.getClass().getCanonicalName(), jsonProcessingException);

@@ -38,7 +38,7 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListShouldReturnLoggedValue() {
+  public void asJsonWithListOfJsonObjectsShouldReturnStringValue() {
     String result = LogUtil.asJson(List.of(
       new JsonObject().put("test", "one"),
       new JsonObject().put("test", "two"),
@@ -55,6 +55,13 @@ class LogUtilTest {
 
     assertNull(result);
     verify(list, times(1)).size();
+  }
+
+  @Test
+  public void asJsonWithListOfStringObjectsShouldReturnStringValue() {
+    String result = LogUtil.asJson(List.of("one", "two", "three"), 2);
+
+    assertEquals("list(size: 3, first 2 elements: [\"one\", \"two\"])", result);
   }
 
   @Test
