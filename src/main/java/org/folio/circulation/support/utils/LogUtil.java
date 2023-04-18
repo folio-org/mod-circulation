@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.rest.persist.PostgresClient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
 
 public class LogUtil {
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final Logger log = LogManager.getLogger(LogUtil.class);
   private static final int MAX_OBJECT_JSON_LENGTH = 10 * 1024;
   private static final int DEFAULT_NUM_OF_LIST_ELEMENTS_TO_LOG = 10;
@@ -41,7 +41,7 @@ public class LogUtil {
     }
 
     try {
-      return crop(new ObjectMapper().writeValueAsString(object));
+      return crop(OBJECT_MAPPER.writeValueAsString(object));
     } catch (JsonProcessingException jsonProcessingException) {
       log.warn("logAsJson:: Error while logging an object of type {}",
         object.getClass().getCanonicalName(), jsonProcessingException);
