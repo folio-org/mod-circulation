@@ -43,9 +43,12 @@ public class UserRepository {
 
   private final PatronGroupRepository patronGroupRepository;
 
+  private final DepartmentRepository departmentRepository;
+
   public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
     patronGroupRepository = new PatronGroupRepository(clients);
+    departmentRepository = new DepartmentRepository(clients);
   }
 
   public CompletableFuture<Result<User>> getUser(UserRelatedRecord userRelatedRecord) {
@@ -86,7 +89,8 @@ public class UserRepository {
       .mapTo(User::new)
       .whenNotFound(succeeded(null))
       .fetch(userId)
-      .thenComposeAsync(this::findUserGroup);
+      .thenComposeAsync(this::findUserGroup)
+      .thenComposeAsync(this::findUserDepartments);
   }
 
   private CompletableFuture<Result<User>> findUserGroup(Result<User> user){
@@ -94,6 +98,13 @@ public class UserRepository {
       return completedFuture(succeeded(null));
     }
     return patronGroupRepository.findGroupForUser(user);
+  }
+
+  private CompletableFuture<Result<User>> findUserDepartments(Result<User> user) {
+    if(Objects.isNull(user.value())){
+      return completedFuture(succeeded(null));
+    }
+    return departmentRepository.findDepartmentsForUser(user);
   }
 
   public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {

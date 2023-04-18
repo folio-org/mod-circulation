@@ -17,7 +17,6 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
-import org.folio.circulation.infrastructure.storage.users.DepartmentRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -53,7 +52,6 @@ public class CheckInByBarcodeResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    final var departmentRepository = new DepartmentRepository(clients);
 
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
@@ -63,7 +61,7 @@ public class CheckInByBarcodeResource extends Resource {
     final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients,
       itemRepository, userRepository, loanRepository, requestRepository,
-      new RequestQueueRepository(requestRepository), departmentRepository);
+      new RequestQueueRepository(requestRepository));
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
@@ -112,8 +110,6 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::getPickupServicePoint, CheckInContext::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getRequester, CheckInContext::withHighestPriorityFulfillableRequest))
-      .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getDepartments, CheckInContext::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getAddressType, CheckInContext::withHighestPriorityFulfillableRequest))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(

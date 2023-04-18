@@ -9,7 +9,6 @@ import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronI
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -127,14 +126,14 @@ public class TemplateContextUtil {
 
       User requester = request.getRequester();
       if (requester != null) {
-        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId(), request.getDepartments()));
+        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()));
       }
     }
 
     return staffSlipContext;
   }
 
-  public static JsonObject createUserContext(User user, String deliveryAddressTypeId, List<Department> departments) {
+  public static JsonObject createUserContext(User user, String deliveryAddressTypeId) {
     JsonObject address = user.getAddressByType(deliveryAddressTypeId);
 
     JsonObject userContext = createUserContext(user);
@@ -147,9 +146,6 @@ public class TemplateContextUtil {
         .put("postalCode", address.getString("postalCode", null))
         .put("countryId", address.getString("countryId", null));
     }
-    if (departments != null && !departments.isEmpty()) {
-      userContext.put("departments", departments.stream().map(Department::getName).collect(joining("; ")));
-    }
 
     return userContext;
   }
@@ -161,8 +157,10 @@ public class TemplateContextUtil {
     .put("lastName", user.getLastName())
     .put("middleName", user.getMiddleName())
     .put("barcode", user.getBarcode())
-    .put("patronGroup", user.getPatronGroup()!=null ? user.getPatronGroup().getGroup():"");
-  }
+    .put("patronGroup", user.getPatronGroup()!=null ? user.getPatronGroup().getGroup():"")
+    .put("departments", user.getDepartments() != null && !user.getDepartments().isEmpty() ?
+        user.getDepartments().stream().map(Department::getName).collect(joining("; ")) : "");
+   }
 
   private static JsonObject createItemContext(Item item) {
     String yearCaptionsToken = String.join("; ", item.getYearCaption());

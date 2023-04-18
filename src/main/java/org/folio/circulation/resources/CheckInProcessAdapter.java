@@ -3,10 +3,8 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CheckInContext;
@@ -33,7 +31,6 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
-import org.folio.circulation.infrastructure.storage.users.DepartmentRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
@@ -63,7 +60,6 @@ class CheckInProcessAdapter {
   private final LostItemFeeRefundService lostItemFeeRefundService;
   private final RequestQueueService requestQueueService;
   protected final EventPublisher eventPublisher;
-  private final DepartmentRepository departmentRepository;
 
   @SuppressWarnings("squid:S00107")
   CheckInProcessAdapter(
@@ -80,8 +76,7 @@ class CheckInProcessAdapter {
     FeeFineScheduledNoticeService feeFineScheduledNoticeService,
     LostItemFeeRefundService lostItemFeeRefundService,
     RequestQueueService requestQueueService,
-    EventPublisher eventPublisher,
-    DepartmentRepository departmentRepository) {
+    EventPublisher eventPublisher) {
 
     this.itemFinder = itemFinder;
     this.singleOpenLoanFinder = singleOpenLoanFinder;
@@ -99,13 +94,12 @@ class CheckInProcessAdapter {
     this.lostItemFeeRefundService = lostItemFeeRefundService;
     this.requestQueueService = requestQueueService;
     this.eventPublisher = eventPublisher;
-    this.departmentRepository = departmentRepository;
   }
 
   public static CheckInProcessAdapter newInstance(Clients clients,
     ItemRepository itemRepository, UserRepository userRepository,
     LoanRepository loanRepository, RequestRepository requestRepository,
-    RequestQueueRepository requestQueueRepository, DepartmentRepository departmentRepository) {
+    RequestQueueRepository requestQueueRepository) {
 
     final var itemFinder = new ItemByBarcodeInStorageFinder(itemRepository);
 
@@ -140,8 +134,7 @@ class CheckInProcessAdapter {
       new LostItemFeeRefundService(clients, itemRepository,
         userRepository, loanRepository),
       requestQueueService,
-      new EventPublisher(clients.pubSubPublishingService()),
-      departmentRepository);
+      new EventPublisher(clients.pubSubPublishingService()));
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInContext context) {
@@ -269,18 +262,4 @@ class CheckInProcessAdapter {
     return requestQueueService.findRequestFulfillableByItem(context.getItem(), context.getRequestQueue())
       .thenApply(r -> r.map(context::withHighestPriorityFulfillableRequest));
   }
-
-
-  CompletableFuture<Result<Request>> getDepartments(CheckInContext context) {
-    Request firstRequest = context.getHighestPriorityFulfillableRequest();
-    if (firstRequest == null || firstRequest.getRequester() == null) {
-      return completedFuture(succeeded(null));
-    }
-    List<String> departmentIds = firstRequest.getRequester().getDepartments()
-      .stream()
-      .map(String.class::cast)
-      .collect(Collectors.toList());
-    return CompletableFuture.completedFuture(Result.succeeded(firstRequest.withDepartments((departmentRepository.getDepartmentByIds(departmentIds)))));
-  }
-
 }

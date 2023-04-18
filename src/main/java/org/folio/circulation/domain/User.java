@@ -11,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import io.vertx.core.json.JsonArray;
@@ -22,20 +23,26 @@ import lombok.val;
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
   private final PatronGroup patronGroup;
+  private final List<Department> departments;
 
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    this(representation, null);
+    this(representation, null, null);
   }
 
-  public User(JsonObject representation, PatronGroup patronGroup) {
+  public User(JsonObject representation, PatronGroup patronGroup, List<Department> departments) {
     this.representation = representation;
     this.patronGroup = patronGroup;
+    this.departments = departments;
   }
 
   public User withPatronGroup(PatronGroup newPatronGroup) {
-    return new User(representation, newPatronGroup);
+    return new User(representation, newPatronGroup, departments);
+  }
+
+  public User withDepartments(List<Department> departments) {
+    return new User(representation, patronGroup, departments);
   }
 
   public boolean cannotDetermineStatus() {
@@ -134,7 +141,11 @@ public class User {
     return getObjectProperty(representation,PERSONAL_PROPERTY_NAME);
   }
 
-  public JsonArray getDepartments(){
+  public JsonArray getDepartmentIds() {
     return getArrayProperty(representation, "departments");
+  }
+
+  public List<Department> getDepartments() {
+    return departments;
   }
 }
