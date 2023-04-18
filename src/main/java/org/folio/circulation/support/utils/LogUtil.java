@@ -41,7 +41,6 @@ public class LogUtil {
     }
 
     try {
-//      return crop(PostgresClient.pojo2JsonObject(object).encode());
       return crop(new ObjectMapper().writeValueAsString(object));
     } catch (JsonProcessingException jsonProcessingException) {
       log.warn("logAsJson:: Error while logging an object of type {}",
