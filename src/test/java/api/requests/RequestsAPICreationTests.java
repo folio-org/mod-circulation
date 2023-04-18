@@ -207,7 +207,7 @@ public class RequestsAPICreationTests extends APITests {
       .withInstanceId(instanceId)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -224,7 +224,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
     assertThat(representation.getString("instanceId"), is(instanceId));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
-    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
@@ -346,7 +346,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -363,7 +363,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(representation.getString("requestDate"), isEquivalentTo(requestDate));
     assertThat(representation.getString("itemId"), is(item.getId().toString()));
     assertThat(representation.getString("requesterId"), is(requester.getId().toString()));
-    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("status"), is("Open - Not yet filled"));
@@ -817,7 +817,7 @@ public class RequestsAPICreationTests extends APITests {
 
     final IndividualResource request = requestsFixture.place(new RequestBuilder()
       .recall()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withItemId(itemId)
       .withRequesterId(requesterId)
@@ -845,7 +845,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsClient.attemptCreate(
       new RequestBuilder()
-        .recall().fulfilToHoldShelf()
+        .recall().fulfillToHoldShelf()
         .forItem(smallAngryPlanet)
         .by(steve)
         .withStatus(status));
@@ -875,7 +875,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsClient.attemptCreateAtSpecificLocation(
       new RequestBuilder()
-        .recall().fulfilToHoldShelf()
+        .recall().fulfillToHoldShelf()
         .forItem(smallAngryPlanet)
         .by(steve)
         .withStatus(status));
@@ -918,7 +918,7 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
-    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(work.getId()));
 
     assertThat("Request should have a delivery address",
@@ -945,7 +945,7 @@ public class RequestsAPICreationTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, rebecca);
 
     IndividualResource createdRequest = requestsFixture.place(new RequestBuilder()
-      .recall().fulfilToHoldShelf()
+      .recall().fulfillToHoldShelf()
       .forItem(smallAngryPlanet)
       .withPickupServicePointId(pickupServicePointId)
       .by(steve)
@@ -1253,7 +1253,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
 
@@ -1281,7 +1281,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
@@ -1311,7 +1311,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId));
@@ -1766,7 +1766,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson().getJsonObject("item").getString("status"), is(itemStatus));
     assertThat(response.getJson().getString("requestLevel"), is("Title"));
     assertThat(response.getJson().getString("instanceId"), is(instanceId));
-    assertThat(response.getJson().getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(response.getJson().getString("fulfillmentPreference"), is("Hold Shelf"));
     assertThat(response.getJson().getString("status"), is("Open - Not yet filled"));
   }
 
@@ -2144,7 +2144,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2199,7 +2199,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2255,7 +2255,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2321,7 +2321,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2396,7 +2396,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2491,7 +2491,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2549,7 +2549,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -2601,7 +2601,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(smallAngryPlanet)
       .by(steve)
       .withRequestDate(ClockUtil.getZonedDateTime())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(createdRequest.getResponse(), hasStatus(HTTP_CREATED));
@@ -2651,7 +2651,7 @@ public class RequestsAPICreationTests extends APITests {
       .page()
       .forItem(item)
       .by(requester)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(pickupServicePointId);
 
     Response postResponse = requestsClient.attemptCreate(requestBuilder);
@@ -2795,7 +2795,7 @@ public class RequestsAPICreationTests extends APITests {
         .page()
         .forItem(itemsFixture.basedUponSmallAngryPlanet())
         .by(usersFixture.charlotte())
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(servicePointsFixture.cd1().getId()));
     JsonObject requestRepresentation = requestsClient.getMany(exactMatch("id", request.getId().toString())).getFirst();
 
@@ -2818,7 +2818,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .forItem(item)
       .by(steve)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -2839,7 +2839,7 @@ public class RequestsAPICreationTests extends APITests {
       .recall()
       .forItem(withdrawnItem)
       .by(usersFixture.steve())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
@@ -2897,7 +2897,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(itemToMoveFrom)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2020, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2020, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -3275,7 +3275,7 @@ public class RequestsAPICreationTests extends APITests {
       .withNoHoldingsRecordId()
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2021, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -3400,7 +3400,7 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withFulfilmentPreference("Hold Shelf")
+      .withFulfillmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -3424,12 +3424,12 @@ public class RequestsAPICreationTests extends APITests {
     "Hold shelf",
     "Invalid Value"
   })
-  void pageRequestShouldNotBeCreatedIfFulfilmentPreferenceIsNotValid(String fulfilmentPreference) {
+  void pageRequestShouldNotBeCreatedIffulfillmentPreferenceIsNotValid(String fulfillmentPreference) {
     var item = itemsFixture.basedUponSmallAngryPlanet();
 
     Response response = requestsClient.attemptCreate(new RequestBuilder()
       .page()
-      .withFulfilmentPreference(fulfilmentPreference)
+      .withFulfillmentPreference(fulfillmentPreference)
       .withRequesterId(usersFixture.steve().getId())
       .withItemId(item.getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
@@ -3440,8 +3440,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("fulfilmentPreference must be one of the following: Hold Shelf, Delivery"),
-      hasParameter("fulfilmentPreference", fulfilmentPreference))));
+      hasMessage("fulfillmentPreference must be one of the following: Hold Shelf, Delivery"),
+      hasParameter("fulfillmentPreference", fulfillmentPreference))));
     var itemById = itemsFixture.getById(item.getId());
     assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
       is(AVAILABLE.getValue()));
@@ -3464,7 +3464,7 @@ public class RequestsAPICreationTests extends APITests {
       .withNoHoldingsRecordId()
       .by(usersFixture.steve())
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withTags(new RequestBuilder.Tags(asList("new", "important")))
       .withPatronComments("I need this book"));
@@ -4076,7 +4076,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestLevel(null)
       .withNoHoldingsRecordId()
       .withNoInstanceId()
-      .withFulfilmentPreference("Hold Shelf")
+      .withFulfillmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
@@ -4099,7 +4099,7 @@ public class RequestsAPICreationTests extends APITests {
       .itemRequestLevel()
       .withNoHoldingsRecordId()
       .withNoInstanceId()
-      .withFulfilmentPreference("Hold Shelf")
+      .withFulfillmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
@@ -4126,7 +4126,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestLevel(null)
       .withHoldingsRecordId(item.getHoldingsRecordId())
       .withNoInstanceId()
-      .withFulfilmentPreference("Hold Shelf")
+      .withFulfillmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
@@ -4147,7 +4147,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestLevel(null)
       .withNoHoldingsRecordId()
       .withInstanceId(item.getInstanceId())
-      .withFulfilmentPreference("Hold Shelf")
+      .withFulfillmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
@@ -4169,7 +4169,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequestLevel(null)
       .withNoHoldingsRecordId()
       .withNoInstanceId()
-      .withFulfilmentPreference("Hold Shelf")
+      .withFulfillmentPreference("Hold Shelf")
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId())
       .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC)));
@@ -4567,7 +4567,7 @@ public class RequestsAPICreationTests extends APITests {
       .withNoHoldingsRecordId()
       .by(jessica)
       .withRequestDate(ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC))
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2021, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2021, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
@@ -4662,7 +4662,7 @@ public class RequestsAPICreationTests extends APITests {
           .page()
           .forItem(itemsFixture.basedUponSmallAngryPlanet())
           .by(usersFixture.charlotte())
-          .fulfilToHoldShelf()
+          .fulfillToHoldShelf()
           .withPickupServicePointId(pickupServicePointId)))
       .collect(Collectors.toList());
   }
@@ -4687,7 +4687,7 @@ public class RequestsAPICreationTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)

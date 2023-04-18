@@ -274,7 +274,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(requestExpiration)
       .withHoldShelfExpiration(holdShelfExpiration)
       .withPickupServicePointId(servicePoint.getId())
@@ -637,7 +637,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2019, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2019, 8, 31))
       .withPickupServicePointId(servicePointId)
@@ -673,7 +673,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2019, 5, 1))
       .withHoldShelfExpiration(LocalDate.of(2019, 6, 1))
       .withPickupServicePointId(servicePointId)
@@ -1179,7 +1179,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .recall()
       .forItem(nod)
       .by(requester)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(toLocalDate(recallRequestExpirationDate))
       .withHoldShelfExpiration(toLocalDate(recallRequestExpirationDate))
       .withPickupServicePointId(UUID.fromString(homeLocation.getJson().getString("primaryServicePoint")))
@@ -1504,7 +1504,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
-    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelfFulfilmentPreference(instanceId));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelffulfillmentPreference(instanceId));
 
     checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
 
@@ -1532,7 +1532,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
-    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithDeliveryFulfilmentPreference(instanceId));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithDeliveryfulfillmentPreference(instanceId));
 
     checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
 
@@ -1834,10 +1834,10 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .create();
   }
 
-  private JsonObject buildHoldTLRWithHoldShelfFulfilmentPreference(UUID instanceId) {
+  private JsonObject buildHoldTLRWithHoldShelffulfillmentPreference(UUID instanceId) {
     return new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -1846,7 +1846,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .withRequesterId(usersFixture.charlotte().getId()).create();
   }
 
-  private JsonObject buildHoldTLRWithDeliveryFulfilmentPreference(UUID instanceId) {
+  private JsonObject buildHoldTLRWithDeliveryfulfillmentPreference(UUID instanceId) {
     return new RequestBuilder()
       .hold()
       .deliverToAddress(servicePointsFixture.cd1().getId())
@@ -1858,11 +1858,11 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       .withRequesterId(usersFixture.charlotte().getId()).create();
   }
 
-  private void validateTLRequestByFields(JsonObject representation, String expectedFulfilmentPreference,
+  private void validateTLRequestByFields(JsonObject representation, String expectedfulfillmentPreference,
     UUID expectedInstanceId, String expectedStatus){
     assertThat(representation.getString("requestLevel"), is("Title"));
     assertThat(representation.getString("requestType"), is("Hold"));
-    assertThat(representation.getString("fulfilmentPreference"), is(expectedFulfilmentPreference));
+    assertThat(representation.getString("fulfillmentPreference"), is(expectedfulfillmentPreference));
     assertThat(representation.getString("instanceId"), is(expectedInstanceId));
     assertThat(representation.getString("status"), is(expectedStatus));
     assertThat(representation.getString("position"), is("1"));

@@ -264,7 +264,7 @@ class RequestQueueResourceTest extends APITests {
         .withInstanceId(smallAngryPlanet.getInstanceId())
         .by(sponsor)
         .proxiedBy(proxy)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
         .withPickupServicePointId(servicePointsFixture.cd1().getId())

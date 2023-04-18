@@ -96,7 +96,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .withInstanceId(temeraire.getInstanceId())
         .forItem(temeraire)
         .by(steve)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
@@ -125,7 +125,7 @@ class RequestsAPIUpdatingTests extends APITests {
     assertThat(representation.getString("instanceId"), is(temeraire.getInstanceId()));
     assertThat(representation.getString("requestLevel"), is("Item"));
     assertThat(representation.getString("requesterId"), is(charlotte.getId()));
-    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
 
@@ -198,7 +198,7 @@ class RequestsAPIUpdatingTests extends APITests {
       .forItem(temeraire)
       .by(charlotte)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf(exampleServicePoint.getId()));
+      .fulfillToHoldShelf(exampleServicePoint.getId()));
 
     requestsClient.replace(createdRequest.getId(),
       RequestBuilder.from(createdRequest)
@@ -439,7 +439,7 @@ class RequestsAPIUpdatingTests extends APITests {
       .recall()
       .forItem(temeraire)
       .by(usersFixture.steve())
-      .fulfilToHoldShelf(exampleServicePoint.getId()));
+      .fulfillToHoldShelf(exampleServicePoint.getId()));
 
     UUID badServicePointId = servicePointsFixture.cd3().getId();
 
@@ -465,7 +465,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .recall()
         .forItem(temeraire)
         .by(usersFixture.james())
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId()));
 
     UUID badServicePointId = UUID.randomUUID();
@@ -508,7 +508,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .withRequestDate(requestDate)
         .forItem(temeraire)
         .by(requester)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
@@ -565,7 +565,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .withRequestDate(requestDate)
         .forItem(temeraire)
         .by(requester)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
@@ -618,7 +618,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .forItem(temeraire)
         .by(steve)
         .proxiedBy(charlotte)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
@@ -679,7 +679,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .withRequestDate(requestDate)
         .forItem(temeraire)
         .by(steve)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
@@ -714,7 +714,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .itemRequestLevel()
         .withInstanceId(instanceId)
         .by(usersFixture.steve())
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     JsonObject updatedInstance = instancesClient.getById(instanceId).getJson().copy()
@@ -763,7 +763,7 @@ class RequestsAPIUpdatingTests extends APITests {
         .withRequestDate(requestDate)
         .forItem(temeraire)
         .by(steve)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(exampleServicePoint.getId())
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31)));
@@ -817,7 +817,7 @@ class RequestsAPIUpdatingTests extends APITests {
       .withRequestDate(ClockUtil.getZonedDateTime())
       .forItem(temeraire)
       .by(steve)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPatronComments("Original patron comments")
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 

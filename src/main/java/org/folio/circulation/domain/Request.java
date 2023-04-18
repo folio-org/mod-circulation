@@ -2,8 +2,8 @@ package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.circulation.domain.RequestFulfilmentPreference.DELIVERY;
-import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestFulfillmentPreference.DELIVERY;
+import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
@@ -120,7 +120,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   boolean isFulfillable() {
-    return getFulfilmentPreference() == HOLD_SHELF || getFulfilmentPreference() == DELIVERY;
+    return getfulfillmentPreference() == HOLD_SHELF || getfulfillmentPreference() == DELIVERY;
   }
 
   public boolean isPage() {
@@ -237,12 +237,12 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return getRequester();
   }
 
-  public String getFulfilmentPreferenceName() {
-    return requestRepresentation.getString("fulfilmentPreference");
+  public String getfulfillmentPreferenceName() {
+    return requestRepresentation.getString("fulfillmentPreference");
   }
 
-  public RequestFulfilmentPreference getFulfilmentPreference() {
-    return RequestFulfilmentPreference.from(getFulfilmentPreferenceName());
+  public RequestFulfillmentPreference getfulfillmentPreference() {
+    return RequestFulfillmentPreference.from(getfulfillmentPreferenceName());
   }
 
   public String getId() {
@@ -321,7 +321,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   ItemStatus checkedInItemStatus() {
-    return getFulfilmentPreference().toCheckedInItemStatus();
+    return getfulfillmentPreference().toCheckedInItemStatus();
   }
 
   public String getDeliveryAddressTypeId() {

@@ -219,7 +219,7 @@ class CancelRequestTests extends APITests {
       .page()
       .forItem(smallAngryPlanet)
       .by(jessica)
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     checkInFixture.checkInByBarcode(smallAngryPlanet);
 
@@ -260,7 +260,7 @@ class CancelRequestTests extends APITests {
       .forItem(item)
       .by(requester)
       .withRequestDate(requestDate)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)

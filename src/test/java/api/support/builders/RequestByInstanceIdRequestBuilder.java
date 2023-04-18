@@ -33,7 +33,7 @@ public class RequestByInstanceIdRequestBuilder implements Builder {
     write(requestBody, "requestDate", formatDateTimeOptional(requestDate));
     write(requestBody, "requesterId", requesterId);
     write(requestBody, "pickupServicePointId", pickupServicePointId);
-    write(requestBody, "fulfilmentPreference", "Hold Shelf");
+    write(requestBody, "fulfillmentPreference", "Hold Shelf");
     write(requestBody, "requestExpirationDate", formatDateTimeOptional(requestExpirationDate));
     write(requestBody, "patronComments", patronComments);
 

@@ -2,7 +2,7 @@ package org.folio.circulation.resources;
 
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
-import static org.folio.circulation.domain.RequestFulfilmentPreference.HOLD_SHELF;
+import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
@@ -43,7 +43,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestFulfilmentPreference;
+import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestRepresentation;
@@ -87,7 +87,7 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(PAGE, RECALL, HOLD);
-  private static final RequestFulfilmentPreference DEFAULT_FULFILMENT_PREFERENCE = HOLD_SHELF;
+  private static final RequestFulfillmentPreference DEFAULT_FULFILMENT_PREFERENCE = HOLD_SHELF;
 
   private final Logger log;
 
@@ -380,7 +380,7 @@ public class RequestByInstanceIdResource extends Resource {
         write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
         write(requestBody, "pickupServicePointId",
           requestByInstanceIdRequest.getPickupServicePointId().toString());
-        write(requestBody, "fulfilmentPreference", DEFAULT_FULFILMENT_PREFERENCE.getValue());
+        write(requestBody, "fulfillmentPreference", DEFAULT_FULFILMENT_PREFERENCE.getValue());
         write(requestBody, "requestType", requestType.getValue());
         if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
           write(requestBody, "requestExpirationDate",

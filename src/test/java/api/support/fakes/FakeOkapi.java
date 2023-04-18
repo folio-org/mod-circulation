@@ -218,7 +218,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordName("request")
       .withRootPath("/request-storage/requests")
       .withRequiredProperties("instanceId", "requesterId", "requestType",
-        "requestDate", "fulfilmentPreference")
+        "requestDate", "fulfillmentPreference")
       .withDisallowedProperties("pickupServicePoint", "loan", "deliveryAddress")
       .withRecordConstraint(this::requestHasSamePosition)
       .withChangeMetadata()
