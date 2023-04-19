@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -123,13 +124,17 @@ class PickSlipsTests extends APITests {
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
     Address address = AddressExamples.mainStreet();
+    var departmentId1 = UUID.randomUUID().toString();
+    var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
-      usersFixture.steve(builder -> builder.withAddress(address));
+      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2))));
     ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     final var requestExpiration = LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
     IndividualResource materialTypeResource = materialTypesFixture.book();
     IndividualResource loanTypeResource = loanTypesFixture.canCirculate();
+    departmentFixture.department(departmentId1);
+    departmentFixture.department(departmentId2);
 
     ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
       builder -> builder.withEnumeration("v.70:no.7-12")
@@ -218,6 +223,7 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
+    assertThat(requesterContext.getString("departments"), is("test department type; test department type"));
 
     JsonObject requestContext = pickSlip.getJsonObject("request");
 

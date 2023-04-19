@@ -40,7 +40,6 @@ public class DepartmentRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findDepartmentsForRequestUsers(
     MultipleRecords<Request> multipleRequests) {
-    log.info("findDepartmentsForRequestUsers:: multipleRequests size {} ", multipleRequests.getTotalRecords());
     List<String> departmentIds = multipleRequests.getRecords().stream()
       .filter(req -> req.getRequester() != null)
       .map(req -> convertJsonArrayToList(req.getRequester()))
@@ -54,7 +53,6 @@ public class DepartmentRepository {
 
   private Result<MultipleRecords<Request>> matchDepartmentsToRequest(
     MultipleRecords<Department> departments, MultipleRecords<Request> requests) {
-    log.info("matchDepartmentsToRequest:: departments {} ", departments);
     Map<String, Department> departmentsMap = departments.toMap(Department::getId);
     return Result.succeeded(requests.mapRecords(req -> req.withRequester(
       req.getRequester().withDepartments(convertJsonArrayToList(req.getRequester())
@@ -62,13 +60,6 @@ public class DepartmentRepository {
         .map(departmentsMap::get)
         .filter(Objects::nonNull)
         .collect(Collectors.toList())))));
-  }
-
-  private List<String> convertJsonArrayToList(User user){
-    return user.getDepartmentIds()
-      .stream()
-      .map(String.class::cast)
-      .collect(Collectors.toList());
   }
 
   private CompletableFuture<Result<List<Department>>> findDepartments(User user) {
@@ -82,5 +73,10 @@ public class DepartmentRepository {
     return findWithMultipleCqlIndexValues(departmentClient,
       "departments", Department::new);
   }
-
+  private List<String> convertJsonArrayToList(User user){
+    return user.getDepartmentIds()
+      .stream()
+      .map(String.class::cast)
+      .collect(Collectors.toList());
+  }
 }
