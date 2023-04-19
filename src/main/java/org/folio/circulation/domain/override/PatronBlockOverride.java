@@ -17,7 +17,7 @@ public class PatronBlockOverride extends BlockOverride {
   }
 
   public static PatronBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", asJson(representation));
+    log.debug("from:: parameters representation: {}", () -> asJson(representation));
 
     return new PatronBlockOverride(representation != null);
   }

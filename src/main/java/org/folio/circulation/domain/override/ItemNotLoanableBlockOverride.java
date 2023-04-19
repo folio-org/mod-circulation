@@ -29,7 +29,7 @@ public class ItemNotLoanableBlockOverride extends BlockOverride {
   }
 
   public static ItemNotLoanableBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", asJson(representation));
+    log.debug("from:: parameters representation: {}", () -> asJson(representation));
 
     return new ItemNotLoanableBlockOverride(representation != null,
       getDateTimeProperty(representation, DUE_DATE_FIELD_NAME),

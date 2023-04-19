@@ -57,7 +57,7 @@ public class ClosedLibraryStrategyService {
     LoanAndRelatedRecords relatedRecords, boolean isRecall) {
 
     log.debug("applyClosedLibraryDueDateManagement:: parameters relatedRecords: {}, isRecall: {}",
-      asJson(relatedRecords.getLoan().asJson()), isRecall);
+      () -> asJson(relatedRecords.getLoan().asJson()), () -> isRecall);
     final Loan loan = relatedRecords.getLoan();
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
@@ -70,14 +70,14 @@ public class ClosedLibraryStrategyService {
     RenewalContext renewalContext) {
 
     final Loan loan = renewalContext.getLoan();
-    log.debug("applyClosedLibraryDueDateManagement:: loan: {}", asJson(loan.asJson()));
+    log.debug("applyClosedLibraryDueDateManagement:: loan: {}", () -> asJson(loan.asJson()));
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
       renewalContext.getTimeZone())
       .thenApply(mapResult(loan::changeDueDate))
       .thenApply(r -> r.next(l -> {
         log.info("applyClosedLibraryDueDateManagement:: loan after applying closed " +
-            "library due date management: {}", asJson(l.asJson()));
+            "library due date management: {}", () -> asJson(l.asJson()));
         return succeeded(l);
       }))
       .thenApply(mapResult(renewalContext::withLoan));
@@ -92,8 +92,8 @@ public class ClosedLibraryStrategyService {
     Loan loan, LoanPolicy loanPolicy, ZoneId timeZone, boolean isRecall) {
 
     log.debug("applyClosedLibraryDueDateManagement:: parameters loan: {}," +
-        "loanPolicy: {}, timeZone: {}, isRecall: {}", asJson(loan.asJson()),
-      asJson(loanPolicy.asJson()), timeZone, isRecall);
+        "loanPolicy: {}, timeZone: {}, isRecall: {}", () -> asJson(loan.asJson()),
+      () -> asJson(loanPolicy.asJson()), () -> timeZone, () -> isRecall);
     LocalDate requestedDate = loan.getDueDate().withZoneSameInstant(timeZone).toLocalDate();
 
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
@@ -107,8 +107,8 @@ public class ClosedLibraryStrategyService {
     boolean isRecall) {
 
     log.debug("applyStrategy:: parameters loan: {}, loanPolicy: {}, openingDays: {}, " +
-        "timeZone: {}, isRecall: {}", asJson(loan.asJson()), asJson(loanPolicy.asJson()),
-     openingDays, timeZone, isRecall);
+        "timeZone: {}, isRecall: {}", () -> asJson(loan.asJson()), () -> asJson(loanPolicy.asJson()),
+      () -> openingDays, () -> timeZone, () -> isRecall);
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
@@ -119,7 +119,8 @@ public class ClosedLibraryStrategyService {
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, ZoneId timeZone) {
 
     log.debug("truncateDueDateIfPatronExpiresEarlier:: parameters dueDate: {}, loan: {}, " +
-        "loanPolicy: {}, timeZone: {}", dueDate, asJson(loan.asJson()), asJson(loanPolicy.asJson()), timeZone);
+        "loanPolicy: {}, timeZone: {}", () -> dueDate, () -> asJson(loan.asJson()),
+      () -> asJson(loanPolicy.asJson()), () -> timeZone);
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
       isBeforeMillis(user.getExpirationDate(), dueDate)) {
@@ -147,8 +148,9 @@ public class ClosedLibraryStrategyService {
     ZoneId timeZone, boolean isRecall) {
 
     log.debug("applyFixedDueDateLimit:: parameters dueDate: {}, loan: {}, " +
-      "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", dueDate, asJson(loan.asJson()),
-      asJson(loanPolicy.asJson()), openingDays, timeZone, isRecall);
+      "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", () -> dueDate,
+      () -> asJson(loan.asJson()), () -> asJson(loanPolicy.asJson()), () -> openingDays,
+      () -> timeZone, () -> isRecall);
 
     Optional<ZonedDateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,

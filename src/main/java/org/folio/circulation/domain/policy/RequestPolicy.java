@@ -28,7 +28,7 @@ public class RequestPolicy {
   }
 
   public static RequestPolicy from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", asJson(representation));
+    log.debug("from:: parameters representation: {}", () -> asJson(representation));
     return new RequestPolicy(representation.getString("id"),
       JsonStringArrayPropertyFetcher
         .toStream(representation, "requestTypes")

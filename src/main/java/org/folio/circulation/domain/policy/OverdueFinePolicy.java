@@ -30,7 +30,7 @@ public class OverdueFinePolicy extends Policy {
   }
 
   public static OverdueFinePolicy from(JsonObject json) {
-    log.debug("from:: parameters json: {}", asJson(json));
+    log.debug("from:: parameters json: {}", () -> asJson(json));
     String intervalId = getNestedStringProperty(json, "overdueFine", "intervalId");
     String recallIntervalId = getNestedStringProperty(json, "overdueRecallFine", "intervalId");
 

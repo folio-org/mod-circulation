@@ -25,7 +25,7 @@ public class RenewalDueDateRequiredBlockOverride extends BlockOverride {
   }
 
   public static RenewalDueDateRequiredBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", asJson(representation));
+    log.debug("from:: parameters representation: {}", () -> asJson(representation));
 
     return new RenewalDueDateRequiredBlockOverride(
       representation != null,

@@ -18,7 +18,7 @@ public class ItemLimitBlockOverride extends BlockOverride {
   }
 
   public static ItemLimitBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", asJson(representation));
+    log.debug("from:: parameters representation: {}", () -> asJson(representation));
     return new ItemLimitBlockOverride(representation != null);
   }
 }

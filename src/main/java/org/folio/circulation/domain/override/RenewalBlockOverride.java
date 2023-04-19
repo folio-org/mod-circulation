@@ -17,7 +17,7 @@ public class RenewalBlockOverride extends BlockOverride {
   }
 
   public static RenewalBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", asJson(representation));
+    log.debug("from:: parameters representation: {}", () -> asJson(representation));
 
     return new RenewalBlockOverride(representation != null);
  }

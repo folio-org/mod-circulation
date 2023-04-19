@@ -43,7 +43,7 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
-    log.debug("calculateDueDate:: parameters loan: {}", asJson(loan.asJson()));
+    log.debug("calculateDueDate:: parameters loan: {}", () -> asJson(loan.asJson()));
     logApplying("Fixed schedule renewal due date calculation");
 
     try {
