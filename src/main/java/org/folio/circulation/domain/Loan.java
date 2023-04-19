@@ -728,10 +728,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   @Override
   public String toString() {
-    return "Loan{" +
-      "id=" + getId() +
-      ", itemId=" + getItemId() +
-      ", userId=" + getUserId() +
-      '}';
+    return representation.toString();
   }
 }
