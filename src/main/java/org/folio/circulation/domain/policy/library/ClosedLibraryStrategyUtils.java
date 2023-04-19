@@ -3,7 +3,6 @@ package org.folio.circulation.domain.policy.library;
 import static java.util.Collections.emptyMap;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
-import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
