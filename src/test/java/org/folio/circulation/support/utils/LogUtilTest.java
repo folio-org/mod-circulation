@@ -50,13 +50,23 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListOfJsonObjectsShouldReturnStringValue() {
+  public void asJsonWithListOfJsonObjectsShouldReturnTruncatedStringValue() {
     String result = asJson(List.of(
       new JsonObject().put("test", "one"),
       new JsonObject().put("test", "two"),
       new JsonObject().put("test", "three")), 2);
 
     assertEquals("list(size: 3, first 2 elements: [{\"test\":\"one\"}, {\"test\":\"two\"}])", result);
+  }
+
+  @Test
+  public void asJsonWithListOfJsonObjectsShouldReturnStringValue() {
+    String result = asJson(List.of(
+      new JsonObject().put("test", "one"),
+      new JsonObject().put("test", "two"),
+      new JsonObject().put("test", "three")), 10);
+
+    assertEquals("list(size: 3, elements: [{\"test\":\"one\"}, {\"test\":\"two\"}, {\"test\":\"three\"}])", result);
   }
 
   @Test
@@ -77,7 +87,7 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListOfStringObjectsShouldReturnStringValue() {
+  public void asJsonWithListOfStringObjectsShouldReturnTruncatedStringValue() {
     String result = asJson(List.of("one", "two", "three"), 2);
 
     assertEquals("list(size: 3, first 2 elements: [\"one\", \"two\"])", result);
