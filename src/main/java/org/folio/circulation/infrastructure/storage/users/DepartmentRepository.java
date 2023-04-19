@@ -38,43 +38,43 @@ public class DepartmentRepository {
     return user.combineAfter(this::findDepartments, User::withDepartments);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Request>>> findDepartmentsForRequestUsers(MultipleRecords<Request> multipleRequests) {
+  public CompletableFuture<Result<MultipleRecords<Request>>> findDepartmentsForRequestUsers(
+    MultipleRecords<Request> multipleRequests) {
     log.info("findDepartmentsForRequestUsers:: multipleRequests size {} ", multipleRequests.getTotalRecords());
     List<String> departmentIds = multipleRequests.getRecords().stream()
       .filter(req -> req.getRequester() != null)
-      .map(req -> req.getRequester().getDepartments().stream()
-        .filter(Objects::nonNull)
-        .map(String.class::cast)
-        .collect(Collectors.toList()))
+      .map(req -> convertJsonArrayToList(req.getRequester()))
       .flatMap(List::stream)
       .distinct()
       .collect(Collectors.toList());
     return createDepartmentsFetcher()
       .findByIds(departmentIds)
-      .thenApply(r -> r.next(dep -> matchDepartmentToRequest(dep, multipleRequests)));
+      .thenApply(r -> r.next(dep -> matchDepartmentsToRequest(dep, multipleRequests)));
   }
 
-  private Result<MultipleRecords<Request>> matchDepartmentToRequest(
-    MultipleRecords<Department> departments, MultipleRecords<Request> requests){
+  private Result<MultipleRecords<Request>> matchDepartmentsToRequest(
+    MultipleRecords<Department> departments, MultipleRecords<Request> requests) {
+    log.info("matchDepartmentsToRequest:: departments {} ", departments);
     Map<String, Department> departmentsMap = departments.toMap(Department::getId);
     return Result.succeeded(requests.mapRecords(req -> req.withRequester(
-      req.getRequester().withDepartments(req.getRequester().getDepartmentIds()
+      req.getRequester().withDepartments(convertJsonArrayToList(req.getRequester())
         .stream()
-        .map(String.class::cast)
-        .collect(Collectors.toList())
-        .stream().map(departmentsMap::get)
+        .map(departmentsMap::get)
         .filter(Objects::nonNull)
         .collect(Collectors.toList())))));
   }
 
-  private CompletableFuture<Result<List<Department>>> findDepartments(User user) {
-    log.debug("findDepartments:: Fetching departments for user Id {} , department Ids {}", user.getId(), user.getDepartmentIds());
-    List<String> departmentIds = user.getDepartmentIds()
+  private List<String> convertJsonArrayToList(User user){
+    return user.getDepartmentIds()
       .stream()
       .map(String.class::cast)
       .collect(Collectors.toList());
+  }
+
+  private CompletableFuture<Result<List<Department>>> findDepartments(User user) {
+    log.debug("findDepartments:: Fetching departments for user Id {} , department Ids {}", user.getId(), user.getDepartmentIds());
     return createDepartmentsFetcher()
-      .findByIds(departmentIds)
+      .findByIds(convertJsonArrayToList(user))
       .thenApply(r -> r.map(rec -> new ArrayList<>(rec.getRecords())));
   }
 
