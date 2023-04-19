@@ -1,5 +1,6 @@
 package org.folio.circulation.support.utils;
 
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
@@ -11,21 +12,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.folio.circulation.domain.Loan;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
 
 class LogUtilTest {
   @Test
-  public void asJsonShouldReturnNullIfCallWithNull() {
-    assertNull(LogUtil.asJson(null));
+  public void asJsonWithObjectShouldReturnNullIfCallWithNull() {
+    assertNull(asJson((Object) null));
   }
 
   @Test
   public void asJsonShouldReturnStringValueOfJson() {
     JsonObject json = new JsonObject()
       .put("key", "value");
-    assertEquals("{\"key\":\"value\"}", LogUtil.asJson(json));
+    assertEquals("{\"key\":\"value\"}", asJson(json));
   }
 
   @Test
@@ -33,13 +35,23 @@ class LogUtilTest {
     JsonObject jsonObject = mock(JsonObject.class);
     when(jsonObject.encode()).thenThrow(new RuntimeException("Test Exception"));
 
-    assertNull(LogUtil.asJson(jsonObject));
+    assertNull(asJson(jsonObject));
     verify(jsonObject, times(1)).encode();
   }
 
   @Test
+  public void asJsonWithListShouldReturnNullIfCallWithNull() {
+    assertNull(asJson((Object) null));
+  }
+
+  @Test
+  public void asJsonWithJsonObjectShouldReturnNullIfJsonMappingException() {
+    assertNull(asJson(Loan.from(new JsonObject())));
+  }
+
+  @Test
   public void asJsonWithListOfJsonObjectsShouldReturnStringValue() {
-    String result = LogUtil.asJson(List.of(
+    String result = asJson(List.of(
       new JsonObject().put("test", "one"),
       new JsonObject().put("test", "two"),
       new JsonObject().put("test", "three")), 2);
@@ -51,7 +63,7 @@ class LogUtilTest {
   public void asJsonWithListOfJsonObjectsShouldReturnNullIfException() {
     List<?> list = mock(List.class);
     when(list.size()).thenThrow(new RuntimeException("Test Exception"));
-    String result = LogUtil.asJson(list, 3);
+    String result = asJson(list, 3);
 
     assertNull(result);
     verify(list, times(1)).size();
@@ -59,14 +71,14 @@ class LogUtilTest {
 
   @Test
   public void asJsonWithListOfStringObjectsShouldReturnStringValue() {
-    String result = LogUtil.asJson(List.of("one", "two", "three"), 2);
+    String result = asJson(List.of("one", "two", "three"), 2);
 
     assertEquals("list(size: 3, first 2 elements: [\"one\", \"two\"])", result);
   }
 
   @Test
   public void asJsonShouldReturnNullIfCallWithNullAndSizeValue() {
-    assertNull(LogUtil.asJson(null, 10));
+    assertNull(asJson(null, 10));
   }
 
   @Test
