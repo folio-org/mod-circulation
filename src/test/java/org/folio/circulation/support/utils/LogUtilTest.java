@@ -56,7 +56,14 @@ class LogUtilTest {
       new JsonObject().put("test", "two"),
       new JsonObject().put("test", "three")), 2);
 
-    assertEquals(result, "list(size: 3, first 2 elements: [{\"test\":\"one\"}, {\"test\":\"two\"}])");
+    assertEquals("list(size: 3, first 2 elements: [{\"test\":\"one\"}, {\"test\":\"two\"}])", result);
+  }
+
+  @Test
+  public void asJsonWithListOfJsonObjectsShouldReturnFirstTenElements() {
+    String result = asJson(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"));
+
+    assertEquals("list(size: 11, first 10 elements: [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\", \"8\", \"9\", \"10\"])", result);
   }
 
   @Test
