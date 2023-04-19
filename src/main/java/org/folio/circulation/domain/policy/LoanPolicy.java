@@ -539,7 +539,7 @@ public class LoanPolicy extends Policy {
     return ruleConditionsEntity;
   }
 
-  public JsonObject asJson() {
-    return representation.copy();
+  public String toString() {
+    return representation.toString();
   }
 }

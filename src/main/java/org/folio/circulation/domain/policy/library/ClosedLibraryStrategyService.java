@@ -92,8 +92,8 @@ public class ClosedLibraryStrategyService {
     Loan loan, LoanPolicy loanPolicy, ZoneId timeZone, boolean isRecall) {
 
     log.debug("applyClosedLibraryDueDateManagement:: parameters loan: {}," +
-        "loanPolicy: {}, timeZone: {}, isRecall: {}", () -> loan,
-      () -> asJson(loanPolicy.asJson()), () -> timeZone, () -> isRecall);
+        "loanPolicy: {}, timeZone: {}, isRecall: {}", () -> loan, () -> loanPolicy,
+      () -> timeZone, () -> isRecall);
     LocalDate requestedDate = loan.getDueDate().withZoneSameInstant(timeZone).toLocalDate();
 
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
@@ -107,8 +107,8 @@ public class ClosedLibraryStrategyService {
     boolean isRecall) {
 
     log.debug("applyStrategy:: parameters loan: {}, loanPolicy: {}, openingDays: {}, " +
-        "timeZone: {}, isRecall: {}", () -> loan, () -> asJson(loanPolicy.asJson()),
-      () -> openingDays, () -> timeZone, () -> isRecall);
+        "timeZone: {}, isRecall: {}", () -> loan, () -> loanPolicy, () -> openingDays,
+      () -> timeZone, () -> isRecall);
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
@@ -119,8 +119,8 @@ public class ClosedLibraryStrategyService {
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, ZoneId timeZone) {
 
     log.debug("truncateDueDateIfPatronExpiresEarlier:: parameters dueDate: {}, loan: {}, " +
-        "loanPolicy: {}, timeZone: {}", () -> dueDate, () -> loan,
-      () -> asJson(loanPolicy.asJson()), () -> timeZone);
+        "loanPolicy: {}, timeZone: {}", () -> dueDate, () -> loan, () -> loanPolicy,
+      () -> timeZone);
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
       isBeforeMillis(user.getExpirationDate(), dueDate)) {
@@ -149,8 +149,7 @@ public class ClosedLibraryStrategyService {
 
     log.debug("applyFixedDueDateLimit:: parameters dueDate: {}, loan: {}, " +
       "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", () -> dueDate,
-      () -> loan, () -> asJson(loanPolicy.asJson()), () -> openingDays,
-      () -> timeZone, () -> isRecall);
+      () -> loan, () -> loanPolicy, () -> openingDays, () -> timeZone, () -> isRecall);
 
     Optional<ZonedDateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,

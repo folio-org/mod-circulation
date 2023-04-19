@@ -30,7 +30,7 @@ public final class ClosedLibraryStrategyUtils {
     LoanPolicy loanPolicy, ZonedDateTime startDate, ZoneId zone) {
 
     log.debug("determineClosedLibraryStrategy:: parameters loanPolicy: {}, " +
-      "zonedDateTime: {}, zone: {}", () -> asJson(loanPolicy.asJson()), () -> startDate, () -> zone);
+      "zonedDateTime: {}, zone: {}", () -> loanPolicy, () -> startDate, () -> zone);
     DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
     LoanPolicyPeriod offsetInterval = loanPolicy.getOffsetPeriodInterval();
     int offsetDuration = loanPolicy.getOffsetPeriodDuration();
@@ -93,8 +93,7 @@ public final class ClosedLibraryStrategyUtils {
     LoanPolicy loanPolicy, ZonedDateTime startDate, ZoneId zone) {
 
     log.debug("determineClosedLibraryStrategyForTruncatedDueDate:: parameters loanPolicy: {}, " +
-      "zonedDateTime: {}, zone: {}", () -> asJson(loanPolicy.asJson()), () -> startDate,
-      () -> zone);
+      "zonedDateTime: {}, zone: {}", () -> loanPolicy, () -> startDate, () -> zone);
     DueDateManagement dueDateManagement = loanPolicy.getDueDateManagement();
 
     log.info("determineClosedLibraryStrategyForTruncatedDueDate:: dueDateManagement: {}",
