@@ -21,10 +21,11 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final Boolean active;
   private final ZonedDateTime expirationDate;
   private final Collection<Address> addresses;
+  private final JsonArray departments;
 
   public UserBuilder() {
     this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, null,"785493025613",
-      null, true, null, new ArrayList<>());
+      null, true, null, new ArrayList<>(), null);
   }
 
   private UserBuilder(
@@ -38,7 +39,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
     UUID patronGroupId,
     Boolean active,
     ZonedDateTime expirationDate,
-    Collection<Address> addresses) {
+    Collection<Address> addresses,
+    JsonArray departments) {
 
     this.id = id;
     this.username = username;
@@ -54,6 +56,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     this.expirationDate = expirationDate;
 
     this.addresses = addresses;
+    this.departments = departments;
   }
 
   public JsonObject create() {
@@ -111,6 +114,9 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
       request.put("personal", personalInformation);
     }
+    if (this.departments != null) {
+      request.put("departments", this.departments);
+    }
 
     return request;
   }
@@ -127,7 +133,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withName(String lastName, String firstName, String middleName) {
@@ -142,7 +149,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withPreferredFirstName(String lastName, String firstName,String preferredFirstName) {
@@ -157,7 +165,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withPreferredFirstName(String lastName, String firstName,String middleName,String preferredFirstName) {
@@ -172,7 +181,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withNoPersonalDetails() {
@@ -187,7 +197,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withBarcode(String barcode) {
@@ -202,7 +213,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withNoBarcode() {
@@ -217,7 +229,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withUsername(String username) {
@@ -232,7 +245,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder inGroupFor(IndividualResource patronGroup) {
@@ -251,7 +265,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder active() {
@@ -278,7 +293,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder expires(ZonedDateTime newExpirationDate) {
@@ -293,7 +309,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       newExpirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder noExpiration() {
@@ -308,7 +325,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       null,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 
   public UserBuilder withAddress(Address address) {
@@ -318,6 +336,22 @@ public class UserBuilder extends JsonBuilder implements Builder {
     newAddresses.add(address);
 
     return withAddresses(newAddresses);
+  }
+
+  public UserBuilder withDepartments(JsonArray departments){
+    return new UserBuilder(
+      this.id,
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.preferredFirstName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses,
+      departments);
   }
 
   public UserBuilder withNoAddresses() {
@@ -336,7 +370,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      newAddresses);
+      newAddresses,
+      this.departments);
   }
 
   public UserBuilder withId(String id) {
@@ -351,6 +386,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.patronGroupId,
       this.active,
       this.expirationDate,
-      this.addresses);
+      this.addresses,
+      this.departments);
   }
 }
