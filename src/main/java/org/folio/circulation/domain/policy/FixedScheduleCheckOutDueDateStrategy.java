@@ -42,7 +42,8 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
     log.debug("calculateDueDate:: parameters loan: {}", loan);
     final ZonedDateTime loanDate = loan.getLoanDate();
 
-    logApplying("Fixed schedule check out due date calculation");
+    log.info("Applying loan policy {} ({}): Fixed schedule check out due date calculation",
+      loanPolicyName, loanPolicyId);
 
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
@@ -51,7 +52,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     }
     catch(Exception e) {
-      logException(e, "Error occurred during fixed schedule check out due date calculation");
+      log.error("calculateDueDate:: Error occurred during fixed schedule check out due date calculation", e);
       return failedDueToServerError(e);
     }
   }
