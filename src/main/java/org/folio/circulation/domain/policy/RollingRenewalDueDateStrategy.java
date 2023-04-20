@@ -57,7 +57,7 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
-    log.debug("calculateDueDate:: parameters loan: {}", () -> loan);
+    log.debug("calculateDueDate:: parameters loan: {}", loan);
     if(StringUtils.isBlank(renewFrom)) {
       log.error("calculateDueDate:: renewFrom is blank");
       return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));

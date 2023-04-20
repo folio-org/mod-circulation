@@ -4,7 +4,6 @@ package org.folio.circulation.domain.override;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 
@@ -27,7 +26,7 @@ public class BlockOverrides {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static BlockOverrides from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}",  () -> asJson(representation));
+    log.debug("from:: parameters representation: {}",  representation);
 
     return new BlockOverrides(
       ItemNotLoanableBlockOverride.from(getObjectProperty(representation, "itemNotLoanableBlock")),
@@ -40,8 +39,7 @@ public class BlockOverrides {
   }
 
   public static BlockOverrides fromRequest(JsonObject requestRepresentation) {
-    log.debug("fromRequest:: parameters requestRepresentation: {}",
-      () -> asJson(requestRepresentation));
+    log.debug("fromRequest:: parameters requestRepresentation: {}", requestRepresentation);
 
     return from(getNestedObjectProperty(
       requestRepresentation, "requestProcessingParameters", "overrideBlocks"));

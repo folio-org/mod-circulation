@@ -6,7 +6,6 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
-import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
@@ -57,7 +56,7 @@ public class ClosedLibraryStrategyService {
     LoanAndRelatedRecords relatedRecords, boolean isRecall) {
 
     log.debug("applyClosedLibraryDueDateManagement:: parameters relatedRecords: {}, isRecall: {}",
-      relatedRecords::getLoan, () -> isRecall);
+      relatedRecords.getLoan(), isRecall);
     final Loan loan = relatedRecords.getLoan();
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
@@ -70,14 +69,14 @@ public class ClosedLibraryStrategyService {
     RenewalContext renewalContext) {
 
     final Loan loan = renewalContext.getLoan();
-    log.debug("applyClosedLibraryDueDateManagement:: loan: {}", () -> loan);
+    log.debug("applyClosedLibraryDueDateManagement:: loan: {}", loan);
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
       renewalContext.getTimeZone())
       .thenApply(mapResult(loan::changeDueDate))
       .thenApply(r -> r.next(updatedLoan -> {
         log.info("applyClosedLibraryDueDateManagement:: loan after applying closed " +
-            "library due date management: {}", () -> updatedLoan);
+            "library due date management: {}", updatedLoan);
         return succeeded(updatedLoan);
       }))
       .thenApply(mapResult(renewalContext::withLoan));
@@ -92,8 +91,7 @@ public class ClosedLibraryStrategyService {
     Loan loan, LoanPolicy loanPolicy, ZoneId timeZone, boolean isRecall) {
 
     log.debug("applyClosedLibraryDueDateManagement:: parameters loan: {}," +
-        "loanPolicy: {}, timeZone: {}, isRecall: {}", () -> loan, () -> loanPolicy,
-      () -> timeZone, () -> isRecall);
+        "loanPolicy: {}, timeZone: {}, isRecall: {}", loan, loanPolicy, timeZone, isRecall);
     LocalDate requestedDate = loan.getDueDate().withZoneSameInstant(timeZone).toLocalDate();
 
     return calendarRepository.lookupOpeningDays(requestedDate, loan.getCheckoutServicePointId())
@@ -107,8 +105,7 @@ public class ClosedLibraryStrategyService {
     boolean isRecall) {
 
     log.debug("applyStrategy:: parameters loan: {}, loanPolicy: {}, openingDays: {}, " +
-        "timeZone: {}, isRecall: {}", () -> loan, () -> loanPolicy, () -> openingDays,
-      () -> timeZone, () -> isRecall);
+        "timeZone: {}, isRecall: {}", loan, loanPolicy, openingDays, timeZone, isRecall);
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
@@ -119,8 +116,7 @@ public class ClosedLibraryStrategyService {
     ZonedDateTime dueDate, Loan loan, LoanPolicy loanPolicy, ZoneId timeZone) {
 
     log.debug("truncateDueDateIfPatronExpiresEarlier:: parameters dueDate: {}, loan: {}, " +
-        "loanPolicy: {}, timeZone: {}", () -> dueDate, () -> loan, () -> loanPolicy,
-      () -> timeZone);
+        "loanPolicy: {}, timeZone: {}", dueDate, loan, loanPolicy, timeZone);
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
       isBeforeMillis(user.getExpirationDate(), dueDate)) {
@@ -148,8 +144,8 @@ public class ClosedLibraryStrategyService {
     ZoneId timeZone, boolean isRecall) {
 
     log.debug("applyFixedDueDateLimit:: parameters dueDate: {}, loan: {}, " +
-      "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", () -> dueDate,
-      () -> loan, () -> loanPolicy, () -> openingDays, () -> timeZone, () -> isRecall);
+      "loanPolicy: {}, openingDays: {}, timeZone: {}, isRecall: {}", dueDate,
+      loan, loanPolicy, openingDays, timeZone, isRecall);
 
     Optional<ZonedDateTime> optionalDueDateLimit =
       loanPolicy.getScheduleLimit(isRecall ? loan.getDueDate() : loan.getLoanDate(), isRenewal,

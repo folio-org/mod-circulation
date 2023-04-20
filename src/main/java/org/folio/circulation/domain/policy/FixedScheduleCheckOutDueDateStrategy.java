@@ -39,7 +39,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
-    log.debug("calculateDueDate:: parameters loan: {}", () -> loan);
+    log.debug("calculateDueDate:: parameters loan: {}", loan);
     final ZonedDateTime loanDate = loan.getLoanDate();
 
     logApplying("Fixed schedule check out due date calculation");

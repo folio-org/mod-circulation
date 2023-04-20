@@ -34,7 +34,7 @@ public class FixedDueDateSchedules {
   }
 
   public static FixedDueDateSchedules from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", () -> asJson(representation));
+    log.debug("from:: parameters representation: {}", representation);
     if (representation == null) {
       return new NoFixedDueDateSchedules();
     } else {

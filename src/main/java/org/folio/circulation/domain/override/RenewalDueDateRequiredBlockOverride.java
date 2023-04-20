@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.override;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
-import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -25,7 +24,7 @@ public class RenewalDueDateRequiredBlockOverride extends BlockOverride {
   }
 
   public static RenewalDueDateRequiredBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", () -> asJson(representation));
+    log.debug("from:: parameters representation: {}", representation);
 
     return new RenewalDueDateRequiredBlockOverride(
       representation != null,

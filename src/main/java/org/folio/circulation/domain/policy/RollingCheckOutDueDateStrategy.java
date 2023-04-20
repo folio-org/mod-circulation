@@ -45,7 +45,7 @@ class RollingCheckOutDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
-    log.debug("calculateDueDate:: parameters loan: {}", () -> loan);
+    log.debug("calculateDueDate:: parameters loan: {}", loan);
     final ZonedDateTime loanDate = loan.getLoanDate();
 
     if(useAlternatePeriod && !loan.isDueDateChangedByHold()) {

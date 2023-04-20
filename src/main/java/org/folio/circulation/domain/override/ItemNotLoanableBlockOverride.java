@@ -3,7 +3,6 @@ package org.folio.circulation.domain.override;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -29,7 +28,7 @@ public class ItemNotLoanableBlockOverride extends BlockOverride {
   }
 
   public static ItemNotLoanableBlockOverride from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", () -> asJson(representation));
+    log.debug("from:: parameters representation: {}", representation);
 
     return new ItemNotLoanableBlockOverride(representation != null,
       getDateTimeProperty(representation, DUE_DATE_FIELD_NAME),

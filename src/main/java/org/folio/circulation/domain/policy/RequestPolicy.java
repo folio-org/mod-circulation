@@ -1,7 +1,5 @@
 package org.folio.circulation.domain.policy;
 
-import static org.folio.circulation.support.utils.LogUtil.asJson;
-
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,7 +26,7 @@ public class RequestPolicy {
   }
 
   public static RequestPolicy from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}", () -> asJson(representation));
+    log.debug("from:: parameters representation: {}", representation);
     return new RequestPolicy(representation.getString("id"),
       JsonStringArrayPropertyFetcher
         .toStream(representation, "requestTypes")
