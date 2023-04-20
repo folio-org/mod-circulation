@@ -54,7 +54,12 @@ public final class ClosedLibraryStrategyUtils {
   }
 
   public static ClosedLibraryStrategy determineClosedLibraryStrategyForHoldShelfExpirationDate(
-    ExpirationDateManagement expirationDateManagement, ZonedDateTime requestedDate, ZoneId zone, TimePeriod intervalPeriod) {
+    ExpirationDateManagement expirationDateManagement, ZonedDateTime requestedDate, ZoneId zone,
+    TimePeriod intervalPeriod) {
+
+    log.debug("determineClosedLibraryStrategyForHoldShelfExpirationDate:: parameters " +
+      "expirationDateManagement: {}, requestedDate: {}, zone: {}, intervalPeriod: {}",
+      expirationDateManagement, requestedDate, zone, intervalPeriod);
 
     switch (expirationDateManagement) {
       case MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY:

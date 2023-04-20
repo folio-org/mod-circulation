@@ -49,6 +49,10 @@ public class ClosedLibraryStrategyService {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> applyClosedLibraryDueDateManagement(
     LoanAndRelatedRecords relatedRecords) {
+
+    log.debug("applyClosedLibraryDueDateManagement:: parameters relatedRecords: {}",
+      relatedRecords.getLoan());
+
     return applyClosedLibraryDueDateManagement(relatedRecords, false);
   }
 
