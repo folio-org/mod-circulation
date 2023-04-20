@@ -43,7 +43,6 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
     log.debug("calculateDueDate:: parameters loan: {}", loan);
-    logApplying("Fixed schedule renewal due date calculation");
 
     try {
       return fixedDueDateSchedules.findDueDateFor(systemDate)
@@ -51,7 +50,7 @@ class FixedScheduleRenewalDueDateStrategy extends DueDateStrategy {
         .orElseGet(() -> failedValidation(
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     } catch (Exception e) {
-      logException(e, "Error occurred during fixed schedule renewal due date calculation");
+      log.error("calculateDueDate:: Error occurred during fixed schedule renewal due date calculation", e);
       return failedDueToServerError(e);
     }
   }
