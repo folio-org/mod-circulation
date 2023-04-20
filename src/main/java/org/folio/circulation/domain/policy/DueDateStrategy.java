@@ -1,11 +1,8 @@
 package org.folio.circulation.domain.policy;
 
-import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;

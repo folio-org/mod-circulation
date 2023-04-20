@@ -42,8 +42,8 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
     log.debug("calculateDueDate:: parameters loan: {}", loan);
     final ZonedDateTime loanDate = loan.getLoanDate();
 
-    log.info("Applying loan policy {} ({}): Fixed schedule check out due date calculation",
-      loanPolicyName, loanPolicyId);
+    log.info("calculateDueDate:: Applying loan policy {} ({}): " +
+        "Fixed schedule check out due date calculation", loanPolicyName, loanPolicyId);
 
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
