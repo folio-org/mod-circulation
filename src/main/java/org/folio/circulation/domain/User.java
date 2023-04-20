@@ -11,10 +11,11 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
@@ -23,7 +24,7 @@ import lombok.val;
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
   private final PatronGroup patronGroup;
-  private final List<Department> departments;
+  private final Collection<Department> departments;
 
   private final JsonObject representation;
 
@@ -31,7 +32,7 @@ public class User {
     this(representation, null, null);
   }
 
-  public User(JsonObject representation, PatronGroup patronGroup, List<Department> departments) {
+  public User(JsonObject representation, PatronGroup patronGroup, Collection<Department> departments) {
     this.representation = representation;
     this.patronGroup = patronGroup;
     this.departments = departments;
@@ -41,7 +42,7 @@ public class User {
     return new User(representation, newPatronGroup, departments);
   }
 
-  public User withDepartments(List<Department> departments) {
+  public User withDepartments(Collection<Department> departments) {
     return new User(representation, patronGroup, departments);
   }
 
@@ -141,11 +142,14 @@ public class User {
     return getObjectProperty(representation,PERSONAL_PROPERTY_NAME);
   }
 
-  public JsonArray getDepartmentIds() {
-    return getArrayProperty(representation, "departments");
+  public List<String> getDepartmentIds() {
+    return getArrayProperty(representation, "departments")
+      .stream()
+      .map(String.class::cast)
+      .collect(Collectors.toList());
   }
 
-  public List<Department> getDepartments() {
+  public Collection<Department> getDepartments() {
     return departments;
   }
 }
