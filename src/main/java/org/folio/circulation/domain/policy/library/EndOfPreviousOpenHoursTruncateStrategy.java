@@ -38,7 +38,11 @@ public class EndOfPreviousOpenHoursTruncateStrategy extends ShortTermLoansBaseSt
       return failed(failureForAbsentTimetable());
     }
 
-    return calculateIfClosed(libraryTimetable, requestedInterval);
+    return calculateIfClosed(libraryTimetable, requestedInterval)
+      .next(dateTime -> {
+        log.info("calculateDueDate:: result: {}", dateTime);
+        return succeeded(dateTime);
+      });
   }
 
   @Override

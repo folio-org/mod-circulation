@@ -43,7 +43,11 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
       log.info("calculateIfClosed:: current time interval is open");
       return succeeded(currentTimeInterval.getEndTime());
     }
-    return succeeded(currentTimeInterval.getNext().getEndTime());
+    return succeeded(currentTimeInterval.getNext().getEndTime())
+      .next(dateTime -> {
+        log.info("calculateIfClosed:: result: {}", dateTime);
+        return succeeded(dateTime);
+      });
   }
 
   private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {

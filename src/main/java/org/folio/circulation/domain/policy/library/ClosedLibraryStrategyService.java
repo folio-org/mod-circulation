@@ -109,7 +109,11 @@ public class ClosedLibraryStrategyService {
 
     return determineClosedLibraryStrategy(loanPolicy, currentDateTime, timeZone)
       .calculateDueDate(loan.getDueDate(), openingDays)
-      .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone, isRecall));
+      .next(dateTime -> applyFixedDueDateLimit(dateTime, loan, loanPolicy, openingDays, timeZone, isRecall))
+      .next(dateTime -> {
+        log.info("applyStrategy:: result: {}", dateTime);
+        return succeeded(dateTime);
+      });
   }
 
   private CompletableFuture<Result<ZonedDateTime>> truncateDueDateIfPatronExpiresEarlier(
@@ -126,7 +130,11 @@ public class ClosedLibraryStrategyService {
       return calendarRepository.lookupOpeningDays(user.getExpirationDate().toLocalDate(),
         loan.getCheckoutServicePointId())
         .thenApply(r -> r.next(openingDays -> calculateTruncatedDueDate(user.getExpirationDate(),
-          loanPolicy, timeZone, openingDays)));
+          loanPolicy, timeZone, openingDays)))
+        .thenApply(r -> r.next(dateTime -> {
+          log.info("truncateDueDateIfPatronExpiresEarlier:: result: {}", dateTime);
+          return succeeded(dateTime);
+        }));
     }
 
     return ofAsync(() -> dueDate);

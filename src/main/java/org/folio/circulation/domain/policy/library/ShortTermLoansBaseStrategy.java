@@ -45,7 +45,11 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
       return succeeded(requestedDate);
     }
     log.info("requestedInterval is close so going as per strategy");
-    return calculateIfClosed(libraryTimetable, requestedInterval);
+    return calculateIfClosed(libraryTimetable, requestedInterval)
+      .next(dateTime -> {
+        log.info("calculateDueDate:: result: {}", dateTime);
+        return succeeded(dateTime);
+      });
   }
 
   protected abstract Result<ZonedDateTime> calculateIfClosed(

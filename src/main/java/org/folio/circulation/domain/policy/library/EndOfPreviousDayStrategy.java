@@ -40,6 +40,10 @@ public class EndOfPreviousDayStrategy implements ClosedLibraryStrategy {
       return failed(failureForAbsentTimetable());
     }
 
-    return succeeded(atEndOfDay(previousDay.getDate(), zone));
+    return succeeded(atEndOfDay(previousDay.getDate(), zone))
+      .next(dateTime -> {
+        log.info("calculateDueDate:: result: {}", dateTime);
+        return succeeded(dateTime);
+      });
   }
 }
