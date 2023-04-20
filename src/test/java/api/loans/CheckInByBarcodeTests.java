@@ -892,7 +892,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     staffSlipContext = response.getStaffSlipContext();
     userContext = staffSlipContext.getJsonObject("requester");
     assertThat(userContext.getString("departments").split("; "),
-      arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
+      arrayContainingInAnyOrder(equalTo("test department1"), equalTo("test department2")));
   }
 
   private void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(
