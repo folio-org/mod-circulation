@@ -34,10 +34,14 @@ public class RequestPolicy {
   }
 
   public boolean allowsType(RequestType type) {
+    log.debug("allowsType:: parameters: type: {}", type);
     for (String requestType : requestTypes) {
-      if (type.nameMatches(requestType))
+      if (type.nameMatches(requestType)) {
+        log.info("allowsType:: result: true");
         return true;
+      }
     }
+    log.info("allowsType:: result: false");
     return false;
   }
 }
