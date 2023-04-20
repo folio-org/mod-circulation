@@ -19,25 +19,25 @@ import io.vertx.core.json.JsonObject;
 
 class LogUtilTest {
   @Test
-  public void asJsonWithObjectShouldReturnNullIfCallWithNull() {
+  void asJsonWithObjectShouldReturnNullIfCallWithNull() {
     assertNull(asJson((Object) null));
   }
 
   @Test
-  public void asJsonShouldReturnStringValueOfJson() {
+  void asJsonShouldReturnStringValueOfJson() {
     JsonObject json = new JsonObject()
       .put("key", "value");
     assertEquals("{\"key\":\"value\"}", asJson(json));
   }
 
   @Test
-  public void cropShouldReturnNullIfException() {
+  void cropShouldReturnNullIfException() {
     String result = LogUtil.crop(null);
     assertNull(result);
   }
 
   @Test
-  public void asJsonWithJsonObjectShouldReturnNullIfException() {
+  void asJsonWithJsonObjectShouldReturnNullIfException() {
     JsonObject jsonObject = mock(JsonObject.class);
     when(jsonObject.encode()).thenThrow(new RuntimeException("Test Exception"));
 
@@ -46,17 +46,17 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListShouldReturnNullIfCallWithNull() {
+  void asJsonWithListShouldReturnNullIfCallWithNull() {
     assertNull(asJson((Object) null));
   }
 
   @Test
-  public void asJsonWithJsonObjectShouldReturnNullIfJsonMappingException() {
+  void asJsonWithJsonObjectShouldReturnNullIfJsonMappingException() {
     assertNull(asJson(Loan.from(new JsonObject())));
   }
 
   @Test
-  public void asJsonWithListOfJsonObjectsShouldReturnTruncatedStringValue() {
+  void asJsonWithListOfJsonObjectsShouldReturnTruncatedStringValue() {
     String result = asJson(List.of(
       new JsonObject().put("test", "one"),
       new JsonObject().put("test", "two"),
@@ -66,7 +66,7 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListOfJsonObjectsShouldReturnStringValue() {
+  void asJsonWithListOfJsonObjectsShouldReturnStringValue() {
     String result = asJson(List.of(
       new JsonObject().put("test", "one"),
       new JsonObject().put("test", "two"),
@@ -76,14 +76,14 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListOfJsonObjectsShouldReturnFirstTenElements() {
+  void asJsonWithListOfJsonObjectsShouldReturnFirstTenElements() {
     String result = asJson(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"));
 
     assertEquals("list(size: 11, first 10 elements: [\"1\", \"2\", \"3\", \"4\", \"5\", \"6\", \"7\", \"8\", \"9\", \"10\"])", result);
   }
 
   @Test
-  public void asJsonWithListOfJsonObjectsShouldReturnNullIfException() {
+  void asJsonWithListOfJsonObjectsShouldReturnNullIfException() {
     List<?> list = mock(List.class);
     when(list.size()).thenThrow(new RuntimeException("Test Exception"));
     String result = asJson(list, 3);
@@ -93,19 +93,19 @@ class LogUtilTest {
   }
 
   @Test
-  public void asJsonWithListOfStringObjectsShouldReturnTruncatedStringValue() {
+  void asJsonWithListOfStringObjectsShouldReturnTruncatedStringValue() {
     String result = asJson(List.of("one", "two", "three"), 2);
 
     assertEquals("list(size: 3, first 2 elements: [\"one\", \"two\"])", result);
   }
 
   @Test
-  public void asJsonShouldReturnNullIfCallWithNullAndSizeValue() {
+  void asJsonShouldReturnNullIfCallWithNullAndSizeValue() {
     assertNull(asJson(null, 10));
   }
 
   @Test
-  public void headersAsStringShouldRemoveOkapiTokenAndReturnRepresentation() {
+  void headersAsStringShouldRemoveOkapiTokenAndReturnRepresentation() {
     Map<String, String> okapiHeaders = new HashMap<>();
     okapiHeaders.put("X-Okapi-Tenant", "testTenant");
     okapiHeaders.put("X-Okapi-Token", "token");
@@ -114,7 +114,7 @@ class LogUtilTest {
   }
 
   @Test
-  public void headersAsStringShouldReturnNullIfHeadersNull() {
+  void headersAsStringShouldReturnNullIfHeadersNull() {
     assertNull(LogUtil.headersAsString(null));
   }
 }
