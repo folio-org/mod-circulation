@@ -26,7 +26,7 @@ public class BlockOverrides {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static BlockOverrides from(JsonObject representation) {
-    log.debug("from:: parameters representation: {}",  representation);
+    log.debug("from:: parameters representation: {}", representation);
 
     return new BlockOverrides(
       ItemNotLoanableBlockOverride.from(getObjectProperty(representation, "itemNotLoanableBlock")),
