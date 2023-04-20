@@ -4,6 +4,7 @@ import static org.folio.circulation.support.StreamToListMapper.toList;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
@@ -35,6 +36,7 @@ public class FixedDueDateSchedules {
   public static FixedDueDateSchedules from(JsonObject representation) {
     log.debug("from:: parameters representation: {}", representation);
     if (representation == null) {
+      log.info("from:: representation is null");
       return new NoFixedDueDateSchedules();
     } else {
       return new FixedDueDateSchedules(getProperty(representation, "id"),
@@ -43,10 +45,17 @@ public class FixedDueDateSchedules {
   }
 
   public Optional<ZonedDateTime> findDueDateFor(ZonedDateTime date) {
-    return findScheduleFor(date).map(this::getDueDate);
+    log.debug("findDueDateFor:: parameters date: {}", date);
+    return findScheduleFor(date)
+      .map(this::getDueDate)
+      .map(dateTime -> {
+        log.info("findDueDateFor:: result: {}", dateTime);
+        return dateTime;
+      });
   }
 
   private Optional<JsonObject> findScheduleFor(ZonedDateTime date) {
+    log.debug("findScheduleFor:: parameters date: {}", date);
     return schedules
       .stream()
       .filter(isWithin(date))
@@ -54,6 +63,7 @@ public class FixedDueDateSchedules {
   }
 
   private Predicate<? super JsonObject> isWithin(ZonedDateTime date) {
+    log.debug("isWithin:: parameters date: {}", date);
     return schedule -> {
       ZonedDateTime from = parseDateTime(schedule.getString("from"));
       ZonedDateTime to = parseDateTime(schedule.getString("to"));
@@ -63,6 +73,7 @@ public class FixedDueDateSchedules {
   }
 
   private ZonedDateTime getDueDate(JsonObject schedule) {
+    log.debug("getDueDate:: parameters schedule: {}", schedule);
     return parseDateTime(schedule.getString("due"));
   }
 
@@ -75,9 +86,14 @@ public class FixedDueDateSchedules {
     ZonedDateTime loanDate,
     Supplier<ValidationError> noApplicableScheduleError) {
 
+    log.debug("truncateDueDate:: parameters dueDate: {}, loanDate: {}", dueDate, loanDate);
+
     return findDueDateFor(loanDate)
       .map(limit -> earliest(dueDate, limit))
-      .map(Result::succeeded)
+      .map(dateTime -> {
+        log.info("truncateDueDate:: result: {}", dateTime);
+        return succeeded(dateTime);
+      })
       .orElseGet(() -> failedValidation(noApplicableScheduleError.get()));
   }
 
