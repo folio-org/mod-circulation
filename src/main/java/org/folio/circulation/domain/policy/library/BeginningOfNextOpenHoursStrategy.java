@@ -31,7 +31,11 @@ public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy
   }
 
   @Override
-  protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable,
+    LibraryInterval requestedInterval) {
+
+    log.debug("calculateIfClosed:: parameters libraryTimetable: {}, requestedInterval: {}",
+      libraryTimetable, requestedInterval);
     LibraryInterval nextInterval = requestedInterval.getNext();
     if (nextInterval == null) {
       log.info("calculateIfClosed:: nextInterval is null");
@@ -58,6 +62,9 @@ public class BeginningOfNextOpenHoursStrategy extends ShortTermLoansBaseStrategy
       log.info("calculateIfClosed:: intervalForDateWithOffset is open");
       return succeeded(dueDateWithOffset);
     }
-    return succeeded(intervalForDateWithOffset.getPrevious().getEndTime());
+    var endTime = intervalForDateWithOffset.getPrevious().getEndTime();
+    log.info("calculateIfClosed:: result: {}", endTime);
+
+    return succeeded(endTime);
   }
 }

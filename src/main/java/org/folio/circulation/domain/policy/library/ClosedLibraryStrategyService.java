@@ -73,7 +73,8 @@ public class ClosedLibraryStrategyService {
     RenewalContext renewalContext) {
 
     final Loan loan = renewalContext.getLoan();
-    log.debug("applyClosedLibraryDueDateManagement:: loan: {}", loan);
+    log.debug("applyClosedLibraryDueDateManagement:: parameters renewalContext: {}",
+      renewalContext.getLoan());
 
     return applyClosedLibraryDueDateManagement(loan, loan.getLoanPolicy(),
       renewalContext.getTimeZone())
@@ -128,8 +129,9 @@ public class ClosedLibraryStrategyService {
     User user = loan.getUser();
     if (user != null && user.getExpirationDate() != null &&
       isBeforeMillis(user.getExpirationDate(), dueDate)) {
-      loan.setDueDateChangedByNearExpireUser();
+
       log.info("truncateDueDateIfPatronExpiresEarlier:: truncating dueDate");
+      loan.setDueDateChangedByNearExpireUser();
 
       return calendarRepository.lookupOpeningDays(user.getExpirationDate().toLocalDate(),
         loan.getCheckoutServicePointId())

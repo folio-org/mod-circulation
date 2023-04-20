@@ -29,7 +29,11 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   }
 
   @Override
-  protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable,
+    LibraryInterval requestedInterval) {
+
+    log.debug("calculateIfClosed:: parameters libraryTimetable: {}, requestedInterval: {}",
+      libraryTimetable, requestedInterval);
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
       log.error("calculateIfClosed:: currentTimeInterval is null");
@@ -50,7 +54,11 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
       });
   }
 
-  private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable, LibraryInterval requestedInterval) {
+  private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable,
+    LibraryInterval requestedInterval) {
+
+    log.debug("hasLibraryRolloverWorkingDay:: parameters libraryTimetable: {}, " +
+        "requestedInterval: {}", libraryTimetable, requestedInterval);
     if (isNotSequenceOfWorkingDays(libraryTimetable, requestedInterval)) {
       log.info("hasLibraryRolloverWorkingDay:: isNotSequenceOfWorkingDays is true");
       return false;
