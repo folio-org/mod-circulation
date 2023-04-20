@@ -31,6 +31,12 @@ class LogUtilTest {
   }
 
   @Test
+  public void cropShouldReturnNullIfException() {
+    String result = LogUtil.crop(null);
+    assertNull(result);
+  }
+
+  @Test
   public void asJsonWithJsonObjectShouldReturnNullIfException() {
     JsonObject jsonObject = mock(JsonObject.class);
     when(jsonObject.encode()).thenThrow(new RuntimeException("Test Exception"));

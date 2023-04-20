@@ -91,7 +91,7 @@ public class LogUtil {
     }
   }
 
-  private static String crop(String str) {
+  protected static String crop(String str) {
     try {
       return str.substring(0, min(str.length(), MAX_OBJECT_JSON_LENGTH));
     } catch (Exception ex) {
