@@ -53,7 +53,9 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -840,8 +842,8 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     // Requester with 1 Department
     IndividualResource requester = usersFixture.steve(builder ->
       builder.withAddress(address).withDepartments(departmentIds));
-    departmentFixture.department(departmentId1.toString());
-    departmentFixture.department(departmentId2.toString());
+    departmentFixture.department1(departmentId1.toString());
+    departmentFixture.department2(departmentId2.toString());
 
     final var requestExpiration = java.time.LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = java.time.LocalDate.of(2019, 8, 31);
@@ -865,7 +867,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject staffSlipContext = response.getStaffSlipContext();
     JsonObject userContext = staffSlipContext.getJsonObject("requester");
-    assertThat(userContext.getString("departments"), is("test department type"));
+    assertThat(userContext.getString("departments"), is("test department1"));
 
     item = itemsFixture.basedUponNod();
     // Requester with 2 Departments
@@ -889,7 +891,8 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     response = checkInFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
     staffSlipContext = response.getStaffSlipContext();
     userContext = staffSlipContext.getJsonObject("requester");
-    assertThat(userContext.getString("departments"), is("test department type; test department type"));
+    assertThat(userContext.getString("departments").split("; "),
+      arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
   }
 
   private void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(

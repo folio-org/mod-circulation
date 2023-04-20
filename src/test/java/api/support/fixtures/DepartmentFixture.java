@@ -14,11 +14,20 @@ public class DepartmentFixture {
     departmentClient = ResourceClient.forDepartmentStorage();
   }
 
-  public IndividualResource department(String id) {
+  public IndividualResource department1(String id) {
     final JsonObject department = new JsonObject();
 
     write(department, "id", id);
-    write(department, "name", "test department type");
+    write(department, "name", "test department1");
+
+    return departmentClient.create(department);
+  }
+
+  public IndividualResource department2(String id) {
+    final JsonObject department = new JsonObject();
+
+    write(department, "id", id);
+    write(department, "name", "test department2");
 
     return departmentClient.create(department);
   }
