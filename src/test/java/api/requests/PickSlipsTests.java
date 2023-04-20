@@ -7,6 +7,8 @@ import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -133,8 +135,8 @@ class PickSlipsTests extends APITests {
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
     IndividualResource materialTypeResource = materialTypesFixture.book();
     IndividualResource loanTypeResource = loanTypesFixture.canCirculate();
-    departmentFixture.department(departmentId1);
-    departmentFixture.department(departmentId2);
+    departmentFixture.department1(departmentId1);
+    departmentFixture.department2(departmentId2);
 
     ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
       builder -> builder.withEnumeration("v.70:no.7-12")
@@ -223,7 +225,8 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
-    assertThat(requesterContext.getString("departments"), is("test department type; test department type"));
+    assertThat(requesterContext.getString("departments").split("; "),
+      arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
 
     JsonObject requestContext = pickSlip.getJsonObject("request");
 
