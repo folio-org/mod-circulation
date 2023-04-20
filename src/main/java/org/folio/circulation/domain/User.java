@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.toStream;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
@@ -10,7 +11,10 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -20,20 +24,26 @@ import lombok.val;
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
   private final PatronGroup patronGroup;
+  private final Collection<Department> departments;
 
   private final JsonObject representation;
 
   public User(JsonObject representation) {
-    this(representation, null);
+    this(representation, null, null);
   }
 
-  public User(JsonObject representation, PatronGroup patronGroup) {
+  public User(JsonObject representation, PatronGroup patronGroup, Collection<Department> departments) {
     this.representation = representation;
     this.patronGroup = patronGroup;
+    this.departments = departments;
   }
 
   public User withPatronGroup(PatronGroup newPatronGroup) {
-    return new User(representation, newPatronGroup);
+    return new User(representation, newPatronGroup, departments);
+  }
+
+  public User withDepartments(Collection<Department> departments) {
+    return new User(representation, patronGroup, departments);
   }
 
   public boolean cannotDetermineStatus() {
@@ -130,5 +140,16 @@ public class User {
 
   public JsonObject getPersonal() {
     return getObjectProperty(representation,PERSONAL_PROPERTY_NAME);
+  }
+
+  public List<String> getDepartmentIds() {
+    return getArrayProperty(representation, "departments")
+      .stream()
+      .map(String.class::cast)
+      .collect(Collectors.toList());
+  }
+
+  public Collection<Department> getDepartments() {
+    return departments;
   }
 }
