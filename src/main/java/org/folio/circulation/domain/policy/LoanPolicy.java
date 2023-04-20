@@ -33,7 +33,9 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
 public class LoanPolicy extends Policy {
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
@@ -52,6 +54,7 @@ public class LoanPolicy extends Policy {
   private static final String INTERVAL_ERROR_TEXT = "the interval \"%s\" in \"%s\" is not recognized";
   private static final String DURATION_ERROR_TEXT = "the duration \"%s\" in \"%s\" is invalid";
 
+  @ToString.Include
   private final JsonObject representation;
   private final FixedDueDateSchedules fixedDueDateSchedules;
   private final FixedDueDateSchedules alternateRenewalFixedDueDateSchedules;
