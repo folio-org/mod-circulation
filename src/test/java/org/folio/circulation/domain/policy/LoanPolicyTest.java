@@ -18,7 +18,8 @@ class LoanPolicyTest {
     var representation = new JsonObject()
       .put("id", loanPolicyId)
       .put("name", loanPolicyName);
-    var expectedValue = String.format("{\"id\":\"%s\",\"name\":\"%s\"}", loanPolicyId, loanPolicyName);
+    var expectedValue = String.format("LoanPolicy(representation={\"id\":\"%s\",\"name\":\"%s\"})",
+      loanPolicyId, loanPolicyName);
 
     assertThat(new LoanPolicy(representation, null, null, null)
       .toString(), is(expectedValue));

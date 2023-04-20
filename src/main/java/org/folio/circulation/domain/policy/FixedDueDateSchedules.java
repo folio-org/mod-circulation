@@ -6,7 +6,6 @@ import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
-import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
