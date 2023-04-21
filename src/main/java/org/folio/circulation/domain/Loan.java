@@ -73,9 +73,12 @@ import org.folio.circulation.support.utils.ClockUtil;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @AllArgsConstructor(access = PRIVATE)
+@ToString(onlyExplicitlyIncluded = true)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
+  @ToString.Include
   private final JsonObject representation;
   @Getter
   private final Item item;
@@ -724,14 +727,5 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return getProperty(representation, ITEM_STATUS);
-  }
-
-  @Override
-  public String toString() {
-    return "Loan{" +
-      "id=" + getId() +
-      ", itemId=" + getItemId() +
-      ", userId=" + getUserId() +
-      '}';
   }
 }

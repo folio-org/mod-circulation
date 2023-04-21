@@ -4,9 +4,11 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
+import lombok.ToString;
 import lombok.Value;
 
 @Value
+@ToString
 public class TimePeriod {
   int duration;
   String intervalId;
