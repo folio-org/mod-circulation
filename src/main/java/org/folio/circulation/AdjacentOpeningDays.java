@@ -2,12 +2,19 @@ package org.folio.circulation;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
+
 import org.folio.circulation.domain.OpeningDay;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class AdjacentOpeningDays {
 
   private final OpeningDay previousDay;
