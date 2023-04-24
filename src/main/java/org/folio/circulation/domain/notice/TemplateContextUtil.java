@@ -184,6 +184,7 @@ public class TemplateContextUtil {
     if (location != null) {
       itemContext
         .put("effectiveLocationSpecific", location.getName())
+        .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
         .put("effectiveLocationInstitution", location.getInstitutionName())
@@ -231,6 +232,9 @@ public class TemplateContextUtil {
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)
       .ifPresent(value -> requestContext.put("servicePointPickup", value));
+    optionalRequest
+      .map(Request::getRequestDate)
+      .ifPresent(value -> write(requestContext, "requestDate", value));
     optionalRequest
       .map(Request::getRequestExpirationDate)
       .ifPresent(value -> write(requestContext, "requestExpirationDate", value));
