@@ -36,6 +36,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
     ScheduledNoticeContext context) {
+
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchAction))
@@ -97,18 +98,21 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context) {
+    return new NoticeLogContext()
+      .withUser(context.getLoan().getUser())
+      .withAccountId(context.getAccount().getId())
+      .withItems(singletonList(buildNoticeLogContextItem(context)));
+  }
+
+  @Override
+  protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     ScheduledNotice notice = context.getNotice();
 
-    NoticeLogContextItem logContextItem = NoticeLogContextItem.from(loan)
+    return NoticeLogContextItem.from(loan)
       .withTemplateId(notice.getConfiguration().getTemplateId())
       .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation())
       .withNoticePolicyId(context.getPatronNoticePolicyId());
-
-    return new NoticeLogContext()
-      .withUser(loan.getUser())
-      .withAccountId(context.getAccount().getId())
-      .withItems(singletonList(logContextItem));
   }
 
   @Override

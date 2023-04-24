@@ -39,7 +39,6 @@ public class TemplateContextUtil {
   private static final String REQUEST = "request";
   private static final String REQUESTER = "requester";
   private static final String LOAN = "loan";
-  private static final String LOANS = "loans";
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
@@ -53,12 +52,12 @@ public class TemplateContextUtil {
       .put(LOAN, createLoanContext(loan));
   }
 
-  public static JsonObject createMultiLoanNoticeContext(User user,
-    Collection<JsonObject> loanContexts) {
+  public static JsonObject createGroupedNoticeContext(User user, String groupToken,
+    Collection<JsonObject> noticeContexts) {
 
     return new JsonObject()
       .put(USER, createUserContext(user))
-      .put(LOANS, new JsonArray(new ArrayList<>(loanContexts)));
+      .put(groupToken, new JsonArray(new ArrayList<>(noticeContexts)));
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan) {
@@ -283,6 +282,13 @@ public class TemplateContextUtil {
     FeeFineAction chargeAction) {
 
     return createLoanNoticeContext(loan)
+      .put(FEE_CHARGE, createFeeChargeContext(account, chargeAction));
+  }
+
+  public static JsonObject createFeeFineChargeNoticeContextWithoutUser(Account account, Loan loan,
+    FeeFineAction chargeAction) {
+
+    return createLoanNoticeContextWithoutUser(loan)
       .put(FEE_CHARGE, createFeeChargeContext(account, chargeAction));
   }
 

@@ -1,22 +1,23 @@
 package org.folio.circulation.resources;
 
 import static java.lang.Math.max;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.GroupedLoanScheduledNoticeHandler;
+import org.folio.circulation.domain.notice.schedule.GroupedScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
@@ -32,7 +33,10 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 
-public class DueDateNotRealTimeScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+public abstract class OvernightScheduledNoticeProcessingResource
+  extends ScheduledNoticeProcessingResource {
+
+  private final EnumSet<TriggeringEvent> triggeringEvents;
 
   private static final CqlSortBy FETCH_NOTICES_SORT_CLAUSE =
     CqlSortBy.sortBy(
@@ -41,12 +45,24 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
         "triggeringEvent", "noticeConfig.format",
         "noticeConfig.timing")
         .map(CqlSortClause::ascending)
-        .collect(Collectors.toList())
+        .collect(toList())
     );
 
-  public DueDateNotRealTimeScheduledNoticeProcessingResource(HttpClient client) {
-    super("/circulation/due-date-not-real-time-scheduled-notices-processing", client);
+  protected OvernightScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+    TriggeringEvent triggeringEvent) {
+
+    this(client, rootPath, EnumSet.of(triggeringEvent));
   }
+
+  protected OvernightScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+    EnumSet<TriggeringEvent> triggeringEvents) {
+
+    super(rootPath, client);
+    this.triggeringEvents = triggeringEvents;
+  }
+
+  protected abstract GroupedScheduledNoticeHandler getHandler(Clients clients,
+    LoanRepository loanRepository);
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
@@ -67,8 +83,7 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
     ZonedDateTime timeLimit) {
 
-    return scheduledNoticesRepository.findNotices(timeLimit,
-      false, Collections.singletonList(TriggeringEvent.DUE_DATE),
+    return scheduledNoticesRepository.findNotices(timeLimit, false, triggeringEvents,
       FETCH_NOTICES_SORT_CLAUSE, pageLimit);
   }
 
@@ -77,11 +92,15 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
     Clients clients, RequestRepository requestRepository,
     LoanRepository loanRepository, MultipleRecords<ScheduledNotice> notices) {
 
-    Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups =
-      notices.getRecords().stream().collect(Collectors.groupingBy(
-        ScheduledNoticeGroupDefinition::from,
-        LinkedHashMap::new,
-        Collectors.toList()));
+    return getHandler(clients, loanRepository)
+      .handleNotices(groupNotices(notices))
+      .thenApply(mapResult(v -> notices));
+  }
+
+  private static List<List<ScheduledNotice>> groupNotices(MultipleRecords<ScheduledNotice> notices) {
+    Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups = notices.getRecords()
+      .stream()
+      .collect(groupingBy(ScheduledNoticeGroupDefinition::from, LinkedHashMap::new, toList()));
 
     boolean fetchedAllTheRecords = notices.getTotalRecords().equals(notices.getRecords().size());
     //If not all the records are fetched then the last group is cut off because there might be only a part of it
@@ -90,14 +109,11 @@ public class DueDateNotRealTimeScheduledNoticeProcessingResource extends Schedul
       ? orderedGroups.size()
       : max(orderedGroups.size() - 1, 1);
 
-    List<List<ScheduledNotice>> noticeGroups = orderedGroups.entrySet()
+    return orderedGroups.entrySet()
       .stream()
       .limit(limit)
       .map(Map.Entry::getValue)
-      .collect(Collectors.toList());
-
-    return new GroupedLoanScheduledNoticeHandler(clients, loanRepository, getZonedDateTime())
-      .handleNotices(noticeGroups)
-      .thenApply(mapResult(v -> notices));
+      .collect(toList());
   }
+
 }

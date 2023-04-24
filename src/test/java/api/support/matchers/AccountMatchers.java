@@ -52,14 +52,15 @@ public final class AccountMatchers {
   }
 
   public static Matcher<JsonObject> isAccount(double amount, double remaining, String status,
-    String paymentStatus, String feeFineType, UUID userId) {
+    String paymentStatus, String feeFineType, UUID userId, UUID loanId) {
     return allOf(
       hasJsonPath("amount", amount),
       hasJsonPath("remaining", remaining),
       hasJsonPath("status.name", status),
       hasJsonPath("paymentStatus.name", paymentStatus),
       hasJsonPath("feeFineType", feeFineType),
-      hasJsonPath("userId", UUIDMatcher.is(userId))
+      hasJsonPath("userId", UUIDMatcher.is(userId)),
+      hasJsonPath("loanId", UUIDMatcher.is(loanId))
     );
   }
 }

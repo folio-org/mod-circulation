@@ -224,7 +224,8 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return createLoanNoticeContext(context.getLoan());
   }
 
-  protected static NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
+  @Override
+  protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
     return NoticeLogContextItem.from(context.getLoan())
       .withTemplateId(context.getNotice().getConfiguration().getTemplateId())
       .withTriggeringEvent(context.getNotice().getTriggeringEvent().getRepresentation())

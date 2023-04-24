@@ -59,12 +59,24 @@ public class ScheduledNoticeProcessingClient {
     runWithFrozenClock(this::runFeeFineNoticesProcessing, mockSystemTime);
   }
 
+  public void runFeeFineNotRealTimeNoticesProcessing(ZonedDateTime mockSystemTime) {
+    runWithFrozenClock(this::runFeeFineNotRealTimeNoticesProcessing, mockSystemTime);
+  }
+
   public void runFeeFineNoticesProcessing() {
     URL url = circulationModuleUrl(
       "/circulation/fee-fine-scheduled-notices-processing");
 
     timedTaskClient.start(url, 204,
       "fee-fine-scheduled-notices-processing-request");
+  }
+
+  public void runFeeFineNotRealTimeNoticesProcessing() {
+    URL url = circulationModuleUrl(
+      "/circulation/fee-fine-not-real-time-scheduled-notices-processing");
+
+    timedTaskClient.start(url, 204,
+      "fee-fine-not-real-time-scheduled-notices-processing-request");
   }
 
   private void runWithFrozenClock(Runnable runnable, ZonedDateTime mockSystemTime) {
