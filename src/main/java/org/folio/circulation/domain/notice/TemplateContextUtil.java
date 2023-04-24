@@ -44,6 +44,7 @@ public class TemplateContextUtil {
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
 
   private TemplateContextUtil() {
   }
@@ -106,6 +107,16 @@ public class TemplateContextUtil {
     }
 
     return createStaffSlipContext(request.getItem(), request);
+  }
+
+  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries,String primaryServicePointName) {
+    if (entries == null) {
+      return new JsonObject();
+    }
+    entries.getJsonArray(PICK_SLIPS_KEY).stream().forEach(pickSlip -> {
+      ((JsonObject)pickSlip).getJsonObject(ITEM).put("fromServicePoint", primaryServicePointName);
+    });
+    return entries;
   }
 
   public static JsonObject createStaffSlipContext(
