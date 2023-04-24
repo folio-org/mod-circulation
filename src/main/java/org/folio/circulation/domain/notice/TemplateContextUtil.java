@@ -7,6 +7,7 @@ import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronInfoFromComment;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
@@ -44,6 +45,7 @@ public class TemplateContextUtil {
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
+  public static final String CURRENT_DATE_TIME = "currentDateTime";
 
   private TemplateContextUtil() {
   }
@@ -129,6 +131,9 @@ public class TemplateContextUtil {
         staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()));
       }
     }
+
+    ZonedDateTime currentDateTime = ClockUtil.getZonedDateTime();
+    write(staffSlipContext,CURRENT_DATE_TIME,currentDateTime);
 
     return staffSlipContext;
   }

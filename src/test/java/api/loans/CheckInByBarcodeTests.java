@@ -42,6 +42,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -58,9 +59,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -313,6 +312,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
+    assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
   }
 
   @Test
@@ -772,6 +772,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     JsonObject staffSlipContext = response.getStaffSlipContext();
     JsonObject userContext = staffSlipContext.getJsonObject("requester");
     assertNull(userContext);
+    assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
@@ -868,6 +869,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     JsonObject staffSlipContext = response.getStaffSlipContext();
     JsonObject userContext = staffSlipContext.getJsonObject("requester");
     assertThat(userContext.getString("departments"), is("test department1"));
+    assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
 
     item = itemsFixture.basedUponNod();
     // Requester with 2 Departments
