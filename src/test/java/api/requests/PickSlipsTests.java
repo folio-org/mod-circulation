@@ -4,12 +4,15 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
+
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -169,9 +172,10 @@ class PickSlipsTests extends APITests {
 
     JsonObject pickSlip = getPickSlipsList(response).get(0);
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
+    assertNotNull(pickSlip.getString(CURRENT_DATE_TIME));
 
     ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
-    
+
     Item item = Item.from(itemResource.getJson())
       .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
