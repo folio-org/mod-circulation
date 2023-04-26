@@ -304,4 +304,8 @@ public class InterfaceUrls {
   public static URL actualCostRecordsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/actual-cost-record-storage/actual-cost-records" + subPath);
   }
+
+  public static URL departmentsStorageUrl() {
+    return APITestContext.viaOkapiModuleUrl("/departments" );
+  }
 }

@@ -7,6 +7,8 @@ import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -20,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -123,13 +126,17 @@ class PickSlipsTests extends APITests {
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
     Address address = AddressExamples.mainStreet();
+    var departmentId1 = UUID.randomUUID().toString();
+    var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
-      usersFixture.steve(builder -> builder.withAddress(address));
+      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2))));
     ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     final var requestExpiration = LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
     IndividualResource materialTypeResource = materialTypesFixture.book();
     IndividualResource loanTypeResource = loanTypesFixture.canCirculate();
+    departmentFixture.department1(departmentId1);
+    departmentFixture.department2(departmentId2);
 
     ItemResource itemResource = itemsFixture.basedUponSmallAngryPlanet(
       builder -> builder.withEnumeration("v.70:no.7-12")
@@ -149,7 +156,6 @@ class PickSlipsTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
     ZonedDateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
-
     IndividualResource requestResource = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .open()
@@ -171,6 +177,8 @@ class PickSlipsTests extends APITests {
     JsonObject pickSlip = getPickSlipsList(response).get(0);
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
 
+    ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
+    
     Item item = Item.from(itemResource.getJson())
       .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
@@ -196,7 +204,7 @@ class PickSlipsTests extends APITests {
     assertEquals(copyNumber, itemContext.getString("copy"));
     assertEquals(item.getNumberOfPieces(), itemContext.getString("numberOfPieces"));
     assertEquals(item.getDescriptionOfPieces(), itemContext.getString("descriptionOfPieces"));
-    assertEquals(actualCheckinDateTime.toString(), itemContext.getString("lastCheckedInDateTime"));
+    assertDatetimeEquivalent(actualCheckinDateTime, requestCheckinDateTime);
     assertEquals(location.getName(), itemContext.getString("effectiveLocationSpecific"));
 
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
@@ -218,6 +226,8 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
+    assertThat(requesterContext.getString("departments").split("; "),
+      arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
 
     JsonObject requestContext = pickSlip.getJsonObject("request");
 
@@ -412,6 +422,9 @@ class PickSlipsTests extends APITests {
     assertResponseContains(response, item, pageRequest, james);
   }
 
+  private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
+    assertThat(firstDateTime.compareTo(secondDateTime), is(0));
+  }
 
   private void assertResponseHasItems(Response response, int itemsCount) {
     JsonObject responseJson = response.getJson();
