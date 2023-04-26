@@ -178,7 +178,7 @@ class PickSlipsTests extends APITests {
     JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
 
     ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
-    
+
     Item item = Item.from(itemResource.getJson())
       .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
@@ -206,7 +206,7 @@ class PickSlipsTests extends APITests {
     assertEquals(item.getDescriptionOfPieces(), itemContext.getString("descriptionOfPieces"));
     assertDatetimeEquivalent(actualCheckinDateTime, requestCheckinDateTime);
     assertEquals(location.getName(), itemContext.getString("effectiveLocationSpecific"));
-
+    assertEquals(location.getPrimaryServicePoint().getName(), itemContext.getString("effectiveLocationPrimaryServicePointName"));
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
     assertEquals(callNumberComponents.getCallNumber(), itemContext.getString("callNumber"));
     assertEquals(callNumberComponents.getPrefix(), itemContext.getString("callNumberPrefix"));

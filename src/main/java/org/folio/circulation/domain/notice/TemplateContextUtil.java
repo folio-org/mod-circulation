@@ -109,12 +109,15 @@ public class TemplateContextUtil {
     return createStaffSlipContext(request.getItem(), request);
   }
 
-  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries,String primaryServicePointName) {
+  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries, ServicePoint primaryServicePoint) {
     if (entries == null) {
       return new JsonObject();
     }
+    if(primaryServicePoint == null) {
+      return entries;
+    }
     entries.getJsonArray(PICK_SLIPS_KEY).stream().forEach(pickSlip -> {
-      ((JsonObject)pickSlip).getJsonObject(ITEM).put("fromServicePoint", primaryServicePointName);
+      ((JsonObject)pickSlip).getJsonObject(ITEM).put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName());
     });
     return entries;
   }
