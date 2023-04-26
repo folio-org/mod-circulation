@@ -44,6 +44,7 @@ public class TemplateContextUtil {
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
 
   private TemplateContextUtil() {
   }
@@ -106,6 +107,19 @@ public class TemplateContextUtil {
     }
 
     return createStaffSlipContext(request.getItem(), request);
+  }
+
+  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries, ServicePoint primaryServicePoint) {
+    if (entries == null) {
+      return new JsonObject();
+    }
+    if(primaryServicePoint == null) {
+      return entries;
+    }
+    entries.getJsonArray(PICK_SLIPS_KEY).stream().forEach(pickSlip -> {
+      ((JsonObject)pickSlip).getJsonObject(ITEM).put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName());
+    });
+    return entries;
   }
 
   public static JsonObject createStaffSlipContext(
@@ -184,6 +198,7 @@ public class TemplateContextUtil {
     if (location != null) {
       itemContext
         .put("effectiveLocationSpecific", location.getName())
+        .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
         .put("effectiveLocationInstitution", location.getInstitutionName())
@@ -231,6 +246,9 @@ public class TemplateContextUtil {
       .map(Request::getPickupServicePoint)
       .map(ServicePoint::getName)
       .ifPresent(value -> requestContext.put("servicePointPickup", value));
+    optionalRequest
+      .map(Request::getRequestDate)
+      .ifPresent(value -> write(requestContext, "requestDate", value));
     optionalRequest
       .map(Request::getRequestExpirationDate)
       .ifPresent(value -> write(requestContext, "requestExpirationDate", value));

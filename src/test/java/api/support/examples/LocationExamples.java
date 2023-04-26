@@ -70,6 +70,7 @@ public class LocationExamples {
       .forCampus(jubileeCampusId)
       .forLibrary(djanoglyLibraryId)
       .withPrimaryServicePoint(primaryServicePointId)
+      .withPrimaryServicePointName("Circ Desk 1")
       .servedBy(otherServicePointIds);
   }
 

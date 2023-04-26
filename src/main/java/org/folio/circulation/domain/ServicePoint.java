@@ -12,6 +12,10 @@ public class ServicePoint {
     return new ServicePoint(id, null, null, false, null, null, null, null, null);
   }
 
+  public static ServicePoint unknown(String id, String name) {
+    return new ServicePoint(id, name, null, false, null, null, null, null, null);
+  }
+
   String id;
   String name;
   String code;

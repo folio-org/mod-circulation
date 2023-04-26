@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.ServicePoint;
 
 public class LocationBuilder extends JsonBuilder implements Builder {
 
@@ -21,9 +22,10 @@ public class LocationBuilder extends JsonBuilder implements Builder {
   private final UUID libraryId;
   private final UUID primaryServicePointId;
   private final Set<UUID> otherServicePointIds;
+  private final String primaryServicePointName;
 
   public LocationBuilder() {
-    this(null, null, null, null, null, null, null, new HashSet<>());
+    this(null, null, null, null, null, null, null, new HashSet<>(), null);
   }
 
   private LocationBuilder(
@@ -34,7 +36,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     UUID campusId,
     UUID libraryId,
     UUID primaryServicePointId,
-    Set<UUID> otherServicePointIds) {
+    Set<UUID> otherServicePointIds,
+    String primaryServicePointName) {
 
     if (otherServicePointIds == null) {
       otherServicePointIds = new HashSet<>();
@@ -48,6 +51,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     this.libraryId = libraryId;
     this.primaryServicePointId = primaryServicePointId;
     this.otherServicePointIds = otherServicePointIds;
+    this.primaryServicePointName = primaryServicePointName;
   }
 
   @Override
@@ -70,6 +74,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
                                                           .collect(Collectors.toList()));
 
       write(representation, "servicePointIds", mappedServicePointIds);
+      write(representation, "primaryServicePointName", primaryServicePointName);
     }
 
     return representation;
@@ -84,7 +89,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.otherServicePointIds);
+      this.otherServicePointIds,
+      this.primaryServicePointName);
   }
 
   public LocationBuilder withCode(String code) {
@@ -96,7 +102,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.otherServicePointIds);
+      this.otherServicePointIds,
+      this.primaryServicePointName);
   }
 
   public LocationBuilder forInstitution(UUID institutionId) {
@@ -108,7 +115,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.otherServicePointIds);
+      this.otherServicePointIds,
+      this.primaryServicePointName);
   }
 
   public LocationBuilder forCampus(UUID campusId) {
@@ -120,7 +128,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.otherServicePointIds);
+      this.otherServicePointIds,
+      this.primaryServicePointName);
   }
 
   public LocationBuilder forLibrary(UUID libraryId) {
@@ -132,7 +141,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       libraryId,
       this.primaryServicePointId,
-      this.otherServicePointIds);
+      this.otherServicePointIds,
+      this.primaryServicePointName);
   }
 
   public LocationBuilder withPrimaryServicePoint(UUID primaryServicePointId) {
@@ -144,7 +154,22 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       primaryServicePointId,
-      this.otherServicePointIds)
+      this.otherServicePointIds,
+      this.primaryServicePointName)
+      .servedBy(primaryServicePointId);
+  }
+
+  public LocationBuilder withPrimaryServicePointName(String primaryServicePointName) {
+    return new LocationBuilder(
+      this.name,
+      this.code,
+      this.discoveryDisplayName,
+      this.institutionId,
+      this.campusId,
+      this.libraryId,
+      primaryServicePointId,
+      this.otherServicePointIds,
+      primaryServicePointName)
       .servedBy(primaryServicePointId);
   }
 
@@ -157,7 +182,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      this.otherServicePointIds);
+      this.otherServicePointIds,
+      this.primaryServicePointName);
   }
 
   public LocationBuilder servedBy(UUID servicePointId) {
@@ -181,6 +207,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.campusId,
       this.libraryId,
       this.primaryServicePointId,
-      newServicePointIds);
+      newServicePointIds,
+      this.primaryServicePointName);
   }
 }
