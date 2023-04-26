@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.fakes.FakeModNotify.getSentPatronNotices;
 import static api.support.fixtures.TemplateContextMatchers.getFeeActionContextMatcher;
 import static api.support.fixtures.TemplateContextMatchers.getFeeChargeContextMatcher;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
@@ -59,6 +58,7 @@ import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
+import api.support.fakes.FakeModNotify;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -670,7 +670,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final UUID userId = agedToLostResult.getUser().getId();
 
-    assertThat(getSentPatronNotices(), hasSize(actionsToTemplateIds.size()));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasSize(actionsToTemplateIds.size()));
 
     actionsToTemplateIds.keySet().stream()
       .map(feeFineAction -> hasEmailNoticeProperties(userId, actionsToTemplateIds.get(feeFineAction),
@@ -678,14 +678,14 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
             getBaseNoticeContextMatcher(agedToLostResult),
             getFeeActionContextMatcher(feeFineAction),
             getFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
-      .forEach(matcher -> assertThat(getSentPatronNotices(), hasItem(matcher)));
+      .forEach(matcher -> assertThat(FakeModNotify.getSentPatronNotices(), hasItem(matcher)));
   }
 
   @SuppressWarnings("unchecked")
   private void verifyBundledFeeFineNotice(UUID templateId, UUID userId,
     Map<JsonObject, AgeToLostResult> accountsToLoans) {
 
-    assertThat(getSentPatronNotices(), hasItem(
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItem(
       hasEmailNoticeProperties(userId, templateId,
         allOf(
           toStringMatcher(getUserContextMatchers(usersClient.get(userId))),
@@ -722,7 +722,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
   private void checkSentLoanNotices(AgeToLostResult agedToLostResult, List<UUID> templateIds) {
     final UUID userId = agedToLostResult.getUser().getId();
 
-    final List<JsonObject> sentNotices = getSentPatronNotices();
+    final List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
     assertThat(sentNotices, hasSize(templateIds.size()));
 
     templateIds.forEach(templateId -> assertThat(sentNotices, hasItem(
