@@ -132,7 +132,7 @@ public class TemplateContextUtil {
       }
     }
 
-    write(staffSlipContext,CURRENT_DATE_TIME, ClockUtil.getZonedDateTime());
+    write(staffSlipContext, CURRENT_DATE_TIME, ClockUtil.getZonedDateTime());
 
     return staffSlipContext;
   }
