@@ -33,7 +33,7 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 
-public abstract class OvernightScheduledNoticeProcessingResource
+public abstract class NotRealTimeScheduledNoticeProcessingResource
   extends ScheduledNoticeProcessingResource {
 
   private final EnumSet<TriggeringEvent> triggeringEvents;
@@ -48,13 +48,13 @@ public abstract class OvernightScheduledNoticeProcessingResource
         .collect(toList())
     );
 
-  protected OvernightScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+  protected NotRealTimeScheduledNoticeProcessingResource(HttpClient client, String rootPath,
     TriggeringEvent triggeringEvent) {
 
     this(client, rootPath, EnumSet.of(triggeringEvent));
   }
 
-  protected OvernightScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+  protected NotRealTimeScheduledNoticeProcessingResource(HttpClient client, String rootPath,
     EnumSet<TriggeringEvent> triggeringEvents) {
 
     super(rootPath, client);

@@ -9,10 +9,10 @@ import org.folio.circulation.support.Clients;
 
 import io.vertx.core.http.HttpClient;
 
-public class DueDateOvernightScheduledNoticeProcessingResource
-  extends OvernightScheduledNoticeProcessingResource {
+public class DueDateNotRealTimeScheduledNoticeProcessingResource
+  extends NotRealTimeScheduledNoticeProcessingResource {
 
-  public DueDateOvernightScheduledNoticeProcessingResource(HttpClient client) {
+  public DueDateNotRealTimeScheduledNoticeProcessingResource(HttpClient client) {
     super(client, "/circulation/due-date-not-real-time-scheduled-notices-processing", DUE_DATE);
   }
 

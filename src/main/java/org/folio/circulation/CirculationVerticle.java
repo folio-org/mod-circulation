@@ -11,11 +11,11 @@ import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.DeclareLostResource;
-import org.folio.circulation.resources.DueDateOvernightScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.EndPatronActionSessionResource;
 import org.folio.circulation.resources.ExpiredActualCostProcessingResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
-import org.folio.circulation.resources.FeeFineOvernightScheduledNoticeProcessingResource;
+import org.folio.circulation.resources.FeeFineNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.HealthResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
@@ -117,10 +117,10 @@ public class CirculationVerticle extends AbstractVerticle {
       .register(router);
 
     new LoanScheduledNoticeProcessingResource(client).register(router);
-    new DueDateOvernightScheduledNoticeProcessingResource(client).register(router);
+    new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);
-    new FeeFineOvernightScheduledNoticeProcessingResource(client).register(router);
+    new FeeFineNotRealTimeScheduledNoticeProcessingResource(client).register(router);
 
     new ExpiredSessionProcessingResource(client).register(router);
     new LoanAnonymizationResource(client).register(router);
