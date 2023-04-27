@@ -10,7 +10,7 @@ import io.vertx.core.json.JsonObject;
 public class GroupedLoanScheduledNoticeHandler extends GroupedScheduledNoticeHandler {
 
   public GroupedLoanScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
-    super(clients, new FeeFineScheduledNoticeHandler(clients, loanRepository), "loans");
+    super(clients, new LoanScheduledNoticeHandler(clients, loanRepository), "loans");
   }
 
   @Override
