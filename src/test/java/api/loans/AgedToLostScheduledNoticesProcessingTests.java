@@ -623,7 +623,9 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     ));
   }
 
-  private static JsonObject getAccount(Collection<JsonObject> accounts, UUID loanId, String feeFineType) {
+  private static JsonObject getAccount(Collection<JsonObject> accounts, UUID loanId,
+    String feeFineType) {
+
     return accounts.stream()
       .filter(account -> feeFineType.equals(account.getString("feeFineType")))
       .filter(account -> loanId.toString().equals(account.getString("loanId")))
@@ -694,7 +696,9 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
         ))));
   }
 
-  private Matcher[] getMatchersForBundledFeeFineNotice(Map<JsonObject, AgeToLostResult> accountsToLoans) {
+  private Matcher[] getMatchersForBundledFeeFineNotice(Map<JsonObject,
+    AgeToLostResult> accountsToLoans) {
+
     return accountsToLoans.entrySet()
       .stream()
       .map(entry -> {
