@@ -7,7 +7,6 @@ import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronInfoFromComment;
 
 import java.lang.invoke.MethodHandles;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
