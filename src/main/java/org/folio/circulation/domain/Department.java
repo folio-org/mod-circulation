@@ -16,4 +16,8 @@ public class Department {
     return representation.getString("name");
   }
 
+  public String getId() {
+    return representation.getString("id");
+  }
+
 }
