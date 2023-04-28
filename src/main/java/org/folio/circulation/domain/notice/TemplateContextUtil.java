@@ -43,6 +43,7 @@ public class TemplateContextUtil {
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
+  public static final String CURRENT_DATE_TIME = "currentDateTime";
 
   private TemplateContextUtil() {
   }
@@ -128,6 +129,8 @@ public class TemplateContextUtil {
         staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()));
       }
     }
+
+    write(staffSlipContext, CURRENT_DATE_TIME, ClockUtil.getZonedDateTime());
 
     return staffSlipContext;
   }
