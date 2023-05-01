@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -43,6 +44,7 @@ public class TemplateContextUtil {
   private static final String FEE_CHARGE = "feeCharge";
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
+  public static final String CURRENT_DATE_TIME = "currentDateTime";
 
   private TemplateContextUtil() {
   }
@@ -129,6 +131,8 @@ public class TemplateContextUtil {
       }
     }
 
+    write(staffSlipContext, CURRENT_DATE_TIME, ClockUtil.getZonedDateTime());
+
     return staffSlipContext;
   }
 
@@ -156,8 +160,10 @@ public class TemplateContextUtil {
     .put("lastName", user.getLastName())
     .put("middleName", user.getMiddleName())
     .put("barcode", user.getBarcode())
-    .put("patronGroup", user.getPatronGroup()!=null ? user.getPatronGroup().getGroup():"");
-  }
+    .put("patronGroup", user.getPatronGroup()!=null ? user.getPatronGroup().getGroup():"")
+    .put("departments", user.getDepartments() != null && !user.getDepartments().isEmpty() ?
+        user.getDepartments().stream().map(Department::getName).collect(joining("; ")) : "");
+   }
 
   private static JsonObject createItemContext(Item item) {
     String yearCaptionsToken = String.join("; ", item.getYearCaption());

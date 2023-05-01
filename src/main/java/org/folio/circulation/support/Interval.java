@@ -20,6 +20,7 @@ import org.folio.circulation.support.utils.DateTimeUtil;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 import lombok.With;
 
@@ -37,6 +38,7 @@ import lombok.With;
 @Builder
 @Value
 @With
+@ToString
 public class Interval {
 
   private final LocalDateTime begin;

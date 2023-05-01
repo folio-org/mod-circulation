@@ -3,9 +3,12 @@ package org.folio.circulation.domain.policy;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -13,6 +16,7 @@ import org.folio.circulation.support.results.Result;
 class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
   private static final String NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE =
     "loan date falls outside of the date ranges in the loan policy";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final FixedDueDateSchedules fixedDueDateSchedules;
 
@@ -35,9 +39,11 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
 
   @Override
   public Result<ZonedDateTime> calculateDueDate(Loan loan) {
+    log.debug("calculateDueDate:: parameters loan: {}", loan);
     final ZonedDateTime loanDate = loan.getLoanDate();
 
-    logApplying("Fixed schedule check out due date calculation");
+    log.info("calculateDueDate:: Applying loan policy {} ({}): " +
+        "Fixed schedule check out due date calculation", loanPolicyName, loanPolicyId);
 
     try {
       return fixedDueDateSchedules.findDueDateFor(loanDate)
@@ -46,7 +52,7 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     }
     catch(Exception e) {
-      logException(e, "Error occurred during fixed schedule check out due date calculation");
+      log.error("calculateDueDate:: Error occurred during fixed schedule check out due date calculation", e);
       return failedDueToServerError(e);
     }
   }

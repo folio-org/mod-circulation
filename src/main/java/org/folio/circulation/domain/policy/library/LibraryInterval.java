@@ -4,9 +4,13 @@ import java.time.ZonedDateTime;
 
 import org.folio.circulation.support.Interval;
 
-public class LibraryInterval {
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
+public class LibraryInterval {
+  @ToString.Include
   private final Interval interval;
+  @ToString.Include
   private final boolean open;
 
   private LibraryInterval previous;

@@ -42,6 +42,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -53,12 +54,15 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -70,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -310,6 +315,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestContext.getString("requestID"), is(request.getId()));
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
+    assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
   }
 
   @Test
@@ -769,6 +775,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     JsonObject staffSlipContext = response.getStaffSlipContext();
     JsonObject userContext = staffSlipContext.getJsonObject("requester");
     assertNull(userContext);
+    assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
@@ -823,6 +830,74 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestPickupExpired() {
     patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(CLOSED_PICKUP_EXPIRED);
+  }
+
+  @Test
+  void verifyDepartmentOnStaffSlipContextCheckInByBarcode() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
+    IndividualResource servicePoint = servicePointsFixture.cd1();
+    Address address = SiriusBlack();
+    var departmentId1 = UUID.randomUUID();
+    var departmentId2 = UUID.randomUUID();
+    JsonArray departmentIds = new JsonArray(List.of(departmentId1));
+
+    // Requester with 1 Department
+    IndividualResource requester = usersFixture.steve(builder ->
+      builder.withAddress(address).withDepartments(departmentIds));
+    departmentFixture.department1(departmentId1.toString());
+    departmentFixture.department2(departmentId2.toString());
+
+    final var requestExpiration = java.time.LocalDate.of(2019, 7, 30);
+    final var holdShelfExpiration = java.time.LocalDate.of(2019, 8, 31);
+    requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(requestExpiration)
+      .withHoldShelfExpiration(holdShelfExpiration)
+      .withPickupServicePointId(servicePoint.getId())
+      .withDeliveryAddressType(addressTypesFixture.home().getId())
+      .withPatronComments("I need the book")
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    ZonedDateTime checkInDate = ZonedDateTime.of(2019, 7, 25, 14, 23, 41, 0, UTC);
+    CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
+
+    JsonObject staffSlipContext = response.getStaffSlipContext();
+    JsonObject userContext = staffSlipContext.getJsonObject("requester");
+    assertThat(userContext.getString("departments"), is("test department1"));
+    assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
+
+    item = itemsFixture.basedUponNod();
+    // Requester with 2 Departments
+    requester = usersFixture.charlotte(builder ->
+      builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2))));
+    requestsFixture.place(new RequestBuilder()
+      .withId(UUID.randomUUID())
+      .open()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfilToHoldShelf()
+      .withRequestExpiration(requestExpiration)
+      .withHoldShelfExpiration(holdShelfExpiration)
+      .withPickupServicePointId(servicePoint.getId())
+      .withDeliveryAddressType(addressTypesFixture.home().getId())
+      .withPatronComments("I need the book")
+      .withTags(new RequestBuilder.Tags(asList("new", "important"))));
+
+    response = checkInFixture.checkInByBarcode(item, checkInDate, servicePoint.getId());
+    staffSlipContext = response.getStaffSlipContext();
+    userContext = staffSlipContext.getJsonObject("requester");
+    assertThat(userContext.getString("departments").split("; "),
+      arrayContainingInAnyOrder(equalTo("test department1"), equalTo("test department2")));
   }
 
   private void patronNoticeIsSentForRequestAwaitingPickupWhenPreviousRequestWasClosed(

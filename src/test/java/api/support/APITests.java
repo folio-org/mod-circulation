@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import api.support.fixtures.DepartmentFixture;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -275,6 +276,7 @@ public abstract class APITests {
   protected final PoliciesActivationFixture policiesActivation = new PoliciesActivationFixture();
   protected final AgeToLostFixture ageToLostFixture =
     new AgeToLostFixture(itemsFixture, usersFixture, checkOutFixture);
+  protected final DepartmentFixture departmentFixture = new DepartmentFixture();
 
   protected APITests() {
     this(true, false);

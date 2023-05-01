@@ -34,6 +34,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
+import org.folio.circulation.infrastructure.storage.users.DepartmentRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.mappers.LocationMapper;
@@ -89,6 +90,7 @@ public class PickSlipsResource extends Resource {
     final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
+    final DepartmentRepository departmentRepository = new DepartmentRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
@@ -98,6 +100,7 @@ public class PickSlipsResource extends Resource {
       .thenComposeAsync(r -> r.after(items -> fetchOpenPageRequestsForItems(items, clients)))
       .thenComposeAsync(r -> r.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))

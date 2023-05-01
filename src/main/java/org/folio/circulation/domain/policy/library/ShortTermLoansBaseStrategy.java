@@ -27,6 +27,8 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
   @Override
   public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
+    log.debug("calculateDueDate:: parameters requestedDate: {}, openingDays: {}",
+      requestedDate, openingDays);
     log.info("----- ShortTermLoansBaseStrategy -----");
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
@@ -35,13 +37,19 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
 
     LibraryInterval requestedInterval = libraryTimetable.findInterval(requestedDate);
     if (requestedInterval == null) {
+      log.error("calculateDueDate:: requestedInterval is null");
       return failed(failureForAbsentTimetable());
     }
     if (requestedInterval.isOpen()) {
+      log.info("calculateDueDate:: requestedInterval is open");
       return succeeded(requestedDate);
     }
     log.info("requestedInterval is close so going as per strategy");
-    return calculateIfClosed(libraryTimetable, requestedInterval);
+    return calculateIfClosed(libraryTimetable, requestedInterval)
+      .next(dateTime -> {
+        log.info("calculateDueDate:: result: {}", dateTime);
+        return succeeded(dateTime);
+      });
   }
 
   protected abstract Result<ZonedDateTime> calculateIfClosed(
