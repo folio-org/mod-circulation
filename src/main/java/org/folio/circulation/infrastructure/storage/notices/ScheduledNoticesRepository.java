@@ -5,6 +5,9 @@ import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 import static io.vertx.core.http.HttpMethod.PUT;
 import static java.util.function.Function.identity;
+import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
@@ -21,13 +24,11 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logResponse;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
-import static org.folio.HttpStatus.HTTP_CREATED;
-import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-import static org.folio.HttpStatus.HTTP_OK;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -75,7 +76,7 @@ public class ScheduledNoticesRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
-    ZonedDateTime timeLimit, boolean realTime, List<TriggeringEvent> triggeringEvents,
+    ZonedDateTime timeLimit, boolean realTime, Collection<TriggeringEvent> triggeringEvents,
     CqlSortBy cqlSortBy, PageLimit pageLimit) {
 
     List<String> triggeringEventRepresentations = triggeringEvents.stream()

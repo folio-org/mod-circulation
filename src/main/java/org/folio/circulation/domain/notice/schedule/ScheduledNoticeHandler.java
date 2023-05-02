@@ -19,6 +19,7 @@ import org.folio.circulation.domain.ItemRelatedRecord;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
@@ -41,9 +42,9 @@ public abstract class ScheduledNoticeHandler {
   protected final LoanRepository loanRepository;
   protected final AccountRepository accountRepository;
   protected final PatronNoticePolicyRepository patronNoticePolicyRepository;
-  protected final CollectionResourceClient templateNoticesClient;
-  protected final ScheduledPatronNoticeService patronNoticeService;
-  protected final EventPublisher eventPublisher;
+  private final CollectionResourceClient templateNoticesClient;
+  private final ScheduledPatronNoticeService patronNoticeService;
+  private final EventPublisher eventPublisher;
 
   protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
@@ -83,7 +84,7 @@ public abstract class ScheduledNoticeHandler {
       .exceptionally(t -> handleException(t, notice));
   }
 
-  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
+  private CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
     ScheduledNoticeContext context) {
 
     return ofAsync(() -> context)
@@ -100,6 +101,8 @@ public abstract class ScheduledNoticeHandler {
   protected abstract boolean isNoticeIrrelevant(ScheduledNoticeContext context);
 
   protected abstract NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context);
+
+  protected abstract NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context);
 
   protected abstract JsonObject buildNoticeContextJson(ScheduledNoticeContext context);
 
