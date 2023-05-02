@@ -135,7 +135,7 @@ public abstract class GroupedScheduledNoticeHandler {
       .collect(toList());
 
     if (relevantContexts.isEmpty()) {
-      log.warn("sendGroupedNotice:: no relevant notices in the group, skipping the group");
+      log.info("sendGroupedNotice:: no relevant notices in the group, skipping the group");
       return completedFuture(succeeded(contexts));
     }
 
