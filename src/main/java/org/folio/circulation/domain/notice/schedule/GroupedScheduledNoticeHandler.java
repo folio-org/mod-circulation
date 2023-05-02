@@ -126,7 +126,7 @@ public abstract class GroupedScheduledNoticeHandler {
     List<ScheduledNoticeContext> contexts) {
 
     if (contexts.isEmpty()) {
-      log.warn("sendGroupedNotice:: no notices left in the group to process, skipping the group");
+      log.info("sendGroupedNotice:: no notices left in the group to process, skipping the group");
       return completedFuture(succeeded(contexts));
     }
 
