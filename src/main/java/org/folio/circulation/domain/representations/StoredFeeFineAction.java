@@ -2,8 +2,11 @@ package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.ServicePoint;
@@ -11,10 +14,15 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
 public class StoredFeeFineAction extends JsonObject {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public StoredFeeFineAction(StoredFeeFineActionBuilder builder) {
     super();
+
+    log.debug("StoredFeeFineAction:: parameters builder={}", builder);
 
     write(this, "id", builder.id);
     write(this, "userId", builder.userId);
@@ -37,6 +45,7 @@ public class StoredFeeFineAction extends JsonObject {
     return new StoredFeeFineActionBuilder().useAccount(account);
   }
 
+  @ToString
   public static class StoredFeeFineActionBuilder {
     private String id = UUID.randomUUID().toString();
     private String userId;

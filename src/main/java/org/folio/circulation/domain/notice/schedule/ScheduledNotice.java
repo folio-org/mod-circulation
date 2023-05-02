@@ -2,6 +2,9 @@ package org.folio.circulation.domain.notice.schedule;
 
 import java.time.ZonedDateTime;
 
+import lombok.ToString;
+
+@ToString
 public class ScheduledNotice {
   private final String id;
   private final String loanId;
@@ -62,19 +65,5 @@ public class ScheduledNotice {
   public ScheduledNotice withNextRunTime(ZonedDateTime nextRunTime) {
     return new ScheduledNotice(id, loanId, requestId, recipientUserId, feeFineActionId,
       triggeringEvent, nextRunTime, configuration);
-  }
-
-  @Override
-  public String toString() {
-    return "ScheduledNotice{" +
-      "id='" + id + '\'' +
-      ", loanId='" + loanId + '\'' +
-      ", requestId='" + requestId + '\'' +
-      ", recipientUserId='" + recipientUserId + '\'' +
-      ", feeFineActionId='" + feeFineActionId + '\'' +
-      ", triggeringEvent='" + triggeringEvent.getRepresentation() + '\'' +
-      ", nextRunTime=" + nextRunTime +
-      ", configuration=" + configuration +
-      '}';
   }
 }

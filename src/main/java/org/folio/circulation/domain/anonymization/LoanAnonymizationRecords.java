@@ -1,5 +1,9 @@
 package org.folio.circulation.domain.anonymization;
 
+import static java.lang.String.format;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,5 +71,12 @@ public class LoanAnonymizationRecords {
 
   public Map<String, Collection<String>> getNotAnonymizedLoans() {
     return notAnonymizedLoans;
+  }
+
+  @Override
+  public String toString() {
+    return format("LoanAnonymizationRecords(anonymizedLoans=%s, loansFound=%s, " +
+      "notAnonymizedLoans=%s)", listAsString(anonymizedLoans), listAsString(loansFound),
+      mapAsString(notAnonymizedLoans));
   }
 }

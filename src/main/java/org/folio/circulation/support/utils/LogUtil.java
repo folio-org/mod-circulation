@@ -3,6 +3,7 @@ package org.folio.circulation.support.utils;
 import static com.google.common.primitives.Ints.min;
 import static java.lang.String.format;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.results.Result;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +76,23 @@ public class LogUtil {
       log.warn("logList:: Failed to log a list", ex);
       return null;
     }
+  }
+
+  public static String collectionAsString(Collection<?> collection) {
+    return collection == null ? "null" : format("collection(size=%d)", collection.size());
+  }
+
+  public static String listAsString(List<?> list) {
+    return list == null ? "null" : format("list(size=%d)", list.size());
+  }
+
+  public static String mapAsString(Map<?, ?> map) {
+    return map == null ? "null" : format("map(size=%d)", map.size());
+  }
+
+  public static <T> String resultAsString(Result<T> result) {
+    return result.failed() ? "Result(failed)" : format("Result(%s)",
+      result.value() == null ? "null" : result.value());
   }
 
   private static String plural(int number) {

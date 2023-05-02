@@ -48,17 +48,21 @@ import org.folio.circulation.domain.policy.RequestPolicy;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.With;
 
 @AllArgsConstructor
 @Getter
+@ToString(onlyExplicitlyIncluded = true)
 public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final TlrSettingsConfiguration tlrSettingsConfiguration;
 
+  @ToString.Include
   @With
   private final Operation operation;
 
+  @ToString.Include
   @With
   private final JsonObject requestRepresentation;
 

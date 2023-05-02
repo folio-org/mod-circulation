@@ -17,8 +17,11 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.User;
@@ -27,12 +30,15 @@ import org.folio.circulation.storage.mappers.ItemMapper;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.With;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @With
 public class LoanLogContext {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private String userBarcode;
   private String userId;
   private String itemBarcode;
@@ -48,6 +54,8 @@ public class LoanLogContext {
   private String loanId;
 
   public static LoanLogContext from(Loan loan) {
+    log.debug("from:: parameters loan={}", loan);
+
     return new LoanLogContext()
       .withUser(ofNullable(loan.getUser())
         .orElse(userFromRepresentation(loan)))
@@ -63,12 +71,16 @@ public class LoanLogContext {
   }
 
   private LoanLogContext withUser(User user) {
+    log.debug("withUser:: parameters user={}", user);
+
     userBarcode = user.getBarcode();
     userId = user.getId();
     return this;
   }
 
   private LoanLogContext withItem(Item item) {
+    log.debug("withItem:: parameters item={}", item);
+
     itemBarcode = item.getBarcode();
     itemId = item.getItemId();
     instanceId = item.getInstanceId();
@@ -77,12 +89,16 @@ public class LoanLogContext {
   }
 
   private static User userFromRepresentation(Loan loan) {
+    log.debug("userFromRepresentation:: parameters loan={}", loan);
+
     JsonObject userJson = new JsonObject();
     ofNullable(loan).ifPresent(l -> write(userJson, "id", l.getUserId()));
     return new User(userJson);
   }
 
   private static Item itemFromRepresentation(Loan loan) {
+    log.debug("itemFromRepresentation:: parameters loan={}", loan);
+
     JsonObject itemJson = new JsonObject();
 
     ofNullable(loan).ifPresent(l -> write(itemJson, "id", l.getItemId()));
@@ -91,6 +107,8 @@ public class LoanLogContext {
   }
 
   public JsonObject asJson() {
+    log.debug("asJson:: ");
+
     JsonObject json = new JsonObject();
     ofNullable(userBarcode).ifPresent(userBarcode -> write(json, USER_BARCODE.value(), userBarcode));
     ofNullable(userId).ifPresent(userId -> write(json, USER_ID.value(), userId));

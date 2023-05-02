@@ -7,6 +7,9 @@ import java.util.Set;
 
 import org.folio.circulation.domain.notice.NoticeEventType;
 
+import lombok.ToString;
+
+@ToString(onlyExplicitlyIncluded = true)
 public enum TriggeringEvent {
 
   HOLD_EXPIRATION("Hold expiration"),
@@ -22,6 +25,7 @@ public enum TriggeringEvent {
   private static final Set<TriggeringEvent> AUTOMATIC_FEE_FINE_ADJUSTMENTS =
     EnumSet.of(AGED_TO_LOST_RETURNED);
 
+  @ToString.Include
   private final String representation;
 
   TriggeringEvent(String representation) {

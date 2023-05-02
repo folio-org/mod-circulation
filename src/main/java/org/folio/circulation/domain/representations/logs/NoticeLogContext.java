@@ -12,10 +12,13 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
@@ -27,12 +30,15 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.With;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @With
 public class NoticeLogContext {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private String userBarcode;
   private String userId;
   @Getter private List<NoticeLogContextItem> items = new ArrayList<>();
@@ -42,6 +48,8 @@ public class NoticeLogContext {
   private String errorMessage;
 
   public static NoticeLogContext from(Loan loan) {
+    log.debug("from:: parameters loan={}", loan);
+
     return new NoticeLogContext()
       .withUser(loan.getUser())
       .withUserId(loan.getUserId())
@@ -49,6 +57,8 @@ public class NoticeLogContext {
   }
 
   public static NoticeLogContext from(Request request) {
+    log.debug("from:: parameters request={}", request);
+
     return new NoticeLogContext()
       .withUserId(request.getUserId())
       .withUser(request.getRequester())
@@ -57,6 +67,8 @@ public class NoticeLogContext {
   }
 
   public static NoticeLogContext from(ScheduledNotice scheduledNotice) {
+    log.debug("from:: parameters scheduledNotice={}", scheduledNotice);
+
     return new NoticeLogContext()
       .withUserId(scheduledNotice.getRecipientUserId())
       .withRequestId(scheduledNotice.getRequestId())
@@ -70,7 +82,10 @@ public class NoticeLogContext {
 
   // it is assumed that all sessions have same user and action type
   public static NoticeLogContext from(List<PatronSessionRecord> sessions) {
+    log.debug("from:: parameters sessions=list(size={})", sessions.size());
+
     if (sessions.isEmpty()) {
+      log.info("from:: sessions list is empty");
       return new NoticeLogContext();
     }
 
@@ -84,7 +99,10 @@ public class NoticeLogContext {
   }
 
   public NoticeLogContext withUser(User user) {
+    log.debug("withUser:: parameters user={}", user);
+
     if (user != null) {
+      log.info("from:: user is null");
       return withUserBarcode(user.getBarcode())
         .withUserId(user.getId());
     }
@@ -93,24 +111,32 @@ public class NoticeLogContext {
   }
 
   public NoticeLogContext withNoticePolicyId(String noticePolicyId) {
+    log.debug("withNoticePolicyId:: parameters noticePolicyId={}", noticePolicyId);
+
     return withItems(items.stream()
       .map(item -> item.withNoticePolicyId(noticePolicyId))
       .collect(toList()));
   }
 
   public NoticeLogContext withTemplateId(String templateId) {
+    log.debug("withTemplateId:: parameters templateId={}", templateId);
+
     return withItems(items.stream()
       .map(item -> item.withTemplateId(templateId))
       .collect(toList()));
   }
 
   public NoticeLogContext withTriggeringEvent(String triggeringEvent) {
+    log.debug("withTriggeringEvent:: parameters triggeringEvent={}", triggeringEvent);
+
     return withItems(items.stream()
       .map(item -> item.withTriggeringEvent(triggeringEvent))
       .collect(toList()));
   }
 
   public JsonObject asJson() {
+    log.debug("asJson:: ");
+
     JsonObject json = new JsonObject();
     write(json, USER_ID.value(), userId);
     write(json, USER_BARCODE.value(), userBarcode);

@@ -6,15 +6,19 @@ import java.util.Collection;
 import java.util.stream.Stream;
 
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.Value;
 
 @Value
+@ToString(onlyExplicitlyIncluded = true)
 public class Instance {
   public static Instance unknown() {
     return new Instance(null, null, emptyList(), emptyList(), emptyList(), emptyList());
   }
 
+  @ToString.Include
   String id;
+  @ToString.Include
   String title;
   @NonNull Collection<Identifier> identifiers;
   @NonNull Collection<Contributor> contributors;

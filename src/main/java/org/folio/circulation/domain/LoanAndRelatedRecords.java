@@ -9,14 +9,17 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.With;
 
 @AllArgsConstructor
 @With
 @Getter
+@ToString(onlyExplicitlyIncluded = true)
 public class LoanAndRelatedRecords implements UserRelatedRecord {
   public static final String REASON_TO_OVERRIDE = "reasonToOverride";
 
+  @ToString.Include
   private final Loan loan;
   private final Loan existingLoan;
   private final RequestQueue requestQueue;

@@ -11,7 +11,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString
 public class LastCheckIn {
 
   private final ZonedDateTime dateTime;
