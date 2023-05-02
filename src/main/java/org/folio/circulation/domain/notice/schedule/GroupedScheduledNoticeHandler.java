@@ -45,7 +45,7 @@ public abstract class GroupedScheduledNoticeHandler {
   public CompletableFuture<Result<List<List<ScheduledNotice>>>> handleNotices(
     List<List<ScheduledNotice>> noticeGroups) {
 
-    log.info("Start processing {} group(s) of scheduled notices ({} notices total)",
+    log.info("handleNotices:: processing {} group(s) of scheduled notices ({} notices total)",
       noticeGroups.size(), noticeGroups.stream().mapToInt(List::size).sum());
 
     return allOf(noticeGroups, this::handleNoticeGroup);
@@ -53,6 +53,8 @@ public abstract class GroupedScheduledNoticeHandler {
 
   private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticeGroup(
     List<ScheduledNotice> notices) {
+
+    log.debug("handleNoticeGroup:: processing group of {} scheduled notices", notices.size());
 
     //TODO: user and template are the same for all notices in the group, so they can be fetched only once
     return allResultsOf(notices, this::buildContext)
@@ -64,6 +66,8 @@ public abstract class GroupedScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> buildContext(ScheduledNotice notice) {
+    log.debug("buildContext:: building context for notice {}", notice);
+
     return ofAsync(() -> new ScheduledNoticeContext(notice))
       .thenCompose(r -> r.after(singleNoticeHandler::fetchData))
       .thenApply(r -> r.map(this::buildNoticeContextJson))
@@ -88,11 +92,13 @@ public abstract class GroupedScheduledNoticeHandler {
 
     if (result.failed()) {
       HttpFailure cause = result.cause();
-      log.error("Failed to build context for scheduled notice: {}.\n{}", cause, notice);
+      log.warn("handleContextBuildingFailure:: failed to build context: {}. Reason: {}", notice, cause);
 
       return singleNoticeHandler.deleteNotice(notice, cause.toString())
         .thenApply(r -> r.next(n -> result));
     }
+
+    log.info("handleContextBuildingFailure:: context built for notice {}", notice.getId());
 
     return completedFuture(result);
   }
@@ -105,10 +111,11 @@ public abstract class GroupedScheduledNoticeHandler {
       .collect(toList());
 
     if (!failedResults.isEmpty()) {
-      log.error("Failed to build context for {} out of {} scheduled notices",
+      log.error("discardContextBuildingFailures:: failed to build context for {} out of {} notices",
         failedResults.size(), results.size());
-
       results.removeAll(failedResults);
+    } else {
+      log.info("discardContextBuildingFailures:: all contexts were built successfully");
     }
 
     return completedFuture(results)
@@ -119,7 +126,7 @@ public abstract class GroupedScheduledNoticeHandler {
     List<ScheduledNoticeContext> contexts) {
 
     if (contexts.isEmpty()) {
-      log.warn("No notices left in the group to process, skipping the group");
+      log.warn("sendGroupedNotice:: no notices left in the group to process, skipping the group");
       return completedFuture(succeeded(contexts));
     }
 
@@ -128,7 +135,7 @@ public abstract class GroupedScheduledNoticeHandler {
       .collect(toList());
 
     if (relevantContexts.isEmpty()) {
-      log.warn("No relevant notices in the group, skipping the group");
+      log.warn("sendGroupedNotice:: no relevant notices in the group, skipping the group");
       return completedFuture(succeeded(contexts));
     }
 
@@ -140,7 +147,8 @@ public abstract class GroupedScheduledNoticeHandler {
       .map(ScheduledNoticeContext::getNoticeContext)
       .collect(toList());
 
-    log.info("Attempting to send a grouped notice for {} scheduled notices", relevantContexts.size());
+    log.info("sendGroupedNotice:: attempting to send a grouped notice for {} scheduled notices",
+      relevantContexts.size());
 
     return patronNoticeService.sendNotice(
         contextSample.getNotice().getConfiguration(),
@@ -165,6 +173,8 @@ public abstract class GroupedScheduledNoticeHandler {
   private CompletableFuture<Result<List<ScheduledNotice>>> updateGroupedNotice(
     List<ScheduledNoticeContext> contexts) {
 
+    log.debug("updateGroupedNotice:: updating {} notices", contexts.size());
+
     return allOf(contexts, singleNoticeHandler::updateNotice);
   }
 
@@ -172,12 +182,12 @@ public abstract class GroupedScheduledNoticeHandler {
     Result<List<ScheduledNotice>> result, List<ScheduledNotice> notices) {
 
     if (result.succeeded()) {
-      log.info("Group of {} scheduled notices was processed successfully", notices.size());
+      log.info("handleResult:: group of {} notices was processed successfully", notices.size());
       return completedFuture(result);
     }
 
     HttpFailure failure = result.cause();
-    log.error("Failed to process group of {} scheduled notices: {}", notices.size(), failure);
+    log.error("handleResult:: failed to process group of {} notices: {}", notices.size(), failure);
 
     return ofAsync(() -> notices);
   }
@@ -185,7 +195,7 @@ public abstract class GroupedScheduledNoticeHandler {
   private Result<List<ScheduledNotice>> handleException(Throwable throwable,
     List<ScheduledNotice> notices) {
 
-    log.error("An exception was thrown while processing a group of {} scheduled notices: {}",
+    log.error("handleException:: exception was thrown while processing a group of {} notices: {}",
       notices.size(), throwable.getLocalizedMessage());
 
     return succeeded(notices);
