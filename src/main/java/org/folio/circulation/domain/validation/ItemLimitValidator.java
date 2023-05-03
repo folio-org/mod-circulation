@@ -64,19 +64,24 @@ public class ItemLimitValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
 
+    log.debug("refuseWhenItemLimitIsReached:: parameters records={}", records);
+
     Loan loan = records.getLoan();
     Integer itemLimit = loan.getLoanPolicy().getItemLimit();
 
     if (itemLimit == null) {
+      log.info("refuseWhenItemLimitIsReached:: itemLimit is null");
       return completedFuture(succeeded(records));
     }
 
     return ofAsync(() -> loan.getLoanPolicy().getRuleConditions())
       .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
         ruleConditions -> {
+          log.info("refuseWhenItemLimitIsReached:: ruleConditions={}", ruleConditions);
           ItemLimitValidationErrorCause cause = getValidationErrorCause(ruleConditions);
 
           if (cause == null) {
+            log.info("refuseWhenItemLimitIsReached:: cause is null");
             String message = String.format("Can not determine item limit validation error cause " +
               "for item %s, patron %s", loan.getItemId(), loan.getUserId());
             log.warn(message);
@@ -92,7 +97,12 @@ public class ItemLimitValidator {
   private CompletableFuture<Result<Boolean>> isLimitReached(
     AppliedRuleConditions ruleConditionsEntity, LoanAndRelatedRecords records) {
 
+    log.debug("isLimitReached:: parameters ruleConditionsEntity={}, records={}",
+      ruleConditionsEntity, records);
+
     if (!ruleConditionsEntity.isItemTypePresent() && !ruleConditionsEntity.isLoanTypePresent()) {
+      log.info("refuseWhenItemLimitIsReached:: " +
+        "item type and loan type are missing from rule conditions");
       return ofAsync(() -> false);
     }
 
@@ -112,32 +122,50 @@ public class ItemLimitValidator {
       .thenApply(r -> r.map(loansCount -> loansCount >= itemLimit));
   }
 
-  private boolean isMaterialTypeMatchInRetrievedLoan(
-    String expectedMaterialTypeId, Loan loanRecord, AppliedRuleConditions ruleConditions) {
+  private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialTypeId,
+    Loan loanRecord, AppliedRuleConditions ruleConditions) {
+
+    log.debug("isMaterialTypeMatchInRetrievedLoan:: parameters expectedMaterialTypeId={}, " +
+        "loanRecord={}, ruleConditions={}", expectedMaterialTypeId, loanRecord, ruleConditions);
 
     if (!ruleConditions.isItemTypePresent()) {
+      log.info("isMaterialTypeMatchInRetrievedLoan:: item type is missing from rule conditions");
       return true;
     }
 
-    return expectedMaterialTypeId != null
+    var result = expectedMaterialTypeId != null
       && expectedMaterialTypeId.equals(loanRecord.getItem().getMaterialTypeId());
+    log.info("isMaterialTypeMatchInRetrievedLoan:: result {}", result);
+    return result;
   }
 
-  private boolean isLoanTypeMatchInRetrievedLoan(
-    String expectedLoanType, Loan loanRecord, AppliedRuleConditions ruleConditions) {
+  private boolean isLoanTypeMatchInRetrievedLoan(String expectedLoanType, Loan loanRecord,
+    AppliedRuleConditions ruleConditions) {
+
+    log.debug("isLoanTypeMatchInRetrievedLoan:: parameters expectedLoanType={}, " +
+      "loanRecord={}, ruleConditions={}", expectedLoanType, loanRecord, ruleConditions);
 
     if (!ruleConditions.isLoanTypePresent()) {
+      log.info("isMaterialTypeMatchInRetrievedLoan:: loan type is missing from rule conditions");
       return true;
     }
 
-    return expectedLoanType != null
+    var result = expectedLoanType != null
       && expectedLoanType.equals(loanRecord.getItem().getLoanTypeId());
+    log.info("isLoanTypeMatchInRetrievedLoan:: result {}", result);
+    return result;
   }
 
   private ItemLimitValidationErrorCause getValidationErrorCause(AppliedRuleConditions ruleConditionsEntity) {
+    log.debug("getValidationErrorCause:: parameters ruleConditionsEntity={}", ruleConditionsEntity);
+
     boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
     boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();
     boolean isRulePatronGroupPresent = ruleConditionsEntity.isPatronGroupPresent();
+
+    log.info("getValidationErrorCause:: isRuleMaterialTypePresent={}, isRuleLoanTypePresent={}, " +
+      "isRulePatronGroupPresent={}", isRuleMaterialTypePresent, isRuleLoanTypePresent,
+      isRulePatronGroupPresent);
 
     if (isRulePatronGroupPresent && isRuleMaterialTypePresent && isRuleLoanTypePresent) {
       return PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;

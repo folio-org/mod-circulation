@@ -5,9 +5,13 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -15,6 +19,7 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class ChangeDueDateValidator {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final ItemStatusValidator itemStatusValidator;
 
@@ -25,7 +30,13 @@ public class ChangeDueDateValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseChangeDueDateForItemInDisallowedStatus(
     Result<LoanAndRelatedRecords> loanAndRelatedRecordsResult) {
 
+    log.debug("refuseChangeDueDateForItemInDisallowedStatus:: parameters " +
+        "loanAndRelatedRecordsResult={}", () -> resultAsString(loanAndRelatedRecordsResult));
+
     return loanAndRelatedRecordsResult.after(relatedRecords -> {
+      log.debug("refuseChangeDueDateForItemInDisallowedStatus:: after relatedRecords={}",
+        relatedRecords);
+
       final Loan changedLoan = relatedRecords.getLoan();
 
       final Result<LoanAndRelatedRecords> statusValidation = itemStatusValidator
@@ -34,6 +45,7 @@ public class ChangeDueDateValidator {
       // If the item is not in a status that we're interesting then just skip
       // further logic
       if (statusValidation.succeeded()) {
+        log.debug("refuseChangeDueDateForItemInDisallowedStatus:: statusValidation succeeded");
         return ofAsync(() -> relatedRecords);
       }
 
@@ -48,11 +60,16 @@ public class ChangeDueDateValidator {
   }
 
   private Result<Boolean> dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
-    return succeeded(existingLoan != null
-        && !isSameMillis(existingLoan.getDueDate(), changedLoan.getDueDate()));
+    log.debug("dueDateHasChanged:: parameters existingLoan={}, changedLoan={}", existingLoan,
+      changedLoan);
+    boolean result = existingLoan != null
+      && !isSameMillis(existingLoan.getDueDate(), changedLoan.getDueDate());
+    log.info("dueDateHasChanged:: result {}", result);
+    return succeeded(result);
   }
 
   private ValidationErrorFailure dueDateChangeFailedForItem(Item item) {
+    log.debug("dueDateChangeFailedForItem:: parameters item={}", item);
     return singleValidationError("item is " + item.getStatusName(),
       "itemId", item.getItemId());
   }

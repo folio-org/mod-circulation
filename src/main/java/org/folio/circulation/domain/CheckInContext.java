@@ -11,6 +11,7 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 
 /**
  * The loan captures a snapshot of the item status
@@ -23,10 +24,13 @@ import lombok.AllArgsConstructor;
  * Which requires passing the records between processes.
  */
 @AllArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 public class CheckInContext {
+  @ToString.Include
   private final CheckInByBarcodeRequest checkInRequest;
   private final TlrSettingsConfiguration tlrSettings;
   private final Item item;
+  @ToString.Include
   private final Loan loan;
   private final RequestQueue requestQueue;
   private final ServicePoint checkInServicePoint;
