@@ -11,6 +11,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -82,7 +83,7 @@ public class NoticeLogContext {
 
   // it is assumed that all sessions have same user and action type
   public static NoticeLogContext from(List<PatronSessionRecord> sessions) {
-    log.debug("from:: parameters sessions: list(size: {})", sessions.size());
+    log.debug("from:: parameters sessions: {}", listAsString(sessions));
 
     if (sessions.isEmpty()) {
       log.info("from:: sessions list is empty");

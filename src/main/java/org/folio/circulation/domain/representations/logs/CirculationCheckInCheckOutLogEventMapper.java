@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.CHE
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_OUT_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -180,8 +181,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
   private static JsonArray mapUpdatedRequestPairsToJsonArray(
     List<UpdatedRequestPair> updatedRequestPairs) {
 
-    log.debug("mapUpdatedRequestPairsToJsonArray:: parameters updatedRequestPairs: list(size: {})",
-      updatedRequestPairs::size);
+    log.debug("mapUpdatedRequestPairsToJsonArray:: parameters updatedRequestPairs: {}",
+      () -> listAsString(updatedRequestPairs));
 
     return new JsonArray(updatedRequestPairs.stream()
       .map(request -> {

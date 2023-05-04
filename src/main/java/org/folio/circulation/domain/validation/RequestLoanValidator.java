@@ -1,11 +1,12 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.utils.LogUtil.resultAsString;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -21,13 +22,13 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 
 public class RequestLoanValidator {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -84,8 +85,9 @@ public class RequestLoanValidator {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     log.debug("verifyNoMatchOrFailAsAlreadyLoaned:: parameters " +
-      "items=list(size={}), loans=MultipleRecords(size={}), requestAndRelatedRecords={}",
-      () -> items.value().size(), () -> loans.value().size(), () -> requestAndRelatedRecords);
+      "items={}, loans={}, requestAndRelatedRecords={}",
+      () -> collectionAsString(items.value()), () -> multipleRecordsAsString(loans.value()),
+      () -> requestAndRelatedRecords);
 
     List<String> itemIds = items.value().stream()
       .map(Item::getItemId)
