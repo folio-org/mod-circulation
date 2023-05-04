@@ -6,7 +6,7 @@ import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHE
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
-import static org.folio.circulation.domain.representations.RequestProperties.FULFILMENT_PREFERENCE;
+import static org.folio.circulation.domain.representations.RequestProperties.FULFILLMENT_PREFERENCE;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.PROXY_USER_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
@@ -87,7 +87,7 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestByInstanceIdResource extends Resource {
 
   private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(PAGE, RECALL, HOLD);
-  private static final RequestFulfillmentPreference DEFAULT_FULFILMENT_PREFERENCE = HOLD_SHELF;
+  private static final RequestFulfillmentPreference DEFAULT_FULFILLMENT_PREFERENCE = HOLD_SHELF;
 
   private final Logger log;
 
@@ -252,7 +252,7 @@ public class RequestByInstanceIdResource extends Resource {
       .map(requestType -> requestRepresentation.copy()
         .put(REQUEST_TYPE, requestType.getValue())
         .put(REQUEST_LEVEL, RequestLevel.TITLE.getValue())
-        .put(FULFILMENT_PREFERENCE, DEFAULT_FULFILMENT_PREFERENCE.getValue()))
+        .put(FULFILLMENT_PREFERENCE, DEFAULT_FULFILLMENT_PREFERENCE.getValue()))
       .collect(toList())
     );
   }
@@ -380,7 +380,7 @@ public class RequestByInstanceIdResource extends Resource {
         write(requestBody, REQUESTER_ID, requestByInstanceIdRequest.getRequesterId().toString());
         write(requestBody, "pickupServicePointId",
           requestByInstanceIdRequest.getPickupServicePointId().toString());
-        write(requestBody, "fulfillmentPreference", DEFAULT_FULFILMENT_PREFERENCE.getValue());
+        write(requestBody, "fulfillmentPreference", DEFAULT_FULFILLMENT_PREFERENCE.getValue());
         write(requestBody, "requestType", requestType.getValue());
         if (requestByInstanceIdRequest.getRequestExpirationDate() != null) {
           write(requestBody, "requestExpirationDate",
