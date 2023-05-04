@@ -11,7 +11,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 
-@ToString(onlyExplicitlyIncluded = true)
+@ToString
 public class AutomatedPatronBlocks {
   private final List<AutomatedPatronBlock> blocks;
 
