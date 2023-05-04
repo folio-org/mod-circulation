@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.results.Result;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -88,6 +89,10 @@ public class LogUtil {
 
   public static String mapAsString(Map<?, ?> map) {
     return map == null ? "null" : format("map(size=%d)", map.size());
+  }
+
+  public static String multipleRecordsAsString(MultipleRecords<?> records) {
+    return records == null ? "null" : format("records(size=%d)", records.size());
   }
 
   public static <T> String resultAsString(Result<T> result) {
