@@ -27,7 +27,8 @@ public class LocationMapper {
       Institution.unknown(getProperty(representation, "institutionId")),
       Campus.unknown(getProperty(representation, "campusId")),
       Library.unknown(getProperty(representation, "libraryId")),
-      ServicePoint.unknown(getProperty(representation, "primaryServicePoint")));
+      ServicePoint.unknown(getProperty(representation, "primaryServicePoint"),
+        getProperty(representation, "effectiveLocationPrimaryServicePointName")));
   }
 
   private Collection<UUID> getServicePointIds(JsonObject representation) {

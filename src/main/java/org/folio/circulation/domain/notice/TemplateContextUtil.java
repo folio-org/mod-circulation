@@ -44,6 +44,7 @@ public class TemplateContextUtil {
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
   public static final String CURRENT_DATE_TIME = "currentDateTime";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
 
   private TemplateContextUtil() {
   }
@@ -106,6 +107,21 @@ public class TemplateContextUtil {
     }
 
     return createStaffSlipContext(request.getItem(), request);
+  }
+
+  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries, ServicePoint primaryServicePoint) {
+    if (entries == null) {
+      return new JsonObject();
+    }
+    if (primaryServicePoint == null) {
+      return entries;
+    }
+    entries.getJsonArray(PICK_SLIPS_KEY).stream().forEach(pickSlip ->
+      ((JsonObject)pickSlip).getJsonObject(ITEM).put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
+
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: params primaryServicePointName = {}", primaryServicePoint.getName());
+
+    return entries;
   }
 
   public static JsonObject createStaffSlipContext(
@@ -186,6 +202,7 @@ public class TemplateContextUtil {
     if (location != null) {
       itemContext
         .put("effectiveLocationSpecific", location.getName())
+        .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
         .put("effectiveLocationInstitution", location.getInstitutionName())
