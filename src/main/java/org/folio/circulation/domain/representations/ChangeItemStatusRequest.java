@@ -18,7 +18,7 @@ public class ChangeItemStatusRequest {
   private final String comment;
 
   public static ChangeItemStatusRequest from(String loanId, JsonObject body) {
-    log.debug("from:: parameters loanId={}, body={}", loanId, body);
+    log.debug("from:: parameters loanId: {}, body: {}", loanId, body);
 
     return new ChangeItemStatusRequest(loanId, body.getString("comment"));
   }

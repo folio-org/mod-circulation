@@ -43,7 +43,7 @@ public class NoticeLogContextItem {
   private String triggeringEvent;
 
   public static NoticeLogContextItem from(Loan loan) {
-    log.debug("from:: parameters loan={}", loan);
+    log.debug("from:: parameters loan: {}", loan);
 
     NoticeLogContextItem noticeLogContextItem = new NoticeLogContextItem();
 
@@ -67,7 +67,7 @@ public class NoticeLogContextItem {
   }
 
   public static NoticeLogContextItem from(PatronSessionRecord patronSession) {
-    log.debug("from:: parameters patronSession={}", patronSession);
+    log.debug("from:: parameters patronSession: {}", patronSession);
 
     return from(patronSession.getLoan())
       .withLoanId(patronSession.getLoanId().toString())
@@ -75,7 +75,7 @@ public class NoticeLogContextItem {
   }
 
   public static NoticeLogContextItem from(Request request) {
-    log.debug("from:: parameters request={}", request);
+    log.debug("from:: parameters request: {}", request);
 
     Item item = request.getItem();
     NoticeLogContextItem logContextItem = new NoticeLogContextItem();
@@ -97,7 +97,7 @@ public class NoticeLogContextItem {
   }
 
   public static NoticeLogContextItem from(Item item) {
-    log.debug("from:: parameters item={}", item);
+    log.debug("from:: parameters item: {}", item);
 
     return new NoticeLogContextItem()
       .withItemId(item.getItemId())

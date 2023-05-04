@@ -54,7 +54,7 @@ public class LoanLogContext {
   private String loanId;
 
   public static LoanLogContext from(Loan loan) {
-    log.debug("from:: parameters loan={}", loan);
+    log.debug("from:: parameters loan: {}", loan);
 
     return new LoanLogContext()
       .withUser(ofNullable(loan.getUser())
@@ -71,7 +71,7 @@ public class LoanLogContext {
   }
 
   private LoanLogContext withUser(User user) {
-    log.debug("withUser:: parameters user={}", user);
+    log.debug("withUser:: parameters user: {}", user);
 
     userBarcode = user.getBarcode();
     userId = user.getId();
@@ -79,7 +79,7 @@ public class LoanLogContext {
   }
 
   private LoanLogContext withItem(Item item) {
-    log.debug("withItem:: parameters item={}", item);
+    log.debug("withItem:: parameters item: {}", item);
 
     itemBarcode = item.getBarcode();
     itemId = item.getItemId();
@@ -89,7 +89,7 @@ public class LoanLogContext {
   }
 
   private static User userFromRepresentation(Loan loan) {
-    log.debug("userFromRepresentation:: parameters loan={}", loan);
+    log.debug("userFromRepresentation:: parameters loan: {}", loan);
 
     JsonObject userJson = new JsonObject();
     ofNullable(loan).ifPresent(l -> write(userJson, "id", l.getUserId()));
@@ -97,7 +97,7 @@ public class LoanLogContext {
   }
 
   private static Item itemFromRepresentation(Loan loan) {
-    log.debug("itemFromRepresentation:: parameters loan={}", loan);
+    log.debug("itemFromRepresentation:: parameters loan: {}", loan);
 
     JsonObject itemJson = new JsonObject();
 

@@ -19,7 +19,7 @@ public class CheckInByBarcodeResponse {
   private final CheckInContext context;
 
   public static CheckInByBarcodeResponse fromRecords(CheckInContext records) {
-    log.debug("fromRecords:: parameters records={}", records);
+    log.debug("fromRecords:: parameters records: {}", records);
 
     return new CheckInByBarcodeResponse(records);
   }

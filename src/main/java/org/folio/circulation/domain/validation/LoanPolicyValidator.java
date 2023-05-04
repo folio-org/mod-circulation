@@ -39,7 +39,7 @@ public class LoanPolicyValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     LoanAndRelatedRecords relatedRecords) {
 
-    log.debug("refuseWhenItemIsNotLoanable:: parameters relatedRecords={}", relatedRecords);
+    log.debug("refuseWhenItemIsNotLoanable:: parameters relatedRecords: {}", relatedRecords);
 
     LoanPolicy loanPolicy = relatedRecords.getLoan().getLoanPolicy();
     if (loanPolicy.isNotLoanable()) {

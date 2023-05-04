@@ -19,7 +19,7 @@ public class ServicePointPickupLocationValidator {
   public Result<RequestAndRelatedRecords> refuseInvalidPickupServicePoint(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("refuseInvalidPickupServicePoint:: parameters requestAndRelatedRecords={}",
+    log.debug("refuseInvalidPickupServicePoint:: parameters requestAndRelatedRecords: {}",
       requestAndRelatedRecords);
 
     Request request = null;

@@ -28,7 +28,7 @@ public class FeeFineBalanceChangedEvent {
   private BigDecimal balance;
 
   public static FeeFineBalanceChangedEvent fromJson(JsonObject json) {
-    log.debug("fromJson:: parameters json={}", json);
+    log.debug("fromJson:: parameters json: {}", json);
 
     var result = new FeeFineBalanceChangedEvent(
       getProperty(json, "id"),

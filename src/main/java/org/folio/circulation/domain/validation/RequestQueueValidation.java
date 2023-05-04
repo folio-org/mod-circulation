@@ -28,7 +28,7 @@ public class RequestQueueValidation {
   }
 
   public static Result<ReorderRequestContext> queueIsFound(Result<ReorderRequestContext> result) {
-    log.debug("queueIsFound:: parameters result={}", () -> resultAsString(result));
+    log.debug("queueIsFound:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(
       r -> succeeded(r.getRequestQueue().getRequests().isEmpty()),
@@ -45,7 +45,7 @@ public class RequestQueueValidation {
    * @return New result, failed when the validation has not been passed.
    */
   public static Result<ReorderRequestContext> queueIsConsistent(Result<ReorderRequestContext> result) {
-    log.debug("queueIsConsistent:: parameters result={}", () -> resultAsString(result));
+    log.debug("queueIsConsistent:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(
       context -> succeeded(isQueueInconsistent(context)),
@@ -58,7 +58,7 @@ public class RequestQueueValidation {
   public static Result<ReorderRequestContext> fulfillingRequestsPositioning(
     Result<ReorderRequestContext> result) {
 
-    log.debug("fulfillingRequestsPositioning:: parameters result={}", () -> resultAsString(result));
+    log.debug("fulfillingRequestsPositioning:: parameters result: {}", () -> resultAsString(result));
 
     if (result.failed()) {
       return result;
@@ -79,7 +79,7 @@ public class RequestQueueValidation {
   private static Result<ReorderRequestContext> fulfillingRequestsHaveTopPositions(
     Result<ReorderRequestContext> result) {
 
-    log.debug("fulfillingRequestsHaveTopPositions:: parameters result={}",
+    log.debug("fulfillingRequestsHaveTopPositions:: parameters result: {}",
       () -> resultAsString(result));
 
     return validateRequestsAtTopPositions(result, RequestHelper::isRequestBeganFulfillment,
@@ -89,7 +89,7 @@ public class RequestQueueValidation {
   private static Result<ReorderRequestContext> fulfillingRequestHasFirstPosition(
     Result<ReorderRequestContext> result) {
 
-    log.debug("fulfillingRequestHasFirstPosition:: parameters result={}",
+    log.debug("fulfillingRequestHasFirstPosition:: parameters result: {}",
       () -> resultAsString(result));
 
     return validateRequestAtFirstPosition(result, RequestHelper::isRequestBeganFulfillment,
@@ -99,7 +99,7 @@ public class RequestQueueValidation {
   public static Result<ReorderRequestContext> pageRequestsPositioning(
     Result<ReorderRequestContext> result) {
 
-    log.debug("pageRequestsPositioning:: parameters result={}",
+    log.debug("pageRequestsPositioning:: parameters result: {}",
       () -> resultAsString(result));
 
     if (result.failed()) {
@@ -115,7 +115,7 @@ public class RequestQueueValidation {
   private static Result<ReorderRequestContext> pageRequestHasFirstPosition(
     Result<ReorderRequestContext> result) {
 
-    log.debug("pageRequestHasFirstPosition:: parameters result={}",
+    log.debug("pageRequestHasFirstPosition:: parameters result: {}",
       () -> resultAsString(result));
 
     return validateRequestAtFirstPosition(result, RequestHelper::isPageRequest,
@@ -130,7 +130,7 @@ public class RequestQueueValidation {
    * @return New Result, failed if validation have not been passed.
    */
   public static Result<ReorderRequestContext> positionsAreSequential(Result<ReorderRequestContext> result) {
-    log.debug("positionsAreSequential:: parameters result={}",
+    log.debug("positionsAreSequential:: parameters result: {}",
       () -> resultAsString(result));
 
     return result.failWhen(
@@ -160,7 +160,7 @@ public class RequestQueueValidation {
   }
 
   private static boolean isQueueInconsistent(ReorderRequestContext context) {
-    log.debug("isQueueInconsistent:: parameters context={}", context);
+    log.debug("isQueueInconsistent:: parameters context: {}", context);
 
     if (context.getReorderQueueRequest().getReorderedQueue().size() !=
       context.getRequestQueue().getRequests().size()) {
@@ -172,7 +172,7 @@ public class RequestQueueValidation {
   }
 
   private static boolean reorderRequestContainsUnmatchedRequests(ReorderRequestContext context) {
-    log.debug("reorderRequestContainsUnmatchedRequests:: parameters context={}", context);
+    log.debug("reorderRequestContainsUnmatchedRequests:: parameters context: {}", context);
     var result = context.getReorderRequestToRequestMap().entrySet().stream()
       .anyMatch(entry -> entry.getKey() == null || entry.getValue() == null);
     log.info("reorderRequestContainsUnmatchedRequests:: result {}", result);
@@ -183,7 +183,7 @@ public class RequestQueueValidation {
     Result<ReorderRequestContext> result, Predicate<Request> requestTypePredicate,
     String onFailureMessage) {
 
-    log.debug("validateRequestAtFirstPosition:: parameters result={}, requestTypePredicate, " +
+    log.debug("validateRequestAtFirstPosition:: parameters result: {}, requestTypePredicate, " +
         "onFailureMessage={}", () -> resultAsString(result), () -> onFailureMessage);
 
     return result.failWhen(context -> {
@@ -211,7 +211,7 @@ public class RequestQueueValidation {
     Result<ReorderRequestContext> result, Predicate<Request> requestTypePredicate,
     String onFailureMessage) {
 
-    log.debug("validateRequestsAtTopPositions:: parameters result={}, requestTypePredicate, " +
+    log.debug("validateRequestsAtTopPositions:: parameters result: {}, requestTypePredicate, " +
       "onFailureMessage={}", () -> resultAsString(result), () -> onFailureMessage);
 
     return result.failWhen(context -> {

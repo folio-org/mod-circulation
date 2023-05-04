@@ -27,7 +27,7 @@ public class ServicePointOfCheckoutPresentValidator {
   public Result<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseCheckOutWhenServicePointIsNotPresent:: parameters records={}",
+    log.debug("refuseCheckOutWhenServicePointIsNotPresent:: parameters records: {}",
       () -> resultAsString(result));
 
     return result.failWhen(

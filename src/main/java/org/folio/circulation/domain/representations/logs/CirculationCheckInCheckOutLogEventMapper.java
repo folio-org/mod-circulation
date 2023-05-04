@@ -39,7 +39,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   public static String mapToCheckInLogEventContent(CheckInContext checkInContext,
     User loggedInUser, User userFromLastLoan) {
 
-    log.debug("mapToCheckInLogEventContent:: parameters checkInContext={}, user={}, " +
+    log.debug("mapToCheckInLogEventContent:: parameters checkInContext: {}, user: {}, " +
       "userFromLastLoan={}", checkInContext, loggedInUser, userFromLastLoan);
 
     JsonObject logEventPayload = new JsonObject();
@@ -69,7 +69,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   public static String mapToCheckOutLogEventContent(LoanAndRelatedRecords loanAndRelatedRecords,
     User loggedInUser) {
 
-    log.debug("mapToCheckOutLogEventContent:: parameters loanAndRelatedRecords={}, " +
+    log.debug("mapToCheckOutLogEventContent:: parameters loanAndRelatedRecords: {}, " +
       "loggedInUser={}", loanAndRelatedRecords, loggedInUser);
 
     JsonObject logEventPayload = new JsonObject();
@@ -101,7 +101,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   private static void populateItemData(CheckInContext checkInContext, JsonObject logEventPayload,
     User loggedInUser) {
 
-    log.debug("populateItemData:: parameters checkInContext={}, logEventPayload={}, " +
+    log.debug("populateItemData:: parameters checkInContext: {}, logEventPayload: {}, " +
       "loggedInUser={}", checkInContext, logEventPayload, loggedInUser);
 
     ofNullable(checkInContext.getItem())
@@ -120,7 +120,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   private static void populateItemData(LoanAndRelatedRecords loanAndRelatedRecords,
     JsonObject logEventPayload, User loggedInUser) {
 
-    log.debug("populateItemData:: parameters loanAndRelatedRecords={}, logEventPayload={}, " +
+    log.debug("populateItemData:: parameters loanAndRelatedRecords: {}, logEventPayload: {}, " +
       "loggedInUser={}", loanAndRelatedRecords, logEventPayload, loggedInUser);
 
     ofNullable(loanAndRelatedRecords.getLoan().getItem())
@@ -148,7 +148,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
   private static void populateLoanData(Loan checkInCheckOutLoan, JsonObject logEventPayload) {
 
-    log.debug("populateLoanData:: parameters checkInCheckOutLoan={}, logEventPayload={}",
+    log.debug("populateLoanData:: parameters checkInCheckOutLoan: {}, logEventPayload: {}",
       checkInCheckOutLoan, logEventPayload);
 
     write(logEventPayload, LOAN_ID.value(), checkInCheckOutLoan.getId());
@@ -180,7 +180,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   private static JsonArray mapUpdatedRequestPairsToJsonArray(
     List<UpdatedRequestPair> updatedRequestPairs) {
 
-    log.debug("mapUpdatedRequestPairsToJsonArray:: parameters updatedRequestPairs=list(size={})",
+    log.debug("mapUpdatedRequestPairsToJsonArray:: parameters updatedRequestPairs: list(size: {})",
       updatedRequestPairs::size);
 
     return new JsonArray(updatedRequestPairs.stream()

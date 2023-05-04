@@ -32,7 +32,7 @@ public class InactiveUserRenewalValidator {
   private Result<RenewalContext> refuseWhenUserIsInactive(User user,
     RenewalContext renewalContext) {
 
-    log.debug("refuseWhenUserIsInactive:: parameters user={}, renewalContext={}", user,
+    log.debug("refuseWhenUserIsInactive:: parameters user: {}, renewalContext: {}", user,
       renewalContext);
 
     if (user.cannotDetermineStatus()) {
@@ -47,7 +47,7 @@ public class InactiveUserRenewalValidator {
   }
 
   private HttpFailure createInactiveUserValidationError(String message, String reason) {
-    log.debug("createInactiveUserValidationError:: parameters message={}, reason={}", message,
+    log.debug("createInactiveUserValidationError:: parameters message: {}, reason: {}", message,
       reason);
 
     return singleValidationError(new ValidationError(message, "reason", reason));

@@ -31,7 +31,7 @@ public class ItemStatusValidator {
   private Result<LoanAndRelatedRecords> refuseWhenItemIs(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords, ItemStatus status) {
 
-    log.debug("refuseWhenItemIs:: parameters loanAndRelatedRecords={}, status={}",
+    log.debug("refuseWhenItemIs:: parameters loanAndRelatedRecords: {}, status: {}",
       () -> resultAsString(loanAndRelatedRecords), () -> status);
 
     return loanAndRelatedRecords.failWhen(
@@ -42,7 +42,7 @@ public class ItemStatusValidator {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsMissing(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    log.debug("refuseWhenItemIsMissing:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenItemIsMissing:: parameters loanAndRelatedRecords: {}",
       () -> resultAsString(loanAndRelatedRecords));
 
     return loanAndRelatedRecords
@@ -53,7 +53,7 @@ public class ItemStatusValidator {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    log.debug("refuseWhenItemIsNotAllowedForCheckOut:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenItemIsNotAllowedForCheckOut:: parameters loanAndRelatedRecords: {}",
       () -> resultAsString(loanAndRelatedRecords));
 
     return loanAndRelatedRecords
@@ -66,7 +66,7 @@ public class ItemStatusValidator {
   public Result<LoanAndRelatedRecords> refuseWhenItemStatusDoesNotAllowDueDateChange(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    log.debug("refuseWhenItemStatusDoesNotAllowDueDateChange:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenItemStatusDoesNotAllowDueDateChange:: parameters loanAndRelatedRecords: {}",
       () -> resultAsString(loanAndRelatedRecords));
 
     return loanAndRelatedRecords

@@ -21,7 +21,7 @@ public class ServicePointLoanLocationValidator {
   }
 
   private Result<LoanAndRelatedRecords> refuseInvalidLoanServicePoints(LoanAndRelatedRecords records) {
-    log.debug("refuseInvalidLoanServicePoints:: parameters records={}", records);
+    log.debug("refuseInvalidLoanServicePoints:: parameters records: {}", records);
 
     Loan loan;
 

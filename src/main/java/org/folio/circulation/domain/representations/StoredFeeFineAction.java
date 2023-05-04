@@ -22,7 +22,7 @@ public class StoredFeeFineAction extends JsonObject {
   public StoredFeeFineAction(StoredFeeFineActionBuilder builder) {
     super();
 
-    log.debug("StoredFeeFineAction:: parameters builder={}", builder);
+    log.debug("StoredFeeFineAction:: parameters builder: {}", builder);
 
     write(this, "id", builder.id);
     write(this, "userId", builder.userId);

@@ -53,7 +53,7 @@ public class AutomatedPatronBlocksValidator {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedForPatron(LoanAndRelatedRecords loanAndRelatedRecords) {
-    log.debug("refuseWhenCheckOutActionIsBlockedForPatron:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenCheckOutActionIsBlockedForPatron:: parameters loanAndRelatedRecords: {}",
       loanAndRelatedRecords);
 
     return refuse(loanAndRelatedRecords.getLoan().getUserId(),
@@ -62,7 +62,7 @@ public class AutomatedPatronBlocksValidator {
 
   public CompletableFuture<Result<RenewalContext>>
   refuseWhenRenewalActionIsBlockedForPatron(RenewalContext renewalContext) {
-    log.debug("refuseWhenRenewalActionIsBlockedForPatron:: parameters renewalContext={}",
+    log.debug("refuseWhenRenewalActionIsBlockedForPatron:: parameters renewalContext: {}",
       renewalContext);
 
     return refuse(renewalContext.getLoan().getUserId(),
@@ -72,7 +72,7 @@ public class AutomatedPatronBlocksValidator {
   public CompletableFuture<Result<RequestAndRelatedRecords>>
   refuseWhenRequestActionIsBlockedForPatron(RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("refuseWhenRequestActionIsBlockedForPatron:: parameters requestAndRelatedRecords={}",
+    log.debug("refuseWhenRequestActionIsBlockedForPatron:: parameters requestAndRelatedRecords: {}",
       requestAndRelatedRecords);
 
     return refuse(requestAndRelatedRecords.getUserId(), AutomatedPatronBlock::isBlockRequest,
@@ -82,7 +82,7 @@ public class AutomatedPatronBlocksValidator {
   private <T> CompletableFuture<Result<T>> refuse(String userId,
     Predicate<AutomatedPatronBlock> actionPredicate, T mapTo) {
 
-    log.debug("refuse:: parameters userId={}, actionPredicate, mapTo", userId);
+    log.debug("refuse:: parameters userId: {}, actionPredicate, mapTo", userId);
 
     return ofAsync(() -> userId)
       .thenComposeAsync(r -> r.after(automatedPatronBlocksRepository::findByUserId))
@@ -99,7 +99,7 @@ public class AutomatedPatronBlocksValidator {
   private CompletableFuture<Result<List<AutomatedPatronBlock>>> getActionBlock(
     AutomatedPatronBlocks automatedPatronBlocks, Predicate<AutomatedPatronBlock> actionPredicate) {
 
-    log.debug("getActionBlock:: parameters automatedPatronBlocks={}, actionPredicate",
+    log.debug("getActionBlock:: parameters automatedPatronBlocks: {}, actionPredicate",
       automatedPatronBlocks);
 
     if (automatedPatronBlocks == null) {
@@ -116,7 +116,7 @@ public class AutomatedPatronBlocksValidator {
   private CompletableFuture<Result<Boolean>> blocksExist(
     List<AutomatedPatronBlock> automatedPatronBlocks) {
 
-    log.debug("blocksExist:: parameters automatedPatronBlocks={}",
+    log.debug("blocksExist:: parameters automatedPatronBlocks: {}",
       () -> listAsString(automatedPatronBlocks));
 
     return completedFuture(succeeded(!automatedPatronBlocks.isEmpty()));

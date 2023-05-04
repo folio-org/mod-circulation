@@ -17,20 +17,20 @@ public class CommonFailures {
   private CommonFailures() { }
 
   public static Supplier<HttpFailure> moreThanOneOpenLoanFailure(String itemBarcode) {
-    log.debug("moreThanOneOpenLoanFailure:: parameters itemBarcode={}", itemBarcode);
+    log.debug("moreThanOneOpenLoanFailure:: parameters itemBarcode: {}", itemBarcode);
     return () -> new ServerErrorFailure(
       format("More than one open loan for item %s", itemBarcode));
   }
 
   public static Supplier<HttpFailure> noItemFoundForBarcodeFailure(String itemBarcode) {
-    log.debug("noItemFoundForBarcodeFailure:: parameters itemBarcode={}", itemBarcode);
+    log.debug("noItemFoundForBarcodeFailure:: parameters itemBarcode: {}", itemBarcode);
     return () -> singleValidationError(
       format("No item with barcode %s exists", itemBarcode),
       "itemBarcode", itemBarcode);
   }
 
   public static Supplier<HttpFailure> noItemFoundForIdFailure(String itemId) {
-    log.debug("noItemFoundForIdFailure:: parameters itemId={}", itemId);
+    log.debug("noItemFoundForIdFailure:: parameters itemId: {}", itemId);
     return () -> singleValidationError(format("No item with ID %s exists", itemId),
       "itemId", itemId);
   }

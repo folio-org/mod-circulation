@@ -44,7 +44,7 @@ public class RequestLoanValidator {
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
       RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("refuseWhenUserHasAlreadyBeenLoanedItem:: parameters requestAndRelatedRecords={}",
+    log.debug("refuseWhenUserHasAlreadyBeenLoanedItem:: parameters requestAndRelatedRecords: {}",
       requestAndRelatedRecords);
 
     final Request request = requestAndRelatedRecords.getRequest();
@@ -67,7 +67,7 @@ public class RequestLoanValidator {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     log.debug("refuseWhenUserHasAlreadyBeenLoanedOneOfInstancesItems:: parameters " +
-        "requestAndRelatedRecords={}", requestAndRelatedRecords);
+        "requestAndRelatedRecords: {}", requestAndRelatedRecords);
 
     final Request request = requestAndRelatedRecords.getRequest();
     final UUID instanceId = UUID.fromString(request.getInstanceId());

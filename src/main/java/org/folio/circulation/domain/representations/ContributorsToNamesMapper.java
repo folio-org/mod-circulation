@@ -22,17 +22,17 @@ public class ContributorsToNamesMapper {
   private ContributorsToNamesMapper() { }
 
   public static JsonArray mapContributorNamesToJson(Item item) {
-    log.debug("mapContributorNamesToJson:: parameters item={}", item);
+    log.debug("mapContributorNamesToJson:: parameters item: {}", item);
     return mapContributorNamesToJson(item.getContributorNames());
   }
 
   public static JsonArray mapContributorNamesToJson(Instance instance) {
-    log.debug("mapContributorNamesToJson:: parameters instance={}", instance);
+    log.debug("mapContributorNamesToJson:: parameters instance: {}", instance);
     return mapContributorNamesToJson(instance.getContributorNames());
   }
 
   public static JsonArray mapContributorNamesToJson(Collection<Contributor> contributors) {
-    log.debug("mapContributorNamesToJson:: parameters contributors={}",
+    log.debug("mapContributorNamesToJson:: parameters contributors: {}",
       () -> collectionAsString(contributors));
     return mapContributorNamesToJson(contributors.stream().map(Contributor::getName));
   }

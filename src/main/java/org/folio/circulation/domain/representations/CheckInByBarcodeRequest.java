@@ -41,7 +41,7 @@ public class CheckInByBarcodeRequest {
   private final ClaimedReturnedResolution claimedReturnedResolution;
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
-    log.debug("from:: parameters json={}", json);
+    log.debug("from:: parameters json: {}", json);
 
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
@@ -103,7 +103,7 @@ public class CheckInByBarcodeRequest {
      * @return Returns matched instance or null if no such instance present.
      */
     public static ClaimedReturnedResolution from(String value) {
-      log.debug("from:: parameters value={}", value);
+      log.debug("from:: parameters value: {}", value);
 
       return Arrays.stream(values())
         .filter(claimedReturnedResolution -> claimedReturnedResolution

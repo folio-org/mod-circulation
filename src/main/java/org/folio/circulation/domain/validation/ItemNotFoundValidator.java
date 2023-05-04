@@ -25,7 +25,7 @@ public class ItemNotFoundValidator {
   public Result<LoanAndRelatedRecords> refuseWhenItemNotFound(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemNotFound:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenItemNotFound:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(
       records -> succeeded(records.getLoan().getItem().isNotFound()),

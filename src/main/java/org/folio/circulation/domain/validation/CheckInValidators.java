@@ -28,7 +28,7 @@ public final class CheckInValidators {
   public Result<CheckInContext> refuseWhenItemIsNotAllowedForCheckIn(
     Result<CheckInContext> checkInContextResult) {
 
-    log.debug("refuseWhenItemIsNotAllowedForCheckIn:: parameters checkInContextResult={}",
+    log.debug("refuseWhenItemIsNotAllowedForCheckIn:: parameters checkInContextResult: {}",
       checkInContextResult);
 
     return checkInContextResult.map(CheckInContext::getItem)
@@ -37,13 +37,13 @@ public final class CheckInValidators {
   }
 
   public Result<Item> refuseWhenItemIsNotAllowedForCheckIn(Item item) {
-    log.debug("refuseWhenItemIsNotAllowedForCheckIn:: parameters item={}", item);
+    log.debug("refuseWhenItemIsNotAllowedForCheckIn:: parameters item: {}", item);
 
     return refuseWhenIsForIntellectualItem(Result.of(() -> item));
   }
 
   private Result<Item> refuseWhenIsForIntellectualItem(Result<Item> itemResult) {
-    log.debug("refuseWhenIsForIntellectualItem:: parameters itemResult={}",
+    log.debug("refuseWhenIsForIntellectualItem:: parameters itemResult: {}",
       () -> resultAsString(itemResult));
 
     return itemResult.failWhen(
@@ -54,7 +54,7 @@ public final class CheckInValidators {
   public Result<CheckInContext> refuseWhenClaimedReturnedIsNotResolved(
     Result<CheckInContext> contextResult) {
 
-    log.debug("refuseWhenClaimedReturnedIsNotResolved:: parameters contextResult={}",
+    log.debug("refuseWhenClaimedReturnedIsNotResolved:: parameters contextResult: {}",
       () -> resultAsString(contextResult));
 
     return contextResult.failWhen(
@@ -65,7 +65,7 @@ public final class CheckInValidators {
   }
 
   private boolean isClaimedReturnedNotResolved(CheckInContext context) {
-    log.debug("isClaimedReturnedNotResolved:: parameters context={}", context);
+    log.debug("isClaimedReturnedNotResolved:: parameters context: {}", context);
     var result = context.getItem().isClaimedReturned()
       && context.getCheckInRequest().getClaimedReturnedResolution() == null;
     log.info("isClaimedReturnedNotResolved:: result {}", result);

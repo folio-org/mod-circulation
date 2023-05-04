@@ -32,7 +32,7 @@ public class RequestedByAnotherPatronValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenRequestedByAnotherPatron(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenRequestedByAnotherPatron:: parameters result={}",
+    log.debug("refuseWhenRequestedByAnotherPatron:: parameters result: {}",
       () -> resultAsString(result));
 
     return result.failAfter(
@@ -41,7 +41,7 @@ public class RequestedByAnotherPatronValidator {
   }
 
   private ValidationErrorFailure requestedByAnotherPatronError(Loan loan) {
-    log.debug("requestedByAnotherPatronError:: parameters loan={}", loan);
+    log.debug("requestedByAnotherPatronError:: parameters loan: {}", loan);
 
     Item item = loan.getItem();
 
@@ -54,7 +54,7 @@ public class RequestedByAnotherPatronValidator {
   private CompletableFuture<Result<Boolean>> isRequestedByAnotherPatron(
     LoanAndRelatedRecords records) {
 
-    log.debug("isRequestedByAnotherPatron:: parameters records={}", records);
+    log.debug("isRequestedByAnotherPatron:: parameters records: {}", records);
 
     return requestQueueService.isItemRequestedByAnotherPatron(records.getRequestQueue(),
       records.getLoan().getUser(), records.getLoan().getItem());

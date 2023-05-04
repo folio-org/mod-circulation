@@ -26,7 +26,7 @@ public class ClosedRequestValidator {
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenAlreadyClosed(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("refuseWhenAlreadyClosed:: parameters requestAndRelatedRecords={}",
+    log.debug("refuseWhenAlreadyClosed:: parameters requestAndRelatedRecords: {}",
       requestAndRelatedRecords);
 
     return refuseWhenAlreadyClosed(requestAndRelatedRecords.getRequest())
@@ -34,7 +34,7 @@ public class ClosedRequestValidator {
   }
 
   private CompletableFuture<Result<Request>> refuseWhenAlreadyClosed(Request request) {
-    log.debug("refuseWhenAlreadyClosed:: parameters request={}", request);
+    log.debug("refuseWhenAlreadyClosed:: parameters request: {}", request);
 
     final String requestId = request.getId();
 

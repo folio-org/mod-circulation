@@ -20,7 +20,7 @@ public final class UserNotFoundValidator {
   private UserNotFoundValidator() {}
 
   public static Result<Loan> refuseWhenUserNotFound(Result<Loan> result) {
-    log.debug("refuseWhenUserNotFound:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenUserNotFound:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(loan -> succeeded(loan.getUser() == null),
       loan -> singleValidationError("user is not found", "userId", loan.getUserId()));

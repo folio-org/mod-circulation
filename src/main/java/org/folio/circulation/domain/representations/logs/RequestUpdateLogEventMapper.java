@@ -29,7 +29,7 @@ public class RequestUpdateLogEventMapper {
   private RequestUpdateLogEventMapper() {}
 
   public static JsonObject mapToRequestLogEventJson(Request request) {
-    log.debug("mapToRequestLogEventJson:: parameters request={}", request);
+    log.debug("mapToRequestLogEventJson:: parameters request: {}", request);
 
     JsonObject logEventPayload = new JsonObject();
     write(logEventPayload, SERVICE_POINT_ID.value(), request.getItem()
@@ -42,7 +42,7 @@ public class RequestUpdateLogEventMapper {
   }
 
   public static JsonObject mapToRequestLogEventJson(Request original, Request updated) {
-    log.debug("mapToRequestLogEventJson:: parameters original={}, updated={}", original, updated);
+    log.debug("mapToRequestLogEventJson:: parameters original: {}, updated: {}", original, updated);
 
     JsonObject logEventPayload = new JsonObject();
     write(logEventPayload, SERVICE_POINT_ID.value(), original.getItem()
@@ -56,7 +56,7 @@ public class RequestUpdateLogEventMapper {
   }
 
   public static JsonObject mapToRequestLogEventJson(List<Request> requests) {
-    log.debug("mapToRequestLogEventJson:: parameters requests={}", () -> listAsString(requests));
+    log.debug("mapToRequestLogEventJson:: parameters requests: {}", () -> listAsString(requests));
 
     JsonObject logEventPayload = new JsonObject();
     write(logEventPayload, SERVICE_POINT_ID.value(), requests.get(0)
@@ -70,7 +70,7 @@ public class RequestUpdateLogEventMapper {
   }
 
   private static void populateItemData(Request request, JsonObject logEventPayload) {
-    log.debug("populateItemData:: parameters request={}, logEventPayload={}", request,
+    log.debug("populateItemData:: parameters request: {}, logEventPayload: {}", request,
       logEventPayload);
 
     ofNullable(request.getItem()).ifPresent(item -> {
@@ -84,7 +84,7 @@ public class RequestUpdateLogEventMapper {
   }
 
   private static JsonObject mapUpdatedRequestPairToJson(UpdatedRequestPair updatedRequestPair) {
-    log.debug("mapUpdatedRequestPairToJson:: parameters updatedRequestPair={}", updatedRequestPair);
+    log.debug("mapUpdatedRequestPairToJson:: parameters updatedRequestPair: {}", updatedRequestPair);
 
     JsonObject requestPayload = new JsonObject();
     ofNullable(updatedRequestPair.getOriginal()).ifPresent(original -> requestPayload.put("original", original.asJson()));
@@ -95,7 +95,7 @@ public class RequestUpdateLogEventMapper {
   }
 
   private static JsonObject mapCreatedRequestToJson(Request request) {
-    log.debug("mapCreatedRequestToJson:: parameters request={}", request);
+    log.debug("mapCreatedRequestToJson:: parameters request: {}", request);
 
     JsonObject requestPayload = new JsonObject();
     requestPayload.put("created", request.asJson());
@@ -105,7 +105,7 @@ public class RequestUpdateLogEventMapper {
   }
 
   private static JsonObject mapReorderedRequestsToJsonArray(List<Request> requests) {
-    log.debug("mapReorderedRequestsToJsonArray:: parameters requests={}",
+    log.debug("mapReorderedRequestsToJsonArray:: parameters requests: {}",
       () -> listAsString(requests));
 
     JsonObject requestPayload = new JsonObject();

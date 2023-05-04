@@ -61,7 +61,7 @@ public class ItemsInTransitReport {
   }
 
   private JsonObject buildEntry(Item item) {
-    log.debug("buildEntry:: parameters item={}", item);
+    log.debug("buildEntry:: parameters item: {}", item);
 
     if (item == null || item.isNotFound()) {
       log.info("buildEntry:: item is null or not found");
@@ -169,7 +169,7 @@ public class ItemsInTransitReport {
   }
 
   private void writeLastCheckIn(JsonObject itemReport, LastCheckIn lastCheckIn) {
-    log.debug("writeLastCheckIn:: parameters itemReport, lastCheckIn={}", lastCheckIn);
+    log.debug("writeLastCheckIn:: parameters itemReport, lastCheckIn: {}", lastCheckIn);
 
     final JsonObject lastCheckInJson = new JsonObject();
     write(lastCheckInJson, "dateTime", lastCheckIn.getDateTime());
@@ -181,7 +181,7 @@ public class ItemsInTransitReport {
   }
 
   private void writeLocation(JsonObject itemReport, Location location) {
-    log.debug("writeLocation:: parameters itemReport, location={}", location);
+    log.debug("writeLocation:: parameters itemReport, location: {}", location);
 
     final JsonObject locationJson = new JsonObject();
     write(locationJson, "name", location.getName());
@@ -193,7 +193,7 @@ public class ItemsInTransitReport {
   private void writeServicePoint(JsonObject jsonObject, ServicePoint servicePoint,
     String propertyName) {
 
-    log.debug("writeServicePoint:: parameters jsonObject, servicePoint={}, propertyName={}",
+    log.debug("writeServicePoint:: parameters jsonObject, servicePoint: {}, propertyName: {}",
       servicePoint, propertyName);
 
     final JsonObject servicePointJson = new JsonObject();
@@ -203,7 +203,7 @@ public class ItemsInTransitReport {
   }
 
   private void writeRequest(Request request, JsonObject itemReport) {
-    log.debug("writeRequest:: parameters request={}, itemReport", request);
+    log.debug("writeRequest:: parameters request: {}, itemReport", request);
 
     final JsonObject requestJson = new JsonObject();
     write(requestJson, "requestType", request.getRequestType().value);
@@ -228,7 +228,7 @@ public class ItemsInTransitReport {
   }
 
   private void writeLoan(JsonObject itemReport, Loan loan) {
-    log.debug("writeLoan:: parameters itemReport, loan={}", loan);
+    log.debug("writeLoan:: parameters itemReport, loan: {}", loan);
 
     final JsonObject loanJson = new JsonObject();
     writeCheckInServicePoint(loanJson, loan.getCheckinServicePoint());
@@ -237,7 +237,7 @@ public class ItemsInTransitReport {
   }
 
   private void writeCheckInServicePoint(JsonObject loanJson, ServicePoint servicePoint) {
-    log.debug("writeCheckInServicePoint:: parameters loanJson={}, servicePoint={}", loanJson,
+    log.debug("writeCheckInServicePoint:: parameters loanJson: {}, servicePoint: {}", loanJson,
       servicePoint);
 
     if (servicePoint != null) {

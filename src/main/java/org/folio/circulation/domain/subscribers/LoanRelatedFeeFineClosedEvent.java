@@ -25,7 +25,7 @@ public class LoanRelatedFeeFineClosedEvent {
   }
 
   public static LoanRelatedFeeFineClosedEvent fromJson(JsonObject json) {
-    log.debug("fromJson:: parameters json={}", json);
+    log.debug("fromJson:: parameters json: {}", json);
     var result = new LoanRelatedFeeFineClosedEvent(getProperty(json, "loanId"));
     log.info("fromJson:: result {}", result);
     return result;

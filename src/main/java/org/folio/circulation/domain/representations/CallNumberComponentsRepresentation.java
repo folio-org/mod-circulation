@@ -18,7 +18,7 @@ public final class CallNumberComponentsRepresentation {
   }
 
   public static JsonObject createCallNumberComponents(CallNumberComponents callNumberComponents) {
-    log.debug("createCallNumberComponents:: parameters callNumberComponents={}",
+    log.debug("createCallNumberComponents:: parameters callNumberComponents: {}",
       callNumberComponents);
 
     if (callNumberComponents == null) {

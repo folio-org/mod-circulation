@@ -17,7 +17,7 @@ public class LoanValidator {
   private LoanValidator() {}
 
   public static Result<Loan> refuseWhenLoanIsClosed(Result<Loan> loanResult) {
-    log.debug("refuseWhenLoanIsClosed:: parameters loanResult={}",
+    log.debug("refuseWhenLoanIsClosed:: parameters loanResult: {}",
       () -> resultAsString(loanResult));
 
     return loanResult.failWhen(

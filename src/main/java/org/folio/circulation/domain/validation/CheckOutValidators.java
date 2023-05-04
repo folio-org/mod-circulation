@@ -117,7 +117,7 @@ public class CheckOutValidators {
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
-    log.debug("errorWhenInIncorrectStatus:: parameters item={}", item);
+    log.debug("errorWhenInIncorrectStatus:: parameters item: {}", item);
 
     String message =
       String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked out",
@@ -132,7 +132,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseCheckOutWhenServicePointIsNotPresent(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseCheckOutWhenServicePointIsNotPresent:: parameters result={}",
+    log.debug("refuseCheckOutWhenServicePointIsNotPresent:: parameters result: {}",
       () -> resultAsString(result));
 
     return servicePointOfCheckoutPresentValidator.refuseCheckOutWhenServicePointIsNotPresent(result)
@@ -143,7 +143,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenUserIsInactive:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenUserIsInactive:: parameters result: {}", () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
       log.info("refuseWhenUserIsInactive:: error handler has {}", FAILED_TO_FETCH_USER);
@@ -158,7 +158,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron(Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron:: parameters result={}",
+    log.debug("refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
@@ -175,7 +175,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedManuallyForPatron(Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenCheckOutActionIsBlockedManuallyForPatron:: parameters result={}",
+    log.debug("refuseWhenCheckOutActionIsBlockedManuallyForPatron:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
@@ -192,7 +192,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenProxyUserIsInactive(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenProxyUserIsInactive:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenProxyUserIsInactive:: parameters result: {}", () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_PROXY_USER)) {
       log.info("refuseWhenProxyUserIsInactive:: error handler has {}", FAILED_TO_FETCH_PROXY_USER);
@@ -207,7 +207,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenInvalidProxyRelationship(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenInvalidProxyRelationship:: parameters result={}",
+    log.debug("refuseWhenInvalidProxyRelationship:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER, FAILED_TO_FETCH_PROXY_USER)) {
@@ -223,7 +223,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemNotFound(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemNotFound:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenItemNotFound:: parameters result: {}", () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       log.info("refuseWhenItemNotFound:: error handler has {}", FAILED_TO_FETCH_ITEM);
@@ -238,7 +238,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemIsAlreadyCheckedOut:: parameters result={}",
+    log.debug("refuseWhenItemIsAlreadyCheckedOut:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
@@ -254,7 +254,7 @@ public class CheckOutValidators {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsNotAllowedForCheckOut(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemIsNotAllowedForCheckOut:: parameters result={}",
+    log.debug("refuseWhenItemIsNotAllowedForCheckOut:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
@@ -271,7 +271,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemHasOpenLoans(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemHasOpenLoans:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenItemHasOpenLoans:: parameters result: {}", () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       log.info("refuseWhenItemHasOpenLoans:: error handler has {}", FAILED_TO_FETCH_ITEM);
@@ -285,7 +285,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenRequestedByAnotherPatron(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenRequestedByAnotherPatron:: parameters result={}",
+    log.debug("refuseWhenRequestedByAnotherPatron:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {
@@ -301,7 +301,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemLimitIsReached:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenItemLimitIsReached:: parameters result: {}", () -> resultAsString(result));
 
     if (isLoanPolicyNotInitialized(result)) {
       log.info("refuseWhenItemLimitIsReached:: loan policy is not initialized");
@@ -315,7 +315,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemIsNotLoanable(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemIsNotLoanable:: parameters result={}", () -> resultAsString(result));
+    log.debug("refuseWhenItemIsNotLoanable:: parameters result: {}", () -> resultAsString(result));
 
     if (isLoanPolicyNotInitialized(result)) {
       log.info("refuseWhenItemIsNotLoanable:: loan policy is not initialized");

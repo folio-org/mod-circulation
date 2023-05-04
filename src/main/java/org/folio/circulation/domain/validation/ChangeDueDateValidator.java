@@ -60,7 +60,7 @@ public class ChangeDueDateValidator {
   }
 
   private Result<Boolean> dueDateHasChanged(Loan existingLoan, Loan changedLoan) {
-    log.debug("dueDateHasChanged:: parameters existingLoan={}, changedLoan={}", existingLoan,
+    log.debug("dueDateHasChanged:: parameters existingLoan: {}, changedLoan: {}", existingLoan,
       changedLoan);
     boolean result = existingLoan != null
       && !isSameMillis(existingLoan.getDueDate(), changedLoan.getDueDate());
@@ -69,7 +69,7 @@ public class ChangeDueDateValidator {
   }
 
   private ValidationErrorFailure dueDateChangeFailedForItem(Item item) {
-    log.debug("dueDateChangeFailedForItem:: parameters item={}", item);
+    log.debug("dueDateChangeFailedForItem:: parameters item: {}", item);
     return singleValidationError("item is " + item.getStatusName(),
       "itemId", item.getItemId());
   }

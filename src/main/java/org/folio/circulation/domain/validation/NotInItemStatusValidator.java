@@ -21,7 +21,7 @@ public final class NotInItemStatusValidator {
   public static Result<Loan> refuseWhenItemIsNotClaimedReturned(
     Result<Loan> loanAndRelatedRecords) {
 
-    log.debug("refuseWhenItemIsNotClaimedReturned:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenItemIsNotClaimedReturned:: parameters loanAndRelatedRecords: {}",
       () -> resultAsString(loanAndRelatedRecords));
 
     return loanAndRelatedRecords
@@ -31,7 +31,7 @@ public final class NotInItemStatusValidator {
   private static Result<Loan> refuseWhenItemIsNotInStatus(
     Result<Loan> loanResult, ItemStatus status) {
 
-    log.debug("refuseWhenItemIsNotInStatus:: parameters loanResult={}, status={}",
+    log.debug("refuseWhenItemIsNotInStatus:: parameters loanResult: {}, status: {}",
       () -> resultAsString(loanResult), () -> status);
 
     return loanResult.failWhen(

@@ -64,7 +64,7 @@ public class ItemLimitValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenItemLimitIsReached(
     LoanAndRelatedRecords records) {
 
-    log.debug("refuseWhenItemLimitIsReached:: parameters records={}", records);
+    log.debug("refuseWhenItemLimitIsReached:: parameters records: {}", records);
 
     Loan loan = records.getLoan();
     Integer itemLimit = loan.getLoanPolicy().getItemLimit();
@@ -97,7 +97,7 @@ public class ItemLimitValidator {
   private CompletableFuture<Result<Boolean>> isLimitReached(
     AppliedRuleConditions ruleConditionsEntity, LoanAndRelatedRecords records) {
 
-    log.debug("isLimitReached:: parameters ruleConditionsEntity={}, records={}",
+    log.debug("isLimitReached:: parameters ruleConditionsEntity: {}, records: {}",
       ruleConditionsEntity, records);
 
     if (!ruleConditionsEntity.isItemTypePresent() && !ruleConditionsEntity.isLoanTypePresent()) {
@@ -125,7 +125,7 @@ public class ItemLimitValidator {
   private boolean isMaterialTypeMatchInRetrievedLoan(String expectedMaterialTypeId,
     Loan loanRecord, AppliedRuleConditions ruleConditions) {
 
-    log.debug("isMaterialTypeMatchInRetrievedLoan:: parameters expectedMaterialTypeId={}, " +
+    log.debug("isMaterialTypeMatchInRetrievedLoan:: parameters expectedMaterialTypeId: {}, " +
         "loanRecord={}, ruleConditions={}", expectedMaterialTypeId, loanRecord, ruleConditions);
 
     if (!ruleConditions.isItemTypePresent()) {
@@ -142,7 +142,7 @@ public class ItemLimitValidator {
   private boolean isLoanTypeMatchInRetrievedLoan(String expectedLoanType, Loan loanRecord,
     AppliedRuleConditions ruleConditions) {
 
-    log.debug("isLoanTypeMatchInRetrievedLoan:: parameters expectedLoanType={}, " +
+    log.debug("isLoanTypeMatchInRetrievedLoan:: parameters expectedLoanType: {}, " +
       "loanRecord={}, ruleConditions={}", expectedLoanType, loanRecord, ruleConditions);
 
     if (!ruleConditions.isLoanTypePresent()) {
@@ -157,7 +157,7 @@ public class ItemLimitValidator {
   }
 
   private ItemLimitValidationErrorCause getValidationErrorCause(AppliedRuleConditions ruleConditionsEntity) {
-    log.debug("getValidationErrorCause:: parameters ruleConditionsEntity={}", ruleConditionsEntity);
+    log.debug("getValidationErrorCause:: parameters ruleConditionsEntity: {}", ruleConditionsEntity);
 
     boolean isRuleMaterialTypePresent = ruleConditionsEntity.isItemTypePresent();
     boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();

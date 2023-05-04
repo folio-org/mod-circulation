@@ -29,7 +29,7 @@ public class ExistingOpenLoanValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenHasOpenLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    log.debug("refuseWhenHasOpenLoan:: parameters loanAndRelatedRecords={}", loanAndRelatedRecords);
+    log.debug("refuseWhenHasOpenLoan:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
 
     return ofAsync(() -> loanAndRelatedRecords.getLoan().getItemId())
       .thenComposeAsync(result -> result.failAfter(loanRepository::hasOpenLoan,

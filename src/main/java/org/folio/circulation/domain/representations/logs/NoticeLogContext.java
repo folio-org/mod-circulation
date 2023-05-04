@@ -48,7 +48,7 @@ public class NoticeLogContext {
   private String errorMessage;
 
   public static NoticeLogContext from(Loan loan) {
-    log.debug("from:: parameters loan={}", loan);
+    log.debug("from:: parameters loan: {}", loan);
 
     return new NoticeLogContext()
       .withUser(loan.getUser())
@@ -57,7 +57,7 @@ public class NoticeLogContext {
   }
 
   public static NoticeLogContext from(Request request) {
-    log.debug("from:: parameters request={}", request);
+    log.debug("from:: parameters request: {}", request);
 
     return new NoticeLogContext()
       .withUserId(request.getUserId())
@@ -67,7 +67,7 @@ public class NoticeLogContext {
   }
 
   public static NoticeLogContext from(ScheduledNotice scheduledNotice) {
-    log.debug("from:: parameters scheduledNotice={}", scheduledNotice);
+    log.debug("from:: parameters scheduledNotice: {}", scheduledNotice);
 
     return new NoticeLogContext()
       .withUserId(scheduledNotice.getRecipientUserId())
@@ -82,7 +82,7 @@ public class NoticeLogContext {
 
   // it is assumed that all sessions have same user and action type
   public static NoticeLogContext from(List<PatronSessionRecord> sessions) {
-    log.debug("from:: parameters sessions=list(size={})", sessions.size());
+    log.debug("from:: parameters sessions: list(size: {})", sessions.size());
 
     if (sessions.isEmpty()) {
       log.info("from:: sessions list is empty");
@@ -99,7 +99,7 @@ public class NoticeLogContext {
   }
 
   public NoticeLogContext withUser(User user) {
-    log.debug("withUser:: parameters user={}", user);
+    log.debug("withUser:: parameters user: {}", user);
 
     if (user != null) {
       log.info("from:: user is null");
@@ -111,7 +111,7 @@ public class NoticeLogContext {
   }
 
   public NoticeLogContext withNoticePolicyId(String noticePolicyId) {
-    log.debug("withNoticePolicyId:: parameters noticePolicyId={}", noticePolicyId);
+    log.debug("withNoticePolicyId:: parameters noticePolicyId: {}", noticePolicyId);
 
     return withItems(items.stream()
       .map(item -> item.withNoticePolicyId(noticePolicyId))
@@ -119,7 +119,7 @@ public class NoticeLogContext {
   }
 
   public NoticeLogContext withTemplateId(String templateId) {
-    log.debug("withTemplateId:: parameters templateId={}", templateId);
+    log.debug("withTemplateId:: parameters templateId: {}", templateId);
 
     return withItems(items.stream()
       .map(item -> item.withTemplateId(templateId))
@@ -127,7 +127,7 @@ public class NoticeLogContext {
   }
 
   public NoticeLogContext withTriggeringEvent(String triggeringEvent) {
-    log.debug("withTriggeringEvent:: parameters triggeringEvent={}", triggeringEvent);
+    log.debug("withTriggeringEvent:: parameters triggeringEvent: {}", triggeringEvent);
 
     return withItems(items.stream()
       .map(item -> item.withTriggeringEvent(triggeringEvent))

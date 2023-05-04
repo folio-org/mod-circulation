@@ -26,7 +26,7 @@ public class MoreThanOneLoanValidator {
   public Result<MultipleRecords<Loan>> failWhenMoreThanOneLoan(
     Result<MultipleRecords<Loan>> result) {
 
-    log.debug("failWhenMoreThanOneLoan:: parameters result={}", () -> resultAsString(result));
+    log.debug("failWhenMoreThanOneLoan:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(moreThanOneLoan(),
       loans -> failureSupplier.get());

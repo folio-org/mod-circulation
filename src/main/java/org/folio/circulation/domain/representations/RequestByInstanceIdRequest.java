@@ -47,7 +47,7 @@ public class RequestByInstanceIdRequest {
   private final String requestLevel;
 
   public static Result<RequestByInstanceIdRequest> from(JsonObject json) {
-    log.debug("from:: parameters json={}", json);
+    log.debug("from:: parameters json: {}", json);
 
     final ZonedDateTime requestDate = getDateTimeProperty(json, REQUEST_DATE);
 

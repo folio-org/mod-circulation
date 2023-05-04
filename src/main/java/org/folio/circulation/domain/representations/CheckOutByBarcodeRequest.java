@@ -39,7 +39,7 @@ public class CheckOutByBarcodeRequest {
   private final BlockOverrides blockOverrides;
 
   public static CheckOutByBarcodeRequest fromJson(JsonObject request) {
-    log.debug("fromJson:: parameters request={}", request);
+    log.debug("fromJson:: parameters request: {}", request);
 
     final String loanDate = getProperty(request, LOAN_DATE);
     final String itemBarcode = getProperty(request, ITEM_BARCODE);
@@ -54,7 +54,7 @@ public class CheckOutByBarcodeRequest {
   }
 
   private static String defaultLoanDate(String loanDate) {
-    log.debug("defaultLoanDate:: parameters loanDate={}", loanDate);
+    log.debug("defaultLoanDate:: parameters loanDate: {}", loanDate);
 
     String result = isNotBlank(loanDate)
       ? loanDate

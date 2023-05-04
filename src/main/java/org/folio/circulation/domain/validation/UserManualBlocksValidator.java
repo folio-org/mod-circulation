@@ -47,7 +47,7 @@ public class UserManualBlocksValidator {
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserIsBlocked(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("refuseWhenUserIsBlocked:: parameters requestAndRelatedRecords={}",
+    log.debug("refuseWhenUserIsBlocked:: parameters requestAndRelatedRecords: {}",
       requestAndRelatedRecords);
 
     return Optional.ofNullable(requestAndRelatedRecords.getRequest())
@@ -62,7 +62,7 @@ public class UserManualBlocksValidator {
   public CompletableFuture<Result<LoanAndRelatedRecords>> refuseWhenUserIsBlocked(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    log.debug("refuseWhenUserIsBlocked:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenUserIsBlocked:: parameters loanAndRelatedRecords: {}",
       loanAndRelatedRecords);
 
     return failIfPatronIsBlocked(userManualBlock -> isBlockedAction(
@@ -74,7 +74,7 @@ public class UserManualBlocksValidator {
   public CompletableFuture<Result<RenewalContext>> refuseWhenUserIsBlocked(
     RenewalContext renewalContext) {
 
-    log.debug("refuseWhenUserIsBlocked:: parameters renewalContext={}", renewalContext);
+    log.debug("refuseWhenUserIsBlocked:: parameters renewalContext: {}", renewalContext);
 
     return failIfPatronIsBlocked(userManualBlock -> isBlockedAction(
         userManualBlock.getExpirationDate(), userManualBlock.getRenewals()),
@@ -85,7 +85,7 @@ public class UserManualBlocksValidator {
   private CompletableFuture<Result<MultipleRecords<UserManualBlock>>> failIfPatronIsBlocked(
     Predicate<UserManualBlock> isUserBlocked, String userId, String message) {
 
-    log.debug("failIfPatronIsBlocked:: parameters isUserBlocked, userId={}, message={}", userId,
+    log.debug("failIfPatronIsBlocked:: parameters isUserBlocked, userId: {}, message: {}", userId,
       message);
 
     return userManualBlocksFetcher.findByQuery(exactMatch("userId", userId))
@@ -98,7 +98,7 @@ public class UserManualBlocksValidator {
   private HttpFailure createUserBlockedValidationError(
     MultipleRecords<UserManualBlock> userManualBlocks, String message) {
 
-    log.debug("createUserBlockedValidationError:: parameters isUserBlocked, userId={}, message={}",
+    log.debug("createUserBlockedValidationError:: parameters isUserBlocked, userId: {}, message: {}",
       () -> multipleRecordsAsString(userManualBlocks), () -> message);
 
     final String reason = userManualBlocks.getRecords().stream()
@@ -119,7 +119,7 @@ public class UserManualBlocksValidator {
   }
 
   private boolean isBlockedAction(ZonedDateTime expirationDate, boolean isBlocked) {
-    log.debug("isBlockedAction:: parameters expirationDate={}, isBlocked={}", expirationDate,
+    log.debug("isBlockedAction:: parameters expirationDate: {}, isBlocked: {}", expirationDate,
       isBlocked);
 
     var result = isBlocked && (expirationDate == null

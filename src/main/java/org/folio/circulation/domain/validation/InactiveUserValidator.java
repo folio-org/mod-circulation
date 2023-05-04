@@ -36,7 +36,7 @@ public class InactiveUserValidator {
   }
 
   public static InactiveUserValidator forProxy(String proxyUserBarcode) {
-    log.debug("forProxy:: parameters proxyUserBarcode={}", proxyUserBarcode);
+    log.debug("forProxy:: parameters proxyUserBarcode: {}", proxyUserBarcode);
 
     return new InactiveUserValidator(LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
@@ -46,7 +46,7 @@ public class InactiveUserValidator {
   }
 
   public static InactiveUserValidator forUser(String userBarcode) {
-    log.debug("forUser:: parameters userBarcode={}", userBarcode);
+    log.debug("forUser:: parameters userBarcode: {}", userBarcode);
 
     return new InactiveUserValidator(records -> records.getLoan().getUser(),
       "Cannot check out to inactive user",
@@ -57,7 +57,7 @@ public class InactiveUserValidator {
   public Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
-    log.debug("refuseWhenUserIsInactive:: parameters loanAndRelatedRecords={}",
+    log.debug("refuseWhenUserIsInactive:: parameters loanAndRelatedRecords: {}",
       () -> resultAsString(loanAndRelatedRecords));
 
     return loanAndRelatedRecords.next(records -> {
@@ -69,7 +69,7 @@ public class InactiveUserValidator {
   Result<LoanAndRelatedRecords> refuseWhenUserIsInactive(
     User user, LoanAndRelatedRecords records) {
 
-    log.debug("refuseWhenUserIsInactive:: parameters user={}, records={}", user, records);
+    log.debug("refuseWhenUserIsInactive:: parameters user: {}, records: {}", user, records);
 
     if (user == null) {
       log.info("refuseWhenUserIsInactive:: user is null");

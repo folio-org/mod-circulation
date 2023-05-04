@@ -23,7 +23,7 @@ public class NoLoanValidator {
   }
 
   public Result<Optional<Loan>> failWhenNoLoan(Result<Optional<Loan>> result) {
-    log.debug("failWhenNoLoan:: parameters result={}", () -> resultAsString(result));
+    log.debug("failWhenNoLoan:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(loan -> of(loan::isEmpty),
       loans -> failureSupplier.get());

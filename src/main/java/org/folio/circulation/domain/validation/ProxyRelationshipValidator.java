@@ -64,7 +64,7 @@ public class ProxyRelationshipValidator {
   private CompletableFuture<Result<Boolean>> doesNotHaveActiveProxyRelationship(
     UserRelatedRecord record) {
 
-    log.debug("doesNotHaveActiveProxyRelationship:: parameters record={}", record);
+    log.debug("doesNotHaveActiveProxyRelationship:: parameters record: {}", record);
 
     return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
       .after(query -> proxyRelationshipsClient.getMany(query, PageLimit.oneThousand())
@@ -76,7 +76,7 @@ public class ProxyRelationshipValidator {
   }
 
   private Result<CqlQuery> proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
-    log.debug("proxyRelationshipQuery:: parameters proxyUserId={}, sponsorUserId={}", proxyUserId,
+    log.debug("proxyRelationshipQuery:: parameters proxyUserId: {}, sponsorUserId: {}", proxyUserId,
       sponsorUserId);
 
     final Result<CqlQuery> proxyUserIdQuery = exactMatch("proxyUserId", proxyUserId);

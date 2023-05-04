@@ -26,13 +26,13 @@ public class AnonymizeLoansRepresentation {
   private AnonymizeLoansRepresentation() { }
 
   public static Result<JsonObject> from(Result<LoanAnonymizationRecords> records) {
-    log.debug("from:: parameters records={}", () -> resultAsString(records));
+    log.debug("from:: parameters records: {}", () -> resultAsString(records));
     return records.map(AnonymizeLoansRepresentation::mapToJson)
       .orElse(failed(records.cause()));
   }
 
   private static Result<JsonObject> mapToJson(LoanAnonymizationRecords records) {
-    log.debug("mapToJson:: parameters records={}", records);
+    log.debug("mapToJson:: parameters records: {}", records);
     LoanAnonymizationAPIResponse response = new LoanAnonymizationAPIResponse();
     response
         .withAnonymizedLoans(records.getAnonymizedLoanIds())
@@ -43,7 +43,7 @@ public class AnonymizeLoansRepresentation {
   }
 
   private static List<Error> mapToErrors(Map<String, Collection<String>> multiMap) {
-    log.debug("mapToErrors:: parameters multiMap={}", mapAsString(multiMap));
+    log.debug("mapToErrors:: parameters multiMap: {}", mapAsString(multiMap));
     return multiMap.keySet()
       .stream()
       .map(k -> new Error().withMessage(k)

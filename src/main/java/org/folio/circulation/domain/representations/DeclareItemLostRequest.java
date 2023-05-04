@@ -36,7 +36,7 @@ public class DeclareItemLostRequest {
   public static Result<DeclareItemLostRequest> from(JsonObject json,
     String loanId) {
 
-    log.debug("from:: parameters json={}, loanId={}", json, loanId);
+    log.debug("from:: parameters json: {}, loanId: {}", json, loanId);
 
     final String comment = getProperty(json, "comment");
 

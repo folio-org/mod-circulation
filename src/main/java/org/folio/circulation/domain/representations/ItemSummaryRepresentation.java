@@ -21,7 +21,7 @@ public class ItemSummaryRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject createItemSummary(Item item) {
-    log.debug("createItemSummary:: parameters item={}", item);
+    log.debug("createItemSummary:: parameters item: {}", item);
 
     if (item == null || item.isNotFound()) {
       log.info("createItemSummary:: item is null or not found");

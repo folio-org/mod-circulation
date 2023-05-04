@@ -31,7 +31,7 @@ public class EndPatronSessionRequest {
   private final PatronActionType actionType;
 
   public static List<Result<EndPatronSessionRequest>> from(JsonObject jsonObject) {
-    log.debug("from:: parameters jsonObject={}", jsonObject);
+    log.debug("from:: parameters jsonObject: {}", jsonObject);
 
     final String END_SESSIONS = "endSessions";
 

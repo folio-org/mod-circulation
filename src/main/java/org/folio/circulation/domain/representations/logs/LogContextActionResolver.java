@@ -38,7 +38,7 @@ public class LogContextActionResolver {
   }
 
   public static String resolveAction(String action) {
-    log.debug("resolveAction:: parameters action={}", action);
+    log.debug("resolveAction:: parameters action: {}", action);
 
     return ofNullable(loanLogActions.get(action))
       .orElse("");
