@@ -101,6 +101,10 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
     return withEventType("Aged to lost & item returned - fine adjusted");
   }
 
+  public NoticeConfigurationBuilder withAgedToLostFineChargedEvent() {
+    return withEventType("Aged to lost - fine charged");
+  }
+
   public NoticeConfigurationBuilder withTiming(String timing, JsonObject timingPeriod) {
     return new NoticeConfigurationBuilder(
       templateId,

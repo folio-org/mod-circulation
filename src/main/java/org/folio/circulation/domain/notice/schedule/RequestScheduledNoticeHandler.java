@@ -30,7 +30,7 @@ import io.vertx.core.json.JsonObject;
 public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected final RequestRepository requestRepository;
 
-  public RequestScheduledNoticeHandler(Clients clients,
+  protected RequestScheduledNoticeHandler(Clients clients,
     LoanRepository loanRepository, RequestRepository requestRepository) {
 
     super(clients, loanRepository);
@@ -70,18 +70,21 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   @Override
   protected NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context) {
+    return new NoticeLogContext()
+      .withUser(context.getRequest().getRequester())
+      .withRequestId(context.getRequest().getId())
+      .withItems(singletonList(buildNoticeLogContextItem(context)));
+  }
+
+  @Override
+  protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
     ScheduledNotice notice = context.getNotice();
     Request request = context.getRequest();
 
-    NoticeLogContextItem logContextItem = NoticeLogContextItem.from(request)
+    return NoticeLogContextItem.from(request)
       .withTemplateId(notice.getConfiguration().getTemplateId())
       .withTriggeringEvent(notice.getTriggeringEvent().getRepresentation())
       .withNoticePolicyId(context.getPatronNoticePolicyId());
-
-    return new NoticeLogContext()
-      .withUser(request.getRequester())
-      .withRequestId(request.getId())
-      .withItems(singletonList(logContextItem));
   }
 
   private static boolean isNoticeNotRelevantYet(ScheduledNoticeContext context) {

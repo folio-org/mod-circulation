@@ -15,6 +15,7 @@ import org.folio.circulation.resources.DueDateNotRealTimeScheduledNoticeProcessi
 import org.folio.circulation.resources.EndPatronActionSessionResource;
 import org.folio.circulation.resources.ExpiredActualCostProcessingResource;
 import org.folio.circulation.resources.ExpiredSessionProcessingResource;
+import org.folio.circulation.resources.FeeFineNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.HealthResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
@@ -119,6 +120,8 @@ public class CirculationVerticle extends AbstractVerticle {
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);
+    new FeeFineNotRealTimeScheduledNoticeProcessingResource(client).register(router);
+
     new ExpiredSessionProcessingResource(client).register(router);
     new LoanAnonymizationResource(client).register(router);
     new DeclareLostResource(client).register(router);

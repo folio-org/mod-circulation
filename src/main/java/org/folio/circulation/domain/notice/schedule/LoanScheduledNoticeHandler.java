@@ -32,6 +32,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
@@ -39,11 +40,10 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   private final LoanPolicyRepository loanPolicyRepository;
   private final ZonedDateTime systemTime;
 
-  public LoanScheduledNoticeHandler(Clients clients,
-    LoanRepository loanRepository, ZonedDateTime systemTime) {
+  public LoanScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
 
     super(clients, loanRepository);
-    this.systemTime = systemTime;
+    this.systemTime = ClockUtil.getZonedDateTime();
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
   }
 
@@ -224,7 +224,8 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return createLoanNoticeContext(context.getLoan());
   }
 
-  protected static NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
+  @Override
+  protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
     return NoticeLogContextItem.from(context.getLoan())
       .withTemplateId(context.getNotice().getConfiguration().getTemplateId())
       .withTriggeringEvent(context.getNotice().getTriggeringEvent().getRepresentation())
