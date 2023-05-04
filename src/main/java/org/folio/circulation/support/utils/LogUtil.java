@@ -96,10 +96,12 @@ public class LogUtil {
   }
 
   public static <T> String resultAsString(Result<T> result) {
-    if (result.failed()) {
-      return "Result(failed)";
+    if (result == null) {
+      return "null";
+    } else if (result.failed()) {
+      return "result(failed)";
     } else {
-      return format("Result(%s)", result.value() == null ? "null" : result.value());
+      return format("result(%s)", result.value() == null ? "null" : result.value());
     }
   }
 
