@@ -6,10 +6,13 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.ProxyRelationship;
 import org.folio.circulation.domain.UserRelatedRecord;
@@ -21,6 +24,8 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 public class ProxyRelationshipValidator {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private final GetManyRecordsClient proxyRelationshipsClient;
   private final Supplier<ValidationErrorFailure> invalidRelationshipErrorSupplier;
 
@@ -35,12 +40,16 @@ public class ProxyRelationshipValidator {
   public <T extends UserRelatedRecord> CompletableFuture<Result<T>> refuseWhenInvalid(
     T userRelatedRecord) {
 
+    log.debug("refuseWhenInvalid:: parameters userRelatedRecord");
+
     //No need to validate as not proxied activity
     if (userRelatedRecord.getProxyUserId() == null) {
+      log.info("refuseWhenInvalid:: proxy user ID is null");
       return completedFuture(succeeded(userRelatedRecord));
     }
 
     if (StringUtils.equals(userRelatedRecord.getProxyUserId(), userRelatedRecord.getUserId())) {
+      log.info("refuseWhenInvalid:: proxy user ID is equal to user ID");
       return completedFuture(failed(singleValidationError(
         "User cannot be proxy for themself", "proxyUserId",
         userRelatedRecord.getProxyUserId())));
@@ -54,6 +63,8 @@ public class ProxyRelationshipValidator {
   private CompletableFuture<Result<Boolean>> doesNotHaveActiveProxyRelationship(
     UserRelatedRecord record) {
 
+    log.debug("doesNotHaveActiveProxyRelationship:: parameters record: {}", record);
+
     return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
       .after(query -> proxyRelationshipsClient.getMany(query, PageLimit.oneThousand())
       .thenApply(result -> result.next(
@@ -63,8 +74,9 @@ public class ProxyRelationshipValidator {
           .noneMatch(ProxyRelationship::isActive))));
   }
 
-  private Result<CqlQuery> proxyRelationshipQuery(
-    String proxyUserId, String sponsorUserId) {
+  private Result<CqlQuery> proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
+    log.debug("proxyRelationshipQuery:: parameters proxyUserId: {}, sponsorUserId: {}", proxyUserId,
+      sponsorUserId);
 
     final Result<CqlQuery> proxyUserIdQuery = exactMatch("proxyUserId", proxyUserId);
     final Result<CqlQuery> userIdQuery = exactMatch("userId", sponsorUserId);

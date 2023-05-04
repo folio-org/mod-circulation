@@ -75,7 +75,7 @@ public class ActualCostRecordRepository {
   }
 
   public CompletableFuture<Result<ActualCostRecord>> findMostRecentOpenRecordForLoan(Loan loan) {
-    log.debug("findMostRecentOpenRecordForLoan:: loanId={}", loan::getId);
+    log.debug("findMostRecentOpenRecordForLoan:: loanId: {}", loan::getId);
 
     Result<CqlQuery> query = exactMatch(LOAN_ID_FIELD_NAME, loan.getId())
       .combine(exactMatch(STATUS_FIELD_NAME, OPEN.getValue()), CqlQuery::and)

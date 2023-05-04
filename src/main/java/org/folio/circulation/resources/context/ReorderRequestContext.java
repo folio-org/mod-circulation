@@ -11,14 +11,17 @@ import org.folio.circulation.domain.reorder.ReorderRequest;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString(onlyExplicitlyIncluded = true)
 public class ReorderRequestContext {
+  @ToString.Include
   private final RequestQueueType requestQueueType;
-
   // Can be either instanceId or itemId depending on the queue type
+  @ToString.Include
   private final String idParamValue;
-
+  @ToString.Include
   private final ReorderQueueRequest reorderQueueRequest;
   private RequestQueue requestQueue;
 

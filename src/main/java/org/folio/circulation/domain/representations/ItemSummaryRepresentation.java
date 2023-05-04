@@ -6,8 +6,11 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
@@ -15,8 +18,13 @@ import org.folio.circulation.domain.ServicePoint;
 import io.vertx.core.json.JsonObject;
 
 public class ItemSummaryRepresentation {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public JsonObject createItemSummary(Item item) {
-    if(item == null || item.isNotFound()) {
+    log.debug("createItemSummary:: parameters item: {}", item);
+
+    if (item == null || item.isNotFound()) {
+      log.info("createItemSummary:: item is null or not found");
       return new JsonObject();
     }
 
@@ -40,6 +48,7 @@ public class ItemSummaryRepresentation {
       .put("name", item.getStatus().getValue());
 
     if (Objects.nonNull(item.getStatus().getDate())){
+      log.info("createItemSummary:: item.getStatus().getDate() is not null");
       status.put("date", item.getStatus().getDate());
     }
 
@@ -51,7 +60,8 @@ public class ItemSummaryRepresentation {
     final ServicePoint inTransitDestinationServicePoint
       = item.getInTransitDestinationServicePoint();
 
-    if(inTransitDestinationServicePoint != null) {
+    if (inTransitDestinationServicePoint != null) {
+      log.info("createItemSummary:: inTransitDestinationServicePoint is not null");
       final JsonObject destinationServicePointSummary = new JsonObject();
 
       write(destinationServicePointSummary, "id",
@@ -66,13 +76,15 @@ public class ItemSummaryRepresentation {
 
     final Location location = item.getLocation();
 
-    if(location != null) {
+    if (location != null) {
+      log.info("createItemSummary:: location is not null");
       itemSummary.put("location", new JsonObject()
         .put("name", location.getName()));
     }
 
     writeByPath(itemSummary, item.getMaterialTypeName(), "materialType", "name");
 
+    log.info("createItemSummary:: result {}", itemSummary);
     return itemSummary;
   }
 }

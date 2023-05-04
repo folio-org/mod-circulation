@@ -3,6 +3,7 @@ package org.folio.circulation.support.utils;
 import static com.google.common.primitives.Ints.min;
 import static java.lang.String.format;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,6 +11,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.results.Result;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,6 +76,32 @@ public class LogUtil {
     } catch (Exception ex) {
       log.warn("logList:: Failed to log a list", ex);
       return null;
+    }
+  }
+
+  public static String collectionAsString(Collection<?> collection) {
+    return collection == null ? "null" : format("collection(size=%d)", collection.size());
+  }
+
+  public static String listAsString(List<?> list) {
+    return list == null ? "null" : format("list(size=%d)", list.size());
+  }
+
+  public static String mapAsString(Map<?, ?> map) {
+    return map == null ? "null" : format("map(size=%d)", map.size());
+  }
+
+  public static String multipleRecordsAsString(MultipleRecords<?> records) {
+    return records == null ? "null" : format("records(size=%d)", records.size());
+  }
+
+  public static <T> String resultAsString(Result<T> result) {
+    if (result == null) {
+      return "null";
+    } else if (result.failed()) {
+      return "result(failed)";
+    } else {
+      return format("result(%s)", result.value() == null ? "null" : result.value());
     }
   }
 

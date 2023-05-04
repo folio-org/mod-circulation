@@ -62,7 +62,7 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
-    log.debug("findChargeActionForAccount:: params account={}", account);
+    log.debug("findChargeActionForAccount:: params account: {}", account);
 
     if (isNull(account)) {
       return emptyAsync();

@@ -7,7 +7,11 @@ import java.time.ZonedDateTime;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
 
+import lombok.ToString;
+
+@ToString(onlyExplicitlyIncluded = true)
 public class RequestAndRelatedRecords implements UserRelatedRecord, ItemRelatedRecord {
+  @ToString.Include
   private final Request request;
   private final Request originalRequest;
   private final RequestQueue requestQueue;

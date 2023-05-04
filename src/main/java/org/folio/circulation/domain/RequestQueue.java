@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.counting;
@@ -181,5 +182,11 @@ public class RequestQueue {
         return request;
       })
       .collect(toList());
+  }
+
+  @Override
+  public String toString() {
+    return format("RequestQueue(%s)",
+      requests == null ? null : format("%d requests", requests.size()));
   }
 }

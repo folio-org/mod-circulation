@@ -5,9 +5,13 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
 public class FeeFineOwner {
+  @ToString.Include
   private final String id;
+  @ToString.Include
   private final String owner;
   private final List<String> servicePoints;
 
