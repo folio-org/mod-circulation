@@ -1,194 +1,20 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createMultiLoanNoticeContext;
-import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
-import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-import java.lang.invoke.MethodHandles;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
-import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpFailure;
-import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 
-public class GroupedLoanScheduledNoticeHandler {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+public class GroupedLoanScheduledNoticeHandler extends GroupedScheduledNoticeHandler {
 
-  private final LoanScheduledNoticeHandler loanScheduledNoticeHandler;
-  private final ScheduledPatronNoticeService patronNoticeService;
-
-  public GroupedLoanScheduledNoticeHandler(Clients clients,
-    LoanRepository loanRepository, ZonedDateTime systemTime) {
-
-    this.loanScheduledNoticeHandler = new LoanScheduledNoticeHandler(clients,
-      loanRepository, systemTime);
-
-    this.patronNoticeService = new ScheduledPatronNoticeService(clients);
+  public GroupedLoanScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
+    super(clients, new LoanScheduledNoticeHandler(clients, loanRepository), "loans");
   }
 
-  public CompletableFuture<Result<List<List<ScheduledNotice>>>> handleNotices(
-    List<List<ScheduledNotice>> noticeGroups) {
-
-    log.info("Start processing {} group(s) of scheduled notices ({} notices total)",
-      noticeGroups.size(), noticeGroups.stream().mapToInt(List::size).sum());
-
-    return allOf(noticeGroups, this::handleNoticeGroup);
+  @Override
+  protected JsonObject buildNoticeContext(ScheduledNoticeContext context) {
+    return createLoanNoticeContextWithoutUser(context.getLoan());
   }
-
-  private CompletableFuture<Result<List<ScheduledNotice>>> handleNoticeGroup(
-    List<ScheduledNotice> notices) {
-
-    //TODO: user and template are the same for all notices in the group, so they can be fetched only once
-    return allResultsOf(notices, this::buildContext)
-      .thenCompose(this::discardContextBuildingFailures)
-      .thenCompose(r -> r.after(this::sendGroupedNotice))
-      .thenCompose(r -> r.after(this::updateGroupedNotice))
-      .thenCompose(r -> handleResult(r, notices))
-      .exceptionally(t -> handleException(t, notices));
-  }
-
-  private CompletableFuture<Result<ScheduledNoticeContext>> buildContext(ScheduledNotice notice) {
-    return ofAsync(() -> new ScheduledNoticeContext(notice))
-      .thenCompose(r -> r.after(loanScheduledNoticeHandler::fetchData))
-      .thenApply(r -> r.map(GroupedLoanScheduledNoticeHandler::buildLoanNoticeContext))
-      .thenApply(r -> r.map(GroupedLoanScheduledNoticeHandler::buildNoticeLogContextItem))
-      .thenCompose(r -> handleContextBuildingFailure(r, notice))
-      .thenApply(r -> r.mapFailure(f -> loanScheduledNoticeHandler.publishErrorEvent(f, notice)));
-  }
-
-  private static ScheduledNoticeContext buildLoanNoticeContext(ScheduledNoticeContext context) {
-    return context.withLoanNoticeContext(createLoanNoticeContextWithoutUser(context.getLoan()));
-  }
-
-  private static ScheduledNoticeContext buildNoticeLogContextItem(ScheduledNoticeContext context) {
-    return context.withNoticeLogContextItem(
-      LoanScheduledNoticeHandler.buildNoticeLogContextItem(context));
-  }
-
-  protected CompletableFuture<Result<ScheduledNoticeContext>> handleContextBuildingFailure(
-    Result<ScheduledNoticeContext> result, ScheduledNotice notice) {
-
-    if (result.failed()) {
-      HttpFailure cause = result.cause();
-      log.error("Failed to build context for scheduled notice: {}.\n{}", cause, notice);
-
-      return loanScheduledNoticeHandler.deleteNotice(notice, cause.toString())
-        .thenApply(r -> r.next(n -> result));
-    }
-
-    return completedFuture(result);
-  }
-
-  private CompletableFuture<Result<List<ScheduledNoticeContext>>> discardContextBuildingFailures(
-    List<Result<ScheduledNoticeContext>> results) {
-
-    var failedResults = results.stream()
-      .filter(Result::failed)
-      .collect(toList());
-
-    if (!failedResults.isEmpty()) {
-      log.error("Failed to build context for {} out of {} scheduled notices",
-        failedResults.size(), results.size());
-
-      results.removeAll(failedResults);
-    }
-
-    return completedFuture(results)
-      .thenApply(Result::combineAll);
-  }
-
-  private CompletableFuture<Result<List<ScheduledNoticeContext>>> sendGroupedNotice(
-    List<ScheduledNoticeContext> contexts) {
-
-    if (contexts.isEmpty()) {
-      log.warn("No notices left in the group to process, skipping the group");
-      return completedFuture(succeeded(contexts));
-    }
-
-    List<ScheduledNoticeContext> relevantContexts = contexts.stream()
-      .filter(not(loanScheduledNoticeHandler::isNoticeIrrelevant))
-      .collect(toList());
-
-    if (relevantContexts.isEmpty()) {
-      log.warn("No relevant notices in the group, skipping the group");
-      return completedFuture(succeeded(contexts));
-    }
-
-    //All the notices have the same properties so we can get any of them
-    ScheduledNoticeContext contextSample = relevantContexts.get(0);
-    User user = contextSample.getLoan().getUser();
-
-    List<JsonObject> noticeLoanContexts = relevantContexts.stream()
-      .map(ScheduledNoticeContext::getLoanNoticeContext)
-      .collect(toList());
-
-    log.info("Attempting to send a grouped notice for {} scheduled notices", relevantContexts.size());
-
-    return patronNoticeService.sendNotice(
-        contextSample.getNotice().getConfiguration(),
-        user.getId(),
-        createMultiLoanNoticeContext(user, noticeLoanContexts),
-        buildNoticeLogContext(relevantContexts, user))
-      .thenApply(mapResult(v -> contexts));
-  }
-
-  private static NoticeLogContext buildNoticeLogContext(List<ScheduledNoticeContext> contexts,
-    User user) {
-
-    List<NoticeLogContextItem> items = contexts.stream()
-      .map(ScheduledNoticeContext::getNoticeLogContextItem)
-      .collect(toList());
-
-    return new NoticeLogContext()
-      .withUser(user)
-      .withItems(items);
-  }
-
-  private CompletableFuture<Result<List<ScheduledNotice>>> updateGroupedNotice(
-    List<ScheduledNoticeContext> contexts) {
-
-    return allOf(contexts, loanScheduledNoticeHandler::updateNotice);
-  }
-
-  private CompletableFuture<Result<List<ScheduledNotice>>> handleResult(
-    Result<List<ScheduledNotice>> result, List<ScheduledNotice> notices) {
-
-    if (result.succeeded()) {
-      log.info("Group of {} scheduled notices was processed successfully", notices.size());
-      return completedFuture(result);
-    }
-
-    HttpFailure failure = result.cause();
-    log.error("Failed to process group of {} scheduled notices: {}", notices.size(), failure);
-
-    return ofAsync(() -> notices);
-  }
-
-  private Result<List<ScheduledNotice>> handleException(Throwable throwable,
-    List<ScheduledNotice> notices) {
-
-    log.error("An exception was thrown while processing a group of {} scheduled notices: {}",
-      notices.size(), throwable.getLocalizedMessage());
-
-    return succeeded(notices);
-  }
-
 }
