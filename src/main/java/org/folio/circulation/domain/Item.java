@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
@@ -23,9 +24,12 @@ import org.folio.circulation.storage.mappers.ItemMapper;
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
 public class Item {
   private final String id;
+  @ToString.Include
   private final JsonObject itemRepresentation;
   @NonNull private final Location location;
   private final LastCheckIn lastCheckIn;

@@ -9,13 +9,16 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 import lombok.Value;
 import lombok.With;
 import lombok.val;
 
 @Value
 @With
+@ToString(onlyExplicitlyIncluded = true)
 public class RenewalContext {
+  @ToString.Include
   Loan loan;
   RequestQueue requestQueue;
   ZoneId timeZone;

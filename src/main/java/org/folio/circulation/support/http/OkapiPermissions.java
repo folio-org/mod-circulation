@@ -13,8 +13,10 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import io.vertx.core.json.JsonArray;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @EqualsAndHashCode
+@ToString
 public class OkapiPermissions {
   private final Set<String> permissions;
 

@@ -8,11 +8,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.json.JsonObject;
@@ -116,5 +119,81 @@ class LogUtilTest {
   @Test
   void headersAsStringShouldReturnNullIfHeadersNull() {
     assertNull(LogUtil.headersAsString(null));
+  }
+
+  @Test
+  void listAsStringHandlesNullValue() {
+    assertEquals("null", LogUtil.listAsString(null));
+  }
+
+  @Test
+  void listAsStringHandlesEmptyList() {
+    assertEquals("list(size=0)", LogUtil.listAsString(List.of()));
+  }
+
+  @Test
+  void listAsStringHandlesNonEmptyList() {
+    assertEquals("list(size=2)", LogUtil.listAsString(List.of("1", "2")));
+  }
+
+  @Test
+  void collectionAsStringHandlesNullValue() {
+    assertEquals("null", LogUtil.collectionAsString(null));
+  }
+
+  @Test
+  void collectionAsStringHandlesEmptyCollection() {
+    assertEquals("collection(size=0)", LogUtil.collectionAsString(List.of()));
+  }
+
+  @Test
+  void collectionAsStringHandlesNonEmptyCollection() {
+    assertEquals("collection(size=2)", LogUtil.collectionAsString(List.of("1", "2")));
+  }
+
+  @Test
+  void mapAsStringHandlesNullValue() {
+    assertEquals("null", LogUtil.mapAsString(null));
+  }
+
+  @Test
+  void mapAsStringHandlesEmptyMap() {
+    assertEquals("map(size=0)", LogUtil.mapAsString(Map.of()));
+  }
+
+  @Test
+  void mapAsStringHandlesNonEmptyMap() {
+    assertEquals("map(size=2)", LogUtil.mapAsString(Map.of("key1", "value2", "key2", "value2")));
+  }
+
+  @Test
+  void multipleRecordsAsStringHandlesNullValue() {
+    assertEquals("null", LogUtil.multipleRecordsAsString(null));
+  }
+
+  @Test
+  void multipleRecordsAsStringHandlesEmptyMultipleRecords() {
+    assertEquals("records(size=0)", LogUtil.multipleRecordsAsString(MultipleRecords.empty()));
+  }
+
+  @Test
+  void multipleRecordsAsStringHandlesNonEmptyMultipleRecords() {
+    MultipleRecords<String> multipleRecords = new MultipleRecords<>(List.of("1", "2"), 2);
+    assertEquals("records(size=2)", LogUtil.multipleRecordsAsString(multipleRecords));
+  }
+
+  @Test
+  void resultAsStringHandlesNullValue() {
+    assertEquals("null", LogUtil.resultAsString(null));
+  }
+
+  @Test
+  void resultAsStringHandlesFailedResult() {
+    assertEquals("result(failed)", LogUtil.resultAsString(Result.failed(null)));
+  }
+
+  @Test
+  void resultAsStringHandlesSucceededResult() {
+    assertEquals("result(abc)", LogUtil.resultAsString(Result.succeeded("abc")));
   }
 }

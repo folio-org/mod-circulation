@@ -296,7 +296,7 @@ public class RequestByInstanceIdResource extends Resource {
     List<JsonObject> itemRequests, int startIndex, CreateRequestService createRequestService,
     Clients clients, List<String> errors, RequestRelatedRepositories repositories) {
 
-    log.debug("RequestByInstanceIdResource.placeRequest, startIndex={}, itemRequestSize={}",
+    log.debug("RequestByInstanceIdResource.placeRequest, startIndex: {}, itemRequestSize: {}",
       startIndex, itemRequests.size());
 
     if (startIndex >= itemRequests.size()) {

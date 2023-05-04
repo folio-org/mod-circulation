@@ -6,7 +6,9 @@ import static org.apache.commons.collections4.SetUtils.hashSet;
 import java.util.Set;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
 public class FeeFine {
   public static final String OVERDUE_FINE_TYPE = "Overdue fine";
   public static final String LOST_ITEM_FEE_TYPE = "Lost item fee";
@@ -17,8 +19,11 @@ public class FeeFine {
     unmodifiableSet(hashSet(LOST_ITEM_FEE_TYPE, LOST_ITEM_ACTUAL_COST_FEE_TYPE,
       LOST_ITEM_PROCESSING_FEE_TYPE));
 
+  @ToString.Include
   private final String id;
+  @ToString.Include
   private final String ownerId;
+  @ToString.Include
   private final String feeFineType;
 
   public FeeFine(String id, String ownerId, String feeFineType) {

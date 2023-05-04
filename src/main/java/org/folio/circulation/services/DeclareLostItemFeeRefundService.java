@@ -28,7 +28,7 @@ public class DeclareLostItemFeeRefundService extends LostItemFeeRefundService {
   public CompletableFuture<Result<LostItemFeeRefundContext>> refundLostItemFees(
     LostItemFeeRefundContext refundFeeContext) {
 
-    log.info("refundLostItemFees:: attempting to refund lost item fees: loanId={}, cancelReason={}",
+    log.info("refundLostItemFees:: attempting to refund lost item fees: loanId: {}, cancelReason: {}",
       refundFeeContext::getLoanId, refundFeeContext::getCancelReason);
 
     if (!refundFeeContext.shouldRefundFeesForItem()) {

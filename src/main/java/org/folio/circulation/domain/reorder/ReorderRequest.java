@@ -1,5 +1,8 @@
 package org.folio.circulation.domain.reorder;
 
+import lombok.ToString;
+
+@ToString
 public class ReorderRequest {
   private String id;
   private Integer newPosition;

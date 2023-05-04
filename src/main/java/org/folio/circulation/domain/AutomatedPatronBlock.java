@@ -4,7 +4,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString
 public class AutomatedPatronBlock {
   private final String patronBlockConditionId;
   private final boolean blockBorrowing;
