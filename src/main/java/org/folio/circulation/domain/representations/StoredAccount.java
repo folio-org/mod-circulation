@@ -36,7 +36,7 @@ public class StoredAccount extends JsonObject {
     super();
 
     log.debug("StoredAccount:: parameters loan: {}, item: {}, feeFineOwner: {}, feeFine: {}, " +
-      "amount={}", loan, item, feeFineOwner, feeFine, amount);
+      "amount: {}", loan, item, feeFineOwner, feeFine, amount);
 
     this.put("id", UUID.randomUUID().toString());
     this.put("ownerId", feeFineOwner.getId());

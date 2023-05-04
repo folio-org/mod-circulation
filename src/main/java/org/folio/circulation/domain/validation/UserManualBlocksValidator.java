@@ -111,7 +111,7 @@ public class UserManualBlocksValidator {
     Predicate<UserManualBlock> isUserBlocked) {
 
     log.debug("isUserBlockedManually:: parameters isUserBlocked, " +
-        "userManualBlockMultipleRecords={}, isUserBlocked",
+        "userManualBlockMultipleRecords: {}, isUserBlocked",
       () -> multipleRecordsAsString(userManualBlockMultipleRecords));
 
     return userManualBlockMultipleRecords.getRecords().stream()

@@ -312,7 +312,7 @@ public class TemplateContextUtil {
     write(context, "chargeDateTime", account.getCreationDate());
 
     if (chargeAction != null) {
-      log.info("createFeeChargeContext:: adding charge action info. account={}, chargeAction={}",
+      log.info("createFeeChargeContext:: adding charge action info. account: {}, chargeAction: {}",
         account, chargeAction);
       write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
     }

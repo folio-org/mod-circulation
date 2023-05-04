@@ -29,9 +29,10 @@ public class OverridingBlockValidator<T> extends BlockValidator<T> {
     OkapiPermissions permissions) {
 
     super(INSUFFICIENT_OVERRIDE_PERMISSIONS, otherwise -> {
-      log.info("OverridingBlockValidator validationFunction:: blockType={}, blockOverrides={}, permissions={}", blockType, blockOverrides, permissions);
+      log.info("OverridingBlockValidator validationFunction:: blockType: {}, " +
+        "blockOverrides: {}, permissions: {}", blockType, blockOverrides, permissions);
       OkapiPermissions missingPermissions = blockType.getMissingOverridePermissions(permissions);
-      log.info("OverridingBlockValidator validationFunction:: missingPermissions={}",
+      log.info("OverridingBlockValidator validationFunction:: missingPermissions: {}",
         missingPermissions);
       return missingPermissions.isEmpty()
         ? ofAsync(() -> otherwise)

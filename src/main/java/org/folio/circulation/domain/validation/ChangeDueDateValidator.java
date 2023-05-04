@@ -31,10 +31,10 @@ public class ChangeDueDateValidator {
     Result<LoanAndRelatedRecords> loanAndRelatedRecordsResult) {
 
     log.debug("refuseChangeDueDateForItemInDisallowedStatus:: parameters " +
-        "loanAndRelatedRecordsResult={}", () -> resultAsString(loanAndRelatedRecordsResult));
+        "loanAndRelatedRecordsResult: {}", () -> resultAsString(loanAndRelatedRecordsResult));
 
     return loanAndRelatedRecordsResult.after(relatedRecords -> {
-      log.debug("refuseChangeDueDateForItemInDisallowedStatus:: after relatedRecords={}",
+      log.debug("refuseChangeDueDateForItemInDisallowedStatus:: after relatedRecords: {}",
         relatedRecords);
 
       final Loan changedLoan = relatedRecords.getLoan();

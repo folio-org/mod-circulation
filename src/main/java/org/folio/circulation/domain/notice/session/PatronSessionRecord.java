@@ -1,8 +1,8 @@
 package org.folio.circulation.domain.notice.session;
 
 import static java.util.Objects.requireNonNull;
-import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.Loan;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.vertx.core.json.JsonObject;
 
 public class PatronSessionRecord {
@@ -20,7 +22,7 @@ public class PatronSessionRecord {
   private final UUID patronId;
   private final UUID loanId;
   private final PatronActionType actionType;
-
+  @JsonIgnore
   private final Loan loan;
 
   public PatronSessionRecord(UUID id, UUID patronId,

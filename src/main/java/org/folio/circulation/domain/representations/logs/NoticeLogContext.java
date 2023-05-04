@@ -11,7 +11,6 @@ import static org.folio.circulation.domain.representations.logs.LogEventPayloadF
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_BARCODE;
 import static org.folio.circulation.domain.representations.logs.LogEventPayloadField.USER_ID;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -25,13 +24,13 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.session.PatronSessionRecord;
+import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import lombok.With;
 
 @AllArgsConstructor
@@ -83,7 +82,7 @@ public class NoticeLogContext {
 
   // it is assumed that all sessions have same user and action type
   public static NoticeLogContext from(List<PatronSessionRecord> sessions) {
-    log.debug("from:: parameters sessions: {}", listAsString(sessions));
+    log.debug("from:: parameters sessions: {}", () -> LogUtil.asJson(sessions));
 
     if (sessions.isEmpty()) {
       log.info("from:: sessions list is empty");

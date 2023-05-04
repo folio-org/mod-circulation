@@ -93,7 +93,7 @@ public class LostItemFeeChargingService {
   private CompletableFuture<Result<ReferenceDataContext>> buildReferenceDataContext(
     LostItemFeeRefundContext refundContext, DeclareLostContext declareLostContext) {
 
-    log.debug("buildReferenceDataContext:: context={}", refundContext);
+    log.debug("buildReferenceDataContext:: context: {}", refundContext);
 
     var loan = declareLostContext.getLoan();
     var lostItemPolicy = loan.getLostItemPolicy();
@@ -115,7 +115,7 @@ public class LostItemFeeChargingService {
   }
 
   private CompletableFuture<Result<Loan>> applyLostItemFeePolicy(ReferenceDataContext context) {
-    log.debug("applyLostItemFeePolicy:: context={}", context);
+    log.debug("applyLostItemFeePolicy:: context: {}", context);
 
     Loan loan = context.getLoan();
     if (shouldCloseLoan(context.getLostItemPolicy())) {

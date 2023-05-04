@@ -28,8 +28,8 @@ import lombok.ToString;
 
 @ToString(onlyExplicitlyIncluded = true)
 public class Item {
-  @ToString.Include
   private final String id;
+  @ToString.Include
   private final JsonObject itemRepresentation;
   @NonNull private final Location location;
   private final LastCheckIn lastCheckIn;

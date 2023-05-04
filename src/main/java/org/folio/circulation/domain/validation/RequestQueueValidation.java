@@ -184,7 +184,7 @@ public class RequestQueueValidation {
     String onFailureMessage) {
 
     log.debug("validateRequestAtFirstPosition:: parameters result: {}, requestTypePredicate, " +
-        "onFailureMessage={}", () -> resultAsString(result), () -> onFailureMessage);
+        "onFailureMessage: {}", () -> resultAsString(result), () -> onFailureMessage);
 
     return result.failWhen(context -> {
         log.debug("validateRequestAtFirstPosition:: failWhen");
@@ -212,7 +212,7 @@ public class RequestQueueValidation {
     String onFailureMessage) {
 
     log.debug("validateRequestsAtTopPositions:: parameters result: {}, requestTypePredicate, " +
-      "onFailureMessage={}", () -> resultAsString(result), () -> onFailureMessage);
+      "onFailureMessage: {}", () -> resultAsString(result), () -> onFailureMessage);
 
     return result.failWhen(context -> {
         List<Integer> newPositions = context.getReorderRequestToRequestMap()

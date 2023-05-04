@@ -40,8 +40,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
   public static String mapToCheckInLogEventContent(CheckInContext checkInContext,
     User loggedInUser, User userFromLastLoan) {
 
-    log.debug("mapToCheckInLogEventContent:: parameters checkInContext: {}, user: {}, " +
-      "userFromLastLoan={}", checkInContext, loggedInUser, userFromLastLoan);
+    log.debug("mapToCheckInLogEventContent:: parameters checkInContext: {}, loggedInUser: {}, " +
+      "userFromLastLoan: {}", checkInContext, loggedInUser, userFromLastLoan);
 
     JsonObject logEventPayload = new JsonObject();
 
@@ -71,7 +71,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     User loggedInUser) {
 
     log.debug("mapToCheckOutLogEventContent:: parameters loanAndRelatedRecords: {}, " +
-      "loggedInUser={}", loanAndRelatedRecords, loggedInUser);
+      "loggedInUser: {}", loanAndRelatedRecords, loggedInUser);
 
     JsonObject logEventPayload = new JsonObject();
     JsonObject payload = new JsonObject();
@@ -103,7 +103,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     User loggedInUser) {
 
     log.debug("populateItemData:: parameters checkInContext: {}, logEventPayload: {}, " +
-      "loggedInUser={}", checkInContext, logEventPayload, loggedInUser);
+      "loggedInUser: {}", checkInContext, logEventPayload, loggedInUser);
 
     ofNullable(checkInContext.getItem())
       .ifPresent(item -> {
@@ -122,7 +122,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     JsonObject logEventPayload, User loggedInUser) {
 
     log.debug("populateItemData:: parameters loanAndRelatedRecords: {}, logEventPayload: {}, " +
-      "loggedInUser={}", loanAndRelatedRecords, logEventPayload, loggedInUser);
+      "loggedInUser: {}", loanAndRelatedRecords, logEventPayload, loggedInUser);
 
     ofNullable(loanAndRelatedRecords.getLoan().getItem())
       .ifPresent(item -> {

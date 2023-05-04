@@ -1,7 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.lang.String.format;
-
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -237,15 +235,5 @@ public class CheckInContext {
 
   public ItemStatus getItemStatusBeforeCheckIn() {
     return itemStatusBeforeCheckIn;
-  }
-
-  @Override
-  public String toString() {
-    return format("CheckInContext(checkInRequest=%s, tlrSettings=%s, item=%s, loan=%s, " +
-        "requestQueue=%s, checkInServicePoint=%s, highestPriorityFulfillableRequest=%s, " +
-        "loggedInUserId=%s, checkInProcessedDateTime=%s, inHouseUse=%s, " +
-        "itemStatusBeforeCheckIn=%s", checkInRequest, tlrSettings, item, loan, requestQueue,
-      checkInServicePoint, highestPriorityFulfillableRequest, loggedInUserId,
-      checkInProcessedDateTime, inHouseUse, itemStatusBeforeCheckIn);
   }
 }

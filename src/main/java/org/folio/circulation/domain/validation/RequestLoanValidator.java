@@ -85,7 +85,7 @@ public class RequestLoanValidator {
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
     log.debug("verifyNoMatchOrFailAsAlreadyLoaned:: parameters " +
-      "items={}, loans={}, requestAndRelatedRecords={}",
+      "items: {}, loans: {}, requestAndRelatedRecords: {}",
       () -> collectionAsString(items.value()), () -> multipleRecordsAsString(loans.value()),
       () -> requestAndRelatedRecords);
 
@@ -106,7 +106,7 @@ public class RequestLoanValidator {
     RequestAndRelatedRecords requestAndRelatedRecords, Loan loan) {
 
     log.debug("oneOfTheItemsIsAlreadyLoanedFailure:: parameters " +
-      "requestAndRelatedRecords={}, loan={}", requestAndRelatedRecords, loan);
+      "requestAndRelatedRecords: {}, loan: {}", requestAndRelatedRecords, loan);
 
     HashMap<String, String> parameters = new HashMap<>();
     parameters.put("userId", requestAndRelatedRecords.getRequest().getUserId());

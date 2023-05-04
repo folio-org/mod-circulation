@@ -77,7 +77,7 @@ public class ItemLimitValidator {
     return ofAsync(() -> loan.getLoanPolicy().getRuleConditions())
       .thenComposeAsync(result -> result.failAfter(ruleConditions -> isLimitReached(ruleConditions, records),
         ruleConditions -> {
-          log.info("refuseWhenItemLimitIsReached:: ruleConditions={}", ruleConditions);
+          log.info("refuseWhenItemLimitIsReached:: ruleConditions: {}", ruleConditions);
           ItemLimitValidationErrorCause cause = getValidationErrorCause(ruleConditions);
 
           if (cause == null) {
@@ -126,7 +126,7 @@ public class ItemLimitValidator {
     Loan loanRecord, AppliedRuleConditions ruleConditions) {
 
     log.debug("isMaterialTypeMatchInRetrievedLoan:: parameters expectedMaterialTypeId: {}, " +
-        "loanRecord={}, ruleConditions={}", expectedMaterialTypeId, loanRecord, ruleConditions);
+        "loanRecord: {}, ruleConditions: {}", expectedMaterialTypeId, loanRecord, ruleConditions);
 
     if (!ruleConditions.isItemTypePresent()) {
       log.info("isMaterialTypeMatchInRetrievedLoan:: item type is missing from rule conditions");
@@ -143,7 +143,7 @@ public class ItemLimitValidator {
     AppliedRuleConditions ruleConditions) {
 
     log.debug("isLoanTypeMatchInRetrievedLoan:: parameters expectedLoanType: {}, " +
-      "loanRecord={}, ruleConditions={}", expectedLoanType, loanRecord, ruleConditions);
+      "loanRecord: {}, ruleConditions: {}", expectedLoanType, loanRecord, ruleConditions);
 
     if (!ruleConditions.isLoanTypePresent()) {
       log.info("isMaterialTypeMatchInRetrievedLoan:: loan type is missing from rule conditions");
@@ -163,8 +163,8 @@ public class ItemLimitValidator {
     boolean isRuleLoanTypePresent = ruleConditionsEntity.isLoanTypePresent();
     boolean isRulePatronGroupPresent = ruleConditionsEntity.isPatronGroupPresent();
 
-    log.info("getValidationErrorCause:: isRuleMaterialTypePresent={}, isRuleLoanTypePresent={}, " +
-      "isRulePatronGroupPresent={}", isRuleMaterialTypePresent, isRuleLoanTypePresent,
+    log.info("getValidationErrorCause:: isRuleMaterialTypePresent: {}, isRuleLoanTypePresent: {}, " +
+      "isRulePatronGroupPresent: {}", isRuleMaterialTypePresent, isRuleLoanTypePresent,
       isRulePatronGroupPresent);
 
     if (isRulePatronGroupPresent && isRuleMaterialTypePresent && isRuleLoanTypePresent) {

@@ -37,6 +37,7 @@ public class CheckInByBarcodeRequest {
   private final String itemBarcode;
   @ToString.Include
   private final UUID servicePointId;
+  @ToString.Include
   private final ZonedDateTime checkInDate;
   private final ClaimedReturnedResolution claimedReturnedResolution;
 

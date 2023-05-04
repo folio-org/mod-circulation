@@ -165,6 +165,7 @@ public class ItemsInTransitReport {
       writeLastCheckIn(entry, lastCheckIn);
     }
 
+    log.info("buildEntry:: result {}", entry);
     return entry;
   }
 
