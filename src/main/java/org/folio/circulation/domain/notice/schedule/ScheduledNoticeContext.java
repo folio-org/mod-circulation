@@ -25,6 +25,6 @@ public class ScheduledNoticeContext {
   private Request request;
   private String patronNoticePolicyId;
   private boolean lostItemFeesForAgedToLostNoticeExist;
-  private JsonObject loanNoticeContext;
+  private JsonObject noticeContext;
   private NoticeLogContextItem noticeLogContextItem;
 }
