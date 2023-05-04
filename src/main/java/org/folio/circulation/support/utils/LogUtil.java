@@ -96,8 +96,11 @@ public class LogUtil {
   }
 
   public static <T> String resultAsString(Result<T> result) {
-    return result.failed() ? "Result(failed)" : format("Result(%s)",
-      result.value() == null ? "null" : result.value());
+    if (result.failed()) {
+      return "Result(failed)";
+    } else {
+      return format("Result(%s)", result.value() == null ? "null" : result.value());
+    }
   }
 
   private static String plural(int number) {

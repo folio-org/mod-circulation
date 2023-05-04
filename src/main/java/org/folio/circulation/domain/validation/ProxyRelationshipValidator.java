@@ -5,7 +5,6 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;

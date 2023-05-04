@@ -148,7 +148,6 @@ public class CirculationCheckInCheckOutLogEventMapper {
   }
 
   private static void populateLoanData(Loan checkInCheckOutLoan, JsonObject logEventPayload) {
-
     log.debug("populateLoanData:: parameters checkInCheckOutLoan: {}, logEventPayload: {}",
       checkInCheckOutLoan, logEventPayload);
 

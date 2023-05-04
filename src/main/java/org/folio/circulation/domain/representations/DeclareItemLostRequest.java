@@ -4,6 +4,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
@@ -33,10 +34,8 @@ public class DeclareItemLostRequest {
   private final String comment;
   private final String servicePointId;
 
-  public static Result<DeclareItemLostRequest> from(JsonObject json,
-    String loanId) {
-
-    log.debug("from:: parameters json: {}, loanId: {}", json, loanId);
+  public static Result<DeclareItemLostRequest> from(JsonObject json, String loanId) {
+    log.debug("from:: parameters json: {}, loanId: {}", () -> asJson(json), () -> loanId);
 
     final String comment = getProperty(json, "comment");
 

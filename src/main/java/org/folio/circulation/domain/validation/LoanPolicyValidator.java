@@ -6,7 +6,6 @@ import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidat
 import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Map;

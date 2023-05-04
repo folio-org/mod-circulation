@@ -26,7 +26,8 @@ public class AlreadyCheckedOutValidator {
   public Result<LoanAndRelatedRecords> refuseWhenItemIsAlreadyCheckedOut(
     Result<LoanAndRelatedRecords> result) {
 
-    log.debug("refuseWhenItemIsAlreadyCheckedOut:: parameters result: {}", resultAsString(result));
+    log.debug("refuseWhenItemIsAlreadyCheckedOut:: parameters result: {}",
+      () -> resultAsString(result));
 
     return result.failWhen(
       records -> succeeded(records.getLoan().getItem().isCheckedOut()),
