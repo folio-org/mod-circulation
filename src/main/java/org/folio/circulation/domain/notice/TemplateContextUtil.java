@@ -110,18 +110,16 @@ public class TemplateContextUtil {
   }
 
   public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries, ServicePoint primaryServicePoint) {
-    log.info("addPrimaryServicePointNameToStaffSlipContext:: parameters entries: {}", entries);
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: parameters entries: {} primaryServicePoint: {}", entries, primaryServicePoint);
     if (primaryServicePoint == null) {
-      log.info("primaryServicePoint object is null");
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePoint object is null");
       return entries;
     }
 
     if (entries == null) {
-      log.info("entries JsonObject is null, primaryServicePointName: {}", primaryServicePoint.getName());
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: entries JsonObject is null, primaryServicePointName: {}", primaryServicePoint.getName());
       return new JsonObject();
     }
-
-    log.debug("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePointName: {}", primaryServicePoint.getName());
 
     entries.getJsonArray(PICK_SLIPS_KEY)
       .stream()
@@ -129,7 +127,7 @@ public class TemplateContextUtil {
       .map(pickSlip -> pickSlip.getJsonObject(ITEM))
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
-    log.debug("Result after adding Primary Service Point Name to Staff Skip Json:: entries: {}", entries);
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result after adding Primary Service Point Name to Staff Slip Json:: entries: {}, primaryServicePointName: {}", entries, primaryServicePoint.getName());
     return entries;
   }
 
