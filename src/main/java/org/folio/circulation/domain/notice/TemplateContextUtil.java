@@ -128,6 +128,7 @@ public class TemplateContextUtil {
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
     log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result after adding Primary Service Point Name to Staff Slip Json:: entries: {}, primaryServicePointName: {}", entries, primaryServicePoint.getName());
+
     return entries;
   }
 
