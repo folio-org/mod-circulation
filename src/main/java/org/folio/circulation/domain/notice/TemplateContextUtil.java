@@ -121,7 +121,7 @@ public class TemplateContextUtil {
       return new JsonObject();
     }
 
-    log.debug("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePointName = {}", primaryServicePoint.getName());
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePointName: {}", primaryServicePoint.getName());
 
     entries.getJsonArray(PICK_SLIPS_KEY)
       .stream()
@@ -129,7 +129,7 @@ public class TemplateContextUtil {
       .map(pickSlip -> pickSlip.getJsonObject(ITEM))
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
-    log.debug("Result after adding Primary Service Point Name to Staff Skip Json :: entries: {}", entries);
+    log.debug("Result after adding Primary Service Point Name to Staff Skip Json:: entries: {}", entries);
     return entries;
   }
 
