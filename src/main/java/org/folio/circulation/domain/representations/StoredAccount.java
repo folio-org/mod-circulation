@@ -3,9 +3,11 @@ package org.folio.circulation.domain.representations;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 
-import org.folio.circulation.domain.Account;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.FeeAmount;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
@@ -16,6 +18,7 @@ import org.folio.circulation.services.support.CreateAccountCommand;
 import io.vertx.core.json.JsonObject;
 
 public class StoredAccount extends JsonObject {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public StoredAccount(CreateAccountCommand command) {
     this(
@@ -28,7 +31,11 @@ public class StoredAccount extends JsonObject {
 
   public StoredAccount(Loan loan, Item item, FeeFineOwner feeFineOwner,
     FeeFine feeFine, FeeAmount amount) {
+
     super();
+
+    log.debug("StoredAccount:: parameters loan: {}, item: {}, feeFineOwner: {}, feeFine: {}, " +
+      "amount: {}", loan, item, feeFineOwner, feeFine, amount);
 
     this.put("id", UUID.randomUUID().toString());
     this.put("ownerId", feeFineOwner.getId());
@@ -58,16 +65,8 @@ public class StoredAccount extends JsonObject {
     this.put("lostItemFeePolicyId", loan.getLostItemPolicyId());
   }
 
-  private StoredAccount(JsonObject json) {
-    super(json.getMap());
-  }
-
   public String getId() {
     return getString("id");
-  }
-
-  public static StoredAccount fromAccount(Account account) {
-    return new StoredAccount(account.toJson());
   }
 
   private JsonObject createNamedObject(String status) {

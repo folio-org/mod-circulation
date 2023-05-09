@@ -1,9 +1,11 @@
 package org.folio.circulation.domain;
 
+import lombok.ToString;
 import lombok.Value;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 
 @Value
+@ToString(onlyExplicitlyIncluded = true)
 public class ServicePoint {
   public static ServicePoint unknown() {
     return unknown(null);
@@ -12,6 +14,11 @@ public class ServicePoint {
     return new ServicePoint(id, null, null, false, null, null, null, null, null);
   }
 
+  public static ServicePoint unknown(String id, String name) {
+    return new ServicePoint(id, name, null, false, null, null, null, null, null);
+  }
+
+  @ToString.Include
   String id;
   String name;
   String code;

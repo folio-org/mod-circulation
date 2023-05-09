@@ -13,9 +13,14 @@ import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class LogContextActionResolver {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static HashMap<String, String> loanLogActions = new HashMap<>();
 
   static {
@@ -33,6 +38,8 @@ public class LogContextActionResolver {
   }
 
   public static String resolveAction(String action) {
+    log.debug("resolveAction:: parameters action: {}", action);
+
     return ofNullable(loanLogActions.get(action))
       .orElse("");
   }

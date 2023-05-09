@@ -40,7 +40,7 @@
     },
     {
       "id": "pick-slips",
-      "version": "0.3",
+      "version": "0.4",
       "handlers": [
         {
           "methods": [

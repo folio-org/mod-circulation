@@ -44,6 +44,7 @@ public class TemplateContextUtil {
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
   public static final String CURRENT_DATE_TIME = "currentDateTime";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
 
   private TemplateContextUtil() {
   }
@@ -106,6 +107,29 @@ public class TemplateContextUtil {
     }
 
     return createStaffSlipContext(request.getItem(), request);
+  }
+
+  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries, ServicePoint primaryServicePoint) {
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: parameters entries: {} primaryServicePoint: {}", entries, primaryServicePoint);
+    if (primaryServicePoint == null) {
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePoint object is null");
+      return entries;
+    }
+
+    if (entries == null) {
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: entries JsonObject is null, primaryServicePointName: {}", primaryServicePoint.getName());
+      return new JsonObject();
+    }
+
+    entries.getJsonArray(PICK_SLIPS_KEY)
+      .stream()
+      .map(JsonObject.class::cast)
+      .map(pickSlip -> pickSlip.getJsonObject(ITEM))
+      .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
+
+    log.info("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}, primaryServicePointName: {}", entries, primaryServicePoint.getName());
+
+    return entries;
   }
 
   public static JsonObject createStaffSlipContext(
@@ -186,6 +210,7 @@ public class TemplateContextUtil {
     if (location != null) {
       itemContext
         .put("effectiveLocationSpecific", location.getName())
+        .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
         .put("effectiveLocationInstitution", location.getInstitutionName())
@@ -306,7 +331,7 @@ public class TemplateContextUtil {
   }
 
   private static JsonObject createFeeChargeContext(Account account, FeeFineAction chargeAction) {
-    log.debug("createFeeChargeContext:: params account={}, chargeAction={}", account, chargeAction);
+    log.debug("createFeeChargeContext:: params account: {}, chargeAction: {}", account, chargeAction);
 
     JsonObject context = new JsonObject();
     write(context, "owner", account.getFeeFineOwner());
@@ -318,7 +343,7 @@ public class TemplateContextUtil {
     write(context, "chargeDateTime", account.getCreationDate());
 
     if (chargeAction != null) {
-      log.info("createFeeChargeContext:: adding charge action info. account={}, chargeAction={}",
+      log.info("createFeeChargeContext:: adding charge action info. account: {}, chargeAction: {}",
         account, chargeAction);
       write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
     }

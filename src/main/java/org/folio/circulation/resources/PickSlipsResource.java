@@ -104,6 +104,8 @@ public class PickSlipsResource extends Resource {
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
+      .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
+        TemplateContextUtil::addPrimaryServicePointNameToStaffSlipContext))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
   }

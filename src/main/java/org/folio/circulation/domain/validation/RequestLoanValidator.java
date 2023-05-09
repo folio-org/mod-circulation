@@ -1,11 +1,14 @@
 package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.of;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -14,18 +17,22 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.server.ValidationError;
+import org.folio.circulation.support.results.Result;
 
 public class RequestLoanValidator {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private static final PageLimit LOANS_PAGE_LIMIT = limit(10000);
   private final ItemByInstanceIdFinder itemByInstanceIdFinder;
   private final LoanRepository loanRepository;
@@ -37,6 +44,9 @@ public class RequestLoanValidator {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> refuseWhenUserHasAlreadyBeenLoanedItem(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("refuseWhenUserHasAlreadyBeenLoanedItem:: parameters requestAndRelatedRecords: {}",
+      requestAndRelatedRecords);
 
     final Request request = requestAndRelatedRecords.getRequest();
 
@@ -57,6 +67,9 @@ public class RequestLoanValidator {
   refuseWhenUserHasAlreadyBeenLoanedOneOfInstancesItems(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenUserHasAlreadyBeenLoanedOneOfInstancesItems:: parameters " +
+        "requestAndRelatedRecords: {}", requestAndRelatedRecords);
+
     final Request request = requestAndRelatedRecords.getRequest();
     final UUID instanceId = UUID.fromString(request.getInstanceId());
 
@@ -70,6 +83,11 @@ public class RequestLoanValidator {
   private Result<RequestAndRelatedRecords> verifyNoMatchOrFailAsAlreadyLoaned(
     Result<Collection<Item>> items, Result<MultipleRecords<Loan>> loans,
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("verifyNoMatchOrFailAsAlreadyLoaned:: parameters " +
+      "items: {}, loans: {}, requestAndRelatedRecords: {}",
+      () -> collectionAsString(items.value()), () -> multipleRecordsAsString(loans.value()),
+      () -> requestAndRelatedRecords);
 
     List<String> itemIds = items.value().stream()
       .map(Item::getItemId)
@@ -86,6 +104,9 @@ public class RequestLoanValidator {
 
   private Result<RequestAndRelatedRecords> oneOfTheItemsIsAlreadyLoanedFailure(
     RequestAndRelatedRecords requestAndRelatedRecords, Loan loan) {
+
+    log.debug("oneOfTheItemsIsAlreadyLoanedFailure:: parameters " +
+      "requestAndRelatedRecords: {}, loan: {}", requestAndRelatedRecords, loan);
 
     HashMap<String, String> parameters = new HashMap<>();
     parameters.put("userId", requestAndRelatedRecords.getRequest().getUserId());

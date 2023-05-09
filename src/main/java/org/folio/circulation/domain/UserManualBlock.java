@@ -7,7 +7,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import java.time.ZonedDateTime;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString
 public class UserManualBlock {
   private final String desc;
   private final ZonedDateTime expirationDate;

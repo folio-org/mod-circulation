@@ -19,13 +19,16 @@ import java.util.stream.Collectors;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 import lombok.val;
 
+@ToString(onlyExplicitlyIncluded = true)
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
   private final PatronGroup patronGroup;
   private final Collection<Department> departments;
 
+  @ToString.Include
   private final JsonObject representation;
 
   public User(JsonObject representation) {

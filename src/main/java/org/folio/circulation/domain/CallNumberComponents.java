@@ -5,7 +5,9 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString
 public class CallNumberComponents {
   private final String callNumber;
   private final String prefix;

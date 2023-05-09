@@ -6,10 +6,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import io.vertx.core.json.JsonObject;
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
 public final class FeeAmount {
   private static final FeeAmount ZERO = new FeeAmount(BigDecimal.ZERO);
 
+  @ToString.Include
   private final BigDecimal amount;
 
   public FeeAmount(BigDecimal amount) {

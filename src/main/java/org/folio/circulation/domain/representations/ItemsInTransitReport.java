@@ -8,10 +8,13 @@ import static org.folio.circulation.domain.representations.ContributorsToNamesMa
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeNamedObject;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -30,20 +33,26 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class ItemsInTransitReport {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private final ItemsInTransitReportContext reportContext;
 
   public JsonObject build() {
+    log.debug("build:: ");
     List<JsonObject> reportEntries = reportContext.getItems().values().stream()
       .sorted(sortByCheckinServicePointComparator())
       .map(this::buildEntry)
       .collect(toList());
 
-    return new JsonObject()
+    JsonObject result = new JsonObject()
       .put("items", new JsonArray(reportEntries))
       .put("totalRecords", reportEntries.size());
+    log.info("build:: result {}", result);
+    return result;
   }
 
   private Comparator<Item> sortByCheckinServicePointComparator() {
+    log.debug("sortByCheckinServicePointComparator:: ");
     return comparing(item -> ofNullable(reportContext.getLoans().get(item.getItemId()))
       .map(Loan::getCheckInServicePointId)
       .map(id -> reportContext.getServicePoints().get(id))
@@ -52,7 +61,10 @@ public class ItemsInTransitReport {
   }
 
   private JsonObject buildEntry(Item item) {
+    log.debug("buildEntry:: parameters item: {}", item);
+
     if (item == null || item.isNotFound()) {
+      log.info("buildEntry:: item is null or not found");
       return new JsonObject();
     }
 
@@ -68,6 +80,7 @@ public class ItemsInTransitReport {
 
     Location location = reportContext.getLocations().get(item.getEffectiveLocationId());
     if (location != null) {
+      log.info("buildEntry:: location is not null");
       item = ofNullable(location.getPrimaryServicePointId())
         .map(UUID::toString)
         .map(reportContext.getServicePoints()::get)
@@ -107,14 +120,17 @@ public class ItemsInTransitReport {
 
     ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {
+      log.info("buildEntry:: inTransitDestinationServicePoint is not null");
       writeServicePoint(entry, inTransitDestinationServicePoint, "inTransitDestinationServicePoint");
     }
 
     if (location != null) {
+      log.info("buildEntry:: location is not null");
       writeLocation(entry, location);
     }
 
     if (request != null) {
+      log.info("buildEntry:: request is not null");
       User requester = reportContext.getUsers().get(request.getRequesterId());
 
       PatronGroup requesterPatronGroup = requester == null ? null :
@@ -130,6 +146,7 @@ public class ItemsInTransitReport {
     }
 
     if (loan != null) {
+      log.info("buildEntry:: loan is not null");
       ServicePoint checkoutServicePoint = reportContext.getServicePoints()
         .get(loan.getCheckoutServicePointId());
       ServicePoint checkInServicePoint = reportContext.getServicePoints()
@@ -144,13 +161,17 @@ public class ItemsInTransitReport {
 
     final LastCheckIn lastCheckIn = item.getLastCheckIn();
     if (lastCheckIn != null) {
+      log.info("buildEntry:: lastCheckIn is not null");
       writeLastCheckIn(entry, lastCheckIn);
     }
 
+    log.info("buildEntry:: result {}", entry);
     return entry;
   }
 
   private void writeLastCheckIn(JsonObject itemReport, LastCheckIn lastCheckIn) {
+    log.debug("writeLastCheckIn:: parameters itemReport, lastCheckIn: {}", lastCheckIn);
+
     final JsonObject lastCheckInJson = new JsonObject();
     write(lastCheckInJson, "dateTime", lastCheckIn.getDateTime());
     final ServicePoint lastCheckInServicePoint = lastCheckIn.getServicePoint();
@@ -161,6 +182,8 @@ public class ItemsInTransitReport {
   }
 
   private void writeLocation(JsonObject itemReport, Location location) {
+    log.debug("writeLocation:: parameters itemReport, location: {}", location);
+
     final JsonObject locationJson = new JsonObject();
     write(locationJson, "name", location.getName());
     write(locationJson, "code", location.getCode());
@@ -168,9 +191,12 @@ public class ItemsInTransitReport {
     write(itemReport, "location", locationJson);
   }
 
-  private void writeServicePoint(JsonObject jsonObject,
-    ServicePoint servicePoint,
+  private void writeServicePoint(JsonObject jsonObject, ServicePoint servicePoint,
     String propertyName) {
+
+    log.debug("writeServicePoint:: parameters jsonObject, servicePoint: {}, propertyName: {}",
+      servicePoint, propertyName);
+
     final JsonObject servicePointJson = new JsonObject();
     write(servicePointJson, "id", servicePoint.getId());
     write(servicePointJson, "name", servicePoint.getName());
@@ -178,6 +204,8 @@ public class ItemsInTransitReport {
   }
 
   private void writeRequest(Request request, JsonObject itemReport) {
+    log.debug("writeRequest:: parameters request: {}, itemReport", request);
+
     final JsonObject requestJson = new JsonObject();
     write(requestJson, "requestType", request.getRequestType().value);
     write(requestJson, "requestDate", request.getRequestDate());
@@ -188,6 +216,7 @@ public class ItemsInTransitReport {
 
     final JsonObject tags = request.asJson().getJsonObject("tags");
     if (tags != null) {
+      log.info("writeRequest:: tags is not null");
       final JsonArray tagsJson = tags.getJsonArray("tagList");
       write(requestJson, "tags", tagsJson);
     }
@@ -200,6 +229,8 @@ public class ItemsInTransitReport {
   }
 
   private void writeLoan(JsonObject itemReport, Loan loan) {
+    log.debug("writeLoan:: parameters itemReport, loan: {}", loan);
+
     final JsonObject loanJson = new JsonObject();
     writeCheckInServicePoint(loanJson, loan.getCheckinServicePoint());
     write(loanJson, "checkInDateTime", loan.getReturnDate());
@@ -207,7 +238,11 @@ public class ItemsInTransitReport {
   }
 
   private void writeCheckInServicePoint(JsonObject loanJson, ServicePoint servicePoint) {
+    log.debug("writeCheckInServicePoint:: parameters loanJson: {}, servicePoint: {}", loanJson,
+      servicePoint);
+
     if (servicePoint != null) {
+      log.info("writeCheckInServicePoint:: servicePoint is not null");
       final JsonObject checkInServicePointJson = new JsonObject();
       write(checkInServicePointJson, "name", servicePoint.getName());
       write(checkInServicePointJson, "code", servicePoint.getCode());
