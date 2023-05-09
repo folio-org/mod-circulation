@@ -37,7 +37,7 @@ public class ServicePointPickupLocationValidator {
     if (request.getPickupServicePointId() == null) {
 
       log.info("refuseInvalidPickupServicePoint:: pickupServicePointId is null");
-      if (request.getFulfillmentPreference() == RequestFulfillmentPreference.HOLD_SHELF) {
+      if (request.getfulfillmentPreference() == RequestFulfillmentPreference.HOLD_SHELF) {
         log.info("refuseInvalidPickupServicePoint:: Hold Shelf Fulfillment Requests require a " +
           "Pickup Service Point");
         return failedValidation(
