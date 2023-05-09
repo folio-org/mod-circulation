@@ -259,6 +259,9 @@ public class TemplateContextUtil {
       .map(ServicePoint::getName)
       .ifPresent(value -> requestContext.put("servicePointPickup", value));
     optionalRequest
+      .map(Request::getRequestDate)
+      .ifPresent(value -> write(requestContext, "requestDate", value));
+    optionalRequest
       .map(Request::getRequestExpirationDate)
       .ifPresent(value -> write(requestContext, "requestExpirationDate", value));
     optionalRequest
