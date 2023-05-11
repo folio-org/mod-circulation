@@ -247,8 +247,7 @@ class PickSlipsTests extends APITests {
     assertThat(requestContext.getString("servicePointPickup"),
       is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
-    assertThat(requestContext.getString("requestDate"),
-      isEquivalentTo(requestDate));
+    assertThat(requestContext.getString("requestDate"), isEquivalentTo(requestDate));
   }
 
   @Test
