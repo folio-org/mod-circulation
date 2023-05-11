@@ -122,7 +122,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(r -> r.next(l -> succeeded(loan)));
+      .thenApply(r -> r.map(response -> loan));
   }
 
   /**
