@@ -195,7 +195,7 @@ class UpdateRequestQueueTest {
       .hold()
       .withItemId(itemId)
       .withPosition(position)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .create());
   }
 

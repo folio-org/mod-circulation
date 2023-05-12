@@ -31,7 +31,7 @@
     "barcode": "760932543816"
   },
   "position": 1,
-  "fulfilmentPreference": "Hold Shelf",
+  "fulfillmentPreference": "Hold Shelf",
   "pickupServicePointId": "3a40852d-49fd-4df2-a1f9-6e2641a6e91f",
   "tags": {
     "tagList": [

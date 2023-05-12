@@ -63,7 +63,7 @@ public class RequestsFixture {
 
     return place(new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(item.getId())
       .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequestDate(on)
@@ -76,7 +76,7 @@ public class RequestsFixture {
 
     return place(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(item.getId())
       .withInstanceId(instanceId)
       .withRequestDate(ZonedDateTime.now())
@@ -99,7 +99,7 @@ public class RequestsFixture {
 
     return place(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -112,7 +112,7 @@ public class RequestsFixture {
   public IndividualResource placeTitleLevelRecallRequest(UUID instanceId, IndividualResource by) {
     return place(new RequestBuilder()
       .recall()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -127,7 +127,7 @@ public class RequestsFixture {
 
     return place(new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -160,7 +160,7 @@ public class RequestsFixture {
 
     return place(new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(item.getId())
       .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequestDate(on)
@@ -173,7 +173,7 @@ public class RequestsFixture {
 
     return place(new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -209,7 +209,7 @@ public class RequestsFixture {
     return place(new RequestBuilder()
       .hold()
       .withRequestType(type)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(item.getId())
       .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequestDate(on)
@@ -235,7 +235,7 @@ public class RequestsFixture {
     return attemptPlace(new RequestBuilder()
       .hold()
       .withRequestType(type)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(item.getId())
       .withInstanceId(((ItemResource) item).getInstanceId())
       .withRequestDate(on)
@@ -248,7 +248,7 @@ public class RequestsFixture {
 
     return attemptPlace(new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -265,7 +265,7 @@ public class RequestsFixture {
         " Provided request type: " + requestType);
     }
     RequestBuilder builder = new RequestBuilder()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withNoItemId()
@@ -384,7 +384,7 @@ public class RequestsFixture {
       .recall()
       .forItem(item)
       .by(user)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
   }
 }

@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestFulfilmentPreference;
+import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.support.results.Result;
 
 public class ServicePointPickupLocationValidator {
@@ -35,8 +35,9 @@ public class ServicePointPickupLocationValidator {
     }
 
     if (request.getPickupServicePointId() == null) {
+
       log.info("refuseInvalidPickupServicePoint:: pickupServicePointId is null");
-      if (request.getFulfilmentPreference() == RequestFulfilmentPreference.HOLD_SHELF) {
+      if (request.getfulfillmentPreference() == RequestFulfillmentPreference.HOLD_SHELF) {
         log.info("refuseInvalidPickupServicePoint:: Hold Shelf Fulfillment Requests require a " +
           "Pickup Service Point");
         return failedValidation(

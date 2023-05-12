@@ -150,7 +150,7 @@ class RequestRepresentationTests {
       .itemRequestLevel()
       .withItemId(ITEM_ID)
       .withRequesterId(requesterId)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(SERVICE_POINT_ID)
       .withRequestExpiration(LocalDate.of(2017, 7, 30))
       .deliverToAddress(ADDRESS_ID)

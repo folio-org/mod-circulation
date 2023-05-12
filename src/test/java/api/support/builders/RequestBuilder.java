@@ -46,7 +46,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final UUID holdingsRecordId;
   private final UUID instanceId;
   private final UUID requesterId;
-  private final String fulfilmentPreference;
+  private final String fulfillmentPreference;
   private final UUID deliveryAddressType;
   private final LocalDate requestExpiration;
   private final LocalDate holdShelfExpiration;
@@ -104,7 +104,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getUUIDProperty(representation, "holdingsRecordId"),
       getUUIDProperty(representation, "instanceId"),
       getUUIDProperty(representation, "requesterId"),
-      getProperty(representation, "fulfilmentPreference"),
+      getProperty(representation, "fulfillmentPreference"),
       getUUIDProperty(representation, "deliveryAddressTypeId"),
       getLocalDatePropertyForDateWithTime(representation, "requestExpirationDate"),
       getLocalDateProperty(representation, "holdShelfExpirationDate"),
@@ -136,7 +136,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "holdingsRecordId", this.holdingsRecordId);
     put(request, "instanceId", this.instanceId);
     put(request, "requesterId", this.requesterId);
-    put(request, "fulfilmentPreference", this.fulfilmentPreference);
+    put(request, "fulfillmentPreference", this.fulfillmentPreference);
     put(request, "position", this.position);
     put(request, "status", this.status);
     put(request, "deliveryAddressTypeId", this.deliveryAddressType);
@@ -247,22 +247,22 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   }
 
   public RequestBuilder deliverToAddress(UUID addressTypeId) {
-    return withFulfilmentPreference("Delivery")
+    return withFulfillmentPreference("Delivery")
       .withDeliveryAddressType(addressTypeId);
   }
 
   //TODO: Remove, and combine with service point to be fulfilled to
-  public RequestBuilder fulfilToHoldShelf() {
-    return withFulfilmentPreference("Hold Shelf");
+  public RequestBuilder fulfillToHoldShelf() {
+    return withFulfillmentPreference("Hold Shelf");
   }
 
-  public RequestBuilder fulfilToHoldShelf(IndividualResource newPickupServicePoint) {
-    return withFulfilmentPreference("Hold Shelf")
+  public RequestBuilder fulfillToHoldShelf(IndividualResource newPickupServicePoint) {
+    return withFulfillmentPreference("Hold Shelf")
       .withPickupServicePointId(newPickupServicePoint.getId());
   }
 
-  public RequestBuilder fulfilToHoldShelf(UUID newPickupServicePointId) {
-    return withFulfilmentPreference("Hold Shelf")
+  public RequestBuilder fulfillToHoldShelf(UUID newPickupServicePointId) {
+    return withFulfillmentPreference("Hold Shelf")
       .withPickupServicePointId(newPickupServicePointId);
   }
 

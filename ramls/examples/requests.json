@@ -9,7 +9,7 @@
       "itemId": "195efae1-588f-47bd-a181-13a2eb437701",
       "instanceId": "195efae1-588f-47bd-a181-13a2eb434521",
       "holdingsRecordId": "195efae1-588f-47bd-a181-13a2eb434521",
-      "fulfilmentPreference": "Hold Shelf",
+      "fulfillmentPreference": "Hold Shelf",
       "position": 1
     },
     {
@@ -21,7 +21,7 @@
       "itemId": "3e5d5433-a271-499c-94f4-5f3e4652e537",
       "instanceId": "1e7d3354-a271-499c-94f4-5f3e4652a345",
       "holdingsRecordId": "296efae1-588f-47bd-a181-13a2eb434521",
-      "fulfilmentPreference": "Delivery",
+      "fulfillmentPreference": "Delivery",
       "requestExpirationDate": "2017-08-31T22:25:37Z",
       "holdShelfExpirationDate": "2017-09-01T22:25:37Z",
       "position": 1,

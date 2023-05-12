@@ -26,7 +26,7 @@ import api.support.http.IndividualResource;
 import api.support.http.UserResource;
 import lombok.val;
 
-class MultipleMixedFulfilmentRequestsTests extends APITests {
+class MultipleMixedFulfillmentRequestsTests extends APITests {
   private static final ZonedDateTime DATE_TIME_2017 = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
   private static final ZonedDateTime DATE_TIME_2018 = ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC);
 

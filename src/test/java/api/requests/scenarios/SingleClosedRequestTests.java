@@ -35,7 +35,7 @@ class SingleClosedRequestTests extends APITests {
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
       .withPickupServicePointId(pickupServicePointId)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())
@@ -72,7 +72,7 @@ class SingleClosedRequestTests extends APITests {
     IndividualResource requestByJessica = requestsClient.create(new RequestBuilder()
       .hold()
       .withPickupServicePointId(pickupServicePointId)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withRequestDate(ZonedDateTime.of(2018, 1, 10, 15, 34, 21, 0, UTC))
       .fulfilled() //TODO: Replace with closed cancelled when introduced
       .withItemId(smallAngryPlanet.getId())

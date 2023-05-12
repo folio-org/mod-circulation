@@ -111,11 +111,11 @@ public class UpdateRequestQueue {
     CompletableFuture<Result<Request>> updatedReq;
 
     log.info("updateOutstandingRequestOnCheckIn :: preference:{} ",
-      requestBeingFulfilled.getFulfilmentPreference());
+      requestBeingFulfilled.getfulfillmentPreference());
     log.info("updateOutstandingRequestOnCheckIn :: requestBeingFulfilled.pickupServicePointId:{} ",
       requestBeingFulfilled.getPickupServicePointId());
 
-    switch (requestBeingFulfilled.getFulfilmentPreference()) {
+    switch (requestBeingFulfilled.getfulfillmentPreference()) {
       case HOLD_SHELF:
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
           log.info("updateOutstandingRequestOnCheckIn :: Updating to awaitingPickUp");
@@ -131,7 +131,7 @@ public class UpdateRequestQueue {
         break;
       default:
         throw new IllegalStateException("Unexpected value: " +
-          requestBeingFulfilled.getFulfilmentPreference());
+          requestBeingFulfilled.getfulfillmentPreference());
     }
 
     Request updatedRequest = Request.from(requestBeingFulfilled.asJson());

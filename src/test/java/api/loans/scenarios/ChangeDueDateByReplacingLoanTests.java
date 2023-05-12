@@ -131,7 +131,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
       .hold()
       .forItem(item)
       .by(usersFixture.steve())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     Response fetchedLoan = loansClient.getById(loan.getId());
 
@@ -338,7 +338,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
       .recall()
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     Response recalledLoan = loansClient.getById(loanId);
 
@@ -388,7 +388,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
       .recall()
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     Response recalledLoan = loansClient.getById(loanId);
 

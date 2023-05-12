@@ -814,9 +814,9 @@ class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .by(usersFixture.jessica())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     assertThat(loansStorageClient.getById(loan.getId()).getJson(),
@@ -859,9 +859,9 @@ class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .by(usersFixture.jessica())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -915,9 +915,9 @@ class LoanDueDatesAfterRecallTests extends APITests {
     requestsFixture.place(new RequestBuilder()
       .recall()
       .forItem(smallAngryPlanet)
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .by(usersFixture.jessica())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -957,9 +957,9 @@ class LoanDueDatesAfterRecallTests extends APITests {
       requestsFixture.place(new RequestBuilder()
         .recall()
         .forItem(smallAngryPlanet)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .by(rebecca)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withPickupServicePointId(requestServicePoint.getId()));
 
       checkInFixture.checkInByBarcode(smallAngryPlanet);
