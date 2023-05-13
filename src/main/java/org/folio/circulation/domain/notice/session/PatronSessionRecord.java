@@ -15,12 +15,17 @@ import org.folio.circulation.domain.Loan;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.vertx.core.json.JsonObject;
+import lombok.Getter;
+import lombok.ToString;
 
+@ToString
+@Getter
 public class PatronSessionRecord {
 
   private final UUID id;
   private final UUID patronId;
   private final UUID loanId;
+  private UUID sessionId;
   private final PatronActionType actionType;
   @JsonIgnore
   private final Loan loan;
@@ -41,26 +46,6 @@ public class PatronSessionRecord {
     this.loan = loan;
   }
 
-  public UUID getId() {
-    return id;
-  }
-
-  public UUID getPatronId() {
-    return patronId;
-  }
-
-  public UUID getLoanId() {
-    return loanId;
-  }
-
-  public PatronActionType getActionType() {
-    return actionType;
-  }
-
-  public Loan getLoan() {
-    return loan;
-  }
-
   public PatronSessionRecord withLoan(Loan newLoan) {
     return new PatronSessionRecord(id, patronId, loanId, actionType, newLoan);
   }
@@ -74,15 +59,5 @@ public class PatronSessionRecord {
     return PatronActionType.from(actionTypeValue)
       .map(patronActionType -> new PatronSessionRecord(id, patronId, loanId, patronActionType))
       .orElse(null);
-  }
-
-  @Override
-  public String toString() {
-    return "PatronSessionRecord{" +
-      "id=" + id +
-      ", patronId=" + patronId +
-      ", loanId=" + loanId +
-      ", actionType=" + actionType +
-      '}';
   }
 }

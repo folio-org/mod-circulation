@@ -8,4 +8,5 @@ public class PatronActionSessionProperties {
   public static final String LOAN_ID = "loanId";
   public static final String ACTION_TYPE = "actionType";
   public static final String PATRON_ACTION_SESSIONS = "patronActionSessions";
+  public static final String SESSION_ID = "sessionId";
 }
