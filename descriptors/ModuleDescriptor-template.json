@@ -778,6 +778,40 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/overdue-fine-scheduled-notices-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.item.get",
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loan-policies.collection.get",
+            "patron-action-session-storage.patron-action-sessions.item.get",
+            "patron-action-session-storage.patron-action-sessions.collection.get",
+            "configuration.entries.item.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "accounts.item.get",
+            "accounts.collection.get",
+            "feefineactions.item.get",
+            "feefineactions.collection.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation.internal.fetch-items",
+            "users.item.get",
+            "users.collection.get",
+            "pubsub.publish.post",
+            "templates.item.get"
+          ],
+          "unit": "minute",
+          "delay": "2"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/fee-fine-not-real-time-scheduled-notices-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.item.get",
