@@ -85,9 +85,8 @@ public class PatronActionSessionService {
     }
     UUID patronId = UUID.fromString(loan.getUserId());
     UUID loanId = UUID.fromString(loan.getId());
-    PatronSessionRecord patronSessionRecord =
-      new PatronSessionRecord(UUID.randomUUID(),
-        patronId, loanId, PatronActionType.CHECK_IN);
+    PatronSessionRecord patronSessionRecord = new PatronSessionRecord(UUID.randomUUID(),
+        patronId, loanId, context.getSessionId(), PatronActionType.CHECK_IN);
 
     return patronActionSessionRepository.create(patronSessionRecord)
       .thenApply(mapResult(v -> context));
