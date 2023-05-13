@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
@@ -25,18 +26,21 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.http.HttpClient;
 
-public abstract class NotRealTimeScheduledNoticeProcessingResource
+public abstract class GroupingScheduledNoticeProcessingResource
   extends ScheduledNoticeProcessingResource {
 
   private final EnumSet<TriggeringEvent> triggeringEvents;
+  private final boolean realTime;
 
   private static final CqlSortBy FETCH_NOTICES_SORT_CLAUSE =
     CqlSortBy.sortBy(
@@ -48,17 +52,18 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
         .collect(toList())
     );
 
-  protected NotRealTimeScheduledNoticeProcessingResource(HttpClient client, String rootPath,
-    TriggeringEvent triggeringEvent) {
+  protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+    TriggeringEvent triggeringEvent, boolean realTime) {
 
-    this(client, rootPath, EnumSet.of(triggeringEvent));
+    this(client, rootPath, EnumSet.of(triggeringEvent), realTime);
   }
 
-  protected NotRealTimeScheduledNoticeProcessingResource(HttpClient client, String rootPath,
-    EnumSet<TriggeringEvent> triggeringEvents) {
+  protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+    EnumSet<TriggeringEvent> triggeringEvents, boolean realTime) {
 
     super(rootPath, client);
     this.triggeringEvents = triggeringEvents;
+    this.realTime = realTime;
   }
 
   protected abstract GroupedScheduledNoticeHandler getHandler(Clients clients,
@@ -67,12 +72,23 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ConfigurationRepository configurationRepository,
-    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
+    ScheduledNoticesRepository scheduledNoticesRepository,
+    PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
-    return configurationRepository.findTimeZoneConfiguration()
-      .thenApply(r -> r.map(this::startOfTodayInTimeZone))
+    return getTimeLimit(configurationRepository)
       .thenCompose(r -> r.after(timeLimit -> findNotices(scheduledNoticesRepository,
         pageLimit, timeLimit)));
+  }
+
+  private CompletableFuture<Result<ZonedDateTime>> getTimeLimit(
+    ConfigurationRepository configurationRepository) {
+
+    if (realTime) {
+      return ofAsync(ClockUtil.getZonedDateTime());
+    }
+
+    return configurationRepository.findTimeZoneConfiguration()
+      .thenApply(r -> r.map(this::startOfTodayInTimeZone));
   }
 
   private ZonedDateTime startOfTodayInTimeZone(ZoneId zone) {
@@ -83,7 +99,7 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
     ZonedDateTime timeLimit) {
 
-    return scheduledNoticesRepository.findNotices(timeLimit, false, triggeringEvents,
+    return scheduledNoticesRepository.findNotices(timeLimit, realTime, triggeringEvents,
       FETCH_NOTICES_SORT_CLAUSE, pageLimit);
   }
 
