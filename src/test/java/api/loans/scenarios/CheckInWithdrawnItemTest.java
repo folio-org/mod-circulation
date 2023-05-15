@@ -50,7 +50,7 @@ class CheckInWithdrawnItemTest extends APITests {
       .forItem(item)
       .page()
       .by(usersFixture.jessica())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     itemsClient.replace(item.getId(), item.getJson().copy()
@@ -71,7 +71,7 @@ class CheckInWithdrawnItemTest extends APITests {
       .forItem(item)
       .page()
       .by(usersFixture.jessica())
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     itemsClient.replace(item.getId(), item.getJson().copy()

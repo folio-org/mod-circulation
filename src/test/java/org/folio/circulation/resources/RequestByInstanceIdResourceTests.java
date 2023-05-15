@@ -100,7 +100,7 @@ public class RequestByInstanceIdResourceTests {
     instanceRequest.put("requestDate", formatDateTime(requestDate));
     instanceRequest.put("requesterId", UUID.randomUUID().toString());
     instanceRequest.put("pickupServicePointId", pickupServicePointId == null ? UUID.randomUUID().toString() : pickupServicePointId.toString());
-    instanceRequest.put("fulfilmentPreference", "Hold Shelf");
+    instanceRequest.put("fulfillmentPreference", "Hold Shelf");
     instanceRequest.put("requestExpirationDate", formatDateTime(requestExpirationDate));
 
     return instanceRequest;

@@ -135,7 +135,7 @@ class ClosedRequestTests extends APITests {
     // make requests for smallAngryPlanet
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ClockUtil.getZonedDateTime().minusHours(4))

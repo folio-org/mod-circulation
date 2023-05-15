@@ -94,7 +94,7 @@ class RequestsAPIRetrievalTests extends APITests {
         .withInstanceId(smallAngryPlanet.getInstanceId())
         .by(sponsor)
         .proxiedBy(proxy)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withRequestExpiration(LocalDate.of(2017, 7, 30))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
@@ -116,7 +116,7 @@ class RequestsAPIRetrievalTests extends APITests {
     assertThat(representation.getString("holdingsRecordId"), is(smallAngryPlanet.getHoldingsRecordId()));
     assertThat(representation.getString("instanceId"), is(smallAngryPlanet.getInstanceId()));
     assertThat(representation.getString("requesterId"), is(sponsor.getId()));
-    assertThat(representation.getString("fulfilmentPreference"), is("Hold Shelf"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Hold Shelf"));
     assertThat(representation.getString("requestExpirationDate"), is("2017-07-30T23:59:59.000Z"));
     assertThat(representation.getString("holdShelfExpirationDate"), is("2017-08-31"));
     assertThat(representation.getString("patronComments"), is("I need the book"));
@@ -338,7 +338,7 @@ class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
-    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));
 
     assertThat("Request should have a delivery address",
@@ -497,7 +497,7 @@ class RequestsAPIRetrievalTests extends APITests {
 
     assertThat(representation.getString("id"), is(not(emptyString())));
     assertThat(representation.getString("requestType"), is("Recall"));
-    assertThat(representation.getString("fulfilmentPreference"), is("Delivery"));
+    assertThat(representation.getString("fulfillmentPreference"), is("Delivery"));
     assertThat(representation.getString("deliveryAddressTypeId"), is(workAddressType.getId()));
 
     assertThat("Request should have a delivery address",
@@ -774,7 +774,7 @@ class RequestsAPIRetrievalTests extends APITests {
         .forItem(smallAngryPlanet)
         .by(sponsor)
         .proxiedBy(proxy)
-        .fulfilToHoldShelf()
+        .fulfillToHoldShelf()
         .withRequestExpiration(LocalDate.of(2017, 7, 31))
         .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
         .withPickupServicePointId(pickupServicePointId)
@@ -796,7 +796,7 @@ class RequestsAPIRetrievalTests extends APITests {
     hasProperty("itemId", request, "request");
     hasProperty("instanceId", request, "request");
     hasProperty("holdingsRecordId", request, "request");
-    hasProperty("fulfilmentPreference", request, "request");
+    hasProperty("fulfillmentPreference", request, "request");
     hasProperty("item", request, "request");
     hasProperty("requester", request, "request");
     hasProperty("status", request, "request");

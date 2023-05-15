@@ -2007,7 +2007,7 @@ class CheckOutByBarcodeTests extends APITests {
       .recall()
       .forItem(item)
       .by(charlotte)
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     assertThat(placeRequestResponse.getStatusCode(), is(201));
   }

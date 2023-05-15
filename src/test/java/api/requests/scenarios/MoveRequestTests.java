@@ -470,7 +470,7 @@ class MoveRequestTests extends APITests {
     // make requests for itemToMoveFrom
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .hold()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(itemToMoveFrom.getId())
       .withInstanceId(itemToMoveFrom.getInstanceId())
       .withRequestDate(getZonedDateTime())
@@ -690,7 +690,7 @@ class MoveRequestTests extends APITests {
     // make requests for itemToMoveFrom
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(itemToMoveFrom.getId())
       .withInstanceId(itemToMoveFrom.getInstanceId())
       .withRequestDate(getZonedDateTime().minusHours(4))
@@ -1186,7 +1186,7 @@ class MoveRequestTests extends APITests {
     // Create recall request for 'itemToMoveFrom' item to Steve
     IndividualResource recallRequestBySteve = requestsFixture.place(new RequestBuilder()
       .recall()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(itemToMoveFrom.getId())
       .withInstanceId(itemToMoveFrom.getInstanceId())
       .withRequesterId(steveUser.getId())

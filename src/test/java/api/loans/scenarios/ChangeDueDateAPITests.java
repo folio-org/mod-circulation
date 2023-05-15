@@ -180,7 +180,7 @@ class ChangeDueDateAPITests extends APITests {
       .hold()
       .forItem(item)
       .by(usersFixture.steve())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     changeDueDateFixture.changeDueDate(new ChangeDueDateRequestBuilder()
       .forLoan(loan.getId())
@@ -376,7 +376,7 @@ class ChangeDueDateAPITests extends APITests {
       .recall()
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
 
     Response recalledLoan = loansClient.getById(initialLoan.getId());
 
@@ -425,7 +425,7 @@ class ChangeDueDateAPITests extends APITests {
       .recall()
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
     Response recalledLoan = loansClient.getById(initialLoan.getId());
 
     assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
@@ -485,7 +485,7 @@ class ChangeDueDateAPITests extends APITests {
       .withInstanceId(instanceId)
       .forItem(smallAngryPlanet)
       .by(usersFixture.charlotte())
-      .fulfilToHoldShelf(servicePointsFixture.cd1()));
+      .fulfillToHoldShelf(servicePointsFixture.cd1()));
     Response recalledLoan = loansClient.getById(initialLoan.getId());
 
     assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
