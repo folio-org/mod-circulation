@@ -209,7 +209,7 @@ public class TemplateContextUtil {
     Location location = item.getLocation();
 
     if (location != null) {
-      log.info("createItemContext:: location is no null");
+      log.info("createItemContext:: location is not null");
 
       itemContext
         .put("effectiveLocationSpecific", location.getName())
