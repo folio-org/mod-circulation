@@ -212,11 +212,15 @@ public class TemplateContextUtil {
 
       itemContext
         .put("effectiveLocationSpecific", location.getName())
-        .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
         .put("effectiveLocationInstitution", location.getInstitutionName())
         .put("effectiveLocationDiscoveryDisplayName", location.getDiscoveryDisplayName());
+
+      var primaryServicePoint = location.getPrimaryServicePoint();
+      if (primaryServicePoint != null) {
+        itemContext.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName());
+      }
     }
 
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
