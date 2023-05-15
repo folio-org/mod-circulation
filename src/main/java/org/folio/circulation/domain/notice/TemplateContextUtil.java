@@ -208,6 +208,8 @@ public class TemplateContextUtil {
     Location location = item.getLocation();
 
     if (location != null) {
+      log.info("createItemContext:: primaryServicePoint {}", location.getPrimaryServicePoint());
+
       itemContext
         .put("effectiveLocationSpecific", location.getName())
         .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
