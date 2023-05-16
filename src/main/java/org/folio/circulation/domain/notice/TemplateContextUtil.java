@@ -189,6 +189,7 @@ public class TemplateContextUtil {
    }
 
   private static JsonObject createItemContext(Item item) {
+    log.debug("createItemContext:: parameters item: {}", item);
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
 
@@ -208,23 +209,32 @@ public class TemplateContextUtil {
     Location location = item.getLocation();
 
     if (location != null) {
+      log.info("createItemContext:: location is not null");
+
       itemContext
         .put("effectiveLocationSpecific", location.getName())
-        .put("effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
         .put("effectiveLocationInstitution", location.getInstitutionName())
         .put("effectiveLocationDiscoveryDisplayName", location.getDiscoveryDisplayName());
+
+      var primaryServicePoint = location.getPrimaryServicePoint();
+      if (primaryServicePoint != null) {
+        log.info("createItemContext:: primaryServicePoint is not null");
+        itemContext.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName());
+      }
     }
 
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
     if (callNumberComponents != null) {
+      log.info("createItemContext:: callNumberComponents is not null");
       itemContext
         .put("callNumber", callNumberComponents.getCallNumber())
         .put("callNumberPrefix", callNumberComponents.getPrefix())
         .put("callNumberSuffix", callNumberComponents.getSuffix());
     }
 
+    log.info("createItemContext:: result {}", itemContext);
     return itemContext;
   }
 
