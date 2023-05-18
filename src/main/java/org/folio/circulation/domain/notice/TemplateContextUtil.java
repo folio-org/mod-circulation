@@ -50,6 +50,13 @@ public class TemplateContextUtil {
   }
 
   public static JsonObject createLoanNoticeContextWithoutUser(Loan loan) {
+    log.debug("createLoanNoticeContextWithoutUser:: parameters loan: {}", loan);
+
+    if (loan == null) {
+      log.info("createLoanNoticeContextWithoutUser:: loan is null");
+      return new JsonObject();
+    }
+
     return new JsonObject()
       .put(ITEM, createItemContext(loan.getItem()))
       .put(LOAN, createLoanContext(loan));

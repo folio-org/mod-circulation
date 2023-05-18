@@ -157,10 +157,10 @@ public class PatronActionSessionRepository {
   public CompletableFuture<Result<Collection<PatronSessionRecord>>> findPatronActionSessions(
     Collection<String> sessionIds, PageLimit pageLimit) {
 
-      return new CqlQueryFinder<>(patronActionSessionsStorageClient, "patronActionSessions",
-        PatronSessionRecord::from)
-        .findByQuery(exactMatchAny(SESSION_ID, sessionIds), pageLimit)
-        .thenApply(r -> r.map(MultipleRecords::getRecords));
+    return new CqlQueryFinder<>(patronActionSessionsStorageClient, "patronActionSessions",
+      PatronSessionRecord::from)
+      .findByQuery(exactMatchAny(SESSION_ID, sessionIds), pageLimit)
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   public CompletableFuture<Result<List<PatronSessionRecord>>> findPatronActionSessions(

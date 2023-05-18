@@ -17,6 +17,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -51,6 +52,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class OverdueFineScheduledNoticesProcessingTests extends APITests {
@@ -82,6 +84,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     assertThatNoticesWereSent(TEMPLATE_IDS.get(UPON_AT));
     verifyNumberOfScheduledNotices(0);
@@ -101,6 +104,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, expectedNextRunTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(expectedNextRunTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(expectedNextRunTime));
 
     assertThatNoticesWereSent(TEMPLATE_IDS.get(AFTER));
     verifyNumberOfScheduledNotices(0);
@@ -120,6 +124,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(expectedFirstRunTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(expectedFirstRunTime));
 
     ZonedDateTime expectedSecondRunTime = RECURRING_PERIOD.plusDate(expectedFirstRunTime);
 
@@ -144,6 +149,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime fakeNow = rightAfter(RECURRING_PERIOD.plusDate(expectedFirstRunTime));
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(fakeNow);
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(fakeNow);
 
     ZonedDateTime expectedNextRunTime = RECURRING_PERIOD.plusDate(fakeNow);
 
@@ -172,6 +178,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, firstAfterRunTime);  // send and reschedule
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(firstAfterRunTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(firstAfterRunTime));
 
     ZonedDateTime expectedRecurrenceRunTime = RECURRING_PERIOD.plusDate(firstAfterRunTime);
 
@@ -179,7 +186,8 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(1);
     assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedRecurrenceRunTime);
 
-    verifyNumberOfPublishedEvents(NOTICE, 3);
+    // 3 charges in 2 notices
+    verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
@@ -193,6 +201,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     feeFineActionsClient.delete(actionId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -211,6 +220,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     accountsClient.delete(accountId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -229,6 +239,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     loansClient.delete(loanId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -247,6 +258,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     itemsClient.delete(itemId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -265,6 +277,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     usersClient.delete(userId);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -283,6 +296,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     templateFixture.delete(TEMPLATE_IDS.get(UPON_AT));
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -302,6 +316,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
 
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -322,6 +337,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     accountsClient.replace(accountId, closedAccountJson);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
@@ -336,9 +352,10 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       false));
     verifyNumberOfScheduledNotices(1);
     scheduledNoticeProcessingClient.runFeeFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
     verifyNumberOfScheduledNotices(0);
     JsonObject loanInSentNotice = FakeModNotify.getSentPatronNotices().get(0)
-      .getJsonObject("context").getJsonObject("loan");
+      .getJsonObject("context").getJsonArray("feeCharges").getJsonObject(0).getJsonObject("loan");
 
     assertThat(loanInSentNotice.getString("numberOfRenewalsAllowed"), is("unlimited"));
     assertThat(loanInSentNotice.getString("numberOfRenewalsRemaining"), is("unlimited"));
@@ -389,6 +406,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     switch (triggeringEvent) {
     case OVERDUE_FINE_RETURNED:
       checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .withSessionId(randomUUID().toString())
         .forItem(item)
         .on(checkInDate)
         .at(checkInServicePointId));
@@ -448,9 +466,14 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
     List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
 
-    assertThat(sentNotices, hasSize(expectedTemplateIds.length));
+    long numberOfCharges = sentNotices.stream()
+      .map(notice -> notice.getJsonObject("context").getJsonArray("feeCharges"))
+      .map(JsonArray::size)
+      .reduce(0, Integer::sum);
 
-    Matcher<?> matcher = TemplateContextMatchers.getFeeChargeContextMatcher(account);
+    assertEquals(numberOfCharges, expectedTemplateIds.length);
+
+    Matcher<?> matcher = TemplateContextMatchers.getBundledFeeChargeContextMatcher(account);
 
     Stream.of(expectedTemplateIds)
       .forEach(templateId -> assertThat(sentNotices, hasItem(

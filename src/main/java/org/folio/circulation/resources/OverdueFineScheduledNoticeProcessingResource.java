@@ -3,9 +3,11 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
+import static org.folio.circulation.support.results.Result.ofAsync;
 
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -61,8 +63,27 @@ public class OverdueFineScheduledNoticeProcessingResource
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
 
-    return patronActionSessionRepository.findPatronActionSessions(sessionIdsFromNotices, oneThousand())
-      .thenApply(r -> r.map(sessions -> skipNoticesWithOpenPatronActionSessions(notices, sessions)));
+    CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> noticesWithSessionId;
+    if (sessionIdsFromNotices.isEmpty()) {
+      noticesWithSessionId = ofAsync(MultipleRecords::empty);
+    }
+    else {
+      noticesWithSessionId = patronActionSessionRepository
+        .findPatronActionSessions(sessionIdsFromNotices, oneThousand())
+        .thenApply(r -> r.map(
+          sessions -> skipNoticesWithOpenPatronActionSessions(notices, sessions)));
+    }
+
+    List<ScheduledNotice> noticesWithoutSessionIdList = notices.getRecords()
+      .stream()
+      .filter(notice -> notice.getSessionId() == null)
+      .collect(Collectors.toList());
+    CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> noticesWithoutSessionId =
+      ofAsync(new MultipleRecords<>(noticesWithoutSessionIdList,
+        noticesWithoutSessionIdList.size()));
+
+    return noticesWithSessionId
+      .thenCombine(noticesWithoutSessionId, (r1, r2) -> r1.combine(r2, MultipleRecords::combine));
   }
 
   private static MultipleRecords<ScheduledNotice> skipNoticesWithOpenPatronActionSessions(

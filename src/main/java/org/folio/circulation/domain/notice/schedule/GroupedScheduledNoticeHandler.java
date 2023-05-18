@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createGroupedNoticeContext;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allResultsOf;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -189,7 +190,11 @@ public abstract class GroupedScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("handleResult:: failed to process group of {} notices: {}", notices.size(), failure);
 
-    return ofAsync(() -> notices);
+    // Deleting all notices from the group
+    return notices.stream()
+      .map(notice -> singleNoticeHandler.deleteNotice(notice, failure.toString()))
+      .reduce(emptyAsync(), (cf1, cf2) -> cf1.thenCombine(cf2, (r1, r2) -> r1))
+      .thenApply(r -> succeeded(notices));
   }
 
   private Result<List<ScheduledNotice>> handleException(Throwable throwable,

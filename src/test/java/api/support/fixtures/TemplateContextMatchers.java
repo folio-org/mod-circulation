@@ -10,6 +10,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -260,7 +261,11 @@ public class TemplateContextMatchers {
     return allOf(loanContextMatcher, itemContextMatcher, loanPolicyMatcher);
   }
 
-  public static Matcher<?> getFeeChargeContextMatcher(Account account) {
+  public static Matcher<?> getBundledFeeChargeContextMatcher(Account account) {
+    return hasJsonPath("feeCharges[*]", hasItem(getSingleFeeChargeContextMatcher(account)));
+  }
+
+  public static Matcher<?> getSingleFeeChargeContextMatcher(Account account) {
     return allOf(
       hasJsonPath("feeCharge.owner", is(account.getFeeFineOwner())),
       hasJsonPath("feeCharge.type", is(account.getFeeFineType())),
@@ -270,7 +275,7 @@ public class TemplateContextMatchers {
     );
   }
 
-  public static Matcher<Object> getFeeChargeContextMatcher(JsonObject account) {
+  public static Matcher<Object> getSingleFeeChargeContextMatcher(JsonObject account) {
     return allOf(
       hasJsonPath("feeCharge.owner", is(account.getString("feeFineOwner"))),
       hasJsonPath("feeCharge.type", is(account.getString("feeFineType"))),
