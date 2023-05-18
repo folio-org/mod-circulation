@@ -49,7 +49,7 @@ class JsonSchemaValidationTest {
       .withItemId(UUID.randomUUID())
       .withInstanceId(UUID.randomUUID())
       .withRequesterId(UUID.randomUUID())
-      .fulfilToHoldShelf(UUID.randomUUID())
+      .fulfillToHoldShelf(UUID.randomUUID())
       .withRequestDate(ClockUtil.getZonedDateTime())
       .create();
 

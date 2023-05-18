@@ -44,7 +44,7 @@ class PageRequestWorkflowTests extends APITests {
 
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))
@@ -70,7 +70,7 @@ class PageRequestWorkflowTests extends APITests {
 
     IndividualResource requestByJessica = requestsFixture.place(new RequestBuilder()
       .page()
-      .fulfilToHoldShelf()
+      .fulfillToHoldShelf()
       .withItemId(smallAngryPlanet.getId())
       .withInstanceId(smallAngryPlanet.getInstanceId())
       .withRequestDate(ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC))

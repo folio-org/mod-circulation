@@ -19,5 +19,5 @@ public class RequestProperties {
   public static final String CANCELLATION_REASON_NAME = "name";
   public static final String CANCELLATION_REASON_PUBLIC_DESCRIPTION = "publicDescription";
   public static final String REQUESTER_ID = "requesterId";
-  public static final String FULFILMENT_PREFERENCE = "fulfilmentPreference";
+  public static final String FULFILLMENT_PREFERENCE = "fulfillmentPreference";
 }

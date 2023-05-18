@@ -53,7 +53,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.RequestFulfilmentPreference;
+import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
@@ -130,7 +130,7 @@ class RequestFromRepresentationService {
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
-      .thenApply(r -> r.next(this::validateFulfilmentPreference))
+      .thenApply(r -> r.next(this::validatefulfillmentPreference))
       // TODO: do we need to also check here that these IDs are valid UUIDs?
       .thenApply(this::refuseWhenNoInstanceId)
       .thenApply(this::refuseWhenNoItemId)
@@ -452,14 +452,14 @@ class RequestFromRepresentationService {
     return succeeded(request);
   }
 
-  private Result<Request> validateFulfilmentPreference(Request request) {
-    return RequestFulfilmentPreference.allowedValues().stream()
-      .filter(value -> value.equals(request.getFulfilmentPreferenceName()))
+  private Result<Request> validatefulfillmentPreference(Request request) {
+    return RequestFulfillmentPreference.allowedValues().stream()
+      .filter(value -> value.equals(request.getfulfillmentPreferenceName()))
       .findFirst()
       .map(value -> succeeded(request))
-      .orElseGet(() -> failedValidation("fulfilmentPreference must be one of the following: " +
-        join(", ", RequestFulfilmentPreference.allowedValues()), "fulfilmentPreference",
-        request.getFulfilmentPreferenceName()));
+      .orElseGet(() -> failedValidation("fulfillmentPreference must be one of the following: " +
+        join(", ", RequestFulfillmentPreference.allowedValues()), "fulfillmentPreference",
+        request.getfulfillmentPreferenceName()));
   }
 
   private Result<Request> refuseWhenNoInstanceId(Result<Request> result) {

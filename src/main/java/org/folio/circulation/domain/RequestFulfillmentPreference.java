@@ -8,27 +8,27 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public enum RequestFulfilmentPreference {
+public enum RequestFulfillmentPreference {
   NONE(""),
   HOLD_SHELF("Hold Shelf"),
   DELIVERY("Delivery");
 
   private final String value;
 
-  private static final List<RequestFulfilmentPreference> ALLOWED_FULFILMENT_PREFERENCES =
+  private static final List<RequestFulfillmentPreference> ALLOWED_FULFILLMENT_PREFERENCES =
     Arrays.stream(values())
-      .filter(fulfilmentPreference -> fulfilmentPreference != NONE)
+      .filter(fulfillmentPreference -> fulfillmentPreference != NONE)
       .collect(Collectors.toList());
 
-  private static final List<String> ALLOWED_VALUES = ALLOWED_FULFILMENT_PREFERENCES.stream()
-    .map(RequestFulfilmentPreference::getValue)
+  private static final List<String> ALLOWED_VALUES = ALLOWED_FULFILLMENT_PREFERENCES.stream()
+    .map(RequestFulfillmentPreference::getValue)
     .collect(Collectors.toList());
 
-  RequestFulfilmentPreference(String value) {
+  RequestFulfillmentPreference(String value) {
     this.value = value;
   }
 
-  public static RequestFulfilmentPreference from(String value) {
+  public static RequestFulfillmentPreference from(String value) {
     return Arrays.stream(values())
       .filter(status -> status.nameMatches(value))
       .findFirst()
@@ -56,8 +56,8 @@ public enum RequestFulfilmentPreference {
     return equalsIgnoreCase(getValue(), value);
   }
 
-  public static List<RequestFulfilmentPreference> allowedFulfilmentPreferences() {
-    return ALLOWED_FULFILMENT_PREFERENCES;
+  public static List<RequestFulfillmentPreference> allowedFulfillmentPreferences() {
+    return ALLOWED_FULFILLMENT_PREFERENCES;
   }
 
   public static List<String> allowedValues() {

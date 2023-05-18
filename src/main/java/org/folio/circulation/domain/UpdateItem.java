@@ -61,7 +61,7 @@ public class UpdateItem {
     UUID checkInServicePointId) {
 
     Result<Item> itemResult;
-    switch (request.getFulfilmentPreference()) {
+    switch (request.getfulfillmentPreference()) {
       case HOLD_SHELF:
         itemResult = changeItemWithHoldRequest(item, checkInServicePointId, request);
         break;
@@ -69,7 +69,7 @@ public class UpdateItem {
         itemResult = changeItemWithDeliveryRequest(item, request);
         break;
       default:
-        throw new IllegalStateException("Unexpected value: " + request.getFulfilmentPreference());
+        throw new IllegalStateException("Unexpected value: " + request.getfulfillmentPreference());
     }
 
     return itemResult;
