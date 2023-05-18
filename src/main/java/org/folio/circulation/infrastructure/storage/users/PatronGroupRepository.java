@@ -148,11 +148,19 @@ public class PatronGroupRepository {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> findPatronGroupForLoanAndRelatedRecords(
     LoanAndRelatedRecords loanAndRelatedRecords) {
+    System.out.println("Inside findPatronGroupForLoanAndRelatedRecords");
     final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
     return fetcher.findByIds(Collections.singleton(loanAndRelatedRecords.getLoan()
       .getUser().getPatronGroupId()))
-      .thenApply(multiplePatronGroupsResult -> multiplePatronGroupsResult.next(
-        patronGroups -> of(() -> matchGroupToUser(loanAndRelatedRecords, patronGroups))));
+      .thenApply(multiplePatronGroupsResult -> {
+        long i=0;
+        while(i<10000000000L){
+          i++;
+        }
+        System.out.println("After while");
+        return multiplePatronGroupsResult.next(
+          patronGroups -> of(() -> matchGroupToUser(loanAndRelatedRecords, patronGroups)));
+      });
   }
 
   private LoanAndRelatedRecords matchGroupToUser(

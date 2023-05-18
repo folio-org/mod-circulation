@@ -252,7 +252,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
     LoanAndRelatedRecords loanAndRelatedRecords, ItemRepository itemRepository) {
-
+    System.out.println("Inside update item");
     return itemRepository.updateItem(loanAndRelatedRecords.getItem())
       .thenApply(r -> r.map(loanAndRelatedRecords::withItem));
   }
