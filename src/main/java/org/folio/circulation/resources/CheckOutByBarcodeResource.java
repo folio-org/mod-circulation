@@ -14,6 +14,8 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Loan;
@@ -79,6 +81,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private void checkOut(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
+    Map<String, Long> hMap = new LinkedHashMap<>();
+    hMap.put("start",System.currentTimeMillis());
 
     CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
       routingContext.getBodyAsJson());
@@ -120,7 +124,6 @@ public class CheckOutByBarcodeResource extends Resource {
           userRepository));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
-
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
@@ -151,22 +154,71 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
-      .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
-      .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
-      .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
-      .thenComposeAsync(r -> r.after(l -> updateItem(l, itemRepository)))
-      .thenComposeAsync(r -> r.after(loanRepository::createLoan))
-      .thenComposeAsync(r -> r.after(l -> saveCheckOutSessionRecord(l, patronActionSessionService,
-        errorHandler)))
-      .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
-      .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
-        userRepository, errorHandler)))
-      .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
-      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
+      .thenComposeAsync(r -> {
+        hMap.put("requestQueueUpdate", System.currentTimeMillis());
+        return r.after(requestQueueUpdate::onCheckOut);
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("requestScheduledNoticeService start", System.currentTimeMillis());
+        System.out.println("Time taken for request queue update "+(hMap.get("requestScheduledNoticeService start") - hMap.get("requestQueueUpdate")));
+        return r.after(requestScheduledNoticeService::rescheduleRequestNotices);
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("loanService truncateLoanWhenItemRecalled", System.currentTimeMillis());
+        System.out.println("Time taken for reschedule request notice "+(hMap.get("loanService truncateLoanWhenItemRecalled") - hMap.get("requestScheduledNoticeService start")));
+        return r.after(loanService::truncateLoanWhenItemRecalled);
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("findPatronGroupForLoanAndRelatedRecords", System.currentTimeMillis());
+        System.out.println("Time taken for truncateLoanWhenItemRecalled "+(hMap.get("findPatronGroupForLoanAndRelatedRecords") - hMap.get("loanService truncateLoanWhenItemRecalled")));
+        return r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords);
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("updateItem", System.currentTimeMillis());
+        System.out.println("Time taken for findPatronGroupForLoanAndRelatedRecords "+(hMap.get("updateItem")-hMap.get("findPatronGroupForLoanAndRelatedRecords")));
+        return r.after(l -> updateItem(l, itemRepository));
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("createLoan", System.currentTimeMillis());
+        System.out.println("Time taken for update item "+(hMap.get("createLoan")-hMap.get("updateItem")));
+        return r.after(loanRepository::createLoan);
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("saveCheckOutSessionRecord", System.currentTimeMillis());
+        System.out.println("Time taken for create Loan "+(hMap.get("saveCheckOutSessionRecord")-hMap.get("createLoan")));
+        return r.after(l -> saveCheckOutSessionRecord(l, patronActionSessionService,
+          errorHandler));
+      })
+      .thenApplyAsync(r -> {
+        hMap.put("withLoggedInUserId", System.currentTimeMillis());
+        System.out.println("Time taken for saveCheckOutSessionRecord "+(hMap.get("withLoggedInUserId")-hMap.get("saveCheckOutSessionRecord")));
+        return r.map(records -> records.withLoggedInUserId(context.getUserId()));
+      })
+      .thenComposeAsync(r -> {
+        hMap.put("publishItemCheckedOutEvent", System.currentTimeMillis());
+        System.out.println("Time taken for map records with loggedInUserId "+(hMap.get("publishItemCheckedOutEvent")-hMap.get("withLoggedInUserId")));
+        return r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
+          userRepository, errorHandler));
+      })
+      .thenApply(r -> {
+        hMap.put("scheduleNoticesForLoanDueDate", System.currentTimeMillis());
+        System.out.println("Time taken for publishItemCheckedOutEvent "+(hMap.get("scheduleNoticesForLoanDueDate")-hMap.get("publishItemCheckedOutEvent")));
+        return r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate);
+      })
+      .thenApply(r -> {
+        hMap.put("getLoan", System.currentTimeMillis());
+        System.out.println("Time taken for scheduleNoticesForLoanDueDate "+(hMap.get("getLoan")-hMap.get("scheduleNoticesForLoanDueDate")));
+        System.out.println("Time taken for entire update operation to complete  "+(hMap.get("getLoan")-hMap.get("requestQueueUpdate")));
+        return r.map(LoanAndRelatedRecords::getLoan);
+      })
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> createdLoanFrom(r, errorHandler))
-      .thenAccept(context::writeResultToHttpResponse);
+      .thenAccept(x -> {
+         hMap.put("end", System.currentTimeMillis());
+         System.out.println("Time taken for entire checkout "+(hMap.get("end")-hMap.get("start")));
+         System.out.println("hMap " +hMap );
+        context.writeResultToHttpResponse(x);
+      });
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
