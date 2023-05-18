@@ -1899,6 +1899,22 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(recallAfterCheckIn.getString("itemId"), is(loanableItemId));
   }
 
+  @Test
+  void checkInShouldNotFailIfNoPrimaryServicePointForItemLocation() {
+    var homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(UUID.randomUUID()));
+    var nod = itemsFixture.basedUponNod(
+      item -> item.withTemporaryLocation(homeLocation.getId()));
+
+    var itemRepresentation = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(servicePointsFixture.cd1().getId())
+      ).getItem();
+
+    assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Available"));
+  }
+
   private JsonObject buildCheckedOutItemWithHoldingRecordsId(UUID holdingRecordsId) {
     return new ItemBuilder()
       .forHolding(holdingRecordsId)
