@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,6 +19,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -32,6 +35,8 @@ import org.folio.circulation.support.results.Result;
 
 public class PatronGroupRepository {
   private final CollectionResourceClient patronGroupsStorageClient;
+
+  final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public PatronGroupRepository(Clients clients) {
     patronGroupsStorageClient = clients.patronGroupsStorage();
@@ -148,7 +153,7 @@ public class PatronGroupRepository {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> findPatronGroupForLoanAndRelatedRecords(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    System.out.println("Inside findPatronGroupForLoanAndRelatedRecords");
+    log.info("Inside findPatronGroupForLoanAndRelatedRecords");
     final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
     return fetcher.findByIds(Collections.singleton(loanAndRelatedRecords.getLoan()
       .getUser().getPatronGroupId()))
@@ -157,7 +162,7 @@ public class PatronGroupRepository {
         while(i<10000000000L){
           i++;
         }
-        System.out.println("After while");
+        log.info("After while");
         return multiplePatronGroupsResult.next(
           patronGroups -> of(() -> matchGroupToUser(loanAndRelatedRecords, patronGroups)));
       });
@@ -166,7 +171,7 @@ public class PatronGroupRepository {
   private LoanAndRelatedRecords matchGroupToUser(
     LoanAndRelatedRecords loanAndRelatedRecords,
     MultipleRecords<PatronGroup> patronGroups) {
-
+    log.info("Inside matchGroupToUser");
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
    return loanAndRelatedRecords.withLoan(loanAndRelatedRecords.getLoan()

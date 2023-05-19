@@ -111,7 +111,10 @@ public class ItemRepository {
 
     return itemsClient.put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
-      .thenCompose(x -> ofAsync(() -> item));
+      .thenCompose(x -> ofAsync(() -> {
+        log.info("update item is about to complete");
+        return item;
+      }));
   }
 
   public CompletableFuture<Result<Item>> getFirstAvailableItemByInstanceId(String instanceId) {
