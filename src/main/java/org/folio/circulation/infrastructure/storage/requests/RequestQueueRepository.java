@@ -74,12 +74,10 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
-    log.debug("getByInstanceId:: parameters instanceId: {}", instanceId);
     return get("instanceId", instanceId, List.of(ITEM, TITLE));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
-    log.debug("getByItemId:: parameters itemId: {}", itemId);
     return get("itemId", itemId, List.of(ITEM));
   }
 
