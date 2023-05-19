@@ -11,7 +11,10 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +24,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
@@ -37,6 +42,7 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 
 public class AccountRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String LOAN_ID_FIELD_NAME = "loanId";
   private static final String ACCOUNT_ID_FIELD_NAME = "accountId";
   private static final String ACCOUNTS_COLLECTION_PROPERTY_NAME = "accounts";
@@ -50,8 +56,10 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Loan>> findAccountsAndActionsForLoan(Result<Loan> loanResult) {
+    log.debug("findAccountsAndActionsForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult.after(loan -> {
       if (loan == null) {
+        log.warn("findAccountsAndActionsForLoan:: loan is null");
         return completedFuture(loanResult);
       }
       return loanResult.combineAfter(r -> fetchAccountsAndActionsForLoan(loan.getId()),
@@ -69,6 +77,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
+    log.debug("findAccountsForLoan:: parameters loan: {}", loan);
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
       .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
@@ -77,6 +86,7 @@ public class AccountRepository {
 
   public CompletableFuture<Result<Collection<Account>>> findAccountsForLoanByQuery(Loan loan,
     Result<CqlQuery> query) {
+    log.debug("findAccountsForLoanByQuery:: parameters loan: {}, query: {}", () -> loan, () -> resultAsString(query));
 
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
       .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()).combine(query, CqlQuery::and))
@@ -89,6 +99,7 @@ public class AccountRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
     MultipleRecords<Loan> multipleLoans) {
+    log.debug("findAccountsForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
 
     if (multipleLoans.getRecords().isEmpty()) {
       return completedFuture(succeeded(multipleLoans));
@@ -120,6 +131,7 @@ public class AccountRepository {
 
   public CompletableFuture<Result<MultipleRecords<Account>>> findFeeFineActionsForAccounts(
       MultipleRecords<Account> multipleAccounts) {
+    log.debug("findFeeFineActionsForAccounts:: parameters multipleAccounts: {}", () -> multipleRecordsAsString(multipleAccounts));
 
     if (multipleAccounts.getRecords().isEmpty()) {
       return completedFuture(succeeded(multipleAccounts));
@@ -153,7 +165,9 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> findAccountForAction(FeeFineAction action) {
+    log.debug("findAccountForAction:: parameters action: {}", action);
     if (isNull(action)) {
+      log.warn("findAccountForAction:: action is null");
       return ofAsync(() -> null);
     }
 
@@ -161,7 +175,9 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> findById(String id) {
+    log.debug("findById:: parameters id: {}", id);
     if(isNull(id)) {
+      log.warn("findById:: id is null");
       return ofAsync(() -> null);
     }
 
@@ -173,6 +189,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> create(StoredAccount account) {
+    log.debug("create:: parameters account: {}", account);
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::from))
       .otherwise(forwardOnFailure());
@@ -182,6 +199,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Void>> update(StoredAccount account) {
+    log.debug("update:: parameters account: {}", account);
     final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
       .on(204, succeeded(null))
       .otherwise(forwardOnFailure());

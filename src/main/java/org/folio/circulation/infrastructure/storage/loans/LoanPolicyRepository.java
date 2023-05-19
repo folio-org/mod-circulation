@@ -6,7 +6,11 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,6 +19,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -35,6 +41,7 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy> {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient fixedDueDateSchedulesStorageClient;
 
   public LoanPolicyRepository(Clients clients) {
@@ -44,7 +51,9 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
     LoanAndRelatedRecords relatedRecords) {
+    log.debug("lookupLoanPolicy:: parameters: relatedRecords: {}", relatedRecords);
     if (relatedRecords.getLoan() == null || relatedRecords.getLoan().getUser() == null) {
+      log.warn("lookupLoanPolicy:: loan or user is null");
       return ofAsync(() -> relatedRecords);
     }
     return Result.of(relatedRecords::getLoan)
@@ -54,6 +63,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   public CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
     RenewalContext renewalContext) {
+    log.debug("lookupLoanPolicy:: parameters renewalContext: {}", renewalContext);
 
     return Result.of(renewalContext::getLoan)
       .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
@@ -61,17 +71,20 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   public CompletableFuture<Result<Loan>> findPolicyForLoan(Result<Loan> loanResult) {
+    log.debug("findPolicyForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult.after(loan ->
       getLoanPolicyById(loan.getLoanPolicyId())
       .thenApply(result -> result.map(loan::withLoanPolicy)));
   }
 
   public CompletableFuture<Result<Loan>> findPolicyForLoan(Loan loan) {
+    log.debug("findPolicyForLoan:: parameters loan: {}", loan);
     return getLoanPolicyById(loan.getLoanPolicyId())
         .thenApply(result -> result.map(loan::withLoanPolicy));
   }
 
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
+    log.debug("getLoanPolicyById:: parameters loanPolicyId: {}", loanPolicyId);
     if (isNull(loanPolicyId)) {
       return ofAsync(() -> unknown(null));
     }
@@ -84,6 +97,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLoanPoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
+    log.debug("findLoanPoliciesForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
     Collection<Loan> loans = multipleLoans.getRecords();
 
     return getLoanPolicies(loans)
@@ -94,6 +108,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   private CompletableFuture<Result<Map<String, LoanPolicy>>> getLoanPolicies(Collection<Loan> loans) {
+    log.debug("getLoanPolicies:: parameters loans: {}", () -> collectionAsString(loans));
     final Collection<String> loansToFetch = loans.stream()
             .map(Loan::getLoanPolicyId)
             .filter(Objects::nonNull)
@@ -112,6 +127,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   @Override
   public CompletableFuture<Result<LoanPolicy>> lookupPolicy(Loan loan) {
+    log.debug("lookupPolicy:: parameters loan: {}", loan);
     return super.lookupPolicy(loan)
       .thenComposeAsync(r -> r.after(this::lookupSchedules));
   }

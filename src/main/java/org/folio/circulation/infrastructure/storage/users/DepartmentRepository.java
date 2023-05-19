@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 public class DepartmentRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -32,7 +34,9 @@ public class DepartmentRepository {
   }
 
   public CompletableFuture<Result<User>> findDepartmentsForUser(Result<User> user) {
+    log.debug("findDepartmentsForUser:: parameters user: {}", () -> resultAsString(user));
     if(user == null || user.value() == null){
+      log.warn("findDepartmentsForUser:: user is null");
       return completedFuture(succeeded(null));
     }
     return user.combineAfter(this::findDepartments, User::withDepartments);
@@ -40,6 +44,8 @@ public class DepartmentRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findDepartmentsForRequestUsers(
     MultipleRecords<Request> multipleRequests) {
+    log.debug("findDepartmentsForRequestUsers:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
     List<String> departmentIds = multipleRequests.getRecords().stream()
       .filter(req -> req.getRequester() != null)
       .map(req -> req.getRequester().getDepartmentIds())

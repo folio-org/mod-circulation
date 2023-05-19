@@ -9,6 +9,9 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -49,15 +52,19 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUser(UserRelatedRecord userRelatedRecord) {
+    log.debug("getUSer:: parameters userRelatedRecord: {}", userRelatedRecord);
     return getUser(userRelatedRecord.getUserId());
   }
 
   public CompletableFuture<Result<User>> getUserWithPatronGroup(UserRelatedRecord userRelatedRecord) {
+    log.debug("getUserWithPatronGroup:: parameters userRelatedRecord: {}", userRelatedRecord);
     return getUserWithPatronGroup(userRelatedRecord.getUserId());
   }
 
   public CompletableFuture<Result<User>> getProxyUser(UserRelatedRecord userRelatedRecord) {
+    log.debug("getProxyUser:: parameters userRelatedRecord: {}", userRelatedRecord);
     if (userRelatedRecord.getProxyUserId() == null) {
+      log.warn("getProxyUser:: proxyUserId is null");
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
@@ -65,7 +72,9 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUser(String userId) {
+    log.debug("getUser:: parameters userId: {}", userId);
     if(isNull(userId)) {
+      log.warn("getUser:: userId is null");
       return ofAsync(() -> null);
     }
 
@@ -77,7 +86,9 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUserWithPatronGroup(String userId) {
+    log.debug("getUserWithPatronGroup:: parameters userId: {}", userId);
     if(isNull(userId)) {
+      log.warn("getUserWithPatronGroup:: userId is null");
       return ofAsync(() -> null);
     }
 
@@ -97,6 +108,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {
+    log.debug("findUserForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult.after(loan -> getUser(loan.getUserId())
       .thenApply(userResult ->
         userResult.map(user -> {
@@ -113,6 +125,7 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findUsersForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
+    log.debug("findUsersForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
     Collection<Loan> loans = multipleLoans.getRecords();
 
     return getUsersForLoans(loans)
@@ -121,6 +134,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<Collection<Loan>>> findUsersForLoans(Collection<Loan> loans) {
+    log.debug("findUsersForLoans:: parameters loans: {}", () -> collectionAsString(loans));
     return getUsersForLoans(loans)
       .thenApply(r -> r.map(users -> loans.stream()
         .map(loan -> loan.withUser(users.getOrDefault(loan.getUserId(), null)))
@@ -147,6 +161,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<Map<String, User>>> getUsersForUserIds(Collection<String> ids) {
+    log.debug("getUsersForUserIds:: parameters ids: {}", () -> collectionAsString(ids));
     final FindWithMultipleCqlIndexValues<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(ids)
@@ -154,7 +169,9 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
+    log.debug("getUserFailOnNotFound:: parameters userId: {}", userId);
     if(isNull(userId)) {
+      log.warn("getUserFailOnNotFound:: userId is null");
       return completedFuture(failedValidation("user is not found", "userId", userId));
     }
 
@@ -166,6 +183,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getProxyUserByBarcode(String barcode) {
+    log.debug("getProxyUserByBarcode:: parameters barcode: {}", barcode);
     //Not proxying, so no need to get proxy user
     if (StringUtils.isBlank(barcode)) {
       return completedFuture(succeeded(null));
@@ -175,6 +193,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUserByBarcode(String barcode) {
+    log.debug("getUserByBarcode:: parameters barcode: {}", barcode);
     return getUserByBarcode(barcode, "userBarcode");
   }
 
@@ -194,6 +213,7 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
+    log.debug("findUsersForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
     return findUsersByRequests(multipleRequests.getRecords())
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> of(() ->
@@ -204,6 +224,7 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<User>>> findUsersByRequests(
     Collection<Request> requests) {
 
+    log.debug("findUsersByRequests:: parameters requests: {}", () -> collectionAsString(requests));
     final List<String> usersToFetch = requests.stream()
       .map(this::getUsersFromRequest)
       .flatMap(Collection::stream)
@@ -211,6 +232,7 @@ public class UserRepository {
       .collect(Collectors.toList());
 
     if (usersToFetch.isEmpty()) {
+      log.warn("findUsersByRequests:: no users to fetch");
       return completedFuture(succeeded(MultipleRecords.empty()));
     }
 

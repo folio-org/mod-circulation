@@ -40,6 +40,7 @@ public class RequestPolicyRepository {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> lookupRequestPolicy(
     RequestAndRelatedRecords relatedRecords) {
+    log.debug("lookupRequestPolicy:: parameters relatedRecords: {}", relatedRecords);
 
     Request request = relatedRecords.getRequest();
 
@@ -48,6 +49,7 @@ public class RequestPolicyRepository {
   }
 
   public CompletableFuture<Result<Request>> lookupRequestPolicies(Request request) {
+    log.debug("lookupRequestPolicies:: parameters request: {}", request);
 
     return allOf(request.getInstanceItems(), Item::getItemId,
       item -> lookupRequestPolicy(item, request.getRequester()))
@@ -55,6 +57,7 @@ public class RequestPolicyRepository {
   }
 
   public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
+    log.debug("lookupRequestPolicy:: parameters item: {}, user: {}", item, user);
     return lookupRequestPolicyId(item, user)
       .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
       .thenApply(result -> result.map(RequestPolicy::from));

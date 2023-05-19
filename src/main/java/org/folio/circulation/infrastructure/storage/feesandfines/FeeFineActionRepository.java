@@ -40,6 +40,7 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
+    log.debug("create:: parameters feeFineAction: {}", feeFineAction);
     final ResponseInterpreter<FeeFineAction> interpreter =
       new ResponseInterpreter<FeeFineAction>()
         .flatMapOn(201, mapUsingJson(FeeFineAction::from))
@@ -50,7 +51,9 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findById(String id) {
+    log.debug("findById:: parameters id: {}", id);
     if(isNull(id)) {
+      log.warn("findById:: id is null");
       return ofAsync(() -> null);
     }
 

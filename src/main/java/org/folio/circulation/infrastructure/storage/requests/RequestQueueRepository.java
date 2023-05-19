@@ -10,6 +10,7 @@ import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -35,18 +36,20 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class RequestQueueRepository {
-  private static final Logger LOG = LogManager.getLogger(RequestQueueRepository.class);
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final PageLimit MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE = oneThousand();
   private final RequestRepository requestRepository;
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> get(LoanAndRelatedRecords records) {
+    log.debug("get:: parameters loanAndRelatedRecords: {}", records);
     Item item = records.getItem();
     return getQueue(records.getTlrSettings(), item.getInstanceId(), item.getItemId())
       .thenApply(mapResult(records::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> get(RequestAndRelatedRecords records) {
+    log.debug("get:: parameters requestAndRelatedRecords: {}", records);
     Request request = records.getRequest();
 
     return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(), request.getItemId())
@@ -62,6 +65,7 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext context) {
+    log.debug("get:: parameters renewalContext: {}", context);
     return getQueue(
       context.getTlrSettings(),
       context.getLoan().getItem().getInstanceId(),
@@ -70,10 +74,12 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
+    log.debug("getByInstanceId:: parameters instanceId: {}", instanceId);
     return get("instanceId", instanceId, List.of(ITEM, TITLE));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
+    log.debug("getByItemId:: parameters itemId: {}", itemId);
     return get("itemId", itemId, List.of(ITEM));
   }
 
@@ -98,6 +104,7 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> getRequestQueueWithoutItemLookup(String itemId) {
+    log.debug("getRequestQueueWithoutItemLookup:: parameters itemId: {}", itemId);
     final Result<CqlQuery> itemIdQuery = exactMatch("itemId", itemId);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
 
@@ -111,12 +118,13 @@ public class RequestQueueRepository {
 
   public CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
+    log.debug("updateRequestsWithChangedPositions:: parameters requestQueue: {}", requestQueue);
 
     Collection<Request> requestsWithChangedPosition = requestQueue
       .getRequestsWithChangedPosition();
 
     if (requestsWithChangedPosition.isEmpty()) {
-      LOG.info("No requests with changed positions found");
+      log.info("No requests with changed positions found");
       return completedFuture(succeeded(requestQueue));
     }
 

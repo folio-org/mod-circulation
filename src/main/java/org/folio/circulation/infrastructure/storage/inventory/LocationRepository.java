@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -76,17 +77,21 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> getEffectiveLocation(Item item) {
+    log.debug("getEffectiveLocation:: parameters item: {}", item);
     return getLocation(item, Item::getEffectiveLocationId);
   }
 
   public CompletableFuture<Result<Location>> getPermanentLocation(Item item) {
+    log.debug("getPermanentLocation:: parameters item: {}", item);
     return getLocation(item, Item::getPermanentLocationId);
   }
 
   private CompletableFuture<Result<Location>> getLocation(Item item,
     Function<Item, String> locationIdGetter) {
+    log.debug("getPermanentLocation:: parameters item: {}", item);
 
     if (item == null || locationIdGetter.apply(item) == null) {
+      log.warn("getPermanentLocation:: item or locationId is null");
       return ofAsync(() -> Location.unknown(null));
     }
 
@@ -111,6 +116,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
     Collection<Item> inventoryRecords) {
+    log.debug("getItemLocations:: parameters inventoryRecords: {}", () -> collectionAsString(inventoryRecords));
 
     final var locationIds = new MultipleRecords<>(inventoryRecords, inventoryRecords.size())
       .toKeys(Item::getEffectiveLocationId);
@@ -142,7 +148,9 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> loadCampus(Location location) {
+    log.debug("loadCampus:: parameters location: {}", location);
     if(isNull(location) || isNull(location.getCampusId())) {
+      log.warn("loadCampus:: location or campusId is null");
       return ofAsync(() -> location);
     }
 
@@ -153,7 +161,9 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> loadInstitution(Location location) {
+    log.debug("loadInstitution:: parameters location: {}", location);
     if(isNull(location) || isNull(location.getInstitutionId())) {
+      log.warn("loadInstitution:: location or institutionId is null");
       return ofAsync(() -> location);
     }
 
@@ -175,6 +185,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Library>>> getLibraries(
           Collection<Location> locations) {
+    log.debug("getLibraries:: parameters locations: {}", () -> collectionAsString(locations));
 
     final var fetcher
       = findWithMultipleCqlIndexValues(librariesStorageClient, "loclibs",
@@ -188,6 +199,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Campus>>> getCampuses(
     Collection<Location> locations) {
+    log.debug("getCampuses:: parameters locations: {}", () -> collectionAsString(locations));
 
     final var fetcher
       = findWithMultipleCqlIndexValues(campusesStorageClient, "loccamps",
@@ -201,6 +213,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Institution>>> getInstitutions(
     Collection<Location> locations) {
+    log.debug("getInstitutions:: parameters locations: {}", () -> collectionAsString(locations));
 
     final var fetcher
       = findWithMultipleCqlIndexValues(institutionsStorageClient, "locinsts",

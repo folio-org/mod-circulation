@@ -5,13 +5,18 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.MultipleRecords;
@@ -28,12 +33,14 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePolicyRepository extends CirculationPolicyRepository<OverdueFinePolicy> {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public OverdueFinePolicyRepository(Clients clients) {
     super(clients.overdueFinesPoliciesStorage(), clients);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
     LoanAndRelatedRecords relatedRecords) {
+    log.debug("lookupOverdueFinePolicy:: parameters relatedRecords: {}", relatedRecords);
 
     return Result.of(relatedRecords::getLoan)
       .combineAfter(this::lookupPolicy, Loan::withOverdueFinePolicy)
@@ -55,6 +62,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
 
   public CompletableFuture<Result<MultipleRecords<Loan>>>
     findOverdueFinePoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
+    log.debug("findOverdueFinePoliciesForLoans:: parameters multipleLoans: {}", () ->  multipleRecordsAsString(multipleLoans));
 
     Collection<Loan> loans = multipleLoans.getRecords();
 
@@ -86,6 +94,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
   }
 
   public CompletableFuture<Result<Loan>> findOverdueFinePolicyForLoan(Result<Loan> loanResult) {
+    log.debug("findOverdueFinePolicyForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult.after(loan ->
       getOverdueFinePolicyById(loan.getOverdueFinePolicyId())
         .thenApply(result -> result.map(loan::withOverdueFinePolicy)));

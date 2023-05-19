@@ -3,9 +3,13 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MaterialType;
 import org.folio.circulation.domain.MultipleRecords;
@@ -16,6 +20,7 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
 public class MaterialTypeRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient materialTypesStorageClient;
 
   public MaterialTypeRepository(Clients clients) {
@@ -23,9 +28,11 @@ public class MaterialTypeRepository {
   }
 
   public CompletableFuture<Result<MaterialType>> getFor(Item item) {
+    log.debug("getFor:: parameters item: {}", () -> item);
     final String materialTypeId = item.getMaterialTypeId();
 
     if (isNull(materialTypeId)) {
+      log.warn("getFor:: materialTypeId is null");
       return Result.ofAsync(() -> MaterialType.unknown(null));
     }
 
@@ -39,6 +46,7 @@ public class MaterialTypeRepository {
 
   public CompletableFuture<Result<MultipleRecords<MaterialType>>> getMaterialTypes(
     MultipleRecords<Item> inventoryRecords) {
+    log.debug("getMaterialTypes:: parameters inventoryRecords: {}", () -> multipleRecordsAsString(inventoryRecords));
 
     final var mapper = new MaterialTypeMapper();
 
