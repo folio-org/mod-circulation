@@ -32,19 +32,22 @@ public class FeeFineOwnerRepository {
   }
 
   public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(String servicePointId) {
+
     log.debug("findOwnerForServicePoint:: parameters servicePointId: {}", servicePointId);
     return findOwners(Collections.singleton(servicePointId))
       .thenApply(mapResult(MultipleRecords::firstOrNull));
   }
 
   public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(UUID servicePointId) {
+
     log.debug("findOwnerForServicePoint:: parameters servicePointId: {}", servicePointId);
     return findOwnerForServicePoint(servicePointId.toString());
   }
 
   public CompletableFuture<Result<Collection<FeeFineOwner>>> findOwnersForServicePoints(
     Collection<String> servicePointIds) {
-    log.debug("findOwnersForServicePoints:: parameters servicePointIds: {}", () -> collectionAsString(servicePointIds));
+
+    log.debug("findOwnersForServicePoints:: parameters servicePointIds: {}", collectionAsString(servicePointIds));
 
     return findOwners(servicePointIds)
       .thenApply(mapResult(MultipleRecords::getRecords));
@@ -52,7 +55,8 @@ public class FeeFineOwnerRepository {
 
   private CompletableFuture<Result<MultipleRecords<FeeFineOwner>>> findOwners(
     Collection<String> servicePointIds) {
-    log.debug("findOwners:: parameters servicePointIds: {}", () -> collectionAsString(servicePointIds));
+
+    log.debug("findOwners:: parameters servicePointIds: {}", collectionAsString(servicePointIds));
 
     return feeFineOwnersFetcher.find(MultipleCqlIndexValuesCriteria.builder()
       .indexName(SERVICE_POINT_OWNER_KEY)

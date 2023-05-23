@@ -30,6 +30,7 @@ public class FeeFineRepository {
   }
 
   public CompletableFuture<Result<FeeFine>> getFeeFine(String type, boolean automatic) {
+
     log.debug("getFeeFine:: parameters type: {}, automatic: {}", type, automatic);
     return getFeeFines(Collections.singleton(type), automatic)
       .thenApply(r -> r.map(col -> col.stream().findFirst().orElse(null)));
@@ -48,6 +49,7 @@ public class FeeFineRepository {
   }
 
   public CompletableFuture<Result<Collection<FeeFine>>> getAutomaticFeeFines(Collection<String> types) {
+
     log.debug("getAutomaticFeeFines:: parameters types: {}", () -> collectionAsString(types));
     return getFeeFines(types, true);
   }
@@ -57,6 +59,7 @@ public class FeeFineRepository {
   }
 
   public CompletableFuture<Result<FeeFine>> create(FeeFine feeFine) {
+
     log.debug("create:: parameters feeFine: {}", feeFine);
     final ResponseInterpreter<FeeFine> interpreter = new ResponseInterpreter<FeeFine>()
       .flatMapOn(201, mapUsingJson(FeeFine::from))

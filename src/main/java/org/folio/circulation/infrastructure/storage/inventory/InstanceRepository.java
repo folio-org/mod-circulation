@@ -57,7 +57,8 @@ public class InstanceRepository {
 
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
-    log.debug("findInstancesForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+
+    log.debug("findInstancesForRequests:: parameters multipleRequests: {}", multipleRecordsAsString(multipleRequests));
 
     Collection<Request> requests = multipleRequests.getRecords();
     final List<String> instanceIdsToFetch = requests.stream()
@@ -89,7 +90,8 @@ public class InstanceRepository {
   }
 
   private Function<Request, Request> getRequestMapper(MultipleRecords<Instance> multipleInstances) {
-    log.debug("getRequestMapper:: parameters multipleInstances: {}", () -> multipleRecordsAsString(multipleInstances));
+
+    log.debug("getRequestMapper:: parameters multipleInstances: {}", multipleRecordsAsString(multipleInstances));
 
     return request -> multipleInstances.getRecords().stream()
       .filter(matchedInstanceId(request))

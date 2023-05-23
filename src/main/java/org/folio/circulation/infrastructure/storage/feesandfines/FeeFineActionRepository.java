@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -40,6 +41,7 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
+
     log.debug("create:: parameters feeFineAction: {}", feeFineAction);
     final ResponseInterpreter<FeeFineAction> interpreter =
       new ResponseInterpreter<FeeFineAction>()
@@ -51,10 +53,13 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findById(String id) {
+
     log.debug("findById:: parameters id: {}", id);
-    if(isNull(id)) {
+    if (isNull(id)) {
       log.warn("findById:: id is null");
-      return ofAsync(() -> null);
+      CompletableFuture<Result<FeeFineAction>> resultCompletableFuture = ofAsync(() -> null);
+      log.info("findById:: result: {}", resultCompletableFuture);
+      return resultCompletableFuture;
     }
 
     return FetchSingleRecord.<FeeFineAction>forRecord("feeFineAction")
@@ -65,9 +70,11 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
+
     log.debug("findChargeActionForAccount:: params account: {}", account);
 
     if (isNull(account)) {
+      log.warn("findChargeActionForAccount:: account is null");
       return emptyAsync();
     }
 
@@ -81,6 +88,8 @@ public class FeeFineActionRepository {
 
   public CompletableFuture<Result<Void>> createAll(
     Collection<StoredFeeFineAction> feeFineActions) {
+
+    log.debug("createAll:: parameters feeFineActions: {}", () -> collectionAsString(feeFineActions));
 
     return allOf(feeFineActions.stream()
       .map(this::create)
