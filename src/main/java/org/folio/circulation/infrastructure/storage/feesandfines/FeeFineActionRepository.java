@@ -62,11 +62,13 @@ public class FeeFineActionRepository {
       return resultCompletableFuture;
     }
 
-    return FetchSingleRecord.<FeeFineAction>forRecord("feeFineAction")
+    CompletableFuture<Result<FeeFineAction>> result = FetchSingleRecord.<FeeFineAction>forRecord("feeFineAction")
       .using(feeFineActionsStorageClient)
       .mapTo(FeeFineAction::from)
       .whenNotFound(failed(new RecordNotFoundFailure("feeFineAction", id)))
       .fetch(id);
+      log.info("findById:: result: {}", result);
+      return result;
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
