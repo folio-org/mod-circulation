@@ -49,7 +49,6 @@ public class PatronSessionRecord {
     this.loanId = requireNonNull(loanId);
     this.sessionId = sessionId;
     this.actionType = requireNonNull(actionType);
-
     this.loan = loan;
   }
 
