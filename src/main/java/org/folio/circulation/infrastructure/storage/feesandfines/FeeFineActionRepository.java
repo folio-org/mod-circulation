@@ -10,6 +10,7 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -57,18 +58,18 @@ public class FeeFineActionRepository {
     log.debug("findById:: parameters id: {}", id);
     if (isNull(id)) {
       log.warn("findById:: id is null");
-      CompletableFuture<Result<FeeFineAction>> resultCompletableFuture = ofAsync(() -> null);
-      log.info("findById:: result: {}", resultCompletableFuture);
-      return resultCompletableFuture;
+      return ofAsync(() -> null);
     }
 
-    CompletableFuture<Result<FeeFineAction>> result = FetchSingleRecord.<FeeFineAction>forRecord("feeFineAction")
+    return FetchSingleRecord.<FeeFineAction>forRecord("feeFineAction")
       .using(feeFineActionsStorageClient)
       .mapTo(FeeFineAction::from)
       .whenNotFound(failed(new RecordNotFoundFailure("feeFineAction", id)))
-      .fetch(id);
-      log.info("findById:: result: {}", result);
-      return result;
+      .fetch(id)
+      .thenApply(r -> {
+        log.info("findById:: result: {}", resultAsString(r));
+        return r;
+      });
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {

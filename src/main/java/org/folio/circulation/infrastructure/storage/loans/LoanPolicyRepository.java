@@ -106,13 +106,12 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     log.debug("findLoanPoliciesForLoans:: parameters multipleLoans: {}", multipleRecordsAsString(multipleLoans));
     Collection<Loan> loans = multipleLoans.getRecords();
 
-    CompletableFuture<Result<MultipleRecords<Loan>>> resultCompletableFuture = getLoanPolicies(loans)
+    log.info("findLoanPoliciesForLoans:: loans: {}", loans.size());
+    return getLoanPolicies(loans)
       .thenApply(r -> r.map(loanPolicies -> multipleLoans.mapRecords(
         loan -> loan.withLoanPolicy(loanPolicies.getOrDefault(
           loan.getLoanPolicyId(), unknown(loan.getLoanPolicyId())))))
       );
-    log.info("findLoanPoliciesForLoans:: result: {}", resultCompletableFuture);
-    return resultCompletableFuture;
   }
 
   private CompletableFuture<Result<Map<String, LoanPolicy>>> getLoanPolicies(Collection<Loan> loans) {

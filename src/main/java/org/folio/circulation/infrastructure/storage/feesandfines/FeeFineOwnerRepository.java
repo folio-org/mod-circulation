@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage.feesandfines;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -49,10 +50,12 @@ public class FeeFineOwnerRepository {
 
     log.debug("findOwnersForServicePoints:: parameters servicePointIds: {}", collectionAsString(servicePointIds));
 
-    CompletableFuture<Result<Collection<FeeFineOwner>>> owners = findOwners(servicePointIds)
-      .thenApply(mapResult(MultipleRecords::getRecords));
-    log.info("findOwnersForServicePoints:: owners: {}", owners);
-    return owners;
+    return findOwners(servicePointIds)
+      .thenApply(mapResult(MultipleRecords::getRecords))
+      .thenApply(r -> {
+        log.info("findOwnersForServicePoints:: result: {}", resultAsString(r));
+        return r;
+      });
   }
 
   private CompletableFuture<Result<MultipleRecords<FeeFineOwner>>> findOwners(
