@@ -620,6 +620,17 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/rules/",
+          "modulePermissions": [
+            "circulation.rules.get"
+          ],
+          "unit": "minute",
+          "delay": "3"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/notice-session-expiration-by-timeout",
           "modulePermissions": [
             "patron-action-session-storage.expired-session-patron-ids.collection.get",
