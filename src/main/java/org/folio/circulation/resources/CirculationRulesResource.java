@@ -32,6 +32,7 @@ import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
@@ -75,6 +76,22 @@ public class CirculationRulesResource extends Resource {
     router.put(rootPath).handler(BodyHandler.create());
     router.get(rootPath).handler(this::get);
     router.put(rootPath).handler(this::put);
+    router.post(rootPath).handler(this::refresh);
+  }
+
+  private void refresh(RoutingContext routingContext) {
+    final WebContext context = new WebContext(routingContext);
+    final Clients clients = Clients.create(context, client);
+    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
+
+    CirculationRulesCache.getInstance().reloadRules(context.getTenantId(), circulationRulesClient)
+    .thenAccept(result -> {
+      if (result.failed()) {
+        internalError(routingContext.response(), "Unable to reload circulation rules" + result.toString());
+      } else {
+        noContent().writeTo(routingContext.response());
+    }});
+
   }
 
   private void get(RoutingContext routingContext) {
@@ -152,7 +169,6 @@ public class CirculationRulesResource extends Resource {
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
 
-    CirculationRulesCache.getInstance().clearCache(webContext.getTenantId());
   }
 
   private Result<Response> failWhenResponseOtherThanNoContent(Result<Response> result) {
