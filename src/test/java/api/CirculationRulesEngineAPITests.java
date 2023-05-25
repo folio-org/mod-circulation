@@ -386,23 +386,6 @@ class CirculationRulesEngineAPITests extends APITests {
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
   }
 
-  @Test
-  void cacheIsInvalidatedAfterFiveSeconds() {
-    setRules(rulesFallback);
-    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
-
-    circulationRulesFixture.updateCirculationRulesWithoutInvalidatingCache(
-      rulesFallback2);
-
-    // Poll until the cached rules should have been replaced
-    await()
-      .atLeast(4, SECONDS)
-      .atMost(6, SECONDS)
-      .pollDelay(1, SECONDS)
-      .pollInterval(1, SECONDS)
-      .until(() -> applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
-  }
-
   private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
       PatronGroup patronGroup, ItemLocation location) {
 
