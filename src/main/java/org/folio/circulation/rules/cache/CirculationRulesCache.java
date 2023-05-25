@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.ExecutableRules;
 import org.folio.circulation.rules.Text2Drools;
@@ -63,8 +62,6 @@ public final class CirculationRulesCache {
         Rules rules = new Rules();
         JsonObject circulationRules = new JsonObject(response.getBody());
 
-        rules.reloadTimestamp = System.currentTimeMillis();
-
         if (log.isInfoEnabled()) {
           log.info("circulationRules = {}", circulationRules.encodePrettily());
         }
@@ -77,13 +74,13 @@ public final class CirculationRulesCache {
             "Cannot apply blank circulation rules")));
         }
 
-        rules.rulesAsText = rulesAsText;
+        rules.setRulesAsText(rulesAsText);
 
-        rules.rulesAsDrools = Text2Drools.convert(rulesAsText);
-        log.info("rulesAsDrools = {}", rules.rulesAsDrools);
+        rules.setRulesAsDrools(Text2Drools.convert(rulesAsText));
+        log.info("rulesAsDrools = {}", rules.getRulesAsDrools());
 
-        rules.drools = new Drools(tenantId, rules.rulesAsDrools);
-        rules.reloadTimestamp = System.currentTimeMillis();
+        rules.setDrools(new Drools(tenantId, rules.getRulesAsDrools()));
+        rules.setReloadTimestamp(System.currentTimeMillis());
         log.info("Done building Drools object for tenant {}", tenantId);
         rulesMap.put(tenantId, rules);
         return ofAsync(() -> rules);
@@ -95,7 +92,7 @@ public final class CirculationRulesCache {
 
     return getDrools(tenantId, circulationRulesClient)
       .thenApply(r -> r.map(drools ->
-        new ExecutableRules(rulesMap.get(tenantId).rulesAsText, drools)));
+        new ExecutableRules(rulesMap.get(tenantId).getRulesAsText(), drools)));
   }
 
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,
@@ -108,15 +105,15 @@ public final class CirculationRulesCache {
     if (rulesExist(tenantId)) {
       Rules rules = rulesMap.get(tenantId);
       DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
-      String strDate = dateFormat.format(rules.reloadTimestamp); 
+      String strDate = dateFormat.format(rules.getReloadTimestamp()); 
       log.info("Rules object found, last updated: " + strDate);
-      cfDrools.complete(succeeded(rules.drools));
+      cfDrools.complete(succeeded(rules.getDrools()));
       return cfDrools;
     }
 
     log.info("Circulation rules have not been loaded, initializing");
 
     return reloadRules(tenantId, circulationRulesClient)
-      .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.drools)));
+      .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.getDrools())));
   }
 }
