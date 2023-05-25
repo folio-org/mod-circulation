@@ -190,11 +190,7 @@ public abstract class GroupedScheduledNoticeHandler {
     HttpFailure failure = result.cause();
     log.error("handleResult:: failed to process group of {} notices: {}", notices.size(), failure);
 
-    // Deleting all notices from the group
-    return notices.stream()
-      .map(notice -> singleNoticeHandler.deleteNotice(notice, failure.toString()))
-      .reduce(emptyAsync(), (cf1, cf2) -> cf1.thenCombine(cf2, (r1, r2) -> r1))
-      .thenApply(r -> succeeded(notices));
+    return ofAsync(notices);
   }
 
   private Result<List<ScheduledNotice>> handleException(Throwable throwable,

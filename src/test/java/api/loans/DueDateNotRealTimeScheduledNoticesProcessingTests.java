@@ -584,7 +584,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void noticeIsDeletedWhenPatronNoticeRequestFails() {
+  void noticeIsNotSentOrDeletedWhenPatronNoticeRequestFails() {
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -614,7 +614,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
 
     verifyNumberOfSentNotices(0);
-    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfScheduledNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
