@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.storage.sessions;
 
+import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
@@ -18,6 +19,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -156,6 +158,13 @@ public class PatronActionSessionRepository {
 
   public CompletableFuture<Result<Collection<PatronSessionRecord>>> findPatronActionSessions(
     Collection<String> sessionIds, PageLimit pageLimit) {
+
+    if (sessionIds.isEmpty()) {
+      log.debug("findPatronActionSessions:: collection of session IDs is empty");
+      return ofAsync(emptyList());
+    }
+
+    log.debug("findPatronActionSessions:: sessionIds: {}", sessionIds);
 
     return new CqlQueryFinder<>(patronActionSessionsStorageClient, "patronActionSessions",
       PatronSessionRecord::from)

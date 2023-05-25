@@ -8,6 +8,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.EnumSet;
@@ -17,6 +18,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.GroupedScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
@@ -38,6 +41,8 @@ import io.vertx.core.http.HttpClient;
 
 public abstract class GroupingScheduledNoticeProcessingResource
   extends ScheduledNoticeProcessingResource {
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final EnumSet<TriggeringEvent> triggeringEvents;
   private final boolean realTime;
@@ -75,6 +80,8 @@ public abstract class GroupingScheduledNoticeProcessingResource
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
+    log.debug("findNoticesToSend:: pageLimit: {}", pageLimit.getLimit());
+
     return getTimeLimit(configurationRepository)
       .thenCompose(r -> r.after(timeLimit -> findNotices(scheduledNoticesRepository,
         pageLimit, timeLimit)));
@@ -82,6 +89,8 @@ public abstract class GroupingScheduledNoticeProcessingResource
 
   private CompletableFuture<Result<ZonedDateTime>> getTimeLimit(
     ConfigurationRepository configurationRepository) {
+
+    log.debug("getTimeLimit:: realTime: {}", realTime);
 
     if (realTime) {
       return ofAsync(ClockUtil.getZonedDateTime());
@@ -98,6 +107,8 @@ public abstract class GroupingScheduledNoticeProcessingResource
   private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNotices(
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
     ZonedDateTime timeLimit) {
+
+    log.debug("findNotices:: pageLimit: {}, timeLimit: {}", pageLimit, timeLimit);
 
     return scheduledNoticesRepository.findNotices(timeLimit, realTime, triggeringEvents,
       FETCH_NOTICES_SORT_CLAUSE, pageLimit);
