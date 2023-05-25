@@ -59,7 +59,6 @@ public final class CirculationRulesCache {
     return circulationRulesClient.get()
       .thenCompose(r -> r.after(response -> {
         log.info("Fetched rules for tenant {}", tenantId);
-        Rules rules = new Rules();
         JsonObject circulationRules = new JsonObject(response.getBody());
 
         if (log.isInfoEnabled()) {
@@ -74,13 +73,11 @@ public final class CirculationRulesCache {
             "Cannot apply blank circulation rules")));
         }
 
-        rules.setRulesAsText(rulesAsText);
+        String droolsText = Text2Drools.convert(rulesAsText);
+        Drools drools =  new Drools(tenantId, droolsText);
+        log.info("rulesAsDrools = {}", droolsText);
 
-        rules.setRulesAsDrools(Text2Drools.convert(rulesAsText));
-        log.info("rulesAsDrools = {}", rules.getRulesAsDrools());
-
-        rules.setDrools(new Drools(tenantId, rules.getRulesAsDrools()));
-        rules.setReloadTimestamp(System.currentTimeMillis());
+        Rules rules = new Rules(rulesAsText, droolsText, drools, System.currentTimeMillis());
         log.info("Done building Drools object for tenant {}", tenantId);
         rulesMap.put(tenantId, rules);
         return ofAsync(() -> rules);
