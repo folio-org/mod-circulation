@@ -57,8 +57,6 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     final var patronActionSessionRepository = PatronActionSessionRepository.using(
       clients, loanRepository, userRepository);
 
-    // TODO: wrap repositories into Repositories
-
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
         scheduledNoticesRepository, patronActionSessionRepository, limit)))
