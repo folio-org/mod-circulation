@@ -233,7 +233,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findByIds(Collection<String> loanIds) {
 
-    log.debug("findByIds:: parameters loanIds: {}", collectionAsString(loanIds));
+    log.debug("findByIds:: parameters loanIds: {}", () -> collectionAsString(loanIds));
     FindWithMultipleCqlIndexValues<Loan> fetcher =
       findWithMultipleCqlIndexValues(loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 
