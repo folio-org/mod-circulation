@@ -28,12 +28,11 @@ public class MaterialTypeRepository {
   }
 
   public CompletableFuture<Result<MaterialType>> getFor(Item item) {
-
     log.debug("getFor:: parameters item: {}", item);
     final String materialTypeId = item.getMaterialTypeId();
 
     if (isNull(materialTypeId)) {
-      log.warn("getFor:: materialTypeId is null");
+      log.info("getFor:: materialTypeId is null");
       return Result.ofAsync(() -> MaterialType.unknown(null));
     }
 
@@ -48,7 +47,7 @@ public class MaterialTypeRepository {
   public CompletableFuture<Result<MultipleRecords<MaterialType>>> getMaterialTypes(
     MultipleRecords<Item> inventoryRecords) {
 
-    log.debug("getMaterialTypes:: parameters inventoryRecords: {}", multipleRecordsAsString(inventoryRecords));
+    log.debug("getMaterialTypes:: parameters inventoryRecords: {}", () -> multipleRecordsAsString(inventoryRecords));
 
     final var mapper = new MaterialTypeMapper();
 

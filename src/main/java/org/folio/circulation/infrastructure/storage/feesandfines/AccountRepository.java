@@ -56,14 +56,13 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Loan>> findAccountsAndActionsForLoan(Result<Loan> loanResult) {
-
     log.debug("findAccountsAndActionsForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult.after(loan -> {
       if (loan == null) {
-        log.warn("findAccountsAndActionsForLoan:: loan is null");
+        log.info("findAccountsAndActionsForLoan:: loan is null");
         return completedFuture(loanResult);
       }
-      return loanResult.combineAfter(r -> fetchAccountsAndActionsForLoan(loan.getId()),
+      return loanResult.combineAfter(result -> fetchAccountsAndActionsForLoan(loan.getId()),
         Loan::withAccounts);
     });
   }
@@ -80,7 +79,6 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
-
     log.debug("findAccountsForLoan:: parameters loan: {}", loan);
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
       .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()))
@@ -105,7 +103,7 @@ public class AccountRepository {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
-    log.debug("findAccountsForLoans:: parameters multipleLoans: {}", multipleRecordsAsString(multipleLoans));
+    log.debug("findAccountsForLoans:: parameters multipleLoans: {}",() -> multipleRecordsAsString(multipleLoans));
 
     if (multipleLoans.getRecords().isEmpty()) {
       return completedFuture(succeeded(multipleLoans));
@@ -172,10 +170,9 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> findAccountForAction(FeeFineAction action) {
-
     log.debug("findAccountForAction:: parameters action: {}", action);
     if (isNull(action)) {
-      log.warn("findAccountForAction:: action is null");
+      log.info("findAccountForAction:: action is null");
       return ofAsync(() -> null);
     }
 
@@ -183,10 +180,9 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> findById(String id) {
-
     log.debug("findById:: parameters id: {}", id);
     if (isNull(id)) {
-      log.warn("findById:: id is null");
+      log.info("findById:: id is null");
       return ofAsync(() -> null);
     }
 
@@ -198,7 +194,6 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> create(StoredAccount account) {
-
     log.debug("create:: parameters account: {}", account);
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::from))
@@ -209,7 +204,6 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Void>> update(StoredAccount account) {
-
     log.debug("update:: parameters account: {}", account);
     final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
       .on(204, succeeded(null))

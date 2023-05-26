@@ -161,6 +161,7 @@ public class PatronGroupRepository {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> findPatronGroupForLoanAndRelatedRecords(
     LoanAndRelatedRecords loanAndRelatedRecords) {
+
     log.debug("findPatronGroupForLoanAndRelatedRecords:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
     final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
     return fetcher.findByIds(Collections.singleton(loanAndRelatedRecords.getLoan()
@@ -181,6 +182,7 @@ public class PatronGroupRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findPatronGroupsByIds(
     MultipleRecords<Loan> multipleLoans) {
+
     log.debug("findPatronGroupsByIds:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
     Collection<Loan> loans = multipleLoans.getRecords();
 

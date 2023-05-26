@@ -33,7 +33,7 @@ public class AddressTypeRepository {
   public CompletableFuture<Result<AddressType>> getAddressTypeById(String id) {
     log.debug("getAddressTypeById:: parameters id: {}", id);
     if (id == null) {
-      log.warn("getAddressTypeById:: id is null");
+      log.info("getAddressTypeById:: id is null");
       return ofAsync(() -> null);
     }
 

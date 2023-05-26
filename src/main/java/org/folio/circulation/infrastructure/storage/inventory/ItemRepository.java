@@ -86,7 +86,7 @@ public class ItemRepository {
     final String IN_TRANSIT_DESTINATION_SERVICE_POINT_ID = "inTransitDestinationServicePointId";
 
     if (item == null) {
-      log.warn("updateItem:: item is null");
+      log.info("updateItem:: item is null");
       return ofAsync(() -> null);
     }
 
@@ -128,7 +128,7 @@ public class ItemRepository {
     log.debug("getAvailableItem:: parameters: holdingsRecords: {}", () -> multipleRecordsAsString(holdingsRecords));
 
     if (holdingsRecords == null || holdingsRecords.isEmpty()) {
-      log.warn("getAvailableItem:: holdingsRecords is null or empty");
+      log.info("getAvailableItem:: holdingsRecords is null or empty");
       return ofAsync(() -> Item.from(null));
     }
 

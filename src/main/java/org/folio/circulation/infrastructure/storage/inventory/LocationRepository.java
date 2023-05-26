@@ -91,7 +91,7 @@ public class LocationRepository {
     log.debug("getPermanentLocation:: parameters item: {}", item);
 
     if (item == null || locationIdGetter.apply(item) == null) {
-      log.warn("getPermanentLocation:: item or locationId is null");
+      log.info("getPermanentLocation:: item or locationId is null");
       return ofAsync(() -> Location.unknown(null));
     }
 
@@ -150,7 +150,7 @@ public class LocationRepository {
   public CompletableFuture<Result<Location>> loadCampus(Location location) {
     log.debug("loadCampus:: parameters location: {}", location);
     if(isNull(location) || isNull(location.getCampusId())) {
-      log.warn("loadCampus:: location or campusId is null");
+      log.info("loadCampus:: location or campusId is null");
       return ofAsync(() -> location);
     }
 
@@ -163,7 +163,7 @@ public class LocationRepository {
   public CompletableFuture<Result<Location>> loadInstitution(Location location) {
     log.debug("loadInstitution:: parameters location: {}", location);
     if(isNull(location) || isNull(location.getInstitutionId())) {
-      log.warn("loadInstitution:: location or institutionId is null");
+      log.info("loadInstitution:: location or institutionId is null");
       return ofAsync(() -> location);
     }
 

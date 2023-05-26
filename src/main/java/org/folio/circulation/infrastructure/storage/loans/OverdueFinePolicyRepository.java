@@ -62,6 +62,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
 
   public CompletableFuture<Result<MultipleRecords<Loan>>>
     findOverdueFinePoliciesForLoans(MultipleRecords<Loan> multipleLoans) {
+
     log.debug("findOverdueFinePoliciesForLoans:: parameters multipleLoans: {}", () ->  multipleRecordsAsString(multipleLoans));
 
     Collection<Loan> loans = multipleLoans.getRecords();

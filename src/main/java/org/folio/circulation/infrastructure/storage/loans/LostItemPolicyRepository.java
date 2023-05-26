@@ -41,6 +41,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupLostItemPolicy(
           LoanAndRelatedRecords relatedRecords) {
+
     log.debug("lookupLostItemPolicy:: parameters relatedRecords: {}", relatedRecords);
 
     return Result.of(relatedRecords::getLoan)
@@ -62,6 +63,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLostItemPoliciesForLoans(
     MultipleRecords<Loan> multipleLoans) {
+
     log.debug("findLostItemPoliciesForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
 
     Collection<Loan> loans = multipleLoans.getRecords();
@@ -94,6 +96,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
 
   public CompletableFuture<Result<Loan>> findLostItemPolicyForLoan(
     Result<Loan> loanResult) {
+
     log.debug("findLostItemPolicyForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
 
     return loanResult.after(loan ->
@@ -103,6 +106,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
 
   public CompletableFuture<Result<LostItemPolicy>> getLostItemPolicyById(
     String lostItemPolicyId) {
+
     log.debug("getLostItemPolicyById:: parameters lostItemPolicyId: {}", lostItemPolicyId);
 
     if (isNull(lostItemPolicyId)) {

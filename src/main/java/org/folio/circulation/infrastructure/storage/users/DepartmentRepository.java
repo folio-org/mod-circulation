@@ -36,7 +36,7 @@ public class DepartmentRepository {
   public CompletableFuture<Result<User>> findDepartmentsForUser(Result<User> user) {
     log.debug("findDepartmentsForUser:: parameters user: {}", () -> resultAsString(user));
     if(user == null || user.value() == null){
-      log.warn("findDepartmentsForUser:: user is null");
+      log.info("findDepartmentsForUser:: user is null");
       return completedFuture(succeeded(null));
     }
     return user.combineAfter(this::findDepartments, User::withDepartments);
@@ -44,6 +44,7 @@ public class DepartmentRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findDepartmentsForRequestUsers(
     MultipleRecords<Request> multipleRequests) {
+
     log.debug("findDepartmentsForRequestUsers:: parameters multipleRequests: {}",
       () -> multipleRecordsAsString(multipleRequests));
     List<String> departmentIds = multipleRequests.getRecords().stream()

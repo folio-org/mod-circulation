@@ -135,10 +135,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
-
     log.debug("findOpenLoanForRequest:: parameters request: {}", request);
     if (!request.hasItemId()) {
-      log.warn("findOpenLoanForRequest:: request does not have an itemId");
+      log.info("findOpenLoanForRequest:: request does not have an itemId");
       return emptyAsync();
     }
 
@@ -444,7 +443,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     List<String> loanIds) {
 
     if (itemIds == null || itemIds.isEmpty()) {
-      log.warn("findLoanWithClosestDueDate: itemIds are null or empty");
+      log.info("findLoanWithClosestDueDate: itemIds are null or empty");
       return ofAsync(() -> null);
     }
 
@@ -462,7 +461,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
     log.debug("findLoanForAccount:: parameters account: {}", account);
     if (account == null) {
-      log.warn("findLoanForAccount: account is null");
+      log.info("findLoanForAccount: account is null");
       return completedFuture(succeeded(null));
     }
 

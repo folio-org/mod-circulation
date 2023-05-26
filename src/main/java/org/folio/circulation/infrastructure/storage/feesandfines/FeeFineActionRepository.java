@@ -42,7 +42,6 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
-
     log.debug("create:: parameters feeFineAction: {}", feeFineAction);
     final ResponseInterpreter<FeeFineAction> interpreter =
       new ResponseInterpreter<FeeFineAction>()
@@ -54,10 +53,9 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findById(String id) {
-
     log.debug("findById:: parameters id: {}", id);
     if (isNull(id)) {
-      log.warn("findById:: id is null");
+      log.info("findById:: id is null");
       return ofAsync(() -> null);
     }
 
@@ -66,18 +64,17 @@ public class FeeFineActionRepository {
       .mapTo(FeeFineAction::from)
       .whenNotFound(failed(new RecordNotFoundFailure("feeFineAction", id)))
       .fetch(id)
-      .thenApply(r -> {
-        log.info("findById:: result: {}", resultAsString(r));
-        return r;
+      .thenApply(result -> {
+        log.info("findById:: result: {}", resultAsString(result));
+        return result;
       });
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
-
     log.debug("findChargeActionForAccount:: params account: {}", account);
 
     if (isNull(account)) {
-      log.warn("findChargeActionForAccount:: account is null");
+      log.info("findChargeActionForAccount:: account is null");
       return emptyAsync();
     }
 
