@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
@@ -11,7 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +41,8 @@ public class OverdueFineScheduledNoticeProcessingResource
   }
 
   @Override
-  protected GroupedScheduledNoticeHandler getHandler(Clients clients, LoanRepository loanRepository) {
+  protected GroupedScheduledNoticeHandler getHandler(Clients clients,
+    LoanRepository loanRepository) {
     return new GroupedFeeFineScheduledNoticeHandler(clients, loanRepository);
   }
 
@@ -64,21 +65,22 @@ public class OverdueFineScheduledNoticeProcessingResource
       .stream()
       .map(ScheduledNotice::getSessionId)
       .filter(Objects::nonNull)
-      .collect(Collectors.toSet());
+      .collect(toSet());
 
     log.info("filterNotices:: {} unique session IDs found in {} notices",
       sessionIdsFromNotices.size(), notices.size());
 
-    return patronActionSessionRepository.findPatronActionSessions(sessionIdsFromNotices, oneThousand())
-      .thenApply(r -> r.map(sessions -> skipNoticesWithOpenPatronActionSessions(notices, sessions)));
+    return patronActionSessionRepository.findPatronActionSessions(sessionIdsFromNotices,
+        oneThousand())
+      .thenApply(
+        r -> r.map(sessions -> skipNoticesWithOpenPatronActionSessions(notices, sessions)));
   }
 
   private static MultipleRecords<ScheduledNotice> skipNoticesWithOpenPatronActionSessions(
     MultipleRecords<ScheduledNotice> notices, Collection<PatronSessionRecord> sessions) {
 
-    log.info("skipNoticesWithOpenPatronActionSessions:: processing {} open sessions", sessions.size());
-
     if (sessions.isEmpty()) {
+      log.info("skipNoticesWithOpenPatronActionSessions:: no open patron action sessions found");
       return notices;
     }
 
@@ -86,9 +88,17 @@ public class OverdueFineScheduledNoticeProcessingResource
       .map(PatronSessionRecord::getSessionId)
       .filter(Objects::nonNull)
       .map(UUID::toString)
-      .collect(Collectors.toSet());
+      .collect(toSet());
 
-    return notices.filter(notice -> !openSessionIds.contains(notice.getSessionId()));
+    log.info("skipNoticesWithOpenPatronActionSessions:: open session IDs: {}", openSessionIds);
+
+    MultipleRecords<ScheduledNotice> filteredNotices = notices.filter(
+      notice -> !openSessionIds.contains(notice.getSessionId()));
+
+    log.info("skipNoticesWithOpenPatronActionSessions:: {} notices were filtered out because ",
+      notices.size() - filteredNotices.size());
+
+    return filteredNotices;
   }
 
 }
