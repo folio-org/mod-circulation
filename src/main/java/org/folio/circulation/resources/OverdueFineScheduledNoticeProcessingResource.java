@@ -70,10 +70,8 @@ public class OverdueFineScheduledNoticeProcessingResource
     log.info("filterNotices:: {} unique session IDs found in {} notices",
       sessionIdsFromNotices.size(), notices.size());
 
-    return patronActionSessionRepository.findPatronActionSessions(sessionIdsFromNotices,
-        oneThousand())
-      .thenApply(
-        r -> r.map(sessions -> skipNoticesWithOpenPatronActionSessions(notices, sessions)));
+    return patronActionSessionRepository.findPatronActionSessions(sessionIdsFromNotices, oneThousand())
+      .thenApply(r -> r.map(sessions -> skipNoticesWithOpenPatronActionSessions(notices, sessions)));
   }
 
   private static MultipleRecords<ScheduledNotice> skipNoticesWithOpenPatronActionSessions(
@@ -95,7 +93,7 @@ public class OverdueFineScheduledNoticeProcessingResource
     MultipleRecords<ScheduledNotice> filteredNotices = notices.filter(
       notice -> !openSessionIds.contains(notice.getSessionId()));
 
-    log.info("skipNoticesWithOpenPatronActionSessions:: {} notices were filtered out because ",
+    log.info("skipNoticesWithOpenPatronActionSessions:: skipping {} notices",
       notices.size() - filteredNotices.size());
 
     return filteredNotices;
