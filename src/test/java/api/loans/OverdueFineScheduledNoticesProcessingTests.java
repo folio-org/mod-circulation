@@ -1,10 +1,14 @@
 package api.loans;
 
+import static api.support.fakes.FakeModNotify.getSentPatronNotices;
+import static api.support.fixtures.TemplateContextMatchers.getBundledFeeChargeContextMatcher;
+import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.PatronNoticeMatcher.hasNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledFeeFineNotice;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfScheduledNotices;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static org.folio.circulation.domain.notice.NoticeTiming.AFTER;
 import static org.folio.circulation.domain.notice.NoticeTiming.UPON_AT;
@@ -13,21 +17,22 @@ import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERD
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Account;
@@ -38,22 +43,26 @@ import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.json.JsonPropertyWriter;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.hamcrest.Matcher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
+import api.support.MultipleJsonRecords;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
-import io.vertx.core.json.JsonArray;
+import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NonNull;
 
 class OverdueFineScheduledNoticesProcessingTests extends APITests {
   private static final Period AFTER_PERIOD = Period.days(1);
@@ -61,33 +70,58 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   private static final String OVERDUE_FINE = "Overdue fine";
   private static final Map<NoticeTiming, UUID> TEMPLATE_IDS = new HashMap<>();
 
-  private Account account;
-  private FeeFineAction action;
-  private ZonedDateTime actionDateTime;
-  private UUID loanId;
-  private UUID itemId;
-  private UUID userId;
-  private UUID actionId;
-  private UUID accountId;
+  private UUID checkInServicePointId;
+  private UUID itemLocationId;
 
-  static {
-    TEMPLATE_IDS.put(UPON_AT, randomUUID());
-    TEMPLATE_IDS.put(AFTER, randomUUID());
+  @BeforeEach
+  void beforeEach() {
+    // init templates
+    UUID uponAtTemplateId = randomUUID();
+    UUID afterTemplateId = randomUUID();
+    templateFixture.createDummyNoticeTemplate(uponAtTemplateId);
+    templateFixture.createDummyNoticeTemplate(afterTemplateId);
+    TEMPLATE_IDS.put(UPON_AT, uponAtTemplateId);
+    TEMPLATE_IDS.put(AFTER, afterTemplateId);
+
+    // init service point and location
+    checkInServicePointId = servicePointsFixture.cd1().getId();
+    itemLocationId = locationsFixture.basedUponExampleLocation(
+        builder -> builder.withPrimaryServicePoint(checkInServicePointId))
+      .getId();
+
+    // init owner
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(randomUUID())
+      .withOwner("test owner")
+      .withServicePointOwner(singletonList(new JsonObject()
+        .put("value", checkInServicePointId.toString())
+        .put("label", "Service Desk 1"))));
+
+    // init fee/fine type
+    feeFinesClient.create(new FeeFineBuilder()
+      .withId(randomUUID())
+      .withFeeFineType(OVERDUE_FINE)
+      .withAutomatic(true));
   }
 
   @ParameterizedTest
   @MethodSource("testParameters")
   void uponAtNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
-    assertThatNoticesWereSent(TEMPLATE_IDS.get(UPON_AT));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), overdueFine);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -95,18 +129,24 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void oneTimeAfterNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, false));
+    UUID checkInSessionId = randomUUID();
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, AFTER, false));
 
-    ZonedDateTime expectedNextRunTime = AFTER_PERIOD.plusDate(actionDateTime);
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user, checkInSessionId);
+
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
+    ZonedDateTime expectedNextRunTime = AFTER_PERIOD.plusDate(chargeActionDateTime);
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, expectedNextRunTime);
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, expectedNextRunTime, overdueFine);
 
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(expectedNextRunTime));
 
-    assertThatNoticesWereSent(TEMPLATE_IDS.get(AFTER));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), overdueFine);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -114,21 +154,25 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void recurringAfterNoticeIsSentAndRescheduled(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, true));
+    UUID checkInSessionId = randomUUID();
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, AFTER, true));
 
-    ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(actionDateTime);
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user, checkInSessionId);
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime);
+    ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(overdueFine.getActionDateTime());
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime, overdueFine);
 
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(expectedFirstRunTime));
 
     ZonedDateTime expectedSecondRunTime = RECURRING_PERIOD.plusDate(expectedFirstRunTime);
 
-    assertThatNoticesWereSent(TEMPLATE_IDS.get(AFTER));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), overdueFine);
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedSecondRunTime);
-
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedSecondRunTime, overdueFine);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -136,23 +180,26 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, AFTER, true));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, AFTER, true));
 
-    ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(actionDateTime);
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime);
+    ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(overdueFine.getActionDateTime());
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime, overdueFine);
 
     ZonedDateTime fakeNow = rightAfter(RECURRING_PERIOD.plusDate(expectedFirstRunTime));
 
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(fakeNow);
 
     ZonedDateTime expectedNextRunTime = RECURRING_PERIOD.plusDate(fakeNow);
 
-    assertThatNoticesWereSent(TEMPLATE_IDS.get(AFTER));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), overdueFine);
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedNextRunTime);
-
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedNextRunTime, overdueFine);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -160,27 +207,33 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void multipleScheduledNoticesAreProcessedDuringOneProcessingIteration(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent,
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(
       createNoticeConfig(triggeringEvent, UPON_AT, false),
       createNoticeConfig(triggeringEvent, AFTER, false),
-      createNoticeConfig(triggeringEvent, AFTER, true)
-    );
+      createNoticeConfig(triggeringEvent, AFTER, true));
 
-    ZonedDateTime firstAfterRunTime = AFTER_PERIOD.plusDate(actionDateTime);
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
+    ZonedDateTime firstAfterRunTime = AFTER_PERIOD.plusDate(chargeActionDateTime);
 
     verifyNumberOfScheduledNotices(3);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);  // send and delete
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, firstAfterRunTime); // send and delete
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, firstAfterRunTime);  // send and reschedule
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);  // send and delete
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, firstAfterRunTime, overdueFine); // send and delete
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, firstAfterRunTime, overdueFine);  // send and reschedule
 
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(firstAfterRunTime));
 
     ZonedDateTime expectedRecurrenceRunTime = RECURRING_PERIOD.plusDate(firstAfterRunTime);
 
-    assertThatNoticesWereSent(TEMPLATE_IDS.get(UPON_AT), TEMPLATE_IDS.get(AFTER), TEMPLATE_IDS.get(AFTER));
-    verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedRecurrenceRunTime);
+    verifyNumberOfSentNotices(2); // 1 "upon at" notice + 1 bundled "after" notice
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), overdueFine);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), List.of(overdueFine, overdueFine));
 
+    verifyNumberOfScheduledNotices(1);
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedRecurrenceRunTime, overdueFine);
     // 3 charges in 2 notices
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -189,17 +242,21 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenReferencedActionDoesNotExist(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    feeFineActionsClient.delete(actionId);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    feeFineActionsClient.delete(overdueFine.getActionId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -207,17 +264,21 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenReferencedAccountDoesNotExist(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    accountsClient.delete(accountId);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    accountsClient.delete(overdueFine.getAccountId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -225,17 +286,21 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenReferencedLoanDoesNotExist(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    loansClient.delete(loanId);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    loansClient.delete(overdueFine.getLoanId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -243,17 +308,21 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenReferencedItemDoesNotExist(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    itemsClient.delete(itemId);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    itemsClient.delete(overdueFine.getItem().getId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -261,17 +330,21 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenReferencedUserDoesNotExist(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    usersClient.delete(userId);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    usersClient.delete(overdueFine.getUser().getId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -279,17 +352,21 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenReferencedTemplateDoesNotExist(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
+    endCheckInSession(user);
     templateFixture.delete(TEMPLATE_IDS.get(UPON_AT));
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
   }
@@ -297,14 +374,18 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsNotDeletedWhenPatronNoticeRequestFails(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
+    endCheckInSession(user);
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
-
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(1);
@@ -315,84 +396,197 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   @ParameterizedTest
   @MethodSource("testParameters")
   void noticeIsDiscardedWhenAccountIsClosed(TriggeringEvent triggeringEvent) {
-    generateOverdueFine(triggeringEvent, createNoticeConfig(triggeringEvent, UPON_AT, false));
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext overdueFine = generateOverdueFine(triggeringEvent, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, actionDateTime);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
-    JsonObject closedAccountJson = account.toJson();
+    JsonObject closedAccountJson = overdueFine.getAccount().toJson();
     JsonPropertyWriter.writeNamedObject(closedAccountJson, "status", "Closed");
+    accountsClient.replace(overdueFine.getAccountId(), closedAccountJson);
 
-    accountsClient.replace(accountId, closedAccountJson);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
+    endCheckInSession(user);
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(0);
     verifyNumberOfScheduledNotices(0);
-
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   @Test
   void overdueFineReturnedNoticeShouldContainUnlimitedNumberOfRenewals() {
-    generateOverdueFine(OVERDUE_FINE_RETURNED, createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT,
-      false));
-    verifyNumberOfScheduledNotices(1);
-    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(actionDateTime));
-    verifyNumberOfScheduledNotices(0);
-    JsonObject loanInSentNotice = FakeModNotify.getSentPatronNotices().get(0)
-      .getJsonObject("context").getJsonArray("feeCharges").getJsonObject(0).getJsonObject("loan");
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false));
 
+    OverdueFineContext overdueFine = generateOverdueFine(OVERDUE_FINE_RETURNED, user);
+    ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
+
+    verifyNumberOfScheduledNotices(1);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, chargeActionDateTime, overdueFine);
+
+    endCheckInSession(user);
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
+
+    JsonObject loanInSentNotice = getSentPatronNotices().get(0)
+      .getJsonObject("context").getJsonArray("feeCharges").getJsonObject(0).getJsonObject("loan");
     assertThat(loanInSentNotice.getString("numberOfRenewalsAllowed"), is("unlimited"));
     assertThat(loanInSentNotice.getString("numberOfRenewalsRemaining"), is("unlimited"));
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @MethodSource("testParameters")
+  void noticesCreatedDuringSameCheckInSessionAreBundled(TriggeringEvent triggeringEvent) {
+    UUID checkInSessionId = randomUUID();
+    UserResource user = usersFixture.james();
+
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+
+    OverdueFineContext fine1 = generateOverdueFine(triggeringEvent, user, checkInSessionId);
+    OverdueFineContext fine2 = generateOverdueFine(triggeringEvent, user, checkInSessionId);
+
+    verifyNumberOfScheduledNotices(2);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, fine2.getActionDateTime(), fine2);
+
+    endCheckInSession(user.getId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(fine2.getAction().getDateAction()));
+
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void noticesCreatedDuringDifferentCheckInSessionAreNotBundledUponCheckIn() {
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false));
+
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, randomUUID());
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, randomUUID());
+
+    verifyNumberOfScheduledNotices(2);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+
+    endCheckInSession(user.getId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(fine2.getAction().getDateAction()));
+
+    verifyNumberOfSentNotices(2);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), fine1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), fine2);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void noticesCreatedDuringDifferentCheckInSessionAreStillBundledUponRenewal() {
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RENEWED, UPON_AT, false));
+
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RENEWED, user, randomUUID());
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RENEWED, user, randomUUID());
+
+    verifyNumberOfScheduledNotices(2);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(fine2.getAction().getDateAction()));
+
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void noticesWithOpenCheckInSessionsAreSkipped() {
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false));
+    UUID firstCheckInSessionId = randomUUID();
+    UUID secondCheckInSessionId = randomUUID();
+
+    // first check-in session
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, firstCheckInSessionId);
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, firstCheckInSessionId);
+    verifyNumberOfScheduledNotices(2);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+
+    endCheckInSession(user); // end first check-in session
+
+    // second check-in session
+    OverdueFineContext fine3 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, secondCheckInSessionId);
+    OverdueFineContext fine4 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, secondCheckInSessionId);
+    verifyNumberOfScheduledNotices(4);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine3.getActionDateTime(), fine3);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine4.getActionDateTime(), fine4);
+
+    // second check-in session is still open
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(fine4.getAction().getDateAction()));
+
+    // notices created during first session are bundled and sent
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+
+    // notices created during second session are still there
+    verifyNumberOfScheduledNotices(2);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine3.getActionDateTime(), fine3);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine4.getActionDateTime(), fine4);
 
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  private void generateOverdueFine(TriggeringEvent triggeringEvent, JsonObject... patronNoticeConfigs) {
+  private void createPatronNoticePolicy(JsonObject... patronNoticeConfigs) {
     NoticePolicyBuilder noticePolicyBuilder = new NoticePolicyBuilder()
       .withName("Patron notice policy with fee/fine notices")
       .withFeeFineNotices(Arrays.asList(patronNoticeConfigs));
 
     use(noticePolicyBuilder);
+  }
 
-    templateFixture.createDummyNoticeTemplate(TEMPLATE_IDS.get(UPON_AT));
-    templateFixture.createDummyNoticeTemplate(TEMPLATE_IDS.get(AFTER));
+  private OverdueFineContext generateOverdueFine(TriggeringEvent triggeringEvent,
+    UserResource user) {
 
-    UUID checkInServicePointId = servicePointsFixture.cd1().getId();
-    IndividualResource location = locationsFixture.basedUponExampleLocation(
-      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
-    IndividualResource user = usersFixture.james();
-    userId = user.getId();
-    IndividualResource item = itemsFixture.basedUponNod(builder ->
-      builder.withPermanentLocation(location.getId()));
-    itemId = item.getId();
+    return generateOverdueFine(triggeringEvent, user, randomUUID());
+  }
 
-    JsonObject servicePointOwner = new JsonObject()
-      .put("value", checkInServicePointId.toString())
-      .put("label", "Service Desk 1");
+  private OverdueFineContext generateOverdueFine(TriggeringEvent triggeringEvent, UserResource user,
+    UUID sessionId) {
 
-    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
-      .withId(randomUUID())
-      .withOwner("test owner")
-      .withServicePointOwner(Collections.singletonList(servicePointOwner)));
+    final List<JsonObject> initialAccounts = accountsClient.getAll();
+    final List<JsonObject> initialActions = feeFineActionsClient.getAll();
 
-    feeFinesClient.create(new FeeFineBuilder()
-      .withId(randomUUID())
-      .withFeeFineType(OVERDUE_FINE)
-      .withAutomatic(true));
+    ItemResource item = itemsFixture.basedUponNod(builder -> builder.withRandomBarcode()
+      .withPermanentLocation(itemLocationId));
 
     final ZonedDateTime checkOutDate = ClockUtil.getZonedDateTime().minusYears(1);
     final ZonedDateTime checkInDate = checkOutDate.plusMonths(1);
 
     IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(item, user, checkOutDate);
-    loanId = UUID.fromString(checkOutResponse.getJson().getString("id"));
+    UUID loanId = UUID.fromString(checkOutResponse.getJson().getString("id"));
 
     switch (triggeringEvent) {
     case OVERDUE_FINE_RETURNED:
       checkInFixture.checkInByBarcode(new CheckInByBarcodeRequestBuilder()
-        .withSessionId(randomUUID().toString())
+        .withSessionId(sessionId.toString())
         .forItem(item)
         .on(checkInDate)
         .at(checkInServicePointId));
@@ -406,23 +600,20 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     List<JsonObject> accounts = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(accountsClient::getAll, hasSize(1));
-
-    assertThat("Fee/fine record should have been created", accounts, hasSize(1));
-    account = Account.from(accounts.get(0));
-    accountId = UUID.fromString(account.getId());
+      .until(accountsClient::getAll, hasSize(initialAccounts.size() + 1));
+    Account account = Account.from(getNewObject(initialAccounts, accounts));
 
     List<JsonObject> actions = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(feeFineActionsClient::getAll, hasSize(1));
+      .until(feeFineActionsClient::getAll, hasSize(initialActions.size() + 1));
+    FeeFineAction action = FeeFineAction.from(getNewObject(initialActions, actions));
 
-    assertThat("Fee/fine action record should have been created", actions, hasSize(1));
-    action = FeeFineAction.from(actions.get(0));
-    actionId = UUID.fromString(action.getId());
-    actionDateTime = action.getDateAction();
+    return new OverdueFineContext(account, action, item, user, loanId);
   }
 
-  private JsonObject createNoticeConfig(TriggeringEvent triggeringEvent, NoticeTiming timing, boolean isRecurring) {
+  private JsonObject createNoticeConfig(TriggeringEvent triggeringEvent, NoticeTiming timing,
+    boolean isRecurring) {
+
     JsonObject timingPeriod = timing == AFTER ? AFTER_PERIOD.asJson() : null;
 
     NoticeConfigurationBuilder builder = new NoticeConfigurationBuilder()
@@ -438,32 +629,38 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     return builder.create();
   }
 
-  private void assertThatScheduledNoticeExists(TriggeringEvent triggeringEvent, NoticeTiming timing, Boolean recurring, ZonedDateTime nextRunTime) {
+  private void assertThatScheduledNoticeExists(TriggeringEvent triggeringEvent, NoticeTiming timing,
+    boolean recurring, ZonedDateTime nextRunTime, OverdueFineContext context) {
+
     Period expectedRecurringPeriod = recurring ? RECURRING_PERIOD : null;
 
     assertThat(scheduledNoticesClient.getAll(), hasItems(
       hasScheduledFeeFineNotice(
-        actionId, loanId, userId, TEMPLATE_IDS.get(timing),
-        triggeringEvent, nextRunTime,
-        timing, expectedRecurringPeriod, true)
+        context.getActionId(), context.getLoanId(), context.getUser().getId(), TEMPLATE_IDS.get(timing),
+        triggeringEvent, nextRunTime, timing, expectedRecurringPeriod, true)
     ));
   }
 
-  private void assertThatNoticesWereSent(UUID... expectedTemplateIds) {
-    List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
+  private void assertThatNoticeWasSent(UUID expectedTemplateId, OverdueFineContext context) {
+    assertThatNoticeWasSent(expectedTemplateId, singletonList(context));
+  }
 
-    long numberOfCharges = sentNotices.stream()
-      .map(notice -> notice.getJsonObject("context").getJsonArray("feeCharges"))
-      .map(JsonArray::size)
-      .reduce(0, Integer::sum);
+  private void assertThatNoticeWasSent(UUID expectedTemplateId,
+    Collection<OverdueFineContext> contexts) {
 
-    assertEquals(numberOfCharges, expectedTemplateIds.length);
+    List<Account> accounts = contexts.stream()
+      .map(OverdueFineContext::getAccount)
+      .collect(Collectors.toList());
 
-    Matcher<?> matcher = TemplateContextMatchers.getBundledFeeChargeContextMatcher(account);
+    // same user for all charges is expected
+    UserResource user = contexts.stream()
+      .findFirst()
+      .map(OverdueFineContext::getUser)
+      .orElseThrow();
 
-    Stream.of(expectedTemplateIds)
-      .forEach(templateId -> assertThat(sentNotices, hasItem(
-        hasNoticeProperties(userId, templateId, "email", "text/html", matcher))));
+    assertThat(getSentPatronNotices(), hasItem(
+        hasNoticeProperties(user.getId(), expectedTemplateId, "email", "text/html",
+          getBundledFeeChargeContextMatcher(user, accounts))));
   }
 
   private static ZonedDateTime rightAfter(ZonedDateTime dateTime) {
@@ -472,5 +669,59 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
   private static Object[] testParameters() {
     return new Object[] { OVERDUE_FINE_RETURNED, OVERDUE_FINE_RENEWED };
+  }
+
+  private static <T> T getNewObject(Collection<T> oldCollection, Collection<T> newCollection) {
+    assertThat(newCollection.size() - oldCollection.size(), is(1));
+    boolean newCollectionChanged = newCollection.removeAll(oldCollection);
+
+    if (oldCollection.size() > 0) {
+      assertTrue(newCollectionChanged);
+    }
+
+    assertThat("Only one new object was expected", newCollection, hasSize(1));
+
+    return newCollection.stream()
+      .findFirst()
+      .orElseThrow();
+  }
+
+  private void endCheckInSession(UserResource user) {
+    endCheckInSession(user.getId());
+  }
+
+  private void endCheckInSession(UUID userId) {
+    endPatronSessionClient.endCheckInSession(userId);
+
+    Awaitility.waitAtMost(5, TimeUnit.SECONDS)
+      .until(() -> getCheckInSession(userId), emptyIterable());
+  }
+
+  private MultipleJsonRecords getCheckInSession(UUID userId) {
+    return patronSessionRecordsClient.getMany(
+      exactMatch("patronId", userId.toString())
+        .and(exactMatch("actionType", "Check-in")));
+  }
+
+  @AllArgsConstructor
+  @Getter
+  private static class OverdueFineContext {
+    @NonNull private Account account;
+    @NonNull private FeeFineAction action;
+    @NonNull private ItemResource item;
+    @NonNull private UserResource user;
+    @NonNull private UUID loanId;
+
+    public ZonedDateTime getActionDateTime() {
+      return action.getDateAction();
+    }
+
+    public UUID getActionId() {
+      return UUID.fromString(action.getId());
+    }
+
+    public UUID getAccountId() {
+      return UUID.fromString(account.getId());
+    }
   }
 }
