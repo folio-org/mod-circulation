@@ -129,6 +129,7 @@ public class PatronActionSessionRepository {
     write(json, PATRON_ID, patronSessionRecord.getPatronId());
     write(json, LOAN_ID, patronSessionRecord.getLoanId());
     write(json, ACTION_TYPE, patronSessionRecord.getActionType().getRepresentation());
+    write(json, SESSION_ID, patronSessionRecord.getSessionId());
 
     return json;
   }
