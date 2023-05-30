@@ -92,7 +92,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
-    System.out.println("Inside create loan");
     final Loan loan = loanAndRelatedRecords.getLoan();
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());

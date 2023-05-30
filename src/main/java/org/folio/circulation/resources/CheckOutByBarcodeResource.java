@@ -217,6 +217,7 @@ public class CheckOutByBarcodeResource extends Resource {
         }
       });
   }
+
   private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
     if(!isCheckOutFeatureEnabled) {
       return completedFuture(Result.succeeded(records));
@@ -246,6 +247,7 @@ public class CheckOutByBarcodeResource extends Resource {
           }
         });
     } catch (Exception ex) {
+      log.warn("createLockWithRetry:: exception {} ", ex.getMessage());
       future.completeExceptionally(ex);
     }
   }
@@ -272,13 +274,11 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
     LoanAndRelatedRecords loanAndRelatedRecords, ItemRepository itemRepository) {
-    log.info("Inside update item");
     return itemRepository.updateItem(loanAndRelatedRecords.getItem())
       .thenApply(r -> r.map(loanAndRelatedRecords::withItem));
   }
 
   private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
-    log.info("Inside checkout item");
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 
