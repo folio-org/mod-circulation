@@ -74,7 +74,8 @@ public class Environment {
     }
 
     try {
-      return Arrays.stream(variable.split("|"))
+      log.info("getIntervalArr:: variable {} ", variable);
+      return Arrays.stream(variable.split("\\|"))
         .map(Integer::parseInt)
         .collect(Collectors.toList());
     } catch (Exception e) {

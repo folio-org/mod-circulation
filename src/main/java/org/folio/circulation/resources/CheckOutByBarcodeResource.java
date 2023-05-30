@@ -230,6 +230,7 @@ public class CheckOutByBarcodeResource extends Resource {
     checkOutLockRepository.create(records)
       .whenComplete((res, err) -> {
         if (res != null) {
+          log.info("createLockWithRetry:: checkOutLock object {} ", res.value());
           future.complete(res.value());
         } else {
           if (noOfAttempts <= maxRetry)
