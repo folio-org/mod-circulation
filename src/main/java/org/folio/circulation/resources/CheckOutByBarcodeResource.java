@@ -15,10 +15,14 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
+import org.folio.circulation.domain.CheckOutLock;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -32,6 +36,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
+import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -51,6 +56,7 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -68,6 +74,11 @@ public class CheckOutByBarcodeResource extends Resource {
   final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final CirculationErrorType[] PARTIAL_SUCCESS_ERRORS = {
     FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_PUBLISH_CHECKOUT_EVENT};
+
+  private final Vertx vertx=Vertx.vertx();
+
+  private final boolean isCheckOutFeatureEnabled = Environment.getCheckOutFeatureFlag();
+  private final List<Integer> retryIntervals = Environment.getRetryInterval();
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -126,6 +137,8 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
+    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients);
+
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
@@ -156,6 +169,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
+      .thenCompose(r ->r.after(records -> this.acquireLock(records, checkOutLockRepository)))
+      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
@@ -181,6 +196,48 @@ public class CheckOutByBarcodeResource extends Resource {
     return patronActionSessionService.saveCheckOutSessionRecord(records)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_SAVE_SESSION_RECORD,
         succeeded(records)));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository) {
+    log.info("acquireLock:: Creating checkout lock");
+    if(!isCheckOutFeatureEnabled) {
+        return completedFuture(Result.succeeded(records));
+      }
+      CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
+      createLockWithRetry(0, future, checkOutLockRepository, records);
+      return future.handle((res,err) ->{
+        if(res!=null){
+          log.info("acquireLock:: Lock is acquired");
+          return Result.succeeded(records);
+        }
+        else{
+          log.info("acquireLock:: Unable to acquire lock");
+          return Result.failed(ValidationErrorFailure.singleValidationError("Unable to acquire lock", "", ""));
+        }
+      });
+  }
+  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+    if(!isCheckOutFeatureEnabled) {
+      return completedFuture(Result.succeeded(records));
+    }
+    return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
+      .thenApply(r -> r.next(errorHandler::failWithValidationErrors));
+  }
+
+  private void createLockWithRetry(int noOfAttempts, CompletableFuture<CheckOutLock> future, CheckOutLockRepository checkOutLockRepository, LoanAndRelatedRecords records) {
+    log.info("createLockWithRetry:: Retrying lock creation {} ", noOfAttempts);
+    int maxRetry = retryIntervals.size() - 1;
+    checkOutLockRepository.create(records)
+      .whenComplete((res, err) -> {
+        if (res != null) {
+          future.complete(res.value());
+        } else {
+          if (noOfAttempts <= maxRetry)
+            vertx.setTimer(retryIntervals.get(noOfAttempts), h -> createLockWithRetry(noOfAttempts + 1, future, checkOutLockRepository, records));
+          else
+            future.completeExceptionally(err);
+        }
+      });
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -211,6 +268,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
+    log.info("Inside checkout item");
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 

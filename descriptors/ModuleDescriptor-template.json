@@ -2126,6 +2126,18 @@
       {
         "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
         "value": "50000"
+      },
+      {
+        "name": "CHECKOUT_LOCK_FEATURE_ENABLED",
+        "value": "false"
+      },
+      {
+        "name": "LOCK_TTL_MS",
+        "value": "3000"
+      },
+      {
+        "name": "RETRY_INTERVAL_MS",
+        "value": "500|500|1000"
       }
     ]
   }
