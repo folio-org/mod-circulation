@@ -206,6 +206,7 @@ public class CheckOutByBarcodeResource extends Resource {
       CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
       createLockWithRetry(0, future, checkOutLockRepository, records);
       return future.handle((res,err) ->{
+        log.info("res {} , err {} ",res,err);
         if(res!=null){
           log.info("acquireLock:: Lock is acquired");
           return Result.succeeded(records);
