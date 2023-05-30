@@ -235,10 +235,13 @@ public class CheckOutByBarcodeResource extends Resource {
           log.info("createLockWithRetry:: checkOutLock object {} ", res.value());
           future.complete(res.value());
         } else {
-          if (noOfAttempts <= maxRetry)
+          if (noOfAttempts <= maxRetry){
             vertx.setTimer(retryIntervals.get(noOfAttempts), h -> createLockWithRetry(noOfAttempts + 1, future, checkOutLockRepository, records));
-          else
-            future.completeExceptionally(err);
+          }else{
+            String error = res.cause() != null ? res.cause().toString() : "";
+            log.warn("createLockWithRetry:: Completing exceptionally {} ", error);
+            future.completeExceptionally(new RuntimeException(error));
+          }
         }
       });
   }

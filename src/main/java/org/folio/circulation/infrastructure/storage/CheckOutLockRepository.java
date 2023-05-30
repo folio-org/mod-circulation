@@ -29,8 +29,8 @@ public class CheckOutLockRepository {
     log.info("create:: trying to create lock");
     final ResponseInterpreter<CheckOutLock> interpreter =
       new ResponseInterpreter<CheckOutLock>()
-        .flatMapOn(201, mapUsingJson(CheckOutLock::from));
-        //.otherwise(forwardOnFailure());
+        .flatMapOn(201, mapUsingJson(CheckOutLock::from))
+        .otherwise(forwardOnFailure());
 
     return checkOutLockClient.post(buildCheckOutLockPayload(records))
       .thenApply(interpreter::flatMap);
