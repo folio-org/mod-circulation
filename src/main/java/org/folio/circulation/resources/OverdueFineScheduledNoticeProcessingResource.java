@@ -43,6 +43,7 @@ public class OverdueFineScheduledNoticeProcessingResource
   @Override
   protected GroupedScheduledNoticeHandler getHandler(Clients clients,
     LoanRepository loanRepository) {
+
     return new GroupedFeeFineScheduledNoticeHandler(clients, loanRepository);
   }
 
