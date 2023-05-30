@@ -78,6 +78,7 @@ public class RequestScheduledNoticeService {
     }
     scheduledNoticesRepository.deleteByRequestId(request.getId())
       .thenAccept(r -> r.next(resp -> scheduleNoticesForRequestWithItemId(request)));
+
     return completedFuture(succeeded(relatedRecords));
   }
 
