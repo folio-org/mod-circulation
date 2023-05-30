@@ -16,7 +16,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.PATRON
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.http.CommonResponseInterpreters.noContentRecordInterpreter;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -58,7 +57,6 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.RecordNotFoundFailure;
-import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.GetManyRecordsRepository;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Offset;
@@ -124,8 +122,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.put(loan.getId(), storageLoan)
-      .thenApply(noContentRecordInterpreter(loan)::flatMap)
-      .thenComposeAsync(r -> r.after(this::refreshLoanRepresentation));
+      .thenApply(r -> r.map(response -> loan));
   }
 
   /**
@@ -182,13 +179,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       .mapTo(Loan::from)
       .whenNotFound(failed(new RecordNotFoundFailure("loan", id)))
       .fetch(id);
-  }
-
-  private CompletableFuture<Result<Loan>> refreshLoanRepresentation(Loan loan) {
-    return new SingleRecordFetcher<>(loansStorageClient, "loan",
-      new ResponseInterpreter<Loan>()
-        .flatMapOn(200, mapUsingJson(loan::replaceRepresentation)))
-      .fetch(loan.getId());
   }
 
   private CompletableFuture<Result<Loan>> fetchItem(Result<Loan> result) {
