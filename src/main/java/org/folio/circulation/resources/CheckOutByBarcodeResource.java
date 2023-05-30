@@ -228,22 +228,26 @@ public class CheckOutByBarcodeResource extends Resource {
   private void createLockWithRetry(int noOfAttempts, CompletableFuture<CheckOutLock> future, CheckOutLockRepository checkOutLockRepository, LoanAndRelatedRecords records) {
     log.info("createLockWithRetry:: Retrying lock creation {} ", noOfAttempts);
     int maxRetry = retryIntervals.size() - 1;
-    checkOutLockRepository.create(records)
-      .whenComplete((res, err) -> {
-        log.info("res {} {} {} , err {} ", res, res.succeeded(), res.failed(), err);
-        if (res.succeeded()) {
-          log.info("createLockWithRetry:: checkOutLock object {} ", res.value());
-          future.complete(res.value());
-        } else {
-          if (noOfAttempts <= maxRetry){
-            vertx.setTimer(retryIntervals.get(noOfAttempts), h -> createLockWithRetry(noOfAttempts + 1, future, checkOutLockRepository, records));
-          }else{
-            String error = res.cause() != null ? res.cause().toString() : "";
-            log.warn("createLockWithRetry:: Completing exceptionally {} ", error);
-            future.completeExceptionally(new RuntimeException(error));
+    try {
+      checkOutLockRepository.create(records)
+        .whenComplete((res, err) -> {
+          log.info("res {} {} {} , err {} ", res, res.succeeded(), res.failed(), err);
+          if (res.succeeded()) {
+            log.info("createLockWithRetry:: checkOutLock object {} ", res.value());
+            future.complete(res.value());
+          } else {
+            if (noOfAttempts <= maxRetry) {
+              vertx.setTimer(retryIntervals.get(noOfAttempts), h -> createLockWithRetry(noOfAttempts + 1, future, checkOutLockRepository, records));
+            } else {
+              String error = res.cause() != null ? res.cause().toString() : "";
+              log.warn("createLockWithRetry:: Completing exceptionally {} ", error);
+              future.completeExceptionally(new RuntimeException(error));
+            }
           }
-        }
-      });
+        });
+    } catch (Exception ex) {
+      future.completeExceptionally(ex);
+    }
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
