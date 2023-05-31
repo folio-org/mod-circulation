@@ -19,6 +19,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.GroupedFeeFineScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.GroupedScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.domain.notice.schedule.grouping.OverdueFineScheduledNoticeGroupDefinitionFactory;
 import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -37,7 +38,8 @@ public class OverdueFineScheduledNoticeProcessingResource
 
   public OverdueFineScheduledNoticeProcessingResource(HttpClient client) {
     super(client, "/circulation/overdue-fine-scheduled-notices-processing",
-      EnumSet.of(OVERDUE_FINE_RETURNED, OVERDUE_FINE_RENEWED), true);
+      EnumSet.of(OVERDUE_FINE_RETURNED, OVERDUE_FINE_RENEWED), true,
+      new OverdueFineScheduledNoticeGroupDefinitionFactory());
   }
 
   @Override

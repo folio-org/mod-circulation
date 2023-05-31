@@ -23,8 +23,10 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.GroupedScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
+import org.folio.circulation.domain.notice.schedule.grouping.DefaultScheduledNoticeGroupDefinitionFactory;
+import org.folio.circulation.domain.notice.schedule.grouping.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
+import org.folio.circulation.domain.notice.schedule.grouping.ScheduledNoticeGroupDefinitionFactory;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
@@ -46,6 +48,7 @@ public abstract class GroupingScheduledNoticeProcessingResource
 
   private final EnumSet<TriggeringEvent> triggeringEvents;
   private final boolean realTime;
+  private final ScheduledNoticeGroupDefinitionFactory groupDefinitionFactory;
 
   private static final CqlSortBy FETCH_NOTICES_SORT_CLAUSE =
     CqlSortBy.sortBy(
@@ -58,17 +61,20 @@ public abstract class GroupingScheduledNoticeProcessingResource
     );
 
   protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
-    TriggeringEvent triggeringEvent, boolean realTime) {
+    EnumSet<TriggeringEvent> triggeringEvents, boolean realTime) {
 
-    this(client, rootPath, EnumSet.of(triggeringEvent), realTime);
+    this(client, rootPath, triggeringEvents, realTime,
+      new DefaultScheduledNoticeGroupDefinitionFactory());
   }
 
   protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
-    EnumSet<TriggeringEvent> triggeringEvents, boolean realTime) {
+    EnumSet<TriggeringEvent> triggeringEvents, boolean realTime,
+    ScheduledNoticeGroupDefinitionFactory groupDefinitionFactory) {
 
     super(rootPath, client);
     this.triggeringEvents = triggeringEvents;
     this.realTime = realTime;
+    this.groupDefinitionFactory = groupDefinitionFactory;
   }
 
   protected abstract GroupedScheduledNoticeHandler getHandler(Clients clients,
@@ -124,10 +130,10 @@ public abstract class GroupingScheduledNoticeProcessingResource
       .thenApply(mapResult(v -> notices));
   }
 
-  private static List<List<ScheduledNotice>> groupNotices(MultipleRecords<ScheduledNotice> notices) {
+  private List<List<ScheduledNotice>> groupNotices(MultipleRecords<ScheduledNotice> notices) {
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups = notices.getRecords()
       .stream()
-      .collect(groupingBy(ScheduledNoticeGroupDefinition::from, LinkedHashMap::new, toList()));
+      .collect(groupingBy(groupDefinitionFactory::newInstance, LinkedHashMap::new, toList()));
 
     boolean fetchedAllTheRecords = notices.getTotalRecords().equals(notices.getRecords().size());
     //If not all the records are fetched then the last group is cut off because there might be only a part of it

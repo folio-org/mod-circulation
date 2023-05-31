@@ -19,7 +19,6 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -105,7 +104,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void uponAtNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -127,7 +126,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void oneTimeAfterNoticeIsSentAndDeleted(TriggeringEvent triggeringEvent) {
     UUID checkInSessionId = randomUUID();
     UserResource user = usersFixture.james();
@@ -152,7 +151,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void recurringAfterNoticeIsSentAndRescheduled(TriggeringEvent triggeringEvent) {
     UUID checkInSessionId = randomUUID();
     UserResource user = usersFixture.james();
@@ -178,7 +177,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void recurringNoticeIsRescheduledCorrectlyWhenNextCalculatedRunTimeIsBeforeNow(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, AFTER, true));
@@ -205,7 +204,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void multipleScheduledNoticesAreProcessedDuringOneProcessingIteration(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(
@@ -240,7 +239,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenReferencedActionDoesNotExist(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -262,7 +261,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenReferencedAccountDoesNotExist(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -284,7 +283,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenReferencedLoanDoesNotExist(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -306,7 +305,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenReferencedItemDoesNotExist(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -328,7 +327,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenReferencedUserDoesNotExist(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -350,7 +349,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenReferencedTemplateDoesNotExist(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -372,7 +371,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsNotDeletedWhenPatronNoticeRequestFails(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -394,7 +393,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @ParameterizedTest
-  @MethodSource("testParameters")
+  @MethodSource("triggeringEvents")
   void noticeIsDiscardedWhenAccountIsClosed(TriggeringEvent triggeringEvent) {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
@@ -443,20 +442,19 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
-  @ParameterizedTest
-  @MethodSource("testParameters")
-  void noticesCreatedDuringSameCheckInSessionAreBundled(TriggeringEvent triggeringEvent) {
+  @Test
+  void uponAtNoticesCreatedDuringSameCheckInSessionAreBundled() {
     UUID checkInSessionId = randomUUID();
     UserResource user = usersFixture.james();
 
-    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, UPON_AT, false));
+    createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false));
 
-    OverdueFineContext fine1 = generateOverdueFine(triggeringEvent, user, checkInSessionId);
-    OverdueFineContext fine2 = generateOverdueFine(triggeringEvent, user, checkInSessionId);
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, checkInSessionId);
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, checkInSessionId);
 
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, fine1.getActionDateTime(), fine1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, fine2.getActionDateTime(), fine2);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
 
     endCheckInSession(user.getId());
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
@@ -469,12 +467,15 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void noticesCreatedDuringDifferentCheckInSessionAreNotBundledUponCheckIn() {
+  void uponAtNoticesCreatedDuringDifferentCheckInSessionsAreNotBundled() {
+    UUID firstCheckInSessionId = randomUUID();
+    UUID secondCheckInSessionId = randomUUID();
     UserResource user = usersFixture.james();
+
     createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false));
 
-    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, randomUUID());
-    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, randomUUID());
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, firstCheckInSessionId);
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, secondCheckInSessionId);
 
     verifyNumberOfScheduledNotices(2);
     assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
@@ -484,7 +485,6 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
       rightAfter(fine2.getAction().getDateAction()));
 
-    verifyNumberOfSentNotices(2);
     assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), fine1);
     assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), fine2);
     verifyNumberOfScheduledNotices(0);
@@ -493,22 +493,51 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void noticesCreatedDuringDifferentCheckInSessionAreStillBundledUponRenewal() {
+  void uponAtNoticesCreatedUponRenewalAreBundled() {
     UserResource user = usersFixture.james();
     createPatronNoticePolicy(createNoticeConfig(OVERDUE_FINE_RENEWED, UPON_AT, false));
 
-    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RENEWED, user, randomUUID());
-    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RENEWED, user, randomUUID());
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RENEWED, user);
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RENEWED, user);
 
     verifyNumberOfScheduledNotices(2);
     assertThatScheduledNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine1.getActionDateTime(), fine1);
     assertThatScheduledNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine2.getActionDateTime(), fine2);
 
+    endCheckInSession(user.getId());
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
-      rightAfter(fine2.getAction().getDateAction()));
+      rightAfter(fine2.getActionDateTime()));
 
-    verifyNumberOfSentNotices(1);
     assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @ParameterizedTest
+  @MethodSource("triggeringEvents")
+  void afterNoticesAreBundled(TriggeringEvent triggeringEvent) {
+    UUID firstCheckInSessionId = randomUUID();
+    UUID secondCheckInSessionId = randomUUID();
+    UserResource user = usersFixture.james();
+
+    createPatronNoticePolicy(createNoticeConfig(triggeringEvent, AFTER, false));
+
+    OverdueFineContext fine1 = generateOverdueFine(triggeringEvent, user, firstCheckInSessionId);
+    OverdueFineContext fine2 = generateOverdueFine(triggeringEvent, user, secondCheckInSessionId);
+
+    ZonedDateTime firstNextRunTime = AFTER_PERIOD.plusDate(fine1.getActionDateTime());
+    ZonedDateTime secondNextRunTime = AFTER_PERIOD.plusDate(fine2.getActionDateTime());
+
+    verifyNumberOfScheduledNotices(2);
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, firstNextRunTime, fine1);
+    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, secondNextRunTime, fine2);
+
+    endCheckInSession(user.getId());
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(secondNextRunTime));
+
+    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), List.of(fine1, fine2));
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -634,7 +663,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     Period expectedRecurringPeriod = recurring ? RECURRING_PERIOD : null;
 
-    assertThat(scheduledNoticesClient.getAll(), hasItems(
+    assertThat(scheduledNoticesClient.getAll(), hasItem(
       hasScheduledFeeFineNotice(
         context.getActionId(), context.getLoanId(), context.getUser().getId(), TEMPLATE_IDS.get(timing),
         triggeringEvent, nextRunTime, timing, expectedRecurringPeriod, true)
@@ -667,7 +696,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     return dateTime.plusMinutes(1);
   }
 
-  private static Object[] testParameters() {
+  private static Object[] triggeringEvents() {
     return new Object[] { OVERDUE_FINE_RETURNED, OVERDUE_FINE_RENEWED };
   }
 
