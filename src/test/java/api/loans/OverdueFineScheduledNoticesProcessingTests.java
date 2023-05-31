@@ -113,13 +113,13 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(1);
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
 
     verifyNumberOfSentNotices(1);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), overdueFine);
+    assertThatNoticeWasSent(UPON_AT, overdueFine);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -138,13 +138,13 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime expectedNextRunTime = AFTER_PERIOD.plusDate(chargeActionDateTime);
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, expectedNextRunTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, AFTER, false, expectedNextRunTime, overdueFine);
 
     endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(expectedNextRunTime));
 
     verifyNumberOfSentNotices(1);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), overdueFine);
+    assertThatNoticeWasSent(AFTER, overdueFine);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -161,7 +161,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(1);
     ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(overdueFine.getActionDateTime());
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime, overdueFine);
 
     endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(expectedFirstRunTime));
@@ -169,9 +169,9 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime expectedSecondRunTime = RECURRING_PERIOD.plusDate(expectedFirstRunTime);
 
     verifyNumberOfSentNotices(1);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), overdueFine);
+    assertThatNoticeWasSent(AFTER, overdueFine);
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedSecondRunTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, AFTER, true, expectedSecondRunTime, overdueFine);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -186,7 +186,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(1);
     ZonedDateTime expectedFirstRunTime = AFTER_PERIOD.plusDate(overdueFine.getActionDateTime());
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, AFTER, true, expectedFirstRunTime, overdueFine);
 
     ZonedDateTime fakeNow = rightAfter(RECURRING_PERIOD.plusDate(expectedFirstRunTime));
 
@@ -196,9 +196,9 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime expectedNextRunTime = RECURRING_PERIOD.plusDate(fakeNow);
 
     verifyNumberOfSentNotices(1);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), overdueFine);
+    assertThatNoticeWasSent(AFTER, overdueFine);
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedNextRunTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, AFTER, true, expectedNextRunTime, overdueFine);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
@@ -218,9 +218,9 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime firstAfterRunTime = AFTER_PERIOD.plusDate(chargeActionDateTime);
 
     verifyNumberOfScheduledNotices(3);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);  // send and delete
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, firstAfterRunTime, overdueFine); // send and delete
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, firstAfterRunTime, overdueFine);  // send and reschedule
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);  // send and delete
+    assertThatNoticeExists(triggeringEvent, AFTER, false, firstAfterRunTime, overdueFine); // send and delete
+    assertThatNoticeExists(triggeringEvent, AFTER, true, firstAfterRunTime, overdueFine);  // send and reschedule
 
     endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(firstAfterRunTime));
@@ -228,11 +228,11 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime expectedRecurrenceRunTime = RECURRING_PERIOD.plusDate(firstAfterRunTime);
 
     verifyNumberOfSentNotices(2); // 1 "upon at" notice + 1 bundled "after" notice
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), overdueFine);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), List.of(overdueFine, overdueFine));
+    assertThatNoticeWasSent(UPON_AT, overdueFine);
+    assertThatNoticeWasSent(AFTER, List.of(overdueFine, overdueFine));
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, true, expectedRecurrenceRunTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, AFTER, true, expectedRecurrenceRunTime, overdueFine);
     // 3 charges in 2 notices
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -248,7 +248,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     feeFineActionsClient.delete(overdueFine.getActionId());
@@ -270,7 +270,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     accountsClient.delete(overdueFine.getAccountId());
@@ -292,7 +292,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     loansClient.delete(overdueFine.getLoanId());
@@ -314,7 +314,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     itemsClient.delete(overdueFine.getItem().getId());
@@ -336,7 +336,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     usersClient.delete(overdueFine.getUser().getId());
@@ -358,7 +358,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     templateFixture.delete(TEMPLATE_IDS.get(UPON_AT));
@@ -380,7 +380,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     FakeModNotify.setFailPatronNoticesWithBadRequest(true);
@@ -402,7 +402,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(triggeringEvent, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     JsonObject closedAccountJson = overdueFine.getAccount().toJson();
     JsonPropertyWriter.writeNamedObject(closedAccountJson, "status", "Closed");
@@ -426,7 +426,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime chargeActionDateTime = overdueFine.getActionDateTime();
 
     verifyNumberOfScheduledNotices(1);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, chargeActionDateTime, overdueFine);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, chargeActionDateTime, overdueFine);
 
     endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(rightAfter(chargeActionDateTime));
@@ -453,14 +453,15 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, checkInSessionId);
 
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
 
-    endCheckInSession(user.getId());
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
       rightAfter(fine2.getAction().getDateAction()));
 
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(UPON_AT, List.of(fine1, fine2));
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -478,15 +479,16 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, secondCheckInSessionId);
 
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
 
-    endCheckInSession(user.getId());
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
       rightAfter(fine2.getAction().getDateAction()));
 
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), fine1);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), fine2);
+    verifyNumberOfSentNotices(2);
+    assertThatNoticeWasSent(UPON_AT, fine1);
+    assertThatNoticeWasSent(UPON_AT, fine2);
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -501,14 +503,15 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RENEWED, user);
 
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine1.getActionDateTime(), fine1);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+    assertThatNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine2.getActionDateTime(), fine2);
 
-    endCheckInSession(user.getId());
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
       rightAfter(fine2.getActionDateTime()));
 
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(UPON_AT, List.of(fine1, fine2));
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -530,14 +533,15 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime secondNextRunTime = AFTER_PERIOD.plusDate(fine2.getActionDateTime());
 
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, firstNextRunTime, fine1);
-    assertThatScheduledNoticeExists(triggeringEvent, AFTER, false, secondNextRunTime, fine2);
+    assertThatNoticeExists(triggeringEvent, AFTER, false, firstNextRunTime, fine1);
+    assertThatNoticeExists(triggeringEvent, AFTER, false, secondNextRunTime, fine2);
 
-    endCheckInSession(user.getId());
+    endCheckInSession(user);
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
       rightAfter(secondNextRunTime));
 
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(AFTER), List.of(fine1, fine2));
+    verifyNumberOfSentNotices(1);
+    assertThatNoticeWasSent(AFTER, List.of(fine1, fine2));
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -554,8 +558,8 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, firstCheckInSessionId);
     OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, firstCheckInSessionId);
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine2.getActionDateTime(), fine2);
 
     endCheckInSession(user); // end first check-in session
 
@@ -563,8 +567,8 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     OverdueFineContext fine3 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, secondCheckInSessionId);
     OverdueFineContext fine4 = generateOverdueFine(OVERDUE_FINE_RETURNED, user, secondCheckInSessionId);
     verifyNumberOfScheduledNotices(4);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine3.getActionDateTime(), fine3);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine4.getActionDateTime(), fine4);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine3.getActionDateTime(), fine3);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine4.getActionDateTime(), fine4);
 
     // second check-in session is still open
     scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
@@ -572,14 +576,69 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
 
     // notices created during first session are bundled and sent
     verifyNumberOfSentNotices(1);
-    assertThatNoticeWasSent(TEMPLATE_IDS.get(UPON_AT), List.of(fine1, fine2));
+    assertThatNoticeWasSent(UPON_AT, List.of(fine1, fine2));
 
     // notices created during second session are still there
     verifyNumberOfScheduledNotices(2);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine3.getActionDateTime(), fine3);
-    assertThatScheduledNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine4.getActionDateTime(), fine4);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine3.getActionDateTime(), fine3);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine4.getActionDateTime(), fine4);
 
     verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void uponAtNoticesCreatedUponCheckInAndRenewalAreNotBundled() {
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(
+      createNoticeConfig(OVERDUE_FINE_RETURNED, UPON_AT, false),
+      createNoticeConfig(OVERDUE_FINE_RENEWED, UPON_AT, false));
+
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user);
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RENEWED, user);
+
+    verifyNumberOfScheduledNotices(2);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, UPON_AT, false, fine1.getActionDateTime(), fine1);
+    assertThatNoticeExists(OVERDUE_FINE_RENEWED, UPON_AT, false, fine2.getActionDateTime(), fine2);
+
+    endCheckInSession(user);
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(fine2.getActionDateTime()));
+
+    verifyNumberOfSentNotices(2);
+    assertThatNoticeWasSent(UPON_AT, fine1);
+    assertThatNoticeWasSent(UPON_AT, fine2);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void afterNoticesCreatedUponCheckInAndRenewalAreNotBundled() {
+    UserResource user = usersFixture.james();
+    createPatronNoticePolicy(
+      createNoticeConfig(OVERDUE_FINE_RETURNED, AFTER, false),
+      createNoticeConfig(OVERDUE_FINE_RENEWED, AFTER, false));
+
+    OverdueFineContext fine1 = generateOverdueFine(OVERDUE_FINE_RETURNED, user);
+    OverdueFineContext fine2 = generateOverdueFine(OVERDUE_FINE_RENEWED, user);
+
+    ZonedDateTime firstNextRunTime = AFTER_PERIOD.plusDate(fine1.getActionDateTime());
+    ZonedDateTime secondNextRunTime = AFTER_PERIOD.plusDate(fine2.getActionDateTime());
+
+    verifyNumberOfScheduledNotices(2);
+    assertThatNoticeExists(OVERDUE_FINE_RETURNED, AFTER, false, firstNextRunTime, fine1);
+    assertThatNoticeExists(OVERDUE_FINE_RENEWED, AFTER, false, secondNextRunTime, fine2);
+
+    endCheckInSession(user);
+    scheduledNoticeProcessingClient.runOverdueFineNoticesProcessing(
+      rightAfter(secondNextRunTime));
+
+    verifyNumberOfSentNotices(2);
+    assertThatNoticeWasSent(AFTER, fine1);
+    assertThatNoticeWasSent(AFTER, fine2);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
@@ -658,7 +717,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     return builder.create();
   }
 
-  private void assertThatScheduledNoticeExists(TriggeringEvent triggeringEvent, NoticeTiming timing,
+  private void assertThatNoticeExists(TriggeringEvent triggeringEvent, NoticeTiming timing,
     boolean recurring, ZonedDateTime nextRunTime, OverdueFineContext context) {
 
     Period expectedRecurringPeriod = recurring ? RECURRING_PERIOD : null;
@@ -670,13 +729,11 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     ));
   }
 
-  private void assertThatNoticeWasSent(UUID expectedTemplateId, OverdueFineContext context) {
-    assertThatNoticeWasSent(expectedTemplateId, singletonList(context));
+  private void assertThatNoticeWasSent(NoticeTiming timing, OverdueFineContext context) {
+    assertThatNoticeWasSent(timing, singletonList(context));
   }
 
-  private void assertThatNoticeWasSent(UUID expectedTemplateId,
-    Collection<OverdueFineContext> contexts) {
-
+  private void assertThatNoticeWasSent(NoticeTiming timing, Collection<OverdueFineContext> contexts) {
     List<Account> accounts = contexts.stream()
       .map(OverdueFineContext::getAccount)
       .collect(Collectors.toList());
@@ -688,7 +745,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       .orElseThrow();
 
     assertThat(getSentPatronNotices(), hasItem(
-        hasNoticeProperties(user.getId(), expectedTemplateId, "email", "text/html",
+        hasNoticeProperties(user.getId(), TEMPLATE_IDS.get(timing), "email", "text/html",
           getBundledFeeChargeContextMatcher(user, accounts))));
   }
 
@@ -716,14 +773,9 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   }
 
   private void endCheckInSession(UserResource user) {
-    endCheckInSession(user.getId());
-  }
-
-  private void endCheckInSession(UUID userId) {
-    endPatronSessionClient.endCheckInSession(userId);
-
+    endPatronSessionClient.endCheckInSession(user.getId());
     Awaitility.waitAtMost(5, TimeUnit.SECONDS)
-      .until(() -> getCheckInSession(userId), emptyIterable());
+      .until(() -> getCheckInSession(user.getId()), emptyIterable());
   }
 
   private MultipleJsonRecords getCheckInSession(UUID userId) {
