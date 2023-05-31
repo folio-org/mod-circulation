@@ -110,7 +110,7 @@ public final class CirculationRulesCache {
       Rules rules = rulesMap.get(tenantId);
       DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
       String strDate = dateFormat.format(rules.getReloadTimestamp()); 
-      log.info("Rules object found, last updated: " + strDate);
+      log.info("Rules object found, last updated: {}", strDate);
       cfDrools.complete(succeeded(rules.getDrools()));
       return cfDrools;
     }
