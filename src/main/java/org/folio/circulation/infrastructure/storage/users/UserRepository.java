@@ -191,6 +191,7 @@ public class UserRepository {
       log.info("getProxyUserByBarcode:: barcode is blank");
       return completedFuture(succeeded(null));
     } else {
+      log.info("getProxyUserByBarcode");
       return getUserByBarcode(barcode, "proxyUserBarcode");
     }
   }
