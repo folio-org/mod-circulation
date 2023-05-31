@@ -15,10 +15,8 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.Environment;
@@ -70,15 +68,9 @@ import io.vertx.ext.web.RoutingContext;
 public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
-
   final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final CirculationErrorType[] PARTIAL_SUCCESS_ERRORS = {
     FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_PUBLISH_CHECKOUT_EVENT};
-
-  private final Vertx vertx=Vertx.vertx();
-
-  private final boolean isCheckOutFeatureEnabled = Environment.getCheckOutFeatureFlag();
-  private final List<Integer> retryIntervals = Environment.getRetryInterval();
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -137,7 +129,9 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients);
+    final var isCheckOutLockFeatureEnabled = Environment.getCheckOutFeatureFlag();
+
+    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, Environment.getRetryIntervals());
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
@@ -169,8 +163,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
-      .thenCompose(r ->r.after(records -> this.acquireLock(records, checkOutLockRepository)))
-      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records, validators, errorHandler)))
+      .thenCompose(r -> r.after(records -> this.acquireLock(records, checkOutLockRepository, isCheckOutLockFeatureEnabled)))
+      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records, validators, errorHandler, isCheckOutLockFeatureEnabled)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
@@ -183,6 +177,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
+      .thenApply(r -> r.next(records -> deleteCheckOutLock(records, checkOutLockRepository, isCheckOutLockFeatureEnabled)))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> createdLoanFrom(r, errorHandler))
@@ -198,58 +193,39 @@ public class CheckOutByBarcodeResource extends Resource {
         succeeded(records)));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository) {
-    log.info("acquireLock:: Creating checkout lock");
-    if(!isCheckOutFeatureEnabled) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, boolean isCheckOutLockFeatureEnabled) {
+    log.debug("acquireLock:: Creating checkout lock");
+    if(!isCheckOutLockFeatureEnabled) {
         return completedFuture(Result.succeeded(records));
       }
-      CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
-      createLockWithRetry(0, future, checkOutLockRepository, records);
-      return future.handle((res,err) ->{
-        log.info("res {} , err {} ",res,err);
+    CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
+    checkOutLockRepository.createLockWithRetry(0, future, records);
+    return future.handle((res,err) ->{
         if(res!=null){
           log.info("acquireLock:: Lock is acquired");
-          return Result.succeeded(records);
+          return Result.succeeded(records.withCheckOutLock(res));
         }
         else{
           log.info("acquireLock:: Unable to acquire lock");
-          return Result.failed(ValidationErrorFailure.singleValidationError("Unable to acquire lock", "", ""));
+          return Result.failed(ValidationErrorFailure.singleValidationError("unable to acquire lock", "", ""));
         }
       });
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
-    if(!isCheckOutFeatureEnabled) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler, boolean isCheckOutLockFeatureEnabled) {
+    if(!isCheckOutLockFeatureEnabled) {
       return completedFuture(Result.succeeded(records));
     }
     return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors));
   }
 
-  private void createLockWithRetry(int noOfAttempts, CompletableFuture<CheckOutLock> future, CheckOutLockRepository checkOutLockRepository, LoanAndRelatedRecords records) {
-    log.info("createLockWithRetry:: Retrying lock creation {} ", noOfAttempts);
-    int maxRetry = retryIntervals.size() - 1;
-    try {
-      checkOutLockRepository.create(records)
-        .whenComplete((res, err) -> {
-          log.info("res {} {} {} , err {} ", res, res.succeeded(), res.failed(), err);
-          if (res.succeeded()) {
-            log.info("createLockWithRetry:: checkOutLock object {} ", res.value());
-            future.complete(res.value());
-          } else {
-            if (noOfAttempts <= maxRetry) {
-              vertx.setTimer(retryIntervals.get(noOfAttempts), h -> createLockWithRetry(noOfAttempts + 1, future, checkOutLockRepository, records));
-            } else {
-              String error = res.cause() != null ? res.cause().toString() : "";
-              log.warn("createLockWithRetry:: Completing exceptionally {} ", error);
-              future.completeExceptionally(new RuntimeException(error));
-            }
-          }
-        });
-    } catch (Exception ex) {
-      log.warn("createLockWithRetry:: exception {} ", ex.getMessage());
-      future.completeExceptionally(ex);
+  private Result<LoanAndRelatedRecords> deleteCheckOutLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, boolean isCheckOutLockFeatureEnabled) {
+    if(!isCheckOutLockFeatureEnabled) {
+      return Result.succeeded(records);
     }
+    checkOutLockRepository.delete(records);
+    return Result.succeeded(records);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -274,6 +250,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
     LoanAndRelatedRecords loanAndRelatedRecords, ItemRepository itemRepository) {
+
     return itemRepository.updateItem(loanAndRelatedRecords.getItem())
       .thenApply(r -> r.map(loanAndRelatedRecords::withItem));
   }

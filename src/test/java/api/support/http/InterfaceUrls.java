@@ -308,4 +308,9 @@ public class InterfaceUrls {
   public static URL departmentsStorageUrl() {
     return APITestContext.viaOkapiModuleUrl("/departments" );
   }
+
+  public static URL checkOutLockStorageUrl() {
+    return APITestContext.viaOkapiModuleUrl("/check-out-lock-storage");
+  }
+
 }

@@ -28,6 +28,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final String loggedInUserId;
   private final TlrSettingsConfiguration tlrSettings;
   private final Request closedFilledRequest;
+  private final CheckOutLock checkOutLock;
 
   public LoanAndRelatedRecords(Loan loan) {
     this(loan, ZoneOffset.UTC);
@@ -38,11 +39,11 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan, Loan existingLoan, ZoneId timeZone) {
-    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null, null);
+    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null, null, null);
   }
 
   public LoanAndRelatedRecords(Loan loan, ZoneId timeZone) {
-    this(loan, null, null, timeZone, new JsonObject(), null, null, null);
+    this(loan, null, null, timeZone, new JsonObject(), null, null, null, null);
   }
 
   public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {

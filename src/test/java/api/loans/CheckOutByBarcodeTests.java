@@ -123,7 +123,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -2565,6 +2564,38 @@ class CheckOutByBarcodeTests extends APITests {
       hasMessage("Could not find user with matching barcode"),
       hasCode(USER_BARCODE_NOT_FOUND),
       hasUserBarcodeParameter(steveWithNoBarcode))));
+  }
+
+  @Test
+  void checkOutByBarcodeWithCheckOutLockFeatureEnabled() {
+    IndividualResource item1 = itemsFixture.basedUponNod();
+    IndividualResource item2 = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource item3 = itemsFixture.basedUponTemeraire();
+    IndividualResource item4 = itemsFixture.basedUponDunkirk();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    //Normal checkout without checkOutLockFeature Enabled
+    checkOutFixture.checkOutByBarcode(item1, rebecca);
+
+    //Enabling checkOutLockFeature
+    System.setProperty("CHECKOUT_LOCK_FEATURE_ENABLED","true");
+
+    //Lock creation and deletion will happen in the same checkout
+    checkOutFixture.checkOutByBarcode(item2, rebecca);
+
+    //Creating a lock for user so that user will not be able to acquire lock
+    IndividualResource  checkOutLock = checkOutLockFixture.createLockForUserId(rebecca.getId().toString());
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(item3, rebecca);
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage("unable to acquire lock")));
+
+    //Deleting the lock
+    checkOutLockFixture.deleteLock(checkOutLock.getId());
+
+    checkOutFixture.checkOutByBarcode(item4, rebecca);
+    //Disabling checkOutLockFeature
+    System.setProperty("CHECKOUT_LOCK_FEATURE_ENABLED","false");
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,

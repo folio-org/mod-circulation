@@ -14,4 +14,8 @@ public class CheckOutLock {
     return new CheckOutLock(representation);
   }
 
+  public String getId() {
+    return this.representation.getString("id");
+  }
+
 }

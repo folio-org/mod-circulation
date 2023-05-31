@@ -6,6 +6,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,15 +22,15 @@ public class Environment {
   }
 
   public static boolean getCheckOutFeatureFlag() {
-    return getVariable("CHECKOUT_LOCK_FEATURE_ENABLED", false);
+    return Boolean.parseBoolean(getPropertyValue("CHECKOUT_LOCK_FEATURE_ENABLED", "false"));
   }
 
-  public static List<Integer> getRetryInterval() {
-    return getIntervalArr("RETRY_INTERVAL_MS",300);
+  public static List<Integer> getRetryIntervals() {
+    return getIntervalArr(getPropertyValue("RETRY_INTERVAL_MS","300"));
   }
 
   public static int getLockTTL() {
-    return getVariable("LOCK_TTL_MS", 3000);
+    return Integer.parseInt(getPropertyValue("LOCK_TTL_MS", "3000"));
   }
 
   private static int getVariable(String key, int defaultValue) {
@@ -49,39 +50,15 @@ public class Environment {
     }
   }
 
-  private static Boolean getVariable(String key, boolean defaultValue) {
-    final var variable = System.getenv().get(key);
-
-    if (isBlank(variable)) {
-      return defaultValue;
-    }
-
-    try {
-      return Boolean.parseBoolean(variable);
-    }
-    catch(Exception e) {
-      log.warn("Invalid value for '{}': '{}' ", key, variable);
-
-      return defaultValue;
-    }
+  private static String getPropertyValue(String key, String defaultValue) {
+    return Optional.ofNullable(System.getenv().get(key))
+      .or(() -> Optional.ofNullable(System.getProperty(key)))
+      .orElse(defaultValue);
   }
 
-  private static List<Integer> getIntervalArr(String key, int defaultValue) {
-    final var variable = System.getenv().get(key);
-
-    if (isBlank(variable)) {
-      return List.of(defaultValue);
-    }
-
-    try {
-      log.info("getIntervalArr:: variable {} ", variable);
-      return Arrays.stream(variable.split("\\|"))
+  private static List<Integer> getIntervalArr(String intervals) {
+      return Arrays.stream(intervals.split("\\|"))
         .map(Integer::parseInt)
         .collect(Collectors.toList());
-    } catch (Exception e) {
-      log.warn("Invalid value for '{}': '{}' ", key, variable);
-
-      return List.of(defaultValue);
-    }
   }
 }
