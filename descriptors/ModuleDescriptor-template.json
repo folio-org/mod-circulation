@@ -620,7 +620,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/rules/",
+          "pathPattern": "/circulation/rules-reload",
           "modulePermissions": [
             "circulation.rules.get"
           ],

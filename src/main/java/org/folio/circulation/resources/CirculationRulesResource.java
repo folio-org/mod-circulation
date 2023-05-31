@@ -75,22 +75,6 @@ public class CirculationRulesResource extends Resource {
     router.put(rootPath).handler(BodyHandler.create());
     router.get(rootPath).handler(this::get);
     router.put(rootPath).handler(this::put);
-    router.post(rootPath).handler(this::refresh);
-  }
-
-  private void refresh(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();
-
-    CirculationRulesCache.getInstance().reloadRules(context.getTenantId(), circulationRulesClient)
-    .thenAccept(result -> {
-      if (result.failed()) {
-        internalError(routingContext.response(), "Unable to reload circulation rules" + result.toString());
-      } else {
-        noContent().writeTo(routingContext.response());
-    }});
-
   }
 
   private void get(RoutingContext routingContext) {
