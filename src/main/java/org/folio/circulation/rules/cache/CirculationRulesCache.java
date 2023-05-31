@@ -30,7 +30,7 @@ public final class CirculationRulesCache {
 
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** rules and Drools for each tenantId */
-  private final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
+  private Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
   public static CirculationRulesCache getInstance() {
     return instance;
@@ -42,11 +42,18 @@ public final class CirculationRulesCache {
     rulesMap.clear();
   }
 
+  public void dropRulesForTenant(String tenantId) {
+    Rules rules = new Rules();
+    rulesMap.put(tenantId, rules);
+  }
+
   private boolean rulesExist(String tenantId) {
     if (rulesMap.containsKey(tenantId)) {
       Rules rules = rulesMap.get(tenantId);
       if (rules != null) {
-        return true;
+        if (rules.getRulesAsText() != "") {
+          return true;
+        }
       }
     }
     return false;

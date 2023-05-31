@@ -13,4 +13,11 @@ public class Rules {
   private final Drools drools;
   /** System.currentTimeMillis() of the last load/reload of the rules from the storage */
   private final long reloadTimestamp;
+
+  public Rules() {
+    rulesAsText = "";
+    rulesAsDrools = "";
+    drools = null;
+    reloadTimestamp = 0;
+  }
 }
