@@ -42,6 +42,7 @@ public class CheckOutLockRepository {
             future.complete(res.value());
           } else {
             if (noOfAttempts <= maxRetry) {
+              log.info("createLockWithRetry:: Retry attempt {} for lock creation with delay {}", noOfAttempts, retryIntervals.get(noOfAttempts));
               vertx.setTimer(retryIntervals.get(noOfAttempts), h -> createLockWithRetry(noOfAttempts + 1, future, records));
             } else {
               String error = res.cause() != null ? res.cause().toString() : "";
