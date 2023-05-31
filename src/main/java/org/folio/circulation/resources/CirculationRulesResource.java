@@ -168,7 +168,7 @@ public class CirculationRulesResource extends Resource {
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
     
-      CirculationRulesCache.getInstance().dropCache();
+      CirculationRulesCache.getInstance().dropRulesForTenant(webContext.getTenantId());
   }
 
   private Result<Response> failWhenResponseOtherThanNoContent(Result<Response> result) {

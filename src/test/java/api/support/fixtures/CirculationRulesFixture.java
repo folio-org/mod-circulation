@@ -44,6 +44,14 @@ public class CirculationRulesFixture {
     return rulesJson.getString("rulesAsText");
   }
 
+  public Response reloadRules() {
+    return toResponse(restAssuredClient
+      .beginRequest("post-circulation-rules")
+      .body("{}")
+      .when().post(circulationRulesUrl())
+      .then().extract().response());
+  }
+
 
   public Response putRules(String body) {
     return toResponse(restAssuredClient
