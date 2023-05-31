@@ -67,6 +67,7 @@ public class RequestPolicyRepository {
   private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
     String requestPolicyId) {
 
+    log.debug("lookupRequestPolicy:: parameters requestPolicyId: {}", requestPolicyId);
     return SingleRecordFetcher.json(requestPoliciesStorageClient, "request policy",
       response -> failedDueToServerError(format(
         "Request policy %s could not be found, please check circulation rules", requestPolicyId)))
@@ -76,7 +77,9 @@ public class RequestPolicyRepository {
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
     Item item, User user) {
 
+    log.debug("lookupRequestPolicyId:: parameters item: {}, user: {}", item, user);
     if (item.isNotFound()) {
+      log.info("lookupRequestPolicyId:: item is not found");
       return completedFuture(failedDueToServerError(
         "Unable to find matching request rules for unknown item"));
     }
@@ -99,13 +102,17 @@ public class RequestPolicyRepository {
   }
 
   private CompletableFuture<Result<String>> processRulesResponse(Response response) {
+    log.debug("processRulesResponse:: parameters response: {}", response);
     final CompletableFuture<Result<String>> future = new CompletableFuture<>();
 
     if (response.getStatusCode() == 404) {
+      log.info("processRulesResponse:: no matching request rules found");
       future.complete(failedDueToServerError("Unable to find matching request rules"));
     } else if (response.getStatusCode() != 200) {
+      log.info("processRulesResponse:: failed to apply request rules");
       future.complete(failed(new ForwardOnFailure(response)));
     } else {
+      log.info("processRulesResponse:: successfully applied request rules");
       future.complete(succeeded(response.getJson().getString("requestPolicyId")));
     }
 

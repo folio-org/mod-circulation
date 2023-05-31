@@ -144,6 +144,8 @@ public class UserRepository {
   private CompletableFuture<Result<Map<String, User>>> getUsersForLoans(
     Collection<Loan> loans) {
 
+    log.debug("getUsersForLoans:: parameters loans: {}", () -> collectionAsString(loans));
+
     final List<String> usersToFetch =
       loans.stream()
         .filter(Objects::nonNull)
@@ -186,6 +188,7 @@ public class UserRepository {
     log.debug("getProxyUserByBarcode:: parameters barcode: {}", barcode);
     //Not proxying, so no need to get proxy user
     if (StringUtils.isBlank(barcode)) {
+      log.info("getProxyUserByBarcode:: barcode is blank");
       return completedFuture(succeeded(null));
     } else {
       return getUserByBarcode(barcode, "proxyUserBarcode");

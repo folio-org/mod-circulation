@@ -60,6 +60,10 @@ public class DepartmentRepository {
 
   private Result<MultipleRecords<Request>> matchDepartmentsToRequest(
     MultipleRecords<Department> departments, MultipleRecords<Request> requests) {
+
+    log.debug("matchDepartmentsToRequest:: parameters departments: {}, requests: {}",
+      () -> multipleRecordsAsString(departments), () -> multipleRecordsAsString(requests));
+
     Map<String, Department> departmentsMap = departments.toMap(Department::getId);
     return Result.succeeded(requests.mapRecords(req -> req.withRequester(
       req.getRequester().withDepartments(req.getRequester().getDepartmentIds()

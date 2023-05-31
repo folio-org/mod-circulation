@@ -10,6 +10,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -104,7 +105,9 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> fetchLocationById(String id) {
+    log.debug("fetchLocationById:: id: {}", id);
     if (isBlank(id)) {
+      log.info("fetchLocationById:: id is blank");
       return ofAsync(() -> Location.unknown(null));
     }
 
@@ -116,6 +119,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Location>>> getItemLocations(
     Collection<Item> inventoryRecords) {
+
     log.debug("getItemLocations:: parameters inventoryRecords: {}", () -> collectionAsString(inventoryRecords));
 
     final var locationIds = new MultipleRecords<>(inventoryRecords, inventoryRecords.size())
@@ -128,6 +132,7 @@ public class LocationRepository {
   public CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
     Set<String> locationIds) {
 
+    log.debug("fetchLocations:: parameters locationIds: {}", locationIds.size());
     final FindWithMultipleCqlIndexValues<Location> fetcher
       = findWithMultipleCqlIndexValues(locationsStorageClient, "locations",
       new LocationMapper()::toDomain);
@@ -137,7 +142,9 @@ public class LocationRepository {
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
+    log.debug("loadLibrary:: parameters location: {}", location);
     if(isNull(location) || isNull(location.getLibraryId())) {
+      log.info("loadLibrary:: location or library id is null");
       return ofAsync(() -> location);
     }
 
@@ -175,6 +182,8 @@ public class LocationRepository {
 
   private CompletableFuture<Result<MultipleRecords<Location>>> loadLibrariesForLocations(
           Result<MultipleRecords<Location>> multipleRecordsResult) {
+
+    log.debug("loadLibrariesForLocations:: parameters multipleRecordsResult: {}", () -> resultAsString(multipleRecordsResult));
 
     return multipleRecordsResult.combineAfter(
       locations -> getLibraries(locations.getRecords()), (locations, libraries) ->
@@ -226,6 +235,7 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Collection<Location>>> fetchLibraries(Collection<Location> locations) {
+    log.debug("fetchLibraries:: parameters locations: {}", () -> collectionAsString(locations));
     return getLibraries(locations)
       .thenApply(flatMapResult(libraries -> succeeded(
         locations.stream()
@@ -236,6 +246,7 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Collection<Location>>> fetchInstitutions(Collection<Location> locations) {
+    log.debug("fetchInstitutions:: parameters locations: {}", () -> collectionAsString(locations));
     return getInstitutions(locations)
       .thenApply(flatMapResult(institutions -> succeeded(
         locations.stream()
@@ -246,6 +257,7 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Collection<Location>>> fetchCampuses(Collection<Location> locations) {
+    log.debug("fetchCampuses:: parameters locations: {}", () -> collectionAsString(locations));
     return getCampuses(locations)
       .thenApply(flatMapResult(campuses -> succeeded(
         locations.stream()
@@ -256,6 +268,7 @@ public class LocationRepository {
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchPrimaryServicePoint(Location location) {
+    log.debug("fetchPrimaryServicePoint:: parameters location: {}", location);
     if (location == null || location.getPrimaryServicePointId() == null) {
       log.info("Location was not found, aborting fetching primary service point");
       return ofAsync(() -> null);
@@ -266,6 +279,8 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Collection<Location>>> fetchLocationsForServicePoint(
     String servicePointId) {
+
+    log.debug("fetchLocationsForServicePoint:: parameters servicePointId: {}", servicePointId);
 
     return new CqlQueryFinder<>(locationsStorageClient, "locations", new LocationMapper()::toDomain)
       .findByQuery(CqlQuery.match("servicePointIds", servicePointId))

@@ -73,7 +73,9 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
+    log.debug("fetchFor:: itemRelatedRecord: {}", itemRelatedRecord);
     if (itemRelatedRecord.getItemId() == null) {
+      log.info("fetchFor:: item id is null");
       return completedFuture(succeeded(Item.from(null)));
     }
 

@@ -5,6 +5,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
@@ -78,6 +79,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
   private CompletableFuture<Result<Map<String, LostItemPolicy>>> getLostItemPolicies(
     Collection<Loan> loans) {
 
+    log.debug("getLostItemPolicies:: parameters loans: {}", () -> collectionAsString(loans));
     final Collection<String> loansToFetch = loans.stream()
       .map(Loan::getLostItemPolicyId)
       .filter(Objects::nonNull)
@@ -110,6 +112,7 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
     log.debug("getLostItemPolicyById:: parameters lostItemPolicyId: {}", lostItemPolicyId);
 
     if (isNull(lostItemPolicyId)) {
+      log.info("getLostItemPolicyById:: lostItemPolicy id is null");
       return ofAsync(() -> LostItemPolicy.unknown(null));
     }
 

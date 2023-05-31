@@ -34,10 +34,12 @@ public class InstanceRepository {
   }
 
   public CompletableFuture<Result<Instance>> fetch(Request request) {
+    log.debug("fetch:: parameters request: {}", request);
     return fetchById(request.getInstanceId());
   }
 
   public CompletableFuture<Result<Instance>> fetchById(String instanceId) {
+    log.debug("fetchById:: parameters instanceId: {}", instanceId);
     InstanceMapper mapper = new InstanceMapper();
 
     return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
@@ -47,6 +49,8 @@ public class InstanceRepository {
 
   public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
     Collection<String> instanceIds) {
+
+    log.debug("fetchByIds:: parameters instanceIds: {}", instanceIds.size());
 
     InstanceMapper mapper = new InstanceMapper();
 
@@ -102,6 +106,7 @@ public class InstanceRepository {
   }
 
   private Predicate<Instance> matchedInstanceId(Request request) {
+    log.debug("matchedInstanceId:: parameters request: {}", request);
     if (request.getInstanceId() == null) {
       log.error("InstanceId is NULL for request {}", request.getId());
       return instance -> false;

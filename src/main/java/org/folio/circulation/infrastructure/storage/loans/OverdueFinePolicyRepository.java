@@ -5,8 +5,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
-import static org.folio.circulation.support.utils.LogUtil.resultAsString;
+import static org.folio.circulation.support.utils.LogUtil.*;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -40,6 +39,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
     LoanAndRelatedRecords relatedRecords) {
+
     log.debug("lookupOverdueFinePolicy:: parameters relatedRecords: {}", relatedRecords);
 
     return Result.of(relatedRecords::getLoan)
@@ -78,6 +78,7 @@ public class OverdueFinePolicyRepository extends CirculationPolicyRepository<Ove
   private CompletableFuture<Result<Map<String, OverdueFinePolicy>>>
     getOverdueFinePolicies(Collection<Loan> loans) {
 
+    log.debug("getOverdueFinePolicies:: parameters loans: {}", () ->  collectionAsString(loans));
     final Collection<String> loansToFetch = loans.stream()
       .map(Loan::getOverdueFinePolicyId)
       .filter(Objects::nonNull)

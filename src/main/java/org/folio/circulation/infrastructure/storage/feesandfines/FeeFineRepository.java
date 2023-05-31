@@ -53,6 +53,7 @@ public class FeeFineRepository {
   }
 
   private Result<MultipleRecords<FeeFine>> mapResponseToFeeFines(Response response) {
+    log.debug("mapResponseToFeeFines:: response body: {}", response::getBody);
     return MultipleRecords.from(response, FeeFine::from, "feefines");
   }
 

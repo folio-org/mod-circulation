@@ -88,6 +88,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
     log.debug("getLoanPolicyById:: parameters loanPolicyId: {}", loanPolicyId);
     if (isNull(loanPolicyId)) {
+      log.info("getLoanPolicyById:: loanPolicy id is null");
       return ofAsync(() -> unknown(null));
     }
 
@@ -136,6 +137,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   private CompletableFuture<Result<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
+    log.debug("lookupSchedules:: parameters loanPolicy: {}", loanPolicy);
     List<String> scheduleIds = new ArrayList<>();
 
     final String loanScheduleId = loanPolicy.getLoansFixedDueDateScheduleId();
@@ -150,6 +152,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     }
 
     if (scheduleIds.isEmpty()) {
+      log.info("lookupSchedules:: no schedules to lookup");
       return CompletableFuture.completedFuture(succeeded(loanPolicy));
     }
 
@@ -169,6 +172,8 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
 
   private CompletableFuture<Result<Map<String, FixedDueDateSchedules>>> getSchedules(
     Collection<String> schedulesIds) {
+
+    log.debug("getSchedules:: parameters schedulesIds: {}", () -> collectionAsString(schedulesIds));
 
     final FindWithMultipleCqlIndexValues<FixedDueDateSchedules> fetcher
       = findWithMultipleCqlIndexValues(fixedDueDateSchedulesStorageClient,

@@ -67,6 +67,9 @@ public class AddressTypeRepository {
   private Result<MultipleRecords<Request>> matchAddressTypesToRequests(
     MultipleRecords<AddressType> addressTypes, MultipleRecords<Request> requests) {
 
+    log.debug("matchAddressTypesToRequests:: parameters addressTypes: {}, requests: {}",
+      () -> multipleRecordsAsString(addressTypes), () -> multipleRecordsAsString(requests));
+
     Map<String, AddressType> addressTypeMap = addressTypes.toMap(AddressType::getId);
 
     return succeeded(

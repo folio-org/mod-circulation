@@ -87,13 +87,16 @@ public class PatronGroupRepository {
   }
 
   private ArrayList<String> getGroupsFromUsers(Request request) {
+    log.debug("getGroupsFromUsers:: parameters request: {}", request);
     final ArrayList<String> groupsToFetch = new ArrayList<>();
 
     if(request.getRequester() != null) {
+      log.info("getGroupsFromUsers:: adding requester group to fetch");
       groupsToFetch.add(request.getRequester().getPatronGroupId());
     }
 
     if(request.getProxy() != null) {
+      log.info("getGroupsFromUsers:: adding proxy group to fetch");
       groupsToFetch.add(request.getProxy().getPatronGroupId());
     }
 
@@ -103,6 +106,8 @@ public class PatronGroupRepository {
   private Request matchGroupsToUsers(
     Request request,
     MultipleRecords<PatronGroup> patronGroups) {
+
+    log.debug("matchGroupsToUsers:: parameters request: {}, patronGroups: {}", () -> request, () -> multipleRecordsAsString(patronGroups));
 
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
@@ -114,6 +119,8 @@ public class PatronGroupRepository {
   private Result<MultipleRecords<Request>> matchGroupsToUsers(
     MultipleRecords<Request> requests,
     MultipleRecords<PatronGroup> patronGroups) {
+
+    log.debug("matchGroupsToUsers:: parameters requests: {}, patronGroups: {}", () -> multipleRecordsAsString(requests), () -> multipleRecordsAsString(patronGroups));
 
     return of(() ->
       requests.mapRecords(request -> matchGroupsToUsers(request, patronGroups)));
@@ -148,7 +155,9 @@ public class PatronGroupRepository {
   }
 
   private CompletableFuture<Result<PatronGroup>> getPatronGroupById(String groupId) {
+    log.debug("getPatronGroupById:: parameters groupId: {}", groupId);
     if(isNull(groupId)) {
+      log.info("getPatronGroupById:: patron group id is null");
       return ofAsync(() -> unknown(null));
     }
 
@@ -174,6 +183,8 @@ public class PatronGroupRepository {
     LoanAndRelatedRecords loanAndRelatedRecords,
     MultipleRecords<PatronGroup> patronGroups) {
 
+    log.debug("matchGroupToUser:: parameters loanAndRelatedRecords: {}, patronGroups: {}", () ->  loanAndRelatedRecords, () -> multipleRecordsAsString(patronGroups));
+
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
    return loanAndRelatedRecords.withLoan(loanAndRelatedRecords.getLoan()
@@ -194,6 +205,7 @@ public class PatronGroupRepository {
         .collect(Collectors.toSet());
 
     if(patronGroupsToFetch.isEmpty()){
+      log.info("findPatronGroupsByIds: no patron groups to fetch");
       return completedFuture(succeeded(multipleLoans));
     }
 

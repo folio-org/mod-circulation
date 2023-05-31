@@ -9,6 +9,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -74,15 +75,19 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
+    log.debug("getByInstanceId:: parameters instanceId: {}", instanceId);
     return get("instanceId", instanceId, List.of(ITEM, TITLE));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
+    log.debug("getByItemId:: parameters itemId: {}", itemId);
     return get("itemId", itemId, List.of(ITEM));
   }
 
   private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,
     Collection<RequestLevel> requestLevels) {
+
+    log.debug("get:: parameters idFieldName: {}, id: {}, requestLevels: {}", () -> idFieldName, () -> id, () -> collectionAsString(requestLevels));
 
     List<String> requestLevelStrings = requestLevels.stream()
       .map(RequestLevel::getValue)
@@ -116,6 +121,7 @@ public class RequestQueueRepository {
 
   public CompletableFuture<Result<RequestQueue>> updateRequestsWithChangedPositions(
     RequestQueue requestQueue) {
+
     log.debug("updateRequestsWithChangedPositions:: parameters requestQueue: {}", requestQueue);
 
     Collection<Request> requestsWithChangedPosition = requestQueue

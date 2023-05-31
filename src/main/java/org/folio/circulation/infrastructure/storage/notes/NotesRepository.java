@@ -56,12 +56,14 @@ public class NotesRepository {
   }
 
   private static Result<Optional<NoteType>> mapResponseToNoteTypes(Response response) {
+    log.debug("mapResponseToNoteTypes:: response: {}", response);
     return new ResponseInterpreter<Optional<NoteType>>()
       .flatMapOn(200, NotesRepository::multipleNoteTypesToOptional)
       .apply(response);
   }
 
   private static Result<Optional<NoteType>> multipleNoteTypesToOptional(Response r) {
+    log.debug("multipleNoteTypesToOptional:: response: {}", r);
     final NoteTypeToJsonMapper noteTypeToJsonMapper = new NoteTypeToJsonMapper();
 
     return Result.of(() -> toStream(r.getJson(), "noteTypes")

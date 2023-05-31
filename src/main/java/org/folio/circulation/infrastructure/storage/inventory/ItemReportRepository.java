@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.http.client.Offset.offset;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public class ItemReportRepository {
 
   private ItemsReportFetcher fillResultItemContext(ItemsReportFetcher itemsReportFetcher,
                                                    Result<MultipleRecords<Item>> itemRecords) {
+
+    log.debug("fillResultItemContext:: parameters itemsReportFetcher: {}, itemRecords: {}",() -> itemsReportFetcher, () -> resultAsString(itemRecords));
     List<Result<MultipleRecords<Item>>> resultListOfItems = itemsReportFetcher.getResultListOfItems();
     resultListOfItems.add(itemRecords);
     int newPageNumber = itemsReportFetcher.getCurrPageNumber() + 1;
@@ -50,6 +53,8 @@ public class ItemReportRepository {
   private void fetchNextPage(ItemsReportFetcher itemsReportFetcher,
                              CompletableFuture<Result<ItemsReportFetcher>> future,
                              String fieldName, String fieldValue) {
+
+    log.debug("fetchNextPage:: parameters itemsReportFetcher: {}, future: {}, fieldName: {}, fieldValue: {}",() -> itemsReportFetcher, () -> future, () -> fieldName, () -> fieldValue);
     getItemsByField(itemsReportFetcher, fieldName, fieldValue)
       .thenApply(itemRecords -> {
           ItemsReportFetcher reportFetcher = fillResultItemContext(itemsReportFetcher, itemRecords);
@@ -67,6 +72,7 @@ public class ItemReportRepository {
 
   private CompletableFuture<Result<MultipleRecords<Item>>> getItemsByField(
     ItemsReportFetcher itemsReportFetcher, String fieldName, String fieldValue) {
+
     log.debug("getItemsByField:: parameters fieldName: {}, fieldValue: {}", fieldName, fieldValue);
 
     final Result<CqlQuery> itemStatusQuery = exactMatch(fieldName, fieldValue);

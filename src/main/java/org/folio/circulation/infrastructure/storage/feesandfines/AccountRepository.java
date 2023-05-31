@@ -11,8 +11,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
-import static org.folio.circulation.support.utils.LogUtil.resultAsString;
+import static org.folio.circulation.support.utils.LogUtil.*;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -106,6 +105,7 @@ public class AccountRepository {
     log.debug("findAccountsForLoans:: parameters multipleLoans: {}",() -> multipleRecordsAsString(multipleLoans));
 
     if (multipleLoans.getRecords().isEmpty()) {
+      log.info("findAccountsForLoans:: multipleLoans is empty");
       return completedFuture(succeeded(multipleLoans));
     }
 
@@ -116,6 +116,7 @@ public class AccountRepository {
   }
 
   private CompletableFuture<Result<Map<String, List<Account>>>> getAccountsForLoans(Collection<Loan> loans) {
+    log.debug("getAccountsForLoans:: parameters loans: {}", () -> collectionAsString(loans));
 
     final Set<String> loanIds =
       loans.stream()
@@ -139,6 +140,7 @@ public class AccountRepository {
     log.debug("findFeeFineActionsForAccounts:: parameters multipleAccounts: {}", () -> multipleRecordsAsString(multipleAccounts));
 
     if (multipleAccounts.getRecords().isEmpty()) {
+      log.info("findFeeFineActionsForAccounts:: multipleAccounts is empty");
       return completedFuture(succeeded(multipleAccounts));
     }
 
@@ -150,6 +152,8 @@ public class AccountRepository {
 
   private CompletableFuture<Result<Map<String, List<FeeFineAction>>>> getFeeFineActionsForAccounts(
     Collection<Account> accounts) {
+
+    log.debug("getFeeFineActionsForAccounts:: parameters accounts: {}", () -> collectionAsString(accounts));
 
     final Set<String> loanIds =
     accounts.stream()
