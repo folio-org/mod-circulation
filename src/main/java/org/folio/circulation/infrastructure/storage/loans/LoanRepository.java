@@ -182,7 +182,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<Loan>> getById(String id) {
-    log.debug("getById:: parameters id: {}", id);
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
       .thenComposeAsync(this::fetchUser)
@@ -190,7 +189,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   private CompletableFuture<Result<Loan>> fetchLoan(String id) {
-    log.debug("fetchLoan:: parameters id: {}", id);
     return FetchSingleRecord.<Loan>forRecord("loan")
       .using(loansStorageClient)
       .mapTo(Loan::from)
@@ -239,7 +237,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findBy(String query) {
-    log.debug("findBy:: parameters query: {}", query);
     return loansStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(this::mapResponseToLoans))
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));

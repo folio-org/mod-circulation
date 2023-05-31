@@ -110,7 +110,6 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
-    log.debug("findBy:: parameters query: {}", query);
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(this::mapResponseToRequests))
       .thenCompose(r -> r.after(this::fetchAdditionalFields));
@@ -172,7 +171,6 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> getById(String id) {
-    log.debug("getById:: parameters id: {}", id);
     return fetchRequest(id)
       .thenCompose(r -> r.after(this::fetchRelatedRecords));
 
