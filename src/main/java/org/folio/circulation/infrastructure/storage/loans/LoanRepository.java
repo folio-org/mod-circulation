@@ -457,7 +457,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     List<String> loanIds) {
 
     log.debug("findLoanWithClosestDueDate:: parameters itemIds: {}, loanIds: {}",
-      itemIds.size(), loanIds.size());
+      () -> collectionAsString(itemIds), () -> collectionAsString(loanIds));
     if (itemIds == null || itemIds.isEmpty()) {
       log.info("findLoanWithClosestDueDate: itemIds are null or empty");
       return ofAsync(() -> null);
