@@ -70,9 +70,9 @@ public class CheckOutLockRepository {
 
   }
 
-  public CompletableFuture<Result<Response>> delete(LoanAndRelatedRecords records) {
-    log.debug("delete:: deleting the lock for userId {} ", records.getUserId());
-    return checkOutLockClient.delete(records.getCheckOutLock().getId());
+  public CompletableFuture<Result<Response>> delete(String checkOutLockId) {
+    log.debug("delete:: deleting the lock for userId {} ", checkOutLockId);
+    return checkOutLockClient.delete(checkOutLockId);
   }
 
   private JsonObject buildCheckOutLockPayload(LoanAndRelatedRecords records) {
