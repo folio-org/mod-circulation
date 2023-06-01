@@ -1075,7 +1075,7 @@
     },
     {
       "id": "scheduled-notice-storage",
-      "version": "0.1"
+      "version": "0.5"
     },
     {
       "id": "feesfines",
@@ -1087,7 +1087,7 @@
     },
     {
       "id": "patron-action-session-storage",
-      "version": "0.1"
+      "version": "0.3"
     },
     {
       "id": "check-in-storage",
