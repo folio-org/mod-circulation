@@ -160,12 +160,12 @@ public class PatronActionSessionRepository {
   public CompletableFuture<Result<Collection<PatronSessionRecord>>> findPatronActionSessions(
     Collection<String> sessionIds, PageLimit pageLimit) {
 
+    log.debug("findPatronActionSessions:: sessionIds: {}", sessionIds);
+
     if (sessionIds.isEmpty()) {
       log.debug("findPatronActionSessions:: collection of session IDs is empty");
       return ofAsync(emptyList());
     }
-
-    log.debug("findPatronActionSessions:: sessionIds: {}", sessionIds);
 
     return new CqlQueryFinder<>(patronActionSessionsStorageClient, "patronActionSessions",
       PatronSessionRecord::from)

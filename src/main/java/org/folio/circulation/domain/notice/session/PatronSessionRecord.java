@@ -29,6 +29,7 @@ public class PatronSessionRecord {
   private final UUID sessionId;
   private final PatronActionType actionType;
   @JsonIgnore
+  @ToString.Exclude
   private final Loan loan;
 
   public PatronSessionRecord(UUID id, UUID patronId, UUID loanId, PatronActionType actionType) {
