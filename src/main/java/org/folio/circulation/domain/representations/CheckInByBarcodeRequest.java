@@ -1,6 +1,5 @@
 package org.folio.circulation.domain.representations;
 
-import static java.lang.String.format;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -31,6 +30,7 @@ public class CheckInByBarcodeRequest {
   private static final String ITEM_BARCODE = "itemBarcode";
   private static final String CHECK_IN_DATE = "checkInDate";
   private static final String SERVICE_POINT_ID = "servicePointId";
+  private static final String SESSION_ID = "sessionId";
   public static final String CLAIMED_RETURNED_RESOLUTION = "claimedReturnedResolution";
 
   @ToString.Include
@@ -39,6 +39,8 @@ public class CheckInByBarcodeRequest {
   private final UUID servicePointId;
   @ToString.Include
   private final ZonedDateTime checkInDate;
+  @ToString.Include
+  private final UUID sessionId;
   private final ClaimedReturnedResolution claimedReturnedResolution;
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
@@ -79,8 +81,10 @@ public class CheckInByBarcodeRequest {
         CLAIMED_RETURNED_RESOLUTION, claimedReturnedResolvedByString);
     }
 
+    final UUID sessionId = getUUIDProperty(json, SESSION_ID);
+
     return succeeded(new CheckInByBarcodeRequest(itemBarcode, servicePointId,
-      checkInDate, claimedReturnedResolution));
+      checkInDate, sessionId, claimedReturnedResolution));
   }
 
   public enum ClaimedReturnedResolution {

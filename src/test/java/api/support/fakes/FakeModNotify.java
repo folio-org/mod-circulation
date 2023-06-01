@@ -9,11 +9,10 @@ import java.util.List;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import lombok.Getter;
 import lombok.Setter;
 
 public class FakeModNotify {
-  @Getter
+
   private static final List<JsonObject> sentPatronNotices = new ArrayList<>();
 
   @Setter
@@ -50,4 +49,10 @@ public class FakeModNotify {
       .findFirst()
       .orElseThrow(() -> new IllegalStateException("No notices were sent"));
   }
+
+  // do not replace with lombok: static import of generated getter breaks compilation
+  public static List<JsonObject> getSentPatronNotices() {
+    return sentPatronNotices;
+  }
+
 }

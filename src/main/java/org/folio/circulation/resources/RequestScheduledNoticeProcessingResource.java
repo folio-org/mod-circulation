@@ -29,6 +29,7 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -46,7 +47,8 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ConfigurationRepository configurationRepository,
-    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
+    ScheduledNoticesRepository scheduledNoticesRepository,
+    PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(ClockUtil.getZonedDateTime(), true,
       Arrays.asList(HOLD_EXPIRATION, REQUEST_EXPIRATION, TITLE_LEVEL_REQUEST_EXPIRATION),
