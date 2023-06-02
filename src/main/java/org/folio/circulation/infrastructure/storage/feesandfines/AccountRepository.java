@@ -63,7 +63,7 @@ public class AccountRepository {
         log.info("findAccountsAndActionsForLoan:: loan is null");
         return completedFuture(loanResult);
       }
-      return loanResult.combineAfter(result -> fetchAccountsAndActionsForLoan(loan.getId()),
+      return loanResult.combineAfter(r -> fetchAccountsAndActionsForLoan(loan.getId()),
         Loan::withAccounts);
     });
   }
@@ -139,7 +139,8 @@ public class AccountRepository {
   public CompletableFuture<Result<MultipleRecords<Account>>> findFeeFineActionsForAccounts(
       MultipleRecords<Account> multipleAccounts) {
 
-    log.debug("findFeeFineActionsForAccounts:: parameters multipleAccounts: {}", () -> multipleRecordsAsString(multipleAccounts));
+    log.debug("findFeeFineActionsForAccounts:: parameters multipleAccounts: {}",
+      () -> multipleRecordsAsString(multipleAccounts));
 
     if (multipleAccounts.getRecords().isEmpty()) {
       log.info("findFeeFineActionsForAccounts:: multipleAccounts is empty");

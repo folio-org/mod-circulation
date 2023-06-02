@@ -47,7 +47,8 @@ public class MaterialTypeRepository {
   public CompletableFuture<Result<MultipleRecords<MaterialType>>> getMaterialTypes(
     MultipleRecords<Item> inventoryRecords) {
 
-    log.debug("getMaterialTypes:: parameters inventoryRecords: {}", () -> multipleRecordsAsString(inventoryRecords));
+    log.debug("getMaterialTypes:: parameters inventoryRecords: {}",
+      () -> multipleRecordsAsString(inventoryRecords));
 
     final var mapper = new MaterialTypeMapper();
 

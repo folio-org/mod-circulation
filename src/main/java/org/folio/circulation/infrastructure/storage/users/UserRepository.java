@@ -191,7 +191,7 @@ public class UserRepository {
       log.info("getProxyUserByBarcode:: barcode is blank");
       return completedFuture(succeeded(null));
     } else {
-      log.info("getProxyUserByBarcode");
+      log.info("getProxyUserByBarcode:: getting proxy user by barcode");
       return getUserByBarcode(barcode, "proxyUserBarcode");
     }
   }
@@ -217,7 +217,8 @@ public class UserRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForRequests(
     MultipleRecords<Request> multipleRequests) {
 
-    log.debug("findUsersForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+    log.debug("findUsersForRequests:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
     return findUsersByRequests(multipleRequests.getRecords())
       .thenApply(multipleUsersResult -> multipleUsersResult.next(
         multipleUsers -> of(() ->

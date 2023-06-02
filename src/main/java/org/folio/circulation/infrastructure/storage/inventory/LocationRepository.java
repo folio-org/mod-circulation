@@ -89,10 +89,10 @@ public class LocationRepository {
 
   private CompletableFuture<Result<Location>> getLocation(Item item,
     Function<Item, String> locationIdGetter) {
-    log.debug("getPermanentLocation:: parameters item: {}", item);
+    log.debug("getLocation:: parameters item: {}", item);
 
     if (item == null || locationIdGetter.apply(item) == null) {
-      log.info("getPermanentLocation:: item or locationId is null");
+      log.info("getLocation:: item or locationId is null");
       return ofAsync(() -> Location.unknown(null));
     }
 
@@ -132,7 +132,7 @@ public class LocationRepository {
   public CompletableFuture<Result<MultipleRecords<Location>>> fetchLocations(
     Set<String> locationIds) {
 
-    log.debug("fetchLocations:: parameters locationIds: {}", locationIds.size());
+    log.debug("fetchLocations:: parameters locationIds: {}", () -> collectionAsString(locationIds));
     final FindWithMultipleCqlIndexValues<Location> fetcher
       = findWithMultipleCqlIndexValues(locationsStorageClient, "locations",
       new LocationMapper()::toDomain);
@@ -183,7 +183,8 @@ public class LocationRepository {
   private CompletableFuture<Result<MultipleRecords<Location>>> loadLibrariesForLocations(
           Result<MultipleRecords<Location>> multipleRecordsResult) {
 
-    log.debug("loadLibrariesForLocations:: parameters multipleRecordsResult: {}", () -> resultAsString(multipleRecordsResult));
+    log.debug("loadLibrariesForLocations:: parameters multipleRecordsResult: {}",
+      () -> resultAsString(multipleRecordsResult));
 
     return multipleRecordsResult.combineAfter(
       locations -> getLibraries(locations.getRecords()), (locations, libraries) ->
@@ -194,6 +195,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Library>>> getLibraries(
           Collection<Location> locations) {
+
     log.debug("getLibraries:: parameters locations: {}", () -> collectionAsString(locations));
 
     final var fetcher
@@ -208,6 +210,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Campus>>> getCampuses(
     Collection<Location> locations) {
+
     log.debug("getCampuses:: parameters locations: {}", () -> collectionAsString(locations));
 
     final var fetcher
@@ -222,6 +225,7 @@ public class LocationRepository {
 
   public CompletableFuture<Result<Map<String, Institution>>> getInstitutions(
     Collection<Location> locations) {
+
     log.debug("getInstitutions:: parameters locations: {}", () -> collectionAsString(locations));
 
     final var fetcher

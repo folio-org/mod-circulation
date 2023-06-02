@@ -4,8 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
-import static org.folio.circulation.support.utils.LogUtil.resultAsString;
+import static org.folio.circulation.support.utils.LogUtil.*;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -195,7 +194,7 @@ public class ServicePointRepository {
   public CompletableFuture<Result<Collection<ServicePoint>>> findServicePointsByIds(
     Collection<String> ids) {
 
-    log.debug("findServicePointsByIds:: parameters ids: {}", ids.size());
+    log.debug("findServicePointsByIds:: parameters ids: {}", () -> collectionAsString(ids));
 
     return createServicePointsFetcher().findByIds(ids)
       .thenApply(r -> r.map(MultipleRecords::getRecords));

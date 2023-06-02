@@ -65,7 +65,8 @@ public class LostItemPolicyRepository extends CirculationPolicyRepository<LostIt
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLostItemPoliciesForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
-    log.debug("findLostItemPoliciesForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
+    log.debug("findLostItemPoliciesForLoans:: parameters multipleLoans: {}",
+      () -> multipleRecordsAsString(multipleLoans));
 
     Collection<Loan> loans = multipleLoans.getRecords();
 

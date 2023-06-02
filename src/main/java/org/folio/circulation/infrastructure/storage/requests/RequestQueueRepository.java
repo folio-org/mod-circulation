@@ -85,7 +85,8 @@ public class RequestQueueRepository {
   private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,
     Collection<RequestLevel> requestLevels) {
 
-    log.debug("get:: parameters idFieldName: {}, id: {}, requestLevels: {}", () -> idFieldName, () -> id, () -> collectionAsString(requestLevels));
+    log.debug("get:: parameters idFieldName: {}, id: {}, requestLevels: {}",
+      () -> idFieldName, () -> id, () -> collectionAsString(requestLevels));
 
     List<String> requestLevelStrings = requestLevels.stream()
       .map(RequestLevel::getValue)

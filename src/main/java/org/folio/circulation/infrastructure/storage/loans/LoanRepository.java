@@ -349,7 +349,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
     MultipleRecords<Request> multipleRequests) {
 
-    log.debug("findOpenLoansFor:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+    log.debug("findOpenLoansFor:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
 
     Collection<Request> requests = multipleRequests.getRecords();
 

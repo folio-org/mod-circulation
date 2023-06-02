@@ -39,14 +39,14 @@ public class FeeFineOwnerRepository {
   }
 
   public CompletableFuture<Result<FeeFineOwner>> findOwnerForServicePoint(UUID servicePointId) {
-    log.debug("findOwnerForServicePoint:: parameters servicePointId: {}", servicePointId);
     return findOwnerForServicePoint(servicePointId.toString());
   }
 
   public CompletableFuture<Result<Collection<FeeFineOwner>>> findOwnersForServicePoints(
     Collection<String> servicePointIds) {
 
-    log.debug("findOwnersForServicePoints:: parameters servicePointIds: {}", () -> collectionAsString(servicePointIds));
+    log.debug("findOwnersForServicePoints:: parameters servicePointIds: {}",
+      () -> collectionAsString(servicePointIds));
 
     return findOwners(servicePointIds)
       .thenApply(mapResult(MultipleRecords::getRecords))

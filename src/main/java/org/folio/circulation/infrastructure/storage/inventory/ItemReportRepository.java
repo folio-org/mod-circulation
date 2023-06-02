@@ -43,7 +43,8 @@ public class ItemReportRepository {
   private ItemsReportFetcher fillResultItemContext(ItemsReportFetcher itemsReportFetcher,
                                                    Result<MultipleRecords<Item>> itemRecords) {
 
-    log.debug("fillResultItemContext:: parameters itemsReportFetcher: {}, itemRecords: {}",() -> itemsReportFetcher, () -> resultAsString(itemRecords));
+    log.debug("fillResultItemContext:: parameters itemsReportFetcher: {}, itemRecords: {}",
+      () -> itemsReportFetcher, () -> resultAsString(itemRecords));
     List<Result<MultipleRecords<Item>>> resultListOfItems = itemsReportFetcher.getResultListOfItems();
     resultListOfItems.add(itemRecords);
     int newPageNumber = itemsReportFetcher.getCurrPageNumber() + 1;
@@ -54,7 +55,8 @@ public class ItemReportRepository {
                              CompletableFuture<Result<ItemsReportFetcher>> future,
                              String fieldName, String fieldValue) {
 
-    log.debug("fetchNextPage:: parameters itemsReportFetcher: {}, future: {}, fieldName: {}, fieldValue: {}",() -> itemsReportFetcher, () -> future, () -> fieldName, () -> fieldValue);
+    log.debug("fetchNextPage:: parameters itemsReportFetcher: {}, fieldName: {}, fieldValue: {}",
+      () -> itemsReportFetcher, () -> fieldName, () -> fieldValue);
     getItemsByField(itemsReportFetcher, fieldName, fieldValue)
       .thenApply(itemRecords -> {
           ItemsReportFetcher reportFetcher = fillResultItemContext(itemsReportFetcher, itemRecords);

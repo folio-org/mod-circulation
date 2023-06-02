@@ -107,7 +107,8 @@ public class PatronGroupRepository {
     Request request,
     MultipleRecords<PatronGroup> patronGroups) {
 
-    log.debug("matchGroupsToUsers:: parameters request: {}, patronGroups: {}", () -> request, () -> multipleRecordsAsString(patronGroups));
+    log.debug("matchGroupsToUsers:: parameters request: {}, patronGroups: {}",
+      () -> request, () -> multipleRecordsAsString(patronGroups));
 
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
@@ -120,7 +121,8 @@ public class PatronGroupRepository {
     MultipleRecords<Request> requests,
     MultipleRecords<PatronGroup> patronGroups) {
 
-    log.debug("matchGroupsToUsers:: parameters requests: {}, patronGroups: {}", () -> multipleRecordsAsString(requests), () -> multipleRecordsAsString(patronGroups));
+    log.debug("matchGroupsToUsers:: parameters requests: {}, patronGroups: {}",
+      () -> multipleRecordsAsString(requests), () -> multipleRecordsAsString(patronGroups));
 
     return of(() ->
       requests.mapRecords(request -> matchGroupsToUsers(request, patronGroups)));
@@ -171,7 +173,8 @@ public class PatronGroupRepository {
   public CompletableFuture<Result<LoanAndRelatedRecords>> findPatronGroupForLoanAndRelatedRecords(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    log.debug("findPatronGroupForLoanAndRelatedRecords:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
+    log.debug("findPatronGroupForLoanAndRelatedRecords:: parameters loanAndRelatedRecords: {}",
+      loanAndRelatedRecords);
     final FindWithMultipleCqlIndexValues<PatronGroup> fetcher = createGroupsFetcher();
     return fetcher.findByIds(Collections.singleton(loanAndRelatedRecords.getLoan()
       .getUser().getPatronGroupId()))
@@ -183,7 +186,8 @@ public class PatronGroupRepository {
     LoanAndRelatedRecords loanAndRelatedRecords,
     MultipleRecords<PatronGroup> patronGroups) {
 
-    log.debug("matchGroupToUser:: parameters loanAndRelatedRecords: {}, patronGroups: {}", () ->  loanAndRelatedRecords, () -> multipleRecordsAsString(patronGroups));
+    log.debug("matchGroupToUser:: parameters loanAndRelatedRecords: {}, patronGroups: {}",
+      () ->  loanAndRelatedRecords, () -> multipleRecordsAsString(patronGroups));
 
     final Map<String, PatronGroup> groupMap = patronGroups.toMap(PatronGroup::getId);
 
@@ -194,7 +198,8 @@ public class PatronGroupRepository {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findPatronGroupsByIds(
     MultipleRecords<Loan> multipleLoans) {
 
-    log.debug("findPatronGroupsByIds:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
+    log.debug("findPatronGroupsByIds:: parameters multipleLoans: {}",
+      () -> multipleRecordsAsString(multipleLoans));
     Collection<Loan> loans = multipleLoans.getRecords();
 
     final Collection<String> patronGroupsToFetch =
