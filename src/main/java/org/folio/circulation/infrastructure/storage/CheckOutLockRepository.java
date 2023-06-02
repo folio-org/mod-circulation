@@ -78,7 +78,7 @@ public class CheckOutLockRepository {
   private JsonObject buildCheckOutLockPayload(LoanAndRelatedRecords records) {
     JsonObject jsonObject = new JsonObject();
     jsonObject.put("userId", records.getUserId());
-    jsonObject.put("ttl", Environment.getLockTTL());
+    jsonObject.put("ttlMs", Environment.getLockTTL());
     return jsonObject;
   }
 
