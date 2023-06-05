@@ -197,6 +197,10 @@ public class CheckInContext {
     return checkInRequest.getServicePointId();
   }
 
+  public UUID getSessionId() {
+    return checkInRequest.getSessionId();
+  }
+
   public TlrSettingsConfiguration getTlrSettings() {
     return tlrSettings;
   }

@@ -3,10 +3,12 @@ package org.folio.circulation.resources;
 import static java.lang.Math.max;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.EnumSet;
@@ -16,27 +18,37 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.GroupedScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.domain.notice.schedule.ScheduledNoticeGroupDefinition;
+import org.folio.circulation.domain.notice.schedule.grouping.DefaultScheduledNoticeGroupDefinitionFactory;
+import org.folio.circulation.domain.notice.schedule.grouping.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
+import org.folio.circulation.domain.notice.schedule.grouping.ScheduledNoticeGroupDefinitionFactory;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.http.HttpClient;
 
-public abstract class NotRealTimeScheduledNoticeProcessingResource
+public abstract class GroupingScheduledNoticeProcessingResource
   extends ScheduledNoticeProcessingResource {
 
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private final EnumSet<TriggeringEvent> triggeringEvents;
+  private final boolean realTime;
+  private final ScheduledNoticeGroupDefinitionFactory groupDefinitionFactory;
 
   private static final CqlSortBy FETCH_NOTICES_SORT_CLAUSE =
     CqlSortBy.sortBy(
@@ -48,17 +60,21 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
         .collect(toList())
     );
 
-  protected NotRealTimeScheduledNoticeProcessingResource(HttpClient client, String rootPath,
-    TriggeringEvent triggeringEvent) {
+  protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+    EnumSet<TriggeringEvent> triggeringEvents, boolean realTime) {
 
-    this(client, rootPath, EnumSet.of(triggeringEvent));
+    this(client, rootPath, triggeringEvents, realTime,
+      new DefaultScheduledNoticeGroupDefinitionFactory());
   }
 
-  protected NotRealTimeScheduledNoticeProcessingResource(HttpClient client, String rootPath,
-    EnumSet<TriggeringEvent> triggeringEvents) {
+  protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
+    EnumSet<TriggeringEvent> triggeringEvents, boolean realTime,
+    ScheduledNoticeGroupDefinitionFactory groupDefinitionFactory) {
 
     super(rootPath, client);
     this.triggeringEvents = triggeringEvents;
+    this.realTime = realTime;
+    this.groupDefinitionFactory = groupDefinitionFactory;
   }
 
   protected abstract GroupedScheduledNoticeHandler getHandler(Clients clients,
@@ -67,12 +83,27 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ConfigurationRepository configurationRepository,
-    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
+    ScheduledNoticesRepository scheduledNoticesRepository,
+    PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
-    return configurationRepository.findTimeZoneConfiguration()
-      .thenApply(r -> r.map(this::startOfTodayInTimeZone))
+    log.debug("findNoticesToSend:: pageLimit: {}", pageLimit.getLimit());
+
+    return getTimeLimit(configurationRepository)
       .thenCompose(r -> r.after(timeLimit -> findNotices(scheduledNoticesRepository,
         pageLimit, timeLimit)));
+  }
+
+  private CompletableFuture<Result<ZonedDateTime>> getTimeLimit(
+    ConfigurationRepository configurationRepository) {
+
+    log.debug("getTimeLimit:: realTime: {}", realTime);
+
+    if (realTime) {
+      return ofAsync(ClockUtil.getZonedDateTime());
+    }
+
+    return configurationRepository.findTimeZoneConfiguration()
+      .thenApply(r -> r.map(this::startOfTodayInTimeZone));
   }
 
   private ZonedDateTime startOfTodayInTimeZone(ZoneId zone) {
@@ -83,7 +114,9 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
     ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit,
     ZonedDateTime timeLimit) {
 
-    return scheduledNoticesRepository.findNotices(timeLimit, false, triggeringEvents,
+    log.debug("findNotices:: pageLimit: {}, timeLimit: {}", pageLimit, timeLimit);
+
+    return scheduledNoticesRepository.findNotices(timeLimit, realTime, triggeringEvents,
       FETCH_NOTICES_SORT_CLAUSE, pageLimit);
   }
 
@@ -97,10 +130,10 @@ public abstract class NotRealTimeScheduledNoticeProcessingResource
       .thenApply(mapResult(v -> notices));
   }
 
-  private static List<List<ScheduledNotice>> groupNotices(MultipleRecords<ScheduledNotice> notices) {
+  private List<List<ScheduledNotice>> groupNotices(MultipleRecords<ScheduledNotice> notices) {
     Map<ScheduledNoticeGroupDefinition, List<ScheduledNotice>> orderedGroups = notices.getRecords()
       .stream()
-      .collect(groupingBy(ScheduledNoticeGroupDefinition::from, LinkedHashMap::new, toList()));
+      .collect(groupingBy(groupDefinitionFactory::newInstance, LinkedHashMap::new, toList()));
 
     boolean fetchedAllTheRecords = notices.getTotalRecords().equals(notices.getRecords().size());
     //If not all the records are fetched then the last group is cut off because there might be only a part of it
