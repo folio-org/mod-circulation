@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.InterfaceUrls.circulationRulesReloadUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
@@ -10,6 +11,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,7 +29,15 @@ import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class CirculationRulesFixture {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private final RestAssuredClient restAssuredClient;
 
   public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
@@ -43,15 +53,6 @@ public class CirculationRulesFixture {
 
     return rulesJson.getString("rulesAsText");
   }
-
-  public Response reloadRules() {
-    return toResponse(restAssuredClient
-      .beginRequest("post-circulation-rules")
-      .body("{}")
-      .when().post(circulationRulesUrl())
-      .then().extract().response());
-  }
-
 
   public Response putRules(String body) {
     return toResponse(restAssuredClient
@@ -86,6 +87,13 @@ public class CirculationRulesFixture {
       .put("rulesAsText", rules);
 
     return putRules(circulationRulesRequest.encodePrettily());
+  }
+
+  public Response attemptRefreshRules() {
+    return toResponse(restAssuredClient
+    .beginRequest("refresh-rules-in-cache")
+    .when().post(circulationRulesReloadUrl(""))
+    .then().extract().response());
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {
