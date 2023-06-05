@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.utils.LogUtil.*;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -38,7 +39,9 @@ public class ServicePointRepository {
   }
 
   public CompletableFuture<Result<ServicePoint>> getServicePointById(UUID id) {
+    log.debug("getServicePointById:: parameters id: {}", id);
     if(id == null) {
+      log.info("getServicePointById:: id is null");
       return ofAsync(() -> null);
     }
 
@@ -46,7 +49,9 @@ public class ServicePointRepository {
   }
 
   public CompletableFuture<Result<ServicePoint>> getServicePointById(String id) {
+    log.debug("getServicePointById:: parameters id: {}", id);
     if(id == null) {
+      log.info("getServicePointById:: id is null");
       return ofAsync(() -> null);
     }
 
@@ -60,21 +65,25 @@ public class ServicePointRepository {
   }
 
   public CompletableFuture<Result<ServicePoint>> getServicePointForRequest(Request request) {
+    log.debug("getServicePointForRequest:: parameters request: {}", request);
     return getServicePointById(request.getPickupServicePointId());
   }
 
   public CompletableFuture<Result<Loan>> findServicePointsForLoan(Result<Loan> loanResult) {
+    log.debug("findServicePointsForLoan:: parameters loanResult: {}", loanResult);
     return fetchCheckInServicePoint(loanResult)
       .thenComposeAsync(this::fetchCheckOutServicePoint);
   }
 
   private CompletableFuture<Result<Loan>> fetchCheckOutServicePoint(Result<Loan> loanResult) {
+    log.debug("fetchCheckOutServicePoint:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult
       .combineAfter(loan -> getServicePointById(loan.getCheckoutServicePointId()),
         Loan::withCheckoutServicePoint);
   }
 
   private CompletableFuture<Result<Loan>> fetchCheckInServicePoint(Result<Loan> loanResult) {
+    log.debug("fetchCheckInServicePoint:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult
       .combineAfter(loan -> getServicePointById(loan.getCheckInServicePointId()),
         Loan::withCheckinServicePoint);
@@ -82,6 +91,8 @@ public class ServicePointRepository {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findServicePointsForLoans(
     MultipleRecords<Loan> multipleLoans) {
+
+    log.debug("findServicePointsForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
 
     Collection<Loan> loans = multipleLoans.getRecords();
 
@@ -132,6 +143,9 @@ public class ServicePointRepository {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findServicePointsForRequests(
     MultipleRecords<Request> multipleRequests) {
+
+    log.debug("findServicePointsForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+
     Collection<Request> requests = multipleRequests.getRecords();
 
     final List<String> servicePointsToFetch = requests.stream()
@@ -142,7 +156,7 @@ public class ServicePointRepository {
       .collect(Collectors.toList());
 
     if(servicePointsToFetch.isEmpty()) {
-      log.info("No service points to query");
+      log.info("findServicePointsForRequests:: No service points to query");
       return completedFuture(succeeded(multipleRequests));
     }
 
@@ -179,6 +193,8 @@ public class ServicePointRepository {
 
   public CompletableFuture<Result<Collection<ServicePoint>>> findServicePointsByIds(
     Collection<String> ids) {
+
+    log.debug("findServicePointsByIds:: parameters ids: {}", () -> collectionAsString(ids));
 
     return createServicePointsFetcher().findByIds(ids)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
