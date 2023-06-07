@@ -9,6 +9,8 @@ import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -40,6 +42,7 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
+    log.debug("create:: parameters feeFineAction: {}", feeFineAction);
     final ResponseInterpreter<FeeFineAction> interpreter =
       new ResponseInterpreter<FeeFineAction>()
         .flatMapOn(201, mapUsingJson(FeeFineAction::from))
@@ -50,7 +53,9 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findById(String id) {
-    if(isNull(id)) {
+    log.debug("findById:: parameters id: {}", id);
+    if (isNull(id)) {
+      log.info("findById:: id is null");
       return ofAsync(() -> null);
     }
 
@@ -58,13 +63,18 @@ public class FeeFineActionRepository {
       .using(feeFineActionsStorageClient)
       .mapTo(FeeFineAction::from)
       .whenNotFound(failed(new RecordNotFoundFailure("feeFineAction", id)))
-      .fetch(id);
+      .fetch(id)
+      .thenApply(result -> {
+        log.info("findById:: result: {}", resultAsString(result));
+        return result;
+      });
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
     log.debug("findChargeActionForAccount:: params account: {}", account);
 
     if (isNull(account)) {
+      log.info("findChargeActionForAccount:: account is null");
       return emptyAsync();
     }
 
@@ -78,6 +88,8 @@ public class FeeFineActionRepository {
 
   public CompletableFuture<Result<Void>> createAll(
     Collection<StoredFeeFineAction> feeFineActions) {
+
+    log.debug("createAll:: parameters feeFineActions: {}", () -> collectionAsString(feeFineActions));
 
     return allOf(feeFineActions.stream()
       .map(this::create)

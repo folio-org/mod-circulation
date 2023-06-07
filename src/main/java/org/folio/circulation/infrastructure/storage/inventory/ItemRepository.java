@@ -17,6 +17,7 @@ import static org.folio.circulation.support.results.AsynchronousResultBindings.c
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -72,7 +73,9 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
+    log.debug("fetchFor:: itemRelatedRecord: {}", itemRelatedRecord);
     if (itemRelatedRecord.getItemId() == null) {
+      log.info("fetchFor:: item id is null");
       return completedFuture(succeeded(Item.from(null)));
     }
 
@@ -80,9 +83,12 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> updateItem(Item item) {
+    log.debug("updateItem:: parameters item: {}", item);
+
     final String IN_TRANSIT_DESTINATION_SERVICE_POINT_ID = "inTransitDestinationServicePointId";
 
     if (item == null) {
+      log.info("updateItem:: item is null");
       return ofAsync(() -> null);
     }
 
@@ -121,8 +127,10 @@ public class ItemRepository {
 
   private CompletableFuture<Result<Item>> getAvailableItem(
     MultipleRecords<Holdings> holdingsRecords) {
+    log.debug("getAvailableItem:: parameters: holdingsRecords: {}", () -> multipleRecordsAsString(holdingsRecords));
 
     if (holdingsRecords == null || holdingsRecords.isEmpty()) {
+      log.info("getAvailableItem:: holdingsRecords is null or empty");
       return ofAsync(() -> Item.from(null));
     }
 

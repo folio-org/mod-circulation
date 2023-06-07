@@ -3,6 +3,8 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -33,10 +35,12 @@ public class InstanceRepository {
   }
 
   public CompletableFuture<Result<Instance>> fetch(Request request) {
+    log.debug("fetch:: parameters request: {}", request);
     return fetchById(request.getInstanceId());
   }
 
   public CompletableFuture<Result<Instance>> fetchById(String instanceId) {
+    log.debug("fetchById:: parameters instanceId: {}", instanceId);
     InstanceMapper mapper = new InstanceMapper();
 
     return SingleRecordFetcher.jsonOrNull(instancesClient, "instance")
@@ -47,6 +51,8 @@ public class InstanceRepository {
   public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
     Collection<String> instanceIds) {
 
+    log.debug("fetchByIds:: parameters instanceIds: {}", () -> collectionAsString(instanceIds));
+
     InstanceMapper mapper = new InstanceMapper();
 
     return findWithMultipleCqlIndexValues(instancesClient, "instances",
@@ -56,6 +62,8 @@ public class InstanceRepository {
 
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
+    log.debug("findInstancesForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+
     Collection<Request> requests = multipleRequests.getRecords();
     final List<String> instanceIdsToFetch = requests.stream()
       .filter(Objects::nonNull)
@@ -86,6 +94,8 @@ public class InstanceRepository {
   }
 
   private Function<Request, Request> getRequestMapper(MultipleRecords<Instance> multipleInstances) {
+    log.debug("getRequestMapper:: parameters multipleInstances: {}", () -> multipleRecordsAsString(multipleInstances));
+
     return request -> multipleInstances.getRecords().stream()
       .filter(matchedInstanceId(request))
       .findFirst()
@@ -97,6 +107,7 @@ public class InstanceRepository {
   }
 
   private Predicate<Instance> matchedInstanceId(Request request) {
+    log.debug("matchedInstanceId:: parameters request: {}", request);
     if (request.getInstanceId() == null) {
       log.error("InstanceId is NULL for request {}", request.getId());
       return instance -> false;
