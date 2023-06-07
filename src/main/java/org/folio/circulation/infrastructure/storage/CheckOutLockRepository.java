@@ -70,8 +70,8 @@ public class CheckOutLockRepository {
 
   }
 
-  public CompletableFuture<Result<Response>> delete(String checkOutLockId) {
-    log.debug("delete:: deleting the lock for userId {} ", checkOutLockId);
+  public CompletableFuture<Result<Response>> deleteCheckoutLockById(String checkOutLockId) {
+    log.info("deleteCheckoutLockById:: deleting the lock for userId {} ", checkOutLockId);
     return checkOutLockClient.delete(checkOutLockId);
   }
 

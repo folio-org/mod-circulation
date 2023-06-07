@@ -228,7 +228,7 @@ public class CheckOutByBarcodeResource extends Resource {
     if(StringUtils.isBlank(checkOutLockId)) {
       return records;
     }
-    checkOutLockRepository.delete(checkOutLockId.toString());
+    checkOutLockRepository.deleteCheckoutLockById(checkOutLockId.toString());
     return records;
   }
 
