@@ -24,7 +24,7 @@ public class CheckOutLockRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient checkOutLockClient;
   private final List<Integer> retryIntervals;
-  private final Vertx vertx=Vertx.vertx();
+  private final Vertx vertx = Vertx.currentContext() != null ? Vertx.currentContext().owner() : Vertx.vertx();
 
   public CheckOutLockRepository(Clients clients, List<Integer> retryIntervals) {
     this.checkOutLockClient = clients.checkOutLockClient();
