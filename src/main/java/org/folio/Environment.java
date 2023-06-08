@@ -26,11 +26,11 @@ public class Environment {
   }
 
   public static List<Integer> getRetryIntervals() {
-    return getIntervalArr(getPropertyValue("RETRY_INTERVAL_MS","300"));
+    return getIntervalArr(getPropertyValue("RETRY_INTERVAL_MS","500|500|1000"));
   }
 
   public static int getLockTTL() {
-    return Integer.parseInt(getPropertyValue("LOCK_TTL_MS", "3000"));
+    return Integer.parseInt(getPropertyValue("LOCK_TTL_MS", "2000"));
   }
 
   private static int getVariable(String key, int defaultValue) {

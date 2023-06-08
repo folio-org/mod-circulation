@@ -2,6 +2,7 @@ package org.folio.circulation.infrastructure.storage;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.Environment;
@@ -24,10 +25,11 @@ public class CheckOutLockRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient checkOutLockClient;
   private final List<Integer> retryIntervals;
-  private final Vertx vertx = Vertx.currentContext() != null ? Vertx.currentContext().owner() : Vertx.vertx();
+  private final Vertx vertx;
 
-  public CheckOutLockRepository(Clients clients, List<Integer> retryIntervals) {
+  public CheckOutLockRepository(Clients clients, RoutingContext routingContext, List<Integer> retryIntervals) {
     this.checkOutLockClient = clients.checkOutLockClient();
+    this.vertx = routingContext.vertx();
     this.retryIntervals = retryIntervals;
   }
 
@@ -52,7 +54,7 @@ public class CheckOutLockRepository {
           }
         });
     } catch (Exception ex) {
-      log.warn("createLockWithRetry:: exception {} ", ex.getMessage());
+      log.warn("createLockWithRetry:: exception  ", ex);
       future.completeExceptionally(ex);
     }
   }

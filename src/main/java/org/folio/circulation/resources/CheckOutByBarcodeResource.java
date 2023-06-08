@@ -132,7 +132,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final var isCheckOutLockFeatureEnabled = Environment.getCheckOutFeatureFlag();
 
-    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, Environment.getRetryIntervals());
+    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext, Environment.getRetryIntervals());
 
     StringBuilder checkOutLockId = new StringBuilder();
 
