@@ -143,8 +143,8 @@ public class ItemsInTransitReport {
         request = request.withRequester(requester.withPatronGroup(requesterPatronGroup));
       }
 
-      log.info("buildEntry:: pickupServicePointId is not null");
-      ServicePoint pickupServicePoint = getServicePoint(request.getPickupServicePointId());
+      var pickupServicePoint = getServicePoint(request.getPickupServicePointId());
+      log.info("buildEntry:: pickupServicePointId: {}", pickupServicePoint);
       request = request.withPickupServicePoint(pickupServicePoint);
 
       writeRequest(request, entry);
@@ -152,8 +152,8 @@ public class ItemsInTransitReport {
 
     if (loan != null) {
       log.info("buildEntry:: loan is not null");
-      ServicePoint checkoutServicePoint = getServicePoint(loan.getCheckoutServicePointId());
-      ServicePoint checkInServicePoint = getServicePoint(loan.getCheckInServicePointId());
+      var checkoutServicePoint = getServicePoint(loan.getCheckoutServicePointId());
+      var checkInServicePoint = getServicePoint(loan.getCheckInServicePointId());
 
       loan = loan
         .withCheckinServicePoint(checkInServicePoint)
