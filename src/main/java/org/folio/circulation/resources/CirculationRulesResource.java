@@ -130,7 +130,7 @@ public class CirculationRulesResource extends Resource {
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
-      Text2Drools.convert(rulesInput.getString("rulesAsText"),
+      Text2Drools.convert(getRulesAsText(rulesInput),
         (policyType, policies, token) -> validatePolicy(
           existingPoliciesIds, policyType, policies, token));
     } catch (CirculationRulesException e) {
@@ -147,7 +147,7 @@ public class CirculationRulesResource extends Resource {
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenApply(this::failWhenResponseOtherThanNoContent)
       .thenApply(result -> result.map(response -> CirculationRulesCache.getInstance()
-        .reloadRules(webContext.getTenantId(), rulesInput.getString("rulesAsText"))))
+        .reloadRules(webContext.getTenantId(), getRulesAsText(rulesInput))))
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
   }
@@ -156,6 +156,10 @@ public class CirculationRulesResource extends Resource {
     return result.failWhen(
       response -> of(() -> response.getStatusCode() != 204),
       ForwardOnFailure::new);
+  }
+
+  private static String getRulesAsText(JsonObject rulesInput) {
+    return rulesInput.getString("rulesAsText");
   }
 
   private void validatePolicy(Map<String, Set<String>> existingPoliciesIds,
