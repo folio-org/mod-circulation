@@ -8,6 +8,7 @@ import org.folio.circulation.rules.ExecutableRules;
 import org.folio.circulation.rules.Text2Drools;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
 import java.lang.invoke.MethodHandles;
@@ -54,31 +55,20 @@ public final class CirculationRulesCache {
     log.info("Reloading rules for tenant {}", tenantId);
 
     return circulationRulesClient.get()
-      .thenCompose(r -> r.after(response -> {
-        log.info("Fetched rules for tenant {}", tenantId);
-        JsonObject circulationRules = new JsonObject(response.getBody());
+      .thenApply(r -> r.map(response -> getRulesAsText(response, tenantId)))
+      .thenCompose(r -> r.after(rulesAsText -> reloadRules(tenantId, rulesAsText)));
+  }
 
-        if (log.isInfoEnabled()) {
-          log.info("circulationRules = {}", circulationRules.encodePrettily());
-        }
+  private static String getRulesAsText(Response response, String tenantId) {
+    log.info("Fetched rules for tenant {}", tenantId);
 
-        String rulesAsText = circulationRules.getString("rulesAsText");
+    final var circulationRules = new JsonObject(response.getBody());
 
-        if (isBlank(rulesAsText)) {
-          log.info("Rules text is blank for tenant {}", tenantId);
-          return completedFuture(failed(new ServerErrorFailure(
-            "Cannot apply blank circulation rules")));
-        }
+    if (log.isInfoEnabled()) {
+      log.info("circulationRules = {}", circulationRules.encodePrettily());
+    }
 
-        String droolsText = Text2Drools.convert(rulesAsText);
-        Drools drools =  new Drools(tenantId, droolsText);
-        log.info("rulesAsDrools = {}", droolsText);
-
-        Rules rules = new Rules(rulesAsText, droolsText, drools, System.currentTimeMillis());
-        log.info("Done building Drools object for tenant {}", tenantId);
-        rulesMap.put(tenantId, rules);
-        return ofAsync(() -> rules);
-      }));
+    return circulationRules.getString("rulesAsText");
   }
 
   public CompletableFuture<Result<Rules>> reloadRules(String tenantId, String rulesAsText) {
