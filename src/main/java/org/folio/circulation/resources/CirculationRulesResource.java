@@ -1,25 +1,12 @@
 package org.folio.circulation.resources;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
-import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
-import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
-import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.results.Result.of;
-
-import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.logging.log4j.LogManager;
@@ -38,13 +25,23 @@ import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
+import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.*;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
+import static org.folio.circulation.support.http.server.JsonHttpResponse.unprocessableEntity;
+import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
+import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.results.Result.of;
 
 /**
  * Write and read the circulation rules.
@@ -149,10 +146,10 @@ public class CirculationRulesResource extends Resource {
 
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenApply(this::failWhenResponseOtherThanNoContent)
+      .thenApply(result -> result.map(response -> CirculationRulesCache.getInstance()
+        .reloadRules(webContext.getTenantId(), rulesInput.getString("rulesAsText"))))
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
-    
-    CirculationRulesCache.getInstance().dropRulesForTenant(webContext.getTenantId());
   }
 
   private Result<Response> failWhenResponseOtherThanNoContent(Result<Response> result) {
