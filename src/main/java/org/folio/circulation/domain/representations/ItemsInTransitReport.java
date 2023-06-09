@@ -78,7 +78,11 @@ public class ItemsInTransitReport {
     Loan loan = reportContext.getLoans().get(item.getItemId());
     Request request = reportContext.getRequests().get(item.getItemId());
 
-    Location location = reportContext.getLocations().get(item.getEffectiveLocationId());
+    Location location = null;
+    if (item.getEffectiveLocationId() != null) {
+      log.info("buildEntry:: effectiveLocationId is not null");
+      location = reportContext.getLocations().get(item.getEffectiveLocationId());
+    }
     if (location != null) {
       log.info("buildEntry:: location is not null");
       item = ofNullable(location.getPrimaryServicePointId())
@@ -139,7 +143,8 @@ public class ItemsInTransitReport {
         request = request.withRequester(requester.withPatronGroup(requesterPatronGroup));
       }
 
-      ServicePoint pickupServicePoint = reportContext.getServicePoints().get(request.getPickupServicePointId());
+      var pickupServicePoint = getServicePoint(request.getPickupServicePointId());
+      log.info("buildEntry:: pickupServicePointId: {}", pickupServicePoint);
       request = request.withPickupServicePoint(pickupServicePoint);
 
       writeRequest(request, entry);
@@ -147,10 +152,8 @@ public class ItemsInTransitReport {
 
     if (loan != null) {
       log.info("buildEntry:: loan is not null");
-      ServicePoint checkoutServicePoint = reportContext.getServicePoints()
-        .get(loan.getCheckoutServicePointId());
-      ServicePoint checkInServicePoint = reportContext.getServicePoints()
-        .get(loan.getCheckInServicePointId());
+      var checkoutServicePoint = getServicePoint(loan.getCheckoutServicePointId());
+      var checkInServicePoint = getServicePoint(loan.getCheckInServicePointId());
 
       loan = loan
         .withCheckinServicePoint(checkInServicePoint)
@@ -167,6 +170,12 @@ public class ItemsInTransitReport {
 
     log.info("buildEntry:: result {}", entry);
     return entry;
+  }
+
+  private ServicePoint getServicePoint(String servicePointId) {
+    return ofNullable(servicePointId)
+      .map(reportContext.getServicePoints()::get)
+      .orElse(null);
   }
 
   private void writeLastCheckIn(JsonObject itemReport, LastCheckIn lastCheckIn) {
