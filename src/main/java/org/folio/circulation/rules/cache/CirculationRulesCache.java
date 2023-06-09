@@ -48,15 +48,9 @@ public final class CirculationRulesCache {
   }
 
   private boolean rulesExist(String tenantId) {
-    if (rulesMap.containsKey(tenantId)) {
-      Rules rules = rulesMap.get(tenantId);
-      if (rules != null) {
-        if (rules.getRulesAsText() != "") {
-          return true;
-        }
-      }
-    }
-    return false;
+    Rules rules = rulesMap.get(tenantId);
+      
+    return rules != null && !rules.getRulesAsText().isEmpty();
   }
 
   public CompletableFuture<Result<Rules>> reloadRules(String tenantId,
@@ -102,7 +96,7 @@ public final class CirculationRulesCache {
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,
     CollectionResourceClient circulationRulesClient) {
 
-    log.info("Getting Drools for tenant {}", tenantId);
+    log.debug("getDrools:: parameters: tenantId, circulationRulesClient: Getting Drools for tenant {}", tenantId);
 
     final CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
 
@@ -118,6 +112,6 @@ public final class CirculationRulesCache {
     log.info("Circulation rules have not been loaded, initializing");
 
     return reloadRules(tenantId, circulationRulesClient)
-      .thenCompose(r -> r.after(updatedRules -> ofAsync(() -> updatedRules.getDrools())));
+    .thenCompose(r -> r.after(updatedRules -> ofAsync(updatedRules::getDrools)));
   }
 }
