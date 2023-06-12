@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandles;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.resources.ChangeDueDateResource;
+import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
@@ -129,6 +130,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new EndPatronActionSessionResource(client).register(router);
     new ClaimItemReturnedResource(client).register(router);
     new ChangeDueDateResource(client).register(router);
+    new AddInfoResource(client).register(router);
     new DeclareClaimedReturnedItemAsMissingResource(client).register(router);
     new ScheduledAgeToLostResource(client).register(router);
     new ScheduledAgeToLostFeeChargingResource(client).register(router);

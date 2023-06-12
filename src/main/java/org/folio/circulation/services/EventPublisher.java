@@ -13,9 +13,7 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
-import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
-import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
-import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
+import static org.folio.circulation.domain.LoanAction.*;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -255,6 +253,40 @@ public class EventPublisher {
         }
         return completedFuture(succeeded(requestAndRelatedRecords));
       }));
+  }
+
+  public CompletableFuture<Result<LoanAndRelatedRecords>> publishInfoAddedEvent(
+    LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    if (loanAndRelatedRecords.getLoan() != null) {
+      Loan loan = loanAndRelatedRecords.getLoan();
+      publishInfoAddedEvent(loan, loan.getAction());
+    }
+    return completedFuture(succeeded(loanAndRelatedRecords));
+  }
+
+  private void publishInfoAddedEvent(Loan loan, String action) {
+    if (loan != null) {
+      JsonObject payloadJsonObject = new JsonObject();
+      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
+      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
+      write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
+
+      runAsync(() -> publishInfoAddedLogEvent(loan));
+
+      pubSubPublishingService.publishEvent(action, payloadJsonObject.encode())
+        .handle((result, error) -> handlePublishEventError(error, loan));
+    }
+    else {
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, action);
+    }
+    completedFuture(succeeded(null));
+  }
+
+  public void publishInfoAddedLogEvent(Loan loan) {
+    publishLogRecord(LoanLogContext.from(loan)
+      .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
+      .withDescription(loan.getActionComment()).asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
