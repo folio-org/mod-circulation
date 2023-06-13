@@ -20,7 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.folio.circulation.support.results.Result.*;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 public final class CirculationRulesCache {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -63,16 +65,13 @@ public final class CirculationRulesCache {
     log.info("Fetched rules for tenant {}", tenantId);
 
     final var circulationRules = new JsonObject(response.getBody());
-
-    if (log.isInfoEnabled()) {
-      log.info("circulationRules = {}", circulationRules.encodePrettily());
-    }
+    log.info("circulationRules = {}", circulationRules.encodePrettily());
 
     return circulationRules.getString("rulesAsText");
   }
 
   public CompletableFuture<Result<Rules>> reloadRules(String tenantId, String rulesAsText) {
-    log.info("Reloading rules for tenant {}", tenantId);
+     log.debug("reloadRules:: parameters tenantId: {}, rulesAsText: {}", tenantId, rulesAsText);
 
         if (isBlank(rulesAsText)) {
           log.info("Rules text is blank for tenant {}", tenantId);
@@ -107,7 +106,7 @@ public final class CirculationRulesCache {
 
     final CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
 
-    if (rulesExist(tenantId)) {
+    if (tenantId != null && rulesExist(tenantId)) {
       Rules rules = rulesMap.get(tenantId);
       DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
       String strDate = dateFormat.format(rules.getReloadTimestamp());
@@ -119,6 +118,6 @@ public final class CirculationRulesCache {
     log.info("Circulation rules have not been loaded, initializing");
 
     return reloadRules(tenantId, circulationRulesClient)
-    .thenCompose(r -> r.after(updatedRules -> ofAsync(updatedRules::getDrools)));
+      .thenCompose(r -> r.after(updatedRules -> ofAsync(updatedRules::getDrools)));
   }
 }
