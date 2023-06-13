@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
@@ -44,13 +43,13 @@ public class CirculationRulesReloadResource extends Resource {
   }
 
   private void reload(RoutingContext routingContext) {
-    log.debug("reload:: parameters: routingContext: Starting reload of circulation rules.");
+    log.debug("reload:: starting reload of circulation rules");
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-    CollectionResourceClient circulationRulesClient = clients.circulationRulesStorage();  
-    CirculationRulesCache.getInstance().reloadRules(context.getTenantId(), circulationRulesClient)
+    CirculationRulesCache.getInstance().reloadRules(context.getTenantId(), 
+      Clients.create(context, client).circulationRulesStorage())
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .exceptionally(CommonFailures::failedDueToServerError)
-      .thenAccept(context::writeResultToHttpResponse);
+      .thenAccept(context::writeResultToHttpResponse)
+      .thenAccept(r -> log.info("reload:: circulation rules reloaded"));
   }
 }
