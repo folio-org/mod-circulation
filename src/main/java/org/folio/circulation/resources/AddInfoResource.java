@@ -42,10 +42,10 @@ public class AddInfoResource extends Resource {
   @Override
   public void register(Router router) {
     new RouteRegistration("/circulation/loans/:id/add-info", router)
-      .create(this::addInfo);
+      .create(this::addPatronOrStaffInfo);
   }
 
-  private void addInfo(RoutingContext routingContext) {
+  private void addPatronOrStaffInfo(RoutingContext routingContext) {
     log.info("Add-info invoked");
     final WebContext context = new WebContext(routingContext);
     createAddInfoRequest(routingContext)
@@ -71,7 +71,7 @@ public class AddInfoResource extends Resource {
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(this::toLoanAndRelatedRecords)
-      .thenApply(r -> addInfo(r, request))
+      .thenApply(r -> addPatronOrStaffInfo(r, request))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishInfoAddedEvent));
   }
@@ -101,13 +101,13 @@ public class AddInfoResource extends Resource {
     return loanRepository.getById(addInfoRequest.getLoanId());
   }
 
-  private Result<LoanAndRelatedRecords> addInfo(Result<LoanAndRelatedRecords> loanResult,
-                                                      AddInfoRequest request) {
-    return loanResult.map(l -> addInfo(l, request.getAction(), request.getActionComment()));
+  private Result<LoanAndRelatedRecords> addPatronOrStaffInfo(Result<LoanAndRelatedRecords> loanResult,
+                                                             AddInfoRequest request) {
+    return loanResult.map(l -> addPatronOrStaffInfo(l, request.getAction(), request.getActionComment()));
   }
 
-  private LoanAndRelatedRecords addInfo(LoanAndRelatedRecords loanAndRelatedRecords,
-                                              String action, String actionComment) {
+  private LoanAndRelatedRecords addPatronOrStaffInfo(LoanAndRelatedRecords loanAndRelatedRecords,
+                                                     String action, String actionComment) {
     loanAndRelatedRecords.getLoan().changeAction(action);
     loanAndRelatedRecords.getLoan().changeActionComment(actionComment);
     return loanAndRelatedRecords;
