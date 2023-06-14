@@ -260,31 +260,19 @@ public class EventPublisher {
 
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
-      publishInfoAddedEvent(loan, loan.getAction());
-    }
-    return completedFuture(succeeded(loanAndRelatedRecords));
-  }
-
-  private void publishInfoAddedEvent(Loan loan, String action) {
-    if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
 
-      runAsync(() -> publishInfoAddedLogEvent(loan));
-
-      pubSubPublishingService.publishEvent(action, payloadJsonObject.encode())
+      publishInfoAddedLogEvent(loan)
         .handle((result, error) -> handlePublishEventError(error, loan));
     }
-    else {
-      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, action);
-    }
-    completedFuture(succeeded(null));
+    return completedFuture(succeeded(loanAndRelatedRecords));
   }
 
-  public void publishInfoAddedLogEvent(Loan loan) {
-    publishLogRecord(LoanLogContext.from(loan)
+  public CompletableFuture<Result<Void>> publishInfoAddedLogEvent(Loan loan) {
+    return publishLogRecord(LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDescription(loan.getActionComment()).asJson(), LOAN);
   }

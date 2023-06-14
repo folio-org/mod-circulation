@@ -41,8 +41,6 @@ public class AddInfoResource extends Resource {
 
   @Override
   public void register(Router router) {
-    log.info("ID-NE");
-    log.debug("ID-NE: registering add-info api");
     new RouteRegistration("/circulation/loans/:id/add-info", router)
       .create(this::addInfo);
   }
