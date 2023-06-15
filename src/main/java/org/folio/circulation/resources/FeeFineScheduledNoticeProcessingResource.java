@@ -2,8 +2,6 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_FINE_CHARGED;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST_RETURNED;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RENEWED;
-import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.OVERDUE_FINE_RETURNED;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.List;
@@ -17,6 +15,7 @@ import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -27,8 +26,6 @@ import io.vertx.core.http.HttpClient;
 
 public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
   private static final List<TriggeringEvent> TRIGGERING_EVENTS_TO_PROCESS = List.of(
-    OVERDUE_FINE_RETURNED,
-    OVERDUE_FINE_RENEWED,
     AGED_TO_LOST_FINE_CHARGED,
     AGED_TO_LOST_RETURNED
   );
@@ -40,7 +37,8 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ConfigurationRepository configurationRepository,
-    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit) {
+    ScheduledNoticesRepository scheduledNoticesRepository,
+    PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
       ClockUtil.getZonedDateTime(), true, TRIGGERING_EVENTS_TO_PROCESS,

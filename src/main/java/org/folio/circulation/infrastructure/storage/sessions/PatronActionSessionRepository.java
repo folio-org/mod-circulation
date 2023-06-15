@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.storage.sessions;
 
+import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
@@ -7,21 +8,25 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.LOAN_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
+import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.SESSION_ID;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.CqlQuery.noQuery;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,6 +56,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
@@ -123,6 +129,7 @@ public class PatronActionSessionRepository {
     write(json, PATRON_ID, patronSessionRecord.getPatronId());
     write(json, LOAN_ID, patronSessionRecord.getLoanId());
     write(json, ACTION_TYPE, patronSessionRecord.getActionType().getRepresentation());
+    write(json, SESSION_ID, patronSessionRecord.getSessionId());
 
     return json;
   }
@@ -148,6 +155,22 @@ public class PatronActionSessionRepository {
       .after(query -> findBy(query, pageLimit))
       .thenCompose(r -> r.combineAfter(() -> userRepository.getUser(patronId), this::setUserForLoans))
       .thenApply(mapResult(this::toList));
+  }
+
+  public CompletableFuture<Result<Collection<PatronSessionRecord>>> findPatronActionSessions(
+    Collection<String> sessionIds, PageLimit pageLimit) {
+
+    log.debug("findPatronActionSessions:: sessionIds: {}", sessionIds);
+
+    if (sessionIds.isEmpty()) {
+      log.debug("findPatronActionSessions:: collection of session IDs is empty");
+      return ofAsync(emptyList());
+    }
+
+    return new CqlQueryFinder<>(patronActionSessionsStorageClient, "patronActionSessions",
+      PatronSessionRecord::from)
+      .findByQuery(exactMatchAny(SESSION_ID, sessionIds), pageLimit)
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   public CompletableFuture<Result<List<PatronSessionRecord>>> findPatronActionSessions(
