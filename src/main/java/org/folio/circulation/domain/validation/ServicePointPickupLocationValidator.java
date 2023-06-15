@@ -24,7 +24,7 @@ public class ServicePointPickupLocationValidator {
     Request request = null;
 
     if (requestAndRelatedRecords != null) {
-      log.info("refuseInvalidPickupServicePoint:: requestAndRelatedRecords is null");
+      log.info("refuseInvalidPickupServicePoint:: requestAndRelatedRecords is not null");
       request = requestAndRelatedRecords.getRequest();
     }
 
