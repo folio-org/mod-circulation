@@ -82,9 +82,9 @@ public class CirculationRulesFixture {
 
   public Response attemptRefreshRules() {
     return toResponse(restAssuredClient
-    .beginRequest("refresh-rules-in-cache")
-    .when().post(circulationRulesReloadUrl(""))
-    .then().extract().response());
+      .beginRequest("refresh-rules-in-cache")
+      .when().post(circulationRulesReloadUrl(""))
+      .then().extract().response());
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {

@@ -1,6 +1,18 @@
 package org.folio.circulation.rules.cache;
 
-import io.vertx.core.json.JsonObject;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
+
+import java.lang.invoke.MethodHandles;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.rules.Drools;
@@ -11,18 +23,7 @@ import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
-import java.lang.invoke.MethodHandles;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
+import io.vertx.core.json.JsonObject;
 
 public final class CirculationRulesCache {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -41,15 +42,10 @@ public final class CirculationRulesCache {
     rulesMap.clear();
   }
 
-  public void dropRulesForTenant(String tenantId) {
-    Rules rules = new Rules();
-    rulesMap.put(tenantId, rules);
-  }
-
   private boolean rulesExist(String tenantId) {
     Rules rules = rulesMap.get(tenantId);
 
-    return rules != null && !rules.getRulesAsText().isEmpty();
+    return rules != null;
   }
 
   public CompletableFuture<Result<Rules>> reloadRules(String tenantId,
@@ -104,20 +100,17 @@ public final class CirculationRulesCache {
 
     log.debug("getDrools:: parameters: tenantId, circulationRulesClient: Getting Drools for tenant {}", tenantId);
 
-    final CompletableFuture<Result<Drools>> cfDrools = new CompletableFuture<>();
-
     if (tenantId != null && rulesExist(tenantId)) {
       Rules rules = rulesMap.get(tenantId);
-      DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+      DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
       String strDate = dateFormat.format(rules.getReloadTimestamp());
       log.info("Rules object found, last updated: {}", strDate);
-      cfDrools.complete(succeeded(rules.getDrools()));
-      return cfDrools;
+      return ofAsync(rules.getDrools());
     }
 
     log.info("Circulation rules have not been loaded, initializing");
 
     return reloadRules(tenantId, circulationRulesClient)
-      .thenCompose(r -> r.after(updatedRules -> ofAsync(updatedRules::getDrools)));
+      .thenApply(r -> r.map(Rules::getDrools));
   }
 }
