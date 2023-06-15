@@ -5,13 +5,13 @@ import io.vertx.core.json.JsonObject;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class AddInfoRequestBuilder implements Builder {
-  private final String action;
+  private final String infoAction;
   private final String actionComment;
   private final String loanId;
 
   public AddInfoRequestBuilder(
     String loanId, String addInfoAction, String actionComment ) {
-    this.action = addInfoAction;
+    this.infoAction = addInfoAction;
     this.actionComment = actionComment;
     this.loanId = loanId;
   }
@@ -19,7 +19,7 @@ public class AddInfoRequestBuilder implements Builder {
   @Override
   public JsonObject create() {
     final JsonObject request = new JsonObject();
-    write(request, "action", action);
+    write(request, "action", infoAction);
     write(request, "actionComment", actionComment);
     return request;
   }

@@ -18,7 +18,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class AddInfoAPITests extends APITests {
+class AddInfoAPITests extends APITests {
 
   private IndividualResource loan;
   private String loanId;
