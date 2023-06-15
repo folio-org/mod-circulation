@@ -1531,7 +1531,10 @@
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "mod-settings.entries.collection.get",
+        "checkout-lock-storage.item.post",
+        "checkout-lock-storage.item.delete"
       ],
       "visible": false
     },
