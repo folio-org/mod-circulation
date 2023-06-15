@@ -1,0 +1,38 @@
+#%RAML 1.0
+title: Add patron or staff info
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for adding patron or staff info
+    content: <b>Add info API</b>
+
+types:
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+/circulation/loans/{id}/add-info:
+  post:
+    is: [validate]
+    body:
+      application/json:
+        type: !include add-info-request.json
+    responses:
+      201:
+        description: "Patron or staff info has been successfully added"
+      422:
+        description: "Unable to add patron or staff info for the loan"
+        body:
+          application/json:
+            type: errors
+            example: !include examples/add-patron-staff-info-errors.json
+      404:
+        description: "The loan is not found"
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"
