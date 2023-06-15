@@ -26,16 +26,20 @@ public class SettingsRepository {
   }
 
   public CompletableFuture<Result<CheckoutLockConfiguration>> lookUpCheckOutLockSettings() {
+    log.info("lookUpCheckOutLockSettings:: fetching checkout lock settings");
     final Result<CqlQuery> moduleQuery = exactMatch("scope", "mod-circulation");
     final Result<CqlQuery> configNameQuery = exactMatch("key", "checkoutLockFeature");
 
     return moduleQuery.combine(configNameQuery, CqlQuery::and)
       .after(cqlQuery -> settingsClient.getMany(cqlQuery, PageLimit.noLimit()))
-      .thenApply(result -> result.next(response ->{
-        log.info("response {} ", response);
-        return MultipleRecords.from(response, Configuration::new, "items");
-        }
-        ))
+      .thenApply(result -> {
+        log.info("result {} ", result);
+        return result.next(response ->{
+            log.info("response {} ", response);
+            return MultipleRecords.from(response, Configuration::new, "items");
+          }
+        );
+      })
       .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
         .map(Configuration::getValue)
         .map(JsonObject::new)

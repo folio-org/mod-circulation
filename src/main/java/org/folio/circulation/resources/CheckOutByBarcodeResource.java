@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.Environment;
 import org.folio.circulation.domain.CheckOutLock;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -199,7 +198,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
-    log.debug("acquireLock:: Creating checkout lock");
+    log.info("acquireLock:: Creating checkout lock {} ",records.getCheckoutLockConfiguration());
     if(records.getCheckoutLockConfiguration()==null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
         return completedFuture(Result.succeeded(records));
       }
