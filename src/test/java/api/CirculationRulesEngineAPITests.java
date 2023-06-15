@@ -387,9 +387,9 @@ class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  void canRefreshRules(){
-    Response response2 = circulationRulesFixture.attemptRefreshRules();
-    assertThat(response2.getStatusCode(), is(204));
+  void canRefreshRules() {
+    Response response = circulationRulesFixture.attemptRefreshRules();
+    assertThat(response.getStatusCode(), is(204));
   }
 
   private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
