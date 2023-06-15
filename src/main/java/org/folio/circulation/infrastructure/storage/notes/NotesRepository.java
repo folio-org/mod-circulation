@@ -6,9 +6,12 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notes.Note;
 import org.folio.circulation.domain.notes.NoteType;
 import org.folio.circulation.support.Clients;
@@ -19,6 +22,7 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
 public class NotesRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
 
@@ -34,6 +38,7 @@ public class NotesRepository {
   }
 
   public CompletableFuture<Result<Note>> create(Note note) {
+    log.debug("create:: note: {}", note);
     final NoteToJsonMapper noteToJsonMapper = new NoteToJsonMapper();
 
     final ResponseInterpreter<Note> interpreter = new ResponseInterpreter<Note>()
@@ -51,12 +56,14 @@ public class NotesRepository {
   }
 
   private static Result<Optional<NoteType>> mapResponseToNoteTypes(Response response) {
+    log.debug("mapResponseToNoteTypes:: response: {}", response);
     return new ResponseInterpreter<Optional<NoteType>>()
       .flatMapOn(200, NotesRepository::multipleNoteTypesToOptional)
       .apply(response);
   }
 
   private static Result<Optional<NoteType>> multipleNoteTypesToOptional(Response r) {
+    log.debug("multipleNoteTypesToOptional:: response: {}", r);
     final NoteTypeToJsonMapper noteTypeToJsonMapper = new NoteTypeToJsonMapper();
 
     return Result.of(() -> toStream(r.getJson(), "noteTypes")

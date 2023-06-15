@@ -1,9 +1,9 @@
 package api.loans;
 
 import static api.support.fixtures.TemplateContextMatchers.getFeeActionContextMatcher;
-import static api.support.fixtures.TemplateContextMatchers.getFeeChargeContextMatcher;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getSingleFeeChargeContextMatcher;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.AccountMatchers.isAccount;
@@ -679,7 +679,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
           allOf(
             getBaseNoticeContextMatcher(agedToLostResult),
             getFeeActionContextMatcher(feeFineAction),
-            getFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
+            getSingleFeeChargeContextMatcher(findAccountForFeeFineAction(feeFineAction)))))
       .forEach(matcher -> assertThat(FakeModNotify.getSentPatronNotices(), hasItem(matcher)));
   }
 
@@ -691,7 +691,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
       hasEmailNoticeProperties(userId, templateId,
         allOf(
           toStringMatcher(getUserContextMatchers(usersClient.get(userId))),
-          JsonPathMatchers.hasJsonPath("feeCharges[*]",  hasItems(
+          JsonPathMatchers.hasJsonPath("feeCharges[*]", hasItems(
             getMatchersForBundledFeeFineNotice(accountsToLoans)))
         ))));
   }
@@ -718,7 +718,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
         noticeContextMatchers.putAll(getLoanContextMatchers(loan.getLoan()));
         noticeContextMatchers.putAll(getItemContextMatchers(itemResource, true));
 
-        return allOf(toStringMatcher(noticeContextMatchers), getFeeChargeContextMatcher(account));
+        return allOf(toStringMatcher(noticeContextMatchers), getSingleFeeChargeContextMatcher(account));
       })
       .toArray(Matcher[]::new);
   }

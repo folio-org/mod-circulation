@@ -3,11 +3,15 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.http.client.Offset.offset;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemsReportFetcher;
 import org.folio.circulation.domain.MultipleRecords;
@@ -18,6 +22,7 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
 
 public class ItemReportRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient itemsClient;
 
   private static final int PAGE_LIMIT = 1000;
@@ -27,6 +32,8 @@ public class ItemReportRepository {
   }
 
   public CompletableFuture<Result<ItemsReportFetcher>> getAllItemsByField(String fieldName, String fieldValue) {
+    log.debug("getAllItemsByField:: parameters fieldName: {}, fieldValue: {}", fieldName, fieldValue);
+
     CompletableFuture<Result<ItemsReportFetcher>> future = new CompletableFuture<>();
     ItemsReportFetcher itemsReportFetcher = new ItemsReportFetcher(0, new ArrayList<>());
     fetchNextPage(itemsReportFetcher, future, fieldName, fieldValue);
@@ -35,6 +42,9 @@ public class ItemReportRepository {
 
   private ItemsReportFetcher fillResultItemContext(ItemsReportFetcher itemsReportFetcher,
                                                    Result<MultipleRecords<Item>> itemRecords) {
+
+    log.debug("fillResultItemContext:: parameters itemsReportFetcher: {}, itemRecords: {}",
+      () -> itemsReportFetcher, () -> resultAsString(itemRecords));
     List<Result<MultipleRecords<Item>>> resultListOfItems = itemsReportFetcher.getResultListOfItems();
     resultListOfItems.add(itemRecords);
     int newPageNumber = itemsReportFetcher.getCurrPageNumber() + 1;
@@ -44,6 +54,9 @@ public class ItemReportRepository {
   private void fetchNextPage(ItemsReportFetcher itemsReportFetcher,
                              CompletableFuture<Result<ItemsReportFetcher>> future,
                              String fieldName, String fieldValue) {
+
+    log.debug("fetchNextPage:: parameters itemsReportFetcher: {}, fieldName: {}, fieldValue: {}",
+      () -> itemsReportFetcher, () -> fieldName, () -> fieldValue);
     getItemsByField(itemsReportFetcher, fieldName, fieldValue)
       .thenApply(itemRecords -> {
           ItemsReportFetcher reportFetcher = fillResultItemContext(itemsReportFetcher, itemRecords);
@@ -61,6 +74,8 @@ public class ItemReportRepository {
 
   private CompletableFuture<Result<MultipleRecords<Item>>> getItemsByField(
     ItemsReportFetcher itemsReportFetcher, String fieldName, String fieldValue) {
+
+    log.debug("getItemsByField:: parameters fieldName: {}, fieldValue: {}", fieldName, fieldValue);
 
     final Result<CqlQuery> itemStatusQuery = exactMatch(fieldName, fieldValue);
     int pageOffset = itemsReportFetcher.getCurrPageNumber() * PAGE_LIMIT;

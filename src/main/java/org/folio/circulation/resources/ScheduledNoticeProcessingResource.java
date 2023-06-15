@@ -12,6 +12,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -53,10 +54,12 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
+    final var patronActionSessionRepository = PatronActionSessionRepository.using(
+      clients, loanRepository, userRepository);
 
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
-        scheduledNoticesRepository, limit)))
+        scheduledNoticesRepository, patronActionSessionRepository, limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,
         loanRepository, notices)))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -66,7 +69,8 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
     ConfigurationRepository configurationRepository,
-    ScheduledNoticesRepository scheduledNoticesRepository, PageLimit pageLimit);
+    ScheduledNoticesRepository scheduledNoticesRepository,
+    PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit);
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(
     Clients clients,

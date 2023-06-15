@@ -26,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 
 public class JsonScheduledNoticeMapper {
   private static final String ID = "id";
+  private static final String SESSION_ID = "sessionId";
   public static final String LOAN_ID = "loanId";
   private static final String REQUEST_ID = "requestId";
   private static final String FEE_FINE_ACTION_ID = "feeFineActionId";
@@ -44,6 +45,7 @@ public class JsonScheduledNoticeMapper {
   public static Result<ScheduledNotice> mapFromJson(JsonObject jsonObject) {
     return succeeded(new ScheduledNoticeBuilder())
       .map(b -> b.setId(getProperty(jsonObject, ID)))
+      .map(b -> b.setSessionId(getProperty(jsonObject, SESSION_ID)))
       .map(b -> b.setLoanId(getProperty(jsonObject, LOAN_ID)))
       .map(b -> b.setRequestId(getProperty(jsonObject, REQUEST_ID)))
       .map(b -> b.setFeeFineActionId(getProperty(jsonObject, FEE_FINE_ACTION_ID)))
@@ -83,6 +85,7 @@ public class JsonScheduledNoticeMapper {
   public static JsonObject mapToJson(ScheduledNotice notice) {
     return new JsonObject()
       .put(ID, notice.getId())
+      .put(SESSION_ID, notice.getSessionId())
       .put(LOAN_ID, notice.getLoanId())
       .put(REQUEST_ID, notice.getRequestId())
       .put(FEE_FINE_ACTION_ID, notice.getFeeFineActionId())

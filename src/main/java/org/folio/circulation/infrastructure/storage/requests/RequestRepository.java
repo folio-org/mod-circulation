@@ -14,10 +14,16 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -48,7 +54,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public class RequestRepository {
-
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String REQUESTS_COLLECTION_NAME = "requests";
 
   private final CollectionResourceClient requestsStorageClient;
@@ -110,12 +116,15 @@ public class RequestRepository {
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query, PageLimit pageLimit) {
+    log.debug("findBy:: parameters query: {}, pageLimit: {}", query, pageLimit);
     return findByWithoutItems(query, pageLimit)
       .thenCompose(r -> r.after(this::fetchAdditionalFields));
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchAdditionalFields(
     MultipleRecords<Request> requestRecords) {
+
+    log.debug("fetchAdditionalFields:: parameters requestRecords: {}", ()-> multipleRecordsAsString(requestRecords));
 
     return ofAsync(() -> requestRecords)
       .thenComposeAsync(requests -> itemRepository.fetchItemsFor(requests, Request::withItem))
@@ -129,25 +138,32 @@ public class RequestRepository {
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
     CqlQuery query, PageLimit pageLimit) {
 
+    log.debug("findByWithoutItems:: parameters query: {}, pageLimit: {}", query, pageLimit);
+
     return requestsStorageClient.getMany(query, pageLimit)
       .thenApply(result -> result.next(this::mapResponseToRequests));
   }
 
   private Result<MultipleRecords<Request>> mapResponseToRequests(Response response) {
+    log.debug("mapResponseToRequests:: parameters response: {}", response);
     return MultipleRecords.from(response, Request::from, REQUESTS_COLLECTION_NAME);
   }
 
   public CompletableFuture<Result<Boolean>> exists(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("exists:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
+
     return exists(requestAndRelatedRecords.getRequest());
   }
 
   private CompletableFuture<Result<Boolean>> exists(Request request) {
+    log.debug("exists:: parameters request: {}", request);
     return exists(request.getId());
   }
 
   private CompletableFuture<Result<Boolean>> exists(String id) {
+    log.debug("exists:: parameters id: {}", id);
     return createSingleRequestFetcher(new ResponseInterpreter<Boolean>()
       .on(200, of(() -> true))
       .on(404, of(() -> false)))
@@ -161,6 +177,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> fetchRelatedRecords(Request request) {
+    log.debug("fetchRelatedRecords:: parameters request: {}", request);
     return ofAsync(request)
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)
@@ -184,6 +201,8 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
     Collection<String> itemIds) {
 
+    log.debug("findOpenRequestsByItemIds:: parameters itemIds: {}", itemIds.size());
+
     Result<CqlQuery> query = exactMatchAny("status", openStates())
       .map(q -> q.sortBy(ascending("position")));
 
@@ -192,6 +211,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
+    log.debug("update:: parameters request: {}", request);
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
@@ -207,12 +227,16 @@ public class RequestRepository {
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("update:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
+
     return update(requestAndRelatedRecords.getRequest())
       .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> create(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("create:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
 
     final Request request = requestAndRelatedRecords.getRequest();
 
@@ -229,6 +253,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> delete(Request request) {
+    log.debug("delete:: parameters request: {}", request);
     final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
       .on(204, of(() -> request))
       .otherwise(forwardOnFailure());
@@ -238,7 +263,9 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> loadCancellationReason(Request request) {
+    log.debug("loadCancellationReason:: parameters request: {}", request);
     if(isNull(request) || isNull(request.getCancellationReasonId())) {
+      log.info("loadCancellationReason:: request or cancellation reason id is null");
       return ofAsync(() -> null);
     }
 
@@ -252,7 +279,10 @@ public class RequestRepository {
   CompletableFuture<Result<Collection<Request>>> batchUpdate(
     Collection<Request> requests) {
 
+    log.debug("batchUpdate:: parameters requests: {}", ()-> collectionAsString(requests));
+
     if (requests == null || requests.isEmpty()) {
+      log.info("batchUpdate:: requests are null or empty");
       return CompletableFuture.completedFuture(succeeded(requests));
     }
 
@@ -267,6 +297,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Collection<Request>>> fetchRequests(Collection<String> requestIds) {
+    log.debug("fetchRequests:: parameters requestIds: {}", requestIds.size());
     CqlQueryFinder<JsonObject> cqlQueryFinder = new CqlQueryFinder<>(
       requestsStorageClient, REQUESTS_COLLECTION_NAME, identity());
 
@@ -277,33 +308,40 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<Request>> fetchRequester(Result<Request> result) {
+    log.debug("fetchRequester:: parameters result: {}", ()-> resultAsString(result));
     return result.combineAfter(request ->
       getUser(request.getUserId()), Request::withRequester);
   }
 
   private CompletableFuture<Result<Request>> fetchProxy(Result<Request> result) {
+    log.debug("fetchProxy:: parameters result: {}", ()-> resultAsString(result));
     return result.combineAfter(request ->
       getUser(request.getProxyUserId()), Request::withProxy);
   }
 
   private CompletableFuture<Result<Request>> fetchLoan(Result<Request> result) {
+    log.debug("fetchLoan:: parameters result: {}", ()-> resultAsString(result));
     return result.combineAfter(loanRepository::findOpenLoanForRequest, Request::withLoan);
   }
 
   private CompletableFuture<Result<Request>> fetchPickupServicePoint(Result<Request> result) {
+    log.debug("fetchPickupServicePoint:: parameters result: {}", ()-> resultAsString(result));
     return result.combineAfter(request -> getServicePoint(request.getPickupServicePointId()),
         Request::withPickupServicePoint);
   }
 
   private CompletableFuture<Result<Request>> fetchPatronGroups(Result<Request> result) {
+    log.debug("fetchPatronGroups:: parameters result: {}", ()-> resultAsString(result));
     return patronGroupRepository.findPatronGroupsForSingleRequestUsers(result);
   }
 
   private CompletableFuture<Result<User>> getUser(String userId) {
+    log.debug("getUser:: parameters userId: {}", userId);
     return userRepository.getUser(userId);
   }
 
   private CompletableFuture<Result<ServicePoint>> getServicePoint(String servicePointId) {
+    log.debug("getServicePoint:: parameters servicePointId: {}", servicePointId);
     return servicePointRepository.getServicePointById(servicePointId);
   }
 
