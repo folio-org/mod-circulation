@@ -27,6 +27,7 @@ import org.folio.circulation.resources.LoanScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.LostItemCirculationRulesEngineResource;
 import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
+import org.folio.circulation.resources.OverdueFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.PickSlipsResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
@@ -124,6 +125,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestScheduledNoticeProcessingResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);
     new FeeFineNotRealTimeScheduledNoticeProcessingResource(client).register(router);
+    new OverdueFineScheduledNoticeProcessingResource(client).register(router);
 
     new ExpiredSessionProcessingResource(client).register(router);
     new LoanAnonymizationResource(client).register(router);

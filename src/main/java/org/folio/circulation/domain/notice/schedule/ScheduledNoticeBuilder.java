@@ -8,6 +8,7 @@ public class ScheduledNoticeBuilder {
   private String requestId;
   private String feeFineActionId;
   private String recipientUserId;
+  private String sessionId;
   private TriggeringEvent triggeringEvent;
   private ZonedDateTime nextRunTime;
   private ScheduledNoticeConfig noticeConfig;
@@ -52,8 +53,13 @@ public class ScheduledNoticeBuilder {
     return this;
   }
 
+  public ScheduledNoticeBuilder setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+    return this;
+  }
+
   public ScheduledNotice build() {
     return new ScheduledNotice(id, loanId, requestId, recipientUserId, feeFineActionId,
-      triggeringEvent, nextRunTime, noticeConfig);
+      sessionId, triggeringEvent, nextRunTime, noticeConfig);
   }
 }

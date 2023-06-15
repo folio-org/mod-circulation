@@ -13,12 +13,15 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -31,9 +34,8 @@ import org.hamcrest.Matcher;
 
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
-
-import javax.validation.constraints.NotNull;
 
 public class TemplateContextMatchers {
 
@@ -260,7 +262,18 @@ public class TemplateContextMatchers {
     return allOf(loanContextMatcher, itemContextMatcher, loanPolicyMatcher);
   }
 
-  public static Matcher<?> getFeeChargeContextMatcher(Account account) {
+  public static Matcher<?> getBundledFeeChargeContextMatcher(UserResource user,
+    Collection<Account> accounts) {
+
+    return allOf(
+      toStringMatcher(getUserContextMatchers(user)),
+      hasJsonPath("feeCharges[*]", hasSize(accounts.size())),
+      hasJsonPath("feeCharges[*]", hasItems(accounts.stream()
+      .map(TemplateContextMatchers::getSingleFeeChargeContextMatcher)
+      .toArray(Matcher[]::new))));
+  }
+
+  public static Matcher<Account> getSingleFeeChargeContextMatcher(Account account) {
     return allOf(
       hasJsonPath("feeCharge.owner", is(account.getFeeFineOwner())),
       hasJsonPath("feeCharge.type", is(account.getFeeFineType())),
@@ -270,7 +283,7 @@ public class TemplateContextMatchers {
     );
   }
 
-  public static Matcher<Object> getFeeChargeContextMatcher(JsonObject account) {
+  public static Matcher<Object> getSingleFeeChargeContextMatcher(JsonObject account) {
     return allOf(
       hasJsonPath("feeCharge.owner", is(account.getString("feeFineOwner"))),
       hasJsonPath("feeCharge.type", is(account.getString("feeFineType"))),

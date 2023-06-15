@@ -31,6 +31,9 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -93,6 +96,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    log.debug("createLoan:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
+
     final Loan loan = loanAndRelatedRecords.getLoan();
 
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
@@ -108,6 +113,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
+
+    log.debug("updateLoan:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
     Loan loan = loanAndRelatedRecords.getLoan();
     log.info("Loan " + loan.getId() + " prior to update:  " + loan.asJson().toString());
     return updateLoan(loanAndRelatedRecords.getLoan())
@@ -115,7 +122,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<Loan>> updateLoan(Loan loan) {
+    log.debug("updateLoan:: parameters loan: {}", loan);
     if(loan == null) {
+      log.info("updateLoan:: loan is null");
       return completedFuture(of(() -> null));
     }
 
@@ -133,7 +142,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForRequest(Request request) {
+    log.debug("findOpenLoanForRequest:: parameters request: {}", request);
     if (!request.hasItemId()) {
+      log.info("findOpenLoanForRequest:: request does not have an itemId");
       return emptyAsync();
     }
 
@@ -148,18 +159,22 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
    * failure if more than one open loan for the item found
    */
   public CompletableFuture<Result<Loan>> findOpenLoanForItem(Item item) {
+    log.debug("findOpenLoanForItem:: parameters item: {}", item);
     return findOpenLoans(item.getItemId())
       .thenApply(loansResult -> loansResult.next(loans -> {
         if (loans.getTotalRecords() == 0) {
+          log.info("findOpenLoanForItem:: no open loans found for item {}", item.getItemId());
           return succeeded(null);
         }
         else if(loans.getTotalRecords() == 1) {
           final Optional<Loan> firstLoan = loans.getRecords().stream().findFirst();
+          log.info("findOpenLoanForItem:: found open loan {} for item {}", firstLoan.get().getId(), item.getItemId());
 
           return firstLoan
             .map(loan -> Result.of(() -> loan.withItem(item)))
             .orElse(Result.of(() -> null));
         } else {
+          log.info("findOpenLoanForItem:: more than one open loan found for item {}", item.getItemId());
           return failedDueToServerError(format(
             "More than one open loan for item %s", item.getItemId()));
         }
@@ -182,15 +197,19 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   private CompletableFuture<Result<Loan>> fetchItem(Result<Loan> result) {
+    log.debug("fetchItem:: parameters result: {}", () -> resultAsString(result));
     return result.combineAfter(itemRepository::fetchFor, Loan::withItem);
   }
 
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
+    log.debug("fetchUser:: parameters result: {}", () -> resultAsString(result));
     return result.combineAfter(userRepository::getUser, Loan::withUser);
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLoansToAnonymize(
     PageLimit pageLimit) {
+
+    log.debug("findLoansToAnonymize:: parameters pageLimit: {}", pageLimit);
 
     Result<CqlQuery> cqlQuery = getStatusCQLQuery("Closed")
       .combine(CqlQuery.hasValue(USER_ID), CqlQuery::and);
@@ -209,6 +228,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findClosedLoans(
     String userId, PageLimit pageLimit) {
 
+    log.debug("findClosedLoans:: parameters userId: {}, pageLimit: {}", userId, pageLimit);
+
     Result<CqlQuery> query = exactMatch(USER_ID, userId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Closed");
 
@@ -222,6 +243,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findByIds(Collection<String> loanIds) {
+    log.debug("findByIds:: parameters loanIds: {}", () -> collectionAsString(loanIds));
     FindWithMultipleCqlIndexValues<Loan> fetcher =
       findWithMultipleCqlIndexValues(loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
 
@@ -232,6 +254,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Collection<Loan>>> findByItemIds(
     Collection<String> itemIds) {
 
+    log.debug("findByItemIds:: parameters itemIds: {}", () -> collectionAsString(itemIds));
+
     Result<CqlQuery> statusQuery = exactMatch(ITEM_STATUS, IN_TRANSIT.getValue());
     FindWithMultipleCqlIndexValues<Loan> fetcher = findWithMultipleCqlIndexValues(
       loansStorageClient, RECORDS_PROPERTY_NAME, Loan::from);
@@ -241,10 +265,12 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   private Result<MultipleRecords<Loan>> mapResponseToLoans(Response response) {
+    log.debug("mapResponseToLoans:: parameters response: {}", response);
     return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
+    log.debug("mapToStorageRepresentation:: parameters loan: {}, item: {}", loan, item);
     JsonObject storageLoan = loan.asJson();
 
     keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
@@ -302,15 +328,18 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
  }
 
   public CompletableFuture<Result<Boolean>> hasOpenLoan(String itemId) {
+    log.debug("hasOpenLoan:: parameters itemId: {}", itemId);
     return findOpenLoans(itemId)
       .thenApply(r -> r.map(loans -> !loans.getRecords().isEmpty()));
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(Item item) {
+    log.debug("findOpenLoans:: parameters item: {}", item);
     return findOpenLoans(item.getItemId());
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(String itemId) {
+    log.debug("findOpenLoans:: parameters itemId: {}", itemId);
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> itemIdQuery = exactMatch(ITEM_ID, itemId);
 
@@ -319,6 +348,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenLoansFor(
     MultipleRecords<Request> multipleRequests) {
+
+    log.debug("findOpenLoansFor:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
 
     Collection<Request> requests = multipleRequests.getRecords();
 
@@ -350,6 +382,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private Result<MultipleRecords<Request>> matchLoansToRequests(
     MultipleRecords<Request> requests, MultipleRecords<Loan> loans) {
 
+    log.debug("matchLoansToRequests:: parameters requests: {}, loans: {}",
+      () -> multipleRecordsAsString(requests), () -> multipleRecordsAsString(loans));
     return of(() ->
       requests.mapRecords(request -> matchLoansToRequest(request, loans)));
   }
@@ -357,6 +391,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private Request matchLoansToRequest(Request request,
     MultipleRecords<Loan> loans) {
 
+    log.debug("matchLoansToRequest:: parameters request: {}, loans: {}",
+      () -> request, () -> multipleRecordsAsString(loans));
     final Map<String, Loan> loanMap = loans.toMap(Loan::getItemId);
 
     return request
@@ -366,12 +402,18 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     PageLimit loansLimit, LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    log.debug("findOpenLoansByUserIdWithItem:: parameters loansLimit: {}, loanAndRelatedRecords: {}",
+      loansLimit, loanAndRelatedRecords);
+
     return findOpenLoansByUserIdWithItem(loansLimit,
       loanAndRelatedRecords.getLoan().getUser().getId());
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItem(
     PageLimit loansLimit, String userId) {
+
+    log.debug("findOpenLoansByUserIdWithItem:: parameters loansLimit: {}, userId: {}",
+      loansLimit, userId);
 
     return findOpenLoansByUserId(loansLimit, userId)
       .thenComposeAsync(loans -> itemRepository.fetchItemsFor(loans, Loan::withItem));
@@ -380,6 +422,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserIdWithItemAndHoldings(
     PageLimit loansLimit, String userId) {
 
+    log.debug("findOpenLoansByUserIdWithItemAndHoldings:: parameters loansLimit: {}, userId: {}",
+      loansLimit, userId);
+
     // Only fetching HoldingsRecord for each item to avoid fetching instances, locations etc.
     return findOpenLoansByUserId(loansLimit, userId)
       .thenComposeAsync(loans -> itemRepository.fetchItemsWithHoldings(loans, Loan::withItem));
@@ -387,6 +432,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoansByUserId(
     PageLimit loansLimit, String userId) {
+
+    log.debug("findOpenLoansByUserId:: parameters loansLimit: {}, userId: {}",
+      loansLimit, userId);
 
     final Result<CqlQuery> statusQuery = getStatusCQLQuery("Open");
     final Result<CqlQuery> userIdQuery = exactMatch(USER_ID, userId);
@@ -398,6 +446,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<Loan>> findLastLoanForItem(String itemId) {
+    log.debug("findLastLoanForItem:: parameters itemId: {}", itemId);
     final Result<CqlQuery> cqlQuery = exactMatch(ITEM_ID, itemId)
       .map(cql -> cql.sortBy(descending(LOAN_DATE)));
 
@@ -408,7 +457,10 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Loan>> findLoanWithClosestDueDate(List<String> itemIds,
     List<String> loanIds) {
 
+    log.debug("findLoanWithClosestDueDate:: parameters itemIds: {}, loanIds: {}",
+      () -> collectionAsString(itemIds), () -> collectionAsString(loanIds));
     if (itemIds == null || itemIds.isEmpty()) {
+      log.info("findLoanWithClosestDueDate: itemIds are null or empty");
       return ofAsync(() -> null);
     }
 
@@ -423,7 +475,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   public CompletableFuture<Result<Loan>> findLoanForAccount(Account account) {
+    log.debug("findLoanForAccount:: parameters account: {}", account);
     if (account == null) {
+      log.info("findLoanForAccount: account is null");
       return completedFuture(succeeded(null));
     }
 
@@ -433,6 +487,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   @Override
   public CompletableFuture<Result<MultipleRecords<Loan>>> getMany(CqlQuery cqlQuery,
     PageLimit pageLimit, Offset offset) {
+
+    log.debug("getMany:: parameters cqlQuery: {}, pageLimit: {}, offset: {}", cqlQuery, pageLimit, offset);
 
     return loansStorageClient.getMany(cqlQuery, pageLimit, offset)
       .thenApply(flatMapResult(this::mapResponseToLoans));

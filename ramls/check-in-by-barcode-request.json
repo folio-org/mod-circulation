@@ -10,7 +10,7 @@
     "servicePointId": {
       "description": "Service point where the item is being processed",
       "type": "string",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "checkInDate": {
       "description": "When the item was checked in",
@@ -24,6 +24,11 @@
         "Found by library",
         "Returned by patron"
       ]
+    },
+    "sessionId": {
+      "description": "Randomly generated UUID which must be the same for all check-in requests issued in scope of the same check-in session ",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
     }
   },
   "additionalProperties": false,

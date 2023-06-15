@@ -66,7 +66,7 @@ public class FeeFineScheduledNoticeService {
   public Result<CheckInContext> scheduleOverdueFineNotices(CheckInContext context,
     FeeFineAction action) {
 
-    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED);
+    scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED, context.getSessionId());
 
     return succeeded(context);
   }
@@ -88,13 +88,19 @@ public class FeeFineScheduledNoticeService {
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
     Loan loan, FeeFineAction action, NoticeEventType eventType) {
 
+    return scheduleNotices(loan, action, eventType, null);
+  }
+
+  private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
+    Loan loan, FeeFineAction action, NoticeEventType eventType, UUID sessionId) {
+
     if (action == null) {
       return ofAsync(() -> null);
     }
 
     return noticePolicyRepository.lookupPolicy(loan)
       .thenCompose(r -> r.after(policy ->
-        scheduleNoticeBasedOnPolicy(loan, policy, action, eventType)));
+        scheduleNoticeBasedOnPolicy(loan, policy, action, eventType, sessionId)));
   }
 
   public CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
@@ -118,18 +124,19 @@ public class FeeFineScheduledNoticeService {
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNoticeBasedOnPolicy(
-    Loan loan, PatronNoticePolicy noticePolicy, FeeFineAction action, NoticeEventType eventType) {
+    Loan loan, PatronNoticePolicy noticePolicy, FeeFineAction action, NoticeEventType eventType,
+    UUID sessionId) {
 
     List<ScheduledNotice> scheduledNotices = noticePolicy.getNoticeConfigurations().stream()
       .filter(config -> config.getNoticeEventType() == eventType)
-      .map(config -> createScheduledNotice(config, loan, action, eventType))
+      .map(config -> createScheduledNotice(config, loan, action, eventType, sessionId))
       .collect(Collectors.toList());
 
     return allOf(scheduledNotices, scheduledNoticesRepository::create);
   }
 
   private ScheduledNotice createScheduledNotice(NoticeConfiguration configuration,
-    Loan loan, FeeFineAction action, NoticeEventType eventType) {
+    Loan loan, FeeFineAction action, NoticeEventType eventType, UUID sessionId) {
 
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
@@ -139,6 +146,7 @@ public class FeeFineScheduledNoticeService {
       .setNextRunTime(determineNextRunTime(configuration, action))
       .setNoticeConfig(createScheduledNoticeConfig(configuration))
       .setTriggeringEvent(TriggeringEvent.from(eventType))
+      .setSessionId(sessionId == null ? null : sessionId.toString())
       .build();
   }
 
