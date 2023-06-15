@@ -37,6 +37,7 @@ import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -88,7 +89,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private void checkOut(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-
+    log.info("******TenantId***** {} ",context.getTenantId());
     CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
       routingContext.getBodyAsJson());
 
@@ -130,11 +131,11 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
-    final var isCheckOutLockFeatureEnabled = Environment.getCheckOutFeatureFlag();
-
-    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext, Environment.getRetryIntervals());
+    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
 
     StringBuilder checkOutLockId = new StringBuilder();
+
+    final SettingsRepository settingsRepository = new SettingsRepository(clients);
 
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
@@ -166,8 +167,9 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
-      .thenCompose(r -> r.after(records -> this.acquireLock(records, checkOutLockRepository, isCheckOutLockFeatureEnabled, checkOutLockId)))
-      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records, validators, errorHandler, isCheckOutLockFeatureEnabled)))
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookUpCheckOutLockSettings, LoanAndRelatedRecords::withCheckoutLockConfiguration))
+      .thenCompose(r -> r.after(records -> this.acquireLock(records, checkOutLockRepository, checkOutLockId)))
+      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
@@ -196,9 +198,9 @@ public class CheckOutByBarcodeResource extends Resource {
         succeeded(records)));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, boolean isCheckOutLockFeatureEnabled, StringBuilder checkOutLockId) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
     log.debug("acquireLock:: Creating checkout lock");
-    if(!isCheckOutLockFeatureEnabled) {
+    if(records.getCheckoutLockConfiguration()==null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
         return completedFuture(Result.succeeded(records));
       }
     CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
@@ -216,8 +218,8 @@ public class CheckOutByBarcodeResource extends Resource {
       });
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler, boolean isCheckOutLockFeatureEnabled) {
-    if(!isCheckOutLockFeatureEnabled) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+    if(records.getCheckoutLockConfiguration()==null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
       return completedFuture(Result.succeeded(records));
     }
     return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
