@@ -14,7 +14,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerP
 
 @AllArgsConstructor
 @Getter
-@ToString(onlyExplicitlyIncluded = true)
+@ToString
 public class CheckoutLockConfiguration {
 
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
