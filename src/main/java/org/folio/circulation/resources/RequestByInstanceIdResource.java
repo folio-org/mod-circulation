@@ -302,8 +302,12 @@ public class RequestByInstanceIdResource extends Resource {
       startIndex, itemRequests.size());
 
     if (startIndex >= itemRequests.size()) {
-      return CompletableFuture.completedFuture(failedValidation(new ValidationError(
-        format("Failed to place a request for the instance. Reasons:%n%s", join("%n", errors)))));
+      log.error("Failed to place a request for the instance. Reasons: {}", errors);
+
+      return CompletableFuture.completedFuture(failedValidation(
+        errors.stream()
+        .map(ValidationError::new)
+        .collect(toList())));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
