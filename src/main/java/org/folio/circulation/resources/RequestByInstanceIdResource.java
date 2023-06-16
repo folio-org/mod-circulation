@@ -306,8 +306,8 @@ public class RequestByInstanceIdResource extends Resource {
 
       return CompletableFuture.completedFuture(failedValidation(
         errors.stream()
-        .map(ValidationError::new)
-        .collect(toList())));
+          .map(ValidationError::new)
+          .collect(toList())));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
