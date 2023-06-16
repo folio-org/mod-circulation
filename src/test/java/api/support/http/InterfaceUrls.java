@@ -173,6 +173,10 @@ public class InterfaceUrls {
     return circulationModuleUrl(String.format("/circulation/loans/%s/change-due-date", loanId));
   }
 
+  public static URL addInfoURL(String loanId) {
+    return circulationModuleUrl(String.format("/circulation/loans/%s/add-info", loanId));
+  }
+
   public static URL claimItemReturnedURL(String loanId) {
     return circulationModuleUrl(String.format("/circulation/loans/%s/claim-item-returned", loanId));
   }

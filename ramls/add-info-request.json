@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request body schema for API for adding staff or patron info",
+  "properties": {
+    "action": {
+      "description": "They category of info added",
+      "type": "string",
+      "enum": [
+        "staffInfoAdded",
+        "patronInfoAdded"
+      ]
+    },
+    "actionComment": {
+      "description": "Free text info",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "action",
+    "actionComment"
+  ]
+}
