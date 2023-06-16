@@ -1124,6 +1124,11 @@
   ],
   "permissionSets": [
     {
+      "permissionName": "mod-settings.global.write.mod-circulation",
+      "displayName": "circulation settings - Manage the settings",
+      "description": "circulation settings - Manage the settings"
+    },
+    {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
       "displayName": "circulation - reorder queue for an item",
       "description": "change request positions in queue for an item"
