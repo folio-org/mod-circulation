@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.DepartmentFixture;
+import api.support.fixtures.SettingsFixture;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -279,6 +280,7 @@ public abstract class APITests {
     new AgeToLostFixture(itemsFixture, usersFixture, checkOutFixture);
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
+  protected final SettingsFixture settingsFixture = new SettingsFixture();
 
   protected APITests() {
     this(true, false);

@@ -313,4 +313,8 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/check-out-lock-storage");
   }
 
+  public static URL settingsStorageUrl() {
+    return APITestContext.viaOkapiModuleUrl("/settings/entries");
+  }
+
 }

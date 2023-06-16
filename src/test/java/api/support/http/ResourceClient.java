@@ -145,6 +145,11 @@ public class ResourceClient {
       InterfaceUrls.checkOutLockStorageUrl(), "check-out-lock-storage");
   }
 
+  public static ResourceClient forSettingsStorage() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.settingsStorageUrl(), "items");
+  }
+
   public static ResourceClient forLoansStorage() {
     return new ResourceClient(InterfaceUrls::loansStorageUrl,
         "loans");

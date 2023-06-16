@@ -2579,8 +2579,7 @@ class CheckOutByBarcodeTests extends APITests {
     checkOutFixture.checkOutByBarcode(item1, rebecca);
 
     //Enabling checkOutLockFeature
-    System.setProperty("CHECKOUT_LOCK_FEATURE_ENABLED","true");
-
+    settingsFixture.enableCheckoutLockFeature(true);
     //Lock creation and deletion will happen in the same checkout
     checkOutFixture.checkOutByBarcode(item2, rebecca);
 
@@ -2595,8 +2594,6 @@ class CheckOutByBarcodeTests extends APITests {
     checkOutLockFixture.deleteLock(checkOutLock.getId());
 
     checkOutFixture.checkOutByBarcode(item4, rebecca);
-    //Disabling checkOutLockFeature
-    System.setProperty("CHECKOUT_LOCK_FEATURE_ENABLED","false");
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,
