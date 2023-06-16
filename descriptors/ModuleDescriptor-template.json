@@ -1125,8 +1125,13 @@
   "permissionSets": [
     {
       "permissionName": "mod-settings.global.write.mod-circulation",
-      "displayName": "circulation settings - Manage the settings",
-      "description": "circulation settings - Manage the settings"
+      "displayName": "circulation settings - Create or update the settings",
+      "description": "circulation settings - Create or update the settings."
+    },
+    {
+      "permissionName": "mod-settings.global.read.mod-circulation",
+      "displayName": "circulation settings - Read the settings",
+      "description": "circulation settings - To read the settings."
     },
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
