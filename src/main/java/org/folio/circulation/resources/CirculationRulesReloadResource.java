@@ -50,9 +50,9 @@ public class CirculationRulesReloadResource extends Resource {
       Clients.create(context, client).circulationRulesStorage())
       .thenApply(r -> {
         if(r.failed()) {
-          log.info("reload:: reload failed: {}", r.cause());
+          log.debug("reload:: reload failed: {}", r.cause());
         } else {
-          log.info("reload:: reload succeeded.");
+          log.debug("reload:: reload succeeded.");
         }
         return r.map(toFixedValue(NoContentResponse::noContent));
       })
