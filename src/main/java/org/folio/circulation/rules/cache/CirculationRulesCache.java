@@ -1,6 +1,5 @@
 package org.folio.circulation.rules.cache;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -54,25 +53,25 @@ public final class CirculationRulesCache {
 
     return circulationRulesClient.get()
       .thenApply(r -> r.map(response -> getRulesAsText(response, tenantId)))
-      .thenCompose(r -> r.after(rulesAsText -> reloadRules(tenantId, rulesAsText)));
+      .thenApply(r -> r.next(rulesAsText -> reloadRules(tenantId, rulesAsText)));
   }
 
   private static String getRulesAsText(Response response, String tenantId) {
     log.info("Fetched rules for tenant {}", tenantId);
-
+    
     final var circulationRules = new JsonObject(response.getBody());
     log.info("circulationRules = {}", circulationRules.encodePrettily());
 
     return circulationRules.getString("rulesAsText");
   }
 
-  public CompletableFuture<Result<Rules>> reloadRules(String tenantId, String rulesAsText) {
+  public Result<Rules> reloadRules(String tenantId, String rulesAsText) {
      log.debug("reloadRules:: parameters tenantId: {}, rulesAsText: {}", tenantId, rulesAsText);
 
         if (isBlank(rulesAsText)) {
           log.info("Rules text is blank for tenant {}", tenantId);
-          return completedFuture(failed(new ServerErrorFailure(
-            "Cannot apply blank circulation rules")));
+          return failed(new ServerErrorFailure(
+            "Cannot apply blank circulation rules"));
         }
 
         String droolsText = Text2Drools.convert(rulesAsText);
@@ -84,7 +83,7 @@ public final class CirculationRulesCache {
 
         rulesMap.put(tenantId, rules);
 
-        return ofAsync(() -> rules);
+        return succeeded(rules);
   }
 
   public CompletableFuture<Result<ExecutableRules>> getExecutableRules(String tenantId,
