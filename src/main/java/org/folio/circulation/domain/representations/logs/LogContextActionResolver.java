@@ -12,6 +12,8 @@ import static org.folio.circulation.domain.LoanAction.MISSING;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.LoanAction.PATRON_INFO_ADDED;
+import static org.folio.circulation.domain.LoanAction.STAFF_INFO_ADDED;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -21,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 public class LogContextActionResolver {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  private static HashMap<String, String> loanLogActions = new HashMap<>();
+  private static final HashMap<String, String> loanLogActions = new HashMap<>();
 
   static {
     loanLogActions.put(DECLARED_LOST.getValue(), "Declared lost");
@@ -35,6 +37,8 @@ public class LogContextActionResolver {
     loanLogActions.put(CLOSED_LOAN.getValue(), "Closed loan");
     loanLogActions.put(ITEM_AGED_TO_LOST.getValue(), "Age to lost");
     loanLogActions.put(DUE_DATE_CHANGED.getValue(), "Changed due date");
+    loanLogActions.put(PATRON_INFO_ADDED.getValue(), "Patron info added");
+    loanLogActions.put(STAFF_INFO_ADDED.getValue(), "Staff info added");
   }
 
   public static String resolveAction(String action) {

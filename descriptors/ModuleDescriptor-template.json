@@ -150,6 +150,22 @@
       ]
     },
     {
+      "id": "add-info",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/loans/{id}/add-info",
+          "permissionsRequired": [
+            "circulation.loans.add-info.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.loans.add-info.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "circulation",
       "version": "14.1",
       "handlers": [
@@ -1205,6 +1221,11 @@
       "description": "changes the due date of the loan"
     },
     {
+      "permissionName": "circulation.loans.add-info.post",
+      "displayName": "circulation - add patron or staff info",
+      "description": "sets action and action comment"
+    },
+    {
       "permissionName": "circulation.loans.claim-item-returned.post",
       "displayName": "circulation - declare the loaned item as claimed returned",
       "description": "declares the loaned item as claimed returned"
@@ -1375,6 +1396,7 @@
         "circulation.loans.item.delete",
         "circulation.loans.collection.delete",
         "circulation.loans.change-due-date.post",
+        "circulation.loans.add-info.post",
         "circulation.loans.claim-item-returned.post",
         "circulation.loans.declare-claimed-returned-item-as-missing.post",
         "circulation.rules.put",
@@ -2010,6 +2032,18 @@
         "users.item.get",
         "pubsub.publish.post",
         "patron-notice.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.loans.add-info.post",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.get",
+        "circulation.internal.fetch-items",
+        "users.item.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
