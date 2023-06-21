@@ -88,7 +88,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private void checkOut(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    log.info("******TenantId***** {} ",context.getTenantId());
+
     CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
       routingContext.getBodyAsJson());
 
