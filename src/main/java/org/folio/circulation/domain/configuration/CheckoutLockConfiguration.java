@@ -27,12 +27,12 @@ public class CheckoutLockConfiguration {
     try{
       return new CheckoutLockConfiguration(
         getBooleanProperty(jsonObject, "checkOutLockFeatureEnabled"),
-        getIntegerProperty(jsonObject, "noOfRetryAttempts",10),
-        getIntegerProperty(jsonObject, "retryInterval", 100),
+        getIntegerProperty(jsonObject, "noOfRetryAttempts",30),
+        getIntegerProperty(jsonObject, "retryInterval", 250),
         getIntegerProperty(jsonObject, "lockTtl", 2000)
       );
     }catch (Exception ex){
-      log.error("Failed to parse TLR setting configuration");
+      log.error("Failed to parse checkOutLockFeature setting configuration");
       return null;
     }
   }

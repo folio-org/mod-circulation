@@ -198,8 +198,8 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
-    log.info("acquireLock:: Creating checkout lock {} ",records.getCheckoutLockConfiguration());
-    if(records.getCheckoutLockConfiguration()==null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
+    log.debug("acquireLock:: Creating checkout lock {} ",records.getCheckoutLockConfiguration());
+    if(records.getCheckoutLockConfiguration() == null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
         return completedFuture(Result.succeeded(records));
       }
     CompletableFuture<CheckOutLock> future = new CompletableFuture<>();

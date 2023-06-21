@@ -30,9 +30,9 @@ public class CheckOutLockRepository {
   }
 
   public void createLockWithRetry(int noOfAttempts, CompletableFuture<CheckOutLock> future, LoanAndRelatedRecords records) {
+    log.debug("createLockWithRetry:: Retrying lock creation {} ", noOfAttempts);
     int maxRetryAttempts = records.getCheckoutLockConfiguration().getNoOfRetryAttempts();
     int retryInterval = records.getCheckoutLockConfiguration().getRetryInterval();
-    log.debug("createLockWithRetry:: Retrying lock creation {} ", noOfAttempts);
     try {
       create(records)
         .whenComplete((res, err) -> {
@@ -51,7 +51,7 @@ public class CheckOutLockRepository {
           }
         });
     } catch (Exception ex) {
-      log.warn("createLockWithRetry:: exception  ", ex);
+      log.warn("createLockWithRetry:: exception ", ex);
       future.completeExceptionally(ex);
     }
   }

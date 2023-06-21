@@ -1136,19 +1136,13 @@
     {
       "id": "actual-cost-record-storage",
       "version": "0.6"
+    },
+    {
+      "id": "settings",
+      "version": "1.0"
     }
   ],
   "permissionSets": [
-    {
-      "permissionName": "mod-settings.global.write.mod-circulation",
-      "displayName": "circulation settings - Create or update the settings",
-      "description": "circulation settings - Create or update the settings."
-    },
-    {
-      "permissionName": "mod-settings.global.read.mod-circulation",
-      "displayName": "circulation settings - Read the settings",
-      "description": "circulation settings - To read the settings."
-    },
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
       "displayName": "circulation - reorder queue for an item",
@@ -1380,6 +1374,16 @@
       "description": "patron block override"
     },
     {
+      "permissionName": "mod-settings.global.write.mod-circulation",
+      "displayName": "circulation settings - Create configuration",
+      "description": "To create new configuration in mod settings"
+    },
+    {
+      "permissionName": "mod-settings.global.read.mod-circulation",
+      "displayName": "circulation settings - Read configuration",
+      "description": "To read the configuration from mod settings."
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -1564,9 +1568,10 @@
         "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get",
         "pubsub.publish.post",
-        "mod-settings.entries.collection.get",
         "checkout-lock-storage.item.post",
-        "checkout-lock-storage.item.delete"
+        "checkout-lock-storage.item.delete",
+        "mod-settings.global.write.mod-circulation",
+        "mod-settings.global.read.mod-circulation"
       ],
       "visible": false
     },
@@ -2207,18 +2212,6 @@
       {
         "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
         "value": "50000"
-      },
-      {
-        "name": "CHECKOUT_LOCK_FEATURE_ENABLED",
-        "value": "false"
-      },
-      {
-        "name": "LOCK_TTL_MS",
-        "value": "3000"
-      },
-      {
-        "name": "RETRY_INTERVAL_MS",
-        "value": "500|500|1000"
       }
     ]
   }
