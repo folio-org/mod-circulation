@@ -1422,7 +1422,9 @@
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get"
+        "circulation.pick-slips.get",
+        "mod-settings.global.write.mod-circulation",
+        "mod-settings.global.read.mod-circulation"
       ]
     },
     {
@@ -1569,9 +1571,7 @@
         "lost-item-fees-policies.collection.get",
         "pubsub.publish.post",
         "checkout-lock-storage.item.post",
-        "checkout-lock-storage.item.delete",
-        "mod-settings.global.write.mod-circulation",
-        "mod-settings.global.read.mod-circulation"
+        "checkout-lock-storage.item.delete"
       ],
       "visible": false
     },
