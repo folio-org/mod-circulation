@@ -32,7 +32,7 @@ public class CheckoutLockConfiguration {
         getIntegerProperty(jsonObject, "lockTtl", 2000)
       );
     }catch (Exception ex){
-      log.error("Failed to parse checkOutLockFeature setting configuration");
+      log.error("Failed to parse checkOutLockFeature setting configuration", ex);
       return null;
     }
   }
