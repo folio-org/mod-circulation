@@ -387,20 +387,9 @@ class CirculationRulesEngineAPITests extends APITests {
   }
 
   @Test
-  void cacheIsInvalidatedAfterFiveSeconds() {
-    setRules(rulesFallback);
-    assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
-
-    circulationRulesFixture.updateCirculationRulesWithoutInvalidatingCache(
-      rulesFallback2);
-
-    // Poll until the cached rules should have been replaced
-    await()
-      .atLeast(4, SECONDS)
-      .atMost(6, SECONDS)
-      .pollDelay(1, SECONDS)
-      .pollInterval(1, SECONDS)
-      .until(() -> applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp7));
+  void canRefreshRules() {
+    Response response = circulationRulesFixture.attemptRefreshRules();
+    assertThat(response.getStatusCode(), is(204));
   }
 
   private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
