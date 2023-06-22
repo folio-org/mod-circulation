@@ -4390,6 +4390,7 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(patron1.getId()));
 
     var itemAUpdated = itemsFixture.getById(itemA.getId());
+    var itemBUpdated = itemsFixture.getById(itemB.getId());
     var pagedItem = "Paged".equals(itemAUpdated.getStatusName())
       ? itemA : itemB;
     var notPagedItem = itemA == pagedItem ? itemB : itemA;
