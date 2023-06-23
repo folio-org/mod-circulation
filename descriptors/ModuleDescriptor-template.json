@@ -1570,7 +1570,7 @@
         "pubsub.publish.post",
         "checkout-lock-storage.item.post",
         "checkout-lock-storage.item.delete",
-        "mod-settings.global.write.mod-circulation",
+        "mod-settings.entries.collection.get",
         "mod-settings.global.read.mod-circulation"
       ],
       "visible": false
