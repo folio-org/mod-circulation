@@ -37,7 +37,7 @@ public class CheckOutLockRepository {
       create(records)
         .whenComplete((res, err) -> {
           if (res.succeeded()) {
-            log.info("createLockWithRetry:: checkOutLock object {} ", res.value());
+            log.info("createLockWithRetry:: completing future successfully");
             future.complete(res.value());
           } else {
             if (noOfAttempts <= maxRetryAttempts) {
