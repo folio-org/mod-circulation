@@ -488,7 +488,7 @@ content-length: 230
   "totalRecords": 1
 }
 ```
-### Checkout Lock Feature
+### Configuration setting for CheckoutLock Feature
   To enable this feature for a tenant, we need to add the below configuration in mod-settings. See https://issues.folio.org/browse/UXPROD-3515 to know more about this feature.
 
 #### Permissions
