@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;

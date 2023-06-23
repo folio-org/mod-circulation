@@ -60,7 +60,8 @@ public final class CirculationRulesCache {
     log.info("Fetched rules for tenant {}", tenantId);
     
     final var circulationRules = new JsonObject(response.getBody());
-    log.info("circulationRules = {}", circulationRules.encodePrettily());
+    var encodeRules = circulationRules.encodePrettily();
+    log.info("circulationRules = {}", encodeRules);
 
     return circulationRules.getString("rulesAsText");
   }
