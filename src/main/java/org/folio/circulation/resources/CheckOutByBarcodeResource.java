@@ -198,27 +198,24 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
-    log.debug("acquireLock:: Creating checkout lock {} ",records.getCheckoutLockConfiguration());
-    if(records.getCheckoutLockConfiguration() == null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
-        return completedFuture(Result.succeeded(records));
-      }
+    log.debug("acquireLock:: Creating checkout lock {} ", records.getCheckoutLockConfiguration());
+    if (records.getCheckoutLockConfiguration() == null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
+      return completedFuture(Result.succeeded(records));
+    }
     CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
     checkOutLockRepository.createLockWithRetry(0, future, records);
-    return future.handle((res,err) ->{
-        if(res!=null){
-          log.info("acquireLock:: Lock is acquired");
-          checkOutLockId.append(res.getId());
-          return Result.succeeded(records);
-        }
-        else{
-          log.info("acquireLock:: Unable to acquire lock");
-          return Result.failed(ValidationErrorFailure.singleValidationError("unable to acquire lock", "", ""));
-        }
-      });
+    return future.handle((res, err) -> {
+      if (err != null) {
+        log.error("acquireLock:: Unable to acquire lock for item {} ", records.getItem().getBarcode(), err);
+        return Result.failed(ValidationErrorFailure.singleValidationError("unable to acquire lock", "", ""));
+      }
+      checkOutLockId.append(res.getId());
+      return Result.succeeded(records);
+    });
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
-    if(records.getCheckoutLockConfiguration()==null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
+    if (records.getCheckoutLockConfiguration() == null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
       return completedFuture(Result.succeeded(records));
     }
     return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
@@ -226,7 +223,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private Result<LoanAndRelatedRecords> deleteCheckOutLock(Result<LoanAndRelatedRecords> records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
-    if(StringUtils.isBlank(checkOutLockId)) {
+    if (StringUtils.isBlank(checkOutLockId)) {
       return records;
     }
     checkOutLockRepository.deleteCheckoutLockById(checkOutLockId.toString());

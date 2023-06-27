@@ -24,14 +24,14 @@ public class CheckoutLockConfiguration {
   private final int lockTtl;
 
   public static CheckoutLockConfiguration from(JsonObject jsonObject) {
-    try{
+    try {
       return new CheckoutLockConfiguration(
         getBooleanProperty(jsonObject, "checkOutLockFeatureEnabled"),
-        getIntegerProperty(jsonObject, "noOfRetryAttempts",30),
+        getIntegerProperty(jsonObject, "noOfRetryAttempts", 30),
         getIntegerProperty(jsonObject, "retryInterval", 250),
         getIntegerProperty(jsonObject, "lockTtl", 2000)
       );
-    }catch (Exception ex){
+    } catch (Exception ex) {
       log.error("Failed to parse checkOutLockFeature setting configuration", ex);
       return null;
     }

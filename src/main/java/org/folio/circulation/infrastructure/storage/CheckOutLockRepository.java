@@ -33,29 +33,22 @@ public class CheckOutLockRepository {
     log.debug("createLockWithRetry:: Retrying lock creation {} ", noOfAttempts);
     int maxRetryAttempts = records.getCheckoutLockConfiguration().getNoOfRetryAttempts();
     int retryInterval = records.getCheckoutLockConfiguration().getRetryInterval();
-    try {
-      create(records)
-        .whenComplete((res, err) -> {
-          if (res.succeeded()) {
-            log.info("createLockWithRetry:: completing future successfully");
-            future.complete(res.value());
+    create(records)
+      .whenComplete((res, err) -> {
+        if (res.succeeded()) {
+          log.info("createLockWithRetry:: completing future successfully");
+          future.complete(res.value());
+        } else {
+          if (noOfAttempts <= maxRetryAttempts) {
+            log.info("createLockWithRetry:: Retry attempt {} for lock creation with delay {}", noOfAttempts, retryInterval);
+            vertx.setTimer(retryInterval, h -> createLockWithRetry(noOfAttempts + 1, future, records));
           } else {
-            if (noOfAttempts <= maxRetryAttempts) {
-              log.info("createLockWithRetry:: Retry attempt {} for lock creation with delay {}", noOfAttempts, retryInterval);
-              vertx.setTimer(retryInterval, h -> createLockWithRetry(noOfAttempts + 1, future, records));
-            } else {
-              String error = res.cause() != null ? res.cause().toString() : "";
-              log.warn("createLockWithRetry:: Completing exceptionally {} ", error);
-              future.completeExceptionally(new RuntimeException(error));
-            }
+            String error = res.cause() != null ? res.cause().toString() : "";
+            future.completeExceptionally(new RuntimeException(error));
           }
-        });
-    } catch (Exception ex) {
-      log.warn("createLockWithRetry:: exception ", ex);
-      future.completeExceptionally(ex);
-    }
+        }
+      });
   }
-
 
   public CompletableFuture<Result<CheckOutLock>> create(LoanAndRelatedRecords records) {
     log.debug("create:: trying to create lock for userId {} ", records.getUserId());
@@ -70,7 +63,7 @@ public class CheckOutLockRepository {
   }
 
   public CompletableFuture<Result<Response>> deleteCheckoutLockById(String checkOutLockId) {
-    log.info("deleteCheckoutLockById:: deleting the lock for userId {} ", checkOutLockId);
+    log.debug("deleteCheckoutLockById:: deleting the lock for userId {} ", checkOutLockId);
     return checkOutLockClient.delete(checkOutLockId);
   }
 

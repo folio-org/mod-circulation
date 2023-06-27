@@ -2584,7 +2584,7 @@ class CheckOutByBarcodeTests extends APITests {
     checkOutFixture.checkOutByBarcode(item2, rebecca);
 
     //Creating a lock for user so that user will not be able to acquire lock
-    IndividualResource  checkOutLock = checkOutLockFixture.createLockForUserId(rebecca.getId().toString());
+    IndividualResource checkOutLock = checkOutLockFixture.createLockForUserId(rebecca.getId().toString());
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item3, rebecca);
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(),
