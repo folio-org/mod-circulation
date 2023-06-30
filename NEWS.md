@@ -1,3 +1,7 @@
+## 23.3.5 2023-06-30
+
+* Circulation rules decoupling and timer-based refresh enhancement (CIRC-1783)
+
 ## 23.3.4 2023-02-22
 
 * Fix improper JSON key for calendar date API (CIRC-1737)

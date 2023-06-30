@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
+import org.folio.circulation.resources.CirculationRulesReloadResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
@@ -90,6 +91,8 @@ public class CirculationVerticle extends AbstractVerticle {
       .register(router);
 
     new CirculationRulesResource("/circulation/rules", client)
+      .register(router);
+    new CirculationRulesReloadResource("/circulation/rules-reload", client)
       .register(router);
     new LoanCirculationRulesEngineResource(
       "/circulation/rules/loan-policy",

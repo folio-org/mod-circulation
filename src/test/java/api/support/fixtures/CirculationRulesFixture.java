@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
+import static api.support.http.InterfaceUrls.circulationRulesReloadUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
@@ -44,7 +45,6 @@ public class CirculationRulesFixture {
     return rulesJson.getString("rulesAsText");
   }
 
-
   public Response putRules(String body) {
     return toResponse(restAssuredClient
       .beginRequest("put-circulation-rules")
@@ -78,6 +78,13 @@ public class CirculationRulesFixture {
       .put("rulesAsText", rules);
 
     return putRules(circulationRulesRequest.encodePrettily());
+  }
+
+  public Response attemptRefreshRules() {
+    return toResponse(restAssuredClient
+      .beginRequest("refresh-rules-in-cache")
+      .when().post(circulationRulesReloadUrl(""))
+      .then().extract().response());
   }
 
   public void updateCirculationRulesWithoutInvalidatingCache(String rules) {
