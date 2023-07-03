@@ -3395,6 +3395,67 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void awaitingPickupNoticesShouldBeSentToMultiplePatronsDuringPagedItemsCheckIn() {
+    configurationsFixture.enableTlrFeature();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with available notice")
+      .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+        .withTemplateId(UUID.randomUUID())
+        .withAvailableEvent()
+        .create()));
+    use(noticePolicy);
+
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    final var patron1 = usersFixture.charlotte();
+    final var patron2 = usersFixture.jessica();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final var itemA = items.get(0);
+    final var itemB = items.get(1);
+    final UUID instanceId = items.get(0).getInstanceId();
+
+
+    IndividualResource pageTlr1 = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patron1.getId()));
+
+    var itemAUpdated = itemsFixture.getById(itemA.getId());
+    var pagedItem = "Paged".equals(itemAUpdated.getStatusName())
+      ? itemA : itemB;
+    var notPagedItem = itemA == pagedItem ? itemB : itemA;
+
+    assertThat(pageTlr1.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(pageTlr1.getJson().getString("itemId"), is(pagedItem.getId()));
+    checkInFixture.checkInByBarcode(pagedItem,pickupServicePointId);
+    var updatedFirstRequest = requestsFixture.getRequests(
+      exactMatch("itemId", pagedItem.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(updatedFirstRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    IndividualResource pageTlr2 = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patron2.getId()));
+
+    assertThat(pageTlr2.getJson().getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertThat(pageTlr2.getJson().getString("itemId"), is(notPagedItem.getId()));
+    checkInFixture.checkInByBarcode(notPagedItem,pickupServicePointId);
+    var updatedSecondRequest = requestsFixture.getRequests(
+      exactMatch("itemId", notPagedItem.getId().toString()), limit(1), noOffset()).getFirst();
+    assertThat(updatedSecondRequest.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    verifyNumberOfSentNotices(2);
+  }
+
+  @Test
   void pageRequestShouldNotChangeItemStatusIfFailsWithoutRequestDate() {
     var item = itemsFixture.basedUponSmallAngryPlanet();
 

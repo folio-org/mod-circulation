@@ -156,7 +156,6 @@ public class RequestNoticeSender {
     }
     else if (item.isAwaitingPickup()) {
       requestQueue.getRequests().stream()
-        .filter(Request::hasTopPriority)
         .filter(Request::isAwaitingPickup)
         .filter(Request::hasChangedStatus)
         .findFirst()
