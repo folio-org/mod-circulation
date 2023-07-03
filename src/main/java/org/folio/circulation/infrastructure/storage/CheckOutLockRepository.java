@@ -43,7 +43,7 @@ public class CheckOutLockRepository {
             log.info("createLockWithRetry:: Retry attempt {} for lock creation with delay {}", noOfAttempts, retryInterval);
             vertx.setTimer(retryInterval, h -> createLockWithRetry(noOfAttempts + 1, future, records));
           } else {
-            String error = res.cause() != null ? res.cause().toString() : "";
+            String error = res.cause() != null ? res.cause().toString() : "Unable to acquire lock";
             future.completeExceptionally(new RuntimeException(error));
           }
         }

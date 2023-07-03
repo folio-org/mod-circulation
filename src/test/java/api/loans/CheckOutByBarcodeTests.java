@@ -2575,22 +2575,22 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource item4 = itemsFixture.basedUponDunkirk();
     IndividualResource rebecca = usersFixture.rebecca();
 
-    //Normal checkout without checkOutLockFeature Enabled
+    // Normal checkout without checkOutLockFeature Enabled
     checkOutFixture.checkOutByBarcode(item1, rebecca);
 
-    //Enabling checkOutLockFeature
+    // Enabling checkOutLockFeature
     settingsFixture.enableCheckoutLockFeature(true);
-    //Lock creation and deletion will happen in the same checkout
+    // Lock creation and deletion will happen in the same checkout
     checkOutFixture.checkOutByBarcode(item2, rebecca);
 
-    //Creating a lock for user so that user will not be able to acquire lock
+    // Creating a lock for user so that user will not be able to acquire lock
     IndividualResource checkOutLock = checkOutLockFixture.createLockForUserId(rebecca.getId().toString());
     final Response response = checkOutFixture.attemptCheckOutByBarcode(item3, rebecca);
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(),
       hasErrorWith(hasMessage("unable to acquire lock")));
 
-    //Deleting the lock
+    // Deleting the lock
     checkOutLockFixture.deleteLock(checkOutLock.getId());
 
     checkOutFixture.checkOutByBarcode(item4, rebecca);

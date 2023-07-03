@@ -16,6 +16,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -132,7 +133,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
 
-    StringBuilder checkOutLockId = new StringBuilder();
+    AtomicReference<String> checkOutLockId = new AtomicReference<>();
 
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
 
@@ -181,7 +182,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
-      .thenApply(r -> deleteCheckOutLock(r, checkOutLockRepository, checkOutLockId))
+      .thenApply(r -> deleteCheckOutLock(r, checkOutLockRepository, checkOutLockId.get()))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> createdLoanFrom(r, errorHandler))
@@ -197,36 +198,36 @@ public class CheckOutByBarcodeResource extends Resource {
         succeeded(records)));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, AtomicReference<String> checkOutLockId) {
     log.debug("acquireLock:: Creating checkout lock {} ", records.getCheckoutLockConfiguration());
-    if (records.getCheckoutLockConfiguration() == null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
-      return completedFuture(Result.succeeded(records));
+    if (records.isCheckoutLockFeatureEnabled()) {
+      CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
+      checkOutLockRepository.createLockWithRetry(0, future, records);
+      return future.handle((res, err) -> {
+        if (err != null) {
+          log.error("acquireLock:: Unable to acquire lock for item {} ", records.getItem().getBarcode(), err);
+          return Result.failed(ValidationErrorFailure.singleValidationError("unable to acquire lock", "", ""));
+        }
+        checkOutLockId.set(res.getId());
+        return Result.succeeded(records);
+      });
     }
-    CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
-    checkOutLockRepository.createLockWithRetry(0, future, records);
-    return future.handle((res, err) -> {
-      if (err != null) {
-        log.error("acquireLock:: Unable to acquire lock for item {} ", records.getItem().getBarcode(), err);
-        return Result.failed(ValidationErrorFailure.singleValidationError("unable to acquire lock", "", ""));
-      }
-      checkOutLockId.append(res.getId());
-      return Result.succeeded(records);
-    });
+    return completedFuture(Result.succeeded(records));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
-    if (records.getCheckoutLockConfiguration() == null || !records.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled()) {
-      return completedFuture(Result.succeeded(records));
+    if (records.isCheckoutLockFeatureEnabled()) {
+      return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
+        .thenApply(r -> r.next(errorHandler::failWithValidationErrors));
     }
-    return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
-      .thenApply(r -> r.next(errorHandler::failWithValidationErrors));
+    return completedFuture(Result.succeeded(records));
   }
 
-  private Result<LoanAndRelatedRecords> deleteCheckOutLock(Result<LoanAndRelatedRecords> records, CheckOutLockRepository checkOutLockRepository, StringBuilder checkOutLockId) {
+  private Result<LoanAndRelatedRecords> deleteCheckOutLock(Result<LoanAndRelatedRecords> records, CheckOutLockRepository checkOutLockRepository, String checkOutLockId) {
     if (StringUtils.isBlank(checkOutLockId)) {
       return records;
     }
-    checkOutLockRepository.deleteCheckoutLockById(checkOutLockId.toString());
+    checkOutLockRepository.deleteCheckoutLockById(checkOutLockId);
     return records;
   }
 

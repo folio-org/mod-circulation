@@ -94,4 +94,8 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
     return loan.getUser();
   }
 
+  public boolean isCheckoutLockFeatureEnabled() {
+    return this.getCheckoutLockConfiguration() != null && this.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled();
+  }
+
 }
