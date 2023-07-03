@@ -1,3 +1,7 @@
+## 23.5.5 2023-07-03
+
+* Circulation rules decoupling and timer-based refresh enhancement (CIRC-1783)
+
 ## 23.5.4 2023-03-29
 
 * Only notify patron for recalls that change due date (CIRC-1747)
