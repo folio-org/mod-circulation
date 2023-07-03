@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toSet;
+
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
@@ -130,10 +131,12 @@ public class CirculationRulesResource extends Resource {
     final WebContext webContext = new WebContext(routingContext);
 
     JsonObject rulesInput;
+    String rulesAsText;
     try {
       // try to convert, do not safe if conversion fails
       rulesInput = routingContext.getBodyAsJson();
-      Text2Drools.convert(rulesInput.getString("rulesAsText"),
+      rulesAsText = getRulesAsText(rulesInput);
+      Text2Drools.convert(rulesAsText,
         (policyType, policies, token) -> validatePolicy(
           existingPoliciesIds, policyType, policies, token));
     } catch (CirculationRulesException e) {
@@ -149,16 +152,20 @@ public class CirculationRulesResource extends Resource {
 
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenApply(this::failWhenResponseOtherThanNoContent)
+      .thenApply(result -> result.map(response -> CirculationRulesCache.getInstance()
+        .reloadRules(webContext.getTenantId(), rulesAsText)))
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
-
-    CirculationRulesCache.getInstance().clearCache(webContext.getTenantId());
   }
 
   private Result<Response> failWhenResponseOtherThanNoContent(Result<Response> result) {
     return result.failWhen(
       response -> of(() -> response.getStatusCode() != 204),
       ForwardOnFailure::new);
+  }
+
+  private static String getRulesAsText(JsonObject rulesInput) {
+    return rulesInput.getString("rulesAsText");
   }
 
   private void validatePolicy(Map<String, Set<String>> existingPoliciesIds,
