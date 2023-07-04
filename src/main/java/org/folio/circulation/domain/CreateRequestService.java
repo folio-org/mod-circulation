@@ -210,7 +210,7 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
-      return completedFuture(checkPolicyForTlrHold(records));
+      return completedFuture(checkPolicyForTitleLevelHold(records));
     }
 
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
@@ -218,7 +218,7 @@ public class CreateRequestService {
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
   }
 
-  private Result<RequestAndRelatedRecords> checkPolicyForTlrHold(RequestAndRelatedRecords records) {
+  private Result<RequestAndRelatedRecords> checkPolicyForTitleLevelHold(RequestAndRelatedRecords records) {
     final Request request = records.getRequest();
 
     if (request.getTlrSettingsConfiguration().isTlrHoldShouldFollowCirculationRules() &&
