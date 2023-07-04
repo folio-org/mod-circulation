@@ -4175,6 +4175,51 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void titleLevelHoldIsPlacedWhenItShouldFollowCirculationRulesAndOneOfInstanceItemsIsAllowedForHold() {
+    // enable TLR feature and make Hold requests respect circulation rules
+    configurationsFixture.configureTlrFeature(true, true, null, null, null);
+
+    // create rules with two material-type-based request policies one of which allows Holds
+    circulationRulesFixture.updateCirculationRules(
+      policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
+        materialTypesFixture.book(), requestPoliciesFixture.nonRequestableRequestPolicy(),
+        materialTypesFixture.videoRecording(), requestPoliciesFixture.holdRequestPolicy())));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+      locationsFixture.mainFloor().getId());
+
+    IndividualResource book = itemsClient.create(new ItemBuilder()
+      .withBarcode("book")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    IndividualResource video = itemsClient.create(new ItemBuilder()
+      .withBarcode("video")
+      .forHolding(holdingsRecord.getId())
+      .withMaterialType(materialTypesFixture.videoRecording().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .create());
+
+    checkOutFixture.checkOutByBarcode(book, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(video, usersFixture.rebecca());
+
+    UserResource requester = usersFixture.steve();
+    Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instance.getId(),
+      requester);
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+
+    JsonObject json = response.getJson();
+    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(json.getString("instanceId"), is(instanceId.toString()));
+  }
+
+  @Test
   void titleLevelHoldIsPlacedWhenItCanIgnoreCirculationRulesAndNoneOfInstanceItemsAreAllowedForHold() {
     // enable TLR feature and make Hold requests ignore circulation rules
     configurationsFixture.configureTlrFeature(true, false, null, null, null);
