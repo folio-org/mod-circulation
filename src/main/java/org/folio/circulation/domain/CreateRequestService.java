@@ -224,6 +224,10 @@ public class CreateRequestService {
     if (request.getTlrSettingsConfiguration().isTlrHoldShouldFollowCirculationRules() &&
       noneOfInstanceItemsAreAllowedForHold(request)) {
 
+      log.warn("checkPolicyForTlrHold:: none of the items of requested instance are allowed for " +
+        "Hold requests according to circulation rules: requesterId={}, instanceId={}",
+        request.getRequesterId(), request.getInstanceId());
+
       return ValidationErrorFailure.<RequestAndRelatedRecords>failedValidation(
           "Hold requests are not allowed for this patron and title combination",
           Map.of(REQUESTER_ID, request.getRequesterId(), INSTANCE_ID, request.getInstanceId()),
