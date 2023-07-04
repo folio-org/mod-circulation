@@ -81,6 +81,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -4132,37 +4133,18 @@ public class RequestsAPICreationTests extends APITests {
     // enable TLR feature and make Hold requests respect circulation rules
     configurationsFixture.configureTlrFeature(true, true, null, null, null);
 
+    IndividualResource book = materialTypesFixture.book();
+    IndividualResource video = materialTypesFixture.videoRecording();
+
     // create rules with two material-type-based request policies none of which allows Holds
     circulationRulesFixture.updateCirculationRules(
       policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
-        materialTypesFixture.book(), requestPoliciesFixture.nonRequestableRequestPolicy(),
-        materialTypesFixture.videoRecording(), requestPoliciesFixture.recallRequestPolicy())));
+        book, requestPoliciesFixture.nonRequestableRequestPolicy(),
+        video, requestPoliciesFixture.recallRequestPolicy())));
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
-    UUID instanceId = instance.getId();
-    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
-      locationsFixture.mainFloor().getId());
-
-    IndividualResource book = itemsClient.create(new ItemBuilder()
-      .withBarcode("book")
-      .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .create());
-
-    IndividualResource video = itemsClient.create(new ItemBuilder()
-      .withBarcode("video")
-      .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .create());
-
-    checkOutFixture.checkOutByBarcode(book, usersFixture.jessica());
-    checkOutFixture.checkOutByBarcode(video, usersFixture.rebecca());
-
     UserResource requester = usersFixture.steve();
-    Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instance.getId(),
-      requester);
+    Response response = createItemsAndAttemptTitleLevelHold(instance, requester, List.of(book, video));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), allOf(
@@ -4179,44 +4161,23 @@ public class RequestsAPICreationTests extends APITests {
     // enable TLR feature and make Hold requests respect circulation rules
     configurationsFixture.configureTlrFeature(true, true, null, null, null);
 
+    IndividualResource book = materialTypesFixture.book();
+    IndividualResource video = materialTypesFixture.videoRecording();
+
     // create rules with two material-type-based request policies one of which allows Holds
     circulationRulesFixture.updateCirculationRules(
       policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
-        materialTypesFixture.book(), requestPoliciesFixture.nonRequestableRequestPolicy(),
-        materialTypesFixture.videoRecording(), requestPoliciesFixture.holdRequestPolicy())));
+        book, requestPoliciesFixture.nonRequestableRequestPolicy(),
+        video, requestPoliciesFixture.holdRequestPolicy())));
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
-    UUID instanceId = instance.getId();
-    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
-      locationsFixture.mainFloor().getId());
-
-    IndividualResource book = itemsClient.create(new ItemBuilder()
-      .withBarcode("book")
-      .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .create());
-
-    IndividualResource video = itemsClient.create(new ItemBuilder()
-      .withBarcode("video")
-      .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .create());
-
-    checkOutFixture.checkOutByBarcode(book, usersFixture.jessica());
-    checkOutFixture.checkOutByBarcode(video, usersFixture.rebecca());
-
     UserResource requester = usersFixture.steve();
-    Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instance.getId(),
-      requester);
+    Response response = createItemsAndAttemptTitleLevelHold(instance, requester, List.of(book, video));
 
     assertThat(response, hasStatus(HTTP_CREATED));
-
-    JsonObject json = response.getJson();
-    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
-    assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
-    assertThat(json.getString("instanceId"), is(instanceId.toString()));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(response.getJson().getString("instanceId"), is(instance.getId().toString()));
   }
 
   @Test
@@ -4224,44 +4185,45 @@ public class RequestsAPICreationTests extends APITests {
     // enable TLR feature and make Hold requests ignore circulation rules
     configurationsFixture.configureTlrFeature(true, false, null, null, null);
 
+    IndividualResource book = materialTypesFixture.book();
+    IndividualResource video = materialTypesFixture.videoRecording();
+
     // create rules with two material-type-based request policies none of which allows Holds
     circulationRulesFixture.updateCirculationRules(
       policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
-        materialTypesFixture.book(), requestPoliciesFixture.nonRequestableRequestPolicy(),
-        materialTypesFixture.videoRecording(), requestPoliciesFixture.recallRequestPolicy())));
+        book, requestPoliciesFixture.nonRequestableRequestPolicy(),
+        video, requestPoliciesFixture.recallRequestPolicy())));
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UserResource requester = usersFixture.steve();
+    Response response = createItemsAndAttemptTitleLevelHold(instance, requester, List.of(book, video));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(response.getJson().getString("instanceId"), is(instance.getId().toString()));
+  }
+
+  private Response createItemsAndAttemptTitleLevelHold(IndividualResource instance,
+    UserResource requester, Collection<IndividualResource> materialTypes) {
+
     UUID instanceId = instance.getId();
     IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
       locationsFixture.mainFloor().getId());
 
-    IndividualResource book = itemsClient.create(new ItemBuilder()
-      .withBarcode("book")
-      .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.book().getId())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .create());
+    materialTypes.forEach(materialType -> {
+      IndividualResource item = itemsClient.create(
+        new ItemBuilder()
+          .withBarcode(UUID.randomUUID().toString())
+          .forHolding(holdingsRecord.getId())
+          .withMaterialType(materialType.getId())
+          .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+          .create());
 
-    IndividualResource video = itemsClient.create(new ItemBuilder()
-      .withBarcode("video")
-      .forHolding(holdingsRecord.getId())
-      .withMaterialType(materialTypesFixture.videoRecording().getId())
-      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
-      .create());
+      checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    });
 
-    checkOutFixture.checkOutByBarcode(book, usersFixture.jessica());
-    checkOutFixture.checkOutByBarcode(video, usersFixture.rebecca());
-
-    UserResource requester = usersFixture.steve();
-    Response response = requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instance.getId(),
-      requester);
-
-    assertThat(response, hasStatus(HTTP_CREATED));
-
-    JsonObject json = response.getJson();
-    assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
-    assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
-    assertThat(json.getString("instanceId"), is(instanceId.toString()));
+    return requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instance.getId(), requester);
   }
 
   @Test
