@@ -4207,8 +4207,7 @@ public class RequestsAPICreationTests extends APITests {
   private Response createItemsAndAttemptTitleLevelHold(IndividualResource instance,
     UserResource requester, Collection<IndividualResource> materialTypes) {
 
-    UUID instanceId = instance.getId();
-    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instanceId,
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instance.getId(),
       locationsFixture.mainFloor().getId());
 
     materialTypes.forEach(materialType -> {
