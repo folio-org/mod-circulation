@@ -1,3 +1,7 @@
+## 23.5.6 2023-07-05
+
+* Pickup notices not sent when another item is Awaiting pickup (CIRC-1832)
+
 ## 23.5.5 2023-07-03
 
 * Circulation rules decoupling and timer-based refresh enhancement (CIRC-1783)
@@ -7,12 +11,12 @@
 * Only notify patron for recalls that change due date (CIRC-1747)
 * Make "Declare lost" fail when a fee/fine should be charged and fee/fine owner doesn't exist (CIRC-1758)
 * Make a TLR recall keep the same item when edited (CIRC-1760)
-* 
+*
 ## 23.5.3 2023-03-27
 
 * Add required module permissions to fix aged to lost item renewal issue (CIRC-1738)
 * Fix TLR recall errors in scenarios where it's placed on the least recalled item (CIRC-1759)
-  
+
 ## 23.5.2 2023-03-22
 
 * Fix unexpected error message when attempting to renew loan with non-loanable item (CIRC-1592)
