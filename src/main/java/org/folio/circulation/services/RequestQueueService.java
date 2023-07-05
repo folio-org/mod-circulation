@@ -75,14 +75,9 @@ public class RequestQueueService {
     Request request) {
 
     boolean instanceIdsMatch = StringUtils.equals(request.getInstanceId(), item.getInstanceId());
+    boolean itemIdsMatch = StringUtils.equals(request.getItemId(), item.getItemId());
 
-    if (request.isRecall() && request.isNotYetFilled()) {
-      return instanceIdsMatch ? isItemRequestableAndLoanable(item, request) : ofAsync(false);
-    }
-
-    String requestItemId = request.getItemId();
-
-    return instanceIdsMatch && (requestItemId == null ^ StringUtils.equals(item.getItemId(), requestItemId))
+    return instanceIdsMatch && (request.getItemId() == null ^ itemIdsMatch)
       ? isItemRequestableAndLoanable(item, request)
       : ofAsync(false);
   }

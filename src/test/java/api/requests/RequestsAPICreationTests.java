@@ -75,8 +75,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -1832,6 +1830,26 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(event, isValidLoanDueDateChangedEvent(updatedLoan));
     assertThat(new JsonObject(event.getString("eventPayload"))
       .getBoolean("dueDateChangedByRecall"), equalTo(true));
+  }
+
+  @Test
+  void titleLevelRecallShouldNotProhibitCheckOutOfAnotherItemOfSameInstance() {
+    reconfigureTlrFeature(ENABLED);
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+
+    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.jessica());
+
+    IndividualResource recall = requestsFixture.placeTitleLevelRecallRequest(
+      firstItem.getInstanceId(), usersFixture.steve());
+
+    assertThat(recall.getJson().getString("itemId"), is(firstItem.getId().toString()));
+
+    checkInFixture.checkInByBarcode(secondItem);
+    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.james());
   }
 
   @Test
