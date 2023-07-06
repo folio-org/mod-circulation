@@ -23,8 +23,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
-import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.ErrorCode.ITEM_HAS_OPEN_LOAN;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
@@ -43,7 +43,7 @@ import org.folio.circulation.domain.validation.overriding.OverridingLoanValidato
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
-import org.folio.circulation.services.RequestQueueService;
+import org.folio.circulation.services.CheckOutRequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -87,7 +87,7 @@ public class CheckOutValidators {
 
     requestedByAnotherPatronValidator = new RequestedByAnotherPatronValidator(
       message -> singleValidationError(message, USER_BARCODE, request.getUserBarcode()),
-      RequestQueueService.using(clients));
+      CheckOutRequestQueueService.using(clients));
 
     alreadyCheckedOutValidator = new AlreadyCheckedOutValidator(
       message -> singleValidationError(message, ITEM_BARCODE, request.getItemBarcode()));

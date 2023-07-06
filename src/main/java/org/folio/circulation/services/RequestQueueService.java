@@ -71,18 +71,25 @@ public class RequestQueueService {
     return ofAsync(StringUtils.equals(item.getItemId(), request.getItemId()));
   }
 
-  private CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
+  protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
-    boolean instanceIdsMatch = StringUtils.equals(request.getInstanceId(), item.getInstanceId());
-    boolean itemIdsMatch = StringUtils.equals(request.getItemId(), item.getItemId());
+    if (!StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
+      return ofAsync(false);
+    }
 
-    return instanceIdsMatch && (request.getItemId() == null ^ itemIdsMatch)
+    if (request.isRecall() && request.isNotYetFilled()) {
+      return isItemRequestableAndLoanable(item, request);
+    }
+
+    String requestItemId = request.getItemId();
+
+    return requestItemId == null ^ StringUtils.equals(item.getItemId(), requestItemId)
       ? isItemRequestableAndLoanable(item, request)
       : ofAsync(false);
   }
 
-  private CompletableFuture<Result<Boolean>> isItemRequestableAndLoanable(Item item, Request request) {
+  protected CompletableFuture<Result<Boolean>> isItemRequestableAndLoanable(Item item, Request request) {
     return isItemRequestable(item, request)
       .thenCompose(r -> r.after(whenTrue(isItemLoanable(item, request), ofAsync(false))));
   }

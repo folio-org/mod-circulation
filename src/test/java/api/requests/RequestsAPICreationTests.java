@@ -1839,17 +1839,22 @@ public class RequestsAPICreationTests extends APITests {
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource firstItem = items.get(0);
     ItemResource secondItem = items.get(1);
+    UUID instanceId = firstItem.getInstanceId();
 
-    checkOutFixture.checkOutByBarcode(firstItem, usersFixture.jessica());
-    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.jessica());
+    UserResource user1 = usersFixture.jessica();
+    UserResource user2 = usersFixture.steve();
+    UserResource user3 = usersFixture.james();
 
-    IndividualResource recall = requestsFixture.placeTitleLevelRecallRequest(
-      firstItem.getInstanceId(), usersFixture.steve());
+    checkOutFixture.checkOutByBarcode(firstItem, user1);
+    IndividualResource pageRequest = requestsFixture.placeTitleLevelPageRequest(instanceId, user2);
+
+    assertThat(pageRequest.getJson().getString("itemId"), is(secondItem.getId().toString()));
+
+    IndividualResource recall = requestsFixture.move(
+      new MoveRequestBuilder(pageRequest.getId(), firstItem.getId(), "Recall"));
 
     assertThat(recall.getJson().getString("itemId"), is(firstItem.getId().toString()));
-
-    checkInFixture.checkInByBarcode(secondItem);
-    checkOutFixture.checkOutByBarcode(secondItem, usersFixture.james());
+    checkOutFixture.checkOutByBarcode(secondItem, user3);
   }
 
   @Test
