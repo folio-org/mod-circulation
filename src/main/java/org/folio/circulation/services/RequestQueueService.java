@@ -55,6 +55,10 @@ public class RequestQueueService {
   }
 
   public CompletableFuture<Result<Boolean>> isRequestFulfillableByItem(Item item, Request request) {
+    if (!StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
+      return ofAsync(false);
+    }
+
     switch (request.getRequestLevel()) {
       case ITEM:
         return isItemLevelRequestFulfillableByItem(item, request);
@@ -74,17 +78,17 @@ public class RequestQueueService {
   protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
-    if (!StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
-      return ofAsync(false);
-    }
-
     if (request.isRecall() && request.isNotYetFilled()) {
       return isItemRequestableAndLoanable(item, request);
     }
 
-    String requestItemId = request.getItemId();
+    return canRequestBeFulfilledByItem(item, request);
+  }
 
-    return requestItemId == null ^ StringUtils.equals(item.getItemId(), requestItemId)
+  protected CompletableFuture<Result<Boolean>> canRequestBeFulfilledByItem(Item item,
+    Request request) {
+
+    return request.getItemId() == null ^ StringUtils.equals(item.getItemId(), request.getItemId())
       ? isItemRequestableAndLoanable(item, request)
       : ofAsync(false);
   }
