@@ -1579,8 +1579,8 @@
         "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get",
         "pubsub.publish.post",
-        "checkout-lock-storage.item.post",
-        "checkout-lock-storage.item.delete",
+        "checkout-lock-storage.checkout-locks.item.post",
+        "checkout-lock-storage.checkout-locks.item.delete",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.mod-circulation"
       ],
