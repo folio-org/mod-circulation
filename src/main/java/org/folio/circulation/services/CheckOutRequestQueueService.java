@@ -31,6 +31,10 @@ public class CheckOutRequestQueueService extends RequestQueueService {
   protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
+    if (!StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
+      return ofAsync(false);
+    }
+
     if (request.isRecall()) {
       return ofAsync(StringUtils.equals(request.getItemId(), item.getItemId()));
     }
