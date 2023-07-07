@@ -1,19 +1,18 @@
 package org.folio.circulation.domain.configuration;
 
-import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
 
 import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 
-import static java.lang.String.format;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
@@ -24,6 +23,7 @@ public class TlrSettingsConfiguration {
   @ToString.Include
   private final boolean titleLevelRequestsFeatureEnabled;
   private final boolean createTitleLevelRequestsByDefault;
+  private final boolean tlrHoldShouldFollowCirculationRules;
   private final UUID confirmationPatronNoticeTemplateId;
   private final UUID cancellationPatronNoticeTemplateId;
   private final UUID expirationPatronNoticeTemplateId;
@@ -33,6 +33,7 @@ public class TlrSettingsConfiguration {
       return new TlrSettingsConfiguration(
         getBooleanProperty(jsonObject, "titleLevelRequestsFeatureEnabled"),
         getBooleanProperty(jsonObject, "createTitleLevelRequestsByDefault"),
+        getBooleanProperty(jsonObject, "tlrHoldShouldFollowCirculationRules"),
         getUUIDProperty(jsonObject, "confirmationPatronNoticeTemplateId"),
         getUUIDProperty(jsonObject, "cancellationPatronNoticeTemplateId"),
         getUUIDProperty(jsonObject, "expirationPatronNoticeTemplateId")

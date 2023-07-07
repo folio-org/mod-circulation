@@ -26,6 +26,7 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -80,6 +81,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -103,6 +105,7 @@ import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.override.PatronBlockOverride;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
@@ -4148,6 +4151,103 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
     assertThat(json.getString("requestType"), is(RequestType.HOLD.getValue()));
     assertThat(json.getString("instanceId"), is(instanceId.toString()));
+  }
+
+  @Test
+  void titleLevelHoldFailsWhenItShouldFollowCirculationRulesAndNoneOfInstanceItemsAreAllowedForHold() {
+    // enable TLR feature and make Hold requests respect circulation rules
+    configurationsFixture.configureTlrFeature(true, true, null, null, null);
+
+    IndividualResource book = materialTypesFixture.book();
+    IndividualResource video = materialTypesFixture.videoRecording();
+
+    // create rules with two material-type-based request policies none of which allows Holds
+    circulationRulesFixture.updateCirculationRules(
+      policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
+        book, requestPoliciesFixture.nonRequestableRequestPolicy(),
+        video, requestPoliciesFixture.recallRequestPolicy())));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UserResource requester = usersFixture.steve();
+    Response response = createItemsAndAttemptTitleLevelHold(instance, requester, List.of(book, video));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("Hold requests are not allowed for this patron and title combination"),
+        hasUUIDParameter("requesterId", requester.getId()),
+        hasUUIDParameter("instanceId", instance.getId()),
+        hasCode(ErrorCode.REQUEST_NOT_ALLOWED_FOR_PATRON_TITLE_COMBINATION)
+      ))));
+  }
+
+  @Test
+  void titleLevelHoldIsPlacedWhenItShouldFollowCirculationRulesAndOneOfInstanceItemsIsAllowedForHold() {
+    // enable TLR feature and make Hold requests respect circulation rules
+    configurationsFixture.configureTlrFeature(true, true, null, null, null);
+
+    IndividualResource book = materialTypesFixture.book();
+    IndividualResource video = materialTypesFixture.videoRecording();
+
+    // create rules with two material-type-based request policies one of which allows Holds
+    circulationRulesFixture.updateCirculationRules(
+      policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
+        book, requestPoliciesFixture.nonRequestableRequestPolicy(),
+        video, requestPoliciesFixture.holdRequestPolicy())));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UserResource requester = usersFixture.steve();
+    Response response = createItemsAndAttemptTitleLevelHold(instance, requester, List.of(book, video));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(response.getJson().getString("instanceId"), is(instance.getId().toString()));
+  }
+
+  @Test
+  void titleLevelHoldIsPlacedWhenItCanIgnoreCirculationRulesAndNoneOfInstanceItemsAreAllowedForHold() {
+    // enable TLR feature and make Hold requests ignore circulation rules
+    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+
+    IndividualResource book = materialTypesFixture.book();
+    IndividualResource video = materialTypesFixture.videoRecording();
+
+    // create rules with two material-type-based request policies none of which allows Holds
+    circulationRulesFixture.updateCirculationRules(
+      policiesActivation.buildRequestPoliciesBasedOnMaterialType(Map.of(
+        book, requestPoliciesFixture.nonRequestableRequestPolicy(),
+        video, requestPoliciesFixture.recallRequestPolicy())));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UserResource requester = usersFixture.steve();
+    Response response = createItemsAndAttemptTitleLevelHold(instance, requester, List.of(book, video));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
+    assertThat(response.getJson().getString("instanceId"), is(instance.getId().toString()));
+  }
+
+  private Response createItemsAndAttemptTitleLevelHold(IndividualResource instance,
+    UserResource requester, Collection<IndividualResource> materialTypes) {
+
+    IndividualResource holdingsRecord = holdingsFixture.createHoldingsRecord(instance.getId(),
+      locationsFixture.mainFloor().getId());
+
+    materialTypes.forEach(materialType -> {
+      IndividualResource item = itemsClient.create(
+        new ItemBuilder()
+          .withBarcode(UUID.randomUUID().toString())
+          .forHolding(holdingsRecord.getId())
+          .withMaterialType(materialType.getId())
+          .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+          .create());
+
+      checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    });
+
+    return requestsFixture.attemptPlaceTitleLevelHoldShelfRequest(instance.getId(), requester);
   }
 
   @Test
