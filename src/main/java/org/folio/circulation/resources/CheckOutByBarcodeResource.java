@@ -167,9 +167,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
-      .thenCompose(r -> r.combineAfter(settingsRepository::lookUpCheckOutLockSettings, LoanAndRelatedRecords::withCheckoutLockConfiguration))
-      .thenCompose(r -> r.after(records -> this.acquireLock(records, checkOutLockRepository, checkOutLockId)))
-      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records, validators, errorHandler)))
+      .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(settingsRepository,
+        checkOutLockRepository, l, checkOutLockId, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
@@ -187,6 +186,20 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> createdLoanFrom(r, errorHandler))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLockIfNeededOrFail(
+    SettingsRepository settingsRepository, CheckOutLockRepository checkOutLockRepository,
+    LoanAndRelatedRecords loanAndRelatedRecords, AtomicReference<String> checkOutLockId,
+    CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+
+    return settingsRepository.lookUpCheckOutLockSettings()
+      .thenApply(cr -> succeeded(loanAndRelatedRecords).combine(cr,
+        LoanAndRelatedRecords::withCheckoutLockConfiguration))
+      .thenCompose(r -> r.after(records -> this.acquireLock(records, checkOutLockRepository,
+        checkOutLockId)))
+      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records,
+        validators, errorHandler)));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
