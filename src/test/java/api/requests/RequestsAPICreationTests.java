@@ -1836,6 +1836,31 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void titleLevelRecallShouldNotProhibitCheckOutOfAnotherItemOfSameInstance() {
+    reconfigureTlrFeature(ENABLED);
+
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    ItemResource firstItem = items.get(0);
+    ItemResource secondItem = items.get(1);
+    UUID instanceId = firstItem.getInstanceId();
+
+    UserResource user1 = usersFixture.jessica();
+    UserResource user2 = usersFixture.steve();
+    UserResource user3 = usersFixture.james();
+
+    checkOutFixture.checkOutByBarcode(firstItem, user1);
+    IndividualResource pageRequest = requestsFixture.placeTitleLevelPageRequest(instanceId, user2);
+
+    assertThat(pageRequest.getJson().getString("itemId"), is(secondItem.getId().toString()));
+
+    IndividualResource recall = requestsFixture.move(
+      new MoveRequestBuilder(pageRequest.getId(), firstItem.getId(), "Recall"));
+
+    assertThat(recall.getJson().getString("itemId"), is(firstItem.getId().toString()));
+    checkOutFixture.checkOutByBarcode(secondItem, user3);
+  }
+
+  @Test
   void canCreateRecallRequestWhenItemIsAwaitingPickup() {
     //Setting up an item with AWAITING_PICKUP status
     final IndividualResource servicePoint = servicePointsFixture.cd1();
