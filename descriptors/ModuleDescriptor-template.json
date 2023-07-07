@@ -1582,6 +1582,7 @@
         "checkout-lock-storage.checkout-locks.item.post",
         "checkout-lock-storage.checkout-locks.item.delete",
         "mod-settings.entries.collection.get",
+        "mod-settings.entries.item.get",
         "mod-settings.global.read.mod-circulation"
       ],
       "visible": false

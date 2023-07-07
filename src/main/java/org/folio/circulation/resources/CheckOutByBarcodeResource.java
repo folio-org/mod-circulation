@@ -211,7 +211,9 @@ public class CheckOutByBarcodeResource extends Resource {
         succeeded(records)));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records, CheckOutLockRepository checkOutLockRepository, AtomicReference<String> checkOutLockId) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records,
+    CheckOutLockRepository checkOutLockRepository, AtomicReference<String> checkOutLockId) {
+
     log.debug("acquireLock:: Creating checkout lock {} ", records.getCheckoutLockConfiguration());
     if (records.isCheckoutLockFeatureEnabled()) {
       CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
@@ -228,7 +230,9 @@ public class CheckOutByBarcodeResource extends Resource {
     return completedFuture(Result.succeeded(records));
   }
 
-  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(
+    LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+
     if (records.isCheckoutLockFeatureEnabled()) {
       return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
         .thenApply(r -> r.next(errorHandler::failWithValidationErrors));
@@ -236,7 +240,9 @@ public class CheckOutByBarcodeResource extends Resource {
     return completedFuture(Result.succeeded(records));
   }
 
-  private Result<LoanAndRelatedRecords> deleteCheckOutLock(Result<LoanAndRelatedRecords> records, CheckOutLockRepository checkOutLockRepository, String checkOutLockId) {
+  private Result<LoanAndRelatedRecords> deleteCheckOutLock(Result<LoanAndRelatedRecords> records,
+    CheckOutLockRepository checkOutLockRepository, String checkOutLockId) {
+
     if (StringUtils.isBlank(checkOutLockId)) {
       return records;
     }
