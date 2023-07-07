@@ -6,7 +6,6 @@ import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
-import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -18,13 +17,10 @@ import static org.hamcrest.core.Is.is;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
-import api.support.fixtures.*;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,6 +29,49 @@ import org.junit.jupiter.api.BeforeEach;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
+import api.support.fixtures.AddInfoFixture;
+import api.support.fixtures.AddressTypesFixture;
+import api.support.fixtures.AgeToLostFixture;
+import api.support.fixtures.AutomatedPatronBlocksFixture;
+import api.support.fixtures.CancellationReasonsFixture;
+import api.support.fixtures.ChangeDueDateFixture;
+import api.support.fixtures.CheckInFixture;
+import api.support.fixtures.CheckOutFixture;
+import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.ConfigurationsFixture;
+import api.support.fixtures.DeclareLostFixtures;
+import api.support.fixtures.DepartmentFixture;
+import api.support.fixtures.EndPatronSessionClient;
+import api.support.fixtures.EventSubscribersFixture;
+import api.support.fixtures.ExpiredSessionProcessingClient;
+import api.support.fixtures.FeeFineAccountFixture;
+import api.support.fixtures.FeeFineOwnerFixture;
+import api.support.fixtures.FeeFineTypeFixture;
+import api.support.fixtures.HoldingsFixture;
+import api.support.fixtures.IdentifierTypesFixture;
+import api.support.fixtures.InstancesFixture;
+import api.support.fixtures.ItemsFixture;
+import api.support.fixtures.LoanPoliciesFixture;
+import api.support.fixtures.LoanTypesFixture;
+import api.support.fixtures.LoansFixture;
+import api.support.fixtures.LocationsFixture;
+import api.support.fixtures.LostItemFeePoliciesFixture;
+import api.support.fixtures.MaterialTypesFixture;
+import api.support.fixtures.NoteTypeFixture;
+import api.support.fixtures.NoticePoliciesFixture;
+import api.support.fixtures.OverdueFinePoliciesFixture;
+import api.support.fixtures.PatronGroupsFixture;
+import api.support.fixtures.ProxyRelationshipsFixture;
+import api.support.fixtures.RequestPoliciesFixture;
+import api.support.fixtures.RequestQueueFixture;
+import api.support.fixtures.RequestsFixture;
+import api.support.fixtures.ScheduledNoticeProcessingClient;
+import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.TemplateFixture;
+import api.support.fixtures.TenantActivationFixture;
+import api.support.fixtures.UserManualBlocksFixture;
+import api.support.fixtures.UsersFixture;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
@@ -378,13 +417,21 @@ public abstract class APITests {
   protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus,
     UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
 
+    reconfigureTlrFeature(tlrFeatureStatus, false, confirmationTemplateId, cancellationTemplateId,
+      expirationTemplateId);
+  }
+
+  protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus,
+    boolean tlrHoldShouldFollowCirculationRules, UUID confirmationTemplateId,
+    UUID cancellationTemplateId, UUID expirationTemplateId) {
+
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      configurationsFixture.configureTlrFeature(true, confirmationTemplateId,
-        cancellationTemplateId, expirationTemplateId);
+      configurationsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
+        confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      configurationsFixture.configureTlrFeature(false, confirmationTemplateId,
-        cancellationTemplateId, expirationTemplateId);
+      configurationsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
+        confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else {
       configurationsFixture.deleteTlrFeatureConfig();

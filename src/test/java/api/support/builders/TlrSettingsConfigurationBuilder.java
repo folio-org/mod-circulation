@@ -13,6 +13,7 @@ import lombok.With;
 public class TlrSettingsConfigurationBuilder extends JsonBuilder implements Builder {
   private final boolean titleLevelRequestsFeatureEnabled;
   private final boolean createTitleLevelRequestsByDefault;
+  private final boolean tlrHoldShouldFollowCirculationRules;
   private final UUID confirmationPatronNoticeTemplateId;
   private final UUID cancellationPatronNoticeTemplateId;
   private final UUID expirationPatronNoticeTemplateId;
@@ -23,6 +24,7 @@ public class TlrSettingsConfigurationBuilder extends JsonBuilder implements Buil
 
     request.put("titleLevelRequestsFeatureEnabled", titleLevelRequestsFeatureEnabled);
     request.put("createTitleLevelRequestsByDefault", createTitleLevelRequestsByDefault);
+    request.put("tlrHoldShouldFollowCirculationRules", tlrHoldShouldFollowCirculationRules);
     request.put("confirmationPatronNoticeTemplateId", confirmationPatronNoticeTemplateId);
     request.put("cancellationPatronNoticeTemplateId", cancellationPatronNoticeTemplateId);
     request.put("expirationPatronNoticeTemplateId", expirationPatronNoticeTemplateId);

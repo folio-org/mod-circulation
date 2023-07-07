@@ -36,6 +36,12 @@ public class ValidationErrorFailure implements HttpFailure {
     return failedValidation(new ValidationError(reason, parameters));
   }
 
+  public static <T> Result<T> failedValidation(String reason, Map<String, String> parameters,
+    ErrorCode errorCode) {
+
+    return failedValidation(new ValidationError(reason, parameters, errorCode));
+  }
+
   public static <T> Result<T> failedValidation(ValidationError error) {
     return failed(singleValidationError(error));
   }

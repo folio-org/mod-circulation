@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.REQUESTER_ID;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.representations.logs.RequestUpdateLogEventMapper.mapToRequestLogEventJson;
@@ -19,6 +20,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUESTING_DISALLOWED_BY_POLICY;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUEST_NOT_ALLOWED_FOR_PATRON_TITLE_COMBINATION;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -41,6 +43,8 @@ import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
+import org.folio.circulation.support.ErrorCode;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
@@ -202,18 +206,44 @@ public class CreateRequestService {
       return ofAsync(() -> records);
     }
 
-    boolean tlrFeatureEnabled = records.getRequest().getTlrSettingsConfiguration()
-      .isTitleLevelRequestsFeatureEnabled();
+    final Request request = records.getRequest();
+    boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
-    if (tlrFeatureEnabled && records.getRequest().getRequestLevel() == TITLE
-      && records.getRequest().isHold()) {
-
-      return ofAsync(() -> records);
+    if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
+      return completedFuture(checkPolicyForTitleLevelHold(records));
     }
 
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
+  }
+
+  private Result<RequestAndRelatedRecords> checkPolicyForTitleLevelHold(RequestAndRelatedRecords records) {
+    final Request request = records.getRequest();
+
+    if (request.getTlrSettingsConfiguration().isTlrHoldShouldFollowCirculationRules() &&
+      noneOfInstanceItemsAreAllowedForHold(request)) {
+
+      log.warn("checkPolicyForTlrHold:: none of the items of requested instance are allowed for " +
+        "Hold requests according to circulation rules: requesterId={}, instanceId={}",
+        request.getRequesterId(), request.getInstanceId());
+
+      return ValidationErrorFailure.<RequestAndRelatedRecords>failedValidation(
+          "Hold requests are not allowed for this patron and title combination",
+          Map.of(REQUESTER_ID, request.getRequesterId(), INSTANCE_ID, request.getInstanceId()),
+          ErrorCode.REQUEST_NOT_ALLOWED_FOR_PATRON_TITLE_COMBINATION)
+        .mapFailure(err -> errorHandler.handleValidationError(err,
+          REQUEST_NOT_ALLOWED_FOR_PATRON_TITLE_COMBINATION, records));
+    }
+
+    return succeeded(records);
+  }
+
+  private static boolean noneOfInstanceItemsAreAllowedForHold(Request request) {
+    return request.getInstanceItemsRequestPolicies()
+      .values()
+      .stream()
+      .noneMatch(policy -> policy.allowsType(RequestType.HOLD));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {

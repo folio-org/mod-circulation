@@ -56,12 +56,14 @@ public class ConfigurationExample {
         .encodePrettily());
   }
 
-  public static ConfigRecordBuilder tlrNoticesConfiguration(boolean isTlrEnabled,
-    UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
+  public static ConfigRecordBuilder tlrFeatureConfiguration(boolean isTlrEnabled,
+    boolean holdShouldFollowCirculationRules, UUID confirmationTemplateId,
+    UUID cancellationTemplateId, UUID expirationTemplateId) {
 
     return new ConfigRecordBuilder("SETTINGS", "TLR",
       new TlrSettingsConfigurationBuilder()
         .withTitleLevelRequestsFeatureEnabled(isTlrEnabled)
+        .withTlrHoldShouldFollowCirculationRules(holdShouldFollowCirculationRules)
         .withConfirmationPatronNoticeTemplateId(confirmationTemplateId)
         .withCancellationPatronNoticeTemplateId(cancellationTemplateId)
         .withExpirationPatronNoticeTemplateId(expirationTemplateId)
