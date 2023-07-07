@@ -29,12 +29,13 @@ public class ConfigurationsFixture {
     }
   }
 
-  public void configureTlrFeature(boolean isTlrFeatureEnabled,  UUID confirmationTemplateId,
-    UUID cancellationTemplateId, UUID expirationTemplateId) {
+  public void configureTlrFeature(boolean isTlrFeatureEnabled, boolean tlrHoldShouldFollowCirculationRules,
+    UUID confirmationTemplateId, UUID cancellationTemplateId, UUID expirationTemplateId) {
 
     deleteTlrFeatureConfig();
-    tlrConfigurationEntryId = client.create(ConfigurationExample.tlrNoticesConfiguration(
-      isTlrFeatureEnabled, confirmationTemplateId, cancellationTemplateId, expirationTemplateId))
+    tlrConfigurationEntryId = client.create(ConfigurationExample.tlrFeatureConfiguration(
+      isTlrFeatureEnabled, tlrHoldShouldFollowCirculationRules, confirmationTemplateId,
+        cancellationTemplateId, expirationTemplateId))
       .getId();
   }
 }
