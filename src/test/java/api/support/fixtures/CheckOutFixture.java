@@ -94,6 +94,13 @@ public class CheckOutFixture {
       expectedStatusCode, headers);
   }
 
+  public IndividualResource checkOutByBarcodeResource(IndividualResource item, IndividualResource to) {
+    return new CheckOutResource(restAssuredClient.post(new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(to)
+      .at(UUID.randomUUID()).create(), checkOutByBarcodeUrl(), "check-out-by-barcode-request"));
+  }
+
   private IndividualResource defaultServicePoint() {
     return servicePointsFixture.cd1();
   }
