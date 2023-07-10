@@ -488,6 +488,41 @@ content-length: 230
   "totalRecords": 1
 }
 ```
+### Configuration setting for CheckoutLock Feature
+  To enable this feature for a tenant, we need to add the below configuration in mod-settings. See https://issues.folio.org/browse/UXPROD-3515 to know more about this feature.
+
+#### Permissions
+  To make a post call to mod-settings, user should have below permissions.
+```
+  mod-settings.entries.item.post
+  mod-settings.global.write.mod-circulation
+```
+
+#### Example request
+```
+POST https://{okapi-location}/settings/entries
+  {
+    "id":"1e01066d-4bee-4cf7-926c-ba2c9c6c0001",
+    "scope": "mod-circulation",
+    "key":"checkoutLockFeature",
+    "value":"{\"checkOutLockFeatureEnabled\":true,\"noOfRetryAttempts\":25,\"retryInterval\":250,\"lockTtl\":2500}"
+}
+```
+
+| parameter | Type        | Description                                                                                           |
+|---------|-------------|-------------------------------------------------------------------------------------------------------|
+| `id`    | UUID        | id should be provided of type UUID.                                                                   |
+| `scope` | String      | Scope should be the module name. Here, it will be "mod-circulation"                                   |
+| `key`   | String      | Key should be feature name which we are enabling the settings. Here, it will be "checkoutLockFeature" |
+| `value` | Json Object | Settings for checkout lock feature                                                                    |
+
+
+| Value options                | Type    | Description                                                                                                                                                                                    |
+|------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `checkOutLockFeatureEnabled` | boolean | Indicates whether or not to enable this feature for the tenant. Default value is false(disabled).                                                                                              |
+| `noOfRetryAttempts`          | int     | The maximum number of times to retry the lock ackquiring process during checkout. Once the retry is exhausted, system will return error. Default value is 30.                                  |
+| `retryInterval`              | int | The amount of time to wait between retries in milliseconds. Default value is 250.                                                                                                              |
+| `lockTtl`                    | int | Maximum amount of time(milliseconds) that the lock should exist for a patron. After this time, the lock will gets deleted and lock will be provided for another request. Default value is 3000 |
 
 ## Additional Information
 

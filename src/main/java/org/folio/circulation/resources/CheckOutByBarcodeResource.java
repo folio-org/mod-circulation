@@ -13,9 +13,15 @@ import static org.folio.circulation.support.http.server.JsonHttpResponse.ok;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.CheckOutLock;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -29,7 +35,9 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
+import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -48,6 +56,7 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
@@ -61,6 +70,7 @@ import io.vertx.ext.web.RoutingContext;
 public class CheckOutByBarcodeResource extends Resource {
 
   private final String rootPath;
+  final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final CirculationErrorType[] PARTIAL_SUCCESS_ERRORS = {
     FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_PUBLISH_CHECKOUT_EVENT};
 
@@ -121,6 +131,12 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
+    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
+
+    AtomicReference<String> checkOutLockId = new AtomicReference<>();
+
+    final SettingsRepository settingsRepository = new SettingsRepository(clients);
+
     ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
@@ -151,6 +167,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords,
         routingContext.getBodyAsJson(), clients)))
       .thenApply(r -> r.map(this::checkOutItem))
+      .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(settingsRepository,
+        checkOutLockRepository, l, checkOutLockId, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
@@ -159,6 +177,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(loanRepository::createLoan))
       .thenComposeAsync(r -> r.after(l -> saveCheckOutSessionRecord(l, patronActionSessionService,
         errorHandler)))
+      .thenApply(r -> deleteCheckOutLock(r, checkOutLockRepository, checkOutLockId.get()))
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
@@ -169,6 +188,20 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLockIfNeededOrFail(
+    SettingsRepository settingsRepository, CheckOutLockRepository checkOutLockRepository,
+    LoanAndRelatedRecords loanAndRelatedRecords, AtomicReference<String> checkOutLockId,
+    CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+
+    return settingsRepository.lookUpCheckOutLockSettings()
+      .thenApply(cr -> succeeded(loanAndRelatedRecords).combine(cr,
+        LoanAndRelatedRecords::withCheckoutLockConfiguration))
+      .thenCompose(r -> r.after(records -> this.acquireLock(records, checkOutLockRepository,
+        checkOutLockId)))
+      .thenCompose(r -> r.after(records -> this.validateItemLimitBasedOnLockFeatureFlag(records,
+        validators, errorHandler)));
+  }
+
   private CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
     LoanAndRelatedRecords records, PatronActionSessionService patronActionSessionService,
     CirculationErrorHandler errorHandler) {
@@ -176,6 +209,45 @@ public class CheckOutByBarcodeResource extends Resource {
     return patronActionSessionService.saveCheckOutSessionRecord(records)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_SAVE_SESSION_RECORD,
         succeeded(records)));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLock(LoanAndRelatedRecords records,
+    CheckOutLockRepository checkOutLockRepository, AtomicReference<String> checkOutLockId) {
+
+    log.debug("acquireLock:: Creating checkout lock {} ", records.getCheckoutLockConfiguration());
+    if (records.isCheckoutLockFeatureEnabled()) {
+      CompletableFuture<CheckOutLock> future = new CompletableFuture<>();
+      checkOutLockRepository.createLockWithRetry(0, future, records);
+      return future.handle((res, err) -> {
+        if (err != null) {
+          log.error("acquireLock:: Unable to acquire lock for item {} ", records.getItem().getBarcode(), err);
+          return Result.failed(ValidationErrorFailure.singleValidationError("unable to acquire lock", "", ""));
+        }
+        checkOutLockId.set(res.getId());
+        return Result.succeeded(records);
+      });
+    }
+    return completedFuture(Result.succeeded(records));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(
+    LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
+
+    if (records.isCheckoutLockFeatureEnabled()) {
+      return validators.refuseWhenItemLimitIsReached(Result.of(() -> records))
+        .thenApply(r -> r.next(errorHandler::failWithValidationErrors));
+    }
+    return completedFuture(Result.succeeded(records));
+  }
+
+  private Result<LoanAndRelatedRecords> deleteCheckOutLock(Result<LoanAndRelatedRecords> records,
+    CheckOutLockRepository checkOutLockRepository, String checkOutLockId) {
+
+    if (StringUtils.isBlank(checkOutLockId)) {
+      return records;
+    }
+    checkOutLockRepository.deleteCheckoutLockById(checkOutLockId);
+    return records;
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(

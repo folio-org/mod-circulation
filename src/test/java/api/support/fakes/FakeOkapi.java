@@ -393,6 +393,22 @@ public class FakeOkapi extends AbstractVerticle {
       .withChangeMetadata()
       .create().register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("check-out-lock-storage")
+      .withRootPath("/check-out-lock-storage")
+      .withCollectionPropertyName("check-out-lock-storage")
+      .withChangeMetadata()
+      .withRecordConstraint(this::userHasAlreadyAcquiredLock)
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("settings")
+      .withRootPath("/settings/entries")
+      .withCollectionPropertyName("items")
+      .withChangeMetadata()
+      .withRecordConstraint(this::userHasAlreadyAcquiredLock)
+      .create().register(router);
+
     new FakeFeeFineOperationsModule().register(router);
 
     server.requestHandler(router)
@@ -404,6 +420,15 @@ public class FakeOkapi extends AbstractVerticle {
           startFuture.fail(result.cause());
         }
       });
+  }
+
+  private Result<Object> userHasAlreadyAcquiredLock(Collection<JsonObject> existingRequests, JsonObject currentRequest) {
+    return existingRequests.stream()
+      .filter(req -> Objects.equals(req.getString("userId"),
+        currentRequest.getString("userId")))
+      .findAny()
+      .map(r -> ValidationErrorFailure.failedValidation("Unable to acquire lock", "", ""))
+      .orElse(Result.succeeded(null));
   }
 
   private Result<Object> requestHasSamePosition(

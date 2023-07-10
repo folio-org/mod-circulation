@@ -4,6 +4,7 @@ package org.folio.circulation.domain;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
+import org.folio.circulation.domain.configuration.CheckoutLockConfiguration;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 
 import io.vertx.core.json.JsonObject;
@@ -28,6 +29,7 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final String loggedInUserId;
   private final TlrSettingsConfiguration tlrSettings;
   private final Request closedFilledRequest;
+  private final CheckoutLockConfiguration checkoutLockConfiguration;
 
   public LoanAndRelatedRecords(Loan loan) {
     this(loan, ZoneOffset.UTC);
@@ -38,11 +40,11 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan, Loan existingLoan, ZoneId timeZone) {
-    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null, null);
+    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null, null, null);
   }
 
   public LoanAndRelatedRecords(Loan loan, ZoneId timeZone) {
-    this(loan, null, null, timeZone, new JsonObject(), null, null, null);
+    this(loan, null, null, timeZone, new JsonObject(), null, null, null, null);
   }
 
   public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
@@ -90,6 +92,10 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   @Override
   public User getUser() {
     return loan.getUser();
+  }
+
+  public boolean isCheckoutLockFeatureEnabled() {
+    return this.getCheckoutLockConfiguration() != null && this.getCheckoutLockConfiguration().isCheckOutLockFeatureEnabled();
   }
 
 }

@@ -91,9 +91,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -103,6 +105,7 @@ import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.support.http.client.Response;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -2565,6 +2568,101 @@ class CheckOutByBarcodeTests extends APITests {
       hasMessage("Could not find user with matching barcode"),
       hasCode(USER_BARCODE_NOT_FOUND),
       hasUserBarcodeParameter(steveWithNoBarcode))));
+  }
+
+  @Test
+  void testAcquiringLockWithCheckOutLockFeature() {
+    IndividualResource item1 = itemsFixture.basedUponNod();
+    IndividualResource item2 = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource item3 = itemsFixture.basedUponTemeraire();
+    IndividualResource item4 = itemsFixture.basedUponDunkirk();
+    IndividualResource rebecca = usersFixture.rebecca();
+
+    // Normal checkout without checkOutLockFeature Enabled
+    checkOutFixture.checkOutByBarcode(item1, rebecca);
+
+    // Enabling checkOutLockFeature
+    settingsFixture.enableCheckoutLockFeature(true);
+    // Lock creation and deletion will happen in the same checkout
+    checkOutFixture.checkOutByBarcode(item2, rebecca);
+
+    // Creating a lock for user so that user will not be able to acquire lock
+    IndividualResource checkOutLock = checkOutLockFixture.createLockForUserId(rebecca.getId().toString());
+    final Response response = checkOutFixture.attemptCheckOutByBarcode(item3, rebecca);
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(),
+      hasErrorWith(hasMessage("unable to acquire lock")));
+
+    // Deleting the lock
+    checkOutLockFixture.deleteLock(checkOutLock.getId());
+
+    checkOutFixture.checkOutByBarcode(item4, rebecca);
+  }
+
+  @Test
+  void concurrentCheckoutsWhenCheckoutLockFeatureDisabled() throws InterruptedException {
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+
+    circulationRulesFixture.updateCirculationRules(createRules("t " + readingRoom));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource steve = usersFixture.steve();
+
+    CountDownLatch latch = new CountDownLatch(2);
+    List<IndividualResource> responseList = new ArrayList<>();
+
+    Thread thread1 = new Thread(() -> {
+      responseList.add(checkOutFixture.checkOutByBarcodeResource(firstBookTypeItem, steve));
+      latch.countDown();
+    });
+
+    Thread thread2 = new Thread(() -> {
+      responseList.add(checkOutFixture.checkOutByBarcodeResource(secondBookTypeItem, steve));
+      latch.countDown();
+    });
+
+    thread1.start();
+    thread2.start();
+    latch.await();
+
+    Assertions.assertTrue(responseList.stream().allMatch(x -> x.getResponse().getStatusCode() == 201));
+  }
+
+  @Test
+  void concurrentCheckoutsWhenCheckoutLockFeatureEnabled() throws InterruptedException {
+    final UUID readingRoom = loanTypesFixture.readingRoom().getId();
+
+    circulationRulesFixture.updateCirculationRules(createRules("t " + readingRoom));
+
+    IndividualResource firstBookTypeItem = itemsFixture.basedUponNod(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource secondBookTypeItem = itemsFixture.basedUponSmallAngryPlanet(itemBuilder -> itemBuilder.withTemporaryLoanType(readingRoom));
+    IndividualResource steve = usersFixture.steve();
+
+    // Enabling checkOutLockFeature
+    settingsFixture.enableCheckoutLockFeature(true);
+
+    CountDownLatch latch = new CountDownLatch(2);
+    List<IndividualResource> responseList = new ArrayList<>();
+
+    Thread thread1 = new Thread(() -> {
+      responseList.add(checkOutFixture.checkOutByBarcodeResource(firstBookTypeItem, steve));
+      latch.countDown();
+    });
+
+    Thread thread2 = new Thread(() -> {
+      responseList.add(checkOutFixture.checkOutByBarcodeResource(secondBookTypeItem, steve));
+      latch.countDown();
+    });
+
+    thread1.start();
+    thread2.start();
+    latch.await();
+
+    Assertions.assertTrue(responseList.stream().anyMatch(x -> x.getResponse().getStatusCode() == 422));
+    Assertions.assertTrue(responseList.stream().anyMatch(x -> x.getResponse().getStatusCode() == 201));
+    Assertions.assertTrue(responseList.stream().anyMatch(x -> x.getResponse().getBody().
+      contains("Patron has reached maximum limit of 1 items for loan type")));
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,

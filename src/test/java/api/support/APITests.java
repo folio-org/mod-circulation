@@ -73,6 +73,8 @@ import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.fixtures.policies.PoliciesActivationFixture;
+import api.support.fixtures.SettingsFixture;
+import api.support.fixtures.CheckOutLockFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
@@ -276,6 +278,8 @@ public abstract class APITests {
   protected final AgeToLostFixture ageToLostFixture =
     new AgeToLostFixture(itemsFixture, usersFixture, checkOutFixture);
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
+  protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
+  protected final SettingsFixture settingsFixture = new SettingsFixture();
 
   protected APITests() {
     this(true, false);
