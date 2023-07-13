@@ -66,20 +66,24 @@ public class TemplateContextUtil {
     Collection<JsonObject> noticeContexts) {
 
     return new JsonObject()
-      .put(USER, createUserContext(user))
+      .put(USER, createUserContext(user).asJson())
       .put(groupToken, new JsonArray(new ArrayList<>(noticeContexts)));
   }
 
   public static JsonObject createLoanNoticeContext(Loan loan) {
     return new JsonObject()
-      .put(USER, createUserContext(loan.getUser()))
+      .put(USER, createUserContext(loan.getUser())
+        .withAddressProperties(loan.getUser().getPrimaryAddress())
+        .asJson())
       .put(ITEM, createItemContext(loan.getItem()))
       .put(LOAN, createLoanContext(loan));
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
     JsonObject requestNoticeContext = new JsonObject()
-      .put(USER, createUserContext(request.getRequester()))
+      .put(USER, createUserContext(request.getRequester())
+        .withAddressProperties(request.getRequester().getPrimaryAddress())
+        .asJson())
       .put(REQUEST, createRequestContext(request))
       .put(ITEM, createItemContext(request));
 
@@ -157,7 +161,7 @@ public class TemplateContextUtil {
 
       User requester = request.getRequester();
       if (requester != null) {
-        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()));
+        staffSlipContext.put(REQUESTER, createUserContext(requester, request.getDeliveryAddressTypeId()).asJson());
       }
     }
 
@@ -166,34 +170,22 @@ public class TemplateContextUtil {
     return staffSlipContext;
   }
 
-  public static JsonObject createUserContext(User user, String deliveryAddressTypeId) {
-    JsonObject address = user.getAddressByType(deliveryAddressTypeId);
-
-    JsonObject userContext = createUserContext(user);
-    if(address != null){
-      userContext
-        .put("addressLine1", address.getString("addressLine1", null))
-        .put("addressLine2", address.getString("addressLine2", null))
-        .put("city", address.getString("city", null))
-        .put("region", address.getString("region", null))
-        .put("postalCode", address.getString("postalCode", null))
-        .put("countryId", address.getString("countryId", null));
-    }
-
-    return userContext;
+  public static UserContext createUserContext(User user, String deliveryAddressTypeId) {
+    return createUserContext(user)
+      .withAddressProperties(user.getAddressByType(deliveryAddressTypeId));
   }
 
-  public static JsonObject createUserContext(User user) {
-    return new JsonObject()
-    .put("firstName", user.getFirstName())
-    .put("preferredFirstName", user.getPreferredFirstName() == null ? user.getFirstName() : user.getPreferredFirstName())
-    .put("lastName", user.getLastName())
-    .put("middleName", user.getMiddleName())
-    .put("barcode", user.getBarcode())
-    .put("patronGroup", user.getPatronGroup()!=null ? user.getPatronGroup().getGroup():"")
-    .put("departments", user.getDepartments() != null && !user.getDepartments().isEmpty() ?
+  public static UserContext createUserContext(User user) {
+    return new UserContext()
+      .with(UserContext.FIRST_NAME, user.getFirstName())
+      .with(UserContext.PREFERRED_FIRST_NAME, user.getPreferredFirstName() == null ? user.getFirstName() : user.getPreferredFirstName())
+      .with(UserContext.LAST_NAME, user.getLastName())
+      .with(UserContext.MIDDLE_NAME, user.getMiddleName())
+      .with(UserContext.BARCODE, user.getBarcode())
+      .with(UserContext.PATRON_GROUP, user.getPatronGroup() != null ? user.getPatronGroup().getGroup() : "")
+      .with(UserContext.DEPARTMENTS, user.getDepartments() != null && !user.getDepartments().isEmpty() ?
         user.getDepartments().stream().map(Department::getName).collect(joining("; ")) : "");
-   }
+  }
 
   private static JsonObject createItemContext(Item item) {
     log.debug("createItemContext:: parameters item: {}", item);
@@ -384,4 +376,47 @@ public class TemplateContextUtil {
     return context;
   }
 
+  public static class UserContext {
+    public static final String FIRST_NAME = "firstName";
+    public static final String PREFERRED_FIRST_NAME = "preferredFirstName";
+    public static final String LAST_NAME = "lastName";
+    public static final String MIDDLE_NAME = "middleName";
+    public static final String BARCODE = "barcode";
+    public static final String PATRON_GROUP = "patronGroup";
+    public static final String DEPARTMENTS = "departments";
+    public static final String ADDRESS_TYPE_ID = "addressTypeId";
+    public static final String ADDRESS_LINE_1 = "addressLine1";
+    public static final String ADDRESS_LINE_2 = "addressLine2";
+    public static final String CITY = "city";
+    public static final String REGION = "region";
+    public static final String POSTAL_CODE = "postalCode";
+    public static final String COUNTRY_ID = "countryId";
+
+    JsonObject context = new JsonObject();
+
+    public UserContext with(String key, String value) {
+      context.put(key, value);
+      return this;
+    }
+
+    public UserContext withAddressProperties(JsonObject address) {
+      if (address != null) {
+        return this
+          .with(UserContext.ADDRESS_LINE_1, address.getString("addressLine1", null))
+          .with(UserContext.ADDRESS_LINE_2, address.getString("addressLine2", null))
+          .with(UserContext.CITY, address.getString("city", null))
+          .with(UserContext.REGION, address.getString("region", null))
+          .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
+          .with(UserContext.COUNTRY_ID, address.getString("countryId", null))
+          .with(UserContext.ADDRESS_TYPE_ID, address.getString("addressTypeId", null));
+      } else {
+        return this;
+      }
+    }
+
+    public JsonObject asJson() {
+      return context;
+    }
+
+  }
 }

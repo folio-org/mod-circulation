@@ -122,6 +122,16 @@ public class User {
       .orElse(null);
   }
 
+  public JsonObject getPrimaryAddress() {
+    JsonObject personal = getObjectProperty(representation, PERSONAL_PROPERTY_NAME);
+    val addresses = toStream(personal, "addresses");
+    return addresses
+      .filter(Objects::nonNull)
+      .filter(address -> Objects.equals(getBooleanProperty(address, "primaryAddress"), true))
+      .findFirst()
+      .orElse(null);
+  }
+
   public PatronGroup getPatronGroup() {
     return patronGroup;
   }
