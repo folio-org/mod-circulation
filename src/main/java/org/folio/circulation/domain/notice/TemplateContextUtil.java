@@ -73,7 +73,7 @@ public class TemplateContextUtil {
   public static JsonObject createLoanNoticeContext(Loan loan) {
     return new JsonObject()
       .put(USER, createUserContext(loan.getUser())
-        .withAddressProperties(loan.getUser().getPrimaryAddress())
+        .withPrimaryAddressProperties(loan.getUser().getPrimaryAddress())
         .asJson())
       .put(ITEM, createItemContext(loan.getItem()))
       .put(LOAN, createLoanContext(loan));
@@ -82,7 +82,7 @@ public class TemplateContextUtil {
   public static JsonObject createRequestNoticeContext(Request request) {
     JsonObject requestNoticeContext = new JsonObject()
       .put(USER, createUserContext(request.getRequester())
-        .withAddressProperties(request.getRequester().getPrimaryAddress())
+        .withPrimaryAddressProperties(request.getRequester().getPrimaryAddress())
         .asJson())
       .put(REQUEST, createRequestContext(request))
       .put(ITEM, createItemContext(request));
@@ -392,6 +392,14 @@ public class TemplateContextUtil {
     public static final String POSTAL_CODE = "postalCode";
     public static final String COUNTRY_ID = "countryId";
 
+    public static final String PRIMARY_ADDRESS_ADDRESS_TYPE = "primaryDeliveryAddressType";
+    public static final String PRIMARY_ADDRESS_ADDRESS_LINE_1 = "primaryAddressLine1";
+    public static final String PRIMARY_ADDRESS_ADDRESS_LINE_2 = "primaryAddressLine2";
+    public static final String PRIMARY_ADDRESS_CITY = "primaryCity";
+    public static final String PRIMARY_ADDRESS_REGION = "primaryStateProvRegion";
+    public static final String PRIMARY_ADDRESS_POSTAL_CODE = "primaryZipPostalCode";
+    public static final String PRIMARY_ADDRESS_COUNTRY_ID = "primaryCountry";
+
     JsonObject context = new JsonObject();
 
     public UserContext with(String key, String value) {
@@ -409,6 +417,21 @@ public class TemplateContextUtil {
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
           .with(UserContext.COUNTRY_ID, address.getString("countryId", null))
           .with(UserContext.ADDRESS_TYPE_ID, address.getString("addressTypeId", null));
+      } else {
+        return this;
+      }
+    }
+
+    public UserContext withPrimaryAddressProperties(JsonObject address) {
+      if (address != null) {
+        return this
+          .with(UserContext.PRIMARY_ADDRESS_ADDRESS_LINE_1, address.getString("addressLine1", null))
+          .with(UserContext.PRIMARY_ADDRESS_ADDRESS_LINE_2, address.getString("addressLine2", null))
+          .with(UserContext.PRIMARY_ADDRESS_CITY, address.getString("city", null))
+          .with(UserContext.PRIMARY_ADDRESS_REGION, address.getString("region", null))
+          .with(UserContext.PRIMARY_ADDRESS_POSTAL_CODE, address.getString("postalCode", null))
+          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, address.getString("countryId", null))
+          .with(UserContext.PRIMARY_ADDRESS_ADDRESS_TYPE, address.getString("addressTypeId", null));
       } else {
         return this;
       }
