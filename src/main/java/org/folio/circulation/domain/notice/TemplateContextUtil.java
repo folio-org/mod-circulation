@@ -440,6 +440,5 @@ public class TemplateContextUtil {
     public JsonObject asJson() {
       return context;
     }
-
   }
 }
