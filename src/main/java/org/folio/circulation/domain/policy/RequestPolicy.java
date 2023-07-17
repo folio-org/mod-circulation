@@ -69,20 +69,15 @@ public class RequestPolicy {
       for (RequestType requestType : RequestType.values()) {
         JsonArray jsonArray = allowedServicePointsJson.getJsonArray(requestType.getValue());
         if (jsonArray != null) {
-          allowedServicePoints.put(requestType, extractServicePointIds(jsonArray));
+          Set<UUID> servicePointIds = jsonArray.stream()
+            .map(String.class::cast)
+            .map(UUID::fromString)
+            .collect(Collectors.toSet());
+          allowedServicePoints.put(requestType, servicePointIds);
         }
       }
     }
 
     return allowedServicePoints;
-  }
-
-  private static Set<UUID> extractServicePointIds(JsonArray jsonArray) {
-    log.debug("extractServicePointIds:: parameters jsonArray: {}", jsonArray);
-
-    return jsonArray.stream()
-      .map(String.class::cast)
-      .map(UUID::fromString)
-      .collect(Collectors.toSet());
   }
 }

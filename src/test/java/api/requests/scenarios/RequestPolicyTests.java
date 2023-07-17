@@ -355,7 +355,11 @@ class RequestPolicyTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = RequestType.class, names = {"PAGE", "HOLD", "RECALL"})
+  @EnumSource(
+    value = RequestType.class,
+    names = {"NONE"},
+    mode = EnumSource.Mode.EXCLUDE
+  )
   void canCreateRequestsWithAllowedServicePoints(RequestType requestType) {
     final UUID requestPolicyId = setRequestPolicyWithAllowedServicePoints(requestType);
     final IndividualResource item = itemsFixture.basedUponUprooted();
