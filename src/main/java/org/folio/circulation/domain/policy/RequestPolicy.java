@@ -1,7 +1,7 @@
 package org.folio.circulation.domain.policy;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +64,7 @@ public class RequestPolicy {
     log.debug("extractAllowedServicePoints:: parameters representation: {}",
       allowedServicePointsJson);
 
-    Map<RequestType, Set<UUID>> allowedServicePoints = new HashMap<>();
+    Map<RequestType, Set<UUID>> allowedServicePoints = new EnumMap<>(RequestType.class);
     if (allowedServicePointsJson != null) {
       for (RequestType requestType : RequestType.values()) {
         JsonArray jsonArray = allowedServicePointsJson.getJsonArray(requestType.getValue());
