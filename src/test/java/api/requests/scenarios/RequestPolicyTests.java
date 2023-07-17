@@ -11,16 +11,23 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class RequestPolicyTests extends APITests {
@@ -343,6 +350,27 @@ class RequestPolicyTests extends APITests {
 
     assertThat(recallResponse, hasStatus(HTTP_INTERNAL_SERVER_ERROR));
     assertTrue(recallResponse.getBody().equalsIgnoreCase(expectedErrorMessage));
+  }
+
+  @ParameterizedTest
+  @EnumSource(
+    value = RequestType.class,
+    names = {"NONE"},
+    mode = EnumSource.Mode.EXCLUDE
+  )
+  void canCreateAndRetrieveRequestPolicyWithAllowedServicePoints(RequestType requestType) {
+    Map<RequestType, Set<UUID>> allowedServicePoints = new HashMap<>();
+    allowedServicePoints.put(requestType, Set.of(requestPickupServicePoint.getId()));
+    UUID requestPolicyId = requestPoliciesFixture
+      .pageRequestPolicyWithAllowedServicePoints(allowedServicePoints, requestType).getId();
+
+    IndividualResource requestPolicyById = requestPolicyClient.get(requestPolicyId);
+
+    assertThat(requestPolicyById.getId(), is(requestPolicyId));
+    JsonArray allowedIds = requestPolicyById.getJson().getJsonObject("allowedServicePoints")
+      .getJsonArray(requestType.getValue());
+    assertThat(allowedIds.size(), is(1));
+    assertThat(allowedIds.getString(0), is(requestPickupServicePoint.getId().toString()));
   }
 
   private void setRules(String rules) {
