@@ -24,6 +24,7 @@ public class RequestPolicy {
   private final String id;
 
   private final List<String> requestTypes;
+  @Getter
   private final Map<RequestType, Set<UUID>> allowedServicePoints;
 
   private RequestPolicy(String id, List<String> requestTypes,
