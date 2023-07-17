@@ -91,7 +91,7 @@ public class RequestPoliciesFixture {
     return customRequestPolicy(requestTypesList);
   }
 
-  public IndividualResource pageRequestPolicyWithAllowedServicePoints(
+  public IndividualResource createRequestPolicyWithAllowedServicePoints(
     Map<RequestType, Set<UUID>> allowedServicePoints, RequestType requestType) {
 
     List<RequestType> requestTypesList = new ArrayList<>();

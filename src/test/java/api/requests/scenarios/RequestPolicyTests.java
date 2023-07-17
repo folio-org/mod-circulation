@@ -19,12 +19,14 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
+import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
@@ -353,16 +355,11 @@ class RequestPolicyTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(
-    value = RequestType.class,
-    names = {"NONE"},
-    mode = EnumSource.Mode.EXCLUDE
-  )
-  void canCreateAndRetrieveRequestPolicyWithAllowedServicePoints(RequestType requestType) {
-    Map<RequestType, Set<UUID>> allowedServicePoints = new HashMap<>();
-    allowedServicePoints.put(requestType, Set.of(requestPickupServicePoint.getId()));
-    UUID requestPolicyId = requestPoliciesFixture
-      .pageRequestPolicyWithAllowedServicePoints(allowedServicePoints, requestType).getId();
+  @EnumSource(value = RequestType.class, names = {"PAGE", "HOLD", "RECALL"})
+  void canCreateRequestsWithAllowedServicePoints(RequestType requestType) {
+    final UUID requestPolicyId = setRequestPolicyWithAllowedServicePoints(requestType);
+    final IndividualResource item = itemsFixture.basedUponUprooted();
+    createRequest(requestType, item);
 
     IndividualResource requestPolicyById = requestPolicyClient.get(requestPolicyId);
 
@@ -371,6 +368,36 @@ class RequestPolicyTests extends APITests {
       .getJsonArray(requestType.getValue());
     assertThat(allowedIds.size(), is(1));
     assertThat(allowedIds.getString(0), is(requestPickupServicePoint.getId().toString()));
+  }
+
+  private UUID setRequestPolicyWithAllowedServicePoints(RequestType requestType) {
+    final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
+    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final Map<RequestType, Set<UUID>> allowedServicePoints = new HashMap<>();
+    allowedServicePoints.put(requestType, Set.of(requestPickupServicePoint.getId()));
+    final UUID requestPolicyId = requestPoliciesFixture
+      .createRequestPolicyWithAllowedServicePoints(allowedServicePoints, requestType).getId();
+    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    final String rules = String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + requestPolicyId + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy
+    );
+    setRules(rules);
+
+    return requestPolicyId;
+  }
+
+  private void createRequest(RequestType requestType, IndividualResource checkedOutItem) {
+    if (requestType != RequestType.PAGE) {
+      checkOutFixture.checkOutByBarcode(checkedOutItem, usersFixture.jessica());
+    }
+    requestsClient.create(new RequestBuilder()
+      .withRequestType(requestType.getValue())
+      .forItem(checkedOutItem)
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.steve()));
   }
 
   private void setRules(String rules) {
