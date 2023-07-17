@@ -43,7 +43,7 @@ public class RequestPolicy {
     return new RequestPolicy(representation.getString("id"),
       JsonStringArrayPropertyFetcher
         .toStream(representation, "requestTypes")
-        .collect(Collectors.toList()), allowedServicePoints);
+        .toList(), allowedServicePoints);
   }
 
   public boolean allowsType(RequestType type) {
