@@ -19,15 +19,14 @@ import java.util.UUID;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITests;
-import api.support.TlrFeatureStatus;
 import api.support.builders.RequestBuilder;
+import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -375,22 +374,13 @@ class RequestPolicyTests extends APITests {
   }
 
   private UUID setRequestPolicyWithAllowedServicePoints(RequestType requestType) {
-    final String nonCirculatingLoanTypePolicy = loanPoliciesFixture.canCirculateFixed().getId().toString();
-    final String anyNoticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
     final Map<RequestType, Set<UUID>> allowedServicePoints = new HashMap<>();
     allowedServicePoints.put(requestType, Set.of(requestPickupServicePoint.getId()));
-    final UUID requestPolicyId = requestPoliciesFixture
-      .createRequestPolicyWithAllowedServicePoints(allowedServicePoints, requestType).getId();
-    final String anyOverdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
-    final String anyLostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+    var requestPolicy = requestPoliciesFixture
+      .createRequestPolicyWithAllowedServicePoints(allowedServicePoints, requestType);
+    policiesActivation.use(PoliciesToActivate.builder().requestPolicy(requestPolicy));
 
-    final String rules = String.join("\n",
-      "priority: t, s, c, b, a, m, g",
-      "fallback-policy : l " + nonCirculatingLoanTypePolicy + " r " + requestPolicyId + " n " + anyNoticePolicy + " o " + anyOverdueFinePolicy + " i " + anyLostItemFeePolicy
-    );
-    setRules(rules);
-
-    return requestPolicyId;
+    return requestPolicy.getId();
   }
 
   private void createRequest(RequestType requestType, IndividualResource checkedOutItem) {
