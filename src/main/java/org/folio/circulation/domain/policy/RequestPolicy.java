@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.policy;
 
+import static org.folio.circulation.support.utils.LogUtil.asJson;
+
 import java.lang.invoke.MethodHandles;
 import java.util.EnumMap;
 import java.util.List;
@@ -77,7 +79,7 @@ public class RequestPolicy {
         }
       }
     }
-    log.info("extractAllowedServicePoints:: result: {}", allowedServicePoints);
+    log.info("extractAllowedServicePoints:: result: {}", () -> asJson(allowedServicePoints));
 
     return allowedServicePoints;
   }
