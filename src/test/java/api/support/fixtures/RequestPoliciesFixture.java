@@ -4,6 +4,8 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
@@ -87,6 +89,19 @@ public class RequestPoliciesFixture {
     requestTypesList.add(RequestType.PAGE);
 
     return customRequestPolicy(requestTypesList);
+  }
+
+  public IndividualResource createRequestPolicyWithAllowedServicePoints(
+    Map<RequestType, Set<UUID>> allowedServicePoints, RequestType requestType) {
+
+    List<RequestType> requestTypesList = new ArrayList<>();
+    requestTypesList.add(requestType);
+    var policyId = UUID.randomUUID();
+    var customPolicy = new RequestPolicyBuilder(policyId, requestTypesList,
+      "Example Request Policy" + policyId,
+      "An example request policy with allowed Service Points", allowedServicePoints);
+
+    return requestPolicyRecordCreator.createIfAbsent(customPolicy);
   }
 
   public IndividualResource nonRequestableRequestPolicy() {

@@ -1,6 +1,8 @@
 package api.support.builders;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
@@ -13,6 +15,7 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
   private final String name;
   private final String description;
   private final List<RequestType> types;
+  private Map<RequestType, Set<UUID>> allowedServicePoints;
 
   public RequestPolicyBuilder(List<RequestType> requestTypes) {
 
@@ -35,6 +38,16 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
       description,
       requestTypes
     );
+  }
+
+  public RequestPolicyBuilder(UUID id, List<RequestType> requestTypes, String name,
+    String description, Map<RequestType, Set<UUID>> allowedServicePoints) {
+
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.types = requestTypes;
+    this.allowedServicePoints = allowedServicePoints;
   }
 
   private RequestPolicyBuilder(
@@ -67,6 +80,14 @@ public class RequestPolicyBuilder extends JsonBuilder implements Builder {
     }
 
     put(requestPolicy, "requestTypes", requestTypes);
+
+    JsonObject allowedServicePointsJson = new JsonObject();
+    if (allowedServicePoints != null) {
+      for (RequestType t : allowedServicePoints.keySet()) {
+        allowedServicePointsJson.put(t.getValue(), allowedServicePoints.get(t));
+      }
+      requestPolicy.put("allowedServicePoints", allowedServicePointsJson);
+    }
 
     return requestPolicy;
   }
