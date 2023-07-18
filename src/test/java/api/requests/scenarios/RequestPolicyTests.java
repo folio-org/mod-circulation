@@ -359,7 +359,7 @@ class RequestPolicyTests extends APITests {
     names = {"NONE"},
     mode = EnumSource.Mode.EXCLUDE
   )
-  void canCreateRequestsWithAllowedServicePoints(RequestType requestType) {
+  void createdRequestCanUseRequestPolicyWithAllowedServicePoints(RequestType requestType) {
     final UUID requestPolicyId = setRequestPolicyWithAllowedServicePoints(requestType);
     final IndividualResource item = itemsFixture.basedUponUprooted();
     createRequest(requestType, item);

@@ -77,6 +77,7 @@ public class RequestPolicy {
         }
       }
     }
+    log.info("extractAllowedServicePoints:: result: {}", allowedServicePoints);
 
     return allowedServicePoints;
   }
