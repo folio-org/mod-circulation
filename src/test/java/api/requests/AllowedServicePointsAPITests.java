@@ -148,6 +148,25 @@ class AllowedServicePointsAPITests extends APITests {
     names = {"NONE"},
     mode = EnumSource.Mode.EXCLUDE
   )
+  void shouldReturnNoAllowedServicePointsIfAllowedServicePointHasNoPickupLocation(
+    RequestType requestType) {
+
+    var requesterId = usersFixture.steve().getId().toString();
+    var itemId = itemsFixture.basedUponNod().getId().toString();
+    var servicePointWithNoPickupLocationId = servicePointsFixture.cd3().getId();
+    setRequestPolicyWithAllowedServicePoints(requestType, servicePointWithNoPickupLocationId);
+
+    var response = get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var allowedServicePoints = response.getJsonArray(requestType.getValue());
+    assertThat(allowedServicePoints, nullValue());
+  }
+
+  @ParameterizedTest
+  @EnumSource(
+    value = RequestType.class,
+    names = {"NONE"},
+    mode = EnumSource.Mode.EXCLUDE
+  )
   void shouldReturnOnlyExistingServicePointsWhenRequestPolicyDoesNotHaveAny(
     RequestType requestType) {
 
