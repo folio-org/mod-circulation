@@ -14,10 +14,8 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
 import org.folio.circulation.support.results.Result;
 
-
 public class AllowedServicePointsService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
 
   public CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePoints(
     AllowedServicePointsRequest request) {
