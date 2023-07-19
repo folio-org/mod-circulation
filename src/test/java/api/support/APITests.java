@@ -83,7 +83,7 @@ import lombok.experimental.Delegate;
 public abstract class APITests {
   private static boolean okapiAlreadyDeployed = false;
 
-  private final RestAssuredClient restAssuredClient = new RestAssuredClient(
+  protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
 
   private final boolean initialiseCirculationRules;
