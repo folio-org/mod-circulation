@@ -74,7 +74,6 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
-import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -252,7 +251,6 @@ public abstract class RenewalResource extends Resource {
       itemRepository,
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
-      ScheduledNoticesRepository.using(clients),
       new OverduePeriodCalculatorService(new CalendarRepository(clients),
         new LoanPolicyRepository(clients)),
       new FeeFineFacade(clients));

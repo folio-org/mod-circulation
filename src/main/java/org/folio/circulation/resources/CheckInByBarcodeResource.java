@@ -1,11 +1,14 @@
 package org.folio.circulation.resources;
 
+import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
@@ -14,6 +17,7 @@ import org.folio.circulation.domain.validation.CheckInValidators;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
@@ -28,6 +32,8 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+
+import java.util.Optional;
 
 public class CheckInByBarcodeResource extends Resource {
   public CheckInByBarcodeResource(HttpClient client) {
@@ -65,6 +71,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);
+    final ScheduledNoticesRepository scheduledNoticesRepository =
+      ScheduledNoticesRepository.using(clients);
 
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients,
@@ -95,6 +103,8 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
         processAdapter::checkInLoan, CheckInContext::withLoan))
+      .thenApplyAsync(mapResult(checkInContext ->
+        removeDueDateNoticesForClosedLoan(checkInContext, scheduledNoticesRepository)))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
         .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
@@ -135,5 +145,18 @@ public class CheckInByBarcodeResource extends Resource {
         item.getStatusName());
 
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
+  }
+
+  private CheckInContext removeDueDateNoticesForClosedLoan(CheckInContext context,
+    ScheduledNoticesRepository repository) {
+
+    String loanId = Optional.ofNullable(context)
+      .map(CheckInContext::getLoan)
+      .filter(Loan::isClosed)
+      .map(Loan::getId)
+      .orElse(null);
+
+    repository.deleteByLoanIdAndTriggeringEvent(loanId, DUE_DATE);
+    return context;
   }
 }
