@@ -77,7 +77,7 @@ public class AllowedServicePointsResource extends Resource {
       errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
     }
 
-    if ((instanceId == null) == (itemId == null)) {
+    if (instanceId == null ^ itemId != null) {
       errors.add("Request query parameters must contain either 'instance' or 'item'.");
     }
 
@@ -99,14 +99,7 @@ public class AllowedServicePointsResource extends Resource {
   }
 
   private static JsonObject toJson(Map<RequestType, Set<String>> allowedServicePoints) {
-    JsonObject responseJson = new JsonObject();
-
-    allowedServicePoints.entrySet()
-      .stream()
-      .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
-      .forEach(entry -> responseJson.put(entry.getKey().getValue(), entry.getValue()));
-
-    return responseJson;
+    return new JsonObject();
   }
 
 }
