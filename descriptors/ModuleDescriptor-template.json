@@ -1448,6 +1448,7 @@
         "circulation.requests.queue.reorder.collection.post",
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
+        "circulation.requests.allowed-service-points.get",
         "circulation.inventory.items-in-transit-report.get",
         "circulation.pick-slips.get"
       ]
