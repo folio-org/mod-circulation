@@ -19,7 +19,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import api.support.APITests;
 import api.support.http.QueryStringParameter;
 
-public class AllowedServicePointsAPITests extends APITests {
+class AllowedServicePointsAPITests extends APITests {
 
   @ParameterizedTest
   @CsvSource(value = {
