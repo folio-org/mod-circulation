@@ -628,6 +628,22 @@
       ]
     },
     {
+      "id": "allowed-service-points",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/allowed-service-points",
+          "permissionsRequired": [
+            "circulation.requests.allowed-service-points.get"
+          ],
+          "modulePermissions": [ ]
+        }
+      ]
+    },
+    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
