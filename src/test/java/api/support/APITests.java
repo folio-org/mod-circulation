@@ -441,4 +441,8 @@ public abstract class APITests {
       configurationsFixture.deleteTlrFeatureConfig();
     }
   }
+
+  public static String randomId() {
+    return UUID.randomUUID().toString();
+  }
 }
