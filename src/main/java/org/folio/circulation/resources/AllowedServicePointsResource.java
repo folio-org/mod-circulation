@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.util.UuidUtil.isUuid;
 
@@ -18,6 +19,7 @@ import org.folio.circulation.services.AllowedServicePointsService;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.MultiMap;
@@ -42,10 +44,12 @@ public class AllowedServicePointsResource extends Resource {
   private void get(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
-    buildRequest(routingContext)
-      .after(new AllowedServicePointsService()::getAllowedServicePoints)
+    ofAsync(routingContext)
+      .thenApply(r -> r.next(AllowedServicePointsResource::buildRequest))
+      .thenCompose(r -> r.after(new AllowedServicePointsService()::getAllowedServicePoints))
       .thenApply(r -> r.map(AllowedServicePointsResource::toJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .exceptionally(CommonFailures::failedDueToServerError)
       .thenAccept(context::writeResultToHttpResponse);
   }
 
