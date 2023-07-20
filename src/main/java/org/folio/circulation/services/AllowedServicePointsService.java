@@ -20,7 +20,7 @@ public class AllowedServicePointsService {
   public CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePoints(
     AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePoints:: {}", request);
+    log.debug("getAllowedServicePoints:: parameters: request={}", request);
 
     return request.getItemId() != null
       ? getAllowedServicePointsForItem(request)
@@ -30,7 +30,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePointsForItem(
     AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePointsForItem:: {}", request);
+    log.debug("getAllowedServicePointsForItem:: parameters: request={}", request);
 
     return ofAsync(new EnumMap<>(RequestType.class));
   }
@@ -38,7 +38,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePointsForInstance(
     AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePointsForInstance:: {}", request);
+    log.debug("getAllowedServicePointsForInstance:: parameters: request={}", request);
 
     return ofAsync(new EnumMap<>(RequestType.class));
   }

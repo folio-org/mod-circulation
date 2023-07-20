@@ -63,8 +63,10 @@ public class AllowedServicePointsResource extends Resource {
     return validateRequest(request);
   }
 
-  private static Result<AllowedServicePointsRequest> validateRequest(AllowedServicePointsRequest request) {
-    log.debug("validateRequest:: request={}", request);
+  private static Result<AllowedServicePointsRequest> validateRequest(
+    AllowedServicePointsRequest request) {
+
+    log.debug("validateRequest:: parameters: request={}", request);
 
     List<String> errors = new ArrayList<>();
     String requesterId = request.getRequesterId();
