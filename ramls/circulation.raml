@@ -318,22 +318,19 @@ resourceTypes:
       displayName: "Allowed pickup service points by request type"
       get:
         description: "Get allowed pickup service points grouped by request type"
-        queryString:
-          minProperties: 2
-          maxProperties: 2
-          properties:
-            requester:
-              description: "Requester ID"
-              pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
-              required: true
-            item:
-              description: "Item ID"
-              pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
-              required: false
-            instance:
-              description: "Instance ID"
-              pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
-              required: false
+        queryParameters:
+          requester:
+            description: "Requester ID"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: true
+          item:
+            description: "Item ID"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: false
+          instance:
+            description: "Instance ID"
+            pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+            required: false
         responses:
           200:
             description: "List of allowed service points was retrieved successfully"
