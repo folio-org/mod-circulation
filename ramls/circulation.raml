@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v14.2
+version: v14.1
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -291,6 +291,7 @@ resourceTypes:
                   body:
                     text/plain:
                       example: "Internal server error."
+    /allowed-service-points
     /instances:
       displayName: Instance level requests
       post:
@@ -314,4 +315,4 @@ resourceTypes:
             body:
               text/plain:
                 example: "Internal server error"
-    /allowed-service-points
+
