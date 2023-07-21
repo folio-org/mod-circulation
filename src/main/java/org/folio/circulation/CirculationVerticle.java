@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
@@ -83,6 +84,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);
 
+    new AllowedServicePointsResource(client).register(router);
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
