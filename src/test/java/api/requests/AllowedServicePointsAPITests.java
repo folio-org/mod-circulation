@@ -145,6 +145,17 @@ class AllowedServicePointsAPITests extends APITests {
     assertThat(allowedServicePoints.get(0), is(servicePointsWithPickupLocation.get(0).getId().toString()));
   }
 
+  @Test
+  void shouldReturnErrorIfRequesterDoesNotExist() {
+    var requesterId = randomId();
+    var itemId = itemsFixture.basedUponNod().getId().toString();
+    var cd1Id = servicePointsFixture.cd1().getId();
+    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, cd1Id);
+
+    Response response = get(requesterId, null, itemId, HttpStatus.SC_BAD_REQUEST);
+    assertThat(response.getBody(), containsString("User does not exist"));
+  }
+
   private Response get(String requesterId, String instanceId, String itemId, int expectedStatusCode) {
     List<QueryStringParameter> queryParams = new ArrayList<>();
     if (requesterId != null) {

@@ -1,5 +1,7 @@
 package org.folio.circulation.services;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
@@ -25,6 +27,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 
@@ -69,7 +72,7 @@ public class AllowedServicePointsService {
 
     if (user == null) {
       log.error("lookupRequestPolicy:: user is null");
-      throw new IllegalStateException("User does not exist");
+      return completedFuture(failed(new BadRequestFailure("User does not exist")));
     }
 
     return itemRepository.fetchById(request.getItemId())
