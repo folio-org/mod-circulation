@@ -13,10 +13,11 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
+import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.services.AllowedServicePointsService;
 import org.folio.circulation.support.BadRequestFailure;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
@@ -24,6 +25,7 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -42,11 +44,12 @@ public class AllowedServicePointsResource extends Resource {
   }
 
   private void get(RoutingContext routingContext) {
-    WebContext context = new WebContext(routingContext);
+    final var context = new WebContext(routingContext);
+    final var clients = Clients.create(context, client);
 
     ofAsync(routingContext)
       .thenApply(r -> r.next(AllowedServicePointsResource::buildRequest))
-      .thenCompose(r -> r.after(new AllowedServicePointsService()::getAllowedServicePoints))
+      .thenCompose(r -> r.after(new AllowedServicePointsService(clients)::getAllowedServicePoints))
       .thenApply(r -> r.map(AllowedServicePointsResource::toJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .exceptionally(CommonFailures::failedDueToServerError)
@@ -101,7 +104,14 @@ public class AllowedServicePointsResource extends Resource {
   }
 
   private static JsonObject toJson(Map<RequestType, Set<String>> allowedServicePoints) {
-    return new JsonObject();
-  }
+    JsonObject response = new JsonObject();
+    if (allowedServicePoints == null) {
+      return response;
+    }
 
+    allowedServicePoints.forEach((key, value) -> response.put(key.getValue(),
+      new JsonArray(value.stream().toList())));
+
+    return response;
+  }
 }
