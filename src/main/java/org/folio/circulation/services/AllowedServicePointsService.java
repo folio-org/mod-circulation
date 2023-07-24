@@ -1,6 +1,7 @@
 package org.folio.circulation.services;
 
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
@@ -68,6 +69,7 @@ public class AllowedServicePointsService {
 
     if (user == null) {
       log.error("lookupRequestPolicy:: user is null");
+      throw new IllegalStateException("User does not exist");
     }
 
     return itemRepository.fetchById(request.getItemId())
@@ -93,7 +95,7 @@ public class AllowedServicePointsService {
 
     return servicePointRepository.filterIdsByServicePointsAndPickupLocationExistence(
       allowedServicePointsIdsSet)
-        .thenCompose(r -> r.after(filteredSpIds -> includeOnlyExistingServicePoints(
+        .thenApply(r -> r.next(filteredSpIds -> includeOnlyExistingServicePoints(
           allowedServicePointsInPolicy, filteredSpIds, requestPolicy)));
   }
 
@@ -105,23 +107,23 @@ public class AllowedServicePointsService {
     List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
       .toList();
-    if (!allowedTypes.isEmpty()) {
-      log.info("fetchAllowedServicePoints:: allowedTypes={}", allowedTypes);
-      return servicePointRepository.fetchPickupLocationServicePointsIds()
-        .thenCompose(r -> r.after(servicePointIds -> {
-          Map<RequestType, Set<String>> allowedServicePoints = new EnumMap<>(RequestType.class);
-          allowedTypes.forEach(requestType -> allowedServicePoints.put(requestType, servicePointIds));
-
-          log.info("fetchAllowedServicePoints:: result: {}", () -> asJson(allowedServicePoints));
-
-          return ofAsync(allowedServicePoints);
-        }));
-    } else {
+    if (allowedTypes.isEmpty()) {
+      log.info("fetchAllowedServicePoints:: allowedTypes is empty");
       return ofAsync(new EnumMap<>(RequestType.class));
     }
+    log.info("fetchAllowedServicePoints:: allowedTypes={}", allowedTypes);
+    return servicePointRepository.fetchPickupLocationServicePointsIds()
+      .thenCompose(r -> r.after(servicePointIds -> {
+        Map<RequestType, Set<String>> allowedServicePoints = new EnumMap<>(RequestType.class);
+        allowedTypes.forEach(requestType -> allowedServicePoints.put(requestType, servicePointIds));
+        log.info("fetchAllowedServicePoints:: result: {}", () -> asJson(allowedServicePoints));
+
+        return ofAsync(allowedServicePoints);
+      }));
+
   }
 
-  private CompletableFuture<Result<Map<RequestType, Set<String>>>> includeOnlyExistingServicePoints(
+  private Result<Map<RequestType, Set<String>>> includeOnlyExistingServicePoints(
     Map<RequestType, Set<UUID>> allowedServicePointsInPolicy, Set<String> relevantSpIds,
     RequestPolicy requestPolicy) {
 
@@ -140,7 +142,7 @@ public class AllowedServicePointsService {
       }
     });
 
-    return ofAsync(allowedServicePoints);
+    return succeeded(allowedServicePoints);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePointsForInstance(
