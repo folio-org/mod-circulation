@@ -152,8 +152,7 @@ class AllowedServicePointsAPITests extends APITests {
     var cd1Id = servicePointsFixture.cd1().getId();
     setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, cd1Id);
 
-    Response response = get(requesterId, null, itemId, HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), containsString("User does not exist"));
+    get(requesterId, null, itemId, HttpStatus.SC_NOT_FOUND);
   }
 
   private Response get(String requesterId, String instanceId, String itemId, int expectedStatusCode) {

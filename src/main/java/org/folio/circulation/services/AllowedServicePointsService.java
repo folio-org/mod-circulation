@@ -27,8 +27,8 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 
 public class AllowedServicePointsService {
@@ -72,7 +72,7 @@ public class AllowedServicePointsService {
 
     if (user == null) {
       log.error("lookupRequestPolicy:: user is null");
-      return completedFuture(failed(new BadRequestFailure("User does not exist")));
+      return completedFuture(failed(new RecordNotFoundFailure("User", request.getRequesterId())));
     }
 
     return itemRepository.fetchById(request.getItemId())
