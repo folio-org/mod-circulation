@@ -129,6 +129,7 @@ public class AllowedServicePointsService {
       .toList();
     if (allowedTypes.isEmpty()) {
       log.info("fetchAllowedServicePoints:: allowedTypes is empty");
+
       return ofAsync(new EnumMap<>(RequestType.class));
     }
     log.info("fetchAllowedServicePoints:: allowedTypes={}", allowedTypes);
@@ -162,6 +163,8 @@ public class AllowedServicePointsService {
     final Map<RequestType, Set<String>> allowedServicePoints = new EnumMap<>(RequestType.class);
     allowedServicePointsInPolicy.forEach((requestType, uuidSet) -> {
       if (requestPolicy.allowsType(requestType)) {
+        log.info("includeOnlyExistingServicePoints:: requestType={} is allowed",
+          requestType.getValue());
         allowedServicePoints.put(requestType,
           uuidSet.stream()
             .map(UUID::toString)

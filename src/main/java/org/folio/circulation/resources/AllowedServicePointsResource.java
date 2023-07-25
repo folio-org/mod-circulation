@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 import static org.folio.util.UuidUtil.isUuid;
 
 import java.lang.invoke.MethodHandles;
@@ -104,13 +105,16 @@ public class AllowedServicePointsResource extends Resource {
   }
 
   private static JsonObject toJson(Map<RequestType, Set<String>> allowedServicePoints) {
+    log.debug("toJson:: parameters: allowedServicePoints={}", () -> asJson(allowedServicePoints));
     JsonObject response = new JsonObject();
     if (allowedServicePoints == null) {
+      log.info("toJson:: allowedServicePoints is null");
       return response;
     }
 
     allowedServicePoints.forEach((key, value) -> response.put(key.getValue(),
       new JsonArray(value.stream().toList())));
+    log.info("allowedServicePoints:: result={}", response);
 
     return response;
   }
