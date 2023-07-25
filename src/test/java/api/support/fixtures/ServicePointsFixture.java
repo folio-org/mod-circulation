@@ -1,11 +1,21 @@
 package api.support.fixtures;
 
-import static api.support.fixtures.ServicePointExamples.*;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk1;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk10;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk2;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk4;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk5;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk6;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk7;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk8;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk9;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
-import api.support.http.IndividualResource;
+import java.util.Collection;
 
 import api.support.builders.ServicePointBuilder;
+import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 
 public class ServicePointsFixture {
@@ -74,5 +84,9 @@ public class ServicePointsFixture {
   public IndividualResource create(ServicePointBuilder builder) {
 
     return servicePointRecordCreator.createIfAbsent(builder);
+  }
+
+  public Collection<IndividualResource> getAllServicePoints() {
+    return servicePointRecordCreator.getIdentityMap().values();
   }
 }
