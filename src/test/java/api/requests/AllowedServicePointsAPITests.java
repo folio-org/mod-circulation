@@ -152,9 +152,9 @@ class AllowedServicePointsAPITests extends APITests {
     var cd1Id = servicePointsFixture.cd1().getId();
     setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, cd1Id);
 
-    Response response = get(requesterId, null, itemId, HttpStatus.SC_NOT_FOUND);
-    assertThat(response.getBody(), equalTo("User record with ID \"" + requesterId +
-      "\" cannot be found"));
+    Response response = get(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    assertThat(response.getBody(), containsString("User with id=" + requesterId +
+      " cannot be found"));
   }
 
   private Response get(String requesterId, String instanceId, String itemId, int expectedStatusCode) {

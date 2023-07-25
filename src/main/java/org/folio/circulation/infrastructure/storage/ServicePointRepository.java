@@ -206,19 +206,16 @@ public class ServicePointRepository {
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<Set<String>>> fetchPickupLocationServicePointsIds() {
+  public CompletableFuture<Result<Collection<ServicePoint>>> fetchPickupLocationServicePoints() {
     return createServicePointsFetcher().find(MultipleCqlIndexValuesCriteria.builder()
         .indexName("pickupLocation")
         .indexOperator(CqlQuery::matchAny)
         .value("true")
         .build())
-      .thenApply(r -> r.map(MultipleRecords::getRecords)
-        .map(servicePoints -> servicePoints.stream()
-          .map(ServicePoint::getId)
-          .collect(Collectors.toSet())));
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<Set<String>>> filterIdsByServicePointsAndPickupLocationExistence(
+  public CompletableFuture<Result<Collection<ServicePoint>>> fetchServicePointsByIdsWithPickupLocation(
     Set<String> ids) {
 
     log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
@@ -227,10 +224,7 @@ public class ServicePointRepository {
     Result<CqlQuery> pickupLocationQuery = exactMatch("pickupLocation", "true");
 
     return createServicePointsFetcher().findByIdIndexAndQuery(ids, "id", pickupLocationQuery)
-      .thenApply(r -> r.map(MultipleRecords::getRecords)
-        .map(records -> records.stream()
-          .map(ServicePoint::getId)
-          .collect(Collectors.toSet())));
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   private FindWithMultipleCqlIndexValues<ServicePoint> createServicePointsFetcher() {
