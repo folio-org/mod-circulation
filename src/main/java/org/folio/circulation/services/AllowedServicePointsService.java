@@ -132,6 +132,7 @@ public class AllowedServicePointsService {
       return ofAsync(new EnumMap<>(RequestType.class));
     }
     log.info("fetchAllowedServicePoints:: allowedTypes={}", allowedTypes);
+
     return fetchPickupLocationServicePointsIds()
       .thenApply(r -> r.map(servicePointIds -> mapToAllowedServicePoints(allowedTypes,
         servicePointIds)));
