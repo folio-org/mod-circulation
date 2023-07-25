@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
@@ -64,11 +65,11 @@ public class AllowedServicePointsService {
     log.debug("getAllowedServicePointsForItem:: parameters: request={}", request);
 
     return userRepository.getUser(request.getRequesterId())
-      .thenCompose(r -> r.after(user -> lookupRequestPolicy(request, user)))
+      .thenCompose(r -> r.after(user -> fetchItemAndLookupRequestPolicy(request, user)))
       .thenCompose(r -> r.after(this::extractAllowedServicePoints));
   }
 
-  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(
+  private CompletableFuture<Result<RequestPolicy>> fetchItemAndLookupRequestPolicy(
     AllowedServicePointsRequest request, User user) {
 
     log.debug("lookupRequestPolicy:: parameters: request={}, user={}", request, user);
@@ -80,9 +81,22 @@ public class AllowedServicePointsService {
     }
 
     return itemRepository.fetchById(request.getItemId())
-      .thenCompose(r -> r.after(item -> requestPolicyRepository.lookupRequestPolicy(item, user)));
+      .thenCompose(r -> r.after(item -> lookupRequestPolicy(item, user, request)));
   }
 
+  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user,
+    AllowedServicePointsRequest request) {
+
+    log.debug("lookupRequestPolicy:: parameters item: {}, user: {}", item, user);
+
+    if (item.isNotFound()) {
+      log.error("lookupRequestPolicy:: item is null");
+      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
+        format("Item with id=%s cannot be found", request.getItemId())))));
+    }
+
+    return requestPolicyRepository.lookupRequestPolicy(item, user);
+  }
   private CompletableFuture<Result<Map<RequestType, Set<String>>>> extractAllowedServicePoints(
     RequestPolicy requestPolicy) {
 

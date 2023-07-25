@@ -157,6 +157,18 @@ class AllowedServicePointsAPITests extends APITests {
       " cannot be found"));
   }
 
+  @Test
+  void shouldReturnErrorIfItemDoesNotExist() {
+    var requesterId = usersFixture.steve().getId().toString();
+    var itemId = randomId();
+    var cd1Id = servicePointsFixture.cd1().getId();
+    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, cd1Id);
+
+    Response response = get(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    assertThat(response.getBody(), containsString("Item with id=" + itemId +
+      " cannot be found"));
+  }
+
   private Response get(String requesterId, String instanceId, String itemId, int expectedStatusCode) {
     List<QueryStringParameter> queryParams = new ArrayList<>();
     if (requesterId != null) {
