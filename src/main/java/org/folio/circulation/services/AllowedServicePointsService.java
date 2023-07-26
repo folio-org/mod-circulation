@@ -165,11 +165,13 @@ public class AllowedServicePointsService {
       if (requestPolicy.allowsType(requestType)) {
         log.info("includeOnlyExistingServicePoints:: requestType={} is allowed",
           requestType.getValue());
-        allowedServicePoints.put(requestType,
-          uuidSet.stream()
-            .map(UUID::toString)
-            .filter(relevantSpIds::contains)
-            .collect(Collectors.toSet()));
+        Set<String> filteredIds = uuidSet.stream()
+          .map(UUID::toString)
+          .filter(relevantSpIds::contains)
+          .collect(Collectors.toSet());
+        if (!filteredIds.isEmpty()) {
+          allowedServicePoints.put(requestType, filteredIds);
+        }
       }
     });
 
