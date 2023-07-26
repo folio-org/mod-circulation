@@ -10,6 +10,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,6 +122,24 @@ class AllowedServicePointsAPITests extends APITests {
     var allowedServicePoints = response.getJsonArray(requestType.getValue()).stream().toList();
     assertThat(allowedServicePoints, hasSize(1));
     assertThat(allowedServicePoints, hasItem(cd1Id.toString()));
+  }
+
+  @ParameterizedTest
+  @EnumSource(
+    value = RequestType.class,
+    names = {"NONE"},
+    mode = EnumSource.Mode.EXCLUDE
+  )
+  void shouldReturnNoAllowedServicePointsIfAllowedServicePointDoesNotExist(
+    RequestType requestType) {
+
+    var requesterId = usersFixture.steve().getId().toString();
+    var itemId = itemsFixture.basedUponNod().getId().toString();
+    setRequestPolicyWithAllowedServicePoints(requestType, UUID.randomUUID());
+
+    var response = get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var allowedServicePoints = response.getJsonArray(requestType.getValue());
+    assertThat(allowedServicePoints, nullValue());
   }
 
   @ParameterizedTest
