@@ -148,7 +148,7 @@ class AllowedServicePointsAPITests extends APITests {
     names = {"NONE"},
     mode = EnumSource.Mode.EXCLUDE
   )
-  void shouldReturnNoAllowedServicePointsIfAllowedServicePointHasNoPickupLocation(
+  void shouldReturnNoAllowedServicePointsIfAllowedServicePointIsNotPickupLocation(
     RequestType requestType) {
 
     var requesterId = usersFixture.steve().getId().toString();
