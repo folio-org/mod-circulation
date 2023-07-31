@@ -66,11 +66,11 @@ public class RequestPolicy {
 
     Set<String> allowedServicePointIds = allowedServicePoints.get(requestType);
     if (allowedServicePointIds == null || allowedServicePointIds.contains(servicePointId)) {
-      log.info("allowsServicePoint:: service point {} is allowed for {}", getId(), requestType);
+      log.info("allowsServicePoint:: service point {} is allowed for {}", servicePointId, requestType);
       return true;
     }
 
-    log.info("allowsServicePoint:: service point {} is not allowed for {}", getId(), requestType);
+    log.info("allowsServicePoint:: service point {} is not allowed for {}", servicePointId, requestType);
     return false;
   }
 
