@@ -42,4 +42,9 @@ public enum RequestType {
     boolean isPage() {
       return equals(PAGE);
     }
+
+  @Override
+  public String toString() {
+    return value;
+  }
 }
