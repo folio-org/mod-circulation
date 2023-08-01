@@ -664,7 +664,7 @@
           ],
           "pathPattern": "/circulation/rules-reload",
           "modulePermissions": [
-            "circulation.rules.get"
+            "circulation-storage.circulation-rules.get"
           ],
           "unit": "minute",
           "delay": "3"
