@@ -648,7 +648,9 @@
             "inventory-storage.items.collection.get",
             "circulation.internal.fetch-items",
             "inventory-storage.service-points.item.get",
-            "inventory-storage.service-points.collection.get"
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.holdings.collection.get"
           ]
         }
       ]

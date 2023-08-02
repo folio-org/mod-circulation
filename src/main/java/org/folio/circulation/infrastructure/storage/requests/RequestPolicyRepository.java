@@ -3,16 +3,21 @@ package org.folio.circulation.infrastructure.storage.requests;
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
@@ -64,6 +69,17 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
+  public CompletableFuture<Result<Collection<RequestPolicy>>> lookupRequestPolicies(
+    Collection<Item> items, User user) {
+
+    log.debug("lookupRequestPolicies:: parameters item: {}, user: {}",
+      () -> asJson(items), () -> asJson(user));
+
+    return allOf(items, item -> lookupRequestPolicyId(item, user))
+      .thenApply(r -> r.map(HashSet::new))
+      .thenCompose(r -> r.after(this::lookupRequestPolicies));
+  }
+
   private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
     String requestPolicyId) {
 
@@ -72,6 +88,16 @@ public class RequestPolicyRepository {
       response -> failedDueToServerError(format(
         "Request policy %s could not be found, please check circulation rules", requestPolicyId)))
       .fetch(requestPolicyId);
+  }
+
+  private CompletableFuture<Result<Collection<RequestPolicy>>> lookupRequestPolicies(
+    Collection<String> requestPolicyIds) {
+
+    log.debug("lookupRequestPolicies:: parameters requestPolicyIds: {}", () -> requestPolicyIds);
+
+    return findWithMultipleCqlIndexValues(requestPoliciesStorageClient, "requestPolicies",
+      RequestPolicy::from).findByIds(requestPolicyIds)
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
