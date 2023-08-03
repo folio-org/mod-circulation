@@ -124,4 +124,8 @@ public class RequestPoliciesFixture {
   public void cleanUp() {
     requestPolicyRecordCreator.cleanUp();
   }
+
+  public IndividualResource create(RequestPolicyBuilder requestPolicyBuilder) {
+    return requestPolicyRecordCreator.createIfAbsent(requestPolicyBuilder);
+  }
 }

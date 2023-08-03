@@ -14,7 +14,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -111,7 +110,6 @@ public class AllowedServicePointsService {
 
     Set<String> allowedServicePointsIdsSet = allowedServicePointsInPolicy.values().stream()
       .flatMap(Collection::stream)
-      .map(UUID::toString)
       .collect(Collectors.toSet());
 
     return filterIdsByServicePointsAndPickupLocationExistence(allowedServicePointsIdsSet)
@@ -153,7 +151,7 @@ public class AllowedServicePointsService {
   }
 
   private Map<RequestType, Set<String>> includeOnlyExistingServicePoints(
-    Map<RequestType, Set<UUID>> allowedServicePointsInPolicy, Set<String> relevantSpIds,
+    Map<RequestType, Set<String>> allowedServicePointsInPolicy, Set<String> relevantSpIds,
     RequestPolicy requestPolicy) {
 
     log.debug("includeOnlyExistingServicePoints:: parameters: allowedServicePointsInPolicy={}, " +
@@ -166,7 +164,6 @@ public class AllowedServicePointsService {
         log.info("includeOnlyExistingServicePoints:: requestType={} is allowed",
           requestType.getValue());
         Set<String> filteredIds = uuidSet.stream()
-          .map(UUID::toString)
           .filter(relevantSpIds::contains)
           .collect(Collectors.toSet());
         if (!filteredIds.isEmpty()) {
