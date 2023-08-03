@@ -10,6 +10,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -75,8 +76,8 @@ public class RequestPolicyRepository {
   public CompletableFuture<Result<Collection<RequestPolicy>>> lookupRequestPolicies(
     Collection<Item> items, User user) {
 
-    log.debug("lookupRequestPolicies:: parameters item: {}, user: {}",
-      () -> asJson(items), () -> asJson(user));
+    log.info("lookupRequestPolicies:: parameters items: {}, user: {}",
+      () -> asJson(new ArrayList<>(items)), () -> asJson(user));
 
     Set<CirculationRuleCriteria> criteriaSet = items.stream()
       .map(item -> new CirculationRuleCriteria(item, user))

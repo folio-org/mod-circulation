@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": ["array", "null"],
-  "description": "List of allowed pickup service point IDs",
+  "description": "List of allowed pickup service points",
   "default": null,
   "minItems": 1,
   "uniqueItems": true,
