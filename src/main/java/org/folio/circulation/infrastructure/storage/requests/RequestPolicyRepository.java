@@ -81,6 +81,7 @@ public class RequestPolicyRepository {
     Set<CirculationRuleCriteria> criteriaSet = items.stream()
       .map(item -> new CirculationRuleCriteria(item, user))
       .collect(Collectors.toSet());
+    log.info("lookupRequestPolicies:: criteriaSet: {}", () -> asJson(criteriaSet));
 
     return allOf(criteriaSet, criteria -> lookupRequestPolicyId(criteria.getMaterialTypeId(),
       criteria.getPatronGroupId(), criteria.getLoanTypeId(), criteria.getLocationId()))
