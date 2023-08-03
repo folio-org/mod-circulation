@@ -86,11 +86,13 @@ public class AddressTypeRepository {
 
   private JsonArray resolveAddressTypesNamesForIds(
     MultipleRecords<AddressType> addressTypes, JsonArray addresses) {
+    String idProp = "addressTypeId";
+    String nameProp = "addressTypeName";
     Map<String, AddressType> addressTypeMap = addressTypes.toMap(AddressType::getId);
     IntStream.range(0, addresses.size()).mapToObj(addresses::getJsonObject)
-      .filter(obj -> obj.getString("addressTypeId") != null
-        && addressTypeMap.get(obj.getString("addressTypeId")) != null)
-      .forEach(address -> address.put("addressTypeName", addressTypeMap.get(address.getString("addressTypeId")).getName()));
+      .filter(obj -> obj.getString(idProp) != null
+        && addressTypeMap.get(obj.getString(idProp)) != null)
+      .forEach(address -> address.put(nameProp, addressTypeMap.get(address.getString(idProp)).getName()));
     return addresses;
   }
 
