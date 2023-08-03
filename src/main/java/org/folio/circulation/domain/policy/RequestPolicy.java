@@ -60,7 +60,7 @@ public class RequestPolicy {
   }
 
   public boolean allowsServicePoint(RequestType requestType, String servicePointId) {
-    log.debug("allowsServicePoint:: parameters: requestType: {}, servicePointId: {}",
+    log.debug("allowsServicePoint:: parameters requestType: {}, servicePointId: {}",
       requestType, servicePointId);
 
     Set<String> allowedServicePointIds = allowedServicePoints.get(requestType);
