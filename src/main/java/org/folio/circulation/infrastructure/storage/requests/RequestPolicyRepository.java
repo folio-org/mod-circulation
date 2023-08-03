@@ -82,7 +82,6 @@ public class RequestPolicyRepository {
       .map(item -> new CirculationRuleCriteria(item, user))
       .collect(Collectors.toSet());
 
-
     return allOf(criteriaSet, criteria -> lookupRequestPolicyId(criteria.getMaterialTypeId(),
       criteria.getPatronGroupId(), criteria.getLoanTypeId(), criteria.getLocationId()))
       .thenApply(r -> r.map(HashSet::new))
