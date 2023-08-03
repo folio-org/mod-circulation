@@ -171,7 +171,7 @@ public class LostItemPolicy extends Policy {
 
   public ZonedDateTime calculateFeeFineChargingPeriodExpirationDateTime(ZonedDateTime lostTime) {
 
-    if(Period.zeroDurationPeriod().equals(lostItemChargeFeeFineInterval)){
+    if (Period.zeroDurationPeriod().equals(lostItemChargeFeeFineInterval)) {
       return null;
     }
 
