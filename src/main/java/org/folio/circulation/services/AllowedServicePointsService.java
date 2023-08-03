@@ -57,7 +57,7 @@ public class AllowedServicePointsService {
   public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>> getAllowedServicePoints(
     AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePoints:: parameters: request={}", request);
+    log.debug("getAllowedServicePoints:: parameters request: {}", request);
 
     return request.getItemId() != null
       ? getAllowedServicePointsForItem(request)
@@ -67,7 +67,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   getAllowedServicePointsForItem(AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePointsForItem:: parameters: request={}", request);
+    log.debug("getAllowedServicePointsForItem:: parameters request: {}", request);
 
     return userRepository.getUser(request.getRequesterId())
       .thenCompose(r -> r.after(user -> fetchItemAndLookupRequestPolicy(request, user)))
@@ -77,7 +77,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<RequestPolicy>> fetchItemAndLookupRequestPolicy(
     AllowedServicePointsRequest request, User user) {
 
-    log.debug("lookupRequestPolicy:: parameters: request={}, user={}", request, user);
+    log.debug("lookupRequestPolicy:: parameters request: {}, user: {}", request, user);
 
     if (user == null) {
       log.error("lookupRequestPolicy:: user is null");
@@ -92,7 +92,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Set<RequestPolicy>>> fetchItemsByInstanceAndLookupRequestPolicies(
     AllowedServicePointsRequest request, User user) {
 
-    log.debug("lookupRequestPolicy:: parameters: request={}, user={}", request, user);
+    log.debug("lookupRequestPolicy:: parameters request: {}, user: {}", request, user);
 
     if (user == null) {
       log.error("lookupRequestPolicy:: user is null");
@@ -122,7 +122,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   extractAllowedServicePoints(RequestPolicy requestPolicy) {
 
-    log.debug("extractAllowedServicePoints:: parameters: requestPolicy={}", requestPolicy);
+    log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}", requestPolicy);
 
     List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
@@ -153,7 +153,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   fetchAllowedServicePoints(List<RequestType> allowedTypes) {
 
-    log.debug("fetchAllowedServicePoints:: parameters: allowedTypes={}",
+    log.debug("fetchAllowedServicePoints:: parameters allowedTypes: {}",
       () -> asJson(allowedTypes));
 
     return fetchAllowedServicePoints()
@@ -164,8 +164,8 @@ public class AllowedServicePointsService {
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
     List<RequestType> allowedTypes, Set<AllowedServicePoint> allowedServicePoints) {
 
-    log.debug("groupAllowedServicePointsByRequestType:: parameters: allowedTypes={}, " +
-        "servicePointsIds={}", () -> asJson(allowedTypes), () -> asJson(allowedServicePoints));
+    log.debug("groupAllowedServicePointsByRequestType:: parameters allowedTypes: {}, " +
+        "servicePointsIds: {}", () -> asJson(allowedTypes), () -> asJson(allowedServicePoints));
 
     Map<RequestType, Set<AllowedServicePoint>> groupedAllowedServicePoints =
       new EnumMap<>(RequestType.class);
@@ -183,7 +183,7 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   getAllowedServicePointsForInstance(AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePointsForInstance:: parameters: request={}", request);
+    log.debug("getAllowedServicePointsForInstance:: parameters request: {}", request);
 
     return userRepository.getUser(request.getRequesterId())
       .thenCompose(r -> r.after(user -> fetchItemsByInstanceAndLookupRequestPolicies(request, user)))
