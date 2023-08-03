@@ -7,7 +7,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -27,10 +26,10 @@ public class RequestPolicy {
 
   private final List<String> requestTypes;
   @Getter
-  private final Map<RequestType, Set<UUID>> allowedServicePoints;
+  private final Map<RequestType, Set<String>> allowedServicePoints;
 
   private RequestPolicy(String id, List<String> requestTypes,
-    Map<RequestType, Set<UUID>> allowedServicePoints) {
+    Map<RequestType, Set<String>> allowedServicePoints) {
     this.id = id;
     this.requestTypes = requestTypes;
     this.allowedServicePoints = allowedServicePoints;
@@ -39,7 +38,7 @@ public class RequestPolicy {
   public static RequestPolicy from(JsonObject representation) {
     log.debug("from:: parameters representation: {}", representation);
 
-    Map<RequestType, Set<UUID>> allowedServicePoints = extractAllowedServicePoints(
+    Map<RequestType, Set<String>> allowedServicePoints = extractAllowedServicePoints(
       representation.getJsonObject("allowedServicePoints"));
 
     return new RequestPolicy(representation.getString("id"),
@@ -60,20 +59,33 @@ public class RequestPolicy {
     return false;
   }
 
-  private static Map<RequestType, Set<UUID>> extractAllowedServicePoints(
+  public boolean allowsServicePoint(RequestType requestType, String servicePointId) {
+    log.debug("allowsServicePoint:: parameters requestType: {}, servicePointId: {}",
+      requestType, servicePointId);
+
+    Set<String> allowedServicePointIds = allowedServicePoints.get(requestType);
+    if (allowedServicePointIds == null || allowedServicePointIds.contains(servicePointId)) {
+      log.info("allowsServicePoint:: service point {} is allowed for {}", servicePointId, requestType);
+      return true;
+    }
+
+    log.info("allowsServicePoint:: service point {} is not allowed for {}", servicePointId, requestType);
+    return false;
+  }
+
+  private static Map<RequestType, Set<String>> extractAllowedServicePoints(
     JsonObject allowedServicePointsJson) {
 
     log.debug("extractAllowedServicePoints:: parameters representation: {}",
       allowedServicePointsJson);
 
-    Map<RequestType, Set<UUID>> allowedServicePoints = new EnumMap<>(RequestType.class);
+    Map<RequestType, Set<String>> allowedServicePoints = new EnumMap<>(RequestType.class);
     if (allowedServicePointsJson != null) {
       for (RequestType requestType : RequestType.values()) {
         JsonArray jsonArray = allowedServicePointsJson.getJsonArray(requestType.getValue());
         if (jsonArray != null) {
-          Set<UUID> servicePointIds = jsonArray.stream()
+          Set<String> servicePointIds = jsonArray.stream()
             .map(String.class::cast)
-            .map(UUID::fromString)
             .collect(Collectors.toSet());
           allowedServicePoints.put(requestType, servicePointIds);
         }
