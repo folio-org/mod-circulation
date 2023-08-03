@@ -75,8 +75,7 @@ public class AddressTypeRepository {
    */
   public CompletableFuture<Result<User>> setAddressTypeNamesOnUserAddresses(Result<User> user) {
     JsonArray addresses = user.value().getAddresses();
-    List<String> addressTypeIds =
-      IntStream.range(0, addresses.size())
+    List<String> addressTypeIds = IntStream.range(0, addresses.size())
         .mapToObj(index -> addresses.getJsonObject(index).getString("addressTypeId"))
         .toList();
     return getAddressTypesByIds(addressTypeIds)
@@ -86,13 +85,13 @@ public class AddressTypeRepository {
 
   private JsonArray resolveAddressTypesNamesForIds(
     MultipleRecords<AddressType> addressTypes, JsonArray addresses) {
-    String idProp = "addressTypeId";
-    String nameProp = "addressTypeName";
     Map<String, AddressType> addressTypeMap = addressTypes.toMap(AddressType::getId);
     IntStream.range(0, addresses.size()).mapToObj(addresses::getJsonObject)
-      .filter(obj -> obj.getString(idProp) != null
-        && addressTypeMap.get(obj.getString(idProp)) != null)
-      .forEach(address -> address.put(nameProp, addressTypeMap.get(address.getString(idProp)).getName()));
+      .forEach(address -> address.put("addressTypeName",
+        addressTypeMap.getOrDefault(
+          address.getString("addressTypeId", "property missing"),
+          new AddressType(null,"", "")
+        ).getName()));
     return addresses;
   }
 
