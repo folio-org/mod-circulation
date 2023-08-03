@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
@@ -108,6 +109,11 @@ public class User {
 
   public String getMiddleName() {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
+  }
+
+  public JsonArray getAddresses() {
+    JsonArray addresses = getPersonal().getJsonArray("addresses");
+    return addresses == null ? new JsonArray() : addresses;
   }
 
   public JsonObject getAddressByType(String type) {

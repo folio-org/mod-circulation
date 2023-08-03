@@ -384,7 +384,7 @@ public class TemplateContextUtil {
     public static final String BARCODE = "barcode";
     public static final String PATRON_GROUP = "patronGroup";
     public static final String DEPARTMENTS = "departments";
-    public static final String ADDRESS_TYPE_ID = "addressTypeId";
+    public static final String ADDRESS_TYPE_NAME = "addressType";
     public static final String ADDRESS_LINE_1 = "addressLine1";
     public static final String ADDRESS_LINE_2 = "addressLine2";
     public static final String CITY = "city";
@@ -392,7 +392,7 @@ public class TemplateContextUtil {
     public static final String POSTAL_CODE = "postalCode";
     public static final String COUNTRY_ID = "countryId";
 
-    public static final String PRIMARY_ADDRESS_ADDRESS_TYPE = "primaryDeliveryAddressType";
+    public static final String PRIMARY_ADDRESS_ADDRESS_TYPE_NAME = "primaryDeliveryAddressType";
     public static final String PRIMARY_ADDRESS_ADDRESS_LINE_1 = "primaryAddressLine1";
     public static final String PRIMARY_ADDRESS_ADDRESS_LINE_2 = "primaryAddressLine2";
     public static final String PRIMARY_ADDRESS_CITY = "primaryCity";
@@ -416,7 +416,7 @@ public class TemplateContextUtil {
           .with(UserContext.REGION, address.getString("region", null))
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
           .with(UserContext.COUNTRY_ID, address.getString("countryId", null))
-          .with(UserContext.ADDRESS_TYPE_ID, address.getString("addressTypeId", null));
+          .with(UserContext.ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
       }
@@ -431,7 +431,7 @@ public class TemplateContextUtil {
           .with(UserContext.PRIMARY_ADDRESS_REGION, address.getString("region", null))
           .with(UserContext.PRIMARY_ADDRESS_POSTAL_CODE, address.getString("postalCode", null))
           .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, address.getString("countryId", null))
-          .with(UserContext.PRIMARY_ADDRESS_ADDRESS_TYPE, address.getString("addressTypeId", null));
+          .with(UserContext.PRIMARY_ADDRESS_ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
       }
