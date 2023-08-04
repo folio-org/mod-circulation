@@ -97,13 +97,6 @@ class AllowedServicePointsAPITests extends APITests {
     var allowedServicePoints = response.getJsonArray(requestType.getValue()).stream()
       .map(JsonObject.class::cast).toList();
     assertThat(allowedServicePoints, hasSize(2));
-    assertThat(allowedServicePoints.stream()
-        .map(allowedSp -> allowedSp.getString("id"))
-        .collect(Collectors.toList()), hasItems(cd1.getId().toString(), cd2.getId().toString()));
-    assertThat(allowedServicePoints.stream()
-      .map(allowedSp -> allowedSp.getString("name"))
-      .collect(Collectors.toList()), hasItems(cd1.getJson().getString("name"),
-      cd2.getJson().getString("name")));
   }
 
   @ParameterizedTest
@@ -213,6 +206,52 @@ class AllowedServicePointsAPITests extends APITests {
     Response response = get(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getBody(), containsString("Item with id=" + itemId +
       " cannot be found"));
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {"false", "true"})
+  void shouldReturnListOfAllowedServicePointsForBothTypesOfRequest(boolean isTlrRequest) {
+    var requesterId = usersFixture.steve().getId().toString();
+    var itemId = itemsFixture.basedUponNod().getId().toString();
+    var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
+      .getInstanceId().toString();
+    var cd1 = servicePointsFixture.cd1();
+    var cd2 = servicePointsFixture.cd2();
+    var cd4 = servicePointsFixture.cd4();
+    var cd5 = servicePointsFixture.cd5();
+    final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
+    allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId(), cd2.getId()));
+    allowedServicePointsInPolicy.put(RequestType.HOLD, Set.of(cd4.getId(), cd5.getId()));
+    var requestPolicy = requestPoliciesFixture
+      .createRequestPolicyWithAllowedServicePoints(allowedServicePointsInPolicy,
+        RequestType.PAGE, RequestType.HOLD);
+    policiesActivation.use(PoliciesToActivate.builder().requestPolicy(requestPolicy));
+
+    var response = isTlrRequest
+      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
+      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+
+    var allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue()).stream()
+      .map(JsonObject.class::cast).toList();
+    assertThat(allowedPageServicePoints, hasSize(2));
+    assertThat(allowedPageServicePoints.stream()
+      .map(allowedSp -> allowedSp.getString("id"))
+      .collect(Collectors.toList()), hasItems(cd1.getId().toString(), cd2.getId().toString()));
+    assertThat(allowedPageServicePoints.stream()
+      .map(allowedSp -> allowedSp.getString("name"))
+      .collect(Collectors.toList()), hasItems(cd1.getJson().getString("name"),
+      cd2.getJson().getString("name")));
+
+    var allowedHoldServicePoints = response.getJsonArray(RequestType.HOLD.getValue()).stream()
+      .map(JsonObject.class::cast).toList();
+    assertThat(allowedHoldServicePoints, hasSize(2));
+    assertThat(allowedHoldServicePoints.stream()
+      .map(allowedSp -> allowedSp.getString("id"))
+      .collect(Collectors.toList()), hasItems(cd4.getId().toString(), cd5.getId().toString()));
+    assertThat(allowedHoldServicePoints.stream()
+      .map(allowedSp -> allowedSp.getString("name"))
+      .collect(Collectors.toList()), hasItems(cd4.getJson().getString("name"),
+      cd5.getJson().getString("name")));
   }
 
   public static Object[] parameters() {

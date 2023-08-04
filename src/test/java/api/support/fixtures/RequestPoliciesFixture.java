@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,12 +93,10 @@ public class RequestPoliciesFixture {
   }
 
   public IndividualResource createRequestPolicyWithAllowedServicePoints(
-    Map<RequestType, Set<UUID>> allowedServicePoints, RequestType requestType) {
+    Map<RequestType, Set<UUID>> allowedServicePoints, RequestType... requestType) {
 
-    List<RequestType> requestTypesList = new ArrayList<>();
-    requestTypesList.add(requestType);
     var policyId = UUID.randomUUID();
-    var customPolicy = new RequestPolicyBuilder(policyId, requestTypesList,
+    var customPolicy = new RequestPolicyBuilder(policyId, Arrays.asList(requestType),
       "Example Request Policy" + policyId,
       "An example request policy with allowed Service Points", allowedServicePoints);
 
