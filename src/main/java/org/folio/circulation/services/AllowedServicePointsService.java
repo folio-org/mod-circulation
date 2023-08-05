@@ -59,31 +59,49 @@ public class AllowedServicePointsService {
 
     log.debug("getAllowedServicePoints:: parameters request: {}", request);
 
-    return request.getItemId() != null
-      ? getAllowedServicePointsForItem(request)
-      : getAllowedServicePointsForInstance(request);
+    return userRepository.getUser(request.getRequesterId())
+      .thenCompose(r -> r.after(user -> refuseIfUserIsNotFound(request, user)))
+      .thenCompose(r -> r.after(user -> request.getItemId() != null
+        ? getAllowedServicePointsForItem(request, user)
+        : getAllowedServicePointsForInstance(request, user)));
+  }
+
+  private CompletableFuture<Result<User>> refuseIfUserIsNotFound(
+    AllowedServicePointsRequest request, User user) {
+
+    if (user == null) {
+      log.error("refuseIfUserIsNotFound:: user is null");
+      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
+        format("User with id=%s cannot be found", request.getRequesterId())))));
+    }
+    return ofAsync(user);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePointsForItem(AllowedServicePointsRequest request) {
+  getAllowedServicePointsForItem(AllowedServicePointsRequest request, User user) {
 
-    log.debug("getAllowedServicePointsForItem:: parameters request: {}", request);
+    log.debug("getAllowedServicePointsForItem:: parameters request: {}, user: {}",
+      request, user);
 
-    return userRepository.getUser(request.getRequesterId())
-      .thenCompose(r -> r.after(user -> fetchItemAndLookupRequestPolicy(request, user)))
+    return fetchItemAndLookupRequestPolicy(request, user)
       .thenCompose(r -> r.after(this::extractAllowedServicePoints));
+  }
+
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  getAllowedServicePointsForInstance(AllowedServicePointsRequest request, User user) {
+
+    log.debug("getAllowedServicePointsForInstance:: parameters request: {}, user: {}",
+      request, user);
+
+    return fetchItemsByInstanceAndLookupRequestPolicies(request, user)
+      .thenCompose(r -> r.after(policies -> allOf(policies, this::extractAllowedServicePoints)))
+      .thenApply(r -> r.map(this::combineAllowedServicePoints));
   }
 
   private CompletableFuture<Result<RequestPolicy>> fetchItemAndLookupRequestPolicy(
     AllowedServicePointsRequest request, User user) {
 
-    log.debug("lookupRequestPolicy:: parameters request: {}, user: {}", request, user);
-
-    if (user == null) {
-      log.error("lookupRequestPolicy:: user is null");
-      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
-        format("User with id=%s cannot be found", request.getRequesterId())))));
-    }
+    log.debug("fetchItemAndLookupRequestPolicy:: parameters request: {}, user: {}", request, user);
 
     return itemRepository.fetchById(request.getItemId())
       .thenCompose(r -> r.after(item -> lookupRequestPolicy(item, user, request)));
@@ -93,12 +111,6 @@ public class AllowedServicePointsService {
     AllowedServicePointsRequest request, User user) {
 
     log.debug("lookupRequestPolicy:: parameters request: {}, user: {}", request, user);
-
-    if (user == null) {
-      log.error("lookupRequestPolicy:: user is null");
-      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
-        format("User with id=%s cannot be found", request.getRequesterId())))));
-    }
 
     return itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true)
       .thenCompose(r -> r.after(items -> requestPolicyRepository.lookupRequestPolicies(items, user)))
@@ -194,17 +206,6 @@ public class AllowedServicePointsService {
     }
 
     return groupedAllowedServicePoints;
-  }
-
-  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePointsForInstance(AllowedServicePointsRequest request) {
-
-    log.debug("getAllowedServicePointsForInstance:: parameters request: {}", request);
-
-    return userRepository.getUser(request.getRequesterId())
-      .thenCompose(r -> r.after(user -> fetchItemsByInstanceAndLookupRequestPolicies(request, user)))
-      .thenCompose(r -> r.after(policies -> allOf(policies, this::extractAllowedServicePoints)))
-      .thenApply(r -> r.map(this::combineAllowedServicePoints));
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> combineAllowedServicePoints(

@@ -7,7 +7,6 @@
   "uniqueItems": true,
   "items": {
     "type": "object",
-    "javaType": "org.folio.circulation.domain.AllowedServicePoint",
     "properties": {
       "id": {
         "type": "string",

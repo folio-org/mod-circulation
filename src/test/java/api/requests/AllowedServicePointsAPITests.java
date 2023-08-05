@@ -2,11 +2,10 @@ package api.requests;
 
 import static api.support.http.InterfaceUrls.allowedServicePointsUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -29,7 +28,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.fixtures.policies.PoliciesToActivate;
+import api.support.http.IndividualResource;
 import api.support.http.QueryStringParameter;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 class AllowedServicePointsAPITests extends APITests {
@@ -115,11 +116,10 @@ class AllowedServicePointsAPITests extends APITests {
     var response = isTlrRequest
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
-    var allowedServicePoints = response.getJsonArray(requestType.getValue()).stream().toList();
-    assertThat(allowedServicePoints, hasSize(1));
-    JsonObject allowedServicePoint = (JsonObject) allowedServicePoints.get(0);
-    assertThat(allowedServicePoint.getString("id"), is(cd1.getId().toString()));
-    assertThat(allowedServicePoint.getString("name"), is(cd1.getJson().getString("name")));
+
+    var allowedServicePoints = response.getJsonArray(requestType.getValue());
+    assertThat(allowedServicePoints.stream().toList(), hasSize(1));
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1));
   }
 
   @ParameterizedTest
@@ -171,17 +171,14 @@ class AllowedServicePointsAPITests extends APITests {
     var response = isTlrRequest
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
-    var allowedServicePoints = response.getJsonArray(requestType.getValue()).stream().toList();
+
+    var allowedServicePoints = response.getJsonArray(requestType.getValue());
     var servicePointsWithPickupLocation = servicePointsFixture.getAllServicePoints().stream()
       .filter(sp -> "true".equals(sp.getJson().getString("pickupLocation")))
       .toList();
 
-    assertThat(allowedServicePoints, hasSize(servicePointsWithPickupLocation.size()));
-    JsonObject allowedServicePoint = (JsonObject) allowedServicePoints.get(0);
-    assertThat(allowedServicePoint.getString("id"), is(servicePointsWithPickupLocation.get(0)
-      .getId().toString()));
-    assertThat(allowedServicePoint.getString("name"), is(servicePointsWithPickupLocation.get(0)
-      .getJson().getString("name")));
+    assertThat(allowedServicePoints.stream().toList(), hasSize(servicePointsWithPickupLocation.size()));
+    assertServicePointsMatch(allowedServicePoints, servicePointsWithPickupLocation);
   }
 
   @Test
@@ -231,27 +228,33 @@ class AllowedServicePointsAPITests extends APITests {
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
-    var allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue()).stream()
-      .map(JsonObject.class::cast).toList();
-    assertThat(allowedPageServicePoints, hasSize(2));
-    assertThat(allowedPageServicePoints.stream()
-      .map(allowedSp -> allowedSp.getString("id"))
-      .collect(Collectors.toList()), hasItems(cd1.getId().toString(), cd2.getId().toString()));
-    assertThat(allowedPageServicePoints.stream()
-      .map(allowedSp -> allowedSp.getString("name"))
-      .collect(Collectors.toList()), hasItems(cd1.getJson().getString("name"),
-      cd2.getJson().getString("name")));
+    final JsonArray allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue());
+    final JsonArray allowedHoldServicePoints = response.getJsonArray(RequestType.HOLD.getValue());
 
-    var allowedHoldServicePoints = response.getJsonArray(RequestType.HOLD.getValue()).stream()
-      .map(JsonObject.class::cast).toList();
-    assertThat(allowedHoldServicePoints, hasSize(2));
-    assertThat(allowedHoldServicePoints.stream()
-      .map(allowedSp -> allowedSp.getString("id"))
-      .collect(Collectors.toList()), hasItems(cd4.getId().toString(), cd5.getId().toString()));
-    assertThat(allowedHoldServicePoints.stream()
+    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2));
+    assertServicePointsMatch(allowedHoldServicePoints, List.of(cd4, cd5));
+  }
+
+  private void assertServicePointsMatch(JsonArray response,
+    List<IndividualResource> expectedServicePoints) {
+
+    final List<String> expectedIds = expectedServicePoints.stream()
+      .map(IndividualResource::getId).map(UUID::toString)
+      .toList();
+
+    final List<String> servicePointIds = response.stream()
+      .map(JsonObject.class::cast)
+      .map(sp -> sp.getString("id"))
+      .collect(Collectors.toList());
+
+    final List<String> servicePointNames = response.stream()
+      .map(JsonObject.class::cast)
       .map(allowedSp -> allowedSp.getString("name"))
-      .collect(Collectors.toList()), hasItems(cd4.getJson().getString("name"),
-      cd5.getJson().getString("name")));
+      .collect(Collectors.toList());
+
+    assertThat(servicePointIds, containsInAnyOrder(expectedIds.toArray(String[]::new)));
+    assertThat(servicePointNames, containsInAnyOrder(expectedServicePoints.stream()
+      .map(sp -> sp.getJson().getString("name")).toArray(String[]::new)));
   }
 
   public static Object[] parameters() {
