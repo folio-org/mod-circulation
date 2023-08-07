@@ -18,12 +18,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
@@ -81,7 +83,7 @@ class AllowedServicePointsAPITests extends APITests {
   @ParameterizedTest
   @MethodSource("parameters")
   void shouldReturnListOfAllowedServicePointsForRequest(RequestType requestType,
-    boolean isTlrRequest) {
+    RequestLevel requestLevel) {
 
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
@@ -91,7 +93,7 @@ class AllowedServicePointsAPITests extends APITests {
     var cd2 = servicePointsFixture.cd2();
     setRequestPolicyWithAllowedServicePoints(requestType, cd1.getId(), cd2.getId());
 
-    var response = isTlrRequest
+    var response = requestLevel == RequestLevel.TITLE
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
@@ -103,7 +105,7 @@ class AllowedServicePointsAPITests extends APITests {
   @ParameterizedTest
   @MethodSource("parameters")
   void shouldReturnOnlyExistingAllowedServicePointForRequest(RequestType requestType,
-    boolean isTlrRequest) {
+    RequestLevel requestLevel) {
 
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
@@ -113,7 +115,7 @@ class AllowedServicePointsAPITests extends APITests {
     var cd2Id = UUID.randomUUID();
     setRequestPolicyWithAllowedServicePoints(requestType, cd1.getId(), cd2Id);
 
-    var response = isTlrRequest
+    var response = requestLevel == RequestLevel.TITLE
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
@@ -125,7 +127,7 @@ class AllowedServicePointsAPITests extends APITests {
   @ParameterizedTest
   @MethodSource("parameters")
   void shouldReturnNoAllowedServicePointsIfAllowedServicePointDoesNotExist(
-    RequestType requestType, boolean isTlrRequest) {
+    RequestType requestType, RequestLevel requestLevel) {
 
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
@@ -133,7 +135,7 @@ class AllowedServicePointsAPITests extends APITests {
       .getInstanceId().toString();
     setRequestPolicyWithAllowedServicePoints(requestType, UUID.randomUUID());
 
-    var response = isTlrRequest
+    var response = requestLevel == RequestLevel.TITLE
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
     var allowedServicePoints = response.getJsonArray(requestType.getValue());
@@ -143,7 +145,7 @@ class AllowedServicePointsAPITests extends APITests {
   @ParameterizedTest
   @MethodSource("parameters")
   void shouldReturnNoAllowedServicePointsIfAllowedServicePointIsNotPickupLocation(
-    RequestType requestType, boolean isTlrRequest) {
+    RequestType requestType, RequestLevel requestLevel) {
 
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
@@ -152,7 +154,7 @@ class AllowedServicePointsAPITests extends APITests {
     var servicePointWithNoPickupLocationId = servicePointsFixture.cd3().getId();
     setRequestPolicyWithAllowedServicePoints(requestType, servicePointWithNoPickupLocationId);
 
-    var response = isTlrRequest
+    var response = requestLevel == RequestLevel.TITLE
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
     var allowedServicePoints = response.getJsonArray(requestType.getValue());
@@ -162,13 +164,13 @@ class AllowedServicePointsAPITests extends APITests {
   @ParameterizedTest
   @MethodSource("parameters")
   void shouldReturnOnlyExistingServicePointsWhenRequestPolicyDoesNotHaveAny(
-    RequestType requestType, boolean isTlrRequest) {
+    RequestType requestType, RequestLevel requestLevel) {
 
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
     var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
       .getInstanceId().toString();
-    var response = isTlrRequest
+    var response = requestLevel == RequestLevel.TITLE
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
@@ -217,8 +219,8 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   @ParameterizedTest
-  @CsvSource(value = {"false", "true"})
-  void shouldReturnListOfAllowedServicePointsForBothTypesOfRequest(boolean isTlrRequest) {
+  @EnumSource(value = RequestLevel.class, names = {"ITEM", "TITLE"})
+  void shouldReturnListOfAllowedServicePointsForBothTypesOfRequest(RequestLevel requestLevel) {
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
     var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
@@ -235,7 +237,7 @@ class AllowedServicePointsAPITests extends APITests {
         RequestType.PAGE, RequestType.HOLD);
     policiesActivation.use(PoliciesToActivate.builder().requestPolicy(requestPolicy));
 
-    var response = isTlrRequest
+    var response = requestLevel == RequestLevel.TITLE
       ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
       : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
@@ -270,12 +272,12 @@ class AllowedServicePointsAPITests extends APITests {
 
   public static Object[] parameters() {
     return new Object[][]{
-      {RequestType.PAGE, false},
-      {RequestType.HOLD, false},
-      {RequestType.RECALL, false},
-      {RequestType.PAGE, true},
-      {RequestType.HOLD, true},
-      {RequestType.RECALL, true},
+      {RequestType.PAGE, RequestLevel.ITEM},
+      {RequestType.HOLD, RequestLevel.ITEM},
+      {RequestType.RECALL, RequestLevel.ITEM},
+      {RequestType.PAGE, RequestLevel.TITLE},
+      {RequestType.HOLD, RequestLevel.TITLE},
+      {RequestType.RECALL, RequestLevel.TITLE},
     };
   }
 

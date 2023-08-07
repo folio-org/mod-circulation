@@ -96,41 +96,42 @@ public class AllowedServicePointsService {
       request, user);
 
     return fetchItems(request)
-      .thenApply(r -> r.next(items -> refuseIfItemIsNotFound(items, request)))
       .thenCompose(r -> r.after(items -> requestPolicyRepository.lookupRequestPolicies(items, user)))
       .thenApply(r -> r.map(HashSet::new));
-  }
-
-  private Result<Collection<Item>> refuseIfItemIsNotFound(
-    Collection<Item> items, AllowedServicePointsRequest request) {
-
-    log.debug("refuseIfItemsAreNotFound:: parameters items: {}, request: {}",
-      items::size, () -> request);
-
-    if (request.getItemId() != null && isItemNotFound(items)) {
-      log.error("refuseIfItemsAreNotFound:: item is not found");
-      return failed(new ValidationErrorFailure(new ValidationError(
-        format("Item with id=%s cannot be found", request.getItemId()))));
-    }
-
-    return succeeded(items);
-  }
-
-  private boolean isItemNotFound(Collection<Item> items) {
-    return items.stream()
-      .filter(Objects::nonNull)
-      .map(Item.class::cast)
-      .filter(Item::isNotFound)
-      .count() == 1;
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItems(
     AllowedServicePointsRequest request) {
 
     return request.getItemId() != null
-      ? itemRepository.fetchById(request.getItemId())
-        .thenApply(r -> r.map(List::of))
-      : itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true);
+      ? fetchItemForItemLevel(request)
+      : fetchItemsForTitleLevel(request);
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsForTitleLevel(
+    AllowedServicePointsRequest request) {
+    return itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true);
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItemForItemLevel(
+    AllowedServicePointsRequest request) {
+
+    return itemRepository.fetchById(request.getItemId())
+      .thenApply(r -> r.next(item -> refuseIfItemIsNotFound(item, request)))
+      .thenApply(r -> r.map(List::of));
+  }
+
+  private Result<Item> refuseIfItemIsNotFound(Item item, AllowedServicePointsRequest request) {
+    log.debug("refuseIfItemIsNotFound:: parameters item: {}, request: {}",
+      item, request);
+
+    if (item.isNotFound()) {
+      log.error("refuseIfItemIsNotFound:: item is not found");
+      return failed(new ValidationErrorFailure(new ValidationError(
+        format("Item with id=%s cannot be found", request.getItemId()))));
+    }
+
+    return succeeded(item);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
