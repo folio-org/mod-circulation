@@ -5,6 +5,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
@@ -15,6 +16,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -54,16 +56,14 @@ public class AllowedServicePointsService {
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
   }
 
-  public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>> getAllowedServicePoints(
-    AllowedServicePointsRequest request) {
+  public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  getAllowedServicePoints(AllowedServicePointsRequest request) {
 
     log.debug("getAllowedServicePoints:: parameters request: {}", request);
 
     return userRepository.getUser(request.getRequesterId())
       .thenCompose(r -> r.after(user -> refuseIfUserIsNotFound(request, user)))
-      .thenCompose(r -> r.after(user -> request.getItemId() != null
-        ? getAllowedServicePointsForItem(request, user)
-        : getAllowedServicePointsForInstance(request, user)));
+      .thenCompose(r -> r.after(user -> getAllowedServicePoints(request, user)));
   }
 
   private CompletableFuture<Result<User>> refuseIfUserIsNotFound(
@@ -74,61 +74,63 @@ public class AllowedServicePointsService {
       return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
         format("User with id=%s cannot be found", request.getRequesterId())))));
     }
+
     return ofAsync(user);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePointsForItem(AllowedServicePointsRequest request, User user) {
+  getAllowedServicePoints(AllowedServicePointsRequest request, User user) {
 
-    log.debug("getAllowedServicePointsForItem:: parameters request: {}, user: {}",
+    log.debug("getAllowedServicePoints:: parameters request: {}, user: {}",
       request, user);
 
-    return fetchItemAndLookupRequestPolicy(request, user)
-      .thenCompose(r -> r.after(this::extractAllowedServicePoints));
-  }
-
-  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePointsForInstance(AllowedServicePointsRequest request, User user) {
-
-    log.debug("getAllowedServicePointsForInstance:: parameters request: {}, user: {}",
-      request, user);
-
-    return fetchItemsByInstanceAndLookupRequestPolicies(request, user)
+    return fetchItemsAndLookupRequestPolicies(request, user)
       .thenCompose(r -> r.after(policies -> allOf(policies, this::extractAllowedServicePoints)))
       .thenApply(r -> r.map(this::combineAllowedServicePoints));
   }
 
-  private CompletableFuture<Result<RequestPolicy>> fetchItemAndLookupRequestPolicy(
+  private CompletableFuture<Result<Set<RequestPolicy>>> fetchItemsAndLookupRequestPolicies(
     AllowedServicePointsRequest request, User user) {
 
-    log.debug("fetchItemAndLookupRequestPolicy:: parameters request: {}, user: {}", request, user);
+    log.debug("fetchItemsAndLookupRequestPolicies:: parameters request: {}, user: {}",
+      request, user);
 
-    return itemRepository.fetchById(request.getItemId())
-      .thenCompose(r -> r.after(item -> lookupRequestPolicy(item, user, request)));
-  }
-
-  private CompletableFuture<Result<Set<RequestPolicy>>> fetchItemsByInstanceAndLookupRequestPolicies(
-    AllowedServicePointsRequest request, User user) {
-
-    log.debug("lookupRequestPolicy:: parameters request: {}, user: {}", request, user);
-
-    return itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true)
+    return fetchItems(request)
+      .thenApply(r -> r.next(items -> refuseIfItemIsNotFound(items, request)))
       .thenCompose(r -> r.after(items -> requestPolicyRepository.lookupRequestPolicies(items, user)))
       .thenApply(r -> r.map(HashSet::new));
   }
 
-  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user,
-    AllowedServicePointsRequest request) {
+  private Result<Collection<Item>> refuseIfItemIsNotFound(
+    Collection<Item> items, AllowedServicePointsRequest request) {
 
-    log.debug("lookupRequestPolicy:: parameters item: {}, user: {}", item, user);
+    log.debug("refuseIfItemsAreNotFound:: parameters items: {}, request: {}",
+      items::size, () -> request);
 
-    if (item.isNotFound()) {
-      log.error("lookupRequestPolicy:: item is null");
-      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
-        format("Item with id=%s cannot be found", request.getItemId())))));
+    if (request.getItemId() != null && isItemNotFound(items)) {
+      log.error("refuseIfItemsAreNotFound:: item is not found");
+      return failed(new ValidationErrorFailure(new ValidationError(
+        format("Item with id=%s cannot be found", request.getItemId()))));
     }
 
-    return requestPolicyRepository.lookupRequestPolicy(item, user);
+    return succeeded(items);
+  }
+
+  private boolean isItemNotFound(Collection<Item> items) {
+    return items.stream()
+      .filter(Objects::nonNull)
+      .map(Item.class::cast)
+      .filter(Item::isNotFound)
+      .count() == 1;
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItems(
+    AllowedServicePointsRequest request) {
+
+    return request.getItemId() != null
+      ? itemRepository.fetchById(request.getItemId())
+        .thenApply(r -> r.map(List::of))
+      : itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>

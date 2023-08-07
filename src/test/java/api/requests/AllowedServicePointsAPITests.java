@@ -205,6 +205,17 @@ class AllowedServicePointsAPITests extends APITests {
       " cannot be found"));
   }
 
+  @Test
+  void shouldReturnErrorIfInstanceDoesNotExist() {
+    var requesterId = usersFixture.steve().getId().toString();
+    var instanceId = randomId();
+    var cd1Id = servicePointsFixture.cd1().getId();
+    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, cd1Id);
+
+    Response response = get(requesterId, instanceId, null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    assertThat(response.getBody(), containsString("There are no holdings for this instance"));
+  }
+
   @ParameterizedTest
   @CsvSource(value = {"false", "true"})
   void shouldReturnListOfAllowedServicePointsForBothTypesOfRequest(boolean isTlrRequest) {
