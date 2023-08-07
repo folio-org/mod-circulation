@@ -1,7 +1,7 @@
 package org.folio.circulation.services;
 
 import static java.lang.String.format;
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.UnaryOperator.identity;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -16,7 +16,6 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -62,20 +61,20 @@ public class AllowedServicePointsService {
     log.debug("getAllowedServicePoints:: parameters request: {}", request);
 
     return userRepository.getUser(request.getRequesterId())
-      .thenCompose(r -> r.after(user -> refuseIfUserIsNotFound(request, user)))
+      .thenApply(r -> r.next(user -> refuseIfUserIsNotFound(request, user)))
       .thenCompose(r -> r.after(user -> getAllowedServicePoints(request, user)));
   }
 
-  private CompletableFuture<Result<User>> refuseIfUserIsNotFound(
+  private Result<User> refuseIfUserIsNotFound(
     AllowedServicePointsRequest request, User user) {
 
     if (user == null) {
       log.error("refuseIfUserIsNotFound:: user is null");
-      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
-        format("User with id=%s cannot be found", request.getRequesterId())))));
+      return failed(new ValidationErrorFailure(new ValidationError(
+        format("User with id=%s cannot be found", request.getRequesterId()))));
     }
 
-    return ofAsync(user);
+    return succeeded(user);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
@@ -172,15 +171,12 @@ public class AllowedServicePointsService {
     log.debug("groupAllowedServicePointsByRequestType:: parameters allowedTypes: {}, " +
         "servicePointsIds: {}", () -> asJson(allowedTypes), () -> asJson(allowedServicePoints));
 
-    Map<RequestType, Set<AllowedServicePoint>> groupedAllowedServicePoints =
-      new EnumMap<>(RequestType.class);
-    allowedTypes.stream()
-      .filter(requestType -> !allowedServicePoints.isEmpty())
-      .forEach(requestType -> groupedAllowedServicePoints.put(requestType, allowedServicePoints));
-    log.info("groupAllowedServicePointsByRequestType:: result: {}",
-      () -> asJson(allowedServicePoints));
+    if (allowedServicePoints.isEmpty()) {
+      return new EnumMap<>(RequestType.class);
+    }
 
-    return groupedAllowedServicePoints;
+    return allowedTypes.stream()
+      .collect(Collectors.toMap(identity(), type -> allowedServicePoints));
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(

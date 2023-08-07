@@ -252,7 +252,8 @@ class AllowedServicePointsAPITests extends APITests {
     List<IndividualResource> expectedServicePoints) {
 
     final List<String> expectedIds = expectedServicePoints.stream()
-      .map(IndividualResource::getId).map(UUID::toString)
+      .map(IndividualResource::getId)
+      .map(UUID::toString)
       .toList();
 
     final List<String> servicePointIds = response.stream()
