@@ -73,13 +73,12 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
 
   @Test
   void actualCostRecordWithNoExpirationDateIsSkipped() {
-    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.create(
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
       new LostItemFeePolicyBuilder()
         .withName("Lost item fee policy with no expiration period")
         .doNotChargeProcessingFeeWhenDeclaredLost()
         .withActualCost(0.0)
-        .withLostItemChargeFeeFine(null));
-    useLostItemPolicy(lostItemFeePolicy.getId());
+        .withLostItemChargeFeeFine(null)).getId());
 
     JsonObject actualCostRecord = generateActualCostRecord(OPEN);
     runProcessingAfterExpirationDate();
