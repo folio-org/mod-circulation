@@ -71,6 +71,22 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
     assertThatLoanIsOpenAndLost(actualCostRecord);
   }
 
+  @Test
+  void actualCostRecordWithNoExpirationDateIsSkipped() {
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(
+      new LostItemFeePolicyBuilder()
+        .withName("Lost item fee policy with no expiration period")
+        .doNotChargeProcessingFeeWhenDeclaredLost()
+        .withActualCost(0.0)
+        .withLostItemChargeFeeFine(null)).getId());
+
+    JsonObject actualCostRecord = generateActualCostRecord(OPEN);
+    runProcessingAfterExpirationDate();
+
+    assertThatActualCostRecordIsInStatus(actualCostRecord, OPEN);
+    assertThatLoanIsOpenAndLost(actualCostRecord);
+  }
+
   @ParameterizedTest
   @EnumSource(mode = EXCLUDE, names = {"OPEN"})
   void closedActiveActualCostRecordIsSkipped(ActualCostRecord.Status status) {
