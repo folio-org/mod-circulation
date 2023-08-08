@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.AllowedServicePoint;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.services.AllowedServicePointsService;
@@ -104,7 +105,7 @@ public class AllowedServicePointsResource extends Resource {
     return succeeded(request);
   }
 
-  private static JsonObject toJson(Map<RequestType, Set<String>> allowedServicePoints) {
+  private static JsonObject toJson(Map<RequestType, Set<AllowedServicePoint>> allowedServicePoints) {
     log.debug("toJson:: parameters: allowedServicePoints={}", () -> asJson(allowedServicePoints));
     JsonObject response = new JsonObject();
     if (allowedServicePoints == null) {

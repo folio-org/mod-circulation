@@ -644,11 +644,16 @@
             "users.collection.get",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.request-policy.get",
+            "circulation.rules.request-policy-all.get",
+            "circulation-storage.request-policies.item.get",
+            "circulation-storage.request-policies.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "circulation.internal.fetch-items",
             "inventory-storage.service-points.item.get",
-            "inventory-storage.service-points.collection.get"
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.holdings.collection.get"
           ]
         }
       ]
