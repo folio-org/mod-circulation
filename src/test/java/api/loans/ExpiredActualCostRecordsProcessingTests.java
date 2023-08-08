@@ -38,8 +38,6 @@ import io.vertx.core.json.JsonObject;
 
 class ExpiredActualCostRecordsProcessingTests extends APITests {
   private static final Period ACTUAL_COST_RECORD_EXPIRATION_PERIOD = Period.minutes(1);
-  private static final Period ITEM_AGED_TO_LOST_AFTER_OVERDUE = Period.minutes(1);
-  private static final Double LOST_ITEM_PROCESSING_FEE = 25.0;
   private final TimedTaskClient timedTaskClient =  new TimedTaskClient(getOkapiHeadersFromContext());
 
   @BeforeEach
@@ -78,12 +76,9 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
     IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.create(
       new LostItemFeePolicyBuilder()
         .withName("Lost item fee policy with no expiration period")
-        .withLostItemProcessingFee(LOST_ITEM_PROCESSING_FEE)
-        .withChargeAmountItemPatron(true)
-        .withChargeAmountItemSystem(true)
-        .withItemAgedToLostAfterOverdue(ITEM_AGED_TO_LOST_AFTER_OVERDUE)
         .doNotChargeProcessingFeeWhenDeclaredLost()
-        .withActualCost(0.0));
+        .withActualCost(0.0)
+        .withLostItemChargeFeeFine(null));
     useLostItemPolicy(lostItemFeePolicy.getId());
 
     JsonObject actualCostRecord = generateActualCostRecord(OPEN);
