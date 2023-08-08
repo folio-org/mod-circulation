@@ -1,9 +1,14 @@
 {
   "Page": [
-    "13934820-81ca-47ed-ac88-6f3e3bab106f"
+    {
+      "id": "13934820-81ca-47ed-ac88-6f3e3bab106f",
+      "name": "Circ Desk 1"
+    }
   ],
   "Hold": [
-    "13934820-81ca-47ed-ac88-6f3e3bab106f",
-    "33253ea7-74ce-49ef-8288-67aa3bda2b41"
+    {
+      "id": "13934820-81ca-47ed-ac88-6f3e3bab106f",
+      "name": "Circ Desk 1"
+    }
   ]
 }

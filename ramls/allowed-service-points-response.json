@@ -6,17 +6,17 @@
     "Page": {
       "description": "Allowed pickup service point IDs for Page requests",
       "type": "array",
-      "$ref": "allowed-service-point-ids.json"
+      "$ref": "allowed-service-points.json"
     },
     "Hold": {
       "description": "Allowed pickup service point IDs for Hold requests",
       "type": "array",
-      "$ref": "allowed-service-point-ids.json"
+      "$ref": "allowed-service-points.json"
     },
     "Recall": {
       "description": "Allowed pickup service point IDs for Recall requests",
       "type": "array",
-      "$ref": "allowed-service-point-ids.json"
+      "$ref": "allowed-service-points.json"
     }
   },
   "additionalProperties": false

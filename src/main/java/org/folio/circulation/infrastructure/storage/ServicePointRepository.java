@@ -215,7 +215,7 @@ public class ServicePointRepository {
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<Collection<ServicePoint>>> fetchServicePointsByIdsWithPickupLocation(
+  public CompletableFuture<Result<Collection<ServicePoint>>> fetchPickupLocationServicePointsByIds(
     Set<String> ids) {
 
     log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",

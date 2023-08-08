@@ -1,9 +1,11 @@
 package org.folio.circulation.services;
 
 import static java.lang.String.format;
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.UnaryOperator.identity;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
@@ -11,24 +13,27 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.AllowedServicePoint;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -40,167 +45,196 @@ public class AllowedServicePointsService {
   private final UserRepository userRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ServicePointRepository servicePointRepository;
+  private final ItemByInstanceIdFinder itemFinder;
 
   public AllowedServicePointsService(Clients clients) {
     itemRepository = new ItemRepository(clients);
     userRepository = new UserRepository(clients);
     requestPolicyRepository = new RequestPolicyRepository(clients);
     servicePointRepository = new ServicePointRepository(clients);
+    itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
   }
 
-  public CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePoints(
-    AllowedServicePointsRequest request) {
+  public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  getAllowedServicePoints(AllowedServicePointsRequest request) {
 
-    log.debug("getAllowedServicePoints:: parameters: request={}", request);
-
-    return request.getItemId() != null
-      ? getAllowedServicePointsForItem(request)
-      : getAllowedServicePointsForInstance(request);
-  }
-
-  private CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePointsForItem(
-    AllowedServicePointsRequest request) {
-
-    log.debug("getAllowedServicePointsForItem:: parameters: request={}", request);
+    log.debug("getAllowedServicePoints:: parameters request: {}", request);
 
     return userRepository.getUser(request.getRequesterId())
-      .thenCompose(r -> r.after(user -> fetchItemAndLookupRequestPolicy(request, user)))
-      .thenCompose(r -> r.after(this::extractAllowedServicePoints));
+      .thenApply(r -> r.next(user -> refuseIfUserIsNotFound(request, user)))
+      .thenCompose(r -> r.after(user -> getAllowedServicePoints(request, user)));
   }
 
-  private CompletableFuture<Result<RequestPolicy>> fetchItemAndLookupRequestPolicy(
+  private Result<User> refuseIfUserIsNotFound(
     AllowedServicePointsRequest request, User user) {
 
-    log.debug("lookupRequestPolicy:: parameters: request={}, user={}", request, user);
-
     if (user == null) {
-      log.error("lookupRequestPolicy:: user is null");
-      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
-        format("User with id=%s cannot be found", request.getRequesterId())))));
+      log.error("refuseIfUserIsNotFound:: user is null");
+      return failed(new ValidationErrorFailure(new ValidationError(
+        format("User with id=%s cannot be found", request.getRequesterId()))));
     }
 
-    return itemRepository.fetchById(request.getItemId())
-      .thenCompose(r -> r.after(item -> lookupRequestPolicy(item, user, request)));
+    return succeeded(user);
   }
 
-  private CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user,
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  getAllowedServicePoints(AllowedServicePointsRequest request, User user) {
+
+    log.debug("getAllowedServicePoints:: parameters request: {}, user: {}",
+      request, user);
+
+    return fetchItemsAndLookupRequestPolicies(request, user)
+      .thenCompose(r -> r.after(policies -> allOf(policies, this::extractAllowedServicePoints)))
+      .thenApply(r -> r.map(this::combineAllowedServicePoints));
+  }
+
+  private CompletableFuture<Result<Set<RequestPolicy>>> fetchItemsAndLookupRequestPolicies(
+    AllowedServicePointsRequest request, User user) {
+
+    log.debug("fetchItemsAndLookupRequestPolicies:: parameters request: {}, user: {}",
+      request, user);
+
+    return fetchItems(request)
+      .thenCompose(r -> r.after(items -> requestPolicyRepository.lookupRequestPolicies(items, user)))
+      .thenApply(r -> r.map(HashSet::new));
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItems(
     AllowedServicePointsRequest request) {
 
-    log.debug("lookupRequestPolicy:: parameters item: {}, user: {}", item, user);
+    return request.getItemId() != null
+      ? fetchItemForItemLevel(request)
+      : fetchItemsForTitleLevel(request);
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsForTitleLevel(
+    AllowedServicePointsRequest request) {
+    return itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true);
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItemForItemLevel(
+    AllowedServicePointsRequest request) {
+
+    return itemRepository.fetchById(request.getItemId())
+      .thenApply(r -> r.next(item -> refuseIfItemIsNotFound(item, request)))
+      .thenApply(r -> r.map(List::of));
+  }
+
+  private Result<Item> refuseIfItemIsNotFound(Item item, AllowedServicePointsRequest request) {
+    log.debug("refuseIfItemIsNotFound:: parameters item: {}, request: {}",
+      item, request);
 
     if (item.isNotFound()) {
-      log.error("lookupRequestPolicy:: item is null");
-      return completedFuture(failed(new ValidationErrorFailure(new ValidationError(
-        format("Item with id=%s cannot be found", request.getItemId())))));
+      log.error("refuseIfItemIsNotFound:: item is not found");
+      return failed(new ValidationErrorFailure(new ValidationError(
+        format("Item with id=%s cannot be found", request.getItemId()))));
     }
 
-    return requestPolicyRepository.lookupRequestPolicy(item, user);
+    return succeeded(item);
   }
-  private CompletableFuture<Result<Map<RequestType, Set<String>>>> extractAllowedServicePoints(
-    RequestPolicy requestPolicy) {
 
-    log.debug("extractAllowedServicePoints:: parameters: requestPolicy={}", requestPolicy);
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  extractAllowedServicePoints(RequestPolicy requestPolicy) {
+
+    log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}", requestPolicy);
+
+    List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
+      .filter(requestPolicy::allowsType)
+      .toList();
+
+    if (allowedTypes.isEmpty()) {
+      log.info("fetchAllowedServicePoints:: allowedTypes is empty");
+      return ofAsync(new EnumMap<>(RequestType.class));
+    }
 
     var allowedServicePointsInPolicy = requestPolicy.getAllowedServicePoints();
     if (allowedServicePointsInPolicy.isEmpty()) {
       log.info("extractAllowedServicePoints:: allowedServicePointsInPolicy is empty");
 
-      return fetchAllowedServicePoints(requestPolicy);
+      return fetchAllowedServicePoints()
+        .thenApply(r -> r.map(allowedServicePoints -> groupAllowedServicePointsByRequestType(
+          allowedTypes, allowedServicePoints)));
     }
 
-    Set<String> allowedServicePointsIdsSet = allowedServicePointsInPolicy.values().stream()
+    Set<String> allowedServicePointsIds = allowedServicePointsInPolicy.values().stream()
       .flatMap(Collection::stream)
       .collect(Collectors.toSet());
 
-    return filterIdsByServicePointsAndPickupLocationExistence(allowedServicePointsIdsSet)
-      .thenApply(r -> r.map(filteredSpIds -> includeOnlyExistingServicePoints(
-        allowedServicePointsInPolicy, filteredSpIds, requestPolicy)));
+    return fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
+      .thenApply(r -> r.map(servicePoints -> groupAllowedServicePointsByRequestType(
+        allowedTypes, servicePoints, allowedServicePointsInPolicy)));
   }
 
-  private CompletableFuture<Result<Map<RequestType, Set<String>>>> fetchAllowedServicePoints(
-    RequestPolicy requestPolicy) {
+  private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
+    List<RequestType> allowedTypes, Set<AllowedServicePoint> allowedServicePoints) {
 
-    log.debug("fetchAllowedServicePoints:: parameters: requestPolicy={}", requestPolicy);
+    log.debug("groupAllowedServicePointsByRequestType:: parameters allowedTypes: {}, " +
+        "servicePointsIds: {}", () -> asJson(allowedTypes), () -> asJson(allowedServicePoints));
 
-    List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
-      .filter(requestPolicy::allowsType)
-      .toList();
-    if (allowedTypes.isEmpty()) {
-      log.info("fetchAllowedServicePoints:: allowedTypes is empty");
-
-      return ofAsync(new EnumMap<>(RequestType.class));
+    if (allowedServicePoints.isEmpty()) {
+      return new EnumMap<>(RequestType.class);
     }
-    log.info("fetchAllowedServicePoints:: allowedTypes={}", allowedTypes);
 
-    return fetchPickupLocationServicePointsIds()
-      .thenApply(r -> r.map(servicePointIds -> mapToAllowedServicePoints(allowedTypes,
-        servicePointIds)));
+    return allowedTypes.stream()
+      .collect(Collectors.toMap(identity(), type -> allowedServicePoints));
   }
 
-  private Map<RequestType, Set<String>> mapToAllowedServicePoints(List<RequestType> allowedTypes,
-    Set<String> servicePointIds) {
+  private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
+    List<RequestType> allowedTypes, Set<AllowedServicePoint> allowedServicePoints,
+    Map<RequestType, Set<String>> allowedServicePointsInPolicy) {
 
-    log.debug("mapToAllowedServicePoints:: parameters: allowedTypes={}, servicePointsIds={}",
-      () -> asJson(allowedTypes), () -> asJson(servicePointIds));
+    log.debug("groupAllowedServicePointsByRequestType:: parameters allowedTypes: {}, " +
+        "servicePointsIds: {}, allowedServicePointsInPolicy: {}", () -> asJson(allowedTypes),
+      () -> asJson(allowedServicePoints), () -> allowedServicePointsInPolicy);
 
-    Map<RequestType, Set<String>> allowedServicePoints = new EnumMap<>(RequestType.class);
-    allowedTypes.forEach(requestType -> allowedServicePoints.put(requestType, servicePointIds));
-    log.info("fetchAllowedServicePoints:: result: {}", () -> asJson(allowedServicePoints));
+    Map<RequestType, Set<AllowedServicePoint>> groupedAllowedServicePoints =
+      new EnumMap<>(RequestType.class);
+    for (Map.Entry<RequestType, Set<String>> entry : allowedServicePointsInPolicy.entrySet()) {
+      RequestType requestType = entry.getKey();
+      Set<String> servicePointIds = entry.getValue();
 
-    return allowedServicePoints;
-  }
-
-  private Map<RequestType, Set<String>> includeOnlyExistingServicePoints(
-    Map<RequestType, Set<String>> allowedServicePointsInPolicy, Set<String> relevantSpIds,
-    RequestPolicy requestPolicy) {
-
-    log.debug("includeOnlyExistingServicePoints:: parameters: allowedServicePointsInPolicy={}, " +
-      "relevantSpIds={}, requestPolicy={}", () -> asJson(allowedServicePointsInPolicy),
-      () -> asJson(relevantSpIds), () -> asJson(requestPolicy));
-
-    final Map<RequestType, Set<String>> allowedServicePoints = new EnumMap<>(RequestType.class);
-    allowedServicePointsInPolicy.forEach((requestType, uuidSet) -> {
-      if (requestPolicy.allowsType(requestType)) {
-        log.info("includeOnlyExistingServicePoints:: requestType={} is allowed",
-          requestType.getValue());
-        Set<String> filteredIds = uuidSet.stream()
-          .filter(relevantSpIds::contains)
+      if (allowedTypes.contains(requestType) && !servicePointIds.isEmpty()) {
+        Set<AllowedServicePoint> allowedServicePointsForType = allowedServicePoints.stream()
+          .filter(allowedServicePoint -> servicePointIds.contains(allowedServicePoint.getId()))
           .collect(Collectors.toSet());
-        if (!filteredIds.isEmpty()) {
-          allowedServicePoints.put(requestType, filteredIds);
+
+        if (!allowedServicePointsForType.isEmpty()) {
+          groupedAllowedServicePoints.put(requestType, allowedServicePointsForType);
         }
       }
-    });
+    }
 
-    return allowedServicePoints;
+    return groupedAllowedServicePoints;
   }
 
-  private CompletableFuture<Result<Map<RequestType, Set<String>>>> getAllowedServicePointsForInstance(
-    AllowedServicePointsRequest request) {
+  private Map<RequestType, Set<AllowedServicePoint>> combineAllowedServicePoints(
+    List<Map<RequestType, Set<AllowedServicePoint>>> maps) {
 
-    log.debug("getAllowedServicePointsForInstance:: parameters: request={}", request);
-
-    return ofAsync(new EnumMap<>(RequestType.class));
+    return maps.stream()
+      .flatMap(map -> map.entrySet().stream())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (set1, set2) -> {
+        set1.addAll(set2);
+        return set1;
+      }, () -> new EnumMap<>(RequestType.class)));
   }
 
-  public CompletableFuture<Result<Set<String>>> fetchPickupLocationServicePointsIds() {
+  public CompletableFuture<Result<Set<AllowedServicePoint>>> fetchAllowedServicePoints() {
     return servicePointRepository.fetchPickupLocationServicePoints()
-      .thenApply(servicePointsResult -> servicePointsResult
-        .map(servicePoints -> servicePoints.stream()
-          .map(ServicePoint::getId)
-          .collect(Collectors.toSet())));
+      .thenApply(r -> r.map(servicePoints -> servicePoints.stream()
+        .map(AllowedServicePoint::new)
+        .collect(Collectors.toSet())));
   }
 
-  public CompletableFuture<Result<Set<String>>> filterIdsByServicePointsAndPickupLocationExistence(
+  public CompletableFuture<Result<Set<AllowedServicePoint>>> fetchPickupLocationServicePointsByIds(
     Set<String> ids) {
 
     log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
       () -> collectionAsString(ids));
 
-    return servicePointRepository.fetchServicePointsByIdsWithPickupLocation(ids)
+    return servicePointRepository.fetchPickupLocationServicePointsByIds(ids)
       .thenApply(servicePointsResult -> servicePointsResult
         .map(servicePoints -> servicePoints.stream()
-          .map(ServicePoint::getId)
+          .map(AllowedServicePoint::new)
           .collect(Collectors.toSet())));
   }
 }

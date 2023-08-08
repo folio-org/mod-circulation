@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": ["array", "null"],
+  "description": "List of allowed pickup service points",
+  "default": null,
+  "minItems": 1,
+  "uniqueItems": true,
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "UUID string",
+        "$ref": "raml-util/schemas/uuid.schema"
+      },
+      "name": {
+        "type": "string",
+        "description": "Service point name"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "name"
+    ]
+  }
+}
