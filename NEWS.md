@@ -1,3 +1,7 @@
+## 23.5.7 2023-08-10
+
+* Use correct permissions for circulation rules reloading (CIRC-1860)
+
 ## 23.5.6 2023-07-05
 
 * Pickup notices not sent when another item is Awaiting pickup (CIRC-1832)
