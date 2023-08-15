@@ -713,6 +713,7 @@
             "accounts.collection.get",
             "circulation.internal.fetch-items",
             "lost-item-fees-policies.collection.get",
+            "lost-item-fees-policies.item.get",
             "circulation-storage.loans.collection.get",
             "pubsub.publish.post"
           ],
