@@ -710,10 +710,12 @@
             "actual-cost-record-storage.actual-cost-records.item.get",
             "actual-cost-record-storage.actual-cost-records.collection.get",
             "actual-cost-record-storage.actual-cost-records.item.put",
+            "accounts.item.get",
             "accounts.collection.get",
             "circulation.internal.fetch-items",
-            "lost-item-fees-policies.collection.get",
             "lost-item-fees-policies.item.get",
+            "lost-item-fees-policies.collection.get",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "pubsub.publish.post"
           ],
