@@ -11,6 +11,7 @@ import static org.folio.circulation.support.utils.LogUtil.asJson;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -139,7 +140,7 @@ public class AllowedServicePointsService {
 
     List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
-      .collect(Collectors.toList());
+      .collect(Collectors.toCollection(ArrayList::new));
 
     if (allowedTypes.isEmpty()) {
       log.info("fetchAllowedServicePoints:: allowedTypes is empty");
