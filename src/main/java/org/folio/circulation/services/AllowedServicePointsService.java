@@ -139,7 +139,7 @@ public class AllowedServicePointsService {
 
     List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
-      .toList();
+      .collect(Collectors.toList());
 
     if (allowedTypes.isEmpty()) {
       log.info("fetchAllowedServicePoints:: allowedTypes is empty");
@@ -222,6 +222,8 @@ public class AllowedServicePointsService {
 
         if (!allowedServicePointsForType.isEmpty()) {
           groupedAllowedServicePoints.put(requestType, allowedServicePointsForType);
+        } else {
+          allowedTypes.remove(requestType);
         }
       }
     }
