@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ErrorCode.SERVICE_POINT_IS_NOT_PICKUP_LOCATION;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -68,7 +69,8 @@ public class ServicePointPickupLocationValidator {
 
         return failedValidation(
             "Service point is not a pickup location",
-          "pickupServicePointId", request.getPickupServicePointId());
+          "pickupServicePointId", request.getPickupServicePointId(),
+          SERVICE_POINT_IS_NOT_PICKUP_LOCATION);
       }
     }
     else {
