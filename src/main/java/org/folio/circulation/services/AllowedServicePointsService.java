@@ -2,6 +2,7 @@ package org.folio.circulation.services;
 
 import static java.lang.String.format;
 import static java.util.function.UnaryOperator.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -65,9 +66,7 @@ public class AllowedServicePointsService {
       .thenCompose(r -> r.after(user -> getAllowedServicePoints(request, user)));
   }
 
-  private Result<User> refuseIfUserIsNotFound(
-    AllowedServicePointsRequest request, User user) {
-
+  private Result<User> refuseIfUserIsNotFound(AllowedServicePointsRequest request, User user) {
     if (user == null) {
       log.error("refuseIfUserIsNotFound:: user is null");
       return failed(new ValidationErrorFailure(new ValidationError(
@@ -162,7 +161,30 @@ public class AllowedServicePointsService {
 
     return fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
       .thenApply(r -> r.map(servicePoints -> groupAllowedServicePointsByRequestType(
-        allowedTypes, servicePoints, allowedServicePointsInPolicy)));
+        allowedTypes, servicePoints, allowedServicePointsInPolicy)))
+      .thenCompose(r -> r.after(allowedSps -> addAllowedAllServicePoints(allowedTypes, allowedSps)));
+  }
+
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  addAllowedAllServicePoints(List<RequestType> allowedTypes, Map<RequestType,
+    Set<AllowedServicePoint>> allowedServicePoints) {
+
+    log.debug("addAllAllowedServicePoints:: parameters allowedTypes: {}, " +
+      "allowedServicePoints: {}", () -> asJson(allowedTypes), () -> asJson(allowedServicePoints));
+
+    if (allowedTypes.size() > allowedServicePoints.keySet().size()) {
+      return fetchAllowedServicePoints()
+        .thenCompose(r -> r.after(allowedSps -> {
+          allowedServicePoints.putAll(
+            allowedTypes.stream()
+              .filter(requestType -> !allowedServicePoints.containsKey(requestType))
+              .collect(toMap(identity(), requestType -> allowedSps))
+          );
+          return ofAsync(allowedServicePoints);
+        }));
+    }
+
+    return ofAsync(allowedServicePoints);
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
@@ -176,7 +198,7 @@ public class AllowedServicePointsService {
     }
 
     return allowedTypes.stream()
-      .collect(Collectors.toMap(identity(), type -> allowedServicePoints));
+      .collect(toMap(identity(), type -> allowedServicePoints));
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
@@ -212,7 +234,7 @@ public class AllowedServicePointsService {
 
     return maps.stream()
       .flatMap(map -> map.entrySet().stream())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (set1, set2) -> {
+      .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (set1, set2) -> {
         set1.addAll(set2);
         return set1;
       }, () -> new EnumMap<>(RequestType.class)));
