@@ -147,10 +147,7 @@ public class AllowedServicePointsService {
       return ofAsync(new EnumMap<>(RequestType.class));
     }
 
-    var allowedServicePointsInPolicy = requestPolicy.getAllowedServicePoints();
-    Set<String> allowedServicePointsIds = allowedServicePointsInPolicy.values().stream()
-      .flatMap(Collection::stream)
-      .collect(Collectors.toSet());
+    var servicePointAllowedByPolicy = requestPolicy.getAllowedServicePoints();
 
     List<RequestType> requestTypesAllowedByItemStatus = items.stream()
       .map(Item::getStatus)
@@ -161,55 +158,63 @@ public class AllowedServicePointsService {
 
     List<RequestType> requestTypesAllowedByPolicyAndStatus = requestTypesAllowedByPolicy.stream()
       .filter(requestTypesAllowedByItemStatus::contains)
-      .toList();
+      .collect(Collectors.toCollection(ArrayList::new)); // collect into a mutable list
 
-    return fetchServicePoints(requestTypesAllowedByPolicy, allowedServicePointsInPolicy,
-      allowedServicePointsIds)
+    return fetchServicePoints(requestTypesAllowedByPolicy, servicePointAllowedByPolicy)
       .thenApply(r -> r.map(servicePoints -> groupAllowedServicePointsByRequestType(
-        requestTypesAllowedByPolicyAndStatus, servicePoints, allowedServicePointsInPolicy)));
+        requestTypesAllowedByPolicyAndStatus, servicePoints, servicePointAllowedByPolicy)));
   }
 
   private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchServicePoints(
-    List<RequestType> allowedTypes, Map<RequestType, Set<String>> allowedServicePointsInPolicy,
-    Set<String> allowedServicePointsIds) {
+    List<RequestType> requestTypesAllowedByPolicy,
+    Map<RequestType, Set<String>> servicePointsAllowedByPolicy) {
 
-    return allowedTypes.size() == allowedServicePointsInPolicy.size()
+    Set<String> allowedServicePointsIds = servicePointsAllowedByPolicy.values().stream()
+      .flatMap(Collection::stream)
+      .collect(Collectors.toSet());
+
+    return requestTypesAllowedByPolicy.size() == servicePointsAllowedByPolicy.size()
       ? fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
       : fetchAllowedServicePoints();
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
-    List<RequestType> allowedTypes, Set<AllowedServicePoint> allowedServicePoints,
-    Map<RequestType, Set<String>> allowedServicePointsInPolicy) {
+    List<RequestType> requestTypesAllowedByPolicyAndStatus,
+    Set<AllowedServicePoint> fetchedServicePoints,
+    Map<RequestType, Set<String>> servicePointAllowedByPolicy) {
 
     log.debug("groupAllowedServicePointsByRequestType:: parameters allowedTypes: {}, " +
-        "servicePointsIds: {}, allowedServicePointsInPolicy: {}", () -> asJson(allowedTypes),
-      () -> asJson(allowedServicePoints), () -> allowedServicePointsInPolicy);
+        "servicePointsIds: {}, allowedServicePointsInPolicy: {}", () -> asJson(requestTypesAllowedByPolicyAndStatus),
+      () -> asJson(fetchedServicePoints), () -> servicePointAllowedByPolicy);
 
     Map<RequestType, Set<AllowedServicePoint>> groupedAllowedServicePoints =
       new EnumMap<>(RequestType.class);
-    for (Map.Entry<RequestType, Set<String>> entry : allowedServicePointsInPolicy.entrySet()) {
+    for (Map.Entry<RequestType, Set<String>> entry : servicePointAllowedByPolicy.entrySet()) {
       RequestType requestType = entry.getKey();
-      Set<String> servicePointIds = entry.getValue();
+      Set<String> servicePointIdsAllowedByPolicyForType = entry.getValue();
 
-      if (allowedTypes.contains(requestType) && !servicePointIds.isEmpty()) {
-        Set<AllowedServicePoint> allowedServicePointsForType = allowedServicePoints.stream()
-          .filter(allowedServicePoint -> servicePointIds.contains(allowedServicePoint.getId()))
-          .collect(Collectors.toSet());
+      if (requestTypesAllowedByPolicyAndStatus.contains(requestType) &&
+        !servicePointIdsAllowedByPolicyForType.isEmpty()) {
 
-        if (allowedServicePointsForType.isEmpty()) {
-          allowedTypes.remove(requestType);
+        Set<AllowedServicePoint> allowedAndExistingServicePointsForType =
+          fetchedServicePoints.stream()
+            .filter(allowedServicePoint ->
+              servicePointIdsAllowedByPolicyForType.contains(allowedServicePoint.getId()))
+            .collect(Collectors.toSet());
+
+        if (allowedAndExistingServicePointsForType.isEmpty()) {
+          requestTypesAllowedByPolicyAndStatus.remove(requestType);
         } else {
-          groupedAllowedServicePoints.put(requestType, allowedServicePointsForType);
+          groupedAllowedServicePoints.put(requestType, allowedAndExistingServicePointsForType);
         }
       }
     }
 
-    if (allowedTypes.size() > groupedAllowedServicePoints.size()) {
+    if (requestTypesAllowedByPolicyAndStatus.size() > groupedAllowedServicePoints.size()) {
       groupedAllowedServicePoints.putAll(
-        allowedTypes.stream()
+        requestTypesAllowedByPolicyAndStatus.stream()
           .filter(requestType -> !groupedAllowedServicePoints.containsKey(requestType))
-          .collect(toMap(identity(), requestType -> allowedServicePoints))
+          .collect(toMap(identity(), requestType -> fetchedServicePoints))
       );
     }
 

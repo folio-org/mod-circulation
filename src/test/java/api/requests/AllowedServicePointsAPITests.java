@@ -24,6 +24,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.core.IsNull;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
+import api.support.builders.ItemBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.dto.AllowedServicePoint;
 import api.support.builders.RequestPolicyBuilder;
@@ -321,25 +323,26 @@ class AllowedServicePointsAPITests extends APITests {
 
   public static Object[] shouldReturnOnlyExistingServicePointsWhenRequestPolicyDoesNotHaveAnyParameters() {
     return new Object[][]{
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE},
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT},
+      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE, false},
+      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE, true},
+      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE, true},
+      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE, false},
+      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE, true},
+      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE, true},
+      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, true},
+      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, false},
+      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, false},
+      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, true},
+      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, false},
+      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, false},
     };
   }
 
   @ParameterizedTest
   @MethodSource("shouldReturnOnlyExistingServicePointsWhenRequestPolicyDoesNotHaveAnyParameters")
   void shouldReturnOnlyExistingServicePointsWhenRequestPolicyDoesNotHaveAny(
-    @NotNull RequestType requestType, RequestLevel requestLevel, ItemStatus itemStatus) {
+    @NotNull RequestType requestType, RequestLevel requestLevel, ItemStatus itemStatus,
+    boolean noServicePointsShouldBeAvailableForRequestType) {
 
     var requesterId = usersFixture.steve().getId().toString();
     var items = itemsFixture.createMultipleItemForTheSameInstance(1,
@@ -357,8 +360,12 @@ class AllowedServicePointsAPITests extends APITests {
       .filter(sp -> "true".equals(sp.getJson().getString("pickupLocation")))
       .toList();
 
-    assertThat(allowedServicePoints.stream().toList(), hasSize(servicePointsWithPickupLocation.size()));
-    assertServicePointsMatch(allowedServicePoints, servicePointsWithPickupLocation);
+    if (noServicePointsShouldBeAvailableForRequestType) {
+      assertThat(allowedServicePoints, IsNull.nullValue());
+    } else {
+      assertThat(allowedServicePoints.stream().toList(), hasSize(servicePointsWithPickupLocation.size()));
+      assertServicePointsMatch(allowedServicePoints, servicePointsWithPickupLocation);
+    }
   }
 
   @Test
@@ -430,31 +437,60 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void shouldReturnAllowedServicePointsForAllEnabledRequestTypes() {
     var requesterId = usersFixture.steve().getId().toString();
-    var itemId = itemsFixture.basedUponNod().getId().toString();
+    var items = itemsFixture.createMultipleItemForTheSameInstance(2,
+      List.of(
+        ib -> ib.withStatus(ItemBuilder.AVAILABLE),
+        ib -> ib.withStatus(ItemBuilder.CHECKED_OUT)
+      ));
+    var item = items.get(0);
+    var itemId = item.getId().toString();
+    var instanceId = item.getInstanceId().toString();
     var cd1 = servicePointsFixture.cd1();
-    servicePointsFixture.cd2();
+    var cd2 = servicePointsFixture.cd2();
     final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
     allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId()));
+    allowedServicePointsInPolicy.put(RequestType.HOLD, Set.of(cd2.getId()));
     policiesActivation.use(new RequestPolicyBuilder(
       UUID.randomUUID(),
       List.of(RequestType.PAGE, RequestType.HOLD, RequestType.RECALL),
       "Test request policy",
       "Test description",
       allowedServicePointsInPolicy));
-
-    var response = get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
-
-    final JsonArray allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue());
-    final JsonArray allowedHoldServicePoints = response.getJsonArray(RequestType.HOLD.getValue());
-    final JsonArray allowedRecallServicePoints = response.getJsonArray(RequestType.RECALL.getValue());
-
-    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1));
-    var servicePointsWithPickupLocation = servicePointsFixture.getAllServicePoints().stream()
+    var allServicePointsWithPickupLocation = servicePointsFixture.getAllServicePoints().stream()
       .filter(sp -> "true".equals(sp.getJson().getString("pickupLocation")))
       .toList();
-    assertThat(servicePointsWithPickupLocation, hasSize(2));
-    assertServicePointsMatch(allowedHoldServicePoints, servicePointsWithPickupLocation);
-    assertServicePointsMatch(allowedRecallServicePoints, servicePointsWithPickupLocation);
+    assertThat(allServicePointsWithPickupLocation, hasSize(2));
+
+    // ILR scenario
+
+    var responseIlr = get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+
+    final JsonArray allowedPageServicePointsIlr =
+      responseIlr.getJsonArray(RequestType.PAGE.getValue());
+    final JsonArray allowedHoldServicePointsIlr =
+      responseIlr.getJsonArray(RequestType.HOLD.getValue());
+    final JsonArray allowedRecallServicePointsIlr =
+      responseIlr.getJsonArray(RequestType.RECALL.getValue());
+
+    assertServicePointsMatch(allowedPageServicePointsIlr, List.of(cd1));
+    assertThat(allServicePointsWithPickupLocation, hasSize(2));
+    assertThat(allowedHoldServicePointsIlr, IsNull.nullValue());
+    assertThat(allowedRecallServicePointsIlr, IsNull.nullValue());
+
+    // TLR scenario
+
+    var responseTlr = get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
+
+    final JsonArray allowedPageServicePointsTlr =
+      responseTlr.getJsonArray(RequestType.PAGE.getValue());
+    final JsonArray allowedHoldServicePointsTlr =
+      responseTlr.getJsonArray(RequestType.HOLD.getValue());
+    final JsonArray allowedRecallServicePointsTlr =
+      responseTlr.getJsonArray(RequestType.RECALL.getValue());
+
+    assertServicePointsMatch(allowedPageServicePointsTlr, List.of(cd1));
+    assertServicePointsMatch(allowedHoldServicePointsTlr, List.of(cd2));
+    assertServicePointsMatch(allowedRecallServicePointsTlr, List.of(cd1, cd2));
   }
 
   private void assertServicePointsMatch(JsonArray response,
