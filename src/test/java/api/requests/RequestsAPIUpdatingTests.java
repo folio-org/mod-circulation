@@ -8,6 +8,7 @@ import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.UUIDMatcher.is;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
@@ -51,6 +52,7 @@ import api.support.APITestContext;
 import com.jayway.jsonpath.JsonPath;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
@@ -449,7 +451,8 @@ class RequestsAPIUpdatingTests extends APITests {
 
     assertThat(putResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Service point is not a pickup location"),
-      hasUUIDParameter("pickupServicePointId", badServicePointId))));
+      hasUUIDParameter("pickupServicePointId", badServicePointId),
+      hasCode(ErrorCode.SERVICE_POINT_IS_NOT_PICKUP_LOCATION))));
   }
 
   @Test
