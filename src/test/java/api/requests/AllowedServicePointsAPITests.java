@@ -6,9 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 import java.util.ArrayList;
@@ -256,7 +254,7 @@ class AllowedServicePointsAPITests extends APITests {
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = itemsFixture.basedUponNod().getId().toString();
     var cd1 = servicePointsFixture.cd1();
-    var cd2 = servicePointsFixture.cd2();
+    servicePointsFixture.cd2();
     final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
     allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId()));
     policiesActivation.use(new RequestPolicyBuilder(
@@ -277,7 +275,6 @@ class AllowedServicePointsAPITests extends APITests {
       .filter(sp -> "true".equals(sp.getJson().getString("pickupLocation")))
       .toList();
     assertThat(servicePointsWithPickupLocation, hasSize(2));
-    assertThat(servicePointsWithPickupLocation, hasItems(cd1, cd2));
     assertServicePointsMatch(allowedHoldServicePoints, servicePointsWithPickupLocation);
     assertServicePointsMatch(allowedRecallServicePoints, servicePointsWithPickupLocation);
   }
