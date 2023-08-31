@@ -35,6 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import api.support.APITests;
 import api.support.builders.ServicePointBuilder;
 import api.support.dto.AllowedServicePoint;
+import api.support.builders.RequestPolicyBuilder;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.QueryStringParameter;
@@ -424,6 +425,36 @@ class AllowedServicePointsAPITests extends APITests {
     final JsonArray allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue());
 
     assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2));
+  }
+
+  @Test
+  void shouldReturnAllowedServicePointsForAllEnabledRequestTypes() {
+    var requesterId = usersFixture.steve().getId().toString();
+    var itemId = itemsFixture.basedUponNod().getId().toString();
+    var cd1 = servicePointsFixture.cd1();
+    servicePointsFixture.cd2();
+    final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
+    allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId()));
+    policiesActivation.use(new RequestPolicyBuilder(
+      UUID.randomUUID(),
+      List.of(RequestType.PAGE, RequestType.HOLD, RequestType.RECALL),
+      "Test request policy",
+      "Test description",
+      allowedServicePointsInPolicy));
+
+    var response = get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+
+    final JsonArray allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue());
+    final JsonArray allowedHoldServicePoints = response.getJsonArray(RequestType.HOLD.getValue());
+    final JsonArray allowedRecallServicePoints = response.getJsonArray(RequestType.RECALL.getValue());
+
+    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1));
+    var servicePointsWithPickupLocation = servicePointsFixture.getAllServicePoints().stream()
+      .filter(sp -> "true".equals(sp.getJson().getString("pickupLocation")))
+      .toList();
+    assertThat(servicePointsWithPickupLocation, hasSize(2));
+    assertServicePointsMatch(allowedHoldServicePoints, servicePointsWithPickupLocation);
+    assertServicePointsMatch(allowedRecallServicePoints, servicePointsWithPickupLocation);
   }
 
   private void assertServicePointsMatch(JsonArray response,

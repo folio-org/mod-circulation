@@ -1294,7 +1294,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Service point is not a pickup location"),
-      hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
+      hasUUIDParameter("pickupServicePointId", pickupServicePointId),
+      hasCode(ErrorCode.SERVICE_POINT_IS_NOT_PICKUP_LOCATION))));
   }
 
   @Test
