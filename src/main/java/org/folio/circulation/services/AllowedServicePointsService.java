@@ -162,7 +162,7 @@ public class AllowedServicePointsService {
     List<RequestType> allowedTypes, Map<RequestType, Set<String>> allowedServicePointsInPolicy,
     Set<String> allowedServicePointsIds) {
 
-    return allowedTypes.size() == allowedServicePointsInPolicy.keySet().size()
+    return allowedTypes.size() == allowedServicePointsInPolicy.size()
       ? fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
       : fetchAllowedServicePoints();
   }
