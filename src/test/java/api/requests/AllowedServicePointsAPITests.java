@@ -6,6 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -257,7 +258,7 @@ class AllowedServicePointsAPITests extends APITests {
     var cd1 = servicePointsFixture.cd1();
     var cd2 = servicePointsFixture.cd2();
     final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
-    allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId(), cd2.getId()));
+    allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId()));
     policiesActivation.use(new RequestPolicyBuilder(
       UUID.randomUUID(),
       List.of(RequestType.PAGE, RequestType.HOLD, RequestType.RECALL),
@@ -271,12 +272,14 @@ class AllowedServicePointsAPITests extends APITests {
     final JsonArray allowedHoldServicePoints = response.getJsonArray(RequestType.HOLD.getValue());
     final JsonArray allowedRecallServicePoints = response.getJsonArray(RequestType.RECALL.getValue());
 
-    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2));
+    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1));
     var servicePointsWithPickupLocation = servicePointsFixture.getAllServicePoints().stream()
       .filter(sp -> "true".equals(sp.getJson().getString("pickupLocation")))
       .toList();
-    assertThat(allowedHoldServicePoints.size(), is(servicePointsWithPickupLocation.size()));
-    assertThat(allowedRecallServicePoints.size(), is(servicePointsWithPickupLocation.size()));
+    assertThat(servicePointsWithPickupLocation, hasSize(2));
+    assertThat(servicePointsWithPickupLocation, hasItems(cd1, cd2));
+    assertServicePointsMatch(allowedHoldServicePoints, servicePointsWithPickupLocation);
+    assertServicePointsMatch(allowedRecallServicePoints, servicePointsWithPickupLocation);
   }
 
   private void assertServicePointsMatch(JsonArray response,

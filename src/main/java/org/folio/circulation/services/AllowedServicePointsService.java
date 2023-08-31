@@ -138,6 +138,7 @@ public class AllowedServicePointsService {
 
     log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}", requestPolicy);
 
+    //  create mutable allowedTypes list
     List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
       .collect(Collectors.toCollection(ArrayList::new));
@@ -152,11 +153,18 @@ public class AllowedServicePointsService {
       .flatMap(Collection::stream)
       .collect(Collectors.toSet());
 
-    return (allowedTypes.size() == allowedServicePointsInPolicy.keySet().size()
-      ? fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
-      : fetchAllowedServicePoints())
+    return fetchServicePoints(allowedTypes, allowedServicePointsInPolicy, allowedServicePointsIds)
       .thenApply(r -> r.map(servicePoints -> groupAllowedServicePointsByRequestType(
         allowedTypes, servicePoints, allowedServicePointsInPolicy)));
+  }
+
+  private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchServicePoints(
+    List<RequestType> allowedTypes, Map<RequestType, Set<String>> allowedServicePointsInPolicy,
+    Set<String> allowedServicePointsIds) {
+
+    return allowedTypes.size() == allowedServicePointsInPolicy.keySet().size()
+      ? fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
+      : fetchAllowedServicePoints();
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
@@ -178,15 +186,15 @@ public class AllowedServicePointsService {
           .filter(allowedServicePoint -> servicePointIds.contains(allowedServicePoint.getId()))
           .collect(Collectors.toSet());
 
-        if (!allowedServicePointsForType.isEmpty()) {
-          groupedAllowedServicePoints.put(requestType, allowedServicePointsForType);
-        } else {
+        if (allowedServicePointsForType.isEmpty()) {
           allowedTypes.remove(requestType);
+        } else {
+          groupedAllowedServicePoints.put(requestType, allowedServicePointsForType);
         }
       }
     }
 
-    if (allowedTypes.size() > groupedAllowedServicePoints.keySet().size()) {
+    if (allowedTypes.size() > groupedAllowedServicePoints.size()) {
       groupedAllowedServicePoints.putAll(
         allowedTypes.stream()
           .filter(requestType -> !groupedAllowedServicePoints.containsKey(requestType))
