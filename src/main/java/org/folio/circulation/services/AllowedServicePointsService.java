@@ -138,10 +138,9 @@ public class AllowedServicePointsService {
 
     log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}", requestPolicy);
 
-    //  create mutable allowedTypes list
     List<RequestType> allowedTypes = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
-      .collect(Collectors.toCollection(ArrayList::new));
+      .collect(Collectors.toCollection(ArrayList::new)); // collect into a mutable list
 
     if (allowedTypes.isEmpty()) {
       log.info("fetchAllowedServicePoints:: allowedTypes is empty");
