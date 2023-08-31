@@ -2,6 +2,9 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -11,10 +14,11 @@ import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.function.BinaryOperator;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +32,7 @@ import org.folio.circulation.rules.CirculationRuleCriteria;
 import org.folio.circulation.support.CirculationRulesClient;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.http.client.Response;
@@ -72,21 +77,29 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
-  public CompletableFuture<Result<Collection<RequestPolicy>>> lookupRequestPolicies(
+  public CompletableFuture<Result<Map<RequestPolicy, List<Item>>>> lookupRequestPolicies(
     Collection<Item> items, User user) {
 
     log.debug("lookupRequestPolicies:: parameters items: {}, user: {}",
       items::size, () -> asJson(user));
 
-    Set<CirculationRuleCriteria> criteriaSet = items.stream()
+    Map<CirculationRuleCriteria, List<Item>> criteriaMap = items.stream()
       .map(item -> new CirculationRuleCriteria(item, user))
-      .collect(Collectors.toSet());
-    log.info("lookupRequestPolicies:: criteriaSet: {}", () -> asJson(criteriaSet));
+      .collect(toMap(identity(), criteria -> List.of(criteria.getItem()), itemListsMergeOperator()));
 
-    return allOf(criteriaSet, criteria -> lookupRequestPolicyId(criteria.getMaterialTypeId(),
-      criteria.getPatronGroupId(), criteria.getLoanTypeId(), criteria.getLocationId()))
-      .thenApply(r -> r.map(HashSet::new))
+    return allOf(criteriaMap.keySet(),
+      criteria -> lookupRequestPolicyAndBuildContext(criteria, criteriaMap.get(criteria)))
+      .thenApply(r -> r.map(requestPolicyContexts -> requestPolicyContexts.stream()
+        .collect(toMap(RequestPolicyContext::getRequestPolicyId, RequestPolicyContext::getItems,
+          itemListsMergeOperator()))
+      ))
       .thenCompose(r -> r.after(this::lookupRequestPolicies));
+  }
+
+  private BinaryOperator<List<Item>> itemListsMergeOperator() {
+    return (itemList1, itemList2) -> Stream.concat(itemList1.stream(), itemList2.stream())
+      .distinct()
+      .collect(toList());
   }
 
   private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
@@ -99,14 +112,16 @@ public class RequestPolicyRepository {
       .fetch(requestPolicyId);
   }
 
-  private CompletableFuture<Result<Collection<RequestPolicy>>> lookupRequestPolicies(
-    Collection<String> requestPolicyIds) {
+  private CompletableFuture<Result<Map<RequestPolicy, List<Item>>>>
+  lookupRequestPolicies(Map<String, List<Item>> requestPolicyIdMap) {
 
-    log.debug("lookupRequestPolicies:: parameters requestPolicyIds: {}", () -> requestPolicyIds);
+    FindWithMultipleCqlIndexValues<RequestPolicy> finder = findWithMultipleCqlIndexValues(
+      requestPoliciesStorageClient, "requestPolicies", RequestPolicy::from);
 
-    return findWithMultipleCqlIndexValues(requestPoliciesStorageClient, "requestPolicies",
-      RequestPolicy::from).findByIds(requestPolicyIds)
-      .thenApply(r -> r.map(MultipleRecords::getRecords));
+    return finder.findByIds(requestPolicyIdMap.keySet())
+      .thenApply(r -> r.map(MultipleRecords::getRecords))
+      .thenApply(r -> r.map(requestPolicies -> requestPolicies.stream()
+        .collect(toMap(identity(), policy -> requestPolicyIdMap.get(policy.getId())))));
   }
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
@@ -129,6 +144,24 @@ public class RequestPolicyRepository {
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
     return lookupRequestPolicyId(materialTypeId, patronGroupId, loanTypeId, locationId);
+  }
+
+  private CompletableFuture<Result<RequestPolicyContext>> lookupRequestPolicyAndBuildContext(
+    CirculationRuleCriteria criteria, List<Item> items) {
+
+    log.debug("lookupRequestPolicyAndBuildContext:: parameters criteria: {}, item: {}", criteria,
+      items);
+
+    return lookupRequestPolicyId(criteria)
+      .thenApply(r -> r.map(requestPolicyId -> new RequestPolicyContext(requestPolicyId, items)));
+  }
+
+  private CompletableFuture<Result<String>> lookupRequestPolicyId(
+    CirculationRuleCriteria criteria) {
+
+    log.debug("lookupRequestPolicyId:: parameters criteria: {}", criteria);
+    return lookupRequestPolicyId(criteria.getMaterialTypeId(),
+      criteria.getPatronGroupId(), criteria.getLoanTypeId(), criteria.getLocationId());
   }
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(String materialTypeId,

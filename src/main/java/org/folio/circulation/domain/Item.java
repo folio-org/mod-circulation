@@ -22,12 +22,15 @@ import java.util.stream.Stream;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
 @ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Item {
+  @EqualsAndHashCode.Include
   private final String id;
   @ToString.Include
   private final JsonObject itemRepresentation;

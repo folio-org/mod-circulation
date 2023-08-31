@@ -17,10 +17,14 @@ public class CirculationRuleCriteria {
   private final String locationId;
   private final String patronGroupId;
 
+  @EqualsAndHashCode.Exclude
+  private Item item;
+
   public CirculationRuleCriteria(@NonNull Item item, @NonNull User user) {
     this.materialTypeId = item.getMaterialTypeId();
     this.loanTypeId = item.getLoanTypeId();
     this.locationId = item.getEffectiveLocationId();
     this.patronGroupId = user.getPatronGroupId();
+    this.item = item;
   }
 }
