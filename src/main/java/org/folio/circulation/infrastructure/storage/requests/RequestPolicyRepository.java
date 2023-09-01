@@ -20,6 +20,7 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
@@ -87,12 +88,10 @@ public class RequestPolicyRepository {
       .map(item -> new CirculationRuleCriteria(item, user))
       .collect(toMap(identity(), criteria -> Set.of(criteria.getItem()), itemsMergeOperator()));
 
-    return allOf(criteriaMap.keySet(),
-      criteria -> lookupRequestPolicyAndBuildContext(criteria, criteriaMap.get(criteria)))
-      .thenApply(r -> r.map(requestPolicyContexts -> requestPolicyContexts.stream()
-        .collect(toMap(RequestPolicyContext::getRequestPolicyId, RequestPolicyContext::getItems,
-          itemsMergeOperator()))
-      ))
+    return allOf(criteriaMap.entrySet(), entry -> lookupRequestPolicyId(entry.getKey())
+      .thenApply(r -> r.map(id -> Pair.of(id, entry.getValue()))))
+      .thenApply(r -> r.map(pair -> pair.stream()
+        .collect(toMap(Pair::getKey, Pair::getValue, itemsMergeOperator()))))
       .thenCompose(r -> r.after(this::lookupRequestPolicies));
   }
 
@@ -143,16 +142,6 @@ public class RequestPolicyRepository {
       materialTypeId, patronGroupId, loanTypeId, locationId);
 
     return lookupRequestPolicyId(materialTypeId, patronGroupId, loanTypeId, locationId);
-  }
-
-  private CompletableFuture<Result<RequestPolicyContext>> lookupRequestPolicyAndBuildContext(
-    CirculationRuleCriteria criteria, Set<Item> items) {
-
-    log.debug("lookupRequestPolicyAndBuildContext:: parameters criteria: {}, item: {}", criteria,
-      items);
-
-    return lookupRequestPolicyId(criteria)
-      .thenApply(r -> r.map(requestPolicyId -> new RequestPolicyContext(requestPolicyId, items)));
   }
 
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
