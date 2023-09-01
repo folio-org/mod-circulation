@@ -45,7 +45,7 @@ public class AsyncCoordinationUtil {
       collection.stream().map(asyncAction).collect(Collectors.toList());
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> futures.stream().map(CompletableFuture::join).toList());
+      .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
   }
 
   /**
@@ -67,7 +67,7 @@ public class AsyncCoordinationUtil {
       .toList();
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+      .thenApply(v -> futures.stream().map(CompletableFuture::join).toList());
   }
 
   public static <T, K, V> CompletableFuture<Result<Map<K, V>>> allOf(
