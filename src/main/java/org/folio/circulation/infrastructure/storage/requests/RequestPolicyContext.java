@@ -1,6 +1,6 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
-import java.util.List;
+import java.util.Set;
 
 import org.folio.circulation.domain.Item;
 
@@ -11,5 +11,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class RequestPolicyContext {
   private final String requestPolicyId;
-  private final List<Item> items;
+  private final Set<Item> items;
 }

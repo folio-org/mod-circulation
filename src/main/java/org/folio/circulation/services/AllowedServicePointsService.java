@@ -88,7 +88,7 @@ public class AllowedServicePointsService {
       .thenApply(r -> r.map(this::combineAllowedServicePoints));
   }
 
-  private CompletableFuture<Result<Map<RequestPolicy, List<Item>>>> fetchItemsAndLookupRequestPolicies(
+  private CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> fetchItemsAndLookupRequestPolicies(
     AllowedServicePointsRequest request, User user) {
 
     log.debug("fetchItemsAndLookupRequestPolicies:: parameters request: {}, user: {}",
@@ -134,7 +134,7 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  extractAllowedServicePoints(RequestPolicy requestPolicy, List<Item> items) {
+  extractAllowedServicePoints(RequestPolicy requestPolicy, Set<Item> items) {
 
     log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}", requestPolicy);
 

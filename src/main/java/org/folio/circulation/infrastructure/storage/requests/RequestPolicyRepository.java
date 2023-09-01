@@ -13,10 +13,11 @@ import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -76,29 +77,28 @@ public class RequestPolicyRepository {
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
-  public CompletableFuture<Result<Map<RequestPolicy, List<Item>>>> lookupRequestPolicies(
+  public CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> lookupRequestPolicies(
     Collection<Item> items, User user) {
 
     log.debug("lookupRequestPolicies:: parameters items: {}, user: {}",
       items::size, () -> asJson(user));
 
-    Map<CirculationRuleCriteria, List<Item>> criteriaMap = items.stream()
+    Map<CirculationRuleCriteria, Set<Item>> criteriaMap = items.stream()
       .map(item -> new CirculationRuleCriteria(item, user))
-      .collect(toMap(identity(), criteria -> List.of(criteria.getItem()), itemListsMergeOperator()));
+      .collect(toMap(identity(), criteria -> Set.of(criteria.getItem()), itemsMergeOperator()));
 
     return allOf(criteriaMap.keySet(),
       criteria -> lookupRequestPolicyAndBuildContext(criteria, criteriaMap.get(criteria)))
       .thenApply(r -> r.map(requestPolicyContexts -> requestPolicyContexts.stream()
         .collect(toMap(RequestPolicyContext::getRequestPolicyId, RequestPolicyContext::getItems,
-          itemListsMergeOperator()))
+          itemsMergeOperator()))
       ))
       .thenCompose(r -> r.after(this::lookupRequestPolicies));
   }
 
-  private BinaryOperator<List<Item>> itemListsMergeOperator() {
-    return (itemList1, itemList2) -> Stream.concat(itemList1.stream(), itemList2.stream())
-      .distinct()
-      .toList();
+  private BinaryOperator<Set<Item>> itemsMergeOperator() {
+    return (items1, items2) -> Stream.concat(items1.stream(), items2.stream())
+      .collect(Collectors.toSet());
   }
 
   private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
@@ -111,8 +111,8 @@ public class RequestPolicyRepository {
       .fetch(requestPolicyId);
   }
 
-  private CompletableFuture<Result<Map<RequestPolicy, List<Item>>>>
-  lookupRequestPolicies(Map<String, List<Item>> requestPolicyIdMap) {
+  private CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>>
+  lookupRequestPolicies(Map<String, Set<Item>> requestPolicyIdMap) {
 
     FindWithMultipleCqlIndexValues<RequestPolicy> finder = findWithMultipleCqlIndexValues(
       requestPoliciesStorageClient, "requestPolicies", RequestPolicy::from);
@@ -146,7 +146,7 @@ public class RequestPolicyRepository {
   }
 
   private CompletableFuture<Result<RequestPolicyContext>> lookupRequestPolicyAndBuildContext(
-    CirculationRuleCriteria criteria, List<Item> items) {
+    CirculationRuleCriteria criteria, Set<Item> items) {
 
     log.debug("lookupRequestPolicyAndBuildContext:: parameters criteria: {}, item: {}", criteria,
       items);
