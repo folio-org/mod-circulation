@@ -41,10 +41,11 @@ public class AsyncCoordinationUtil {
     Collection<T> collection,
     Function<T, CompletableFuture<Result<R>>> asyncAction) {
 
-    List<CompletableFuture<Result<R>>> futures = collection.stream().map(asyncAction).toList();
+    List<CompletableFuture<Result<R>>> futures =
+      collection.stream().map(asyncAction).collect(Collectors.toList());
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> futures.stream().map(CompletableFuture::join).toList());
+      .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
   }
 
   /**
