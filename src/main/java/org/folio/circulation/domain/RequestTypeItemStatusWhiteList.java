@@ -25,6 +25,7 @@ import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RequestTypeItemStatusWhiteList {
   private static EnumMap<ItemStatus, Boolean> recallRules;
@@ -159,6 +160,6 @@ public class RequestTypeItemStatusWhiteList {
   public static List<RequestType> getRequestTypesAllowedForItemStatus(ItemStatus itemStatus) {
     return Arrays.stream(RequestType.values())
       .filter(requestType -> requestsRulesMap.get(requestType).get(itemStatus))
-      .toList();
+      .collect(Collectors.toList());
   }
 }
