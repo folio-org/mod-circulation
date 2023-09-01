@@ -62,10 +62,9 @@ public class AsyncCoordinationUtil {
   private static <T, R, S> CompletableFuture<List<Result<S>>> allResultsOf(
     Map<T, R> map, BiFunction<T, R, CompletableFuture<Result<S>>> asyncAction) {
 
-    List<CompletableFuture<Result<S>>> futures =
-      map.keySet().stream()
-        .map(key -> asyncAction.apply(key, map.get(key)))
-        .toList();
+    List<CompletableFuture<Result<S>>> futures = map.entrySet().stream()
+      .map(entry -> asyncAction.apply(entry.getKey(), entry.getValue()))
+      .toList();
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
       .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
