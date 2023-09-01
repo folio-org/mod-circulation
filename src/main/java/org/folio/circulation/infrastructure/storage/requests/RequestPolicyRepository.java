@@ -3,7 +3,6 @@ package org.folio.circulation.infrastructure.storage.requests;
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
@@ -99,7 +98,7 @@ public class RequestPolicyRepository {
   private BinaryOperator<List<Item>> itemListsMergeOperator() {
     return (itemList1, itemList2) -> Stream.concat(itemList1.stream(), itemList2.stream())
       .distinct()
-      .collect(toList());
+      .toList();
   }
 
   private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
