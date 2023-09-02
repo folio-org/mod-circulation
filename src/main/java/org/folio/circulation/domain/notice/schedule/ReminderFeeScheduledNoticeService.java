@@ -21,30 +21,32 @@ public class ReminderFeeScheduledNoticeService {
 
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
     Loan loan = records.getLoan();
-    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry firstReminder =
-      loan.getOverdueFinePolicy().getRemindersPolicy().getReminderSequenceEntry(1);
+    if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
+      OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry firstReminder =
+        loan.getOverdueFinePolicy().getRemindersPolicy().getReminderSequenceEntry(1);
 
-    ScheduledNoticeConfig config =
-      new ScheduledNoticeConfig(
-        NoticeTiming.AFTER,
-        null, // recurrence handled using reminder fee policy
-        firstReminder.getNoticeTemplateId(),
-        firstReminder.getNoticeFormat(),
-        true);
+      ScheduledNoticeConfig config =
+        new ScheduledNoticeConfig(
+          NoticeTiming.AFTER,
+          null, // recurrence handled using reminder fee policy
+          firstReminder.getNoticeTemplateId(),
+          firstReminder.getNoticeFormat(),
+          true);
 
-    ScheduledNotice scheduledNotice = new ScheduledNotice(
-      UUID.randomUUID().toString(),
-      loan.getId(),
-      null,
-      loan.getUserId(),
-      null,
-      null,
-      TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
-      firstReminder.getPeriod().plusDate(records.getLoan().getDueDate()),
-      config
-    );
+      ScheduledNotice scheduledNotice = new ScheduledNotice(
+        UUID.randomUUID().toString(),
+        loan.getId(),
+        null,
+        loan.getUserId(),
+        null,
+        null,
+        TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
+        firstReminder.getPeriod().plusDate(records.getLoan().getDueDate()),
+        config
+      );
 
-    scheduledNoticesRepository.create(scheduledNotice);
+      scheduledNoticesRepository.create(scheduledNotice);
+    }
     return succeeded(records);
   }
 }

@@ -167,7 +167,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.1",
+      "version": "14.2",
       "handlers": [
         {
           "methods": [
@@ -628,6 +628,37 @@
       ]
     },
     {
+      "id": "allowed-service-points",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/allowed-service-points",
+          "permissionsRequired": [
+            "circulation.requests.allowed-service-points.get"
+          ],
+          "modulePermissions": [
+            "users.item.get",
+            "users.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation.rules.request-policy.get",
+            "circulation.rules.request-policy-all.get",
+            "circulation-storage.request-policies.item.get",
+            "circulation-storage.request-policies.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "circulation.internal.fetch-items",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.holdings.collection.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
@@ -638,7 +669,7 @@
           ],
           "pathPattern": "/circulation/rules-reload",
           "modulePermissions": [
-            "circulation.rules.get"
+            "circulation-storage.circulation-rules.get"
           ],
           "unit": "minute",
           "delay": "3"
@@ -679,9 +710,12 @@
             "actual-cost-record-storage.actual-cost-records.item.get",
             "actual-cost-record-storage.actual-cost-records.collection.get",
             "actual-cost-record-storage.actual-cost-records.item.put",
+            "accounts.item.get",
             "accounts.collection.get",
             "circulation.internal.fetch-items",
+            "lost-item-fees-policies.item.get",
             "lost-item-fees-policies.collection.get",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "pubsub.publish.post"
           ],
@@ -1432,6 +1466,7 @@
         "circulation.requests.queue.reorder.collection.post",
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
+        "circulation.requests.allowed-service-points.get",
         "circulation.inventory.items-in-transit-report.get",
         "circulation.pick-slips.get"
       ]

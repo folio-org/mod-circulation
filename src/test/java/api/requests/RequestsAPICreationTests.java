@@ -76,6 +76,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -86,6 +87,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -132,6 +134,7 @@ import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.builders.RequestPolicyBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
@@ -1291,7 +1294,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Service point is not a pickup location"),
-      hasUUIDParameter("pickupServicePointId", pickupServicePointId))));
+      hasUUIDParameter("pickupServicePointId", pickupServicePointId),
+      hasCode(ErrorCode.SERVICE_POINT_IS_NOT_PICKUP_LOCATION))));
   }
 
   @Test
@@ -4227,6 +4231,84 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
     assertThat(response.getJson().getString("requestType"), is(RequestType.HOLD.getValue()));
     assertThat(response.getJson().getString("instanceId"), is(instance.getId().toString()));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestType.class, names = {"NONE"}, mode = EXCLUDE)
+  void itemLevelRequestIsNotPlacedWhenRequestPolicyDisallowsRequestedPickupServicePoint(
+    RequestType requestType) {
+
+    final UUID requestPolicyId = UUID.randomUUID();
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      requestPolicyId,
+      List.of(requestType),
+      "Test request policy",
+      "Test description",
+      Map.of(requestType, Set.of(servicePointsFixture.cd2().getId()))
+    ));
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .itemRequestLevel()
+      .withRequestType(requestType.getValue())
+      .forItem(itemsFixture.basedUponSmallAngryPlanet())
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(usersFixture.charlotte().getId()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("One or more Pickup Locations are no longer available"),
+        hasParameter("requestType", requestType.getValue()),
+        hasUUIDParameter("pickupServicePointId", pickupServicePointId),
+        hasUUIDParameter("requestPolicyId", requestPolicyId),
+        hasCode(ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED)
+      ))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestType.class, names = {"PAGE", "RECALL"})
+  void titleLevelRequestIsNotPlacedWhenRequestPolicyDisallowsRequestedPickupServicePoint(
+    RequestType requestType) {
+
+    configurationsFixture.enableTlrFeature();
+    final UUID requestPolicyId = UUID.randomUUID();
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      requestPolicyId,
+      List.of(requestType),
+      "Test request policy",
+      "Test description",
+      Map.of(requestType, Set.of(servicePointsFixture.cd2().getId()))
+    ));
+
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+
+    if (requestType == RECALL) {
+      checkOutFixture.checkOutByBarcode(item, usersFixture.james());
+    }
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .titleRequestLevel()
+      .withRequestType(requestType.getValue())
+      .withInstanceId(item.getInstanceId())
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(usersFixture.charlotte().getId()));
+
+    assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
+    assertThat(response.getJson(), allOf(
+      hasErrorWith(allOf(
+        hasMessage("One or more Pickup Locations are no longer available"),
+        hasParameter("requestType", requestType.getValue()),
+        hasUUIDParameter("pickupServicePointId", pickupServicePointId),
+        hasUUIDParameter("requestPolicyId", requestPolicyId),
+        hasCode(ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED)
+      ))));
   }
 
   private Response createItemsAndAttemptTitleLevelHold(IndividualResource instance,

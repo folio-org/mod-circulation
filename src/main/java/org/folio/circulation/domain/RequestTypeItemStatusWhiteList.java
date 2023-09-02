@@ -22,7 +22,9 @@ import static org.folio.circulation.domain.ItemStatus.UNAVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.UNKNOWN;
 import static org.folio.circulation.domain.ItemStatus.WITHDRAWN;
 
+import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.List;
 
 public class RequestTypeItemStatusWhiteList {
   private static EnumMap<ItemStatus, Boolean> recallRules;
@@ -152,5 +154,11 @@ public class RequestTypeItemStatusWhiteList {
 
   public static boolean canCreateRequestForItem(ItemStatus itemStatus, RequestType requestType) {
     return requestsRulesMap.get(requestType).get(itemStatus);
+  }
+
+  public static List<RequestType> getRequestTypesAllowedForItemStatus(ItemStatus itemStatus) {
+    return Arrays.stream(RequestType.values())
+      .filter(requestType -> requestsRulesMap.get(requestType).get(itemStatus))
+      .toList();
   }
 }

@@ -10,10 +10,12 @@ import org.folio.circulation.support.http.client.Response;
 import api.support.builders.Builder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import lombok.Getter;
 
 public class RecordCreator {
   private final ResourceClient client;
   private final Function<JsonObject, String> identityMapKey;
+  @Getter
   private final Map<String, IndividualResource> identityMap = new HashMap<>();
 
   RecordCreator(

@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Circulation
-version: v14.1
+version: v14.2
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
@@ -314,4 +314,45 @@ resourceTypes:
             body:
               text/plain:
                 example: "Internal server error"
-
+    /allowed-service-points:
+      displayName: Allowed pickup service points by request type
+      get:
+        description: Get allowed pickup service points grouped by request type
+        queryString:
+          minProperties: 2
+          maxProperties: 2
+          properties:
+            requester:
+              description: "Requester ID"
+              pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+              required: true
+            item:
+              description: "Item ID"
+              pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+              required: false
+            instance:
+              description: "Instance ID"
+              pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+              required: false
+        responses:
+          200:
+            description: "List of allowed service points was retrieved successfully"
+            body:
+              application/json:
+                type: !include allowed-service-points-response.json
+                example: !include examples/allowed-service-points-response.json
+          400:
+            description: "Invalid request"
+            body:
+              text/plain:
+                example: "Request query parameters must contain 'requester'"
+          422:
+            description: "Validation failure"
+            body:
+              text/plain:
+                example: "Validation failed"
+          500:
+            description: "Internal server error"
+            body:
+              text/plain:
+                example: "Internal server error"

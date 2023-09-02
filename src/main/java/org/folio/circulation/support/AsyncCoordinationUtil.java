@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,28 @@ public class AsyncCoordinationUtil {
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
       .thenApply(v -> futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+  }
+
+  /**
+   * Applies BiFunction {@code asyncAction} to all key-value pairs in {@code map}
+   * and combines results to list
+   */
+  public static <T, R, S> CompletableFuture<Result<List<S>>> allOf(
+    Map<T, R> map, BiFunction<T, R, CompletableFuture<Result<S>>> asyncAction) {
+
+    return allResultsOf(map, asyncAction)
+      .thenApply(Result::combineAll);
+  }
+
+  private static <T, R, S> CompletableFuture<List<Result<S>>> allResultsOf(
+    Map<T, R> map, BiFunction<T, R, CompletableFuture<Result<S>>> asyncAction) {
+
+    List<CompletableFuture<Result<S>>> futures = map.entrySet().stream()
+      .map(entry -> asyncAction.apply(entry.getKey(), entry.getValue()))
+      .toList();
+
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+      .thenApply(v -> futures.stream().map(CompletableFuture::join).toList());
   }
 
   public static <T, K, V> CompletableFuture<Result<Map<K, V>>> allOf(
