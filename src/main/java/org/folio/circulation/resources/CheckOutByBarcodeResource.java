@@ -29,6 +29,7 @@ import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -111,6 +112,8 @@ public class CheckOutByBarcodeResource extends Resource {
     final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     final LoanScheduledNoticeService scheduledNoticeService =
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
+    final ReminderFeeScheduledNoticeService reminderFeeScheduledNoticesService =
+      new ReminderFeeScheduledNoticeService(scheduledNoticesRepository);
 
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(permissions);
@@ -182,6 +185,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
+      .thenApply(r -> r.next(reminderFeeScheduledNoticesService::scheduleFirstReminder))
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> createdLoanFrom(r, errorHandler))
