@@ -60,7 +60,7 @@ public class RequestServiceUtility {
     }
 
     if (!requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {
-      return failedValidation("One or more Pickup Locations are no longer available",
+      return failedValidation("One or more Pickup locations are no longer available",
         Map.of(PICKUP_SERVICE_POINT_ID, request.getPickupServicePointId(),
           REQUEST_TYPE, requestType.toString(),
           "requestPolicyId", requestPolicy.getId()),

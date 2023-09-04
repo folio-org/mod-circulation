@@ -4260,7 +4260,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
-        hasMessage("One or more Pickup Locations are no longer available"),
+        hasMessage("One or more Pickup locations are no longer available"),
         hasParameter("requestType", requestType.getValue()),
         hasUUIDParameter("pickupServicePointId", pickupServicePointId),
         hasUUIDParameter("requestPolicyId", requestPolicyId),
@@ -4303,7 +4303,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
-        hasMessage("One or more Pickup Locations are no longer available"),
+        hasMessage("One or more Pickup locations are no longer available"),
         hasParameter("requestType", requestType.getValue()),
         hasUUIDParameter("pickupServicePointId", pickupServicePointId),
         hasUUIDParameter("requestPolicyId", requestPolicyId),
