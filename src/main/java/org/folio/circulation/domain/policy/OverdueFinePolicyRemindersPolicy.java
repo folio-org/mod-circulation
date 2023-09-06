@@ -4,11 +4,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.NoticeFormat;
 
-import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,6 +69,14 @@ public class OverdueFinePolicyRemindersPolicy {
       } else {
         return null;
       }
+    }
+
+    public boolean hasEntryAfter(int sequenceNumber) {
+      return reminderSequenceEntries.size() >= sequenceNumber+1;
+    }
+
+    public ReminderSequenceEntry getEntryAfter(int sequenceNumber) {
+      return hasEntryAfter(sequenceNumber) ? getEntry(sequenceNumber+1) : null;
     }
 
     public String toString() {

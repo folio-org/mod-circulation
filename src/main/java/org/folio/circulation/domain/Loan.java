@@ -39,13 +39,19 @@ import static org.folio.circulation.domain.representations.LoanProperties.STATUS
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
+import static org.folio.circulation.domain.representations.LoanProperties.LAST_FEE_BILLED;
+import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.BILL_NUMBER;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getValueByPath;
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
@@ -594,6 +600,27 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return ObjectUtils.allNotNull(dueDate, systemTime)
       && isBeforeMillis(dueDate, systemTime);
+  }
+
+  public Loan withIncrementedRemindersLastFeeBilled(ZonedDateTime date) {
+    Integer latestReminderNo = getLastReminderFeeBilledNumber();
+    return withRemindersLastFeeBilled( latestReminderNo == null ? 1 : latestReminderNo+1, date);
+  }
+
+  public Loan withRemindersLastFeeBilled(int number, ZonedDateTime date) {
+    JsonObject lastFeeBilled = getNestedObjectProperty(representation,REMINDERS,LAST_FEE_BILLED);
+    if (lastFeeBilled == null) {
+      write(representation,REMINDERS,new JsonObject());
+      write(representation.getJsonObject(REMINDERS),LAST_FEE_BILLED,new JsonObject());
+      lastFeeBilled = getNestedObjectProperty(representation,REMINDERS,LAST_FEE_BILLED);
+    }
+    write(lastFeeBilled, BILL_DATE, date);
+    write(lastFeeBilled, BILL_NUMBER, number);
+    return this;
+  }
+
+  public Integer getLastReminderFeeBilledNumber() {
+    return (Integer) getValueByPath(representation, REMINDERS, LAST_FEE_BILLED, BILL_NUMBER);
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {

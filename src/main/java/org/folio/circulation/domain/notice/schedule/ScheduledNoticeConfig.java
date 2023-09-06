@@ -8,8 +8,8 @@ public class ScheduledNoticeConfig {
 
   private final NoticeTiming timing;
   private final Period recurringPeriod;
-  private final String templateId;
-  private final NoticeFormat format;
+  private String templateId;
+  private NoticeFormat format;
   private final boolean sendInRealTime;
 
   public ScheduledNoticeConfig(
@@ -54,6 +54,17 @@ public class ScheduledNoticeConfig {
   public boolean hasAfterTiming() {
     return timing == NoticeTiming.AFTER;
   }
+
+  public ScheduledNoticeConfig setTemplateId(String templateId) {
+    this.templateId = templateId;
+    return this;
+  }
+
+  public ScheduledNoticeConfig setFormat(NoticeFormat format) {
+    this.format = format;
+    return this;
+  }
+
 
   @Override
   public String toString() {

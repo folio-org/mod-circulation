@@ -59,7 +59,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForLoan));
   }
 
-  private Result<ScheduledNoticeContext> failWhenNoticeHasNoLoanId(ScheduledNoticeContext context) {
+  protected Result<ScheduledNoticeContext> failWhenNoticeHasNoLoanId(ScheduledNoticeContext context) {
     String loanId = context.getNotice().getLoanId();
 
     return isEmpty(loanId)
@@ -112,7 +112,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return scheduledNoticesRepository.update(nextRecurringNotice);
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
 
     // Also fetches user, item and item-related records (holdings, instance, location, etc.)
