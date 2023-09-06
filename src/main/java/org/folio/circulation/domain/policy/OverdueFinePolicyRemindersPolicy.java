@@ -3,7 +3,6 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.notice.NoticeFormat;
 
 import java.math.BigDecimal;
@@ -98,14 +97,14 @@ public class OverdueFinePolicyRemindersPolicy {
     private static final String INTERVAL = "interval";
     private static final String TIME_UNIT_ID = "timeUnitId";
     private static final String REMINDER_FEE = "reminderFee";
-    private static final String NOTICE_METHOD_ID = "noticeMethodId";
+    private static final String NOTICE_FORMAT = "noticeFormat";
     private static final String NOTICE_TEMPLATE_ID = "noticeTemplateId";
     private static final String BLOCK_TEMPLATE_ID = "blockTemplateId";
 
     private final int sequenceNumber;
     private final Period period;
     private final BigDecimal reminderFee;
-    private final String noticeMethodId;
+    private final String noticeFormat;
     private final String noticeTemplateId;
     private final String blockTemplateId;
 
@@ -113,13 +112,13 @@ public class OverdueFinePolicyRemindersPolicy {
       int sequenceNumber,
       Period period,
       BigDecimal reminderFee,
-      String noticeMethodId,
+      String noticeFormat,
       String noticeTemplateId,
       String blockTemplateId) {
       this.sequenceNumber = sequenceNumber;
       this.period = period;
       this.reminderFee = reminderFee;
-      this.noticeMethodId = noticeMethodId;
+      this.noticeFormat = noticeFormat;
       this.noticeTemplateId= noticeTemplateId;
       this.blockTemplateId = blockTemplateId;
     }
@@ -130,19 +129,19 @@ public class OverdueFinePolicyRemindersPolicy {
       BigDecimal fee = getBigDecimalProperty(entry,REMINDER_FEE);
       return new ReminderSequenceEntry(
         sequenceNumber, period, fee,
-        entry.getString(NOTICE_METHOD_ID),
+        entry.getString(NOTICE_FORMAT),
         entry.getString(NOTICE_TEMPLATE_ID),
         entry.getString(BLOCK_TEMPLATE_ID));
     }
 
     public NoticeFormat getNoticeFormat () {
-      return NoticeFormat.from(StringUtils.capitalize(noticeMethodId));
+      return NoticeFormat.from(noticeFormat);
     }
 
     public String toString() {
       return "Reminder #" + sequenceNumber +
         ", period: " + period.toString() +
-        ", method: " + noticeMethodId + ". ";
+        ", format: " + noticeFormat + ". ";
     }
   }
 }
