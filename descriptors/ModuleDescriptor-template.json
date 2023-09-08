@@ -167,7 +167,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.1",
+      "version": "14.2",
       "handlers": [
         {
           "methods": [
@@ -618,11 +618,43 @@
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
             "users.collection.get",
+            "addresstypes.collection.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
             "pubsub.publish.post"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "allowed-service-points",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/requests/allowed-service-points",
+          "permissionsRequired": [
+            "circulation.requests.allowed-service-points.get"
+          ],
+          "modulePermissions": [
+            "users.item.get",
+            "users.collection.get",
+            "circulation-storage.circulation-rules.get",
+            "circulation.rules.request-policy.get",
+            "circulation.rules.request-policy-all.get",
+            "circulation-storage.request-policies.item.get",
+            "circulation-storage.request-policies.collection.get",
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.collection.get",
+            "circulation.internal.fetch-items",
+            "inventory-storage.service-points.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.holdings.collection.get"
           ]
         }
       ]
@@ -638,7 +670,7 @@
           ],
           "pathPattern": "/circulation/rules-reload",
           "modulePermissions": [
-            "circulation.rules.get"
+            "circulation-storage.circulation-rules.get"
           ],
           "unit": "minute",
           "delay": "3"
@@ -657,13 +689,15 @@
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
             "users.collection.get",
+            "addresstypes.collection.get",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
             "configuration.entries.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "3"
@@ -679,9 +713,12 @@
             "actual-cost-record-storage.actual-cost-records.item.get",
             "actual-cost-record-storage.actual-cost-records.collection.get",
             "actual-cost-record-storage.actual-cost-records.item.put",
+            "accounts.item.get",
             "accounts.collection.get",
             "circulation.internal.fetch-items",
+            "lost-item-fees-policies.item.get",
             "lost-item-fees-policies.collection.get",
+            "circulation-storage.loans.item.get",
             "circulation-storage.loans.collection.get",
             "pubsub.publish.post"
           ],
@@ -705,6 +742,7 @@
             "configuration.entries.collection.get",
             "patron-notice.post",
             "users.item.get",
+            "addresstypes.collection.get",
             "templates.item.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
@@ -712,7 +750,8 @@
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "accounts.item.get",
-            "accounts.collection.get"
+            "accounts.collection.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
@@ -735,10 +774,12 @@
             "configuration.entries.collection.get",
             "patron-notice.post",
             "users.item.get",
+            "addresstypes.collection.get",
             "templates.item.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
-            "circulation.rules.notice-policy.get"
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -758,13 +799,15 @@
             "circulation-storage.requests.collection.get",
             "patron-notice.post",
             "users.item.get",
+            "addresstypes.collection.get",
             "usergroups.collection.get",
             "usergroups.item.get",
             "configuration.entries.collection.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -795,8 +838,10 @@
             "circulation.internal.fetch-items",
             "users.item.get",
             "users.collection.get",
+            "addresstypes.collection.get",
             "pubsub.publish.post",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -827,8 +872,10 @@
             "circulation-storage.loans.collection.get",
             "circulation-storage.circulation-rules.get",
             "circulation.internal.fetch-items",
+            "circulation-storage.loans-history.collection.get",
             "users.item.get",
             "users.collection.get",
+            "addresstypes.collection.get",
             "pubsub.publish.post",
             "templates.item.get"
           ],
@@ -861,8 +908,10 @@
             "circulation.internal.fetch-items",
             "users.item.get",
             "users.collection.get",
+            "addresstypes.collection.get",
             "pubsub.publish.post",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -892,6 +941,7 @@
             "circulation.internal.fetch-items",
             "users.item.get",
             "users.collection.get",
+            "addresstypes.collection.get",
             "proxiesfor.collection.get",
             "configuration.entries.collection.get",
             "scheduled-notice-storage.scheduled-notices.collection.delete",
@@ -924,7 +974,9 @@
             "pubsub.publish.post",
             "users.item.get",
             "users.collection.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
+            "addresstypes.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "30"
@@ -951,12 +1003,14 @@
             "users.collection.get",
             "usergroups.collection.get",
             "usergroups.item.get",
+            "addresstypes.collection.get",
             "circulation-storage.circulation-rules.get",
             "circulation-storage.patron-notice-policies.item.get",
             "circulation-storage.patron-notice-policies.collection.get",
             "circulation.rules.notice-policy.get",
             "scheduled-notice-storage.scheduled-notices.item.post",
-            "actual-cost-record-storage.actual-cost-records.item.post"
+            "actual-cost-record-storage.actual-cost-records.item.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "35"
@@ -1432,6 +1486,7 @@
         "circulation.requests.queue.reorder.collection.post",
         "circulation.requests.instances.item.post",
         "circulation.requests.hold-shelf-clearance-report.get",
+        "circulation.requests.allowed-service-points.get",
         "circulation.inventory.items-in-transit-report.get",
         "circulation.pick-slips.get"
       ]
@@ -1445,7 +1500,8 @@
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
         "users.collection.get",
-        "users.item.get"
+        "users.item.get",
+        "addresstypes.collection.get"
       ],
       "visible": false
     },
@@ -1462,6 +1518,7 @@
         "lost-item-fees-policies.item.get",
         "accounts.collection.get",
         "users.item.get",
+        "addresstypes.collection.get",
         "actual-cost-record-storage.actual-cost-records.collection.get",
         "actual-cost-record-storage.actual-cost-records.item.get",
         "actual-cost-record-storage.actual-cost-records.item.post",
@@ -1495,6 +1552,7 @@
         "accounts.collection.get",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
@@ -1528,6 +1586,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "proxiesfor.collection.get",
@@ -1566,6 +1625,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "proxiesfor.collection.get",
@@ -1612,6 +1672,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "addresstypes.item.get",
@@ -1669,6 +1730,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "proxiesfor.collection.get",
         "calendar.endpoint.dates.get",
         "configuration.entries.collection.get",
@@ -1719,6 +1781,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "proxiesfor.collection.get",
         "configuration.entries.collection.get",
         "circulation.rules.notice-policy.get",
@@ -1755,6 +1818,7 @@
         "inventory-storage.items.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
+        "addresstypes.collection.get",
         "proxiesfor.collection.get",
         "pubsub.publish.post"
       ],
@@ -1771,6 +1835,7 @@
         "circulation.internal.fetch-items",
         "users.collection.get",
         "users.item.get",
+        "addresstypes.collection.get",
         "accounts.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
@@ -1793,6 +1858,7 @@
         "accounts.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
+        "addresstypes.collection.get",
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.collection.get"
       ],
@@ -1810,6 +1876,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get"
       ],
@@ -1840,6 +1907,7 @@
         "inventory-storage.items.item.put",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "proxiesfor.collection.get",
@@ -1866,6 +1934,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get"
       ],
@@ -1883,6 +1952,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "circulation-storage.requests.item.delete",
@@ -1917,6 +1987,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "proxiesfor.collection.get",
@@ -1942,6 +2013,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get"
       ],
@@ -1960,6 +2032,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "pubsub.publish.post"
@@ -1990,6 +2063,7 @@
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "proxiesfor.collection.get",
@@ -2019,6 +2093,7 @@
         "feefines.collection.get",
         "accounts.item.post",
         "users.item.get",
+        "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "feefineactions.item.post",
@@ -2049,6 +2124,7 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
+        "addresstypes.collection.get",
         "pubsub.publish.post",
         "patron-notice.post"
       ],
@@ -2062,6 +2138,7 @@
         "circulation-storage.loans.item.get",
         "circulation.internal.fetch-items",
         "users.item.get",
+        "addresstypes.collection.get",
         "pubsub.publish.post"
       ],
       "visible": false
@@ -2076,6 +2153,7 @@
         "inventory-storage.items.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
+        "addresstypes.collection.get",
         "notes.collection.get",
         "notes.item.post",
         "note.types.collection.get",
@@ -2093,6 +2171,7 @@
         "inventory-storage.items.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
+        "addresstypes.collection.get",
         "notes.item.post",
         "note.types.collection.get",
         "notes.domain.all",
@@ -2124,6 +2203,7 @@
         "proxiesfor.collection.get",
         "proxiesfor.collection.get",
         "users.item.get",
+        "addresstypes.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
@@ -2155,6 +2235,7 @@
         "circulation-storage.requests.collection.get",
         "users.item.get",
         "users.collection.get",
+        "addresstypes.collection.get",
         "addresstypes.item.get",
         "addresstypes.collection.get"
       ],
@@ -2228,3 +2309,4 @@
     ]
   }
 }
+
