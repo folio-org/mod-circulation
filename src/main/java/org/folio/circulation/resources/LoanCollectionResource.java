@@ -176,7 +176,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 
     getExistingLoan(loanRepository , loan)
       .thenApply(e -> e.map(existingLoan -> new LoanAndRelatedRecords(loan, existingLoan)))

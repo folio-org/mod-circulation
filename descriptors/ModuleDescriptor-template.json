@@ -622,7 +622,8 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.loans-history.collection.get"
           ]
         }
       ]
@@ -694,7 +695,8 @@
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
             "configuration.entries.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "3"
@@ -746,7 +748,8 @@
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "accounts.item.get",
-            "accounts.collection.get"
+            "accounts.collection.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "5"
@@ -772,7 +775,8 @@
             "templates.item.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
-            "circulation.rules.notice-policy.get"
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -798,7 +802,8 @@
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -830,7 +835,8 @@
             "users.item.get",
             "users.collection.get",
             "pubsub.publish.post",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -861,10 +867,12 @@
             "circulation-storage.loans.collection.get",
             "circulation-storage.circulation-rules.get",
             "circulation.internal.fetch-items",
+            "circulation-storage.loans-history.collection.get",
             "users.item.get",
             "users.collection.get",
             "pubsub.publish.post",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -896,7 +904,8 @@
             "users.item.get",
             "users.collection.get",
             "pubsub.publish.post",
-            "templates.item.get"
+            "templates.item.get",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -934,7 +943,8 @@
             "anonymize-storage-loans.post",
             "accounts.collection.get",
             "feefineactions.collection.get",
-            "pubsub.publish.post"
+            "pubsub.publish.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "60"
@@ -958,7 +968,8 @@
             "pubsub.publish.post",
             "users.item.get",
             "users.collection.get",
-            "scheduled-notice-storage.scheduled-notices.item.post"
+            "scheduled-notice-storage.scheduled-notices.item.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "30"
@@ -990,7 +1001,8 @@
             "circulation-storage.patron-notice-policies.collection.get",
             "circulation.rules.notice-policy.get",
             "scheduled-notice-storage.scheduled-notices.item.post",
-            "actual-cost-record-storage.actual-cost-records.item.post"
+            "actual-cost-record-storage.actual-cost-records.item.post",
+            "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
           "delay": "35"
@@ -1569,7 +1581,8 @@
         "patron-notice.post",
         "configuration.entries.collection.get",
         "calendar.endpoint.dates.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -1676,7 +1689,8 @@
         "actual-cost-record-storage.actual-cost-records.item.get",
         "actual-cost-fee-fine-cancel.post",
         "departments.item.get",
-        "departments.collection.get"
+        "departments.collection.get",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -1727,7 +1741,8 @@
         "manualblocks.item.get",
         "actual-cost-record-storage.actual-cost-records.collection.get",
         "actual-cost-record-storage.actual-cost-records.item.get",
-        "actual-cost-fee-fine-cancel.post"
+        "actual-cost-fee-fine-cancel.post",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -1762,7 +1777,8 @@
         "patron-notice.post",
         "anonymize-storage-loans.post",
         "feefineactions.collection.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -1885,7 +1901,8 @@
         "configuration.entries.collection.get",
         "manualblocks.collection.get",
         "pubsub.publish.post",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -1961,7 +1978,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
         "manualblocks.collection.get",
-        "automated-patron-blocks.collection.get"
+        "automated-patron-blocks.collection.get",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -2036,7 +2054,8 @@
         "manualblocks.collection.get",
         "automated-patron-blocks.collection.get",
         "pubsub.publish.post",
-        "circulation-storage.fixed-due-date-schedules.collection.get"
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -2085,7 +2104,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
         "pubsub.publish.post",
-        "patron-notice.post"
+        "patron-notice.post",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
@@ -2163,7 +2183,8 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
         "configuration.entries.collection.get",
-        "patron-notice.post"
+        "patron-notice.post",
+        "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
