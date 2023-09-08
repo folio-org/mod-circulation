@@ -102,7 +102,9 @@ public class RequestNoticeSender {
       .stream()
       .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled())
       .count();
-
+    if(request.hasLoan()) {
+      loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan()).join();
+    }
     if (request.hasItemId()) {
       sendConfirmationNoticeForRequestWithItemId(request);
     } else {
@@ -116,6 +118,9 @@ public class RequestNoticeSender {
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();
+    if(request.hasLoan()) {
+      loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan()).join();
+    }
 
     if (request.hasItemId()) {
       sendCancellationNoticeForRequestWithItemId(request);
@@ -231,6 +236,10 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendNotice(Request request, UUID templateId,
     NoticeEventType eventType) {
 
+    if(request.hasLoan()) {
+      loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan()).join();
+    }
+
     JsonObject noticeContext = createRequestNoticeContext(request);
     NoticeLogContext noticeLogContext = NoticeLogContext.from(request)
       .withTriggeringEvent(eventType.getRepresentation())
@@ -242,6 +251,10 @@ public class RequestNoticeSender {
 
   private CompletableFuture<Result<Void>> fetchDataAndSendRequestAwaitingPickupNotice(
     Request request) {
+
+    if(request.hasLoan()) {
+      loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan()).join();
+    }
 
     return ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
@@ -283,6 +296,8 @@ public class RequestNoticeSender {
       || loan.getItem() == null || recallRequestCount > 1) {
       return ofAsync(null);
     }
+
+    loanRepository.fetchLatestPatronInfoAddedComment(loan).join();
 
     PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
       .withItem(loan.getItem())

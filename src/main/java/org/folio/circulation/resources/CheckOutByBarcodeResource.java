@@ -127,7 +127,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients,
         PatronActionSessionRepository.using(clients, loanRepository,
-          userRepository));
+          userRepository), loanRepository);
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 

@@ -32,6 +32,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.combiner.LoanNoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -54,13 +55,15 @@ public class PatronActionSessionService {
 
   private final PatronActionSessionRepository patronActionSessionRepository;
   private final ImmediatePatronNoticeService patronNoticeService;
+  private final LoanRepository loanRepository;
   protected final EventPublisher eventPublisher;
 
   public static PatronActionSessionService using(Clients clients,
-    PatronActionSessionRepository patronActionSessionRepository) {
+    PatronActionSessionRepository patronActionSessionRepository, LoanRepository loanRepository) {
 
     return new PatronActionSessionService(patronActionSessionRepository,
       new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
+      loanRepository,
       new EventPublisher(clients.pubSubPublishingService()));
   }
 
@@ -214,15 +217,15 @@ public class PatronActionSessionService {
     return succeeded(null);
   }
 
-  private static List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
+  private List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
     return sessions.stream()
-      .map(PatronActionSessionService::buildPatronNoticeEvent)
+      .map(this::buildPatronNoticeEvent)
       .collect(Collectors.toList());
   }
 
-  private static PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
+  private PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
     Loan loan = session.getLoan();
-
+    loanRepository.fetchLatestPatronInfoAddedComment(loan).join();
     return new PatronNoticeEventBuilder()
       .withItem(loan.getItem())
       .withUser(loan.getUser())

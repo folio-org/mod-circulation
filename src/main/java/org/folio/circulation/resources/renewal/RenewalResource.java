@@ -150,7 +150,7 @@ public abstract class RenewalResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 
     final AutomatedPatronBlocksRepository automatedPatronBlocksRepository =
       new AutomatedPatronBlocksRepository(clients);

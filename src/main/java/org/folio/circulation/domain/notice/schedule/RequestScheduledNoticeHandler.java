@@ -161,7 +161,16 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
     return requestRepository.fetchRelatedRecords(context.getRequest())
       .thenApply(mapResult(context::withRequest))
+      .thenApply(r -> r.next(this::fetchLatestPatronInfoAddedComment))
       .thenApply(r -> r.next(this::failWhenRequestHasNoUser));
+  }
+
+  private Result<ScheduledNoticeContext> fetchLatestPatronInfoAddedComment(ScheduledNoticeContext context){
+    Request request = context.getRequest();
+    if(request.getLoan() != null){
+      loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan()).join();
+    }
+    return Result.of(() -> context);
   }
 
 }
