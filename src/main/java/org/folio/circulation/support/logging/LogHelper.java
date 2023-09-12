@@ -1,8 +1,6 @@
 package org.folio.circulation.support.logging;
 
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
-import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -35,12 +33,12 @@ public class LogHelper {
     final HttpServerRequest request = rc.request();
     populateLoggingContext(request);
 
-    if (logger.isInfoEnabled()) {
-      logger.info("[{}] [{}] {} {}",
-          null2empty(rc.request().getHeader(REQUEST_ID)),
-          null2empty(rc.request().getHeader(TENANT)),
-          rc.request().method(), rc.request().path());
-    }
+//    if (logger.isInfoEnabled()) {
+//      logger.info("[{}] [{}] {} {}",
+//          null2empty(rc.request().getHeader(REQUEST_ID)),
+//          null2empty(rc.request().getHeader(TENANT)),
+//          rc.request().method(), rc.request().path());
+//    }
 
     rc.next();
   }
@@ -89,11 +87,11 @@ public class LogHelper {
     FolioLoggingContext.put(FolioLoggingContext.USER_ID_LOGGING_VAR_NAME,request.getHeader(RestVerticle.OKAPI_USERID_HEADER));
     FolioLoggingContext.put(FolioLoggingContext.MODULE_ID_LOGGING_VAR_NAME, MODULE_NAME);
 
-    request.endHandler(v -> {
-      FolioLoggingContext.put(FolioLoggingContext.TENANT_ID_LOGGING_VAR_NAME, null);
-      FolioLoggingContext.put(FolioLoggingContext.REQUEST_ID_LOGGING_VAR_NAME, null);
-      FolioLoggingContext.put(FolioLoggingContext.USER_ID_LOGGING_VAR_NAME, null);
-      FolioLoggingContext.put(FolioLoggingContext.MODULE_ID_LOGGING_VAR_NAME, null);
-    });
+//    request.endHandler(v -> {
+//      FolioLoggingContext.put(FolioLoggingContext.TENANT_ID_LOGGING_VAR_NAME, null);
+//      FolioLoggingContext.put(FolioLoggingContext.REQUEST_ID_LOGGING_VAR_NAME, null);
+//      FolioLoggingContext.put(FolioLoggingContext.USER_ID_LOGGING_VAR_NAME, null);
+//      FolioLoggingContext.put(FolioLoggingContext.MODULE_ID_LOGGING_VAR_NAME, null);
+//    });
   }
 }
