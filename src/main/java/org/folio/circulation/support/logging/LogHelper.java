@@ -1,8 +1,6 @@
 package org.folio.circulation.support.logging;
 
 import static java.util.stream.Collectors.toList;
-import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
-import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -27,16 +25,9 @@ public class LogHelper {
     throw new UnsupportedOperationException("Do not instantiate");
   }
 
-  private static String null2empty(String s) {
-    return (s == null) ? "" : s;
-  }
-
   public static void logRequest(RoutingContext rc, Logger logger) {
     if (logger.isInfoEnabled()) {
-      logger.info("[{}] [{}] {} {}",
-          null2empty(rc.request().getHeader(REQUEST_ID)),
-          null2empty(rc.request().getHeader(TENANT)),
-          rc.request().method(), rc.request().path());
+      logger.info("Invoking {} {}", rc.request().method(), rc.request().path());
     }
     rc.next();
   }
