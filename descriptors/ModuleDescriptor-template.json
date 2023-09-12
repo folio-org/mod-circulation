@@ -2095,6 +2095,7 @@
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.get",
+        "circulation-storage.loans.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
         "pubsub.publish.post"
