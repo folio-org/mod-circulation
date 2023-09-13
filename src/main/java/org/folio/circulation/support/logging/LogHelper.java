@@ -84,14 +84,6 @@ public class LogHelper {
     FolioLoggingContext.put(FolioLoggingContext.USER_ID_LOGGING_VAR_NAME, userId);
     FolioLoggingContext.put(FolioLoggingContext.MODULE_ID_LOGGING_VAR_NAME, MODULE_NAME);
 
-    request.endHandler(v -> {
-      log.debug("populateLoggingContext:: clearing logging context");
-      FolioLoggingContext.put(FolioLoggingContext.TENANT_ID_LOGGING_VAR_NAME, null);
-      FolioLoggingContext.put(FolioLoggingContext.REQUEST_ID_LOGGING_VAR_NAME, null);
-      FolioLoggingContext.put(FolioLoggingContext.USER_ID_LOGGING_VAR_NAME, null);
-      FolioLoggingContext.put(FolioLoggingContext.MODULE_ID_LOGGING_VAR_NAME, null);
-    });
-
     routingContext.next();
   }
 }
