@@ -19,7 +19,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class LogHelper {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  public static final String MODULE_NAME = "mod-circulation";
+  private static final String MODULE_NAME = "mod-circulation";
 
   private LogHelper() {
     throw new UnsupportedOperationException("Do not instantiate");
