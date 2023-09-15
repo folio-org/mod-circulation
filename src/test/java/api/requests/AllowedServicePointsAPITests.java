@@ -54,7 +54,7 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void getFailsWithBadRequestWhenRequesterIdIsNull() {
     Response response = get(null, randomId(), null, HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), equalTo("Request query parameters must contain 'requester'."));
+    assertThat(response.getBody(), equalTo("Invalid combination of query parameters"));
   }
 
   @ParameterizedTest
@@ -66,7 +66,7 @@ class AllowedServicePointsAPITests extends APITests {
     String instanceId, String itemId) {
 
     Response response = get(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), equalTo("Request query parameters must contain either 'instance' or 'item'."));
+    assertThat(response.getBody(), equalTo("Invalid combination of query parameters"));
   }
 
   @ParameterizedTest
@@ -84,9 +84,8 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void getFailsWithMultipleErrors() {
     Response response = get(null, "instanceId", "itemId", HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), equalTo("Request query parameters must contain 'requester'. " +
-      "Request query parameters must contain either 'instance' or 'item'. " +
-      "Instance ID is not a valid UUID: instanceId. Item ID is not a valid UUID: itemId."));
+    assertThat(response.getBody(), equalTo("Instance ID is not a valid UUID: instanceId. " +
+      "Item ID is not a valid UUID: itemId. Invalid combination of query parameters"));
   }
 
   public static Object[] shouldReturnListOfAllowedServicePointsForRequestParameters() {
@@ -518,14 +517,15 @@ class AllowedServicePointsAPITests extends APITests {
 
   private Response get(String requesterId, String instanceId, String itemId, int expectedStatusCode) {
     List<QueryStringParameter> queryParams = new ArrayList<>();
+    queryParams.add(namedParameter("operation", "create"));
     if (requesterId != null) {
-      queryParams.add(namedParameter("requester", requesterId));
+      queryParams.add(namedParameter("requesterId", requesterId));
     }
     if (instanceId != null) {
-      queryParams.add(namedParameter("instance", instanceId));
+      queryParams.add(namedParameter("instanceId", instanceId));
     }
     if (itemId != null) {
-      queryParams.add(namedParameter("item", itemId));
+      queryParams.add(namedParameter("itemId", itemId));
     }
 
     return restAssuredClient.get(allowedServicePointsUrl(), queryParams, expectedStatusCode,
