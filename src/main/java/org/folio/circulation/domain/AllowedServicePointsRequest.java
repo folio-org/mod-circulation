@@ -11,4 +11,12 @@ public class AllowedServicePointsRequest {
   private String requesterId;
   private String instanceId;
   private String itemId;
+
+  public boolean isForTitleLevelRequest() {
+    return instanceId != null;
+  }
+
+  public boolean isForItemLevelRequest() {
+    return itemId != null;
+  }
 }

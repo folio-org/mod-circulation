@@ -10,6 +10,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
@@ -401,6 +403,30 @@ class AllowedServicePointsAPITests extends APITests {
 
     Response response = get(requesterId, instanceId, null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getBody(), containsString("There are no holdings for this instance"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void allPickupLocationsAreReturnedForTitleLevelHoldWhenItIsDisabledAndInstanceHasNoItems(
+    boolean instanceHasHoldings) {
+
+    // make TLR-hold ignore circulation rules
+    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+
+    IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
+    IndividualResource sp2 = servicePointsFixture.cd2(); // pickup location
+    IndividualResource sp3 = servicePointsFixture.cd3(); // not a pickup location
+    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, Set.of(sp1.getId())); // no hold
+
+    String requesterId = usersFixture.steve().getId().toString();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    if (instanceHasHoldings) {
+      holdingsFixture.defaultWithHoldings(instance.getId());
+    }
+
+    JsonObject response = get(requesterId, instance.getId().toString(), null, HttpStatus.SC_OK).getJson();
+    assertThat(response, iterableWithSize(1));
+    assertServicePointsMatch(response.getJsonArray("Hold"), List.of(sp1, sp2));
   }
 
   @ParameterizedTest

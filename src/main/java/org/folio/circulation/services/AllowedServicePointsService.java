@@ -30,7 +30,9 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
@@ -48,6 +50,7 @@ public class AllowedServicePointsService {
   private final RequestPolicyRepository requestPolicyRepository;
   private final ServicePointRepository servicePointRepository;
   private final ItemByInstanceIdFinder itemFinder;
+  private final ConfigurationRepository configurationRepository;
 
   public AllowedServicePointsService(Clients clients) {
     itemRepository = new ItemRepository(clients);
@@ -55,6 +58,7 @@ public class AllowedServicePointsService {
     requestPolicyRepository = new RequestPolicyRepository(clients);
     servicePointRepository = new ServicePointRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
+    configurationRepository = new ConfigurationRepository(clients);
   }
 
   public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
@@ -85,7 +89,8 @@ public class AllowedServicePointsService {
 
     return fetchItemsAndLookupRequestPolicies(request, user)
       .thenCompose(r -> r.after(policies -> allOf(policies, this::extractAllowedServicePoints)))
-      .thenApply(r -> r.map(this::combineAllowedServicePoints));
+      .thenApply(r -> r.map(this::combineAllowedServicePoints))
+      .thenCompose(r -> r.after(asp -> considerTlrSettings(asp, request)));
   }
 
   private CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> fetchItemsAndLookupRequestPolicies(
@@ -102,14 +107,14 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Collection<Item>>> fetchItems(
     AllowedServicePointsRequest request) {
 
-    return request.getItemId() != null
+    return request.isForItemLevelRequest()
       ? fetchItemForItemLevel(request)
       : fetchItemsForTitleLevel(request);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItemsForTitleLevel(
     AllowedServicePointsRequest request) {
-    return itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), true);
+    return itemFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), false);
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchItemForItemLevel(
@@ -232,14 +237,14 @@ public class AllowedServicePointsService {
       }, () -> new EnumMap<>(RequestType.class)));
   }
 
-  public CompletableFuture<Result<Set<AllowedServicePoint>>> fetchAllowedServicePoints() {
+  private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchAllowedServicePoints() {
     return servicePointRepository.fetchPickupLocationServicePoints()
       .thenApply(r -> r.map(servicePoints -> servicePoints.stream()
         .map(AllowedServicePoint::new)
         .collect(Collectors.toSet())));
   }
 
-  public CompletableFuture<Result<Set<AllowedServicePoint>>> fetchPickupLocationServicePointsByIds(
+  private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchPickupLocationServicePointsByIds(
     Set<String> ids) {
 
     log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
@@ -250,5 +255,40 @@ public class AllowedServicePointsService {
         .map(servicePoints -> servicePoints.stream()
           .map(AllowedServicePoint::new)
           .collect(Collectors.toSet())));
+  }
+
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>> considerTlrSettings(
+    Map<RequestType, Set<AllowedServicePoint>> servicePoints, AllowedServicePointsRequest request) {
+
+    if (!request.isForTitleLevelRequest() || servicePoints.containsKey(RequestType.HOLD)) {
+      log.info("considerTlrSettings:: no need to check TLR-settings");
+      return ofAsync(servicePoints);
+    }
+
+    return configurationRepository.lookupTlrSettings()
+      .thenCompose(r -> r.after(tlr -> considerTlrSettings(tlr, servicePoints)));
+  }
+
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>> considerTlrSettings(
+    TlrSettingsConfiguration tlrSettings, Map<RequestType, Set<AllowedServicePoint>> servicePoints) {
+
+    if (!tlrSettings.isTitleLevelRequestsFeatureEnabled() ||
+      tlrSettings.isTlrHoldShouldFollowCirculationRules()) {
+
+      log.info("considerTlrSettings:: TLR-settings are checked, doing nothing");
+      return ofAsync(servicePoints);
+    }
+
+    log.info("considerTlrSettings:: allowing all pickup locations for Hold");
+
+    return fetchAllowedServicePoints()
+      .thenApply(r -> r.peek(pickupLocations -> {
+        if (pickupLocations.isEmpty()) {
+          log.info("considerTlrSettings:: no pickup locations found");
+        } else {
+          servicePoints.put(RequestType.HOLD, pickupLocations);
+        }
+      }))
+      .thenApply(r -> r.map(ignored -> servicePoints));
   }
 }

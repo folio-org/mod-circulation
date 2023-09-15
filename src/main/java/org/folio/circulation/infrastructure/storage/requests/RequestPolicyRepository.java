@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -8,6 +9,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
 
@@ -83,6 +85,11 @@ public class RequestPolicyRepository {
 
     log.debug("lookupRequestPolicies:: parameters items: {}, user: {}",
       items::size, () -> asJson(user));
+
+    if (items.isEmpty()) {
+      log.info("lookupRequestPolicies:: no items found, nothing to lookup");
+      return ofAsync(emptyMap());
+    }
 
     Map<CirculationRuleCriteria, Set<Item>> criteriaMap = items.stream()
       .map(item -> new CirculationRuleCriteria(item, user))
