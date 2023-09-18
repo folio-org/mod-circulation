@@ -42,14 +42,16 @@ public final class CirculationRulesCache {
   }
 
   private boolean rulesExist(String tenantId) {
+    log.debug("rulesExist:: parameters tenantId: {}", tenantId);
     Rules rules = rulesMap.get(tenantId);
-
+    log.info("rulesExist:: result: {}", rules != null);
     return rules != null;
   }
 
   public CompletableFuture<Result<Rules>> reloadRules(String tenantId,
     CollectionResourceClient circulationRulesClient) {
-    log.info("Reloading rules for tenant {}", tenantId);
+
+    log.debug("reloadRules:: parameters tenant: {}", tenantId);
 
     return circulationRulesClient.get()
       .thenApply(r -> r.map(response -> getRulesAsText(response, tenantId)))
@@ -57,11 +59,11 @@ public final class CirculationRulesCache {
   }
 
   private static String getRulesAsText(Response response, String tenantId) {
-    log.info("Fetched rules for tenant {}", tenantId);
-    
+    log.debug("getRulesAsText:: parameters tenantId: {}", tenantId);
+
     final var circulationRules = new JsonObject(response.getBody());
     var encodeRules = circulationRules.encodePrettily();
-    log.info("circulationRules = {}", encodeRules);
+    log.info("getRulesAsText:: circulationRules: {}", encodeRules);
 
     return circulationRules.getString("rulesAsText");
   }
