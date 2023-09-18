@@ -72,18 +72,14 @@ public class TemplateContextUtil {
 
   public static JsonObject createLoanNoticeContext(Loan loan) {
     return new JsonObject()
-      .put(USER, createUserContext(loan.getUser())
-        .withPrimaryAddressProperties(loan.getUser().getPrimaryAddress())
-        .asJson())
+      .put(USER, createUserContext(loan.getUser()).asJson())
       .put(ITEM, createItemContext(loan.getItem()))
       .put(LOAN, createLoanContext(loan));
   }
 
   public static JsonObject createRequestNoticeContext(Request request) {
     JsonObject requestNoticeContext = new JsonObject()
-      .put(USER, createUserContext(request.getRequester())
-        .withPrimaryAddressProperties(request.getRequester().getPrimaryAddress())
-        .asJson())
+      .put(USER, createUserContext(request.getRequester()).asJson())
       .put(REQUEST, createRequestContext(request))
       .put(ITEM, createItemContext(request));
 
@@ -184,7 +180,8 @@ public class TemplateContextUtil {
       .with(UserContext.BARCODE, user.getBarcode())
       .with(UserContext.PATRON_GROUP, user.getPatronGroup() != null ? user.getPatronGroup().getGroup() : "")
       .with(UserContext.DEPARTMENTS, user.getDepartments() != null && !user.getDepartments().isEmpty() ?
-        user.getDepartments().stream().map(Department::getName).collect(joining("; ")) : "");
+        user.getDepartments().stream().map(Department::getName).collect(joining("; ")) : "")
+      .withPrimaryAddressProperties(user.getPrimaryAddress());
   }
 
   private static JsonObject createItemContext(Item item) {
