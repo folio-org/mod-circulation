@@ -148,6 +148,7 @@ public class RequestRepresentation {
     write(locationSummary, "name", location.getName());
     write(locationSummary, "libraryName", location.getLibraryName());
     write(locationSummary, "code", location.getCode());
+    write(locationSummary, "effectiveLocationPrimaryServicePointName", location.getPrimaryServicePoint().getName());
     return locationSummary;
   }
 

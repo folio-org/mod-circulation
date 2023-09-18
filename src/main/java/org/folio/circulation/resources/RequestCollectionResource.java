@@ -55,6 +55,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 public class RequestCollectionResource extends CollectionResource {
   public RequestCollectionResource(HttpClient client) {
     super(client, "/circulation/requests");
@@ -228,19 +232,46 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
+    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-
-    fromFutureResult(requestRepository.findBy(routingContext.request().query()))
-      .map(this::mapToJson)
+    String itemQuery = routingContext.request().getParam("effectiveLocationPrimaryServicePointId");
+    List<String> effLocationIds = parseEffLocationIds(dec(itemQuery));
+    fromFutureResult(requestRepository.findBy(routingContext.request().query()).thenComposeAsync(r -> r.after(servicePointRepository::findPrimaryServicePointsForRequests)))
+      .map(j -> mapToJson(j, effLocationIds))
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
   }
 
-  private JsonObject mapToJson(MultipleRecords<Request> requests) {
-    final var requestRepresentation = new RequestRepresentation();
+  private List<String> parseEffLocationIds(String itemQueryDecoded) {
+    itemQueryDecoded = itemQueryDecoded.replace(" sortby requestDate", "");
+    itemQueryDecoded = itemQueryDecoded.replace("effectiveLocationPrimaryServicePointId==", "");
+    itemQueryDecoded = itemQueryDecoded.replace("(", "");
+    itemQueryDecoded = itemQueryDecoded.replace(")", "");
 
+    List<String> result = new ArrayList<>(Arrays.stream(itemQueryDecoded.split(" or ")).toList());
+    result.removeAll(Arrays.asList("", null));
+    List<String> fResult = new ArrayList<>();
+    for(String i : result) {
+      fResult.add(i. replaceAll("\"", ""));
+    }
+    return fResult;
+  }
+
+  private String dec(String encodedString) {
+    try {
+      return URLDecoder.decode(encodedString, StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      return "";
+    }
+  }
+
+  private JsonObject mapToJson(MultipleRecords<Request> requests, List<String> effLocationIds) {
+    final var requestRepresentation = new RequestRepresentation();
+    if(!effLocationIds.isEmpty()) {
+      requests = requests.filter(r -> effLocationIds.contains(r.getItem().getLocation().getPrimaryServicePointId().toString()));
+    }
     return requests.asJson(requestRepresentation::extendedRepresentation, "requests");
   }
 
