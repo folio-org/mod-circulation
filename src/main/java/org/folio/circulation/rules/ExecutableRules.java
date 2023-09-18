@@ -31,22 +31,32 @@ public class ExecutableRules {
   }
 
   public Result<CirculationRuleMatch> determineLoanPolicy(RulesExecutionParameters parameters) {
+    log.debug("determineLoanPolicy:: parameters parameters: {}", parameters);
+
     return determinePolicy(parameters, drools::loanPolicy, "loan policy");
   }
 
   public Result<CirculationRuleMatch> determineRequestPolicy(RulesExecutionParameters parameters) {
+    log.debug("determineRequestPolicy:: parameters parameters: {}", parameters);
+
     return determinePolicy(parameters, drools::requestPolicy, "request policy");
   }
 
   public Result<CirculationRuleMatch> determineNoticePolicy(RulesExecutionParameters parameters) {
+    log.debug("determineNoticePolicy:: parameters parameters: {}", parameters);
+
     return determinePolicy(parameters, drools::noticePolicy, "notice policy");
   }
 
   public Result<CirculationRuleMatch> determineLostItemPolicy(RulesExecutionParameters parameters) {
+    log.debug("determineLostItemPolicy:: parameters parameters: {}", parameters);
+
     return determinePolicy(parameters, drools::lostItemPolicy, "lost item policy");
   }
 
   public Result<CirculationRuleMatch> determineOverduePolicy(RulesExecutionParameters parameters) {
+    log.debug("determineOverduePolicy:: parameters parameters: {}", parameters);
+
     return determinePolicy(parameters, drools::overduePolicy, "overdude policy");
   }
 
