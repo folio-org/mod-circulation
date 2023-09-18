@@ -63,7 +63,7 @@ public class Drools {
   }
 
   private KieSession createSession(MultiMap params, Location location, Match match) {
-    log.debug("createSession:: params params: {}, location: {}, match: {}", params.size(),
+    log.debug("createSession:: parameters params: {}, location: {}, match: {}", params.size(),
       location, match);
     String itemTypeId = params.get(ITEM_TYPE_ID_NAME);
     String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
