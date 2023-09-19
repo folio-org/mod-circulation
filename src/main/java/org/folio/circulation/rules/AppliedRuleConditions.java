@@ -9,7 +9,7 @@ public class AppliedRuleConditions {
   boolean isPatronGroupPresent;
 
   public AppliedRuleConditions(boolean isItemTypePresent,
-                               boolean isLoanTypePresent, boolean isPatronGroupPresent) {
+    boolean isLoanTypePresent, boolean isPatronGroupPresent) {
 
     this.isItemTypePresent = isItemTypePresent;
     this.isLoanTypePresent = isLoanTypePresent;
