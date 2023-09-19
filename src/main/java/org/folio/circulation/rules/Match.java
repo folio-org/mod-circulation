@@ -1,8 +1,11 @@
 package org.folio.circulation.rules;
 
+import lombok.ToString;
+
 /**
  * Store the result of a rule match.
  */
+@ToString
 public class Match {
   /** loan policy of the matching rule */
   @SuppressWarnings("squid:ClassVariableVisibilityCheck")  // Drools directly uses public fields
