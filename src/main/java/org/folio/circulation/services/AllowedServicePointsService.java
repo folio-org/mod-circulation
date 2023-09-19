@@ -113,6 +113,7 @@ public class AllowedServicePointsService {
     return fetchItemsAndLookupRequestPolicies(request, user)
       .thenCompose(r -> r.after(policies -> allOf(policies, mappingFunction)))
       .thenApply(r -> r.map(this::combineAllowedServicePoints));
+    // TODO: remove irrelevant request types for REPLACE
   }
 
   private CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> fetchItemsAndLookupRequestPolicies(
