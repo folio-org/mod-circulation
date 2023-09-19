@@ -6,7 +6,7 @@ public class CirculationRuleMatch {
   private final AppliedRuleConditions appliedRuleConditions;
 
   public CirculationRuleMatch(String policyId,
-                              AppliedRuleConditions appliedRuleConditions) {
+    AppliedRuleConditions appliedRuleConditions) {
 
     this.policyId = policyId;
     this.appliedRuleConditions = appliedRuleConditions;
