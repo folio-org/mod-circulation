@@ -60,6 +60,11 @@ import static org.folio.circulation.domain.representations.ItemProperties.CALL_N
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
+import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
+import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
+import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCES_ITEM;
+import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
+import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -541,7 +546,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED),
       hasParameter("requestLevel", "Title"))));
   }
 
@@ -580,7 +586,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED),
       hasParameter("requestLevel", "invalid"))));
   }
 
@@ -631,7 +638,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("requestLevel must be one of the following: \"Item\", \"Title\""),
+      hasMessage("Request level must be one of the following: \"Item\", \"Title\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED),
       hasParameter("requestLevel", "invalid"))));
   }
 
@@ -663,7 +671,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("One of the items of the requested title is already loaned to the requester"),
+      hasMessage("This requester already has a loan for one of the instance's items"),
+      hasCode(REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCES_ITEM),
       hasParameter("itemId", item.getId().toString()),
       hasParameter("userId", usersFixture.jessica().getId().toString()))));
   }
@@ -796,6 +805,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("This requester currently has this item on loan."),
+      hasCode(REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()),
       hasUUIDParameter("userId", rebecca.getId()))));
   }
@@ -1263,8 +1273,9 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
-    assertThat(postResponse.getJson(), hasErrorWith(
-      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point")));
+    assertThat(postResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup service point"),
+      hasCode(HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT))));
   }
 
   @Test
@@ -2969,8 +2980,9 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage("A valid user and patron group are required. User is null"),
       hasNullParameter("userId"))));
 
-    assertThat(responseJson, hasErrorWith(
-      hasMessage("Hold Shelf Fulfillment Requests require a Pickup Service Point")));
+    assertThat(responseJson, hasErrorWith(allOf(
+      hasMessage("Hold Shelf Fulfillment Requests require a Pickup service point"),
+      hasCode(HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT))));
   }
 
   @Test
@@ -3163,8 +3175,9 @@ public class RequestsAPICreationTests extends APITests {
 
     Response response = requestsFixture.attemptPlace(buildTitleLevelRequest());
     assertThat(response.getStatusCode(), CoreMatchers.is(422));
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED))));
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
@@ -3531,7 +3544,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("fulfillmentPreference must be one of the following: Hold Shelf, Delivery"),
+      hasMessage("Fulfillment preference must be one of the following: Hold Shelf, Delivery"),
+      hasCode(FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED),
       hasParameter("fulfillmentPreference", fulfillmentPreference))));
     var itemById = itemsFixture.getById(item.getId());
     assertThat(itemById.getResponse().getJson().getJsonObject("status").getString("name"),
@@ -4399,7 +4413,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED),
       hasNullParameter("requestLevel"))));
   }
 
@@ -4421,7 +4436,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("requestLevel must be one of the following: \"Item\""),
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED),
       hasNullParameter("requestLevel"))));
   }
 
