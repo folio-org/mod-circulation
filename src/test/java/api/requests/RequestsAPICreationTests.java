@@ -62,6 +62,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
+import static org.folio.circulation.support.ErrorCode.PAGEABLE_AVAILABLE_ITEM_FOUND;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCES_ITEM;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
@@ -745,7 +746,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold/Recall TLR not allowed: pageable available item found for instance"),
+      hasMessage("Hold/Recall title level request not allowed: pageable available item found for instance"),
+      hasCode(PAGEABLE_AVAILABLE_ITEM_FOUND),
       hasParameter("instanceId", item.getInstanceId().toString()),
       hasParameter("itemId", items.get(1).getId().toString()))));
   }
@@ -804,7 +806,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("This requester currently has this item on loan."),
+      hasMessage("This requester already has this item on loan"),
       hasCode(REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()),
       hasUUIDParameter("userId", rebecca.getId()))));
@@ -1274,7 +1276,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
-      hasMessage("Hold Shelf Fulfillment Requests require a Pickup service point"),
+      hasMessage("Hold shelf fulfillment requests require a Pickup service point"),
       hasCode(HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT))));
   }
 
@@ -2981,7 +2983,7 @@ public class RequestsAPICreationTests extends APITests {
       hasNullParameter("userId"))));
 
     assertThat(responseJson, hasErrorWith(allOf(
-      hasMessage("Hold Shelf Fulfillment Requests require a Pickup service point"),
+      hasMessage("Hold shelf fulfillment requests require a Pickup service point"),
       hasCode(HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT))));
   }
 
@@ -3986,7 +3988,8 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
-        hasMessage("Hold/Recall TLR not allowed: pageable available item found for instance"),
+        hasMessage("Hold/Recall title level request not allowed: pageable available item found for instance"),
+        hasCode(PAGEABLE_AVAILABLE_ITEM_FOUND),
         hasUUIDParameter("instanceId", instanceId),
         hasUUIDParameter("itemId", availablePageableItem.getId())
       ))));
