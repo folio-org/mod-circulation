@@ -75,7 +75,7 @@ public class AllowedServicePointsResource extends Resource {
   private static Result<AllowedServicePointsRequest> validateAllowedServicePointsRequest(
     AllowedServicePointsRequest allowedServicePointsRequest) {
 
-    log.debug("validateAllowedServicePointsRequest:: parameters: allowedServicePointsRequest={}",
+    log.debug("validateAllowedServicePointsRequest:: parameters allowedServicePointsRequest: {}",
       allowedServicePointsRequest);
 
     Request.Operation operation = allowedServicePointsRequest.getOperation();

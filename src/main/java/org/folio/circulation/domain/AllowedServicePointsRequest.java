@@ -25,7 +25,7 @@ public class AllowedServicePointsRequest {
     log.debug("updateWithRequestInformation:: parameters request: {}", request);
 
     if (request != null) {
-      log.debug("updateWithRequestInformation:: request in not null");
+      log.info("updateWithRequestInformation:: request in not null");
       this.requesterId = request.getRequesterId();
 
       if (request.isItemLevel()) {

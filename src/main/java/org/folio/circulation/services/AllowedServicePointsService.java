@@ -80,6 +80,8 @@ public class AllowedServicePointsService {
     AllowedServicePointsRequest allowedServicePointsRequest) {
 
     if (allowedServicePointsRequest.getRequestId() != null) {
+      log.info("fetchRequestIfNeeded:: requestId is no null, fetching request");
+
       return requestRepository.getByIdIgnoringRelatedRecords(allowedServicePointsRequest.getRequestId())
         .thenApply(r -> r.peek(allowedServicePointsRequest::updateWithRequestInformation))
         .thenApply(r -> succeeded(allowedServicePointsRequest));
@@ -104,11 +106,10 @@ public class AllowedServicePointsService {
     log.debug("getAllowedServicePoints:: parameters request: {}, user: {}",
       request, user);
 
-    BiFunction<RequestPolicy, Set<Item>,
-      CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>> mappingFunction =
-      request.isImplyingItemStatusIgnore()
-        ? this::extractAllowedServicePointsIgnoringItemStatus
-        : this::extractAllowedServicePointsConsideringItemStatus;
+    BiFunction<RequestPolicy, Set<Item>, CompletableFuture<Result<Map<RequestType,
+      Set<AllowedServicePoint>>>>> mappingFunction = request.isImplyingItemStatusIgnore()
+      ? this::extractAllowedServicePointsIgnoringItemStatus
+      : this::extractAllowedServicePointsConsideringItemStatus;
 
     return fetchItemsAndLookupRequestPolicies(request, user)
       .thenCompose(r -> r.after(policies -> allOf(policies, mappingFunction)))
