@@ -5,12 +5,20 @@ import static api.support.http.api.support.NamedQueryStringParameter.namedParame
 import static api.support.matchers.AllowedServicePointsMatchers.allowedServicePointMatcher;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static java.lang.Boolean.TRUE;
+import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.RequestLevel.ITEM;
+import static org.folio.circulation.domain.RequestLevel.TITLE;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,9 +43,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.builders.RequestPolicyBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.dto.AllowedServicePoint;
-import api.support.builders.RequestPolicyBuilder;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.QueryStringParameter;
@@ -53,8 +62,8 @@ class AllowedServicePointsAPITests extends APITests {
 
   @Test
   void getFailsWithBadRequestWhenRequesterIdIsNull() {
-    Response response = get(null, randomId(), null, HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), equalTo("Request query parameters must contain 'requester'."));
+    Response response = getCreateOp(null, randomId(), null, HttpStatus.SC_BAD_REQUEST);
+    assertThat(response.getBody(), equalTo("Invalid combination of query parameters"));
   }
 
   @ParameterizedTest
@@ -65,8 +74,8 @@ class AllowedServicePointsAPITests extends APITests {
   void getFailsWithBadRequestWhenRequestDoesNotContainExactlyTwoParameters(String requesterId,
     String instanceId, String itemId) {
 
-    Response response = get(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), equalTo("Request query parameters must contain either 'instance' or 'item'."));
+    Response response = getCreateOp(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
+    assertThat(response.getBody(), equalTo("Invalid combination of query parameters"));
   }
 
   @ParameterizedTest
@@ -77,16 +86,15 @@ class AllowedServicePointsAPITests extends APITests {
     "not-a-uuid,                            not-a-uuid,                           not-a-uuid",
   }, nullValues={"NULL"})
   void getFailsWhenRequestContainsInvalidUUID(String requesterId, String instanceId, String itemId) {
-    Response response = get(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
+    Response response = getCreateOp(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
     assertThat(response.getBody(), containsString("ID is not a valid UUID"));
   }
 
   @Test
   void getFailsWithMultipleErrors() {
-    Response response = get(null, "instanceId", "itemId", HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), equalTo("Request query parameters must contain 'requester'. " +
-      "Request query parameters must contain either 'instance' or 'item'. " +
-      "Instance ID is not a valid UUID: instanceId. Item ID is not a valid UUID: itemId."));
+    Response response = getCreateOp(null, "instanceId", "itemId", HttpStatus.SC_BAD_REQUEST);
+    assertThat(response.getBody(), equalTo("Instance ID is not a valid UUID: instanceId. " +
+      "Item ID is not a valid UUID: itemId. Invalid combination of query parameters"));
   }
 
   public static Object[] shouldReturnListOfAllowedServicePointsForRequestParameters() {
@@ -99,18 +107,18 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, oneAndTwo},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, oneAndTwo},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, oneAndTwo},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, oneAndTwo},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, oneAndTwo},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {PAGE, ITEM, AVAILABLE, oneAndTwo, oneAndTwo},
+      {HOLD, ITEM, AVAILABLE, oneAndTwo, none},
+      {RECALL, ITEM, AVAILABLE, oneAndTwo, none},
+      {PAGE, TITLE, AVAILABLE, oneAndTwo, oneAndTwo},
+      {HOLD, TITLE, AVAILABLE, oneAndTwo, none},
+      {RECALL, TITLE, AVAILABLE, oneAndTwo, none},
+      {PAGE, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, ITEM, CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {RECALL, ITEM, CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {PAGE, TITLE, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, TITLE, CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {RECALL, TITLE, CHECKED_OUT, oneAndTwo, oneAndTwo},
     };
   }
 
@@ -137,9 +145,78 @@ class AllowedServicePointsAPITests extends APITests {
       .map(UUID::fromString)
       .collect(Collectors.toSet()));
 
-    var response = requestLevel == RequestLevel.TITLE
-      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
-      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var response = requestLevel == TITLE
+      ? get("create", requesterId, instanceId, null, null, HttpStatus.SC_OK).getJson()
+      : get("create", requesterId, null, itemId, null, HttpStatus.SC_OK).getJson();
+
+    assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
+  }
+
+  public static Object[] shouldReturnListOfAllowedServicePointsForRequestReplacementParameters() {
+    String sp1Id = randomId();
+    String sp2Id = randomId();
+    var sp1 = new AllowedServicePoint(sp1Id, "SP One");
+    var sp2 = new AllowedServicePoint(sp2Id, "SP Two");
+
+    List<AllowedServicePoint> none = List.of();
+    List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
+
+    return new Object[][]{
+      {PAGE, ITEM, AVAILABLE, oneAndTwo, oneAndTwo},
+      {PAGE, TITLE, AVAILABLE, oneAndTwo, oneAndTwo},
+      {HOLD, ITEM, CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {RECALL, ITEM, CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {HOLD, TITLE, CHECKED_OUT, oneAndTwo, oneAndTwo},
+      {RECALL, TITLE, CHECKED_OUT, oneAndTwo, oneAndTwo},
+    };
+  }
+
+  @ParameterizedTest
+  @MethodSource("shouldReturnListOfAllowedServicePointsForRequestReplacementParameters")
+  void shouldReturnListOfAllowedServicePointsForRequestReplacement(
+    RequestType requestType, RequestLevel requestLevel, ItemStatus itemStatus,
+    List<AllowedServicePoint> allowedSpByPolicy, List<AllowedServicePoint> allowedSpInResponse) {
+
+    var requesterId = usersFixture.steve().getId().toString();
+    var items = itemsFixture.createMultipleItemForTheSameInstance(1,
+      List.of(ib -> ib.withStatus(itemStatus.getValue())));
+    var item = items.get(0);
+    var itemId = item.getId().toString();
+    var holdingsRecordId = item.getHoldingsRecordId().toString();
+    var instanceId = item.getInstanceId().toString();
+
+    allowedSpByPolicy.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
+      .withId(UUID.fromString(sp.getId()))
+      .withName(sp.getName())
+    ));
+
+    setRequestPolicyWithAllowedServicePoints(requestType, allowedSpByPolicy.stream()
+      .map(AllowedServicePoint::getId)
+      .map(UUID::fromString)
+      .collect(Collectors.toSet()));
+
+    configurationsFixture.enableTlrFeature();
+    var pickupLocationId = allowedSpByPolicy.stream()
+      .findFirst()
+      .map(AllowedServicePoint::getId)
+      .map(UUID::fromString)
+      .orElse(null);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withRequestType(requestType.toString())
+      .fulfillToHoldShelf()
+      .withRequestLevel(requestLevel.toString())
+      .withInstanceId(UUID.fromString(instanceId))
+      .withItemId(requestLevel == TITLE ? null : UUID.fromString(itemId))
+      .withHoldingsRecordId(requestLevel == TITLE ? null : UUID.fromString(holdingsRecordId))
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(UUID.fromString(requesterId))
+      .withPickupServicePointId(pickupLocationId));
+
+    var requestId = request == null ? null : request.getId().toString();
+
+    var response =
+      get("replace", null, null, null, requestId, HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
   }
@@ -156,18 +233,18 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, two},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, two},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, two},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, two},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, two},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, two},
+      {PAGE, ITEM, AVAILABLE, oneAndTwo, two},
+      {HOLD, ITEM, AVAILABLE, oneAndTwo, none},
+      {RECALL, ITEM, AVAILABLE, oneAndTwo, none},
+      {PAGE, TITLE, AVAILABLE, oneAndTwo, two},
+      {HOLD, TITLE, AVAILABLE, oneAndTwo, none},
+      {RECALL, TITLE, AVAILABLE, oneAndTwo, none},
+      {PAGE, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, ITEM, CHECKED_OUT, oneAndTwo, two},
+      {RECALL, ITEM, CHECKED_OUT, oneAndTwo, two},
+      {PAGE, TITLE, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, TITLE, CHECKED_OUT, oneAndTwo, two},
+      {RECALL, TITLE, CHECKED_OUT, oneAndTwo, two},
     };
   }
 
@@ -196,9 +273,9 @@ class AllowedServicePointsAPITests extends APITests {
       .map(UUID::fromString)
       .collect(Collectors.toSet()));
 
-    var response = requestLevel == RequestLevel.TITLE
-      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
-      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var response = requestLevel == TITLE
+      ? getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
+      : getCreateOp(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(
       requestType, allowedSpInResponse
@@ -218,18 +295,18 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
+      {PAGE, ITEM, AVAILABLE, oneAndTwo, none},
+      {HOLD, ITEM, AVAILABLE, oneAndTwo, none},
+      {RECALL, ITEM, AVAILABLE, oneAndTwo, none},
+      {PAGE, TITLE, AVAILABLE, oneAndTwo, none},
+      {HOLD, TITLE, AVAILABLE, oneAndTwo, none},
+      {RECALL, TITLE, AVAILABLE, oneAndTwo, none},
+      {PAGE, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {RECALL, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {PAGE, TITLE, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, TITLE, CHECKED_OUT, oneAndTwo, none},
+      {RECALL, TITLE, CHECKED_OUT, oneAndTwo, none},
     };
   }
 
@@ -251,9 +328,9 @@ class AllowedServicePointsAPITests extends APITests {
       .map(UUID::fromString)
       .collect(Collectors.toSet()));
 
-    var response = requestLevel == RequestLevel.TITLE
-      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
-      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var response = requestLevel == TITLE
+      ? getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
+      : getCreateOp(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(
       requestType, allowedSpInResponse
@@ -273,18 +350,18 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, oneAndTwo, none},
+      {PAGE, ITEM, AVAILABLE, oneAndTwo, none},
+      {HOLD, ITEM, AVAILABLE, oneAndTwo, none},
+      {RECALL, ITEM, AVAILABLE, oneAndTwo, none},
+      {PAGE, TITLE, AVAILABLE, oneAndTwo, none},
+      {HOLD, TITLE, AVAILABLE, oneAndTwo, none},
+      {RECALL, TITLE, AVAILABLE, oneAndTwo, none},
+      {PAGE, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {RECALL, ITEM, CHECKED_OUT, oneAndTwo, none},
+      {PAGE, TITLE, CHECKED_OUT, oneAndTwo, none},
+      {HOLD, TITLE, CHECKED_OUT, oneAndTwo, none},
+      {RECALL, TITLE, CHECKED_OUT, oneAndTwo, none},
     };
   }
 
@@ -312,9 +389,9 @@ class AllowedServicePointsAPITests extends APITests {
       .map(UUID::fromString)
       .collect(Collectors.toSet()));
 
-    var response = requestLevel == RequestLevel.TITLE
-      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
-      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var response = requestLevel == TITLE
+      ? getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
+      : getCreateOp(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(
       requestType, allowedSpInResponse
@@ -323,18 +400,18 @@ class AllowedServicePointsAPITests extends APITests {
 
   public static Object[] shouldReturnOnlyExistingServicePointsWhenRequestPolicyDoesNotHaveAnyParameters() {
     return new Object[][]{
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.AVAILABLE, false},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.AVAILABLE, true},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.AVAILABLE, true},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.AVAILABLE, false},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.AVAILABLE, true},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.AVAILABLE, true},
-      {RequestType.PAGE, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, true},
-      {RequestType.HOLD, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, false},
-      {RequestType.RECALL, RequestLevel.ITEM, ItemStatus.CHECKED_OUT, false},
-      {RequestType.PAGE, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, true},
-      {RequestType.HOLD, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, false},
-      {RequestType.RECALL, RequestLevel.TITLE, ItemStatus.CHECKED_OUT, false},
+      {PAGE, ITEM, AVAILABLE, false},
+      {HOLD, ITEM, AVAILABLE, true},
+      {RECALL, ITEM, AVAILABLE, true},
+      {PAGE, TITLE, AVAILABLE, false},
+      {HOLD, TITLE, AVAILABLE, true},
+      {RECALL, TITLE, AVAILABLE, true},
+      {PAGE, ITEM, CHECKED_OUT, true},
+      {HOLD, ITEM, CHECKED_OUT, false},
+      {RECALL, ITEM, CHECKED_OUT, false},
+      {PAGE, TITLE, CHECKED_OUT, true},
+      {HOLD, TITLE, CHECKED_OUT, false},
+      {RECALL, TITLE, CHECKED_OUT, false},
     };
   }
 
@@ -351,9 +428,9 @@ class AllowedServicePointsAPITests extends APITests {
     var itemId = item.getId().toString();
     var instanceId = item.getInstanceId().toString();
 
-    var response = requestLevel == RequestLevel.TITLE
-      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
-      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var response = requestLevel == TITLE
+      ? getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
+      : getCreateOp(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
     var allowedServicePoints = response.getJsonArray(requestType.getValue());
     var servicePointsWithPickupLocation = servicePointsFixture.getAllServicePoints().stream()
@@ -373,9 +450,9 @@ class AllowedServicePointsAPITests extends APITests {
     var requesterId = randomId();
     var itemId = itemsFixture.basedUponNod().getId().toString();
     var cd1Id = servicePointsFixture.cd1().getId();
-    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, Set.of(cd1Id));
+    setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(cd1Id));
 
-    Response response = get(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    Response response = getCreateOp(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getBody(), containsString("User with id=" + requesterId +
       " cannot be found"));
   }
@@ -385,9 +462,9 @@ class AllowedServicePointsAPITests extends APITests {
     var requesterId = usersFixture.steve().getId().toString();
     var itemId = randomId();
     var cd1Id = servicePointsFixture.cd1().getId();
-    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, Set.of(cd1Id));
+    setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(cd1Id));
 
-    Response response = get(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    Response response = getCreateOp(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getBody(), containsString("Item with id=" + itemId +
       " cannot be found"));
   }
@@ -397,9 +474,9 @@ class AllowedServicePointsAPITests extends APITests {
     var requesterId = usersFixture.steve().getId().toString();
     var instanceId = randomId();
     var cd1Id = servicePointsFixture.cd1().getId();
-    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, Set.of(cd1Id));
+    setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(cd1Id));
 
-    Response response = get(requesterId, instanceId, null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    Response response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getBody(), containsString("There are no holdings for this instance"));
   }
 
@@ -415,21 +492,21 @@ class AllowedServicePointsAPITests extends APITests {
     var cd4 = servicePointsFixture.cd4();
     var cd5 = servicePointsFixture.cd5();
     final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
-    allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId(), cd2.getId()));
-    allowedServicePointsInPolicy.put(RequestType.HOLD, Set.of(cd4.getId(), cd5.getId()));
+    allowedServicePointsInPolicy.put(PAGE, Set.of(cd1.getId(), cd2.getId()));
+    allowedServicePointsInPolicy.put(HOLD, Set.of(cd4.getId(), cd5.getId()));
     var requestPolicy = requestPoliciesFixture
       .createRequestPolicyWithAllowedServicePoints(allowedServicePointsInPolicy,
-        RequestType.PAGE, RequestType.HOLD);
+        PAGE, HOLD);
     policiesActivation.use(PoliciesToActivate.builder().requestPolicy(requestPolicy));
 
-    var response = requestLevel == RequestLevel.TITLE
-      ? get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
-      : get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var response = requestLevel == TITLE
+      ? getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson()
+      : getCreateOp(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
-    assertThat(response, hasNoJsonPath(RequestType.HOLD.getValue()));
-    assertThat(response, hasNoJsonPath(RequestType.RECALL.getValue()));
+    assertThat(response, hasNoJsonPath(HOLD.getValue()));
+    assertThat(response, hasNoJsonPath(RECALL.getValue()));
 
-    final JsonArray allowedPageServicePoints = response.getJsonArray(RequestType.PAGE.getValue());
+    final JsonArray allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
 
     assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2));
   }
@@ -448,11 +525,11 @@ class AllowedServicePointsAPITests extends APITests {
     var cd1 = servicePointsFixture.cd1();
     var cd2 = servicePointsFixture.cd2();
     final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
-    allowedServicePointsInPolicy.put(RequestType.PAGE, Set.of(cd1.getId()));
-    allowedServicePointsInPolicy.put(RequestType.HOLD, Set.of(cd2.getId()));
+    allowedServicePointsInPolicy.put(PAGE, Set.of(cd1.getId()));
+    allowedServicePointsInPolicy.put(HOLD, Set.of(cd2.getId()));
     policiesActivation.use(new RequestPolicyBuilder(
       UUID.randomUUID(),
-      List.of(RequestType.PAGE, RequestType.HOLD, RequestType.RECALL),
+      List.of(PAGE, HOLD, RECALL),
       "Test request policy",
       "Test description",
       allowedServicePointsInPolicy));
@@ -463,14 +540,14 @@ class AllowedServicePointsAPITests extends APITests {
 
     // ILR scenario
 
-    var responseIlr = get(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
+    var responseIlr = getCreateOp(requesterId, null, itemId, HttpStatus.SC_OK).getJson();
 
     final JsonArray allowedPageServicePointsIlr =
-      responseIlr.getJsonArray(RequestType.PAGE.getValue());
+      responseIlr.getJsonArray(PAGE.getValue());
     final JsonArray allowedHoldServicePointsIlr =
-      responseIlr.getJsonArray(RequestType.HOLD.getValue());
+      responseIlr.getJsonArray(HOLD.getValue());
     final JsonArray allowedRecallServicePointsIlr =
-      responseIlr.getJsonArray(RequestType.RECALL.getValue());
+      responseIlr.getJsonArray(RECALL.getValue());
 
     assertServicePointsMatch(allowedPageServicePointsIlr, List.of(cd1));
     assertThat(allServicePointsWithPickupLocation, hasSize(2));
@@ -479,14 +556,14 @@ class AllowedServicePointsAPITests extends APITests {
 
     // TLR scenario
 
-    var responseTlr = get(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
+    var responseTlr = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
 
     final JsonArray allowedPageServicePointsTlr =
-      responseTlr.getJsonArray(RequestType.PAGE.getValue());
+      responseTlr.getJsonArray(PAGE.getValue());
     final JsonArray allowedHoldServicePointsTlr =
-      responseTlr.getJsonArray(RequestType.HOLD.getValue());
+      responseTlr.getJsonArray(HOLD.getValue());
     final JsonArray allowedRecallServicePointsTlr =
-      responseTlr.getJsonArray(RequestType.RECALL.getValue());
+      responseTlr.getJsonArray(RECALL.getValue());
 
     assertServicePointsMatch(allowedPageServicePointsTlr, List.of(cd1));
     assertServicePointsMatch(allowedHoldServicePointsTlr, List.of(cd2));
@@ -516,16 +593,34 @@ class AllowedServicePointsAPITests extends APITests {
       .map(sp -> sp.getJson().getString("name")).toArray(String[]::new)));
   }
 
-  private Response get(String requesterId, String instanceId, String itemId, int expectedStatusCode) {
+  private Response getCreateOp(String requesterId, String instanceId, String itemId,
+    int expectedStatusCode) {
+
+    return get("create", requesterId, instanceId, itemId, null, expectedStatusCode);
+  }
+
+  private Response getReplaceOp(String requesterId, String instanceId, String itemId,
+    int expectedStatusCode) {
+
+    return get("replace", requesterId, instanceId, itemId, null, expectedStatusCode);
+  }
+
+  private Response get(String operation, String requesterId, String instanceId, String itemId,
+    String requestId, int expectedStatusCode) {
+
     List<QueryStringParameter> queryParams = new ArrayList<>();
+    queryParams.add(namedParameter("operation", operation));
     if (requesterId != null) {
-      queryParams.add(namedParameter("requester", requesterId));
+      queryParams.add(namedParameter("requesterId", requesterId));
     }
     if (instanceId != null) {
-      queryParams.add(namedParameter("instance", instanceId));
+      queryParams.add(namedParameter("instanceId", instanceId));
     }
     if (itemId != null) {
-      queryParams.add(namedParameter("item", itemId));
+      queryParams.add(namedParameter("itemId", itemId));
+    }
+    if (requestId != null) {
+      queryParams.add(namedParameter("requestId", requestId));
     }
 
     return restAssuredClient.get(allowedServicePointsUrl(), queryParams, expectedStatusCode,

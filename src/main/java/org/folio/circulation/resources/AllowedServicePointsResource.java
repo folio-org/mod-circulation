@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.AllowedServicePoint;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.services.AllowedServicePointsService;
 import org.folio.circulation.support.BadRequestFailure;
@@ -60,32 +61,35 @@ public class AllowedServicePointsResource extends Resource {
 
   private static Result<AllowedServicePointsRequest> buildRequest(RoutingContext routingContext) {
     MultiMap queryParams = routingContext.queryParams();
-    AllowedServicePointsRequest request = new AllowedServicePointsRequest(
-      queryParams.get("requester"),
-      queryParams.get("instance"),
-      queryParams.get("item"));
 
-    return validateRequest(request);
+    Request.Operation operation = queryParams.get("operation") == null ? null
+      : Request.Operation.valueOf(queryParams.get("operation").toUpperCase());
+
+    AllowedServicePointsRequest request = new AllowedServicePointsRequest(operation,
+      queryParams.get("requesterId"), queryParams.get("instanceId"), queryParams.get("itemId"),
+      queryParams.get("requestId"));
+
+    return validateAllowedServicePointsRequest(request);
   }
 
-  private static Result<AllowedServicePointsRequest> validateRequest(
-    AllowedServicePointsRequest request) {
+  private static Result<AllowedServicePointsRequest> validateAllowedServicePointsRequest(
+    AllowedServicePointsRequest allowedServicePointsRequest) {
 
-    log.debug("validateRequest:: parameters: request={}", request);
+    log.debug("validateAllowedServicePointsRequest:: parameters allowedServicePointsRequest: {}",
+      allowedServicePointsRequest);
+
+    Request.Operation operation = allowedServicePointsRequest.getOperation();
+    String requesterId = allowedServicePointsRequest.getRequesterId();
+    String instanceId = allowedServicePointsRequest.getInstanceId();
+    String itemId = allowedServicePointsRequest.getItemId();
+    String requestId = allowedServicePointsRequest.getRequestId();
 
     List<String> errors = new ArrayList<>();
-    String requesterId = request.getRequesterId();
-    String instanceId = request.getInstanceId();
-    String itemId = request.getItemId();
 
-    if (requesterId == null) {
-      errors.add("Request query parameters must contain 'requester'.");
-    } else if (!isUuid(requesterId)) {
+    // Checking UUID validity
+
+    if (requesterId != null && !isUuid(requesterId)) {
       errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
-    }
-
-    if (instanceId == null ^ itemId != null) {
-      errors.add("Request query parameters must contain either 'instance' or 'item'.");
     }
 
     if (instanceId != null && !isUuid(instanceId)) {
@@ -96,13 +100,54 @@ public class AllowedServicePointsResource extends Resource {
       errors.add(String.format("Item ID is not a valid UUID: %s.", itemId));
     }
 
+    if (requestId != null && !isUuid(requestId)) {
+      errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
+    }
+
+    // Checking parameter combinations
+
+    boolean allowedCombinationOfParametersDetected = false;
+
+    if (operation == Request.Operation.CREATE && requesterId != null && instanceId != null &&
+      itemId == null && requestId == null) {
+
+      log.info("validateAllowedServicePointsRequest:: TLR request creation case");
+      allowedCombinationOfParametersDetected = true;
+    }
+
+    if (operation == Request.Operation.CREATE && requesterId != null && instanceId == null &&
+      itemId != null && requestId == null) {
+
+      log.info("validateAllowedServicePointsRequest:: ILR request creation case");
+      allowedCombinationOfParametersDetected = true;
+    }
+
+    if (operation == Request.Operation.REPLACE && requesterId == null && instanceId == null &&
+      itemId == null && requestId != null) {
+
+      log.info("validateAllowedServicePointsRequest:: request replacement case");
+      allowedCombinationOfParametersDetected = true;
+    }
+
+    if (operation == Request.Operation.MOVE && requesterId == null && instanceId == null &&
+      itemId == null && requestId != null) {
+
+      log.info("validateAllowedServicePointsRequest:: request movement case");
+      allowedCombinationOfParametersDetected = true;
+    }
+
+    if (!allowedCombinationOfParametersDetected) {
+      String errorMessage = "Invalid combination of query parameters";
+      errors.add(errorMessage);
+    }
+
     if (!errors.isEmpty()) {
       String errorMessage = String.join(" ", errors);
       log.error("validateRequest:: allowed service points request failed: {}", errorMessage);
       return failed(new BadRequestFailure(errorMessage));
     }
 
-    return succeeded(request);
+    return succeeded(allowedServicePointsRequest);
   }
 
   private static JsonObject toJson(Map<RequestType, Set<AllowedServicePoint>> allowedServicePoints) {

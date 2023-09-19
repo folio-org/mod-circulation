@@ -3,6 +3,9 @@ package org.folio.circulation.services;
 import static java.lang.String.format;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -20,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +31,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.AllowedServicePoint;
 import org.folio.circulation.domain.AllowedServicePointsRequest;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
@@ -34,6 +39,7 @@ import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
@@ -45,6 +51,7 @@ public class AllowedServicePointsService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
+  private final RequestRepository requestRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ServicePointRepository servicePointRepository;
   private final ItemByInstanceIdFinder itemFinder;
@@ -52,6 +59,7 @@ public class AllowedServicePointsService {
   public AllowedServicePointsService(Clients clients) {
     itemRepository = new ItemRepository(clients);
     userRepository = new UserRepository(clients);
+    requestRepository = new RequestRepository(clients);
     requestPolicyRepository = new RequestPolicyRepository(clients);
     servicePointRepository = new ServicePointRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
@@ -62,9 +70,24 @@ public class AllowedServicePointsService {
 
     log.debug("getAllowedServicePoints:: parameters request: {}", request);
 
-    return userRepository.getUser(request.getRequesterId())
+    return fetchRequestIfNeeded(request)
+      .thenCompose(r -> r.after(f -> userRepository.getUser(request.getRequesterId())))
       .thenApply(r -> r.next(user -> refuseIfUserIsNotFound(request, user)))
       .thenCompose(r -> r.after(user -> getAllowedServicePoints(request, user)));
+  }
+
+  private CompletableFuture<Result<AllowedServicePointsRequest>> fetchRequestIfNeeded(
+    AllowedServicePointsRequest allowedServicePointsRequest) {
+
+    if (allowedServicePointsRequest.getRequestId() != null) {
+      log.info("fetchRequestIfNeeded:: requestId is no null, fetching request");
+
+      return requestRepository.getByIdIgnoringRelatedRecords(allowedServicePointsRequest.getRequestId())
+        .thenApply(r -> r.peek(allowedServicePointsRequest::updateWithRequestInformation))
+        .thenApply(r -> succeeded(allowedServicePointsRequest));
+    }
+
+    return ofAsync(allowedServicePointsRequest);
   }
 
   private Result<User> refuseIfUserIsNotFound(AllowedServicePointsRequest request, User user) {
@@ -83,9 +106,15 @@ public class AllowedServicePointsService {
     log.debug("getAllowedServicePoints:: parameters request: {}, user: {}",
       request, user);
 
+    BiFunction<RequestPolicy, Set<Item>, CompletableFuture<Result<Map<RequestType,
+      Set<AllowedServicePoint>>>>> mappingFunction = request.isImplyingItemStatusIgnore()
+      ? this::extractAllowedServicePointsIgnoringItemStatus
+      : this::extractAllowedServicePointsConsideringItemStatus;
+
     return fetchItemsAndLookupRequestPolicies(request, user)
-      .thenCompose(r -> r.after(policies -> allOf(policies, this::extractAllowedServicePoints)))
+      .thenCompose(r -> r.after(policies -> allOf(policies, mappingFunction)))
       .thenApply(r -> r.map(this::combineAllowedServicePoints));
+    // TODO: remove irrelevant request types for REPLACE
   }
 
   private CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> fetchItemsAndLookupRequestPolicies(
@@ -134,9 +163,23 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  extractAllowedServicePoints(RequestPolicy requestPolicy, Set<Item> items) {
+  extractAllowedServicePointsIgnoringItemStatus(RequestPolicy requestPolicy, Set<Item> items) {
 
-    log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}", requestPolicy);
+    return extractAllowedServicePoints(requestPolicy, items, true);
+  }
+
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  extractAllowedServicePointsConsideringItemStatus(RequestPolicy requestPolicy, Set<Item> items) {
+
+    return extractAllowedServicePoints(requestPolicy, items, false);
+  }
+
+  private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
+  extractAllowedServicePoints(RequestPolicy requestPolicy, Set<Item> items,
+    boolean ignoreItemStatus) {
+
+    log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}, items: {}, " +
+        "ignoreItemStatus: {}", requestPolicy, items, ignoreItemStatus);
 
     List<RequestType> requestTypesAllowedByPolicy = Arrays.stream(RequestType.values())
       .filter(requestPolicy::allowsType)
@@ -149,7 +192,9 @@ public class AllowedServicePointsService {
 
     var servicePointAllowedByPolicy = requestPolicy.getAllowedServicePoints();
 
-    List<RequestType> requestTypesAllowedByItemStatus = items.stream()
+    List<RequestType> requestTypesAllowedByItemStatus = ignoreItemStatus
+      ? List.of(PAGE, RECALL, HOLD)
+      : items.stream()
       .map(Item::getStatus)
       .map(RequestTypeItemStatusWhiteList::getRequestTypesAllowedForItemStatus)
       .flatMap(Collection::stream)
