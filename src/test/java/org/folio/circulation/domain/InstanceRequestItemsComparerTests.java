@@ -245,7 +245,7 @@ class InstanceRequestItemsComparerTests {
 
   private static Item createItem(UUID withServicePointId) {
     JsonObject itemRepresentation = new JsonObject();
-    itemRepresentation.put("itemId", UUID.randomUUID().toString());
+    itemRepresentation.put("id", UUID.randomUUID().toString());
 
     Location location = Location.unknown(null);
 

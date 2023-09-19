@@ -1,21 +1,27 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.utils.LogUtil.*;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -25,9 +31,9 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria;
+import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ServicePointRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -197,6 +203,27 @@ public class ServicePointRepository {
     log.debug("findServicePointsByIds:: parameters ids: {}", () -> collectionAsString(ids));
 
     return createServicePointsFetcher().findByIds(ids)
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
+  public CompletableFuture<Result<Collection<ServicePoint>>> fetchPickupLocationServicePoints() {
+    return createServicePointsFetcher().find(MultipleCqlIndexValuesCriteria.builder()
+        .indexName("pickupLocation")
+        .indexOperator(CqlQuery::matchAny)
+        .value("true")
+        .build())
+      .thenApply(r -> r.map(MultipleRecords::getRecords));
+  }
+
+  public CompletableFuture<Result<Collection<ServicePoint>>> fetchPickupLocationServicePointsByIds(
+    Set<String> ids) {
+
+    log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
+      () -> collectionAsString(ids));
+
+    Result<CqlQuery> pickupLocationQuery = exactMatch("pickupLocation", "true");
+
+    return createServicePointsFetcher().findByIdIndexAndQuery(ids, "id", pickupLocationQuery)
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 

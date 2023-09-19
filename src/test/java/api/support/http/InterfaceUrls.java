@@ -309,12 +309,16 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/actual-cost-expiration-by-timeout");
   }
 
+  public static URL allowedServicePointsUrl() {
+    return circulationModuleUrl("/circulation/requests/allowed-service-points");
+  }
+
   public static URL actualCostRecordsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/actual-cost-record-storage/actual-cost-records" + subPath);
   }
 
   public static URL departmentsStorageUrl() {
-    return APITestContext.viaOkapiModuleUrl("/departments" );
+    return APITestContext.viaOkapiModuleUrl("/departments");
   }
 
   public static URL checkOutLockStorageUrl() {

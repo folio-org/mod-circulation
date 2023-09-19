@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Allowed pickup service points grouped by request type",
+  "type": "object",
+  "properties": {
+    "Page": {
+      "description": "Allowed pickup service point IDs for Page requests",
+      "type": "array",
+      "$ref": "allowed-service-points.json"
+    },
+    "Hold": {
+      "description": "Allowed pickup service point IDs for Hold requests",
+      "type": "array",
+      "$ref": "allowed-service-points.json"
+    },
+    "Recall": {
+      "description": "Allowed pickup service point IDs for Recall requests",
+      "type": "array",
+      "$ref": "allowed-service-points.json"
+    }
+  },
+  "additionalProperties": false
+}
