@@ -2235,7 +2235,6 @@
         "circulation-storage.requests.collection.get",
         "users.item.get",
         "users.collection.get",
-        "addresstypes.collection.get",
         "addresstypes.item.get",
         "addresstypes.collection.get"
       ],
