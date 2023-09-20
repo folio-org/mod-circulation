@@ -59,6 +59,8 @@ public class Drools {
   }
 
   private KieSession createSession(MultiMap params, Location location, Match match) {
+    log.debug("createSession:: parameters params: {}, location: {}, match: {}", params,
+      location, match);
     String itemTypeId = params.get(ITEM_TYPE_ID_NAME);
     String loanTypeId = params.get(LOAN_TYPE_ID_NAME);
     String patronGroupId = params.get(PATRON_TYPE_ID_NAME);
@@ -86,6 +88,7 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch loanPolicy(MultiMap params, Location location) {
+    log.debug("loanPolicy:: params params: {}, location: {}", params, location);
     final var match = new Match();
     final KieSession kieSession = createSession(params, location, match);
     final RuleEventListener ruleEventListener = new RuleEventListener();
@@ -110,6 +113,7 @@ public class Drools {
    * @return matches, each match has a loanPolicyId and a circulationRuleLine field
    */
   public JsonArray loanPolicies(MultiMap params, Location location) {
+    log.debug("loanPolicies:: params params: {}, location: {}", params, location);
     final var match = new Match();
     final KieSession kieSession = createSession(params, location, match);
 
@@ -179,6 +183,7 @@ public class Drools {
    * @return CirculationRuleMatch object with the name of the loan policy and rule conditions
    */
   public CirculationRuleMatch noticePolicy(MultiMap params, Location location) {
+    log.debug("noticePolicy:: parameters params: {}, location: {}", params, location);
     final var match = new Match();
     final KieSession kieSession = createSession(params, location, match);
 
@@ -197,6 +202,7 @@ public class Drools {
    * @return matches, each match has a noticePolicyId and a circulationRuleLine field
    */
   public JsonArray noticePolicies(MultiMap params, Location location) {
+    log.debug("noticePolicies:: parameters params: {}, location: {}", params, location);
     final var match = new Match();
     final KieSession kieSession = createSession(params, location, match);
 
