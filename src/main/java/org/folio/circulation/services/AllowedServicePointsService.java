@@ -94,7 +94,7 @@ public class AllowedServicePointsService {
 
     final String instanceId = request.getInstanceId();
     if (instanceId == null) {
-      log.info("validateInstanceId:: instanceId is null, nothing to validate");
+      log.info("fetchInstance:: instanceId is null, doing nothing");
       return ofAsync(request);
     }
 
@@ -111,11 +111,11 @@ public class AllowedServicePointsService {
 
     String requestId = allowedServicePointsRequest.getRequestId();
     if (requestId == null) {
-      log.info("fetchRequestIfNeeded:: requestId is null, doing nothing");
+      log.info("fetchRequest:: requestId is null, doing nothing");
       return ofAsync(allowedServicePointsRequest);
     }
 
-    log.info("fetchRequestIfNeeded:: requestId is not null, fetching request");
+    log.info("fetchRequest:: requestId is not null, fetching request");
 
     return requestRepository.getByIdWithoutRelatedRecords(requestId)
       .thenApply(r -> r.mapFailure(failure ->  failed(failure instanceof RecordNotFoundFailure ?
@@ -168,7 +168,7 @@ public class AllowedServicePointsService {
         .thenCompose(r -> r.after(this::considerTlrSettings));
     }
 
-    log.info("considerTlrSettings:: no need to check TLR-settings");
+    log.info("getAllowedServicePointsForTitleWithNoItems:: no need to check TLR-settings");
     return ofAsync(emptyMap());
   }
 
