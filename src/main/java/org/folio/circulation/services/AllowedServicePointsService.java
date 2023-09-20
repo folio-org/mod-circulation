@@ -359,7 +359,7 @@ public class AllowedServicePointsService {
 
   private static <T> HttpFailure notFoundValidationFailure(String id, Class<T> type) {
     String errorMessage = String.format("%s with ID %s was not found", type.getSimpleName(), id);
-    log.error("notFoundFailure:: {}", errorMessage);
+    log.error("notFoundValidationFailure:: {}", errorMessage);
 
     return new ValidationErrorFailure(new ValidationError(errorMessage));
   }
