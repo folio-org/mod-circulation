@@ -160,7 +160,6 @@ class AllowedServicePointsAPITests extends APITests {
     var sp1 = new AllowedServicePoint(sp1Id, "SP One");
     var sp2 = new AllowedServicePoint(sp2Id, "SP Two");
 
-    List<AllowedServicePoint> none = List.of();
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
@@ -501,7 +500,7 @@ class AllowedServicePointsAPITests extends APITests {
       holdingsFixture.defaultWithHoldings(instance.getId());
     }
 
-    JsonObject response = get(requesterId, instance.getId().toString(), null, HttpStatus.SC_OK).getJson();
+    JsonObject response = get("create", requesterId, instance.getId().toString(), null, null, HttpStatus.SC_OK).getJson();
     assertThat(response, iterableWithSize(1));
     assertServicePointsMatch(response.getJsonArray("Hold"), List.of(sp1, sp2));
   }
