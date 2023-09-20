@@ -19,9 +19,17 @@ public class AllowedServicePointsRequest {
   private String requesterId;
   private String instanceId;
   private String itemId;
+
+  public boolean isForTitleLevelRequest() {
+    return instanceId != null;
+  }
+
+  public boolean isForItemLevelRequest() {
+    return itemId != null;
+  }
   private String requestId;
 
-  public void updateWithRequestInformation(Request request) {
+  public AllowedServicePointsRequest updateWithRequestInformation(Request request) {
     log.debug("updateWithRequestInformation:: parameters request: {}", request);
 
     if (request != null) {
@@ -36,6 +44,8 @@ public class AllowedServicePointsRequest {
         this.instanceId = request.getInstanceId();
       }
     }
+
+    return this;
   }
 
   public boolean isImplyingItemStatusIgnore() {
