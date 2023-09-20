@@ -1,7 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRemindersPolicy;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -85,7 +84,7 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
   /**
    * Checks the loan for the most recent reminder sent, then updates the notice config of the scheduled notice
    * with the next step from the configured reminder sequence.
-   * If there is no next reminder step, the scheduled notice is deleted.
+   * If there is no next reminder step, or if the loan was closed, the scheduled notice is deleted.
    */
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(ScheduledNoticeContext context) {
@@ -94,7 +93,9 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
     OverdueFinePolicyRemindersPolicy.ReminderSequence schedule = loan.getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule();
     OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry nextEntry = schedule.getEntryAfter(latestReminderNumber);
     if (nextEntry == null) {
-      return deleteNotice(context.getNotice(), "No more reminders scheduled");
+      return deleteNotice(context.getNotice(), "no more reminders scheduled");
+    } else if (isNoticeIrrelevant(context)) {
+      return deleteNotice(context.getNotice(), "further reminder notices became irrelevant");
     } else {
       ScheduledNotice nextReminderNotice = context.getNotice()
         .withNextRunTime(nextEntry.getPeriod().plusDate(systemTime));
@@ -108,8 +109,7 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
 
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
-    return context.getNotice().getConfiguration().getFormat().equals(NoticeFormat.UNKNOWN);
+    return dueDateNoticeIsNotRelevant(context);
   }
-
 
 }

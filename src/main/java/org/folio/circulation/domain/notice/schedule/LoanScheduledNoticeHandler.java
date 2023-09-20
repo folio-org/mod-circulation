@@ -138,7 +138,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenApply(mapResult(context::withLostItemFeesForAgedToLostNoticeExist));
   }
 
-  private boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
+  protected boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     ZonedDateTime dueDate = loan.getDueDate();
     String loanId = loan.getId();
