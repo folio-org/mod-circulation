@@ -79,6 +79,13 @@ public class RequestRepository {
       loanRepository, servicePointRepository, patronGroupRepository, new InstanceRepository(clients));
   }
 
+  /**
+   * Simplified constructor for fetching request records only, ignoring related records
+   */
+  public RequestRepository(org.folio.circulation.support.Clients clients) {
+    this(clients, null, null, null, null, null);
+  }
+
   private RequestRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository, LoanRepository loanRepository,
     ServicePointRepository servicePointRepository,
@@ -173,7 +180,10 @@ public class RequestRepository {
   public CompletableFuture<Result<Request>> getById(String id) {
     return fetchRequest(id)
       .thenCompose(r -> r.after(this::fetchRelatedRecords));
+  }
 
+  public CompletableFuture<Result<Request>> getByIdIgnoringRelatedRecords(String id) {
+    return fetchRequest(id);
   }
 
   public CompletableFuture<Result<Request>> fetchRelatedRecords(Request request) {

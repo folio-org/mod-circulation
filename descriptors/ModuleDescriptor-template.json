@@ -630,7 +630,7 @@
     },
     {
       "id": "allowed-service-points",
-      "version": "0.1",
+      "version": "1.0",
       "handlers": [
         {
           "methods": [
