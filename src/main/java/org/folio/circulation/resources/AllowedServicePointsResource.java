@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -62,8 +63,10 @@ public class AllowedServicePointsResource extends Resource {
   private static Result<AllowedServicePointsRequest> buildRequest(RoutingContext routingContext) {
     MultiMap queryParams = routingContext.queryParams();
 
-    Request.Operation operation = queryParams.get("operation") == null ? null
-      : Request.Operation.valueOf(queryParams.get("operation").toUpperCase());
+    Request.Operation operation = Optional.ofNullable(queryParams.get("operation"))
+      .map(String::toUpperCase)
+      .map(Request.Operation::valueOf)
+      .orElse(null);
 
     AllowedServicePointsRequest request = new AllowedServicePointsRequest(operation,
       queryParams.get("requesterId"), queryParams.get("instanceId"), queryParams.get("itemId"),

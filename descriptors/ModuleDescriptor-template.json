@@ -654,7 +654,11 @@
             "inventory-storage.service-points.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory-storage.holdings.item.get",
-            "inventory-storage.holdings.collection.get"
+            "inventory-storage.holdings.collection.get",
+            "inventory-storage.instances.item.get",
+            "inventory-storage.instances.collection.get",
+            "configuration.entries.item.get",
+            "configuration.entries.collection.get"
           ]
         }
       ]

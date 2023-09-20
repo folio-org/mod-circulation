@@ -4,6 +4,8 @@ import static api.support.http.InterfaceUrls.allowedServicePointsUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
 import static api.support.matchers.AllowedServicePointsMatchers.allowedServicePointMatcher;
 import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
+import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
@@ -15,8 +17,10 @@ import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
@@ -40,6 +45,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.builders.ItemBuilder;
@@ -49,6 +55,7 @@ import api.support.builders.ServicePointBuilder;
 import api.support.dto.AllowedServicePoint;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
 import api.support.http.QueryStringParameter;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -158,7 +165,6 @@ class AllowedServicePointsAPITests extends APITests {
     var sp1 = new AllowedServicePoint(sp1Id, "SP One");
     var sp2 = new AllowedServicePoint(sp2Id, "SP Two");
 
-    List<AllowedServicePoint> none = List.of();
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
@@ -453,8 +459,8 @@ class AllowedServicePointsAPITests extends APITests {
     setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(cd1Id));
 
     Response response = getCreateOp(requesterId, null, itemId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
-    assertThat(response.getBody(), containsString("User with id=" + requesterId +
-      " cannot be found"));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      String.format("User with ID %s was not found", requesterId))));
   }
 
   @Test
@@ -477,7 +483,51 @@ class AllowedServicePointsAPITests extends APITests {
     setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(cd1Id));
 
     Response response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
-    assertThat(response.getBody(), containsString("There are no holdings for this instance"));
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      String.format("Instance with ID %s was not found", instanceId))));
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void allPickupLocationsAreReturnedForTitleLevelHoldWhenItIsDisabledAndInstanceHasNoItems(
+    boolean instanceHasHoldings) {
+
+    // allow TLR-holds for instances with no holdings/items
+    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+
+    IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
+    IndividualResource sp2 = servicePointsFixture.cd2(); // pickup location
+    servicePointsFixture.cd3(); // not a pickup location
+    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, Set.of(sp1.getId())); // no hold
+
+    String requesterId = usersFixture.steve().getId().toString();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    if (instanceHasHoldings) {
+      holdingsFixture.defaultWithHoldings(instance.getId());
+    }
+
+    JsonObject response = getCreateOp(requesterId, instance.getId().toString(), null, HttpStatus.SC_OK).getJson();
+    assertThat(response, iterableWithSize(1));
+    assertServicePointsMatch(response.getJsonArray("Hold"), List.of(sp1, sp2));
+  }
+
+  @Test
+  void noAllowedServicePointsAreReturnedForTitleLevelHoldWhenItIsDisabledAndInstanceHasItems() {
+    // allow TLR-holds for instances with no holdings/items
+    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+
+    IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
+    servicePointsFixture.cd2(); // pickup location
+    servicePointsFixture.cd3(); // not a pickup location
+    setRequestPolicyWithAllowedServicePoints(RequestType.PAGE, Set.of(sp1.getId())); // no hold
+
+    String requesterId = usersFixture.steve().getId().toString();
+    ItemResource item = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(item); // to make item eligible for a hold request
+
+    JsonObject response = getCreateOp(requesterId, item.getInstanceId().toString(), null, HttpStatus.SC_OK)
+      .getJson();
+    assertThat(response, emptyIterable());
   }
 
   @ParameterizedTest
@@ -570,6 +620,17 @@ class AllowedServicePointsAPITests extends APITests {
     assertServicePointsMatch(allowedRecallServicePointsTlr, List.of(cd1, cd2));
   }
 
+  @ParameterizedTest
+  @EnumSource(value = Request.Operation.class, names = {"MOVE", "REPLACE"})
+  void getFailsWhenRequestDoesNotExist(Request.Operation operation) {
+    String operationString = operation.name().toLowerCase();
+    String requestId = randomId();
+    Response response = get(operationString, null, null, null, requestId,
+      HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      String.format("Request with ID %s was not found", requestId))));
+  }
+
   private void assertServicePointsMatch(JsonArray response,
     List<IndividualResource> expectedServicePoints) {
 
@@ -599,10 +660,8 @@ class AllowedServicePointsAPITests extends APITests {
     return get("create", requesterId, instanceId, itemId, null, expectedStatusCode);
   }
 
-  private Response getReplaceOp(String requesterId, String instanceId, String itemId,
-    int expectedStatusCode) {
-
-    return get("replace", requesterId, instanceId, itemId, null, expectedStatusCode);
+  private Response getReplaceOp(String requestId, int expectedStatusCode) {
+    return get("replace", null, null, null, requestId, expectedStatusCode);
   }
 
   private Response get(String operation, String requesterId, String instanceId, String itemId,
