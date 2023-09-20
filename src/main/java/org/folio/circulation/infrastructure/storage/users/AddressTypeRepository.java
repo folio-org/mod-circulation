@@ -10,13 +10,17 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
+import io.vertx.core.json.JsonArray;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.AddressType;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -62,6 +66,33 @@ public class AddressTypeRepository {
 
     return getAddressTypesByIds(addressTypeIds)
       .thenApply(r -> r.next(addressTypes -> matchAddressTypesToRequests(addressTypes, requests)));
+  }
+
+  /**
+   * Inserts address type names by address type UUID in user's addresses.
+   * @param user User object, possibly with an address array.
+   * @return The User object with a mutated address array if any.
+   */
+  public CompletableFuture<Result<User>> setAddressTypeNamesOnUserAddresses(Result<User> user) {
+    JsonArray addresses = user.value().getAddresses();
+    List<String> addressTypeIds = IntStream.range(0, addresses.size())
+        .mapToObj(index -> addresses.getJsonObject(index).getString("addressTypeId"))
+        .toList();
+    return getAddressTypesByIds(addressTypeIds)
+      .thenApply(addressTypesResult -> resolveAddressTypesNamesForIds(addressTypesResult.value(), addresses))
+      .thenApply(r -> user);
+  }
+
+  private JsonArray resolveAddressTypesNamesForIds(
+    MultipleRecords<AddressType> addressTypes, JsonArray addresses) {
+    Map<String, AddressType> addressTypeMap = addressTypes.toMap(AddressType::getId);
+    IntStream.range(0, addresses.size()).mapToObj(addresses::getJsonObject)
+      .forEach(address -> address.put("addressTypeName",
+        addressTypeMap.getOrDefault(
+          address.getString("addressTypeId", "property missing"),
+          new AddressType(null,"", "")
+        ).getName()));
+    return addresses;
   }
 
   private Result<MultipleRecords<Request>> matchAddressTypesToRequests(
