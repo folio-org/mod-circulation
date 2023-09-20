@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
 import org.folio.circulation.domain.ItemStatus;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
@@ -620,10 +621,12 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"replace", "move"})
-  void getFailsWhenRequestDoesNotExist(String operation) {
+  @EnumSource(value = Request.Operation.class, names = {"MOVE", "REPLACE"})
+  void getFailsWhenRequestDoesNotExist(Request.Operation operation) {
+    String operationString = operation.name().toLowerCase();
     String requestId = randomId();
-    Response response = get(operation, null, null, null, requestId, HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    Response response = get(operationString, null, null, null, requestId,
+      HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
   }

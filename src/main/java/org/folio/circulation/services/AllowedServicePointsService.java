@@ -145,6 +145,7 @@ public class AllowedServicePointsService {
   getAllowedServicePoints(AllowedServicePointsRequest request, User user, Collection<Item> items) {
 
     if (items.isEmpty() && request.isForTitleLevelRequest()) {
+      log.info("getAllowedServicePoints:: requested instance has no items");
       return getAllowedServicePointsForTitleWithNoItems(request);
     }
 
