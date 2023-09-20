@@ -29,7 +29,7 @@ public class AllowedServicePointsRequest {
   }
   private String requestId;
 
-  public void updateWithRequestInformation(Request request) {
+  public AllowedServicePointsRequest updateWithRequestInformation(Request request) {
     log.debug("updateWithRequestInformation:: parameters request: {}", request);
 
     if (request != null) {
@@ -44,6 +44,8 @@ public class AllowedServicePointsRequest {
         this.instanceId = request.getInstanceId();
       }
     }
+
+    return this;
   }
 
   public boolean isImplyingItemStatusIgnore() {
