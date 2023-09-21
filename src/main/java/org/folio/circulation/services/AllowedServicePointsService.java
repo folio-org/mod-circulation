@@ -190,6 +190,9 @@ public class AllowedServicePointsService {
       return ofAsync(new EnumMap<>(RequestType.class));
     }
 
+    log.info("fetchAllowedServicePoints:: types allowed by policy: {}",
+      requestTypesAllowedByPolicy);
+
     var servicePointAllowedByPolicy = requestPolicy.getAllowedServicePoints();
 
     List<RequestType> requestTypesAllowedByItemStatus = ignoreItemStatus
@@ -200,6 +203,9 @@ public class AllowedServicePointsService {
       .flatMap(Collection::stream)
       .distinct()
       .toList();
+
+    log.info("fetchAllowedServicePoints:: types allowed by status: {}",
+      requestTypesAllowedByItemStatus);
 
     List<RequestType> requestTypesAllowedByPolicyAndStatus = requestTypesAllowedByPolicy.stream()
       .filter(requestTypesAllowedByItemStatus::contains)

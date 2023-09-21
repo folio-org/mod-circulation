@@ -17,6 +17,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -568,6 +569,64 @@ class AllowedServicePointsAPITests extends APITests {
     assertServicePointsMatch(allowedPageServicePointsTlr, List.of(cd1));
     assertServicePointsMatch(allowedHoldServicePointsTlr, List.of(cd2));
     assertServicePointsMatch(allowedRecallServicePointsTlr, List.of(cd1, cd2));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestLevel.class, names = {"TITLE", "ITEM"})
+  void shouldReturnListOfAllowedServicePointsForRequestMove(RequestLevel requestLevel) {
+    var requesterId = usersFixture.steve().getId().toString();
+    var items = itemsFixture.createMultipleItemForTheSameInstance(2,
+      List.of(ib -> ib.withStatus(ItemBuilder.AVAILABLE)
+          .withMaterialType(materialTypesFixture.book().getId()),
+        ib -> ib.withStatus(ItemBuilder.CHECKED_OUT)
+          .withMaterialType(materialTypesFixture.videoRecording().getId()))
+    );
+
+    var requestedItem = items.get(0);
+    var requestedItemId = requestedItem.getId().toString();
+    var holdingsRecordId = requestedItem.getHoldingsRecordId().toString();
+    var instanceId = requestedItem.getInstanceId().toString();
+    var itemToMoveTo = items.get(1);
+    var itemToMoveToId = itemToMoveTo.getId().toString();
+
+    String sp1Id = randomId();
+    UUID sp1Uuid = UUID.fromString(sp1Id);
+    String sp2Id = randomId();
+    UUID sp2Uuid = UUID.fromString(sp2Id);
+    var sp1 = new AllowedServicePoint(sp1Id, "SP One");
+    var sp2 = new AllowedServicePoint(sp1Id, "SP Two");
+    List<AllowedServicePoint> allServicePoints = List.of(sp1, sp2);
+
+    allServicePoints.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
+      .withId(UUID.fromString(sp.getId()))
+      .withName(sp.getName())
+    ));
+
+    setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(sp1Uuid));
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withRequestType(PAGE.toString())
+      .fulfillToHoldShelf()
+      .withRequestLevel(requestLevel.toString())
+      .withInstanceId(UUID.fromString(instanceId))
+      .withItemId(requestLevel == TITLE ? null : UUID.fromString(requestedItemId))
+      .withHoldingsRecordId(requestLevel == TITLE ? null : UUID.fromString(holdingsRecordId))
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(UUID.fromString(requesterId))
+      .withPickupServicePointId(sp1Uuid));
+
+    assertThat(request, notNullValue());
+    UUID requestUuid = request.getId();
+    String requestId = requestUuid.toString();
+
+    setRequestPolicyWithAllowedServicePoints(HOLD, Set.of(sp2Uuid));
+
+    var response =
+      get("move", null, null, itemToMoveToId, requestId, HttpStatus.SC_OK).getJson();
+
+    assertThat(response, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
   }
 
   private void assertServicePointsMatch(JsonArray response,
