@@ -66,7 +66,7 @@ public class NameConverter extends CirculationRulesBaseListener {
     log.debug("replace:: parameters names: {}, replacementMap: {}",
       () -> listAsString(names), () -> LogUtil.mapAsString(replacementMap));
     if (replacementMap == null) {
-      log.info("replace:: replacementMap is null");
+      log.debug("replace:: replacementMap is null");
 
       return;
     }
@@ -74,7 +74,7 @@ public class NameConverter extends CirculationRulesBaseListener {
     for (TerminalNode name : names) {
       String newName = replacementMap.get(name.getText());
       if (newName != null) {
-        log.info("replace:: newName: {}", newName);
+        log.debug("replace:: newName: {}", newName);
         tokenStreamRewriter.replace(name.getSymbol(), newName);
       }
     }
