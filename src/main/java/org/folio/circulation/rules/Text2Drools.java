@@ -144,7 +144,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     walker.walk(text2drools, entryPoint);
 
     String droolsRepresentation = text2drools.drools.toString();
-    log.info("getDroolsRepresentation:: result: {}", droolsRepresentation);
+    log.debug("getDroolsRepresentation:: result: {}", droolsRepresentation);
 
     return droolsRepresentation;
   }
@@ -193,7 +193,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     int size = letters.CRITERIUM_LETTER().size();
 
     if (size != 7) {
-      log.info("exitSevenCriteriumLetters:: size is not 7");
+      log.debug("exitSevenCriteriumLetters:: size is not 7");
       Token token = letters.getStart();
       String message = size < 7 ? "7 letters expected, found only " + size
                                 : "Only 7 letters expected, found " + size;
@@ -214,7 +214,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private PriorityType getType(CriteriumPriorityContext ctx) {
     if (ctx.sevenCriteriumLetters() != null) {
-      log.info("getType:: sevenCriteriumLetters is not null");
+      log.debug("getType:: sevenCriteriumLetters is not null");
       return PriorityType.CRITERIUM;
     }
     return PriorityType.NUMBER_OF_CRITERIA;
@@ -316,7 +316,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     Matcher previousMatcher = stack.peek();
 
     if (previousMatcher == null) {
-      log.info("exitExpr:: previousMatcher is null");
+      log.debug("exitExpr:: previousMatcher is null");
       previousMatcher = defaultMatcher;
     }
 
@@ -335,7 +335,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private void generateRule(PoliciesContext policies) {
     if (policies == null) {
-      log.info("generateRule:: policies is null");
+      log.debug("generateRule:: policies is null");
       return;
     }
 
@@ -389,7 +389,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
 
   private static int priority(Matcher matcher, PriorityType type) {
     if (matcher == null) {  // fallback-policy
-      log.info("priority:: matcher is null");
+      log.debug("priority:: matcher is null");
       return 0;
     }
     switch (type) {
@@ -432,7 +432,7 @@ public class Text2Drools extends CirculationRulesBaseListener {
     matcher.drools.append(field);
 
     if (criteriumContext.all() != null) {
-      log.info("addCriterium:: criteriumContext.all() is not null");
+      log.debug("addCriterium:: criteriumContext.all() is not null");
       matcher.drools.append("() // all\n");
       return;
     }
@@ -441,12 +441,12 @@ public class Text2Drools extends CirculationRulesBaseListener {
     TerminalNode terminal = criteriumContext.getChild(TerminalNode.class, 1);
 
     if (terminal != null && terminal.getText().equals("!")) {
-      log.info("addCriterium:: not is true");
+      log.debug("addCriterium:: terminal node is '!'");
       not = true;
     }
 
     if (criteriumContext.NAME().size() == 1) {
-      log.info("addCriterium:: criteriumContext.NAME().size() is 1");
+      log.debug("addCriterium:: criteriumContext.NAME().size() is 1");
       matcher.drools.append(not ? "(id != " : "(id == " );
       appendQuotedString(matcher.drools, criteriumContext.NAME(0).getText());
       matcher.drools.append(")\n");
