@@ -1,5 +1,8 @@
 package org.folio.circulation.rules;
 
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
+
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 
@@ -7,8 +10,11 @@ import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.rules.CirculationRulesParser.CriteriumContext;
 import org.folio.circulation.rules.CirculationRulesParser.PolicyContext;
+import org.folio.circulation.support.utils.LogUtil;
 
 /**
  * Make a UUID to name or a name to UUID conversion of the names in each criterium
@@ -20,6 +26,8 @@ public class NameConverter extends CirculationRulesBaseListener {
    * Terence Parr: "The Definitive ANTLR 4 Reference", Pragmatic Bookshelf, 2012,
    * section "Accessing Hidden Channels" pages 206-208.
    */
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private TokenStreamRewriter tokenStreamRewriter;
   /** maps the name type (one of t, a, b, c, s, m, g, policy) to a map where
@@ -55,13 +63,18 @@ public class NameConverter extends CirculationRulesBaseListener {
    * @param replacementMap  maps the old name to the new name
    */
   private void replace(List<TerminalNode> names, Map<String, String> replacementMap) {
+    log.debug("replace:: parameters names: {}, replacementMap: {}",
+      () -> listAsString(names), () -> LogUtil.mapAsString(replacementMap));
     if (replacementMap == null) {
+      log.debug("replace:: replacementMap is null");
+
       return;
     }
 
     for (TerminalNode name : names) {
       String newName = replacementMap.get(name.getText());
       if (newName != null) {
+        log.debug("replace:: newName: {}", newName);
         tokenStreamRewriter.replace(name.getSymbol(), newName);
       }
     }
