@@ -3,7 +3,7 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.RequestProperties.PICKUP_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
-import static org.folio.circulation.support.ErrorCode.ALREADY_REQUESTED;
+import static org.folio.circulation.support.ErrorCode.ITEM_ALREADY_REQUESTED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -235,7 +235,7 @@ public class RequestServiceUtility {
       message = "This requester already has an open request for this item";
     }
 
-    return failedValidation(message, parameters, ALREADY_REQUESTED);
+    return failedValidation(message, parameters, ITEM_ALREADY_REQUESTED);
   }
 
   static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {

@@ -1,6 +1,6 @@
 package org.folio.circulation.domain.validation;
 
-import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCES_ITEM;
+import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCE_ITEM;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
@@ -116,6 +116,6 @@ public class RequestLoanValidator {
     parameters.put("itemId", loan.getItemId());
 
     return failedValidation("This requester already has a loan for one of the instance's items",
-      parameters, REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCES_ITEM);
+      parameters, REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCE_ITEM);
   }
 }

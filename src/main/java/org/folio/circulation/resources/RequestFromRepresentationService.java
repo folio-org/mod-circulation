@@ -24,7 +24,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
-import static org.folio.circulation.support.ErrorCode.INSTANCE_HAS_NO_ITEM_ID;
+import static org.folio.circulation.support.ErrorCode.INSTANCE_HAS_NO_ITEM;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -539,7 +539,7 @@ class RequestFromRepresentationService {
       errorParameters.put("itemId", itemId);
       errorParameters.put("holdingsRecordId", holdingsRecordId);
       return failedValidation("Cannot create a title level page request " +
-          "for this instance ID with no item ID", errorParameters, INSTANCE_HAS_NO_ITEM_ID);
+          "for this instance ID with no item ID", errorParameters, INSTANCE_HAS_NO_ITEM);
     }
     else {
       return of(() -> request);
