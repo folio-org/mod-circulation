@@ -77,7 +77,6 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
-import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;

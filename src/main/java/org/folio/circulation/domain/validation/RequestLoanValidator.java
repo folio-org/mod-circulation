@@ -28,7 +28,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
-import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
