@@ -63,7 +63,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.REQ
 import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.support.ErrorCode.PAGEABLE_AVAILABLE_ITEM_FOUND;
-import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCE_ITEM;
+import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -673,7 +673,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("This requester already has a loan for one of the instance's items"),
-      hasCode(REQUESTER_ALREADY_HAS_LOAN_FOR_INSTANCE_ITEM),
+      hasCode(REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS),
       hasParameter("itemId", item.getId().toString()),
       hasParameter("userId", usersFixture.jessica().getId().toString()))));
   }
