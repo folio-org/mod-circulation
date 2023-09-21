@@ -62,7 +62,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
-import static org.folio.circulation.support.ErrorCode.PAGEABLE_AVAILABLE_ITEM_FOUND;
+import static org.folio.circulation.support.ErrorCode.HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
@@ -747,7 +747,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Hold/Recall title level request not allowed: pageable available item found for instance"),
-      hasCode(PAGEABLE_AVAILABLE_ITEM_FOUND),
+      hasCode(HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND),
       hasParameter("instanceId", item.getInstanceId().toString()),
       hasParameter("itemId", items.get(1).getId().toString()))));
   }
@@ -3989,7 +3989,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), allOf(
       hasErrorWith(allOf(
         hasMessage("Hold/Recall title level request not allowed: pageable available item found for instance"),
-        hasCode(PAGEABLE_AVAILABLE_ITEM_FOUND),
+        hasCode(HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND),
         hasUUIDParameter("instanceId", instanceId),
         hasUUIDParameter("itemId", availablePageableItem.getId())
       ))));

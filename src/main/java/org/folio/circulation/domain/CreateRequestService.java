@@ -23,7 +23,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.REQUEST_NOT_ALLOWED_FOR_PATRON_TITLE_COMBINATION;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
-import static org.folio.circulation.support.ErrorCode.PAGEABLE_AVAILABLE_ITEM_FOUND;
+import static org.folio.circulation.support.ErrorCode.HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
@@ -150,7 +150,7 @@ public class CreateRequestService {
     log.info("{}. Pageable item(s): {}", errorMessage, availableItemId);
 
     return failedValidation(errorMessage, Map.of(ITEM_ID, availableItemId, INSTANCE_ID,
-      request.getInstanceId()), PAGEABLE_AVAILABLE_ITEM_FOUND);
+      request.getInstanceId()), HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkInstance(
