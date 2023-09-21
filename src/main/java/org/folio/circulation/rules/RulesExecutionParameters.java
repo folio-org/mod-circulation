@@ -6,6 +6,10 @@ import static org.folio.circulation.resources.AbstractCirculationRulesEngineReso
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.LOCATION_ID_NAME;
 import static org.folio.circulation.resources.AbstractCirculationRulesEngineResource.PATRON_TYPE_ID_NAME;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.User;
@@ -21,6 +25,7 @@ import lombok.With;
 @ToString
 @AllArgsConstructor
 public final class RulesExecutionParameters {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final String loanTypeId;
   private final String locationId;
   private final String materialTypeId;
@@ -37,11 +42,13 @@ public final class RulesExecutionParameters {
   }
 
   public static RulesExecutionParameters forItem(Item item, User user) {
+    log.debug("forItem:: parameters item: {}, user: {}", item, user);
     return new RulesExecutionParameters(item.getLoanTypeId(), item.getEffectiveLocationId(),
       item.getMaterialTypeId(), user.getPatronGroupId(), item.getLocation());
   }
 
   public static RulesExecutionParameters forRequest(WebContext context) {
+    log.debug("forRequest:: parameters requestId {}", context.getRequestId());
     return new RulesExecutionParameters(context.getStringParameter(LOAN_TYPE_ID_NAME),
       context.getStringParameter(LOCATION_ID_NAME), context.getStringParameter(ITEM_TYPE_ID_NAME),
       context.getStringParameter(PATRON_TYPE_ID_NAME), null);
