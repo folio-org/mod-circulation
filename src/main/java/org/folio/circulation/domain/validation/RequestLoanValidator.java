@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS;
+import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -57,9 +59,10 @@ public class RequestLoanValidator {
         parameters.put("userId", request.getUserId());
         parameters.put("loanId", loan.getId());
 
-        String message = "This requester currently has this item on loan.";
+        String message = "This requester already has this item on loan";
 
-        return singleValidationError(new ValidationError(message, parameters));
+        return singleValidationError(new ValidationError(message, parameters,
+          REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN));
       }).map(loan -> requestAndRelatedRecords));
   }
 
@@ -112,7 +115,7 @@ public class RequestLoanValidator {
     parameters.put("userId", requestAndRelatedRecords.getRequest().getUserId());
     parameters.put("itemId", loan.getItemId());
 
-    return failedValidation("One of the items of the requested title is already loaned to " +
-      "the requester", parameters);
+    return failedValidation("This requester already has a loan for one of the instance's items",
+      parameters, REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS);
   }
 }
