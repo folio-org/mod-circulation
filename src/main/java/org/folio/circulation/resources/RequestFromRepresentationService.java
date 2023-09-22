@@ -23,6 +23,9 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
+import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
+import static org.folio.circulation.support.ErrorCode.CANNOT_CREATE_PAGE_TLR_WITHOUT_ITEM_ID;
+import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -445,8 +448,8 @@ class RequestFromRepresentationService {
         .collect(Collectors.joining(", "));
 
       return failedValidation(
-        "requestLevel must be one of the following: " + allowedStatusesJoined, "requestLevel",
-        requestLevelRaw);
+        "Request level must be one of the following: " + allowedStatusesJoined, "requestLevel",
+        requestLevelRaw, REQUEST_LEVEL_IS_NOT_ALLOWED);
     }
 
     return succeeded(request);
@@ -457,9 +460,9 @@ class RequestFromRepresentationService {
       .filter(value -> value.equals(request.getfulfillmentPreferenceName()))
       .findFirst()
       .map(value -> succeeded(request))
-      .orElseGet(() -> failedValidation("fulfillmentPreference must be one of the following: " +
+      .orElseGet(() -> failedValidation("Fulfillment preference must be one of the following: " +
         join(", ", RequestFulfillmentPreference.allowedValues()), "fulfillmentPreference",
-        request.getfulfillmentPreferenceName()));
+        request.getfulfillmentPreferenceName(), FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED));
   }
 
   private Result<Request> refuseWhenNoInstanceId(Result<Request> result) {
@@ -535,8 +538,8 @@ class RequestFromRepresentationService {
       Map<String, String> errorParameters = new HashMap<>();
       errorParameters.put("itemId", itemId);
       errorParameters.put("holdingsRecordId", holdingsRecordId);
-      return failedValidation("Attempt to create TLR request linked to an item",
-        errorParameters);
+      return failedValidation("Cannot create a title level page request " +
+          "for this instance ID with no item ID", errorParameters, CANNOT_CREATE_PAGE_TLR_WITHOUT_ITEM_ID);
     }
     else {
       return of(() -> request);

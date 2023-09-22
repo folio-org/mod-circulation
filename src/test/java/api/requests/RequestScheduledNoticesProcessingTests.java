@@ -11,6 +11,7 @@ import static api.support.fixtures.TemplateContextMatchers.getUserContextMatcher
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
@@ -25,6 +26,7 @@ import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_EXPIRATION;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
+import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.utils.ClockUtil.getLocalDate;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -33,6 +35,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -45,6 +48,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.FixMethodOrder;
@@ -634,8 +638,9 @@ class RequestScheduledNoticesProcessingTests extends APITests {
     Response response = requestsFixture.attemptPlace(buildTitleLevelRequest(requestExpiration));
 
     assertThat(response.getStatusCode(), is(422));
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(REQUEST_LEVEL_IS_NOT_ALLOWED))));
     verifyNumberOfScheduledNotices(0);
   }
 

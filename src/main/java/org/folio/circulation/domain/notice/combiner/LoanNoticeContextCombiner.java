@@ -22,7 +22,7 @@ public class LoanNoticeContextCombiner implements NoticeContextCombiner {
       .collect(collectingAndThen(
         Collectors.toList(),
         contexts -> new JsonObject()
-          .put("user", createUserContext(events.iterator().next().getUser()))
+          .put("user", createUserContext(events.iterator().next().getUser()).asJson())
           .put("loans", contexts)
       ));
   }

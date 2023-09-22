@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.support.ErrorCode.SERVICE_POINT_IS_NOT_PICKUP_LOCATION;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -42,8 +43,8 @@ public class ServicePointPickupLocationValidator {
         log.info("refuseInvalidPickupServicePoint:: Hold Shelf Fulfillment Requests require a " +
           "Pickup Service Point");
         return failedValidation(
-          "Hold Shelf Fulfillment Requests require a Pickup Service Point",
-          "id", request.getId());
+          "Hold shelf fulfillment requests require a Pickup service point",
+          "id", request.getId(), HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT);
       } else {
         log.info("refuseInvalidPickupServicePoint:: No pickup service point specified for request");
         return succeeded(requestAndRelatedRecords);

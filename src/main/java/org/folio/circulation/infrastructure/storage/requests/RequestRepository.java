@@ -182,7 +182,7 @@ public class RequestRepository {
       .thenCompose(r -> r.after(this::fetchRelatedRecords));
   }
 
-  public CompletableFuture<Result<Request>> getByIdIgnoringRelatedRecords(String id) {
+  public CompletableFuture<Result<Request>> getByIdWithoutRelatedRecords(String id) {
     return fetchRequest(id);
   }
 

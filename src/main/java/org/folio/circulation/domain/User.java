@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
@@ -25,6 +26,7 @@ import lombok.val;
 @ToString(onlyExplicitlyIncluded = true)
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
+  private static final String ADDRESSES_PROPERTY_NAME = "addresses";
   private final PatronGroup patronGroup;
   private final Collection<Department> departments;
 
@@ -110,14 +112,29 @@ public class User {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "middleName");
   }
 
+  public JsonArray getAddresses() {
+    JsonArray addresses = getPersonal().getJsonArray(ADDRESSES_PROPERTY_NAME);
+    return addresses == null ? new JsonArray() : addresses;
+  }
+
   public JsonObject getAddressByType(String type) {
     JsonObject personal = getObjectProperty(representation, PERSONAL_PROPERTY_NAME);
 
-    val addresses = toStream(personal, "addresses");
+    val addresses = toStream(personal, ADDRESSES_PROPERTY_NAME);
 
     return addresses
       .filter(Objects::nonNull)
       .filter(address -> Objects.equals(getProperty(address, "addressTypeId"), type))
+      .findFirst()
+      .orElse(null);
+  }
+
+  public JsonObject getPrimaryAddress() {
+    JsonObject personal = getObjectProperty(representation, PERSONAL_PROPERTY_NAME);
+    val addresses = toStream(personal, ADDRESSES_PROPERTY_NAME);
+    return addresses
+      .filter(Objects::nonNull)
+      .filter(address -> Objects.equals(getBooleanProperty(address, "primaryAddress"), true))
       .findFirst()
       .orElse(null);
   }
