@@ -105,6 +105,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   @Getter
   private boolean dueDateChangedByNearExpireUser;
+  @Getter
+  private final String latestPatronInfoAddedComment;
 
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
@@ -117,7 +119,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, null, null, null, null, null,
       getDateTimeProperty(representation, DUE_DATE), getDateTimeProperty(representation, DUE_DATE),
-      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList(), null, false, false);
+      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList(), null, false, false, null);
   }
 
   public JsonObject asJson() {
@@ -304,7 +306,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withItem(Item newItem) {
@@ -315,7 +317,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, newItem, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   @Override
@@ -331,12 +333,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, item, newUser, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withActualCostRecord(ActualCostRecord actualCostRecord) {
     return new Loan(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint,
-      originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
@@ -359,22 +361,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withAccounts(Collection<Account> newAccounts) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withLoanPolicy(LoanPolicy newLoanPolicy) {
@@ -382,7 +384,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withLoanPolicy(newLoanPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      policies.withLoanPolicy(newLoanPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
@@ -390,7 +392,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
@@ -398,7 +400,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withLostItemPolicy(newLostItemPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      policies.withLostItemPolicy(newLostItemPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+  }
+
+  public Loan withLatestPatronInfoAddedComment(String newLatestPatronInfoAddedComment) {
+    return new Loan(representation, item, user, proxy, checkinServicePoint,
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, newLatestPatronInfoAddedComment);
   }
 
   public String getLoanPolicyId() {
@@ -656,7 +663,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan copy() {
     final JsonObject representationCopy = representation.copy();
     return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan ageOverdueItemToLost(ZonedDateTime ageToLostDate) {
