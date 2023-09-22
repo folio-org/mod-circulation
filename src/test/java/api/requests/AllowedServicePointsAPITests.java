@@ -655,12 +655,13 @@ class AllowedServicePointsAPITests extends APITests {
     String sp2Id = randomId();
     UUID sp2Uuid = UUID.fromString(sp2Id);
     var sp1 = new AllowedServicePoint(sp1Id, "SP One");
-    var sp2 = new AllowedServicePoint(sp1Id, "SP Two");
+    var sp2 = new AllowedServicePoint(sp2Id, "SP Two");
     List<AllowedServicePoint> allServicePoints = List.of(sp1, sp2);
 
     allServicePoints.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
       .withId(UUID.fromString(sp.getId()))
       .withName(sp.getName())
+      .withPickupLocation(true)
     ));
 
     setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(sp1Uuid));
