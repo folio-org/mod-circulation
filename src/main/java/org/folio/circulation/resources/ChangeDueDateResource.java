@@ -82,7 +82,7 @@ public class ChangeDueDateResource extends Resource {
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients);
+    final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     log.info("starting change due date process for loan {}", request.getLoanId());

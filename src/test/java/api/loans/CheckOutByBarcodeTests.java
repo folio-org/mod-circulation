@@ -73,6 +73,7 @@ import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MA
 import static org.folio.circulation.support.ErrorCode.ITEM_LIMIT_PATRON_GROUP_MATERIAL_TYPE_LOAN_TYPE;
 import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.ErrorCode.USER_BARCODE_NOT_FOUND;
+import static org.folio.circulation.support.ErrorCode.USER_CANNOT_BE_PROXY_FOR_THEMSELVES;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.parseDateTime;
@@ -522,7 +523,8 @@ class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID()));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("User cannot be proxy for themself"),
+      hasMessage("User cannot be proxy for themselves"),
+      hasCode(USER_CANNOT_BE_PROXY_FOR_THEMSELVES),
       hasUUIDParameter("proxyUserId", james.getId()))));
   }
 

@@ -46,9 +46,12 @@ public class UserRepository {
 
   private final PatronGroupRepository patronGroupRepository;
 
+  private final AddressTypeRepository addressTypeRepository;
+
   public UserRepository(Clients clients) {
     usersStorageClient = clients.usersStorage();
     patronGroupRepository = new PatronGroupRepository(clients);
+    addressTypeRepository = new AddressTypeRepository(clients);
   }
 
   public CompletableFuture<Result<User>> getUser(UserRelatedRecord userRelatedRecord) {
@@ -82,7 +85,8 @@ public class UserRepository {
       .using(usersStorageClient)
       .mapTo(User::new)
       .whenNotFound(succeeded(null))
-      .fetch(userId);
+      .fetch(userId)
+      .thenComposeAsync(this::resolveAddressTypeNames);
   }
 
   public CompletableFuture<Result<User>> getUserWithPatronGroup(String userId) {
@@ -97,7 +101,8 @@ public class UserRepository {
       .mapTo(User::new)
       .whenNotFound(succeeded(null))
       .fetch(userId)
-      .thenComposeAsync(this::findUserGroup);
+      .thenComposeAsync(this::findUserGroup)
+      .thenComposeAsync(this::resolveAddressTypeNames);
   }
 
   private CompletableFuture<Result<User>> findUserGroup(Result<User> user){
@@ -105,6 +110,13 @@ public class UserRepository {
       return completedFuture(succeeded(null));
     }
     return patronGroupRepository.findGroupForUser(user);
+  }
+
+  private CompletableFuture<Result<User>> resolveAddressTypeNames(Result<User> user) {
+    if(Objects.isNull(user.value())){
+      return completedFuture(succeeded(null));
+    }
+    return addressTypeRepository.setAddressTypeNamesOnUserAddresses(user);
   }
 
   public CompletableFuture<Result<Loan>> findUserForLoan(Result<Loan> loanResult) {

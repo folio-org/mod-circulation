@@ -38,10 +38,14 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getLoanPolicyAndMatch(
     RulesExecutionParameters params) {
 
+    log.debug("getLoanPolicyAndMatch:: parameters params: {}", params);
+
     return executeRules(params, ExecutableRules::determineLoanPolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getLoanPolicies(RulesExecutionParameters params) {
+    log.debug("getLoanPolicies:: parameters params: {}", params);
+
     return triggerRules(params,
       (drools, newParams) -> drools.loanPolicies(newParams.toMap(), newParams.getLocation()));
   }
@@ -49,10 +53,14 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getLostItemPolicyAndMatch(
     RulesExecutionParameters params) {
 
+    log.debug("getLostItemPolicyAndMatch:: parameters params: {}", params);
+
     return executeRules(params, ExecutableRules::determineLostItemPolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getLostItemPolicies(RulesExecutionParameters params) {
+    log.debug("getLostItemPolicies:: parameters params: {}", params);
+
     return triggerRules(params,
       (drools, newParams) -> drools.lostItemPolicies(newParams.toMap(), newParams.getLocation()));
   }
@@ -60,10 +68,14 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getNoticePolicyAndMatch(
     RulesExecutionParameters params) {
 
+    log.debug("getNoticePolicyAndMatch:: parameters params: {}", params);
+
     return executeRules(params, ExecutableRules::determineNoticePolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getNoticePolicies(RulesExecutionParameters params) {
+    log.debug("getNoticePolicies:: parameters params: {}", params);
+
     return triggerRules(params,
       (drools, newParams) -> drools.noticePolicies(newParams.toMap(), newParams.getLocation()));
   }
@@ -71,10 +83,14 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getOverduePolicyAndMatch(
     RulesExecutionParameters params) {
 
+    log.debug("getOverduePolicyAndMatch:: parameters params: {}", params);
+
     return executeRules(params, ExecutableRules::determineOverduePolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getOverduePolicies(RulesExecutionParameters params) {
+    log.debug("getOverduePolicies:: parameters params: {}", params);
+
     return triggerRules(params,
       (drools, newParams) -> drools.overduePolicies(newParams.toMap(), newParams.getLocation()));
   }
@@ -82,10 +98,14 @@ public class CirculationRulesProcessor {
   public CompletableFuture<Result<CirculationRuleMatch>> getRequestPolicyAndMatch(
     RulesExecutionParameters params) {
 
+    log.debug("getRequestPolicyAndMatch:: parameters params: {}", params);
+
     return executeRules(params, ExecutableRules::determineRequestPolicy);
   }
 
   public CompletableFuture<Result<JsonArray>> getRequestPolicies(RulesExecutionParameters params) {
+    log.debug("getRequestPolicies:: parameters params: {}", params);
+
     return triggerRules(params,
       (drools, newParams) -> drools.requestPolicies(newParams.toMap(), newParams.getLocation()));
   }
@@ -114,8 +134,13 @@ public class CirculationRulesProcessor {
         rulesExecutor.apply(rules, parametersWithLocation)));
   }
 
-  private CompletableFuture<Result<RulesExecutionParameters>> fetchLocation(RulesExecutionParameters params) {
+  private CompletableFuture<Result<RulesExecutionParameters>> fetchLocation(
+    RulesExecutionParameters params) {
+
+    log.debug("fetchLocation:: parameters params: {}", params);
+
     if (params.getLocation() != null) {
+      log.info("fetchLocation:: location is not null");
       return ofAsync(() -> params);
     }
 

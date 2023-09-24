@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ErrorCode.USER_CANNOT_BE_PROXY_FOR_THEMSELVES;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.failed;
@@ -51,8 +52,8 @@ public class ProxyRelationshipValidator {
     if (StringUtils.equals(userRelatedRecord.getProxyUserId(), userRelatedRecord.getUserId())) {
       log.info("refuseWhenInvalid:: proxy user ID is equal to user ID");
       return completedFuture(failed(singleValidationError(
-        "User cannot be proxy for themself", "proxyUserId",
-        userRelatedRecord.getProxyUserId())));
+        "User cannot be proxy for themselves", "proxyUserId",
+        userRelatedRecord.getProxyUserId(), USER_CANNOT_BE_PROXY_FOR_THEMSELVES)));
     }
 
     return succeeded(userRelatedRecord).failAfter(

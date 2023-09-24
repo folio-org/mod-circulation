@@ -74,7 +74,9 @@ public class CirculationVerticle extends AbstractVerticle {
 
     this.server = vertx.createHttpServer();
 
-    router.route().handler(rc -> LogHelper.logRequest(rc, log));
+    router.route()
+      .handler(LogHelper::populateLoggingContext)
+      .handler(rc -> LogHelper.logRequest(rc, log));
 
     new HealthResource().register(router);
     new TenantActivationResource().register(router);
