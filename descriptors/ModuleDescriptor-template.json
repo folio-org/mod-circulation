@@ -1043,13 +1043,16 @@
             "users.item.get",
             "addresstypes.collection.get",
             "templates.item.get",
+            "owners.collection.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "accounts.item.get",
-            "accounts.collection.get"
+            "accounts.collection.get",
+            "accounts.item.post",
+            "feefineactions.item.post"
           ],
           "unit": "minute",
           "delay": "5"

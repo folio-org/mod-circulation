@@ -1,17 +1,32 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Account;
+import org.folio.circulation.domain.FeeFineAction;
+import org.folio.circulation.domain.FeeFineOwner;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRemindersPolicy;
+import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.circulation.support.utils.DateFormatUtil;
 
+import java.math.BigDecimal;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.Objects.isNull;
+import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -30,12 +45,28 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
   private final ZonedDateTime systemTime;
   private final LoanPolicyRepository loanPolicyRepository;
   private final OverdueFinePolicyRepository overdueFinePolicyRepository;
+  private final FeeFineOwnerRepository feeFineOwnerRepository;
+  private final CollectionResourceClient accountsStorageClient;
+  private final CollectionResourceClient feeFineActionsStorageClient;
+
+
+
+  static final String ACCOUNT_FEE_FINE_ID_VALUE = "6b830703-f828-4e38-a0bb-ee81deacbd03";
+  static final String ACCOUNT_FEE_FINE_TYPE_VALUE = "Reminder fee";
+  static final String ACCOUNT_PAYMENT_STATUS_NAME_VALUE = "Outstanding";
+  static final String ACCOUNT_STATUS_NAME_VALUE = "Open";
+
+
 
   public LoanScheduledNoticeReminderFeeHandler(Clients clients, LoanRepository loanRepository) {
     super(clients, loanRepository);
     this.systemTime = ClockUtil.getZonedDateTime();
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
     this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
+    this.accountsStorageClient = clients.accountsStorageClient();
+    this.feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
+
     log.debug("Instantiated LoanScheduledNoticeReminderFeeHandler");
   }
 
@@ -44,6 +75,8 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
 
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
+      .thenCompose(r -> r.after(this::persistAccount))
+      .thenCompose(r -> r.after(this::createFeeFineAction))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(r -> r.after(this::updateLoan))
       .thenCompose(r -> r.after(this::updateNotice))
@@ -54,7 +87,6 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
-
     // Also fetches user, item and item-related records (holdings, instance, location, etc.)
     return loanRepository.getById(context.getNotice().getLoanId())
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
@@ -63,15 +95,23 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
 
-
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
     return ofAsync(() -> context)
       .thenApply(r -> r.next(this::failWhenNoticeHasNoLoanId))
       .thenCompose(r -> r.after(this::fetchTemplate))
-      .thenCompose(r -> r.after(this::fetchLoan));
+      .thenCompose(r -> r.after(this::fetchLoan))
+      .thenApply(r -> r.next(this::failWhenLoanHasNoNextReminderScheduled))
+      .thenCompose(r -> r.after(this::buildAccountObject));
   }
 
+  protected Result<ScheduledNoticeContext> failWhenLoanHasNoNextReminderScheduled(ScheduledNoticeContext context) {
+    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry nextReminder = context.getLoan().getNextReminder();
+
+    return isNull(nextReminder)
+      ? failed(new RecordNotFoundFailure("next scheduled reminder", "reminder-for-loan-"+context.getLoan().getId()))
+      : succeeded(context);
+  }
   /**
    * Sets current reminder as the most recent on the loan.
    */
@@ -81,6 +121,63 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
       .thenApply(r -> r.map(v -> context));
   }
 
+  private CompletableFuture<Result<ScheduledNoticeContext>> buildAccountObject(ScheduledNoticeContext context) {
+    Loan loan = context.getLoan();
+    Item item = context.getLoan().getItem();
+    ReminderFeeAccount reminderFeeAccount = new ReminderFeeAccount()
+        .with(ReminderFeeAccount.FEE_FINE_ID, ACCOUNT_FEE_FINE_ID_VALUE)
+        .with(ReminderFeeAccount.FEE_FINE_TYPE, ACCOUNT_FEE_FINE_TYPE_VALUE)
+        .with(ReminderFeeAccount.AMOUNT, loan.getNextReminder().getReminderFee())
+        .with(ReminderFeeAccount.REMAINING, loan.getNextReminder().getReminderFee())
+        .with(ReminderFeeAccount.TITLE, item.getTitle())
+        .with(ReminderFeeAccount.BARCODE, item.getBarcode())
+        .with(ReminderFeeAccount.CALL_NUMBER, item.getCallNumber())
+        .with(ReminderFeeAccount.LOCATION, item.getLocation().getName())
+        .with(ReminderFeeAccount.MATERIAL_TYPE, item.getMaterialTypeName())
+        .with(ReminderFeeAccount.MATERIAL_TYPE_ID, item.getMaterialTypeId())
+        .with(ReminderFeeAccount.LOAN_ID, loan.getId())
+        .with(ReminderFeeAccount.USER_ID, loan.getUserId())
+        .with(ReminderFeeAccount.ITEM_ID, item.getItemId())
+        .with(ReminderFeeAccount.DUE_DATE, loan.getDueDate())
+        .withNamedObject(ReminderFeeAccount.PAYMENT_STATUS, ACCOUNT_PAYMENT_STATUS_NAME_VALUE)
+        .withNamedObject(ReminderFeeAccount.STATUS, ACCOUNT_STATUS_NAME_VALUE)
+        .with(ReminderFeeAccount.CONTRIBUTORS, mapContributorNamesToJson(item))
+        .with(ReminderFeeAccount.LOAN_POLICY_ID, loan.getLoanPolicyId())
+        .with(ReminderFeeAccount.OVERDUE_FINE_POLICY_ID, loan.getOverdueFinePolicyId())
+        .with(ReminderFeeAccount.LOST_ITEM_FEE_POLICY_ID, loan.getLostItemPolicyId());
+
+    return lookupFeeFineOwner(context)
+        .thenApply(mapResult(reminderFeeAccount::withFeeFineOwner))
+        .thenApply(r -> Result.succeeded(context.withAccount(Account.from(r.value().asJson()))));
+  }
+
+  private CompletableFuture<Result<FeeFineOwner>> lookupFeeFineOwner(ScheduledNoticeContext context) {
+    return feeFineOwnerRepository
+      .findOwnerForServicePoint(context.getLoan().getItem().getLocation().getPrimaryServicePoint().getId());
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> persistAccount(ScheduledNoticeContext context) {
+    return accountsStorageClient.post(context.getAccount().toJson())
+      .thenApply(r -> Result.succeeded(context));
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> createFeeFineAction(ScheduledNoticeContext context) {
+    Account account = context.getAccount();
+    ReminderFeeAction reminderFeeAction =
+      new ReminderFeeAction()
+        .with(ReminderFeeAction.ACCOUNT_ID, account.getId())
+        .with(ReminderFeeAction.USER_ID, account.getUserId())
+        .with(ReminderFeeAction.BALANCE, account.getRemaining().toDouble())
+        .with(ReminderFeeAction.AMOUNT_ACTION, account.getAmount().toDouble())
+        .with(ReminderFeeAction.TYPE_ACTION, account.getFeeFineType())
+        .with(ReminderFeeAction.SOURCE, ReminderFeeAction.CREATED_BY_SYSTEM)
+        .with(ReminderFeeAction.CREATED_AT, context.getLoan().getItem().getLocation().getPrimaryServicePoint().getId())
+        .with(ReminderFeeAction.COMMENTS, String.format("STAFF: Reminder fee %s", context.getLoan().getNextReminder().getSequenceNumber()))
+        .with(ReminderFeeAction.DATE_ACTION, ClockUtil.getZonedDateTime());
+    return feeFineActionsStorageClient.post(reminderFeeAction.asJson())
+      .thenApply(r -> Result.succeeded(context.withChargeAction(new FeeFineAction(reminderFeeAction.asJson()))));
+  }
+
   /**
    * Checks the loan for the most recent reminder sent, then updates the notice config of the scheduled notice
    * with the next step from the configured reminder sequence.
@@ -88,20 +185,17 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
    */
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(ScheduledNoticeContext context) {
-    Loan loan = context.getLoan();
-    Integer latestReminderNumber = loan.getLastReminderFeeBilledNumber();
-    OverdueFinePolicyRemindersPolicy.ReminderSequence schedule = loan.getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule();
-    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry nextEntry = schedule.getEntryAfter(latestReminderNumber);
-    if (nextEntry == null) {
+    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry nextReminder = context.getLoan().getNextReminder();
+    if (nextReminder == null) {
       return deleteNotice(context.getNotice(), "no more reminders scheduled");
     } else if (isNoticeIrrelevant(context)) {
       return deleteNotice(context.getNotice(), "further reminder notices became irrelevant");
     } else {
       ScheduledNotice nextReminderNotice = context.getNotice()
-        .withNextRunTime(nextEntry.getPeriod().plusDate(systemTime));
+        .withNextRunTime(nextReminder.getPeriod().plusDate(systemTime));
       nextReminderNotice.getConfiguration()
-        .setTemplateId(nextEntry.getNoticeTemplateId())
-        .setFormat(nextEntry.getNoticeFormat());
+        .setTemplateId(nextReminder.getNoticeTemplateId())
+        .setFormat(nextReminder.getNoticeFormat());
 
       return scheduledNoticesRepository.update(nextReminderNotice);
     }
@@ -110,6 +204,118 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
     return dueDateNoticeIsNotRelevant(context);
+  }
+
+
+  static class ReminderFeeAccount {
+    static final String OWNER_ID = "ownerId";
+    static final String FEE_FINE_ID = "feeFineId";
+    static final String FEE_FINE_TYPE = "feeFineType";
+    static final String AMOUNT = "amount";
+    static final String REMAINING = "remaining";
+    static final String FEE_FINE_OWNER = "feeFineOwner";
+    static final String TITLE = "title";
+    static final String BARCODE = "barcode";
+    static final String CALL_NUMBER = "callNumber";
+    static final String LOCATION = "location";
+    static final String MATERIAL_TYPE = "materialType";
+    static final String MATERIAL_TYPE_ID = "materialTypeId";
+    static final String LOAN_ID = "loanId";
+    static final String USER_ID = "userId";
+    static final String ITEM_ID = "itemId";
+    static final String DUE_DATE = "dueDate";
+    static final String RETURNED_DATE = "returnedDate";
+    static final String PAYMENT_STATUS = "paymentStatus";
+    static final String STATUS = "status";
+    static final String CONTRIBUTORS = "contributors";
+    static final String LOAN_POLICY_ID = "loanPolicyId";
+    static final String OVERDUE_FINE_POLICY_ID = "overdueFinePolicyId";
+    static final String LOST_ITEM_FEE_POLICY_ID = "lostItemFeePolicyId";
+    final JsonObject json = new JsonObject();
+
+    ReminderFeeAccount() {
+      json.put("id", UUID.randomUUID().toString());
+    }
+
+    ReminderFeeAccount with (String propertyName, String value) {
+      json.put(propertyName, value);
+      return this;
+    }
+
+    ReminderFeeAccount with (String propertyName, BigDecimal value) {
+      json.put(propertyName, value);
+      return this;
+    }
+
+    ReminderFeeAccount with (String propertyName, ZonedDateTime value) {
+      json.put(propertyName, DateFormatUtil.formatDateTime(value.withZoneSameInstant(ZoneOffset.UTC)));
+      return this;
+    }
+
+    ReminderFeeAccount with (String propertyName, JsonArray array) {
+      json.put(propertyName, array);
+      return this;
+    }
+
+    ReminderFeeAccount withNamedObject (String propertyName, String name) {
+      json.put(propertyName, new JsonObject().put("name", name));
+      return this;
+    }
+
+    ReminderFeeAccount withFeeFineOwner (FeeFineOwner owner) {
+      if (owner != null) {
+        json.put(FEE_FINE_OWNER, owner.getOwner());
+        json.put(OWNER_ID, owner.getId());
+      }
+      return this;
+    }
+
+    JsonObject asJson() {
+      return json;
+    }
+
+  }
+
+  static class ReminderFeeAction {
+
+    static final String CREATED_BY_SYSTEM = "System";
+    final JsonObject json = new JsonObject();
+    static final String USER_ID = "userId";
+    static final String ACCOUNT_ID = "accountId";
+    static final String SOURCE = "source";
+    static final String CREATED_AT = "createdAt";
+    static final String TRANSACTION_INFORMATION = "transactionInformation";
+    static final String COMMENTS = "comments";
+    static final String BALANCE = "balance";
+    static final String AMOUNT_ACTION = "amountAction";
+    static final String NOTIFY = "notify";
+    static final String TYPE_ACTION = "typeAction";
+    static final String DATE_ACTION = "dateAction";
+
+    ReminderFeeAction() {
+      json.put("id", UUID.randomUUID().toString());
+      json.put(NOTIFY, false);
+    }
+
+    ReminderFeeAction with (String propertyName, String value) {
+      json.put(propertyName, value);
+      return this;
+    }
+
+    ReminderFeeAction with (String propertyName, Double value) {
+      json.put(propertyName, value);
+      return this;
+    }
+
+    ReminderFeeAction with (String propertyName, ZonedDateTime value) {
+      json.put(propertyName, DateFormatUtil.formatDateTime(value.withZoneSameInstant(ZoneOffset.UTC)));
+      return this;
+    }
+
+    JsonObject asJson() {
+      return json;
+    }
+
   }
 
 }
