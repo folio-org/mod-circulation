@@ -72,7 +72,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private boolean invalidUuid(HttpServerRequest request, String paramName) {
-    log.debug("invalidUuid:: parameters request: {}, paramName: {}", request.params(), paramName);
+    log.debug("invalidUuid:: parameters paramName: {}", paramName);
     final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
     String uuid = request.getParam(paramName);
     if (uuid == null) {

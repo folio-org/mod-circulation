@@ -64,7 +64,7 @@ public class ChangeDueDateResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(
     final ChangeDueDateRequest request, RoutingContext routingContext) {
 
-    log.debug("processChangeDueDate:: parameters request: {}");
+    log.debug("processChangeDueDate:: parameters request: {}", request);
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
