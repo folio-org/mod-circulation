@@ -12,6 +12,7 @@ import static org.folio.circulation.support.http.server.NoContentResponse.noCont
 import static org.folio.circulation.support.http.server.ServerErrorResponse.internalError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.of;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ForwardResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpServerResponse;
@@ -86,6 +88,7 @@ public class CirculationRulesResource extends Resource {
     log.debug("get(RoutingContext) client={}", circulationRulesClient);
 
     if (circulationRulesClient == null) {
+      log.error("get:: cannot initialise client to storage interface");
       internalError(routingContext.response(),
         "Cannot initialise client to storage interface");
       return;
@@ -116,6 +119,7 @@ public class CirculationRulesResource extends Resource {
     CollectionResourceClient loansRulesClient = clients.circulationRulesStorage();
 
     if (loansRulesClient == null) {
+      log.error("put:: cannot initialise client to storage interface");
       internalError(routingContext.response(),
         "Cannot initialise client to storage interface");
       return;
@@ -128,6 +132,8 @@ public class CirculationRulesResource extends Resource {
   private void proceedWithUpdate(Map<String, Set<String>> existingPoliciesIds,
     RoutingContext routingContext, Clients clients) {
 
+    log.debug("proceedWithUpdate:: parameters existingPoliciesIds: {}",
+      () -> mapAsString(existingPoliciesIds));
     final WebContext webContext = new WebContext(routingContext);
 
     JsonObject rulesInput;
@@ -216,12 +222,19 @@ public class CirculationRulesResource extends Resource {
   private Map<String, Set<String>> getTotalMap(Map<String, Set<String>> totalMap,
     Map<String, Set<String>> newMap) {
 
+    log.debug("getTotalMap:: parameters totalMap: {}, newMap: {}", () -> mapAsString(totalMap),
+      () -> mapAsString(newMap));
     totalMap.putAll(newMap);
+    log.debug("getTotalMap:: result: {}", totalMap);
+
     return totalMap;
   }
 
   private CompletableFuture<Result<Map<String, Set<String>>>> getPolicyIdsByType(
     CollectionResourceClient client, String entityName, String policyType) {
+
+    log.debug("getPolicyIdsByType :: parameters enityName: {}, policyType: {}",
+      entityName, policyType);
 
     return client.get(POLICY_PAGE_LIMIT)
       .thenApply(r -> r.next(response -> mapResponseToIds(response, entityName)))
