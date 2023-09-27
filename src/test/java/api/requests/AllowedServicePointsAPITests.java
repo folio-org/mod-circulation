@@ -20,8 +20,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -637,11 +637,8 @@ class AllowedServicePointsAPITests extends APITests {
   void shouldReturnListOfAllowedServicePointsForRequestMove(RequestLevel requestLevel) {
     var requesterId = usersFixture.steve().getId().toString();
     var items = itemsFixture.createMultipleItemForTheSameInstance(2,
-      List.of(ib -> ib.withStatus(ItemBuilder.AVAILABLE)
-          .withMaterialType(materialTypesFixture.book().getId()),
-        ib -> ib.withStatus(ItemBuilder.CHECKED_OUT)
-          .withMaterialType(materialTypesFixture.videoRecording().getId()))
-    );
+      List.of(ib -> ib.withStatus(ItemBuilder.AVAILABLE),
+        ib -> ib.withStatus(ItemBuilder.CHECKED_OUT)));
 
     var requestedItem = items.get(0);
     var requestedItemId = requestedItem.getId().toString();
@@ -654,11 +651,14 @@ class AllowedServicePointsAPITests extends APITests {
     UUID sp1Uuid = UUID.fromString(sp1Id);
     String sp2Id = randomId();
     UUID sp2Uuid = UUID.fromString(sp2Id);
+    String sp3Id = randomId();
+    UUID sp3Uuid = UUID.fromString(sp3Id);
     var sp1 = new AllowedServicePoint(sp1Id, "SP One");
     var sp2 = new AllowedServicePoint(sp2Id, "SP Two");
-    List<AllowedServicePoint> allServicePoints = List.of(sp1, sp2);
+    var sp3 = new AllowedServicePoint(sp2Id, "SP Three");
+    List<AllowedServicePoint> existingServicePoints = List.of(sp1, sp2); // omitting sp3
 
-    allServicePoints.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
+    existingServicePoints.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
       .withId(UUID.fromString(sp.getId()))
       .withName(sp.getName())
       .withPickupLocation(true)
@@ -683,12 +683,65 @@ class AllowedServicePointsAPITests extends APITests {
     UUID requestUuid = request.getId();
     String requestId = requestUuid.toString();
 
-    setRequestPolicyWithAllowedServicePoints(HOLD, Set.of(sp2Uuid));
+    // Changing policy, now it includes nonexistent sp3
+    setRequestPolicyWithAllowedServicePoints(HOLD, Set.of(sp2Uuid, sp3Uuid));
 
-    var response =
+    // Valid "move" request
+    var moveResponse =
       get("move", null, null, itemToMoveToId, requestId, HttpStatus.SC_OK).getJson();
+    assertThat(moveResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
 
-    assertThat(response, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
+    // Invalid "move" requests
+    var invalidMoveResponse1 = get("move", null, null, null, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse1.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse2 = get("move", null, null, itemToMoveToId, null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse2.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse3 = get("move", null, null, null, null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse3.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse4 = get("move", requesterId, null, itemToMoveToId, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse4.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse5 = get("move", null, instanceId, itemToMoveToId, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse5.getBody(), equalTo("Invalid combination of query parameters"));
+
+    // Valid "replace" request
+    var replaceResponse =
+      get("replace", null, null, null, requestId, HttpStatus.SC_OK).getJson();
+    assertThat(replaceResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
+
+    // Invalid "replace" requests
+    var invalidReplaceResponse1 = get("replace", null, null, null, null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse1.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse2 = get("replace", requesterId, null, null, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse2.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse3 = get("replace", null, instanceId, null, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse3.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse4 = get("replace", null, null, requestedItemId, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse4.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse5 = get("replace", requesterId, instanceId,
+      requestedItemId, requestId, HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse5.getBody(),
+      equalTo("Invalid combination of query parameters"));
   }
 
   private void assertServicePointsMatch(JsonArray response,
