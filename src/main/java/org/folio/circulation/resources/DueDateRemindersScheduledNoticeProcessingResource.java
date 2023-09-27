@@ -47,5 +47,4 @@ public class DueDateRemindersScheduledNoticeProcessingResource extends Scheduled
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }
-
 }
