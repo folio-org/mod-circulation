@@ -3,6 +3,7 @@ package org.folio.circulation.domain.policy;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
+import org.apache.commons.lang.WordUtils;
 import org.folio.circulation.domain.notice.NoticeFormat;
 
 import java.math.BigDecimal;
@@ -125,7 +126,7 @@ public class OverdueFinePolicyRemindersPolicy {
     public static ReminderSequenceEntry from (int sequenceNumber, JsonObject entry) {
       Period period = Period.from(
         entry.getInteger(INTERVAL),
-        entry.getString(TIME_UNIT_ID)+"s");
+        normalizeTimeUnit(entry.getString(TIME_UNIT_ID)));
       BigDecimal fee = getBigDecimalProperty(entry,REMINDER_FEE);
       return new ReminderSequenceEntry(
         sequenceNumber, period, fee,
@@ -136,6 +137,14 @@ public class OverdueFinePolicyRemindersPolicy {
 
     public NoticeFormat getNoticeFormat () {
       return NoticeFormat.from(noticeFormat);
+    }
+
+    /**
+     * Normalizes "HOUR", "HOURS", "hour", "hours" to "Hours"
+     */
+    private static String normalizeTimeUnit (String timeUnitId) {
+      String capitalized = WordUtils.capitalizeFully(timeUnitId);
+      return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
 
     public String toString() {

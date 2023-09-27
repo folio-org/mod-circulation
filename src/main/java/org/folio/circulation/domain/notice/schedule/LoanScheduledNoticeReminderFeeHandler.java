@@ -26,6 +26,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.isNull;
+import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
+import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -203,9 +205,9 @@ public class LoanScheduledNoticeReminderFeeHandler extends LoanScheduledNoticeHa
 
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
-    return dueDateNoticeIsNotRelevant(context);
+    Loan loan = context.getLoan();
+    return loan.isClosed() || loan.hasItemWithAnyStatus(DECLARED_LOST, CLAIMED_RETURNED);
   }
-
 
   static class ReminderFeeAccount {
     static final String OWNER_ID = "ownerId";
