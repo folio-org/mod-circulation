@@ -195,16 +195,17 @@ public class ServicePointRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findPrimaryServicePointsForRequests(
-    MultipleRecords<Request> multipleRequests) {
+    final MultipleRecords<Request> multipleRequests) {
 
     log.debug("findServicePointsForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
 
-    Collection<Request> requests = multipleRequests.getRecords();
+    final Collection<Request> requests = multipleRequests.getRecords();
 
     final List<String> servicePointsToFetch = requests.stream()
       .filter(Objects::nonNull)
-      .map(r -> r.getItem().getLocation().getPrimaryServicePointId().toString())
+      .map(r -> r.getItem() != null ? r.getItem().getLocation().getPrimaryServicePointId() : null)
       .filter(Objects::nonNull)
+      .map(Object::toString)
       .distinct()
       .collect(Collectors.toList());
 
@@ -226,15 +227,15 @@ public class ServicePointRepository {
             for(ServicePoint servicePoint : spCollection) {
               if(request.getItem().getLocation().getPrimaryServicePointId() != null &&
                 request.getItem().getLocation().getPrimaryServicePointId().toString().equals(servicePoint.getId())) {
-                Location l = request.getItem().getLocation().withPrimaryServicePoint(servicePoint);
-                Item i = request.getItem().withLocation(l);
-                newRequest = request.withItem(i);
+                Location location = request.getItem().getLocation().withPrimaryServicePoint(servicePoint);
+                Item item = request.getItem().withLocation(location);
+                newRequest = request.withItem(item);
                 foundSP = true;
                 break;
               }
             }
             if(!foundSP) {
-              log.info("No service point (out of {}) found for request {} (pickupServicePointId {})",
+              log.info("No service point (out of {}) found for request {} (primaryServicePointId {})",
                 spCollection.size(), request.getId(), request.getPickupServicePointId());
               newRequest = request;
             }

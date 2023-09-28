@@ -8,6 +8,9 @@ import static org.folio.circulation.support.results.AsynchronousResult.fromFutur
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
@@ -55,11 +58,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.lang.invoke.MethodHandles;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class RequestCollectionResource extends CollectionResource {
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public RequestCollectionResource(HttpClient client) {
     super(client, "/circulation/requests");
   }
@@ -232,45 +238,52 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
+    final var servicePointRepository = new ServicePointRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    String itemQuery = routingContext.request().getParam("effectiveLocationPrimaryServicePointId");
-    List<String> effLocationIds = parseEffLocationIds(dec(itemQuery));
-    fromFutureResult(requestRepository.findBy(routingContext.request().query()).thenComposeAsync(r -> r.after(servicePointRepository::findPrimaryServicePointsForRequests)))
-      .map(j -> mapToJson(j, effLocationIds))
+    final var encodedQuery = routingContext.request().getParam("effectiveLocationPrimaryServicePointId");
+    final var effectiveLocationIds = parseEffectiveLocationIds(dec(encodedQuery));
+    fromFutureResult(requestRepository.findBy(routingContext.request().query())
+      .thenComposeAsync(result -> result.after(servicePointRepository::findPrimaryServicePointsForRequests)))
+      .map(requests -> mapToJson(requests, effectiveLocationIds))
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
   }
 
-  private List<String> parseEffLocationIds(String itemQueryDecoded) {
-    itemQueryDecoded = itemQueryDecoded.replace(" sortby requestDate", "");
-    itemQueryDecoded = itemQueryDecoded.replace("effectiveLocationPrimaryServicePointId==", "");
-    itemQueryDecoded = itemQueryDecoded.replace("(", "");
-    itemQueryDecoded = itemQueryDecoded.replace(")", "");
+  List<String> parseEffectiveLocationIds(String itemQueryDecoded) {
+    itemQueryDecoded = itemQueryDecoded.replace(" sortby requestDate", StringUtils.EMPTY);
+    itemQueryDecoded = itemQueryDecoded.replace("effectiveLocationPrimaryServicePointId==", StringUtils.EMPTY);
+    itemQueryDecoded = itemQueryDecoded.replace("(", StringUtils.EMPTY);
+    itemQueryDecoded = itemQueryDecoded.replace(")", StringUtils.EMPTY);
 
-    List<String> result = new ArrayList<>(Arrays.stream(itemQueryDecoded.split(" or ")).toList());
-    result.removeAll(Arrays.asList("", null));
-    List<String> fResult = new ArrayList<>();
-    for(String i : result) {
-      fResult.add(i. replaceAll("\"", ""));
+    final List<String> results = new ArrayList<>(Arrays.stream(itemQueryDecoded.split(" or ")).toList());
+    results.removeAll(Arrays.asList("", null));
+    final List<String> parsedLocationIds = new ArrayList<>();
+    for(String result : results) {
+      parsedLocationIds.add(result. replaceAll("\"", StringUtils.EMPTY));
     }
-    return fResult;
+    return parsedLocationIds;
   }
 
-  private String dec(String encodedString) {
+  String dec(String encodedQuery) {
     try {
-      return URLDecoder.decode(encodedString, StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      return "";
+      return URLDecoder.decode(encodedQuery, StandardCharsets.UTF_8);
+    } catch (Exception ex) {
+      log.error("Failed to decode effectiveLocationPrimaryServicePointId query", ex);
+      return StringUtils.EMPTY;
     }
   }
 
-  private JsonObject mapToJson(MultipleRecords<Request> requests, List<String> effLocationIds) {
+  JsonObject mapToJson(MultipleRecords<Request> requests, final List<String> effectiveLocationIds) {
     final var requestRepresentation = new RequestRepresentation();
-    if(!effLocationIds.isEmpty()) {
-      requests = requests.filter(r -> effLocationIds.contains(r.getItem().getLocation().getPrimaryServicePointId().toString()));
+    if(!effectiveLocationIds.isEmpty()) {
+      requests = requests.filter(request -> {
+        if(request.getItem() != null && request.getItem().getLocation().getPrimaryServicePointId() != null) {
+          return effectiveLocationIds.contains(request.getItem().getLocation().getPrimaryServicePointId().toString());
+        }
+        return false;
+      });
     }
     return requests.asJson(requestRepresentation::extendedRepresentation, "requests");
   }
