@@ -261,7 +261,7 @@ public class RequestCollectionResource extends CollectionResource {
     results.removeAll(Arrays.asList("", null));
     final List<String> parsedLocationIds = new ArrayList<>();
     for(String result : results) {
-      parsedLocationIds.add(result. replaceAll("\"", StringUtils.EMPTY));
+      parsedLocationIds.add(result. replace("\"", StringUtils.EMPTY));
     }
     return parsedLocationIds;
   }

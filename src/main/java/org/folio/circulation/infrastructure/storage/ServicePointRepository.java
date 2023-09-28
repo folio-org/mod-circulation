@@ -207,7 +207,7 @@ public class ServicePointRepository {
       .filter(Objects::nonNull)
       .map(Object::toString)
       .distinct()
-      .collect(Collectors.toList());
+      .toList();
 
     if(servicePointsToFetch.isEmpty()) {
       log.info("findPrimaryServicePointsForRequests:: No service points to query");
