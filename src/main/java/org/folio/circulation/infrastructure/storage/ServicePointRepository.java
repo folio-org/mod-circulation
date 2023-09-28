@@ -214,9 +214,7 @@ public class ServicePointRepository {
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final FindWithMultipleCqlIndexValues<ServicePoint> fetcher = createServicePointsFetcher();
-
-    return fetcher.findByIds(servicePointsToFetch)
+    return createServicePointsFetcher().findByIds(servicePointsToFetch)
       .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
         multipleServicePoints -> {
           List<Request> newRequestList = new ArrayList<>();
