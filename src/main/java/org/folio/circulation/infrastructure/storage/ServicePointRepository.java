@@ -210,7 +210,7 @@ public class ServicePointRepository {
       .collect(Collectors.toList());
 
     if(servicePointsToFetch.isEmpty()) {
-      log.info("findServicePointsForRequests:: No service points to query");
+      log.info("findPrimaryServicePointsForRequests:: No service points to query");
       return completedFuture(succeeded(multipleRequests));
     }
 
@@ -223,7 +223,7 @@ public class ServicePointRepository {
           Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
           for(Request request : requests) {
             Request newRequest = null;
-            boolean foundSP = false; //Have we found a matching service point for the request?
+            boolean foundSP = false;
             for(ServicePoint servicePoint : spCollection) {
               if(request.getItem().getLocation().getPrimaryServicePointId() != null &&
                 request.getItem().getLocation().getPrimaryServicePointId().toString().equals(servicePoint.getId())) {
