@@ -3,6 +3,7 @@ package api.requests.scenarios;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsAreValid;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
@@ -15,6 +16,7 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 
 import java.time.LocalDate;
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
@@ -333,8 +336,9 @@ class CancelRequestTests extends APITests {
     Response response = requestsFixture.attemptCancelRequest(request);
 
     assertThat(response.getStatusCode(), CoreMatchers.is(422));
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("requestLevel must be one of the following: \"Item\"")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Request level must be one of the following: \"Item\""),
+      hasCode(ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED))));
     verifyNumberOfSentNotices(0);
   }
 

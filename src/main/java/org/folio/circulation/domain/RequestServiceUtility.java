@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.RequestProperties.PICKUP_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.support.ErrorCode.ITEM_ALREADY_REQUESTED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -218,7 +219,7 @@ public class RequestServiceUtility {
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
         message = requestBeingPlaced.getOperation() == Operation.MOVE
-          ? "Not allowed to move TLR to the same item"
+          ? "Not allowed to move title level page request to the same item"
           : "This requester already has an open request for this instance";
       } else {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
@@ -234,7 +235,7 @@ public class RequestServiceUtility {
       message = "This requester already has an open request for this item";
     }
 
-    return failedValidation(message, parameters);
+    return failedValidation(message, parameters, ITEM_ALREADY_REQUESTED);
   }
 
   static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
