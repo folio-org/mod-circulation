@@ -621,12 +621,20 @@ class AllowedServicePointsAPITests extends APITests {
     assertServicePointsMatch(allowedRecallServicePointsTlr, List.of(cd1, cd2));
   }
 
-  @ParameterizedTest
-  @EnumSource(value = Request.Operation.class, names = {"MOVE", "REPLACE"})
-  void getFailsWhenRequestDoesNotExist(Request.Operation operation) {
-    String operationString = operation.name().toLowerCase();
+  @Test
+  void getReplaceFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
-    Response response = get(operationString, null, null, null, requestId,
+    Response response = get("replace", null, null, null, requestId,
+      HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      String.format("Request with ID %s was not found", requestId))));
+  }
+
+  @Test
+  void getMoveFailsWhenRequestDoesNotExist() {
+    String requestId = randomId();
+    String itemId = itemsFixture.basedUponNod().getId().toString();
+    Response response = get("move", null, null, itemId, requestId,
       HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
