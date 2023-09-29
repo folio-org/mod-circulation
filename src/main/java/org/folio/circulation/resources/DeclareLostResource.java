@@ -171,7 +171,7 @@ public class DeclareLostResource extends Resource {
   }
 
   private boolean shouldDeclareLostBeRefused(DeclareLostContext declaredLostContext) {
-    log.debug("shouldDeclareLostBeRefused:: parameters loan: {}", () -> declaredLostContext.getLoan());
+    log.debug("shouldDeclareLostBeRefused:: parameters loan: {}", declaredLostContext::getLoan);
     var lostItemPolicy = declaredLostContext.getLoan().getLostItemPolicy();
 
     boolean shouldDeclareLostBeRefused = declaredLostContext.getFeeFineOwner() == null
