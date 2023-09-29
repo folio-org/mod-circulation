@@ -251,6 +251,9 @@ public class AllowedServicePointsService {
       return ofAsync(new EnumMap<>(RequestType.class));
     }
 
+    log.info("fetchAllowedServicePoints:: types allowed by policy: {}",
+      requestTypesAllowedByPolicy);
+
     var servicePointAllowedByPolicy = requestPolicy.getAllowedServicePoints();
 
     List<RequestType> requestTypesAllowedByItemStatus = ignoreItemStatus
@@ -262,10 +265,14 @@ public class AllowedServicePointsService {
       .distinct()
       .toList();
 
+    log.info("fetchAllowedServicePoints:: types allowed by status: {}",
+      requestTypesAllowedByItemStatus);
+
     List<RequestType> requestTypesAllowedByPolicyAndStatus = requestTypesAllowedByPolicy.stream()
       .filter(requestTypesAllowedByItemStatus::contains)
       .collect(Collectors.toCollection(ArrayList::new)); // collect into a mutable list
 
+    // TODO: fetch service points on a later stage, we only need IDs here
     return fetchServicePoints(requestTypesAllowedByPolicy, servicePointAllowedByPolicy)
       .thenApply(r -> r.map(servicePoints -> groupAllowedServicePointsByRequestType(
         requestTypesAllowedByPolicyAndStatus, servicePoints, servicePointAllowedByPolicy)));
@@ -302,6 +309,9 @@ public class AllowedServicePointsService {
       if (requestTypesAllowedByPolicyAndStatus.contains(requestType) &&
         !servicePointIdsAllowedByPolicyForType.isEmpty()) {
 
+        log.info("groupAllowedServicePointsByRequestType:: request type {} is allowed; " +
+          "list of allowed SPs for type: {}", requestType, servicePointIdsAllowedByPolicyForType);
+
         Set<AllowedServicePoint> allowedAndExistingServicePointsForType =
           fetchedServicePoints.stream()
             .filter(allowedServicePoint ->
@@ -309,6 +319,8 @@ public class AllowedServicePointsService {
             .collect(Collectors.toSet());
 
         if (allowedAndExistingServicePointsForType.isEmpty()) {
+          log.info("groupAllowedServicePointsByRequestType:: allowed and existing SPs not found " +
+            "for type {}", requestType);
           requestTypesAllowedByPolicyAndStatus.remove(requestType);
         } else {
           groupedAllowedServicePoints.put(requestType, allowedAndExistingServicePointsForType);
@@ -323,6 +335,8 @@ public class AllowedServicePointsService {
           .collect(toMap(identity(), requestType -> fetchedServicePoints))
       );
     }
+
+    log.info("groupAllowedServicePointsByRequestType:: result: {}", groupedAllowedServicePoints);
 
     return groupedAllowedServicePoints;
   }
