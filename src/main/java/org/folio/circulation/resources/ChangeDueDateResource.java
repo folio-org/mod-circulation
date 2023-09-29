@@ -108,7 +108,7 @@ public class ChangeDueDateResource extends Resource {
       LoanAndRelatedRecords loanAndRelatedRecords) {
 
     log.debug("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: parameters loanAndRelatedRecords: {}",
-      loanAndRelatedRecords);
+      () -> loanAndRelatedRecords);
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
     log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());
@@ -143,7 +143,7 @@ public class ChangeDueDateResource extends Resource {
     ZonedDateTime dueDate) {
 
     log.debug("changeDueDate:: parameters loanAndRelatedRecords: {}, dueDate: {}",
-      loanAndRelatedRecords, dueDate);
+      () -> loanAndRelatedRecords, () -> dueDate);
     loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
 
     return loanAndRelatedRecords;

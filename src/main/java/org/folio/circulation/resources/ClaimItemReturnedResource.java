@@ -56,7 +56,7 @@ public class ClaimItemReturnedResource extends Resource {
   private CompletableFuture<Result<Loan>> processClaimItemReturned(
     RoutingContext routingContext, ClaimItemReturnedRequest request) {
 
-    log.debug("processClaimItemReturned:: parameters request: {}", request);
+    log.debug("processClaimItemReturned:: parameters request: {}",request);
     final Clients clients = Clients.create(new WebContext(routingContext), client);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
@@ -83,7 +83,7 @@ public class ClaimItemReturnedResource extends Resource {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
     final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(loanId, body);
-    log.debug("createRequest:: parameters request: {}, loanId: {}, body: {}", request, loanId, body);
+    log.debug("createRequest:: parameters request: {}, loanId: {}, body: {}", () -> request, () -> loanId, () -> body);
 
     if (request.getItemClaimedReturnedDateTime() == null) {
       log.error("createRequest:: Item claimed returned date is a required field");

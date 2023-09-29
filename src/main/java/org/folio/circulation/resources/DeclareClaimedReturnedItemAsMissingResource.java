@@ -84,7 +84,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   private Result<ChangeItemStatusRequest> createRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
-    log.debug("createRequest:: parameters loanId: {}, body: {}", loanId, body);
+    log.debug("createRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     final ChangeItemStatusRequest request = ChangeItemStatusRequest.from(loanId, body);
     if (request.getComment() == null) {
@@ -97,7 +97,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
-    log.debug("createNote:: parameters loan: {}", loan);
+    log.debug("createNote:: parameters loan: {}", () -> loan);
     final NotesRepository notesRepository = NotesRepository.createUsing(clients);
     final NoteCreator creator = new NoteCreator(notesRepository);
 

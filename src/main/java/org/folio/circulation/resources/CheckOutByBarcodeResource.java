@@ -193,7 +193,7 @@ public class CheckOutByBarcodeResource extends Resource {
     CheckOutValidators validators, CirculationErrorHandler errorHandler) {
 
     log.debug("acquireLockIfNeededOrFail:: parameters loanAndRelatedRecords: {}",
-      loanAndRelatedRecords);
+      () -> loanAndRelatedRecords);
 
     return settingsRepository.lookUpCheckOutLockSettings()
       .thenApply(cr -> succeeded(loanAndRelatedRecords).combine(cr,
@@ -208,7 +208,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords records, PatronActionSessionService patronActionSessionService,
     CirculationErrorHandler errorHandler) {
 
-    log.debug("saveCheckOutSessionRecord:: parameters records: {}", records);
+    log.debug("saveCheckOutSessionRecord:: parameters records: {}", () -> records);
 
     return patronActionSessionService.saveCheckOutSessionRecord(records)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_SAVE_SESSION_RECORD,
@@ -237,7 +237,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> validateItemLimitBasedOnLockFeatureFlag(
     LoanAndRelatedRecords records, CheckOutValidators validators, CirculationErrorHandler errorHandler) {
 
-    log.debug("validateItemLimitBasedOnLockFeatureFlag:: parameters records: {}", records);
+    log.debug("validateItemLimitBasedOnLockFeatureFlag:: parameters records: {}", () -> records);
 
     if (records.isCheckoutLockFeatureEnabled()) {
       log.warn("validateItemLimitBasedOnLockFeatureFlag:: check out lock feature enabled");
@@ -263,7 +263,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords records, EventPublisher eventPublisher,
     UserRepository userRepository, CirculationErrorHandler errorHandler) {
 
-    log.debug("publishItemCheckedOutEvent:: parameters records: {}", records);
+    log.debug("publishItemCheckedOutEvent:: parameters records: {}", () -> records);
 
     return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
@@ -274,7 +274,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
     CirculationErrorHandler errorHandler) {
 
-    log.debug("lookupLoanPolicy:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
+    log.debug("lookupLoanPolicy:: parameters loanAndRelatedRecords: {}", () -> loanAndRelatedRecords);
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_ITEM)) {
       return completedFuture(succeeded(loanAndRelatedRecords));
@@ -286,7 +286,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> updateItem(
     LoanAndRelatedRecords loanAndRelatedRecords, ItemRepository itemRepository) {
 
-    log.debug("updateItem:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
+    log.debug("updateItem:: parameters loanAndRelatedRecords: {}", () -> loanAndRelatedRecords);
 
     return itemRepository.updateItem(loanAndRelatedRecords.getItem())
       .thenApply(r -> r.map(loanAndRelatedRecords::withItem));
@@ -346,7 +346,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private Result<LoanAndRelatedRecords> setItemLocationIdAtCheckout(
     LoanAndRelatedRecords relatedRecords) {
 
-    log.debug("setItemLocationIdAtCheckout:: parameters relatedRecords: {}", relatedRecords);
+    log.debug("setItemLocationIdAtCheckout:: parameters relatedRecords: {}", () -> relatedRecords);
 
     return succeeded(relatedRecords.withItemEffectiveLocationIdAtCheckOut());
   }
@@ -354,7 +354,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(
     LoanAndRelatedRecords relatedRecords, Clients clients) {
 
-    log.debug("checkOut:: parameters relatedRecords: {}", relatedRecords);
+    log.debug("checkOut:: parameters relatedRecords: {}", () -> relatedRecords);
 
     ZonedDateTime loanDate = relatedRecords.getLoan().getLoanDate();
     final ClosedLibraryStrategyService strategyService =
@@ -377,7 +377,7 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
     log.debug("calculateDefaultInitialDueDate:: parameters loanAndRelatedRecords: {}",
-      loanAndRelatedRecords);
+      () -> loanAndRelatedRecords);
     Loan loan = loanAndRelatedRecords.getLoan();
     LoanPolicy loanPolicy = loan.getLoanPolicy();
     RequestQueue requestQueue = loanAndRelatedRecords.getRequestQueue();

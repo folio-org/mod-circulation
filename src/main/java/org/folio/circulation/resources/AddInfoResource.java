@@ -92,7 +92,7 @@ public class AddInfoResource extends Resource {
   }
 
   private boolean staffOrPatronInfoProvidedInRequest(JsonObject requestBody) {
-    log.debug("staffOrPatronInfoProvidedInRequest:: parameters requestBody: {}", requestBody);
+    log.debug("staffOrPatronInfoProvidedInRequest:: parameters requestBody: {}", () -> requestBody);
     String action = requestBody.getString(ACTION);
     return StringUtils.isNotBlank (action)
       && StringUtils.isNotBlank(requestBody.getString(ACTION_COMMENT))
@@ -116,10 +116,9 @@ public class AddInfoResource extends Resource {
     String action, String actionComment) {
 
     log.debug("addPatronOrStaffInfo:: parameters loanAndRelatedRecords: {}, action: {}, " +
-      "actionComment: {}", loanAndRelatedRecords, action, actionComment);
+      "actionComment: {}", () -> loanAndRelatedRecords, () -> action, () -> actionComment);
     loanAndRelatedRecords.getLoan().changeAction(action);
     loanAndRelatedRecords.getLoan().changeActionComment(actionComment);
-    log.info("addPatronOrStaffInfo:: result: {}", loanAndRelatedRecords);
 
     return loanAndRelatedRecords;
   }
