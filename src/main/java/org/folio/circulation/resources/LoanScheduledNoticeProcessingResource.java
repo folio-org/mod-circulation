@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -42,9 +43,8 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
     return scheduledNoticesRepository.findNotices(
-      ClockUtil.getZonedDateTime(), true,
-      List.of(DUE_DATE, AGED_TO_LOST),
-      CqlSortBy.ascending("nextRunTime"), pageLimit)
+        ClockUtil.getZonedDateTime(), true, List.of(DUE_DATE, AGED_TO_LOST),
+        CqlSortBy.ascending("nextRunTime"), pageLimit)
       .thenApply(r -> r.next(this::logNotices));
   }
 
@@ -55,6 +55,9 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
     LoanRepository loanRepository,
     MultipleRecords<ScheduledNotice> noticesResult) {
 
+    log.debug("handleNotices:: parameters noticesResult: {}",
+      () -> multipleRecordsAsString(noticesResult));
+
     return new LoanScheduledNoticeHandler(clients, loanRepository)
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
@@ -63,8 +66,7 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
   private Result<MultipleRecords<ScheduledNotice>> logNotices(
     MultipleRecords<ScheduledNotice> records) {
 
-    log.info("logNotices:: found notices: {}",
-      () -> LogUtil.collectionAsString(records.getRecords()));
+    log.info("logNotices:: found notices: {}", () -> multipleRecordsAsString(records));
 
     return succeeded(records);
   }

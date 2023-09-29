@@ -87,12 +87,15 @@ public class LoanNoticeSender {
     List<ValidationError> errors = new ArrayList<>();
 
     if (loan == null) {
+      log.info("validateLoan:: loan in null");
       errors.add(new ValidationError("Loan is null", "loan", null));
     } else {
       if (loan.getUser() == null) {
+        log.info("validateLoan:: user in null");
         errors.add(new ValidationError("User is null", "user", null));
       }
       if (loan.getItem() == null || loan.getItem().isNotFound()) {
+        log.info("validateLoan:: user in null");
         errors.add(new ValidationError("Item is null", "item", null));
       }
     }
@@ -108,6 +111,7 @@ public class LoanNoticeSender {
     if (loan == null) {
       log.error("Failed to send {} notice and circulation log event: loan is null", eventType);
     } else {
+      log.info("publishNoticeErrorEvent:: publishing event: {}", eventType);
       NoticeLogContext noticeLogContext = NoticeLogContext.from(loan)
         .withTriggeringEvent(eventType.getRepresentation());
       eventPublisher.publishNoticeErrorLogEvent(noticeLogContext, failure);

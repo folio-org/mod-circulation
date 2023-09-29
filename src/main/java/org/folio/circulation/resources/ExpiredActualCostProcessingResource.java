@@ -38,6 +38,7 @@ public class ExpiredActualCostProcessingResource extends Resource {
   }
 
   private void process(RoutingContext routingContext) {
+    log.debug("process:: expiring actual cost records by timeout");
     var context = new WebContext(routingContext);
     var clients = create(context, client);
 
@@ -55,7 +56,6 @@ public class ExpiredActualCostProcessingResource extends Resource {
       closeLoanWithLostItemService, itemRepository, actualCostRecordRepository,
       loanRepository);
 
-    log.info("process:: expiring actual cost records by timeout");
     actualCostRecordExpirationService.expireActualCostRecords()
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);

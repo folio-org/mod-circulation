@@ -4,6 +4,7 @@ import static org.folio.circulation.domain.notice.session.PatronActionType.ALL;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -29,6 +30,7 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -50,6 +52,7 @@ public class ExpiredSessionProcessingResource extends Resource {
   }
 
   private void process(RoutingContext routingContext) {
+    log.debug("process:: expiring notice sessions by timeout");
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
@@ -86,6 +89,8 @@ public class ExpiredSessionProcessingResource extends Resource {
 
   private CompletableFuture<Result<Void>> attemptEndSessions(
     PatronActionSessionService patronSessionService, List<ExpiredSession> expiredSessions) {
+    log.debug("attemptEndSessions:: parameters expiredSessions: {}",
+      () -> listAsString(expiredSessions));
 
     //TODO: sessions without patronId will not be cleared?
     List<ExpiredSession> existingExpiredSessions = expiredSessions.stream()
