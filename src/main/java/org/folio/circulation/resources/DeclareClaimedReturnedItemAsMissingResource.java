@@ -60,7 +60,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(
     RoutingContext routingContext, ChangeItemStatusRequest request) {
 
-    log.debug("processDeclareClaimedReturnedItemAsMissing:: parameters request: {}", request);
+    log.debug("processDeclareClaimedReturnedItemAsMissing:: parameters request: {}", () -> request);
     final Clients clients = Clients.create(new WebContext(routingContext), client);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
@@ -76,7 +76,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   }
 
   private Result<Loan> declareLoanMissing(Result<Loan> loanResult, ChangeItemStatusRequest request) {
-    log.debug("declareLoanMissing:: parameters request: {}", request);
+    log.debug("declareLoanMissing:: parameters request: {}", () -> request);
 
     return loanResult.map(loan -> loan.markItemMissing(request.getComment()));
   }
