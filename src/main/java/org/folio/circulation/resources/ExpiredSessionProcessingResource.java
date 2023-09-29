@@ -30,7 +30,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;

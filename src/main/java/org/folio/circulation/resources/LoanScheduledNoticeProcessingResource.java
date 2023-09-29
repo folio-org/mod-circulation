@@ -25,7 +25,6 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 
