@@ -133,7 +133,7 @@ public class AllowedServicePointsResource extends Resource {
     }
 
     if (operation == Request.Operation.MOVE && requesterId == null && instanceId == null &&
-      itemId == null && requestId != null) {
+      itemId != null && requestId != null) {
 
       log.info("validateAllowedServicePointsRequest:: request movement case");
       allowedCombinationOfParametersDetected = true;
