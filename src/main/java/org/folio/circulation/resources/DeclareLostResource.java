@@ -69,7 +69,7 @@ public class DeclareLostResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> publishEvent(Loan loan, EventPublisher eventPublisher) {
-    log.debug("publishEvent:: parameters loan: {}", loan);
+    log.debug("publishEvent:: parameters loan: {}", () -> loan);
     if (loan.isDeclaredLost()) {
       log.info("publishEvent:: publish declaredLostEvent");
       return eventPublisher.publishDeclaredLostEvent(loan);
@@ -86,7 +86,7 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
     Clients clients, WebContext context) {
 
-    log.debug("declareItemLost:: parameters request: {}", request);
+    log.debug("declareItemLost:: parameters request: {}", () -> request);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -127,7 +127,7 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<DeclareLostContext>> declareItemLostWhenClaimedReturned(
     DeclareLostContext declareLostContext, Clients clients) {
 
-    log.debug("declareItemLostWhenClaimedReturned:: parameters loan: {}", declareLostContext.getLoan());
+    log.debug("declareItemLostWhenClaimedReturned:: parameters loan: {}", declareLostContext::getLoan);
     final NotesRepository notesRepository = NotesRepository.createUsing(clients);
     final NoteCreator creator = new NoteCreator(notesRepository);
 
@@ -171,7 +171,7 @@ public class DeclareLostResource extends Resource {
   }
 
   private boolean shouldDeclareLostBeRefused(DeclareLostContext declaredLostContext) {
-    log.debug("shouldDeclareLostBeRefused:: parameters loan: {}", declaredLostContext.getLoan());
+    log.debug("shouldDeclareLostBeRefused:: parameters loan: {}", () -> declaredLostContext.getLoan());
     var lostItemPolicy = declaredLostContext.getLoan().getLostItemPolicy();
 
     boolean shouldDeclareLostBeRefused = declaredLostContext.getFeeFineOwner() == null
