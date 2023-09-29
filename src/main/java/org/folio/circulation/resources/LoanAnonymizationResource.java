@@ -55,7 +55,7 @@ public class LoanAnonymizationResource extends Resource {
     final var loanAnonymizationService = new DefaultLoanAnonymizationService(
       new AnonymizationCheckersService(), anonymizeStorageLoansRepository, eventPublisher);
 
-    log.info("Initializing loan anonymization for borrower: {}", borrowerId);
+    log.info("anonymizeLoans:: initializing loan anonymization for borrower: {}", borrowerId);
 
     loanAnonymizationService.anonymizeLoans(loansFinder::findLoansToAnonymize)
       .thenApply(AnonymizeLoansRepresentation::from)

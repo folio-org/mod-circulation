@@ -4,13 +4,17 @@ import static org.folio.circulation.domain.notice.session.PatronActionType.ALL;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.safelyInitialise;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -32,6 +36,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ExpiredSessionProcessingResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public ExpiredSessionProcessingResource(HttpClient client) {
     super(client);
@@ -46,6 +51,7 @@ public class ExpiredSessionProcessingResource extends Resource {
   }
 
   private void process(RoutingContext routingContext) {
+    log.debug("process:: expiring notice sessions by timeout");
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
@@ -74,6 +80,7 @@ public class ExpiredSessionProcessingResource extends Resource {
   }
 
   private CompletableFuture<Result<ZonedDateTime>> defineExpiredTime(Integer timeout) {
+    log.debug("defineExpiredTime:: parameters timeout: {}", timeout);
     final ZonedDateTime now = ClockUtil.getZonedDateTime();
     Result<ZonedDateTime> dateTimeResult = Result.succeeded(now.minusMinutes(timeout));
     return CompletableFuture.completedFuture(dateTimeResult);
@@ -81,6 +88,8 @@ public class ExpiredSessionProcessingResource extends Resource {
 
   private CompletableFuture<Result<Void>> attemptEndSessions(
     PatronActionSessionService patronSessionService, List<ExpiredSession> expiredSessions) {
+    log.debug("attemptEndSessions:: parameters expiredSessions: {}",
+      () -> listAsString(expiredSessions));
 
     //TODO: sessions without patronId will not be cleared?
     List<ExpiredSession> existingExpiredSessions = expiredSessions.stream()
@@ -88,6 +97,7 @@ public class ExpiredSessionProcessingResource extends Resource {
       .collect(Collectors.toList());
 
     if (existingExpiredSessions.isEmpty()) {
+      log.info("attemptEndSessions:: no existing expired sessions");
       return ofAsync(() -> null);
     }
 
