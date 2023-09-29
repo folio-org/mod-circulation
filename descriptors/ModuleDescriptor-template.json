@@ -1026,7 +1026,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/due-date-reminders-scheduled-notices-processing",
+          "pathPattern": "/circulation/scheduled-reminders-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",

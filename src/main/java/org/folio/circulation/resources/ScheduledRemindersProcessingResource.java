@@ -4,7 +4,7 @@ import io.vertx.core.http.HttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeReminderFeeHandler;
+import org.folio.circulation.domain.notice.schedule.LoanScheduledReminderHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -24,12 +24,12 @@ import java.util.concurrent.CompletableFuture;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.*;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
-public class DueDateRemindersScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+public class ScheduledRemindersProcessingResource extends ScheduledNoticeProcessingResource {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  public DueDateRemindersScheduledNoticeProcessingResource(HttpClient client) {
-    super("/circulation/due-date-reminders-scheduled-notices-processing", client);
-    log.debug("Instantiating reminders processing resource");
+  public ScheduledRemindersProcessingResource(HttpClient client) {
+    super("/circulation/scheduled-reminders-processing", client);
+    log.debug("Instantiating reminders processing - notices and fees");
   }
 
   @Override
@@ -43,7 +43,7 @@ public class DueDateRemindersScheduledNoticeProcessingResource extends Scheduled
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(Clients clients, RequestRepository requestRepository, LoanRepository loanRepository, MultipleRecords<ScheduledNotice> noticesResult) {
-    return new LoanScheduledNoticeReminderFeeHandler(clients, loanRepository)
+    return new LoanScheduledReminderHandler(clients, loanRepository)
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }
