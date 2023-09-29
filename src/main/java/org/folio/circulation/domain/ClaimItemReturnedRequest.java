@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class ClaimItemReturnedRequest extends ChangeItemStatusRequest {
   public static final String ITEM_CLAIMED_RETURNED_DATE = "itemClaimedReturnedDateTime";
   private final ZonedDateTime itemClaimedReturnedDateTime;

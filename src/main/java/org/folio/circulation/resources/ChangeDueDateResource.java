@@ -64,7 +64,7 @@ public class ChangeDueDateResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(
     final ChangeDueDateRequest request, RoutingContext routingContext) {
 
-    log.debug("processChangeDueDate:: parameters request: {}", request);
+    log.debug("processChangeDueDate:: parameters request: {}", () -> request);
 
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
@@ -124,7 +124,7 @@ public class ChangeDueDateResource extends Resource {
   CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository,
     ChangeDueDateRequest changeDueDateRequest) {
 
-    log.debug("getExistingLoan:: parameters changeDueDateRequest: {}", changeDueDateRequest);
+    log.debug("getExistingLoan:: parameters changeDueDateRequest: {}", () -> changeDueDateRequest);
 
     return loanRepository.getById(changeDueDateRequest.getLoanId())
       .thenApplyAsync(r -> r.map(exitingLoan -> exitingLoan.setPreviousDueDate(
@@ -134,7 +134,7 @@ public class ChangeDueDateResource extends Resource {
   private Result<LoanAndRelatedRecords> changeDueDate(Result<LoanAndRelatedRecords> loanResult,
       ChangeDueDateRequest request) {
 
-    log.debug("changeDueDate:: parameters request: {}", request);
+    log.debug("changeDueDate:: parameters request: {}", () -> request);
 
     return loanResult.map(l -> changeDueDate(l, request.getDueDate()));
   }
@@ -152,7 +152,7 @@ public class ChangeDueDateResource extends Resource {
   private Result<ChangeDueDateRequest> createChangeDueDateRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
-    log.debug("createChangeDueDateRequest:: parameters loanId: {}, body: {}", loanId, body);
+    log.debug("createChangeDueDateRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     if (!body.containsKey(DUE_DATE)) {
       log.warn("createChangeDueDateRequest:: the request does not contain dueDate");
