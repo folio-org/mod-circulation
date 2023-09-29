@@ -6,8 +6,11 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ClaimItemReturnedRequest;
 import org.folio.circulation.domain.Loan;
@@ -28,6 +31,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ClaimItemReturnedResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public ClaimItemReturnedResource(HttpClient client) {
     super(client);
   }
@@ -52,6 +56,7 @@ public class ClaimItemReturnedResource extends Resource {
   private CompletableFuture<Result<Loan>> processClaimItemReturned(
     RoutingContext routingContext, ClaimItemReturnedRequest request) {
 
+    log.debug("processClaimItemReturned:: parameters request: {}", () -> request);
     final Clients clients = Clients.create(new WebContext(routingContext), client);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
@@ -65,7 +70,11 @@ public class ClaimItemReturnedResource extends Resource {
       .thenCompose(changeItemStatusService::updateLoanAndItem);
   }
 
-  private Result<Loan> declareLoanClaimedReturned(Result<Loan> loanResult, ClaimItemReturnedRequest request) {
+  private Result<Loan> declareLoanClaimedReturned(Result<Loan> loanResult,
+    ClaimItemReturnedRequest request) {
+
+    log.debug("declareLoanClaimedReturned:: parameters request: {}", () -> request);
+
     return loanResult.map(loan -> loan
       .claimItemReturned(request.getComment(), request.getItemClaimedReturnedDateTime()));
   }
@@ -74,8 +83,11 @@ public class ClaimItemReturnedResource extends Resource {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
     final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(loanId, body);
+    log.debug("createRequest:: parameters request: {}, loanId: {}, body: {}",
+      () -> request, () -> loanId, () -> body);
 
     if (request.getItemClaimedReturnedDateTime() == null) {
+      log.error("createRequest:: Item claimed returned date is a required field");
       return failed(singleValidationError("Item claimed returned date is a required field",
         ITEM_CLAIMED_RETURNED_DATE, null));
     }

@@ -64,6 +64,8 @@ public class ChangeDueDateResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> processChangeDueDate(
     final ChangeDueDateRequest request, RoutingContext routingContext) {
 
+    log.debug("processChangeDueDate:: parameters request: {}", () -> request);
+
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
@@ -105,6 +107,8 @@ public class ChangeDueDateResource extends Resource {
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
       LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    log.debug("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: parameters loanAndRelatedRecords: {}",
+      () -> loanAndRelatedRecords);
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
     log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());
@@ -117,13 +121,20 @@ public class ChangeDueDateResource extends Resource {
     }
   }
 
-  CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, ChangeDueDateRequest changeDueDateRequest) {
+  CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository,
+    ChangeDueDateRequest changeDueDateRequest) {
+
+    log.debug("getExistingLoan:: parameters changeDueDateRequest: {}", () -> changeDueDateRequest);
+
     return loanRepository.getById(changeDueDateRequest.getLoanId())
-      .thenApplyAsync(r -> r.map(exitingLoan -> exitingLoan.setPreviousDueDate(exitingLoan.getDueDate())));
+      .thenApplyAsync(r -> r.map(exitingLoan -> exitingLoan.setPreviousDueDate(
+        exitingLoan.getDueDate())));
   }
 
   private Result<LoanAndRelatedRecords> changeDueDate(Result<LoanAndRelatedRecords> loanResult,
       ChangeDueDateRequest request) {
+
+    log.debug("changeDueDate:: parameters request: {}", () -> request);
 
     return loanResult.map(l -> changeDueDate(l, request.getDueDate()));
   }
@@ -131,15 +142,20 @@ public class ChangeDueDateResource extends Resource {
   private LoanAndRelatedRecords changeDueDate(LoanAndRelatedRecords loanAndRelatedRecords,
     ZonedDateTime dueDate) {
 
+    log.debug("changeDueDate:: parameters loanAndRelatedRecords: {}, dueDate: {}",
+      () -> loanAndRelatedRecords, () -> dueDate);
     loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
+
     return loanAndRelatedRecords;
   }
 
   private Result<ChangeDueDateRequest> createChangeDueDateRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
+    log.debug("createChangeDueDateRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     if (!body.containsKey(DUE_DATE)) {
+      log.warn("createChangeDueDateRequest:: the request does not contain dueDate");
       return failed(singleValidationError(
         "A new due date is required in order to change the due date", DUE_DATE, null));
     }

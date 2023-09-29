@@ -2,9 +2,11 @@ package org.folio.circulation.domain.representations;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class AddInfoRequest {
 
   public static final String ACTION = "action";

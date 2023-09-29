@@ -4,6 +4,10 @@ import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequ
 import static org.folio.circulation.domain.validation.UserNotFoundValidator.refuseWhenLoggedInUserNotPresent;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -30,6 +34,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class CheckInByBarcodeResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public CheckInByBarcodeResource(HttpClient client) {
     super(client);
   }
@@ -127,6 +132,7 @@ public class CheckInByBarcodeResource extends Resource {
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
+    log.debug("errorWhenInIncorrectStatus:: parameters item: {}", () -> item);
     String message =
       String.format("%s (%s) (Barcode: %s) has the item status %s and cannot be checked in",
         item.getTitle(),
