@@ -46,7 +46,7 @@ public class AddInfoResource extends Resource {
   }
 
   private void addPatronOrStaffInfo(RoutingContext routingContext) {
-    log.debug("addPatronOrStaffInfo:: ");
+    log.debug("addPatronOrStaffInfo:: invoked");
     final WebContext context = new WebContext(routingContext);
     createAddInfoRequest(routingContext)
       .after(r -> processInfoAdded(r, routingContext))

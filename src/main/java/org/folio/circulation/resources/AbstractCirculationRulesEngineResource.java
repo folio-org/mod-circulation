@@ -81,7 +81,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
       return true;
     }
     if (!uuid.matches(regex)) {
-      log.debug("invalidUuid:: {} is not matched to the regex {}", uuid, regex);
+      log.debug("invalidUuid:: {} does not match the regex {}", uuid, regex);
       ClientErrorResponse.badRequest(request.response(), "invalid uuid format of " + paramName +
           ", expecting " + regex + " but it is " + uuid);
       return true;
