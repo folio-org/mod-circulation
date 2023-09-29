@@ -122,7 +122,7 @@ public class LoanNoticeSender {
 
 
   private CompletableFuture<Result<Void>> sendNotice(Loan loan, NoticeEventType eventType) {
-    log.debug("sendNotice:: parameters loan: {}, eventType: {}", loan, eventType);
+    log.debug("sendNotice:: parameters loan: {}, eventType: {}", () -> loan, () -> eventType);
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(loan.getItem())
       .withUser(loan.getUser())

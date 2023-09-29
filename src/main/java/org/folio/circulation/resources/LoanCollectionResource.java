@@ -366,13 +366,13 @@ public class LoanCollectionResource extends CollectionResource {
     Loan loan,
     ServicePointRepository servicePointRepository) {
 
-    log.debug("getServicePointsForLoan:: parameters loan: {}", loan);
+    log.debug("getServicePointsForLoan:: parameters loan: {}", () -> loan);
 
     return servicePointRepository.findServicePointsForLoan(of(() -> loan));
   }
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
-    log.debug("createItemNotFoundValidator:: parameters loan: {}", loan);
+    log.debug("createItemNotFoundValidator:: parameters loan: {}", () -> loan);
 
     return new ItemNotFoundValidator(
       () -> singleValidationError(
@@ -381,7 +381,7 @@ public class LoanCollectionResource extends CollectionResource {
   }
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
-    log.debug("errorWhenInIncorrectStatus:: parameters item: {}", item);
+    log.debug("errorWhenInIncorrectStatus:: parameters item: {}", () -> item);
     String message =
       String.format("%s (%s) (Barcode: %s) has the item status %s, loan cannot be created",
         item.getTitle(),
