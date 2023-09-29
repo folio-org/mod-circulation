@@ -36,11 +36,11 @@ public class AllowedServicePointsRequest {
       log.info("updateWithRequestInformation:: request in not null");
       this.requesterId = request.getRequesterId();
 
-      if (request.isItemLevel()) {
+      if (request.isItemLevel() && this.operation == Request.Operation.REPLACE) {
         this.itemId = request.getItemId();
       }
 
-      if (request.isTitleLevel()) {
+      if (request.isTitleLevel() && this.operation == Request.Operation.REPLACE) {
         this.instanceId = request.getInstanceId();
       }
     }
