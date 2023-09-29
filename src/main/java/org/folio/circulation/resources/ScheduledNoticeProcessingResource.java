@@ -60,7 +60,6 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
         scheduledNoticesRepository, patronActionSessionRepository, limit)))
-      // TODO: Charge reminder fee here?
       .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,
         loanRepository, notices)))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
