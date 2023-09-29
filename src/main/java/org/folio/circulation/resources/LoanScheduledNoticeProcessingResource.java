@@ -2,11 +2,15 @@ package org.folio.circulation.resources;
 
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.AGED_TO_LOST;
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.DUE_DATE;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
@@ -20,10 +24,12 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 
 public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public LoanScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/loan-scheduled-notices-processing", client);
@@ -38,7 +44,8 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
     return scheduledNoticesRepository.findNotices(
       ClockUtil.getZonedDateTime(), true,
       List.of(DUE_DATE, AGED_TO_LOST),
-      CqlSortBy.ascending("nextRunTime"), pageLimit);
+      CqlSortBy.ascending("nextRunTime"), pageLimit)
+      .thenApply(r -> r.next(this::logNotices));
   }
 
   @Override
@@ -51,5 +58,14 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
     return new LoanScheduledNoticeHandler(clients, loanRepository)
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
+  }
+
+  private Result<MultipleRecords<ScheduledNotice>> logNotices(
+    MultipleRecords<ScheduledNotice> records) {
+
+    log.info("logNotices:: found notices: {}",
+      () -> LogUtil.collectionAsString(records.getRecords()));
+
+    return succeeded(records);
   }
 }

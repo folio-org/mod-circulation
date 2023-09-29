@@ -50,12 +50,15 @@ public class LoanNoticeSender {
   }
 
   public Result<RenewalContext> sendRenewalPatronNotice(RenewalContext records) {
+    log.debug("sendRenewalPatronNotice:: parameters records: {}", records);
     sendLoanNotice(records.getLoan(), NoticeEventType.RENEWED);
     return succeeded(records);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> sendManualDueDateChangeNotice(
     LoanAndRelatedRecords records) {
+
+    log.debug("sendManualDueDateChangeNotice:: parameters records: {}", records);
 
     return loanPolicyRepository.lookupLoanPolicy(records)
       .thenApply(r -> r.next(recordsWithPolicy -> {
@@ -65,10 +68,13 @@ public class LoanNoticeSender {
   }
 
   private void sendLoanNotice(LoanAndRelatedRecords records, NoticeEventType eventType) {
+    log.debug("sendLoanNotice:: parameters records: {}, eventType: {}", records, eventType);
     sendLoanNotice(records.getLoan(), eventType);
   }
 
   private CompletableFuture<Result<Void>> sendLoanNotice(Loan loan, NoticeEventType eventType) {
+    log.debug("sendLoanNotice:: parameters loan: {}, eventType: {}", loan, eventType);
+
     return succeeded(loan)
       .next(this::validateLoan)
       .mapFailure(failure -> publishNoticeErrorEvent(failure, loan, eventType))
@@ -77,6 +83,7 @@ public class LoanNoticeSender {
   }
 
   private Result<Loan> validateLoan(Loan loan) {
+    log.debug("validateLoan:: parameters loan: {}", loan);
     List<ValidationError> errors = new ArrayList<>();
 
     if (loan == null) {
@@ -111,6 +118,7 @@ public class LoanNoticeSender {
 
 
   private CompletableFuture<Result<Void>> sendNotice(Loan loan, NoticeEventType eventType) {
+    log.debug("sendNotice:: parameters loan: {}, eventType: {}", loan, eventType);
     PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
       .withItem(loan.getItem())
       .withUser(loan.getUser())
