@@ -51,11 +51,11 @@ public class RequestPolicy {
     log.debug("allowsType:: parameters: type: {}", type);
     for (String requestType : requestTypes) {
       if (type.nameMatches(requestType)) {
-        log.info("allowsType:: result: true");
+        log.info("allowsType:: result: true for type {}", type);
         return true;
       }
     }
-    log.info("allowsType:: result: false");
+    log.info("allowsType:: result: false for type {}", type);
     return false;
   }
 
