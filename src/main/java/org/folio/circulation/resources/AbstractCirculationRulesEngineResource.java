@@ -72,13 +72,16 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private boolean invalidUuid(HttpServerRequest request, String paramName) {
+    log.debug("invalidUuid:: parameters paramName: {}", paramName);
     final String regex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$";
     String uuid = request.getParam(paramName);
     if (uuid == null) {
+      log.debug("invalidUuid:: {} is null", paramName);
       ClientErrorResponse.badRequest(request.response(), "required query parameter missing: " + paramName);
       return true;
     }
-    if (! uuid.matches(regex)) {
+    if (!uuid.matches(regex)) {
+      log.debug("invalidUuid:: {} does not match the regex {}", uuid, regex);
       ClientErrorResponse.badRequest(request.response(), "invalid uuid format of " + paramName +
           ", expecting " + regex + " but it is " + uuid);
       return true;
@@ -91,6 +94,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
   }
 
   private CompletableFuture<Result<JsonObject>> buildJsonResult(CirculationRuleMatch entity) {
+    log.debug("buildJsonResult:: parameters entity: {}", entity);
     JsonObject appliedRuleConditions = new JsonObject()
       .put("materialTypeMatch", entity.getAppliedRuleConditions().isItemTypePresent())
       .put("loanTypeMatch", entity.getAppliedRuleConditions().isLoanTypePresent())
@@ -118,6 +122,7 @@ public abstract class AbstractCirculationRulesEngineResource extends Resource {
     val request = routingContext.request();
 
     if (invalidApplyParameters(request)) {
+      log.debug("applyRules:: invalid apply parameters");
       return;
     }
 

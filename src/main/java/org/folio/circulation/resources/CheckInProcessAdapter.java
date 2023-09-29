@@ -3,10 +3,13 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -45,6 +48,7 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 class CheckInProcessAdapter {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ItemByBarcodeInStorageFinder itemFinder;
   private final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder;
   private final LoanCheckInService loanCheckInService;
@@ -143,7 +147,10 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Item>> findItem(CheckInContext context) {
-    return itemFinder.findItemByBarcode(context.getCheckInRequestBarcode());
+    String checkInRequestBarcode = context.getCheckInRequestBarcode();
+    log.debug("findItem:: parameters barcode: {}", checkInRequestBarcode);
+
+    return itemFinder.findItemByBarcode(checkInRequestBarcode);
   }
 
   CompletableFuture<Result<Loan>> findSingleOpenLoan(
@@ -160,6 +167,7 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<RequestQueue>> getRequestQueue(CheckInContext context) {
     boolean tlrEnabled = context.getTlrSettings().isTitleLevelRequestsFeatureEnabled();
+    log.info("getRequestQueue:: tlrEnabled: {}", tlrEnabled);
 
     if (!tlrEnabled) {
       return requestQueueRepository.getByItemId(context.getItem().getItemId());
@@ -170,6 +178,8 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Item>> updateItem(CheckInContext context) {
+    log.debug("updateItem:: parameters context: {}", () -> context);
+
     return updateItem.onCheckIn(context.getItem(), context.getHighestPriorityFulfillableRequest(),
       context.getCheckInServicePointId(), context.getLoggedInUserId(),
       context.getCheckInProcessedDateTime());
@@ -178,6 +188,7 @@ class CheckInProcessAdapter {
   CompletableFuture<Result<RequestQueue>> updateRequestQueue(
     CheckInContext context) {
 
+    log.debug("updateRequestQueue:: parameters context: {}", () -> context);
     final RequestQueue requestQueue = context.getRequestQueue();
     final Item item = context.getItem();
     final String checkInServicePointId = context.getCheckInServicePointId().toString();
@@ -186,6 +197,7 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Loan>> updateLoan(CheckInContext context) {
+    log.debug("updateLoan:: parameters context: {}", () -> context);
     // Loan must be updated after item
     // due to snapshot of item status stored with the loan
     // as this is how the loan action history is populated
@@ -193,6 +205,7 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Item>> getDestinationServicePoint(CheckInContext context) {
+    log.debug("getDestinationServicePoint:: parameters context: {}", () -> context);
     final Item item = context.getItem();
 
     if (item.getInTransitDestinationServicePointId() != null) {
@@ -206,12 +219,15 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<ServicePoint>> getCheckInServicePoint(CheckInContext context) {
+    log.debug("getCheckInServicePoint:: parameters context: {}", () -> context);
     return servicePointRepository.getServicePointById(context.getCheckInServicePointId());
   }
 
   CompletableFuture<Result<Request>> getPickupServicePoint(CheckInContext context) {
+    log.debug("getPickupServicePoint:: parameters context: {}", () -> context);
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
+      log.info("getPickupServicePoint:: firstRequest is null");
       return completedFuture(succeeded(null));
     }
     return StringUtils.isNotBlank(firstRequest.getPickupServicePointId())
@@ -221,8 +237,10 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Request>> getRequester(CheckInContext context) {
+    log.debug("getRequester:: parameters context: {}", () -> context);
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
+      log.info("getRequester:: firstRequest is null");
       return completedFuture(succeeded(null));
     }
     return userRepository.getUserWithPatronGroup(firstRequest)
@@ -231,8 +249,10 @@ class CheckInProcessAdapter {
   }
 
   CompletableFuture<Result<Request>> getAddressType(CheckInContext context) {
+    log.debug("getAddressType:: parameters context: {}", () -> context);
     Request firstRequest = context.getHighestPriorityFulfillableRequest();
     if (firstRequest == null) {
+      log.info("getAddressType:: firstRequest is null");
       return completedFuture(succeeded(null));
     }
     return addressTypeRepository.getAddressTypeById(firstRequest.getDeliveryAddressTypeId())
@@ -250,21 +270,29 @@ class CheckInProcessAdapter {
   public CompletableFuture<Result<CheckInContext>> logCheckInOperation(
     CheckInContext checkInContext) {
 
+    log.debug("logCheckInOperation:: parameters checkInContext: {}", () -> checkInContext);
+
     return logCheckInService.logCheckInOperation(checkInContext);
   }
 
   CompletableFuture<Result<CheckInContext>> createOverdueFineIfNecessary(
     CheckInContext records, WebContext context) {
 
+    log.debug("createOverdueFineIfNecessary:: parameters records: {}", () -> records);
+
     return overdueFineService.createOverdueFineIfNecessary(records, context.getUserId())
       .thenApply(r -> r.next(action -> feeFineScheduledNoticeService.scheduleOverdueFineNotices(records, action)));
   }
 
   CompletableFuture<Result<CheckInContext>> refundLostItemFees(CheckInContext context) {
+    log.debug("refundLostItemFees:: parameters context: {}", () -> context);
+
     return lostItemFeeRefundService.refundLostItemFees(context);
   }
 
   CompletableFuture<Result<CheckInContext>> findFulfillableRequest(CheckInContext context) {
+    log.debug("findFulfillableRequest:: parameters context: {}", () -> context);
+
     return requestQueueService.findRequestFulfillableByItem(context.getItem(), context.getRequestQueue())
       .thenApply(r -> r.map(context::withHighestPriorityFulfillableRequest));
   }

@@ -8,9 +8,11 @@ import org.apache.logging.log4j.Logger;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class ChangeItemStatusRequest {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
