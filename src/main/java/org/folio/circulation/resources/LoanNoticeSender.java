@@ -87,15 +87,15 @@ public class LoanNoticeSender {
     List<ValidationError> errors = new ArrayList<>();
 
     if (loan == null) {
-      log.info("validateLoan:: loan in null");
+      log.info("validateLoan:: loan is null");
       errors.add(new ValidationError("Loan is null", "loan", null));
     } else {
       if (loan.getUser() == null) {
-        log.info("validateLoan:: user in null");
+        log.info("validateLoan:: user is null");
         errors.add(new ValidationError("User is null", "user", null));
       }
       if (loan.getItem() == null || loan.getItem().isNotFound()) {
-        log.info("validateLoan:: user in null");
+        log.info("validateLoan:: item is null");
         errors.add(new ValidationError("Item is null", "item", null));
       }
     }
