@@ -5,6 +5,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.UUID;
 
+import api.support.builders.OverdueFinePolicyWithReminderFees;
 import api.support.http.IndividualResource;
 
 import api.support.builders.NoticePolicyBuilder;
@@ -13,6 +14,10 @@ import io.vertx.core.json.JsonObject;
 
 public class OverdueFinePoliciesFixture {
   private final RecordCreator overdueFinePolicyRecordCreator;
+  public final UUID FIRST_REMINDER_TEMPLATE_ID = UUID.randomUUID();
+  public final UUID SECOND_REMINDER_TEMPLATE_ID = UUID.randomUUID();
+  public final UUID THIRD_REMINDER_TEMPLATE_ID = UUID.randomUUID();
+
 
   public OverdueFinePoliciesFixture() {
     overdueFinePolicyRecordCreator = new RecordCreator(forOverdueFinePolicies(),
@@ -97,6 +102,20 @@ public class OverdueFinePoliciesFixture {
     overdueFinePolicy.put("id", UUID.randomUUID().toString());
     overdueFinePolicy.put("name", "No overdue fine policy");
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicy);
+  }
+
+  public IndividualResource reminderFeesPolicy() {
+    OverdueFinePolicyWithReminderFees policy = new OverdueFinePolicyWithReminderFees(
+      UUID.randomUUID(),
+      "Overdue fine policy with scheduled reminder fees")
+      .withAddedReminderEntry(
+        1,"minute",1.50,
+        "Email",FIRST_REMINDER_TEMPLATE_ID.toString())
+      .withAddedReminderEntry(1, "minute", 2.00,
+        "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
+      .withAddedReminderEntry(1,"minute", 2.15,
+        "Email", THIRD_REMINDER_TEMPLATE_ID.toString());
+    return overdueFinePolicyRecordCreator.createIfAbsent(policy.create());
   }
 
   public IndividualResource create(NoticePolicyBuilder noticePolicy) {

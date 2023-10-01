@@ -137,6 +137,29 @@
           "format": "date-time"
         }
       }
+    },
+    "reminders" : {
+      "description": "Information about reminders for overdue loan",
+      "type": "object",
+      "properties": {
+        "lastFeeBilled": {
+          "description": "Information about the most recent reminder fee billing",
+          "type": "object",
+          "properties": {
+            "number": {
+              "description": "Last reminder fee billed, sequence number",
+              "type": "integer"
+            },
+            "date": {
+              "description": "Last reminder fee billed, date",
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,
