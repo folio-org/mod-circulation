@@ -79,18 +79,6 @@ public class OverdueFinePolicyRemindersPolicy {
       return hasEntryAfter(sequenceNumber) ? getEntry(sequenceNumber+1) : null;
     }
 
-    public String toString() {
-      if (isEmpty()) {
-        return "No reminder schedule";
-      } else {
-        StringBuilder builder = new StringBuilder();
-        for (ReminderSequenceEntry entry : reminderSequenceEntries.values()) {
-          builder.append(entry.toString());
-        }
-        return builder.toString();
-      }
-    }
-
   }
 
   @Getter
@@ -147,10 +135,5 @@ public class OverdueFinePolicyRemindersPolicy {
       return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
 
-    public String toString() {
-      return "Reminder #" + sequenceNumber +
-        ", period: " + period.toString() +
-        ", format: " + noticeFormat + ". ";
-    }
   }
 }
