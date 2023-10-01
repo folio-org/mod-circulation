@@ -15,9 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.utl.PatronNoticeTestHelper.*;
@@ -29,7 +27,7 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.hamcrest.Matchers.hasSize;
 
-public class ReminderFeeTests extends APITests {
+class ReminderFeeTests extends APITests {
 
   private ItemResource item;
   private UserResource borrower;
@@ -37,7 +35,7 @@ public class ReminderFeeTests extends APITests {
   private ZonedDateTime loanDate;
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
       materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
 
@@ -82,14 +80,12 @@ public class ReminderFeeTests extends APITests {
   @Test
   void checkOutWithReminderFeePolicyWillScheduleFirstReminder() {
 
-    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(item)
         .to(borrower)
         .on(loanDate)
         .at(UUID.randomUUID()));
-
-    final JsonObject loan = response.getJson();
 
     verifyNumberOfScheduledNotices(1);
   }

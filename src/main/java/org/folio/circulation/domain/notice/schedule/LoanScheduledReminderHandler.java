@@ -69,9 +69,10 @@ public class LoanScheduledReminderHandler extends LoanScheduledNoticeHandler {
     this.accountsStorageClient = clients.accountsStorageClient();
     this.feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
 
-    log.debug("Instantiated LoanScheduledNoticeReminderFeeHandler");
+    log.debug("Instantiated LoanScheduledReminderHandler");
   }
 
+  @Override
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
     final ScheduledNotice notice = context.getNotice();
 
