@@ -74,9 +74,6 @@ class ReminderFeeTests extends APITests {
 
   }
 
-  // Test that first reminder is scheduled
-  // Test that two reminders are sent and scheduled notice deleted when no more reminders scheduled
-  // Test that one reminder is sent, but subsequent reminders cancelled after item is checked in
   @Test
   void checkOutWithReminderFeePolicyWillScheduleFirstReminder() {
 
@@ -142,7 +139,6 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
   }
 
-  //
   @Test
   void willStopSendingRemindersCreatingAccountsAfterCheckIn() {
 
