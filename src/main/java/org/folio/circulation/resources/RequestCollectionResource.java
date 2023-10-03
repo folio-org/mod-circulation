@@ -66,6 +66,7 @@ import java.util.*;
 public class RequestCollectionResource extends CollectionResource {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID = "effectiveLocationPrimaryServicePointId";
   public RequestCollectionResource(HttpClient client) {
     super(client, "/circulation/requests");
   }
@@ -242,7 +243,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    final var encodedQuery = routingContext.request().getParam("effectiveLocationPrimaryServicePointId");
+    final var encodedQuery = routingContext.request().getParam(EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID);
     final var effectiveLocationIds = parseEffectiveLocationIds(dec(encodedQuery));
     fromFutureResult(requestRepository.findBy(routingContext.request().query())
       .thenComposeAsync(result -> result.after(servicePointRepository::findPrimaryServicePointsForRequests)))
@@ -253,7 +254,7 @@ public class RequestCollectionResource extends CollectionResource {
 
   List<String> parseEffectiveLocationIds(String itemQueryDecoded) {
     itemQueryDecoded = itemQueryDecoded.replace(" sortby requestDate", StringUtils.EMPTY);
-    itemQueryDecoded = itemQueryDecoded.replace("effectiveLocationPrimaryServicePointId==", StringUtils.EMPTY);
+    itemQueryDecoded = itemQueryDecoded.replace(EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID + "==", StringUtils.EMPTY);
     itemQueryDecoded = itemQueryDecoded.replace("(", StringUtils.EMPTY);
     itemQueryDecoded = itemQueryDecoded.replace(")", StringUtils.EMPTY);
 

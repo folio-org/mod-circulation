@@ -219,11 +219,13 @@ public class ServicePointRepository {
         multipleServicePoints -> {
           List<Request> newRequestList = new ArrayList<>();
           Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
+
           for(Request request : requests) {
             Request newRequest = null;
             boolean foundSP = false;
+
             for(ServicePoint servicePoint : spCollection) {
-              if(request.getItem().getLocation().getPrimaryServicePointId() != null &&
+              if(request.getItem() != null && request.getItem().getLocation() != null && request.getItem().getLocation().getPrimaryServicePointId() != null &&
                 request.getItem().getLocation().getPrimaryServicePointId().toString().equals(servicePoint.getId())) {
                 Location location = request.getItem().getLocation().withPrimaryServicePoint(servicePoint);
                 Item item = request.getItem().withLocation(location);

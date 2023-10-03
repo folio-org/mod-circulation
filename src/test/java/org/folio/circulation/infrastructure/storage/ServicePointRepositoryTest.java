@@ -36,12 +36,14 @@ class ServicePointRepositoryTest {
     Institution institution = new Institution(StringUtils.EMPTY, StringUtils.EMPTY);
     Campus campus = new Campus(StringUtils.EMPTY, StringUtils.EMPTY);
     Library library = new Library(StringUtils.EMPTY, StringUtils.EMPTY);
+
     ServicePoint primaryServicePoint = ServicePoint.unknown(primaryServicePointId.toString(), name);
     Location location = new Location("11", null, null, null, List.of(UUID.randomUUID()), primaryServicePointId, institution, campus, library, primaryServicePoint);
     when(request.getItem()).thenReturn(item);
     when(item.getLocation()).thenReturn(location);
     when(item.withLocation(any())).thenReturn(item);
     when(request.withItem(any())).thenReturn(request);
+
     CollectionResourceClient client = mock(CollectionResourceClient.class);
     MultipleRecords<Request> multipleRequests = new MultipleRecords<>(List.of(request), 1);
     Clients clients = mock(Clients.class);
@@ -74,10 +76,12 @@ class ServicePointRepositoryTest {
     Institution institution = new Institution(StringUtils.EMPTY, StringUtils.EMPTY);
     Campus campus = new Campus(StringUtils.EMPTY, StringUtils.EMPTY);
     Library library = new Library(StringUtils.EMPTY, StringUtils.EMPTY);
+
     ServicePoint primaryServicePoint = ServicePoint.unknown(primaryServicePointId.toString(), name);
     Location location = new Location("11", null, null, null, List.of(UUID.randomUUID()), primaryServicePointId, institution, campus, library, primaryServicePoint);
     when(request.getItem()).thenReturn(item);
     when(item.getLocation()).thenReturn(location);
+
     CollectionResourceClient client = mock(CollectionResourceClient.class);
     MultipleRecords<Request> multipleRequests = new MultipleRecords<>(List.of(request), 1);
     Clients clients = mock(Clients.class);
