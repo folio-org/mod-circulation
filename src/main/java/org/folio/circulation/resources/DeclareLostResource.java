@@ -8,10 +8,13 @@ import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notes.NoteCreator;
@@ -41,6 +44,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class DeclareLostResource extends Resource {
   private static final String NO_FEE_FINE_OWNER_FOUND = "No fee/fine owner found for item's permanent location";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public DeclareLostResource(HttpClient client) {
     super(client);
@@ -65,11 +69,14 @@ public class DeclareLostResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> publishEvent(Loan loan, EventPublisher eventPublisher) {
+    log.debug("publishEvent:: parameters loan: {}", () -> loan);
     if (loan.isDeclaredLost()) {
+      log.info("publishEvent:: publish declaredLostEvent");
       return eventPublisher.publishDeclaredLostEvent(loan);
     }
 
     if (loan.isClosed()) {
+      log.info("publishEvent:: publish loanClosedEvent");
       return eventPublisher.publishLoanClosedEvent(loan);
     }
 
@@ -79,6 +86,7 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<Loan>> declareItemLost(DeclareItemLostRequest request,
     Clients clients, WebContext context) {
 
+    log.debug("declareItemLost:: parameters request: {}", () -> request);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -119,6 +127,7 @@ public class DeclareLostResource extends Resource {
   private CompletableFuture<Result<DeclareLostContext>> declareItemLostWhenClaimedReturned(
     DeclareLostContext declareLostContext, Clients clients) {
 
+    log.debug("declareItemLostWhenClaimedReturned:: parameters loan: {}", declareLostContext::getLoan);
     final NotesRepository notesRepository = NotesRepository.createUsing(clients);
     final NoteCreator creator = new NoteCreator(notesRepository);
 
@@ -162,9 +171,13 @@ public class DeclareLostResource extends Resource {
   }
 
   private boolean shouldDeclareLostBeRefused(DeclareLostContext declaredLostContext) {
+    log.debug("shouldDeclareLostBeRefused:: parameters loan: {}", declaredLostContext::getLoan);
     var lostItemPolicy = declaredLostContext.getLoan().getLostItemPolicy();
 
-    return declaredLostContext.getFeeFineOwner() == null
+    boolean shouldDeclareLostBeRefused = declaredLostContext.getFeeFineOwner() == null
       && (lostItemPolicy.hasLostItemFee() || lostItemPolicy.hasLostItemProcessingFee());
+    log.info("shouldDeclareLostBeRefused:: result: {}", shouldDeclareLostBeRefused);
+
+    return shouldDeclareLostBeRefused;
   }
 }

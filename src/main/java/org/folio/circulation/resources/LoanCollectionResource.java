@@ -7,6 +7,7 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -316,6 +317,9 @@ public class LoanCollectionResource extends CollectionResource {
   private Result<LoanAndRelatedRecords> refuseWhenClosedAndNoCheckInServicePointId(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
+    log.debug("refuseWhenClosedAndNoCheckInServicePointId:: parameters loanAndRelatedRecords: {}",
+      () -> resultAsString(loanAndRelatedRecords));
+
     return loanAndRelatedRecords
       .map(LoanAndRelatedRecords::getLoan)
       .next(Loan::closedLoanHasCheckInServicePointId)
@@ -325,6 +329,9 @@ public class LoanCollectionResource extends CollectionResource {
   private Result<LoanAndRelatedRecords> refuseWhenNotOpenOrClosed(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
 
+    log.debug("refuseWhenNotOpenOrClosed:: parameters loanAndRelatedRecords: {}",
+      () -> resultAsString(loanAndRelatedRecords));
+
     return loanAndRelatedRecords
       .map(LoanAndRelatedRecords::getLoan)
       .next(Loan::isValidStatus)
@@ -333,6 +340,9 @@ public class LoanCollectionResource extends CollectionResource {
 
   private Result<LoanAndRelatedRecords> refuseWhenOpenAndNoUserId(
     Result<LoanAndRelatedRecords> loanAndRelatedRecords) {
+
+    log.debug("refuseWhenOpenAndNoUserId:: parameters loanAndRelatedRecords: {}",
+      () -> resultAsString(loanAndRelatedRecords));
 
     return loanAndRelatedRecords
       .map(LoanAndRelatedRecords::getLoan)
@@ -344,6 +354,9 @@ public class LoanCollectionResource extends CollectionResource {
     Result<LoanAndRelatedRecords> larrResult,
     ServicePointRepository servicePointRepository) {
 
+    log.debug("getServicePointsForLoanAndRelated:: parameters larrResult: {}",
+      () -> resultAsString(larrResult));
+
     return larrResult.combineAfter(loanAndRelatedRecords ->
         getServicePointsForLoan(loanAndRelatedRecords.getLoan(), servicePointRepository),
       LoanAndRelatedRecords::withLoan);
@@ -353,10 +366,14 @@ public class LoanCollectionResource extends CollectionResource {
     Loan loan,
     ServicePointRepository servicePointRepository) {
 
+    log.debug("getServicePointsForLoan:: parameters loan: {}", () -> loan);
+
     return servicePointRepository.findServicePointsForLoan(of(() -> loan));
   }
 
   private ItemNotFoundValidator createItemNotFoundValidator(Loan loan) {
+    log.debug("createItemNotFoundValidator:: parameters loan: {}", () -> loan);
+
     return new ItemNotFoundValidator(
       () -> singleValidationError(
         String.format("No item with ID %s could be found", loan.getItemId()),
@@ -364,6 +381,7 @@ public class LoanCollectionResource extends CollectionResource {
   }
 
   private static ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {
+    log.debug("errorWhenInIncorrectStatus:: parameters item: {}", () -> item);
     String message =
       String.format("%s (%s) (Barcode: %s) has the item status %s, loan cannot be created",
         item.getTitle(),
@@ -375,6 +393,8 @@ public class LoanCollectionResource extends CollectionResource {
   }
 
   CompletableFuture<Result<Loan>> getExistingLoan(LoanRepository loanRepository, Loan loan) {
+    log.debug("getExistingLoan:: parameters loan: {}", loan);
+
     return loanRepository.getById(loan.getId())
       .thenApplyAsync(r -> r.map(exitingLoan -> {
         exitingLoan.setPreviousDueDate(exitingLoan.getDueDate());
@@ -386,8 +406,13 @@ public class LoanCollectionResource extends CollectionResource {
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    log.debug("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: " +
+      "parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
+
     if (dueDateHasNotChanged(loanAndRelatedRecords.getExistingLoan(),
       loanAndRelatedRecords.getLoan())) {
+
+      log.info("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: due date has not changed");
 
       return loanAndRelatedRecords;
     }

@@ -1,5 +1,8 @@
 package org.folio.circulation.rules;
 
+import lombok.ToString;
+
+@ToString
 public class CirculationRuleMatch {
 
   private final String policyId;

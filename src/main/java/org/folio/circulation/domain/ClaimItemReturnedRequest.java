@@ -7,8 +7,10 @@ import org.folio.circulation.support.json.JsonPropertyFetcher;
 
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString(callSuper = true)
 public class ClaimItemReturnedRequest extends ChangeItemStatusRequest {
   public static final String ITEM_CLAIMED_RETURNED_DATE = "itemClaimedReturnedDateTime";
   private final ZonedDateTime itemClaimedReturnedDateTime;

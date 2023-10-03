@@ -6,8 +6,11 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.notes.NoteCreator;
@@ -32,6 +35,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public DeclareClaimedReturnedItemAsMissingResource(HttpClient client) {
     super(client);
   }
@@ -56,6 +60,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(
     RoutingContext routingContext, ChangeItemStatusRequest request) {
 
+    log.debug("processDeclareClaimedReturnedItemAsMissing:: parameters request: {}", () -> request);
     final Clients clients = Clients.create(new WebContext(routingContext), client);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
@@ -71,15 +76,19 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   }
 
   private Result<Loan> declareLoanMissing(Result<Loan> loanResult, ChangeItemStatusRequest request) {
+    log.debug("declareLoanMissing:: parameters request: {}", () -> request);
+
     return loanResult.map(loan -> loan.markItemMissing(request.getComment()));
   }
 
   private Result<ChangeItemStatusRequest> createRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
     final JsonObject body = routingContext.getBodyAsJson();
+    log.debug("createRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     final ChangeItemStatusRequest request = ChangeItemStatusRequest.from(loanId, body);
     if (request.getComment() == null) {
+      log.error("createRequest:: comment is a required field");
       return failed(singleValidationError("Comment is a required field",
               "comment", null));
     }
@@ -88,6 +97,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
   }
 
   private CompletableFuture<Result<Loan>> createNote(Clients clients, Loan loan) {
+    log.debug("createNote:: parameters loan: {}", () -> loan);
     final NotesRepository notesRepository = NotesRepository.createUsing(clients);
     final NoteCreator creator = new NoteCreator(notesRepository);
 

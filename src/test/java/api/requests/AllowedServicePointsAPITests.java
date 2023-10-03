@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -620,15 +621,135 @@ class AllowedServicePointsAPITests extends APITests {
     assertServicePointsMatch(allowedRecallServicePointsTlr, List.of(cd1, cd2));
   }
 
-  @ParameterizedTest
-  @EnumSource(value = Request.Operation.class, names = {"MOVE", "REPLACE"})
-  void getFailsWhenRequestDoesNotExist(Request.Operation operation) {
-    String operationString = operation.name().toLowerCase();
+  @Test
+  void getReplaceFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
-    Response response = get(operationString, null, null, null, requestId,
+    Response response = get("replace", null, null, null, requestId,
       HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
+  }
+
+  @Test
+  void getMoveFailsWhenRequestDoesNotExist() {
+    String requestId = randomId();
+    String itemId = itemsFixture.basedUponNod().getId().toString();
+    Response response = get("move", null, null, itemId, requestId,
+      HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    assertThat(response.getJson(), hasErrorWith(hasMessage(
+      String.format("Request with ID %s was not found", requestId))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = RequestLevel.class, names = {"TITLE", "ITEM"})
+  void shouldReturnListOfAllowedServicePointsForRequestMove(RequestLevel requestLevel) {
+    var requesterId = usersFixture.steve().getId().toString();
+    var items = itemsFixture.createMultipleItemForTheSameInstance(2,
+      List.of(ib -> ib.withStatus(ItemBuilder.AVAILABLE),
+        ib -> ib.withStatus(ItemBuilder.CHECKED_OUT)));
+
+    var requestedItem = items.get(0);
+    var requestedItemId = requestedItem.getId().toString();
+    var holdingsRecordId = requestedItem.getHoldingsRecordId().toString();
+    var instanceId = requestedItem.getInstanceId().toString();
+    var itemToMoveTo = items.get(1);
+    var itemToMoveToId = itemToMoveTo.getId().toString();
+
+    String sp1Id = randomId();
+    UUID sp1Uuid = UUID.fromString(sp1Id);
+    String sp2Id = randomId();
+    UUID sp2Uuid = UUID.fromString(sp2Id);
+    String sp3Id = randomId();
+    UUID sp3Uuid = UUID.fromString(sp3Id);
+    var sp1 = new AllowedServicePoint(sp1Id, "SP One");
+    var sp2 = new AllowedServicePoint(sp2Id, "SP Two");
+    var sp3 = new AllowedServicePoint(sp2Id, "SP Three");
+    List<AllowedServicePoint> existingServicePoints = List.of(sp1, sp2); // omitting sp3
+
+    existingServicePoints.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
+      .withId(UUID.fromString(sp.getId()))
+      .withName(sp.getName())
+      .withPickupLocation(true)
+    ));
+
+    setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(sp1Uuid));
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withRequestType(PAGE.toString())
+      .fulfillToHoldShelf()
+      .withRequestLevel(requestLevel.toString())
+      .withInstanceId(UUID.fromString(instanceId))
+      .withItemId(requestLevel == TITLE ? null : UUID.fromString(requestedItemId))
+      .withHoldingsRecordId(requestLevel == TITLE ? null : UUID.fromString(holdingsRecordId))
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(UUID.fromString(requesterId))
+      .withPickupServicePointId(sp1Uuid));
+
+    assertThat(request, notNullValue());
+    UUID requestUuid = request.getId();
+    String requestId = requestUuid.toString();
+
+    // Changing policy, now it includes nonexistent sp3
+    setRequestPolicyWithAllowedServicePoints(HOLD, Set.of(sp2Uuid, sp3Uuid));
+
+    // Valid "move" request
+    var moveResponse =
+      get("move", null, null, itemToMoveToId, requestId, HttpStatus.SC_OK).getJson();
+    assertThat(moveResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
+
+    // Invalid "move" requests
+    var invalidMoveResponse1 = get("move", null, null, null, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse1.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse2 = get("move", null, null, itemToMoveToId, null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse2.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse3 = get("move", null, null, null, null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse3.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse4 = get("move", requesterId, null, itemToMoveToId, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse4.getBody(), equalTo("Invalid combination of query parameters"));
+
+    var invalidMoveResponse5 = get("move", null, instanceId, itemToMoveToId, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidMoveResponse5.getBody(), equalTo("Invalid combination of query parameters"));
+
+    // Valid "replace" request
+    var replaceResponse =
+      get("replace", null, null, null, requestId, HttpStatus.SC_OK).getJson();
+    assertThat(replaceResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
+
+    // Invalid "replace" requests
+    var invalidReplaceResponse1 = get("replace", null, null, null, null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse1.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse2 = get("replace", requesterId, null, null, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse2.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse3 = get("replace", null, instanceId, null, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse3.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse4 = get("replace", null, null, requestedItemId, requestId,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse4.getBody(),
+      equalTo("Invalid combination of query parameters"));
+
+    var invalidReplaceResponse5 = get("replace", requesterId, instanceId,
+      requestedItemId, requestId, HttpStatus.SC_BAD_REQUEST);
+    assertThat(invalidReplaceResponse5.getBody(),
+      equalTo("Invalid combination of query parameters"));
   }
 
   private void assertServicePointsMatch(JsonArray response,

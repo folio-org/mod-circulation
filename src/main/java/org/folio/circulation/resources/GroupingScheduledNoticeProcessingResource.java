@@ -44,7 +44,7 @@ import io.vertx.core.http.HttpClient;
 public abstract class GroupingScheduledNoticeProcessingResource
   extends ScheduledNoticeProcessingResource {
 
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final EnumSet<TriggeringEvent> triggeringEvents;
   private final boolean realTime;
