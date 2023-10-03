@@ -102,7 +102,7 @@ class ReminderFeeTests extends APITests {
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
     ZonedDateTime firstRunTime = dueDate.plusMinutes(2);
-    scheduledNoticeProcessingClient.runScheduledRemindersProcessing(firstRunTime);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(firstRunTime);
 
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(1);
@@ -112,7 +112,7 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     ZonedDateTime secondRunTime = dueDate.plusMinutes(4);
-    scheduledNoticeProcessingClient.runScheduledRemindersProcessing(secondRunTime);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(secondRunTime);
 
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(2);
@@ -121,7 +121,7 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
 
     ZonedDateTime thirdRunTime = dueDate.plusMinutes(6);
-    scheduledNoticeProcessingClient.runScheduledRemindersProcessing(thirdRunTime);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(thirdRunTime);
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(3);
@@ -130,7 +130,7 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
 
     ZonedDateTime fourthRunTime = dueDate.plusMinutes(8);
-    scheduledNoticeProcessingClient.runScheduledRemindersProcessing(fourthRunTime);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(fourthRunTime);
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(3);
@@ -154,7 +154,7 @@ class ReminderFeeTests extends APITests {
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
     ZonedDateTime firstRunTime = dueDate.plusMinutes(2);
-    scheduledNoticeProcessingClient.runScheduledRemindersProcessing(firstRunTime);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(firstRunTime);
 
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(1);
@@ -166,7 +166,7 @@ class ReminderFeeTests extends APITests {
     checkInFixture.checkInByBarcode(item);
 
     ZonedDateTime secondRunTime = dueDate.plusMinutes(4);
-    scheduledNoticeProcessingClient.runScheduledRemindersProcessing(secondRunTime);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(secondRunTime);
 
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfSentNotices(1);

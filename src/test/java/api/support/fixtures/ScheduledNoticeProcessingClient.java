@@ -90,16 +90,16 @@ public class ScheduledNoticeProcessingClient {
     timedTaskClient.start(url, 204, "overdue-fine-scheduled-notices-processing");
   }
 
-  public void runScheduledRemindersProcessing(ZonedDateTime mockSystemTime) {
-    runWithFrozenClock(this::runScheduledRemindersProcessing, mockSystemTime);
+  public void runScheduledDigitalRemindersProcessing(ZonedDateTime mockSystemTime) {
+    runWithFrozenClock(this::runScheduledDigitalRemindersProcessing, mockSystemTime);
   }
 
-  public void runScheduledRemindersProcessing() {
+  public void runScheduledDigitalRemindersProcessing() {
     URL url = circulationModuleUrl(
-      "/circulation/scheduled-reminders-processing");
+      "/circulation/scheduled-digital-reminders-processing");
 
     timedTaskClient.start(url, 204,
-      "scheduled-reminders-processing-request");
+      "scheduled-digital-reminders-processing-request");
   }
 
   private void runWithFrozenClock(Runnable runnable, ZonedDateTime mockSystemTime) {

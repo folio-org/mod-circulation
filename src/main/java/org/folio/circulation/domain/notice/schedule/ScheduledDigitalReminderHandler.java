@@ -42,7 +42,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
  * and to apply different isNoticeRelevant logic.
  * Reuses a handful of methods to set the notice contexts and fail if loan id is missing.
  */
-public class LoanScheduledReminderHandler extends LoanScheduledNoticeHandler {
+public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler {
 
   private final ZonedDateTime systemTime;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -60,7 +60,7 @@ public class LoanScheduledReminderHandler extends LoanScheduledNoticeHandler {
 
 
 
-  public LoanScheduledReminderHandler(Clients clients, LoanRepository loanRepository) {
+  public ScheduledDigitalReminderHandler(Clients clients, LoanRepository loanRepository) {
     super(clients, loanRepository);
     this.systemTime = ClockUtil.getZonedDateTime();
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -69,7 +69,7 @@ public class LoanScheduledReminderHandler extends LoanScheduledNoticeHandler {
     this.accountsStorageClient = clients.accountsStorageClient();
     this.feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
 
-    log.debug("Instantiated LoanScheduledReminderHandler");
+    log.debug("Instantiated ScheduledDigitalReminderHandler");
   }
 
   @Override

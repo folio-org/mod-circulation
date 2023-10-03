@@ -47,7 +47,7 @@ public class ReminderFeeScheduledNoticeService {
         null,
         null,
         TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
-        firstReminder.getPeriod().plusDate(records.getLoan().getDueDate()),
+        firstReminder.getPeriod().plusDate(loan.getDueDate()),
         config
       );
 

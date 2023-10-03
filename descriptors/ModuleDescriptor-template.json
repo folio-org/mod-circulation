@@ -1026,7 +1026,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/scheduled-reminders-processing",
+          "pathPattern": "/circulation/scheduled-digital-reminders-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
@@ -1198,7 +1198,7 @@
     },
     {
       "id": "scheduled-notice-storage",
-      "version": "0.5"
+      "version": "0.6"
     },
     {
       "id": "feesfines",
