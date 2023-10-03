@@ -20,12 +20,10 @@ import org.folio.circulation.support.utils.ClockUtil;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.*;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
