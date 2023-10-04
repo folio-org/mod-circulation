@@ -31,6 +31,7 @@ import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeNoticeContext;
 
 
 /**
@@ -218,6 +219,11 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     return loan.isClosed() || loan.hasItemWithAnyStatus(DECLARED_LOST, CLAIMED_RETURNED);
+  }
+
+  @Override
+  protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
+    return createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(), context.getChargeAction());
   }
 
   static class ReminderFeeAccount {
