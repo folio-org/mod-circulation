@@ -33,6 +33,7 @@ class RequestCollectionResourceTest {
   String queryWithTwoPSPIds = "(effectiveLocationPrimaryServicePointId==(\"a9b8247d-3a7a-410e-8df6-1c5af342aa77\" or \"3a40852d-49fd-4df2-a1f9-6e2641a6e91f\")) sortby requestDate";
   String queryWithThreePSPIds = "(effectiveLocationPrimaryServicePointId==(\"a9b8247d-3a7a-410e-8df6-1c5af342aa77\" or \"3a40852d-49fd-4df2-a1f9-6e2641a6e91f\" or \"c4c90014-c8c9-4ade-8f24-b5e313319f4b\")) sortby requestDate";
   String queryWithNoPSPIds = "() sortby requestDate";
+  String queryWithNoPSPIdsSortByDesc = "() sortby requestDate/sort.descending";
 
   RequestCollectionResource requestCollectionResource = new RequestCollectionResource(mock(HttpClient.class));
 
@@ -63,6 +64,12 @@ class RequestCollectionResourceTest {
   @Test
   void parseQueryWithNoPSPIds() {
     List<String> tokens = requestCollectionResource.parseEffectiveLocationIds(queryWithNoPSPIds);
+    assertEquals(0, tokens.size());
+  }
+
+  @Test
+  void parseQueryWithNoPSPIds_with_desc() {
+    List<String> tokens = requestCollectionResource.parseEffectiveLocationIds(queryWithNoPSPIdsSortByDesc);
     assertEquals(0, tokens.size());
   }
 

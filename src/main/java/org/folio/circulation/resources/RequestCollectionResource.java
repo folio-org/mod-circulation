@@ -253,7 +253,7 @@ public class RequestCollectionResource extends CollectionResource {
   }
 
   List<String> parseEffectiveLocationIds(String itemQueryDecoded) {
-    itemQueryDecoded = itemQueryDecoded.replace(" sortby requestDate", StringUtils.EMPTY);
+    itemQueryDecoded = StringUtils.substringBefore(itemQueryDecoded, "sortby").trim();
     itemQueryDecoded = itemQueryDecoded.replace(EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID + "==", StringUtils.EMPTY);
     itemQueryDecoded = itemQueryDecoded.replace("(", StringUtils.EMPTY);
     itemQueryDecoded = itemQueryDecoded.replace(")", StringUtils.EMPTY);
