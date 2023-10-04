@@ -2,6 +2,7 @@ package api.loans;
 
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.http.IndividualResource;
@@ -36,16 +37,34 @@ class ReminderFeeTests extends APITests {
 
   @BeforeEach
   void beforeEach() {
-    ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
-      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
 
-    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings(
+    HoldingBuilder holdingsBuilder = itemsFixture.applyCallNumberHoldings(
       "CN",
       "Prefix",
       "Suffix",
       Collections.singletonList("CopyNumbers"));
 
-    item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+    final UUID servicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      item -> item.withPrimaryServicePoint(servicePointId));
+
+    ItemBuilder itemBuilder = basedUponSmallAngryPlanet(
+      materialTypesFixture.book().getId(),
+      loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(homeLocation);
+
+    JsonObject servicePointOwner = new JsonObject();
+    servicePointOwner.put("value", homeLocation.getJson().getString("primaryServicePoint"));
+    servicePointOwner.put("label", "label");
+    UUID ownerId = UUID.randomUUID();
+    feeFineOwnersClient.create(new FeeFineOwnerBuilder()
+      .withId(ownerId)
+      .withOwner("fee-fine-owner")
+      .withServicePointOwner(Collections.singletonList(servicePointOwner))
+    );
+
+    item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingsBuilder);
+
     borrower = usersFixture.steve();
 
     templateFixture.createDummyNoticeTemplate(overdueFinePoliciesFixture.FIRST_REMINDER_TEMPLATE_ID);
@@ -82,7 +101,7 @@ class ReminderFeeTests extends APITests {
         .forItem(item)
         .to(borrower)
         .on(loanDate)
-        .at(UUID.randomUUID()));
+        .at(servicePointsFixture.cd1()));
 
     verifyNumberOfScheduledNotices(1);
   }
@@ -95,7 +114,7 @@ class ReminderFeeTests extends APITests {
         .forItem(item)
         .to(borrower)
         .on(loanDate)
-        .at(UUID.randomUUID()));
+        .at(servicePointsFixture.cd1()));
 
     final JsonObject loan = response.getJson();
 
@@ -147,7 +166,7 @@ class ReminderFeeTests extends APITests {
         .forItem(item)
         .to(borrower)
         .on(loanDate)
-        .at(UUID.randomUUID()));
+        .at(servicePointsFixture.cd1()));
 
     final JsonObject loan = response.getJson();
 
