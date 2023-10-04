@@ -90,7 +90,7 @@ public class ScheduledNoticesRepository {
       .after(query -> findBy(query, pageLimit));
   }
 
-  private CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findBy(
+  public CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findBy(
     CqlQuery cqlQuery, PageLimit pageLimit) {
 
     return scheduledNoticesStorageClient.getMany(cqlQuery, pageLimit)

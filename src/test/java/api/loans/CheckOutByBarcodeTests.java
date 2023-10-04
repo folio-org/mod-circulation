@@ -410,6 +410,54 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  void canCheckOutUsingReminderFeePolicy() {
+
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.reminderFeesPolicy();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId());
+
+    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource steve = usersFixture.steve();
+
+    final ZonedDateTime loanDate = atEndOfDay(getZonedDateTime());
+
+    getZonedDateTime()
+      .withMonth(3)
+      .withDayOfMonth(18)
+      .withHour(11)
+      .withMinute(43)
+      .withSecond(54)
+      .truncatedTo(ChronoUnit.SECONDS);
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(smallAngryPlanet)
+        .to(steve)
+        .on(loanDate)
+        .at(UUID.randomUUID()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat("loan date should be as supplied",
+      loan.getString("loanDate"), isEquivalentTo(loanDate));
+
+    loanHasPatronGroupProperties(loan, "Regular Group");
+
+    loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasOverdueFinePolicyProperties(loan,  overdueFinePolicy);
+    loanHasLostItemPolicyProperties(loan,  lostItemFeePolicy);
+
+    assertThat("due date should be based upon fixed due date schedule",
+      parseDateTime(loan.getString("dueDate")), is(END_OF_CURRENT_YEAR_DUE_DATE));
+  }
+
+  @Test
   void canGetLoanCreatedWhilstCheckingOut() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

@@ -1019,8 +1019,46 @@
             "actual-cost-record-storage.actual-cost-records.item.post",
             "circulation-storage.loans-history.collection.get"
           ],
+          "schedule": {
+            "cron": "1 0 * * *",
+            "zone": "CET"
+          }
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-digital-reminders-processing",
+          "modulePermissions": [
+            "scheduled-notice-storage.scheduled-notices.collection.get",
+            "scheduled-notice-storage.scheduled-notices.item.delete",
+            "scheduled-notice-storage.scheduled-notices.item.put",
+            "circulation-storage.loans.item.get",
+            "circulation-storage.loans.item.put",
+            "circulation-storage.loan-policies.item.get",
+            "circulation-storage.loan-policies.collection.get",
+            "overdue-fines-policies.item.get",
+            "circulation.internal.fetch-items",
+            "circulation.rules.loan-policy.get",
+            "configuration.entries.collection.get",
+            "patron-notice.post",
+            "users.item.get",
+            "addresstypes.collection.get",
+            "templates.item.get",
+            "owners.collection.get",
+            "pubsub.publish.post",
+            "circulation-storage.circulation-rules.get",
+            "circulation.rules.notice-policy.get",
+            "circulation-storage.fixed-due-date-schedules.item.get",
+            "circulation-storage.fixed-due-date-schedules.collection.get",
+            "accounts.item.get",
+            "accounts.collection.get",
+            "accounts.item.post",
+            "feefineactions.item.post",
+            "circulation-storage.loans-history.collection.get"
+          ],
           "unit": "minute",
-          "delay": "35"
+          "delay": "5"
         }
       ]
     },
@@ -1163,7 +1201,7 @@
     },
     {
       "id": "scheduled-notice-storage",
-      "version": "0.5"
+      "version": "0.6"
     },
     {
       "id": "feesfines",

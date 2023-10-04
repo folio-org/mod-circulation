@@ -90,6 +90,18 @@ public class ScheduledNoticeProcessingClient {
     timedTaskClient.start(url, 204, "overdue-fine-scheduled-notices-processing");
   }
 
+  public void runScheduledDigitalRemindersProcessing(ZonedDateTime mockSystemTime) {
+    runWithFrozenClock(this::runScheduledDigitalRemindersProcessing, mockSystemTime);
+  }
+
+  public void runScheduledDigitalRemindersProcessing() {
+    URL url = circulationModuleUrl(
+      "/circulation/scheduled-digital-reminders-processing");
+
+    timedTaskClient.start(url, 204,
+      "scheduled-digital-reminders-processing-request");
+  }
+
   private void runWithFrozenClock(Runnable runnable, ZonedDateTime mockSystemTime) {
     // Save the current clock because it may not be the default clock.
     final Clock original = getClock();

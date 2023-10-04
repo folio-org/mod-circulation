@@ -59,7 +59,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchPatronNoticePolicyIdForLoan));
   }
 
-  private Result<ScheduledNoticeContext> failWhenNoticeHasNoLoanId(ScheduledNoticeContext context) {
+  protected Result<ScheduledNoticeContext> failWhenNoticeHasNoLoanId(ScheduledNoticeContext context) {
     String loanId = context.getNotice().getLoanId();
 
     return isEmpty(loanId)
@@ -112,7 +112,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return scheduledNoticesRepository.update(nextRecurringNotice);
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
     // Also fetches user, item and item-related records (holdings, instance, location, etc.)
     return loanRepository.getById(context.getNotice().getLoanId())
@@ -138,7 +138,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       .thenApply(mapResult(context::withLostItemFeesForAgedToLostNoticeExist));
   }
 
-  private boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
+  protected boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     ZonedDateTime dueDate = loan.getDueDate();
     String loanId = loan.getId();

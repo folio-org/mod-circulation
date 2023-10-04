@@ -42,7 +42,7 @@ public abstract class ScheduledNoticeHandler {
   protected final LoanRepository loanRepository;
   protected final AccountRepository accountRepository;
   protected final PatronNoticePolicyRepository patronNoticePolicyRepository;
-  private final CollectionResourceClient templateNoticesClient;
+  protected final CollectionResourceClient templateNoticesClient;
   private final ScheduledPatronNoticeService patronNoticeService;
   private final EventPublisher eventPublisher;
 
@@ -72,9 +72,8 @@ public abstract class ScheduledNoticeHandler {
     return handleContext(new ScheduledNoticeContext(notice));
   }
 
-  private CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
+  protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
     final ScheduledNotice notice = context.getNotice();
-    log.info("Start processing scheduled notice {}", notice);
 
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
@@ -84,7 +83,7 @@ public abstract class ScheduledNoticeHandler {
       .exceptionally(t -> handleException(t, notice));
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
+  protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
     ScheduledNoticeContext context) {
 
     return ofAsync(() -> context)
@@ -148,7 +147,7 @@ public abstract class ScheduledNoticeHandler {
       : succeeded(null);
   }
 
-  private CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
+  protected CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
     if (isNoticeIrrelevant(context)) {
@@ -203,7 +202,7 @@ public abstract class ScheduledNoticeHandler {
       .thenApply(responseInterpreter::flatMap);
   }
 
-  private CompletableFuture<Result<ScheduledNotice>> handleResult(Result<ScheduledNotice> result,
+  protected CompletableFuture<Result<ScheduledNotice>> handleResult(Result<ScheduledNotice> result,
     ScheduledNotice notice) {
 
     if (result.succeeded()) {
@@ -217,7 +216,7 @@ public abstract class ScheduledNoticeHandler {
     return deleteNotice(notice, failure.toString());
   }
 
-  private Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
+  protected Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
     log.error("An exception was thrown while processing scheduled notice {}: {}",
       notice.getId(), throwable.getMessage());
 
