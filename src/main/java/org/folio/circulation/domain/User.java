@@ -113,7 +113,7 @@ public class User {
   }
 
   public JsonArray getAddresses() {
-    JsonArray addresses = getPersonal().getJsonArray(ADDRESSES_PROPERTY_NAME);
+    JsonArray addresses = getPersonal() == null ? null : getPersonal().getJsonArray(ADDRESSES_PROPERTY_NAME);
     return addresses == null ? new JsonArray() : addresses;
   }
 
