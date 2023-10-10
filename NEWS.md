@@ -67,6 +67,7 @@
 * Create process to bill reminder fees (CIRC-1527)
 * Setup job to run for billing of reminder fees (CIRC-1528)
 * Add fee/fine charge info into reminder fees (CIRC-1906)
+* Fix NPE in when getting user's personal info (CIRC-1905)
 
 ## 23.5.0 2023-02-23
 
