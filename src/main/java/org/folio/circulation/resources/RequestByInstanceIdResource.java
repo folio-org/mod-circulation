@@ -1,5 +1,7 @@
 package org.folio.circulation.resources;
 
+import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
 import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHELF;
@@ -300,10 +302,12 @@ public class RequestByInstanceIdResource extends Resource {
       startIndex, itemRequests.size());
 
     if (startIndex >= itemRequests.size()) {
-      String aggregateFailures = String.format("%n%s", String.join("%n", errors));
+      log.error("Failed to place a request for the instance. Reasons: {}", errors);
 
-      return CompletableFuture.completedFuture(failedDueToServerError(
-        "Failed to place a request for the instance. Reasons: " + aggregateFailures));
+      return CompletableFuture.completedFuture(failedValidation(
+        errors.stream()
+          .map(ValidationError::new)
+          .collect(toList())));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
