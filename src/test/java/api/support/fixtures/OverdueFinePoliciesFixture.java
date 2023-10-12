@@ -114,7 +114,7 @@ public class OverdueFinePoliciesFixture {
       .withAddedReminderEntry(1, "minute", 2.00,
         "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
       .withAddedReminderEntry(1,"minute", 2.15,
-        "Email", THIRD_REMINDER_TEMPLATE_ID.toString());
+        "Mail", THIRD_REMINDER_TEMPLATE_ID.toString());
     return overdueFinePolicyRecordCreator.createIfAbsent(policy.create());
   }
 
