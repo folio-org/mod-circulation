@@ -1057,8 +1057,10 @@
             "feefineactions.item.post",
             "circulation-storage.loans-history.collection.get"
           ],
-          "unit": "minute",
-          "delay": "5"
+          "schedule": {
+            "cron": "1 0 * * *",
+            "zone": "CET"
+          }
         }
       ]
     },
