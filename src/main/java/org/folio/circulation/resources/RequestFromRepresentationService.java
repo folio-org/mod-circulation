@@ -206,6 +206,7 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<JsonObject>> fillInMissingInstanceId(JsonObject request) {
     final String holdingsRecordId = request.getString(HOLDINGS_RECORD_ID);
     if (holdingsRecordId == null) {
+      log.warn("fillInMissingInstanceId:: holdingRecordId is null");
       return ofAsync(() -> request);
     }
 
@@ -244,6 +245,7 @@ class RequestFromRepresentationService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> fetchItemAndLoan(
     RequestAndRelatedRecords records) {
 
+    log.debug("fetchItemAndLoan:: parameters records: {}", records);
     Request request = records.getRequest();
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
@@ -268,6 +270,8 @@ class RequestFromRepresentationService {
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanDefault(
     RequestAndRelatedRecords records) {
+
+    log.debug("fetchItemAndLoanDefault:: parameters records: {}", records);
 
     return fromFutureResult(findItemForRequest(records.getRequest()))
       .flatMapFuture(this::fetchLoan)
@@ -308,6 +312,7 @@ class RequestFromRepresentationService {
 
     Request request = records.getRequest();
     if (errorHandler.hasAny(INVALID_INSTANCE_ID)) {
+      log.warn("fetchItemAndLoanForRecallTlrCreation:: invalid instanceId");
       return ofAsync(() -> request);
     }
 
@@ -342,6 +347,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> findItemForRecall(Request request) {
+    log.debug("findItemForRecall:: parameters request: {}", request);
     Loan loan = request.getLoan();
     if (loan != null) {
       return itemRepository.fetchFor(loan)
@@ -364,6 +370,7 @@ class RequestFromRepresentationService {
   }
 
   private CompletableFuture<Result<Request>> findInstanceItemsAndPolicies(Request request) {
+    log.debug("findInstanceItemsAndPolicies:: parameters request: {}", request);
     final var instanceId = UUID.fromString(request.getInstanceId());
     return itemByInstanceIdFinder.getItemsByInstanceId(instanceId, false)
       .thenApply(r -> r.map(request::withInstanceItems))

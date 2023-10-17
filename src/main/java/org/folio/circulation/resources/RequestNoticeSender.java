@@ -97,6 +97,7 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords records) {
 
+    log.debug("sendNoticeOnRequestCreated:: parameters records: {}", records);
     Request request = records.getRequest();
     recallRequestCount = records.getRequestQueue().getRequests()
       .stream()
@@ -117,6 +118,7 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCancelled(
     RequestAndRelatedRecords records) {
 
+    log.debug("sendNoticeOnRequestCancelled:: parameters records: {}", records);
     Request request = records.getRequest();
 
     if (request.hasItemId()) {
@@ -138,6 +140,7 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestUpdated(
     RequestAndRelatedRecords records) {
 
+    log.debug("sendNoticeOnRequestUpdated:: parameters records: {}", records);
     if (records.getRequest().getStatus() == RequestStatus.CLOSED_CANCELLED) {
       requestRepository.loadCancellationReason(records.getRequest())
         .thenCompose(r -> r.after(this::fetchLatestPatronInfoAddedComment))
@@ -149,6 +152,7 @@ public class RequestNoticeSender {
   }
 
   private CompletableFuture<Result<Request>> fetchLatestPatronInfoAddedComment(Request request) {
+    log.debug("fetchLatestPatronInfoAddedComment:: parameters request: {}", request);
     if(request.hasLoan()){
       return loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan())
         .thenApply(r -> r.map(request::withLoan));
@@ -158,6 +162,7 @@ public class RequestNoticeSender {
   }
 
   public Result<CheckInContext> sendNoticeOnRequestAwaitingPickup(CheckInContext context) {
+    log.debug("sendNoticeOnRequestAwaitingPickup:: parameters context: {}", context);
     final Item item = context.getItem();
     final RequestQueue requestQueue = context.getRequestQueue();
 
@@ -190,6 +195,7 @@ public class RequestNoticeSender {
     Item item = request.getItem();
 
     if (item == null || item.isNotFound() || item.getLocation() == null) {
+      log.info("fetchMissingLocationDetails:: location cannot be fetched, item: {}", item);
       return ofAsync(request);
     }
 
@@ -201,6 +207,7 @@ public class RequestNoticeSender {
   }
 
   private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithItem(Request request) {
+    log.debug("sendConfirmationNoticeForRequestWithItem:: parameters request: {}", request);
     PatronNoticeEvent event = createPatronNoticeEvent(request, getEventType(request));
 
     return patronNoticeService.acceptNoticeEvent(event)
@@ -211,6 +218,8 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithoutItemId(
     Request request) {
 
+    log.debug("sendConfirmationNoticeForRequestWithoutItemId:: parameters request: {}", request);
+
     return sendNoticeForRequestWithoutItemId(request, getEventType(request),
       TlrSettingsConfiguration::getConfirmationPatronNoticeTemplateId);
   }
@@ -218,12 +227,16 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendCancellationNoticeForRequestWithItemId(
     Request request) {
 
+    log.debug("sendCancellationNoticeForRequestWithItemId:: parameters request: {}", request);
+
     return patronNoticeService.acceptNoticeEvent(
       createPatronNoticeEvent(request, REQUEST_CANCELLATION));
   }
 
   private CompletableFuture<Result<Void>> sendCancellationNoticeForRequestWithoutItemId(
     Request request) {
+
+    log.debug("sendCancellationNoticeForRequestWithoutItemId:: parameters request: {}", request);
 
     return sendNoticeForRequestWithoutItemId(request, REQUEST_CANCELLATION,
       TlrSettingsConfiguration::getCancellationPatronNoticeTemplateId);
@@ -247,6 +260,8 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> sendNotice(Request request, UUID templateId,
     NoticeEventType eventType) {
 
+    log.debug("sendNotice:: parameters request: {}, templateId: {}, eventType: {}",
+      request, templateId, eventType);
     JsonObject noticeContext = createRequestNoticeContext(request);
     NoticeLogContext noticeLogContext = NoticeLogContext.from(request)
       .withTriggeringEvent(eventType.getRepresentation())
@@ -259,6 +274,9 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> fetchDataAndSendRequestAwaitingPickupNotice(
     Request request) {
 
+    log.debug("fetchDataAndSendRequestAwaitingPickupNotice:: parameters request: {}",
+      request);
+
     return ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
       .thenCompose(r -> r.combineAfter(this::fetchRequester, Request::withRequester))
@@ -270,6 +288,7 @@ public class RequestNoticeSender {
 
   private CompletableFuture<Result<User>> fetchRequester(Request request) {
     String requesterId = request.getRequesterId();
+    log.info("fetchRequester:: requesterId: {}", requesterId);
 
     return userRepository.getUserWithPatronGroup(requesterId)
       .thenApply(r -> r.failWhen(this::isNull,
@@ -278,6 +297,7 @@ public class RequestNoticeSender {
 
   private CompletableFuture<Result<ServicePoint>> fetchServicePoint(Request request) {
     String pickupServicePointId = request.getPickupServicePointId();
+    log.info("fetchServicePoint:: pickupServicePointId: {}", pickupServicePointId);
 
     return servicePointRepository.getServicePointById(pickupServicePointId)
       .thenApply(r -> r.failWhen(this::isNull,

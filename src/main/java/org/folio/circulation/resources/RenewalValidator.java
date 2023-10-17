@@ -5,17 +5,21 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.LogUtil;
 
 public final class RenewalValidator {
   public static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
@@ -30,6 +34,7 @@ public final class RenewalValidator {
 
   public static final String DECLARED_LOST_ITEM_RENEWED_ERROR = "item is Declared lost";
   public static final String CLAIMED_RETURNED_RENEWED_ERROR = "item is Claimed returned";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private RenewalValidator() { }
 
@@ -37,12 +42,17 @@ public final class RenewalValidator {
     ZonedDateTime proposedDueDate, List<ValidationError> errors) {
 
     if (isSameOrBefore(loan, proposedDueDate)) {
+      log.info("errorWhenEarlierOrSameDueDate:: due date from loan: {}, proposedDueDate: {}",
+        loan.getDueDate(), proposedDueDate);
       errors.add(loanPolicyValidationError(loan.getLoanPolicy(), RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
   }
 
   public static Result<ZonedDateTime> errorWhenEarlierOrSameDueDate(Loan loan, ZonedDateTime proposedDueDate) {
     if (isSameOrBefore(loan, proposedDueDate)) {
+      log.info("errorWhenEarlierOrSameDueDate:: due date from loan: {}, proposedDueDate: {}",
+        loan.getDueDate(), proposedDueDate);
+
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
@@ -77,6 +87,8 @@ public final class RenewalValidator {
   private static Map<String, String> buildLoanPolicyParameters(
     Map<String, String> additionalParameters, LoanPolicy loanPolicy) {
 
+    log.debug("buildLoanPolicyParameters:: parameters additionalParameters: {}, loanPolicy: {}",
+      () -> LogUtil.mapAsString(additionalParameters), () -> loanPolicy);
     Map<String, String> result = new HashMap<>(additionalParameters);
     result.put("loanPolicyId", loanPolicy.getId());
     result.put("loanPolicyName", loanPolicy.getName());
