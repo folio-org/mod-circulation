@@ -156,7 +156,7 @@ public class RequestQueueResource extends Resource {
     String idParamValue) {
 
     log.debug("validateTlrFeatureStatus:: parameters requestQueueType: {}, idParamValue: {}",
-      requestQueueType.toString(), idParamValue);
+      requestQueueType, idParamValue);
 
     return configurationRepository.lookupTlrSettings()
       .thenApply(r -> r.failWhen(
