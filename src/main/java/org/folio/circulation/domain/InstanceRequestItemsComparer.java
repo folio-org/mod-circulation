@@ -1,5 +1,8 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
+
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -7,13 +10,24 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.utils.LogUtil;
+
 public class InstanceRequestItemsComparer {
 
   private InstanceRequestItemsComparer() {}
 
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public static Map<Item, Integer> sortRequestQueues(Map<Item, Integer> itemsQueueLengthUnsortedMap,
-                                                     Map<Item, ZonedDateTime> itemDueDateMap,
-                                                     UUID destinationServicePointId) {
+    Map<Item, ZonedDateTime> itemDueDateMap, UUID destinationServicePointId) {
+
+    log.debug("sortRequestQueues:: parameters itemsQueueLengthUnsortedMap: {}, " +
+      "itemDueDateMap: {}, destinationServicePointId: {}", () -> mapAsString(
+        itemsQueueLengthUnsortedMap), () -> mapAsString(itemDueDateMap),
+      () -> destinationServicePointId);
+
     return itemsQueueLengthUnsortedMap
       .entrySet()
       .stream()
@@ -22,8 +36,11 @@ public class InstanceRequestItemsComparer {
         (oldValue, newValue) -> oldValue, (LinkedHashMap::new)));
   }
 
-  private static Comparator<Map.Entry<Item, Integer>> compareQueueLengths(Map<Item, ZonedDateTime> itemDueDateMap,
-                                                                          UUID destinationServicePointId) {
+  private static Comparator<Map.Entry<Item, Integer>> compareQueueLengths(
+    Map<Item, ZonedDateTime> itemDueDateMap, UUID destinationServicePointId) {
+
+    log.debug("compareQueueLengths:: parameters itemDueDateMap: {}, destinationServicePointId: {}",
+      () -> mapAsString(itemDueDateMap), () -> destinationServicePointId);
     // Sort the map
     return (q1Size, q2Size) -> {
       int result = compareQueueSize(q1Size.getValue(), q2Size.getValue());
@@ -37,15 +54,20 @@ public class InstanceRequestItemsComparer {
           result =  compareItemServicePoint(q1Item, q2Item, destinationServicePointId);
         }
       }
+      log.info("compareQueueLengths:: result: {}", result);
       return result;
     };
   }
 
   private static int compareQueueSize(int queueSize1, int queueSize2){
+    log.debug("compareQueueSize:: parameters queueSize1: {}, queueSize2: {}",
+      queueSize1, queueSize2);
     return queueSize1 - queueSize2;
   }
 
   private static int compareDueDate(Item item1, Item item2, Map<Item, ZonedDateTime> itemDueDateMap) {
+    log.debug("compareDueDate:: parameters item1: {}, item2: {}, itemDueDateMap: {}",
+      () -> item1, () -> item2, () -> mapAsString(itemDueDateMap));
     ZonedDateTime q1ItemDueDate = itemDueDateMap.get(item1);
     ZonedDateTime q2ItemDueDate = itemDueDateMap.get(item2);
 
@@ -61,9 +83,13 @@ public class InstanceRequestItemsComparer {
   }
 
   private static int compareItemServicePoint(Item item1, Item item2,
-                                           UUID destinationServicePointId) {
-    if (destinationServicePointId == null)
+    UUID destinationServicePointId) {
+
+    log.debug("compareItemServicePoint:: parameters item1: {}, item2: {}, " +
+        "destinationServicePointId: {}", item1, item2, destinationServicePointId);
+    if (destinationServicePointId == null) {
       return 0;
+    }
 
     Location item1Location = item1.getLocation();
     Location item2Location = item2.getLocation();

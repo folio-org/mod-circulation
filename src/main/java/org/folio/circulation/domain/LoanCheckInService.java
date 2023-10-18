@@ -6,18 +6,25 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 
 public class LoanCheckInService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public Result<Loan> checkIn(Loan loan, ZonedDateTime systemDateTime,
     CheckInByBarcodeRequest request) {
 
+    log.debug("checkIn:: parameters loan: {}, systemDateTime: {}, request: {}",
+      loan, systemDateTime, request);
     if (loan == null) {
+      log.debug("checkIn:: loan is null");
       return of(() -> null);
     }
 
@@ -28,6 +35,7 @@ public class LoanCheckInService {
     }
 
     if (loan.isAgedToLost()) {
+      log.info("checkIn:: loan is agedToLost, removing aged to lost billing info");
       loan.removeAgedToLostBillingInfo();
     }
 

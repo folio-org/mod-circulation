@@ -62,6 +62,7 @@ import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.UUID;
@@ -69,6 +70,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRemindersPolicy;
@@ -85,6 +88,7 @@ import lombok.ToString;
 @AllArgsConstructor(access = PRIVATE)
 @ToString(onlyExplicitlyIncluded = true)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   @ToString.Include
   private final JsonObject representation;
   @Getter
@@ -142,6 +146,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeDueDate(ZonedDateTime newDueDate) {
+    log.debug("changeDueDate:: parameters newDueDate: {}", newDueDate);
     write(representation, DUE_DATE, newDueDate.withZoneSameInstant(UTC));
 
     return this;
@@ -170,18 +175,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeReturnDate(ZonedDateTime returnDate) {
+    log.debug("changeReturnDate:: parameters returnDate: {}", returnDate);
     write(representation, RETURN_DATE, returnDate);
   }
 
   private void changeSystemReturnDate(ZonedDateTime systemReturnDate) {
+    log.debug("changeSystemReturnDate:: parameters systemReturnDate: {}", systemReturnDate);
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
   }
 
   public void changeAction(LoanAction action) {
+    log.debug("changeAction:: parameters action: {}", action);
     changeAction(action.getValue());
   }
 
   public void changeAction(String action) {
+    log.debug("changeAction:: parameters action: {}", action);
     write(representation, LoanProperties.ACTION, action);
   }
 
@@ -190,10 +199,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
+    log.debug("changeCheckInServicePointId:: parameters servicePointId: {}", servicePointId);
     write(representation, "checkinServicePointId", servicePointId);
   }
 
   public Loan changeItemStatusForItemAndLoan(ItemStatus itemStatus) {
+    log.debug("changeItemStatusForItemAndLoan:: parameters itemStatus: {}", itemStatus);
     Item itemToChange = getItem();
 
     executeIfNotNull(itemToChange, f -> f.changeStatus(itemStatus));
@@ -204,19 +215,23 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeStatus(LoanStatus status) {
+    log.debug("changeStatus:: parameters status: {}", status);
     representation.put(STATUS, new JsonObject().put("name", status.getValue()));
   }
 
   public Loan changeItemEffectiveLocationIdAtCheckOut(String locationId) {
+    log.debug("changeItemEffectiveLocationIdAtCheckOut:: parameters locationId: {}", locationId);
     representation.put(ITEM_LOCATION_ID_AT_CHECKOUT, locationId);
     return this;
   }
 
   public void changeActionComment(String comment) {
+    log.debug("changeActionComment:: parameters comment: {}", comment);
     representation.put(ACTION_COMMENT, comment);
   }
 
   public void removeActionComment() {
+    log.debug("removeActionComment:: ");
     representation.remove(ACTION_COMMENT);
   }
 
@@ -226,11 +241,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
+      log.warn("isValidStatus:: Loan does not have a status");
       return failedDueToServerError("Loan does not have a status");
     }
 
     // Provided status name is not present in the enum
     if (getStatus() == null) {
+      log.warn("isValidStatus:: Loan status must be \"Open\" or \"Closed\"");
       return failedValidation("Loan status must be \"Open\" or \"Closed\"",
         STATUS, getStatusName());
     }
@@ -240,6 +257,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> openLoanHasUserId() {
     if (isOpen() && getUserId() == null) {
+      log.warn("openLoanHasUserId:: Open loan must have a user ID");
       return failedValidation("Open loan must have a user ID",
         USER_ID, getUserId());
     } else {
@@ -249,6 +267,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
+      log.warn("closedLoanHasCheckInServicePointId:: a closed loan must have a checkin service point");
       return failedValidation("A Closed loan must have a Checkin Service Point",
           CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
     } else {
@@ -454,6 +473,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan renew(ZonedDateTime dueDate, String basedUponLoanPolicyId) {
+    log.debug("renew:: parameters dueDate: {}, basedUponLoanPolicyId: {}",
+      dueDate, basedUponLoanPolicyId);
     changeAction(RENEWED);
     removeActionComment();
     setLoanPolicyId(basedUponLoanPolicyId);
@@ -463,10 +484,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan overrideRenewal(ZonedDateTime dueDate,
-   String basedUponLoanPolicyId,
+  public Loan overrideRenewal(ZonedDateTime dueDate, String basedUponLoanPolicyId,
     String actionComment) {
 
+    log.debug("overrideRenewal:: parameters dueDate: {}, basedUponLoanPolicyId: {}, " +
+      "actionComment: {}", dueDate, basedUponLoanPolicyId, actionComment);
     changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -479,6 +501,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private Loan checkIn(LoanAction action, ZonedDateTime returnDateTime,
     ZonedDateTime systemReturnDateTime, UUID servicePointId) {
 
+    log.debug("checkIn:: parameters action: {}, returnDateTime: {}, " +
+      "systemReturnDateTime: {}, servicePointId: {}", action, returnDateTime,
+      systemReturnDateTime, servicePointId);
     closeLoan(action);
     changeReturnDate(returnDateTime);
     changeSystemReturnDate(systemReturnDateTime);
@@ -500,6 +525,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
+    log.debug("declareItemLost:: parameters comment: {}, dateTime: {}", comment, dateTime);
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
@@ -583,10 +609,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeItemStatus(String itemStatus) {
+    log.debug("changeItemStatus:: parameters itemStatus: {}", itemStatus);
     representation.put(LoanProperties.ITEM_STATUS, itemStatus);
   }
 
   public void changeDeclaredLostDateTime(ZonedDateTime dateTime) {
+    log.debug("changeDeclaredLostDateTime:: parameters dateTime: {}", dateTime);
     write(representation, DECLARED_LOST_DATE, dateTime);
   }
 
@@ -646,6 +674,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
+    log.debug("claimItemReturned:: parameters comment: {}, claimedReturnedDate: {}",
+      comment, claimedReturnedDate);
     changeAction(CLAIMED_RETURNED);
     if (StringUtils.isNotBlank(comment)) {
       changeActionComment(comment);
@@ -662,6 +692,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action) {
+    log.debug("closeLoan:: parameters action: {}", action);
     changeStatus(LoanStatus.CLOSED);
 
     changeAction(action);
@@ -671,6 +702,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action, String comment) {
+    log.debug("closeLoan:: parameters action: {}, comment: {}", action, comment);
     changeStatus(LoanStatus.CLOSED);
 
     changeAction(action);
@@ -680,6 +712,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan markItemMissing(String comment) {
+    log.debug("markItemMissing:: parameters comment: {}", comment);
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
     return closeLoan(MISSING, comment);
@@ -698,6 +731,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void closeLoanAsLostAndPaid() {
+    log.debug("closeLoanAsLostAndPaid:: ");
     closeLoan(CLOSED_LOAN);
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
@@ -709,6 +743,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan ageOverdueItemToLost(ZonedDateTime ageToLostDate) {
+    log.debug("ageOverdueItemToLost:: parameters ageToLostDate: {}", ageToLostDate);
     changeAction(ITEM_AGED_TO_LOST);
     removeActionComment();
     changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
