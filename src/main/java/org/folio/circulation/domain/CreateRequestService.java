@@ -119,7 +119,7 @@ public class CreateRequestService {
 
     Request request = requestAndRelatedRecords.getRequest();
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
-      log.debug("refuseHoldOrRecallTlrWhenPageableItemExists:: request is title-level Hold or Recall");
+      log.info("refuseHoldOrRecallTlrWhenPageableItemExists:: request is title-level Hold or Recall");
       List<Item> availablePageableItems = ItemForTlrService.using(repositories)
         .findAvailablePageableItems(requestAndRelatedRecords.getRequest());
 
@@ -214,7 +214,7 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
-    log.debug("checkItem:: accumulated errors: {}", errorHandler::getErrors);
+    log.debug("checkPolicy:: accumulated errors: {}", errorHandler::getErrors);
     if (errorHandler.hasAny(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST, INVALID_ITEM_ID,
       ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
       TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
