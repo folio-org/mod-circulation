@@ -2,6 +2,7 @@ package org.folio.circulation.domain;
 
 import static java.lang.Boolean.TRUE;
 import static java.lang.Boolean.FALSE;
+import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
@@ -146,7 +147,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeDueDate(ZonedDateTime newDueDate) {
-    log.debug("changeDueDate:: parameters newDueDate: {}", newDueDate);
+    log.debug("changeDueDate:: parameters newDueDate: {}", () -> newDueDate);
     write(representation, DUE_DATE, newDueDate.withZoneSameInstant(UTC));
 
     return this;
@@ -175,12 +176,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeReturnDate(ZonedDateTime returnDate) {
-    log.debug("changeReturnDate:: parameters returnDate: {}", returnDate);
+    log.debug("changeReturnDate:: parameters returnDate: {}", () -> returnDate);
     write(representation, RETURN_DATE, returnDate);
   }
 
   private void changeSystemReturnDate(ZonedDateTime systemReturnDate) {
-    log.debug("changeSystemReturnDate:: parameters systemReturnDate: {}", systemReturnDate);
+    log.debug("changeSystemReturnDate:: parameters systemReturnDate: {}", () -> systemReturnDate);
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
   }
 
@@ -242,14 +243,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
       String errorMessage = "Loan does not have a status";
-      log.warn("isValidStatus:: " + errorMessage);
+      log.warn(format("isValidStatus:: %s", errorMessage));
       return failedDueToServerError(errorMessage);
     }
 
     // Provided status name is not present in the enum
     if (getStatus() == null) {
       String errorMessage = "Loan status must be \"Open\" or \"Closed\"";
-      log.warn("isValidStatus:: " + errorMessage);
+      log.warn(format("isValidStatus:: %s", errorMessage));
       return failedValidation(errorMessage, STATUS, getStatusName());
     }
 
@@ -259,7 +260,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> openLoanHasUserId() {
     if (isOpen() && getUserId() == null) {
       String errorMessage = "Open loan must have a user ID";
-      log.warn("openLoanHasUserId:: " + errorMessage);
+      log.warn(format("openLoanHasUserId:: %s", errorMessage));
       return failedValidation(errorMessage, USER_ID, getUserId());
     } else {
       return succeeded(null);
@@ -269,7 +270,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
       String errorMessage = "A Closed loan must have a Checkin Service Point";
-      log.warn("closedLoanHasCheckInServicePointId:: " + errorMessage);
+      log.warn(format("closedLoanHasCheckInServicePointId:: %s", errorMessage));
       return failedValidation(errorMessage, CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
     } else {
       return succeeded(null);
@@ -489,7 +490,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     String actionComment) {
 
     log.debug("overrideRenewal:: parameters dueDate: {}, basedUponLoanPolicyId: {}, " +
-      "actionComment: {}", dueDate, basedUponLoanPolicyId, actionComment);
+      "actionComment: {}", () -> dueDate, () -> basedUponLoanPolicyId, () -> actionComment);
     changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -503,8 +504,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     ZonedDateTime systemReturnDateTime, UUID servicePointId) {
 
     log.debug("checkIn:: parameters action: {}, returnDateTime: {}, " +
-      "systemReturnDateTime: {}, servicePointId: {}", action, returnDateTime,
-      systemReturnDateTime, servicePointId);
+      "systemReturnDateTime: {}, servicePointId: {}", () -> action, () -> returnDateTime,
+      () -> systemReturnDateTime, () -> servicePointId);
     closeLoan(action);
     changeReturnDate(returnDateTime);
     changeSystemReturnDate(systemReturnDateTime);
@@ -526,7 +527,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
-    log.debug("declareItemLost:: parameters comment: {}, dateTime: {}", comment, dateTime);
+    log.debug("declareItemLost:: parameters comment: {}, dateTime: {}", () -> comment, () -> dateTime);
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
@@ -615,7 +616,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeDeclaredLostDateTime(ZonedDateTime dateTime) {
-    log.debug("changeDeclaredLostDateTime:: parameters dateTime: {}", dateTime);
+    log.debug("changeDeclaredLostDateTime:: parameters dateTime: {}", () -> dateTime);
     write(representation, DECLARED_LOST_DATE, dateTime);
   }
 
@@ -676,7 +677,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
     log.debug("claimItemReturned:: parameters comment: {}, claimedReturnedDate: {}",
-      comment, claimedReturnedDate);
+      () -> comment, () -> claimedReturnedDate);
     changeAction(CLAIMED_RETURNED);
     if (StringUtils.isNotBlank(comment)) {
       changeActionComment(comment);
@@ -744,7 +745,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan ageOverdueItemToLost(ZonedDateTime ageToLostDate) {
-    log.debug("ageOverdueItemToLost:: parameters ageToLostDate: {}", ageToLostDate);
+    log.debug("ageOverdueItemToLost:: parameters ageToLostDate: {}", () -> ageToLostDate);
     changeAction(ITEM_AGED_TO_LOST);
     removeActionComment();
     changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);
