@@ -9,7 +9,9 @@ import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.REQUE
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.TITLE_LEVEL_REQUEST_EXPIRATION;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.notice.schedule.InstanceAwareRequestScheduledNoticeHandler;
@@ -35,10 +39,12 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 
 public class RequestScheduledNoticeProcessingResource extends ScheduledNoticeProcessingResource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public RequestScheduledNoticeProcessingResource(HttpClient client) {
     super("/circulation/request-scheduled-notices-processing", client);
@@ -77,6 +83,8 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     Clients clients, RequestRepository requestRepository, LoanRepository loanRepository,
     Collection<ScheduledNotice> notices, Collection<Request> requests) {
 
+    log.debug("handleNotices:: parameters notices: {}, requests: {}", () ->
+      collectionAsString(notices), () -> collectionAsString(requests));
     Map<String, Request> requestsById = requests.stream()
       .collect(toMap(Request::getId, identity()));
 

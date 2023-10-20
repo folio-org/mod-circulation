@@ -8,10 +8,13 @@ import static org.folio.circulation.resources.context.RequestQueueType.FOR_ITEM;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -45,6 +48,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestQueueResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public static final String URI_BASE = "/circulation/requests/queue";
   public static final String INSTANCE_ID_PARAM_NAME = "instanceId";
   public static final String ITEM_ID_PARAM_NAME = "itemId";
@@ -162,7 +166,9 @@ public class RequestQueueResource extends Resource {
       ));
   }
 
-  private Result<ReorderRequestContext> publishReorderedQueue(EventPublisher eventPublisher, Result<ReorderRequestContext> reorderRequestContext) {
+  private Result<ReorderRequestContext> publishReorderedQueue(EventPublisher eventPublisher,
+    Result<ReorderRequestContext> reorderRequestContext) {
+
     reorderRequestContext.after(r -> {
       CompletableFuture.runAsync(() -> {
         List<Request> reordered = r.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).collect(Collectors.toList());
@@ -174,6 +180,7 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {
+    log.debug("toRepresentation:: parameters context: {}", () -> context);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     return completedFuture(succeeded(context.getRequestQueue()))
@@ -187,6 +194,8 @@ public class RequestQueueResource extends Resource {
    * @return Either instanceId or itemId parameter name depending on the queue type
    */
   private String getIdParameterNameByQueueType(RequestQueueType requestQueueType) {
+    log.debug("getIdParameterNameByQueueType:: parameters requestQueueType: {}",
+      () -> requestQueueType);
     if (requestQueueType == FOR_INSTANCE) {
       return INSTANCE_ID_PARAM_NAME;
     } else {
@@ -211,7 +220,7 @@ public class RequestQueueResource extends Resource {
     RequestQueueRepository requestQueueRepository) {
 
     String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
-
+    log.info("getRequestQueueByType:: requestQueueType: {}", requestQueueType);
     if (requestQueueType == FOR_INSTANCE) {
       return requestQueueRepository.getByInstanceId(idParamValue);
     } else {
