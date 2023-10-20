@@ -1,8 +1,7 @@
 package org.folio.circulation.domain;
 
-import static java.lang.Boolean.TRUE;
 import static java.lang.Boolean.FALSE;
-import static java.lang.String.format;
+import static java.lang.Boolean.TRUE;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
@@ -22,6 +21,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
+import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.BILL_NUMBER;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
@@ -30,20 +31,18 @@ import static org.folio.circulation.domain.representations.LoanProperties.DECLAR
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
+import static org.folio.circulation.domain.representations.LoanProperties.LAST_FEE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.METADATA;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
-import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
-import static org.folio.circulation.domain.representations.LoanProperties.LAST_FEE_BILLED;
-import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
-import static org.folio.circulation.domain.representations.LoanProperties.BILL_NUMBER;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -243,14 +242,14 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
       String errorMessage = "Loan does not have a status";
-      log.warn(format("isValidStatus:: %s", errorMessage));
+      log.warn("isValidStatus:: {}", errorMessage);
       return failedDueToServerError(errorMessage);
     }
 
     // Provided status name is not present in the enum
     if (getStatus() == null) {
       String errorMessage = "Loan status must be \"Open\" or \"Closed\"";
-      log.warn(format("isValidStatus:: %s", errorMessage));
+      log.warn("isValidStatus:: {}", errorMessage);
       return failedValidation(errorMessage, STATUS, getStatusName());
     }
 
@@ -260,7 +259,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> openLoanHasUserId() {
     if (isOpen() && getUserId() == null) {
       String errorMessage = "Open loan must have a user ID";
-      log.warn(format("openLoanHasUserId:: %s", errorMessage));
+      log.warn("openLoanHasUserId::{}", errorMessage);
       return failedValidation(errorMessage, USER_ID, getUserId());
     } else {
       return succeeded(null);
@@ -270,7 +269,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
       String errorMessage = "A Closed loan must have a Checkin Service Point";
-      log.warn(format("closedLoanHasCheckInServicePointId:: %s", errorMessage));
+      log.warn("closedLoanHasCheckInServicePointId:: {}", errorMessage);
       return failedValidation(errorMessage, CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
     } else {
       return succeeded(null);
