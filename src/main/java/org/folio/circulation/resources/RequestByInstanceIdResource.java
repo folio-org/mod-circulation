@@ -80,7 +80,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
