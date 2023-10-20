@@ -156,9 +156,8 @@ public class RequestByInstanceIdResource extends Resource {
     InstanceRequestRelatedRecords instanceRequestPackage, LoanRepository loanRepository) {
 
     final List<Item> unsortedUnavailableItems = instanceRequestPackage.getUnsortedUnavailableItems();
-    if (unsortedUnavailableItems == null ||
-        unsortedUnavailableItems.isEmpty()) {
-      log.info("getLoanItems:: unsortedUnavailableItems is null or emtpy");
+    if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
+      log.info("getLoanItems:: unsortedUnavailableItems is null or empty");
 
       return CompletableFuture.completedFuture(succeeded(null));
     }

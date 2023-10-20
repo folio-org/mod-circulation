@@ -195,7 +195,9 @@ public class RequestNoticeSender {
     Item item = request.getItem();
 
     if (item == null || item.isNotFound() || item.getLocation() == null) {
-      log.info("fetchMissingLocationDetails:: location cannot be fetched, item: {}", () -> item);
+      log.info("fetchMissingLocationDetails:: location cannot be fetched, item: {}",
+        request.getItemId());
+
       return ofAsync(request);
     }
 

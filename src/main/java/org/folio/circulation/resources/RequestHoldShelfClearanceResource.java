@@ -9,6 +9,7 @@ import static org.folio.circulation.support.CqlSortBy.descending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -141,7 +142,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
     GetManyRecordsClient client, List<List<String>> batchItemIds) {
 
     log.debug("findAwaitingPickupRequestsByItemsIds:: parameters batchItemIds: {}",
-      () -> LogUtil.listAsString(batchItemIds));
+      () -> listAsString(batchItemIds));
     List<Result<MultipleRecords<Request>>> awaitingPickupRequests = findAwaitingPickupRequests(client, batchItemIds);
 
     return CompletableFuture.completedFuture(Result.succeeded(
@@ -192,7 +193,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
       context.getAwaitingPickupItemIds());
     List<Request> firstRequestFromList = getFirstRequestFromList(requestList);
     log.debug("findExpiredOrCancelledRequestByItemIds:: firstRequestFromList: {}",
-      () -> LogUtil.listAsString(firstRequestFromList));
+      () -> listAsString(firstRequestFromList));
 
     return CompletableFuture.completedFuture(Result.succeeded(
       context.withExpiredOrCancelledRequests(firstRequestFromList)));
@@ -210,6 +211,7 @@ public class RequestHoldShelfClearanceResource extends Resource {
 
   private Result<List<Request>> findExpiredOrCancelledRequestByServicePoint(String servicePointId,
     HoldShelfClearanceRequestContext context) {
+
     List<Request> requestList = context.getExpiredOrCancelledRequests().stream()
       .filter(hasContextRequestForServicePoint(servicePointId))
       .filter(hasNotContextAwaitingPickupRequestForItemId(context))
