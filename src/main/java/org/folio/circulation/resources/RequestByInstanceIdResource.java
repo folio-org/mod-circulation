@@ -21,6 +21,7 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
 import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 
 import java.lang.invoke.MethodHandles;
@@ -440,6 +441,7 @@ public class RequestByInstanceIdResource extends Resource {
         Map<Item, RequestQueue> itemQueueMap = records.getItemRequestQueueMap();
 
         if (itemDueDateMap == null && itemQueueMap == null) {
+          log.info("combineWithUnavailableItems:: itemDueDateMap and itemQueueMap are null");
           return records;
         }
 
@@ -463,6 +465,8 @@ public class RequestByInstanceIdResource extends Resource {
         if (records.getItemsWithoutRequests() != null)
           finalOrderedList.addAll(records.getItemsWithoutRequests());
         records.setSortedUnavailableItems(finalOrderedList);
+        log.info("combineWithUnavailableItems:: result: {}", listAsString(finalOrderedList));
+
       return records;
     });
   }
