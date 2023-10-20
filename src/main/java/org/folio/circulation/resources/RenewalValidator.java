@@ -4,6 +4,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -43,7 +44,7 @@ public final class RenewalValidator {
 
     if (isSameOrBefore(loan, proposedDueDate)) {
       log.info("errorWhenEarlierOrSameDueDate:: due date from loan: {}, proposedDueDate: {}",
-        loan.getDueDate(), proposedDueDate);
+        loan::getDueDate, () -> proposedDueDate);
       errors.add(loanPolicyValidationError(loan.getLoanPolicy(), RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
     }
   }
@@ -51,7 +52,7 @@ public final class RenewalValidator {
   public static Result<ZonedDateTime> errorWhenEarlierOrSameDueDate(Loan loan, ZonedDateTime proposedDueDate) {
     if (isSameOrBefore(loan, proposedDueDate)) {
       log.info("errorWhenEarlierOrSameDueDate:: due date from loan: {}, proposedDueDate: {}",
-        loan.getDueDate(), proposedDueDate);
+        loan::getDueDate, () -> proposedDueDate);
 
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
         RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
@@ -88,7 +89,7 @@ public final class RenewalValidator {
     Map<String, String> additionalParameters, LoanPolicy loanPolicy) {
 
     log.debug("buildLoanPolicyParameters:: parameters additionalParameters: {}, loanPolicy: {}",
-      () -> LogUtil.mapAsString(additionalParameters), () -> loanPolicy);
+      () -> mapAsString(additionalParameters), () -> loanPolicy);
     Map<String, String> result = new HashMap<>(additionalParameters);
     result.put("loanPolicyId", loanPolicy.getId());
     result.put("loanPolicyName", loanPolicy.getName());
