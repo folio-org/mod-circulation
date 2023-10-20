@@ -28,8 +28,7 @@ public class LoanService {
   public CompletableFuture<Result<LoanAndRelatedRecords>> truncateLoanWhenItemRecalled(
     LoanAndRelatedRecords records) {
 
-    log.debug("truncateLoanWhenItemRecalled:: parameters records: {}",
-      () -> records);
+    log.debug("truncateLoanWhenItemRecalled:: parameters records: {}", () -> records);
     RequestQueue requestQueue = records.getRequestQueue();
     Collection<Request> requests = requestQueue.getRequests();
 

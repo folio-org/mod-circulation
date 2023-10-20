@@ -55,7 +55,7 @@ public class LoanRepresentation {
       additionalBorrowerProperties(extendedRepresentation, loan.getUser());
     } else {
       //When there is no user, it means that the loan has been anonymized
-      log.info("extendedLoan:: the is no user, removing borrower");
+      log.info("extendedLoan:: there is no user, removing borrower");
       extendedRepresentation.remove(BORROWER);
     }
 
