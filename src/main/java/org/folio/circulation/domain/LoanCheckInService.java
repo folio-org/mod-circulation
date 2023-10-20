@@ -22,7 +22,7 @@ public class LoanCheckInService {
     CheckInByBarcodeRequest request) {
 
     log.debug("checkIn:: parameters loan: {}, systemDateTime: {}, request: {}",
-      loan, systemDateTime, request);
+      () -> loan, () -> systemDateTime, () -> request);
     if (loan == null) {
       log.debug("checkIn:: loan is null");
       return of(() -> null);

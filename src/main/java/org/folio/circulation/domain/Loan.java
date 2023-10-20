@@ -241,15 +241,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
-      log.warn("isValidStatus:: Loan does not have a status");
-      return failedDueToServerError("Loan does not have a status");
+      String errorMessage = "Loan does not have a status";
+      log.warn("isValidStatus:: " + errorMessage);
+      return failedDueToServerError(errorMessage);
     }
 
     // Provided status name is not present in the enum
     if (getStatus() == null) {
-      log.warn("isValidStatus:: Loan status must be \"Open\" or \"Closed\"");
-      return failedValidation("Loan status must be \"Open\" or \"Closed\"",
-        STATUS, getStatusName());
+      String errorMessage = "Loan status must be \"Open\" or \"Closed\"";
+      log.warn("isValidStatus:: " + errorMessage);
+      return failedValidation(errorMessage, STATUS, getStatusName());
     }
 
     return succeeded(null);
@@ -257,9 +258,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> openLoanHasUserId() {
     if (isOpen() && getUserId() == null) {
-      log.warn("openLoanHasUserId:: Open loan must have a user ID");
-      return failedValidation("Open loan must have a user ID",
-        USER_ID, getUserId());
+      String errorMessage = "Open loan must have a user ID";
+      log.warn("openLoanHasUserId:: " + errorMessage);
+      return failedValidation(errorMessage, USER_ID, getUserId());
     } else {
       return succeeded(null);
     }
@@ -267,9 +268,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
-      log.warn("closedLoanHasCheckInServicePointId:: a closed loan must have a checkin service point");
-      return failedValidation("A Closed loan must have a Checkin Service Point",
-          CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
+      String errorMessage = "A Closed loan must have a Checkin Service Point";
+      log.warn("closedLoanHasCheckInServicePointId:: " + errorMessage);
+      return failedValidation(errorMessage, CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
     } else {
       return succeeded(null);
     }
@@ -474,7 +475,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan renew(ZonedDateTime dueDate, String basedUponLoanPolicyId) {
     log.debug("renew:: parameters dueDate: {}, basedUponLoanPolicyId: {}",
-      dueDate, basedUponLoanPolicyId);
+      () -> dueDate, () -> basedUponLoanPolicyId);
     changeAction(RENEWED);
     removeActionComment();
     setLoanPolicyId(basedUponLoanPolicyId);
