@@ -29,6 +29,7 @@ import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.logResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -77,6 +78,8 @@ public class CreateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("createRequest:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
+
     final var requestRepository = repositories.getRequestRepository();
     final var configurationRepository = repositories.getConfigurationRepository();
     final var automatedBlocksValidator = requestBlockValidators.getAutomatedPatronBlocksValidator();
@@ -108,7 +111,7 @@ public class CreateRequestService {
       .thenApplyAsync(r -> {
         r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
-      });
+      }).thenApply(r -> logResult(r, "createRequest"));
   }
 
   private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenPageableItemExists(
@@ -116,6 +119,7 @@ public class CreateRequestService {
 
     Request request = requestAndRelatedRecords.getRequest();
     if (request.isTitleLevel() && (request.isHold() || request.isRecall())) {
+      log.info("refuseHoldOrRecallTlrWhenPageableItemExists:: request is title-level Hold or Recall");
       List<Item> availablePageableItems = ItemForTlrService.using(repositories)
         .findAvailablePageableItems(requestAndRelatedRecords.getRequest());
 
@@ -131,6 +135,7 @@ public class CreateRequestService {
     RequestAndRelatedRecords requestAndRelatedRecords, List<Item> availablePageableItems) {
 
     if (availablePageableItems.isEmpty()) {
+      log.info("failValidationWhenPageableItemsExist:: no available pageable items found");
       return succeeded(requestAndRelatedRecords);
     }
 
@@ -146,8 +151,10 @@ public class CreateRequestService {
   private Result<RequestAndRelatedRecords> failedValidationHoldAndRecallNotAllowed(Request request,
     String availableItemId) {
 
-    String errorMessage = "Hold/Recall title level request not allowed: pageable available item found for instance";
-    log.info("{}. Pageable item(s): {}", errorMessage, availableItemId);
+    String errorMessage = "Hold/Recall title level request not allowed: pageable available item " +
+      "found for instance";
+    log.warn("failedValidationHoldAndRecallNotAllowed:: {}. Pageable available item: {}",
+      errorMessage, availableItemId);
 
     return failedValidation(errorMessage, Map.of(ITEM_ID, availableItemId, INSTANCE_ID,
       request.getInstanceId()), HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND);
@@ -166,20 +173,28 @@ public class CreateRequestService {
     RequestAndRelatedRecords records) {
 
     Request request = records.getRequest();
+    RequestLevel requestLevel = request.getRequestLevel();
+    log.info("checkItem:: request level: {}", requestLevel);
+    log.debug("checkItem:: accumulated errors: {}", errorHandler::getErrors);
 
-    if (records.isTlrFeatureEnabled() && request.getRequestLevel() == TITLE) {
+    if (records.isTlrFeatureEnabled() && requestLevel == TITLE) {
+      log.info("checkItem:: checking title-level request");
       if (errorHandler.hasAny(ATTEMPT_TO_CREATE_TLR_LINKED_TO_AN_ITEM, ATTEMPT_HOLD_OR_RECALL_TLR_FOR_AVAILABLE_ITEM)) {
+        log.warn("checkItem:: error(s) incompatible with TLR check detected, check aborted");
         return ofAsync(() -> records);
       }
 
       Result<RequestAndRelatedRecords> result = succeeded(records);
-      if (request.getItemId() != null) {
+      String itemId = request.getItemId();
+      if (itemId != null) {
+        log.info("checkItem:: request contains itemId: {}", itemId);
         result = result
           .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
           .mapFailure(err -> errorHandler.handleValidationError(err, ITEM_DOES_NOT_EXIST, records));
       }
 
       if (errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST)) {
+        log.info("checkItem:: checking if user already has an item of requested instance on loan");
         return result
           .after(requestLoanValidator::refuseWhenUserHasAlreadyBeenLoanedOneOfInstancesItems)
           .thenApply(r -> errorHandler.handleValidationResult(r, ONE_OF_INSTANCES_ITEMS_HAS_OPEN_LOAN, records));
@@ -199,10 +214,12 @@ public class CreateRequestService {
   private CompletableFuture<Result<RequestAndRelatedRecords>> checkPolicy(
     RequestAndRelatedRecords records) {
 
+    log.debug("checkPolicy:: accumulated errors: {}", errorHandler::getErrors);
     if (errorHandler.hasAny(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST, INVALID_ITEM_ID,
       ITEM_DOES_NOT_EXIST, INVALID_USER_OR_PATRON_GROUP_ID,
       TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM)) {
 
+      log.warn("checkPolicy:: error(s) incompatible with check detected, check aborted");
       return ofAsync(() -> records);
     }
 
@@ -210,6 +227,7 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
+      log.info("checkPolicy:: checking policy for title-level hold");
       return completedFuture(checkPolicyForTitleLevelHold(records));
     }
 
@@ -247,10 +265,12 @@ public class CreateRequestService {
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckInstance(RequestAndRelatedRecords records) {
+    log.debug("shouldCheckInstance:: accumulated errors: {}", errorHandler::getErrors);
     return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID));
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
+    log.debug("shouldCheckItem:: accumulated errors: {}", errorHandler::getErrors);
     return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST,
       INVALID_ITEM_ID));
   }
