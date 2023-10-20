@@ -180,7 +180,7 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<JsonObject>> toRepresentation(ReorderRequestContext context) {
-    log.debug("toRepresentation:: parameters context: {}", context);
+    log.debug("toRepresentation:: parameters context: {}", () -> context);
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
     return completedFuture(succeeded(context.getRequestQueue()))
@@ -194,7 +194,8 @@ public class RequestQueueResource extends Resource {
    * @return Either instanceId or itemId parameter name depending on the queue type
    */
   private String getIdParameterNameByQueueType(RequestQueueType requestQueueType) {
-    log.debug("getIdParameterNameByQueueType:: parameters requestQueueType: {}", requestQueueType);
+    log.debug("getIdParameterNameByQueueType:: parameters requestQueueType: {}",
+      () -> requestQueueType);
     if (requestQueueType == FOR_INSTANCE) {
       return INSTANCE_ID_PARAM_NAME;
     } else {

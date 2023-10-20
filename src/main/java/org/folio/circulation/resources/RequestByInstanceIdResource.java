@@ -186,7 +186,7 @@ public class RequestByInstanceIdResource extends Resource {
           }
         }
         instanceRequestPackage.setItemsWithoutLoans(itemsWithoutLoansList);
-        log.debug("getLoanItems:: result: {}", () -> LogUtil.mapAsString(itemDueDateMap));
+        log.debug("getLoanItems:: result: {}", () -> mapAsString(itemDueDateMap));
 
         return succeeded(itemDueDateMap);
       });
@@ -229,7 +229,7 @@ public class RequestByInstanceIdResource extends Resource {
         }
         instanceRequestPackage.setItemsWithoutRequests(itemsWithoutRequestQueues);
         instanceRequestPackage.setItemRequestQueueMap(itemQueueMap);
-        log.debug("getRequestQueues:: result: {}", itemQueueMap);
+        log.debug("getRequestQueues:: result: {}", () -> mapAsString(itemQueueMap));
 
         return succeeded(itemQueueMap);
     });
@@ -381,7 +381,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getInstanceLevelRequest();
     log.debug("instanceToItemRequests:: requestByInstanceIdRequest: {}",
-      requestByInstanceIdRequest);
+      () -> requestByInstanceIdRequest);
     final List<Item> combinedItems = requestRecords.getCombinedSortedItemsList();
 
     if (combinedItems == null || combinedItems.isEmpty()) {
