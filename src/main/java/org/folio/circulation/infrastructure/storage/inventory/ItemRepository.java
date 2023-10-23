@@ -36,6 +36,7 @@ import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.infrastructure.storage.CirculationItemRepository;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
@@ -61,6 +62,7 @@ public class ItemRepository {
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
+  private final CirculationItemRepository circulationItemRepository;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -69,7 +71,8 @@ public class ItemRepository {
         new ServicePointRepository(clients)),
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
-      new LoanTypeRepository(clients.loanTypesStorage()));
+      new LoanTypeRepository(clients.loanTypesStorage()),
+      new CirculationItemRepository(clients.circulationItemClient()));
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -115,6 +118,11 @@ public class ItemRepository {
       write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
     }
 
+    if(item.isDCBItem()){
+      return circulationItemRepository.updateItem(item.getItemId(), updatedItemRepresentation)
+        .thenApply(noContentRecordInterpreter(item)::flatMap)
+        .thenCompose(x -> ofAsync(() -> item));
+    }
     return itemsClient.put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
@@ -140,8 +148,19 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
+
+    final var mapper = new ItemMapper();
+
     return fetchItemByBarcode(barcode)
-      .thenComposeAsync(this::fetchItemRelatedRecords);
+      .thenComposeAsync(item -> {
+        if (item == null || !item.value().isFound()) {
+          return circulationItemRepository
+            .findCirculationItemByBarcode(barcode)
+            .thenApply(mapResult(identityMap::add))
+            .thenApply(r -> r.map(mapper::toDomain));
+        }
+        return completedFuture(item);
+      }).thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
