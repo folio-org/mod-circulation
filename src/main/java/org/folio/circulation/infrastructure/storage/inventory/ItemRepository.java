@@ -14,6 +14,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -148,26 +149,23 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
-
     return fetchItemByBarcode(barcode)
-      .thenComposeAsync(itemResult -> ifItemNotFoundThenFetchCirculationItem(itemResult, barcode))
+      .thenComposeAsync(itemResult -> itemResult.after(when(
+        item -> ofAsync(item::isNotFound),
+        item -> fetchCirculationItem(barcode),
+        item -> completedFuture(itemResult)
+      )))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
-  private CompletableFuture<Result<Item>> ifItemNotFoundThenFetchCirculationItem(
-    Result<Item> itemResult, String barcode) {
+  private CompletableFuture<Result<Item>> fetchCirculationItem(String barcode) {
 
     final var mapper = new ItemMapper();
 
-    return itemResult.after(item -> {
-        if (!item.isFound()) {
-          return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
-            .fetchWithQueryStringParameters(Map.of("barcode", barcode))
-            .thenApply(mapResult(identityMap::add))
-            .thenApply(r -> r.map(mapper::toDomain));
-        }
-        return completedFuture(itemResult);
-      });
+    return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
+      .fetchWithQueryStringParameters(Map.of("barcode", barcode))
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(r -> r.map(mapper::toDomain));
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
