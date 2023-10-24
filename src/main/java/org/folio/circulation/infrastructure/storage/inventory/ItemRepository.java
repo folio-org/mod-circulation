@@ -118,7 +118,7 @@ public class ItemRepository {
       write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
     }
 
-    if(item.isDcbItem()){
+    if (item.isDcbItem()){
       return circulationItemClient.put(item.getItemId(), updatedItemRepresentation)
         .thenApply(noContentRecordInterpreter(item)::flatMap)
         .thenCompose(x -> ofAsync(() -> item));
@@ -149,18 +149,25 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
 
+    return fetchItemByBarcode(barcode)
+      .thenComposeAsync(itemResult -> ifItemNotFoundThenFetchCirculationItem(itemResult, barcode))
+      .thenComposeAsync(this::fetchItemRelatedRecords);
+  }
+
+  private CompletableFuture<Result<Item>> ifItemNotFoundThenFetchCirculationItem(
+    Result<Item> itemResult, String barcode) {
+
     final var mapper = new ItemMapper();
 
-    return fetchItemByBarcode(barcode)
-      .thenComposeAsync(item -> {
-        if (item == null || !item.value().isFound()) {
+    return itemResult.after(item -> {
+        if (!item.isFound()) {
           return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
             .fetchWithQueryStringParameters(Map.of("barcode", barcode))
             .thenApply(mapResult(identityMap::add))
             .thenApply(r -> r.map(mapper::toDomain));
         }
-        return completedFuture(item);
-      }).thenComposeAsync(this::fetchItemRelatedRecords);
+        return completedFuture(itemResult);
+      });
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
