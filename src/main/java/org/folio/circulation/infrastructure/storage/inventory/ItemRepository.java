@@ -22,6 +22,7 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -36,7 +37,6 @@ import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.infrastructure.storage.CirculationItemRepository;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
@@ -62,7 +62,7 @@ public class ItemRepository {
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
-  private final CirculationItemRepository circulationItemRepository;
+  private final CollectionResourceClient circulationItemClient;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -72,7 +72,7 @@ public class ItemRepository {
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
       new LoanTypeRepository(clients.loanTypesStorage()),
-      new CirculationItemRepository(clients.circulationItemClient()));
+      clients.circulationItemClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -118,8 +118,8 @@ public class ItemRepository {
       write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
     }
 
-    if(item.isDCBItem()){
-      return circulationItemRepository.updateItem(item.getItemId(), updatedItemRepresentation)
+    if(item.isDcbItem()){
+      return circulationItemClient.put(item.getItemId(), updatedItemRepresentation)
         .thenApply(noContentRecordInterpreter(item)::flatMap)
         .thenCompose(x -> ofAsync(() -> item));
     }
@@ -154,8 +154,8 @@ public class ItemRepository {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(item -> {
         if (item == null || !item.value().isFound()) {
-          return circulationItemRepository
-            .findCirculationItemByBarcode(barcode)
+          return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
+            .fetchWithQueryStringParameters(Map.of("barcode", barcode))
             .thenApply(mapResult(identityMap::add))
             .thenApply(r -> r.map(mapper::toDomain));
         }

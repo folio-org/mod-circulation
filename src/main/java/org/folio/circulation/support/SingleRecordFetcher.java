@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -67,6 +68,18 @@ public class SingleRecordFetcher<T> {
     requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
     return client.get(id)
+      .thenApply(flatMapResult(interpreter::apply))
+      .exceptionally(CommonFailures::failedDueToServerError);
+  }
+
+  public CompletableFuture<Result<T>> fetchWithQueryStringParameters(Map<String, String> queryParameters) {
+    if (log.isInfoEnabled()) {
+      log.info("Fetching {} with query parameters: {}", recordType, sanitizeLogParameter(queryParameters.toString()));
+    }
+
+    requireNonNull(queryParameters, format("Cannot fetch  %s with null parameters", recordType));
+
+    return client.getManyWithQueryStringParameters(queryParameters)
       .thenApply(flatMapResult(interpreter::apply))
       .exceptionally(CommonFailures::failedDueToServerError);
   }

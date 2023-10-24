@@ -399,7 +399,7 @@ public class Item {
       this.instance, this.materialType, this.loanType, this.description);
   }
 
-  public boolean isDCBItem(){
+  public boolean isDcbItem(){
     return getBooleanProperty(itemRepresentation, "dcbItem");
   }
 }

@@ -24,7 +24,6 @@ import org.folio.circulation.domain.ItemDescription;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
-import org.folio.circulation.infrastructure.storage.CirculationItemRepository;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
@@ -94,7 +93,6 @@ class ItemRepositoryTests {
     final var instanceRepository = mock(InstanceRepository.class);
     final var holdingsRepository = mock(HoldingsRepository.class);
     final var loanTypeRepository = mock(LoanTypeRepository.class);
-    final var circulationItemRepository = mock(CirculationItemRepository.class);
 
     when(locationRepository.getEffectiveLocation(any()))
       .thenReturn(ofAsync(Location::unknown));
@@ -110,7 +108,7 @@ class ItemRepositoryTests {
 
     return new ItemRepository(itemsClient, locationRepository,
       materialTypeRepository, instanceRepository,
-      holdingsRepository, loanTypeRepository, circulationItemRepository);
+      holdingsRepository, loanTypeRepository, itemsClient);
   }
 
   private Item dummyItem() {
