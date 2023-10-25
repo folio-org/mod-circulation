@@ -101,7 +101,6 @@ class ItemRepositoryTests {
 
     when(itemsClient.getMany(any(), any())).thenReturn(Result.ofAsync(
       () -> new Response(200, emptyResult.toString(), "application/json")));
-
     when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(Result.ofAsync(
       () -> new Response(200, circulationItemJson.toString(), "application/json")));
 
