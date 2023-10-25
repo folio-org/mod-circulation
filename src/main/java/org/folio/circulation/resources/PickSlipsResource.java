@@ -9,19 +9,23 @@ import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCrite
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -65,6 +69,7 @@ public class PickSlipsResource extends Resource {
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
 
   private static final PageLimit LOCATIONS_LIMIT = PageLimit.oneThousand();
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final String rootPath;
 
@@ -113,6 +118,8 @@ public class PickSlipsResource extends Resource {
   private CompletableFuture<Result<MultipleRecords<Location>>> fetchLocationsForServicePoint(
     UUID servicePointId, Clients clients) {
 
+    log.debug("fetchLocationsForServicePoint:: parameters servicePointId: {}", servicePointId);
+
     return findWithCqlQuery(clients.locationsStorage(), LOCATIONS_KEY, new LocationMapper()::toDomain)
       .findByQuery(exactMatch(PRIMARY_SERVICE_POINT_KEY, servicePointId.toString()), LOCATIONS_LIMIT);
   }
@@ -121,6 +128,8 @@ public class PickSlipsResource extends Resource {
     MultipleRecords<Location> multipleLocations,
     ItemRepository itemRepository, LocationRepository locationRepository) {
 
+    log.debug("fetchPagedItemsForLocations:: parameters multipleLocations: {}",
+      () -> multipleRecordsAsString(multipleLocations));
     Collection<Location> locations = multipleLocations.getRecords();
 
     Set<String> locationIds = locations.stream()
@@ -129,6 +138,8 @@ public class PickSlipsResource extends Resource {
       .collect(toSet());
 
     if (locationIds.isEmpty()) {
+      log.info("fetchPagedItemsForLocations:: locationIds is empty");
+
       return completedFuture(succeeded(emptyList()));
     }
 
@@ -143,6 +154,9 @@ public class PickSlipsResource extends Resource {
     MultipleRecords<Item> items, Collection<Location> locationsForServicePoint,
     LocationRepository locationRepository) {
 
+    log.debug("fetchLocationDetailsForItems:: parameters items: {}",
+      () -> multipleRecordsAsString(items));
+
     Set<String> locationIdsFromItems = items.toKeys(Item::getEffectiveLocationId);
 
     Set<Location> locationsForItems = locationsForServicePoint.stream()
@@ -150,6 +164,8 @@ public class PickSlipsResource extends Resource {
       .collect(toSet());
 
     if (locationsForItems.isEmpty()) {
+      log.info("fetchLocationDetailsForItems:: locationsForItems is empty");
+
       return completedFuture(succeeded(emptyList()));
     }
 
@@ -162,6 +178,9 @@ public class PickSlipsResource extends Resource {
 
   private Result<Collection<Item>> matchLocationsToItems(
     MultipleRecords<Item> items, Collection<Location> locations) {
+
+    log.debug("matchLocationsToItems:: parameters items: {}, locations: {}",
+      () -> multipleRecordsAsString(items), () -> collectionAsString(locations));
 
     Map<String, Location> locationsMap = locations.stream()
       .collect(toMap(Location::getId, identity()));
@@ -182,6 +201,8 @@ public class PickSlipsResource extends Resource {
       .collect(toSet());
 
     if(itemIds.isEmpty()) {
+      log.info("fetchOpenPageRequestsForItems:: itemIds is empty");
+
       return completedFuture(succeeded(MultipleRecords.empty()));
     }
 
@@ -207,6 +228,7 @@ public class PickSlipsResource extends Resource {
   }
 
   private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
+    log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
       .map(TemplateContextUtil::createStaffSlipContext)
       .collect(Collectors.toList());
@@ -216,6 +238,4 @@ public class PickSlipsResource extends Resource {
 
     return succeeded(jsonRepresentations);
   }
-
-
 }

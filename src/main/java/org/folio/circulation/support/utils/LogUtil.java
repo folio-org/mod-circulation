@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
@@ -103,6 +104,23 @@ public class LogUtil {
     } else {
       return format("result(%s)", result.value() == null ? "null" : result.value());
     }
+  }
+
+  public static <T> Result<T> logResult(Result<T> result, String methodName) {
+    return logResult(result, methodName, Level.INFO, Level.WARN);
+  }
+
+  public static <T> Result<T> logResult(Result<T> result, String methodName,
+    Level successLevel, Level failureLevel) {
+
+    if (result == null) {
+      log.log(Level.WARN, "{}:: result is null", methodName);
+    } else if (result.failed()) {
+      log.log(failureLevel, "{}:: failed result: {}", methodName, result.cause());
+    } else if (result.succeeded()) {
+      log.log(successLevel, "{}:: successful result: {}", methodName, result.value());
+    }
+    return result;
   }
 
   private static String plural(int number) {
