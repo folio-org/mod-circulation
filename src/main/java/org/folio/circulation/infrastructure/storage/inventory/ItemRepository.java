@@ -156,7 +156,6 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<Item>> fetchCirculationItemByBarcode(String barcode) {
-
     final var mapper = new ItemMapper();
 
     return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
