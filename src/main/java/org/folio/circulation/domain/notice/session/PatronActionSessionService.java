@@ -32,7 +32,6 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.combiner.LoanNoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -55,15 +54,13 @@ public class PatronActionSessionService {
 
   private final PatronActionSessionRepository patronActionSessionRepository;
   private final ImmediatePatronNoticeService patronNoticeService;
-  private final LoanRepository loanRepository;
   protected final EventPublisher eventPublisher;
 
   public static PatronActionSessionService using(Clients clients,
-    PatronActionSessionRepository patronActionSessionRepository, LoanRepository loanRepository) {
+    PatronActionSessionRepository patronActionSessionRepository) {
 
     return new PatronActionSessionService(patronActionSessionRepository,
       new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
-      loanRepository,
       new EventPublisher(clients.pubSubPublishingService()));
   }
 
@@ -126,7 +123,6 @@ public class PatronActionSessionService {
 
     return ofAsync(() -> sessions)
       .thenApply(mapResult(this::discardInvalidSessions))
-      .thenCompose(r -> r.after(this::fetchLatestPatronInfoAddedComment))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(ignored -> deleteSessions(sessions));
   }
@@ -196,19 +192,6 @@ public class PatronActionSessionService {
       .thenApply(mapResult(v -> sessions));
   }
 
-  private CompletableFuture<Result<List<PatronSessionRecord>>> fetchLatestPatronInfoAddedComment(
-    List<PatronSessionRecord> sessions) {
-    List<CompletableFuture<PatronSessionRecord>> futures = new ArrayList<>();
-
-    sessions.forEach(s -> futures.add(loanRepository.fetchLatestPatronInfoAddedComment(s.getLoan())
-      .thenApply(r -> s.withLoan(r.value()))));
-
-    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> succeeded(futures.stream()
-        .map(CompletableFuture::join)
-        .collect(Collectors.toList())));
-  }
-
   private CompletableFuture<Result<Void>> publishNoticeErrorEvent(
     List<PatronSessionRecord> sessions, String errorMessage) {
 
@@ -231,13 +214,13 @@ public class PatronActionSessionService {
     return succeeded(null);
   }
 
-  private List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
+  private static List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
     return sessions.stream()
-      .map(this::buildPatronNoticeEvent)
+      .map(PatronActionSessionService::buildPatronNoticeEvent)
       .collect(Collectors.toList());
   }
 
-  private PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
+  private static PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
     Loan loan = session.getLoan();
 
     return new PatronNoticeEventBuilder()
