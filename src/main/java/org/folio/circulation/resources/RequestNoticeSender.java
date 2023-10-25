@@ -147,16 +147,6 @@ public class RequestNoticeSender {
     return succeeded(records);
   }
 
-  private CompletableFuture<Result<Request>> fetchLatestPatronInfoAddedComment(Request request) {
-    log.debug("fetchLatestPatronInfoAddedComment:: parameters request: {}", () -> request);
-    if(request.hasLoan()){
-      return loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan())
-        .thenApply(r -> r.map(request::withLoan));
-    } else {
-      return CompletableFuture.completedFuture(succeeded(request));
-    }
-  }
-
   public Result<CheckInContext> sendNoticeOnRequestAwaitingPickup(CheckInContext context) {
     log.debug("sendNoticeOnRequestAwaitingPickup:: parameters context: {}", () -> context);
     final Item item = context.getItem();
