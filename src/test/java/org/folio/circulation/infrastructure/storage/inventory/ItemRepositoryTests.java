@@ -103,8 +103,7 @@ class ItemRepositoryTests {
     when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(Result.ofAsync(
       () -> new Response(200, circulationItemJson.toString(), "application/json")));
 
-
-    assertThat(get(repository.fetchByBarcode(itemId)).value(), is(itemId));
+    assertThat(get(repository.fetchByBarcode(itemId)).value().getItemId(), is(itemId));
   }
 
   private void mockedClientGet(CollectionResourceClient client, String body) {
