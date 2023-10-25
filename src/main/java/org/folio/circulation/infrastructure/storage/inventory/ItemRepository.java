@@ -167,15 +167,13 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
-      .thenComposeAsync(itemResult -> itemResult.after(when(
-        item -> ofAsync(item::isNotFound), item -> fetchCirculationItem(itemId),
-        item -> completedFuture(itemResult)
+      .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
+        item -> fetchCirculationItem(itemId), item -> completedFuture(itemResult)
       )))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
   private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
-
     final var mapper = new ItemMapper();
 
     return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
