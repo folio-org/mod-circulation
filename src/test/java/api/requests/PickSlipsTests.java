@@ -39,6 +39,8 @@ import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 
+import com.neovisionaries.i18n.CountryCode;
+
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
@@ -228,7 +230,7 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("city"), is(address.getCity()));
     assertThat(requesterContext.getString("region"), is(address.getRegion()));
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
-    assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
+    assertThat(requesterContext.getString("countryId"), is(CountryCode.getByCode(address.getCountryId()).getName()));
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
     assertThat(requesterContext.getString("departments").split("; "),
       arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));

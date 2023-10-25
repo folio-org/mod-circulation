@@ -29,6 +29,8 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.utils.ClockUtil;
 
+import com.neovisionaries.i18n.CountryCode;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -414,7 +416,7 @@ public class TemplateContextUtil {
           .with(UserContext.CITY, address.getString("city", null))
           .with(UserContext.REGION, address.getString("region", null))
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.COUNTRY_ID, address.getString("countryId", null))
+          .with(UserContext.COUNTRY_ID, CountryCode.getByCode(address.getString("countryId", null)).getName())
           .with(UserContext.ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
@@ -429,7 +431,7 @@ public class TemplateContextUtil {
           .with(UserContext.PRIMARY_ADDRESS_CITY, address.getString("city", null))
           .with(UserContext.PRIMARY_ADDRESS_REGION, address.getString("region", null))
           .with(UserContext.PRIMARY_ADDRESS_POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, address.getString("countryId", null))
+          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, CountryCode.getByCode(address.getString("countryId", null)).getName())
           .with(UserContext.PRIMARY_ADDRESS_ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
