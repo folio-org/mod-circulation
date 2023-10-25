@@ -88,7 +88,6 @@ class ItemRepositoryTests {
     final var itemsClient = mock(CollectionResourceClient.class);
     final var circulationItemsClient = mock(CollectionResourceClient.class);
     final var repository = createRepository(itemsClient, circulationItemsClient);
-
     final var itemId = UUID.randomUUID().toString();
 
     final var circulationItemJson = new JsonObject()
