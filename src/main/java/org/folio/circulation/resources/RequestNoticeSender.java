@@ -105,11 +105,9 @@ public class RequestNoticeSender {
       .count();
 
     if (request.hasItemId()) {
-      fetchLatestPatronInfoAddedComment(request)
-        .thenApply(r -> r.after(this::sendConfirmationNoticeForRequestWithItemId));
+      sendConfirmationNoticeForRequestWithItemId(request);
     } else {
-      fetchLatestPatronInfoAddedComment(request)
-        .thenApply(r -> r.after(this::sendConfirmationNoticeForRequestWithoutItemId));
+      sendConfirmationNoticeForRequestWithoutItemId(request);
     }
 
     return succeeded(records);
@@ -131,8 +129,7 @@ public class RequestNoticeSender {
   }
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestMoved(RequestAndRelatedRecords records) {
-    fetchLatestPatronInfoAddedComment(records.getRequest())
-      .thenApply(r -> r.after(this::sendNoticeOnRecall));
+    sendNoticeOnRecall(records.getRequest());
 
     return succeeded(records);
   }
@@ -143,7 +140,6 @@ public class RequestNoticeSender {
     log.debug("sendNoticeOnRequestUpdated:: parameters records: {}", () -> records);
     if (records.getRequest().getStatus() == RequestStatus.CLOSED_CANCELLED) {
       requestRepository.loadCancellationReason(records.getRequest())
-        .thenCompose(r -> r.after(this::fetchLatestPatronInfoAddedComment))
         .thenApply(r -> r.map(records::withRequest))
         .thenAccept(r -> r.next(this::sendNoticeOnRequestCancelled));
     }
@@ -213,7 +209,6 @@ public class RequestNoticeSender {
     PatronNoticeEvent event = createPatronNoticeEvent(request, getEventType(request));
 
     return patronNoticeService.acceptNoticeEvent(event)
-      .whenComplete((r, t) -> fetchLatestPatronInfoAddedComment(request))
       .whenComplete((r, t) -> sendNoticeOnRecall(request));
   }
 
@@ -252,9 +247,7 @@ public class RequestNoticeSender {
     UUID templateId = templateIdExtractor.apply(tlrSettings);
 
     if (request.isTitleLevel() && tlrSettings.isTitleLevelRequestsFeatureEnabled() && templateId != null) {
-      return fetchLatestPatronInfoAddedComment(request)
-        .thenApply(r -> sendNotice(request, templateId, eventType))
-        .join();
+      return sendNotice(request, templateId, eventType);
     }
 
     return emptyAsync();
@@ -283,7 +276,6 @@ public class RequestNoticeSender {
     return ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
       .thenCompose(r -> r.combineAfter(this::fetchRequester, Request::withRequester))
-      .thenCompose(r -> r.after(this::fetchLatestPatronInfoAddedComment))
       .thenApply(r -> r.mapFailure(failure -> publishNoticeErrorEvent(failure, request)))
       .thenApply(r -> r.map(req -> createPatronNoticeEvent(req, AVAILABLE)))
       .thenCompose(r -> r.after(patronNoticeService::acceptNoticeEvent));
