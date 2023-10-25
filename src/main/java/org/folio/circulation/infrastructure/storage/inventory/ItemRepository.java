@@ -150,8 +150,7 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
-        item -> fetchCirculationItemByBarcode(barcode), item -> completedFuture(itemResult)
-      )))
+        item -> fetchCirculationItemByBarcode(barcode), item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
