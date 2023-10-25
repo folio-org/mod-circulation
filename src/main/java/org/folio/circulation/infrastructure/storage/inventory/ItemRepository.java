@@ -168,8 +168,7 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
-        item -> fetchCirculationItem(itemId), item -> completedFuture(itemResult)
-      )))
+        item -> fetchCirculationItem(itemId), item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
