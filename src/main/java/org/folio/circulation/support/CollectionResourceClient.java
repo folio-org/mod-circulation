@@ -88,7 +88,7 @@ public class CollectionResourceClient implements GetManyRecordsClient {
     return client.get(url);
   }
 
-  public CompletableFuture<Result<Response>> getManyWithQueryStringParameters(Map<String, String> queryParameters){
+  public CompletableFuture<Result<Response>> getManyWithQueryStringParameters(Map<String, String> queryParameters) {
     return getManyWithRawQueryStringParameters(queryParameters.entrySet().stream()
       .map(entry -> entry.getKey() + "=" + entry.getValue())
       .reduce((a, b) -> a + "&" + b)
