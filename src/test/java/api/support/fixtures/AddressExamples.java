@@ -24,8 +24,8 @@ public class AddressExamples {
       null, "London", "London region", "123456", "UK");
   }
 
-  public static Address mainStreet() {
+  public static Address mainStreet(String countryCode) {
     return new Address(HOME_ADDRESS_TYPE, "16 Main St",
-      "Apt 3a", "Northampton", "MA", "01060", "US");
+      "Apt 3a", "Northampton", "MA", "01060", countryCode);
   }
 }

@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -25,7 +24,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -38,6 +36,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
 import com.neovisionaries.i18n.CountryCode;
 
@@ -50,6 +51,7 @@ import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 import api.support.matchers.UUIDMatcher;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -124,13 +126,17 @@ class PickSlipsTests extends APITests {
     assertResponseHasItems(response, 0);
   }
 
-  @Test
-  void responseContainsPickSlipWithAllAvailableTokens() {
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "US",
+    StringUtils.EMPTY
+  })
+  void responseContainsPickSlipWithAllAvailableTokens(String countryCode) {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
-    Address address = AddressExamples.mainStreet();
+    Address address = AddressExamples.mainStreet(countryCode);
     var departmentId1 = UUID.randomUUID().toString();
     var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
@@ -230,7 +236,8 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("city"), is(address.getCity()));
     assertThat(requesterContext.getString("region"), is(address.getRegion()));
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
-    assertThat(requesterContext.getString("countryId"), is(CountryCode.getByCode(address.getCountryId()).getName()));
+    assertThat(requesterContext.getString("countryId"), is(address.getCountryId().isEmpty() ?
+      null : CountryCode.getByCode(address.getCountryId()).getName()));
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
     assertThat(requesterContext.getString("departments").split("; "),
       arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
