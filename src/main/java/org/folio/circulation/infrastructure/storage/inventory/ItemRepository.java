@@ -72,8 +72,7 @@ public class ItemRepository {
         new ServicePointRepository(clients)),
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
-      new LoanTypeRepository(clients.loanTypesStorage()),
-      clients.circulationItemClient());
+      new LoanTypeRepository(clients.loanTypesStorage()), clients.circulationItemClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
