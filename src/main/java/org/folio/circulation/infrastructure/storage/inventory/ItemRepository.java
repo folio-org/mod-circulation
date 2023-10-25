@@ -151,14 +151,13 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode)
       .thenComposeAsync(itemResult -> itemResult.after(when(
-        item -> ofAsync(item::isNotFound),
-        item -> fetchCirculationItem(barcode),
+        item -> ofAsync(item::isNotFound), item -> fetchCirculationItemByBarcode(barcode),
         item -> completedFuture(itemResult)
       )))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
-  private CompletableFuture<Result<Item>> fetchCirculationItem(String barcode) {
+  private CompletableFuture<Result<Item>> fetchCirculationItemByBarcode(String barcode) {
 
     final var mapper = new ItemMapper();
 
@@ -170,7 +169,21 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
+      .thenComposeAsync(itemResult -> itemResult.after(when(
+        item -> ofAsync(item::isNotFound), item -> fetchCirculationItem(itemId),
+        item -> completedFuture(itemResult)
+      )))
       .thenComposeAsync(this::fetchItemRelatedRecords);
+  }
+
+  private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
+
+    final var mapper = new ItemMapper();
+
+    return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
+      .fetch(id)
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(r -> r.map(mapper::toDomain));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLocations(
