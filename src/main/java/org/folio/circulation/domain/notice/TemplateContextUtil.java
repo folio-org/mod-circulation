@@ -417,7 +417,7 @@ public class TemplateContextUtil {
           .with(UserContext.CITY, address.getString("city", null))
           .with(UserContext.REGION, address.getString("region", null))
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.COUNTRY_ID, getCountryNameByCountryId(address.getString("countryId", null)))
+          .with(UserContext.COUNTRY_ID, getCountryNameByCountryId(address.getString(COUNTRY_ID, null)))
           .with(UserContext.ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
@@ -439,7 +439,7 @@ public class TemplateContextUtil {
           .with(UserContext.PRIMARY_ADDRESS_CITY, address.getString("city", null))
           .with(UserContext.PRIMARY_ADDRESS_REGION, address.getString("region", null))
           .with(UserContext.PRIMARY_ADDRESS_POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, getCountryNameByCountryId(address.getString("countryId", null)))
+          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, getCountryNameByCountryId(address.getString(COUNTRY_ID, null)))
           .with(UserContext.PRIMARY_ADDRESS_ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
