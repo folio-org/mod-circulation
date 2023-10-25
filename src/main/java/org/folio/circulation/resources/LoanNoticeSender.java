@@ -21,7 +21,6 @@ import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -38,14 +37,12 @@ public class LoanNoticeSender {
   private final ImmediatePatronNoticeService patronNoticeService;
   private final LoanPolicyRepository loanPolicyRepository;
   private final EventPublisher eventPublisher;
-  private final LoanRepository loanRepository;
 
-  public static LoanNoticeSender using(Clients clients, LoanRepository loanRepository) {
+  public static LoanNoticeSender using(Clients clients) {
     return new LoanNoticeSender(
       new SingleImmediatePatronNoticeService(clients),
       new LoanPolicyRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService()),
-      loanRepository
+      new EventPublisher(clients.pubSubPublishingService())
     );
   }
 
@@ -78,8 +75,7 @@ public class LoanNoticeSender {
     return succeeded(loan)
       .next(this::validateLoan)
       .mapFailure(failure -> publishNoticeErrorEvent(failure, loan, eventType))
-      .next(l -> loanRepository.fetchLatestPatronInfoAddedComment(l).join())
-      .after(l -> sendNotice(l, eventType));
+      .after(l -> sendNotice(loan, eventType));
   }
 
   private Result<Loan> validateLoan(Loan loan) {
