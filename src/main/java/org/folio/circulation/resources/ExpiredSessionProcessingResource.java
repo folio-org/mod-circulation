@@ -63,7 +63,7 @@ public class ExpiredSessionProcessingResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final PatronActionSessionService patronSessionService
       = PatronActionSessionService.using(clients,
-      PatronActionSessionRepository.using(clients, loanRepository, userRepository), loanRepository);
+      PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final PatronExpiredSessionRepository patronExpiredSessionRepository
       = PatronExpiredSessionRepository.using(clients);

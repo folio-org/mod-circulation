@@ -315,8 +315,6 @@ public class TemplateContextUtil {
       }
     }
 
-    write(loanContext, "additionalInfo", loan.getLatestPatronInfoAddedComment());
-
     return loanContext;
   }
 
