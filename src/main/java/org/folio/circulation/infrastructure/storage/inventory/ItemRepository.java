@@ -119,7 +119,7 @@ public class ItemRepository {
       write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
     }
 
-    if (item.isDcbItem()){
+    if (item.isDcbItem()) {
       return circulationItemClient.put(item.getItemId(), updatedItemRepresentation)
         .thenApply(noContentRecordInterpreter(item)::flatMap)
         .thenCompose(x -> ofAsync(() -> item));
