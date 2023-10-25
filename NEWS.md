@@ -1,3 +1,7 @@
+## 24.0.1 2023-10-25
+
+* Revert CIRC-1793 - remove support for token `loan.additionalInfo` in patron notices (CIRC-1942)
+
 ## 24.0.0 2023-10-11
 
 * Fix NPE when user without barcode tries to check out an item that is already requested (CIRC-1550)
