@@ -8,11 +8,14 @@ import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronI
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
@@ -423,11 +426,19 @@ public class TemplateContextUtil {
     }
 
     public String getCountryNameByCodeIgnoreCase(String code) {
-      if (code == null) {
+      String countryName;
+      if (StringUtils.isEmpty(code)) {
         return null;
       }
-      Locale loc = new Locale("",code);
-      return loc.getDisplayName();
+        Locale loc = new Locale("",code);
+        if (Arrays.stream(Locale.getISOCountries()).collect(Collectors.toList()).contains(code)) {
+          countryName = loc.getDisplayName();
+        }
+        else {
+          log.info("Invalid country code " + code);
+          throw new IllegalArgumentException("Not a valid country code for the provided locale.");
+        }
+      return countryName;
     }
 
     public UserContext withPrimaryAddressProperties(JsonObject address) {
