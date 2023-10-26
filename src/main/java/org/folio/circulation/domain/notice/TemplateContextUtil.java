@@ -423,19 +423,16 @@ public class TemplateContextUtil {
     }
 
     public String getCountryNameByCodeIgnoreCase(String code) {
-      String countryName;
       if (StringUtils.isEmpty(code)) {
         return null;
       }
-        Locale loc = new Locale("",code);
-        if (Stream.of(Locale.getISOCountries()).toList().contains(code)) {
-          countryName = loc.getDisplayName();
-        }
-        else {
+      if (Stream.of(Locale.getISOCountries()).toList().contains(code)) {
+          return new Locale("",code).getDisplayName();
+      }
+      else {
           log.info("Invalid country code {}", code);
           throw new IllegalArgumentException("Not a valid country code to determine the country name.");
-        }
-      return countryName;
+      }
     }
 
     public UserContext withPrimaryAddressProperties(JsonObject address) {
