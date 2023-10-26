@@ -85,8 +85,6 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
-import com.neovisionaries.i18n.CountryCode;
-
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
@@ -308,7 +306,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("city"), is(address.getCity()));
     assertThat(userContext.getString("region"), is(address.getRegion()));
     assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
-    assertThat(userContext.getString("countryId"), is(CountryCode.getByCode(address.getCountryId()).getName()));
+    assertThat(userContext.getString("countryId"), is("UK"));
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
       ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));

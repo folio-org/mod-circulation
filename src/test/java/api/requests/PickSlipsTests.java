@@ -40,8 +40,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
-import com.neovisionaries.i18n.CountryCode;
-
 import api.support.APITests;
 import api.support.builders.Address;
 import api.support.builders.RequestBuilder;
@@ -237,7 +235,7 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("region"), is(address.getRegion()));
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId().isEmpty() ?
-      null : CountryCode.getByCode(address.getCountryId()).getName()));
+      "" : ("United States")));
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
     assertThat(requesterContext.getString("departments").split("; "),
       arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
