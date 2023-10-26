@@ -73,7 +73,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients,
-        PatronActionSessionRepository.using(clients, loanRepository, userRepository), loanRepository);
+        PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
 
