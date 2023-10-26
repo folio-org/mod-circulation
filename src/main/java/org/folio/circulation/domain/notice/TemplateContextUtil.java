@@ -430,7 +430,7 @@ public class TemplateContextUtil {
         return new Locale("",code).getDisplayName();
       }
       else {
-        log.info("Invalid country code {}", code);
+        log.info("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
         throw new IllegalArgumentException("Not a valid country code to determine the country name.");
       }
     }
