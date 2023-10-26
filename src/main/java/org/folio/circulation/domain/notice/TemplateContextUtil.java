@@ -427,11 +427,11 @@ public class TemplateContextUtil {
         return null;
       }
       if (Stream.of(Locale.getISOCountries()).toList().contains(code)) {
-          return new Locale("",code).getDisplayName();
+        return new Locale("",code).getDisplayName();
       }
       else {
-          log.info("Invalid country code {}", code);
-          throw new IllegalArgumentException("Not a valid country code to determine the country name.");
+        log.info("Invalid country code {}", code);
+        throw new IllegalArgumentException("Not a valid country code to determine the country name.");
       }
     }
 
