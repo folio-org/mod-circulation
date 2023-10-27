@@ -1,3 +1,7 @@
+## 24.0.2 2023-10-27
+
+* Partial revert of CIRC-1527: bring back the correct delay for scheduled Aged To Lost Fee charging job (CIRC-1947)
+
 ## 24.0.1 2023-10-25
 
 * Revert CIRC-1793 - remove support for token `loan.additionalInfo` in patron notices (CIRC-1942)
