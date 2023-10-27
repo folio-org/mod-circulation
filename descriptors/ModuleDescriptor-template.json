@@ -1016,10 +1016,8 @@
             "actual-cost-record-storage.actual-cost-records.item.post",
             "circulation-storage.loans-history.collection.get"
           ],
-          "schedule": {
-            "cron": "1 0 * * *",
-            "zone": "CET"
-          }
+          "unit": "minute",
+          "delay": "35"
         },
         {
           "methods": [
