@@ -426,13 +426,13 @@ public class TemplateContextUtil {
       if (StringUtils.isEmpty(code)) {
         return null;
       }
-      if (Stream.of(Locale.getISOCountries()).toList().contains(code)) {
-        return new Locale("",code).getDisplayName();
-      }
-      else {
-        log.info("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
+
+      if (!Stream.of(Locale.getISOCountries()).toList().contains(code)) {
+        log.error("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
         throw new IllegalArgumentException("Not a valid country code to determine the country name.");
       }
+
+      return new Locale("",code).getDisplayName();
     }
 
     public UserContext withPrimaryAddressProperties(JsonObject address) {

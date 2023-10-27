@@ -162,8 +162,8 @@ class PickSlipsTests extends APITests {
         .withPermanentLoanType(loanTypeResource.getId()));
 
     ZonedDateTime now = ClockUtil.getZonedDateTime();
-    checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
-    checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
+    var checkoutResource =  checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
+    var checkinResource = checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
     ZonedDateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
@@ -184,6 +184,8 @@ class PickSlipsTests extends APITests {
 
     if (StringUtils.isNoneEmpty(countryCode) && !countryCode.equalsIgnoreCase("US")) {
       assertThat(response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
+      assertEquals(true, response.getBody().
+        contains("IllegalArgumentException: Not a valid country code to determine the country name."));
     }
     else {
       assertThat(response.getStatusCode(), is(HTTP_OK));
