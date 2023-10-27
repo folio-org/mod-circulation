@@ -306,7 +306,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("city"), is(address.getCity()));
     assertThat(userContext.getString("region"), is(address.getRegion()));
     assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
-    assertThat(userContext.getString("countryId"), is(address.getCountryId()));
+    assertThat(userContext.getString("countryId"), is("United Kingdom"));
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
       ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
