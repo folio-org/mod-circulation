@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
@@ -22,8 +23,10 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -47,6 +50,8 @@ import lombok.val;
 
 class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   private final static UUID TEMPLATE_ID = UUID.randomUUID();
+
+  private static final String LOAN_INFO_ADDED = "testing patron info";
 
   @BeforeEach
   public void setUp() {
@@ -73,12 +78,16 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james, loanDate);
     IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james, loanDate);
+    addPatronInfoToLoan(nodToJamesLoan.getId().toString());
+    addPatronInfoToLoan(interestingTimesToJamesLoan.getId().toString());
 
     IndividualResource rebecca = usersFixture.rebecca();
     ItemResource temeraire = itemsFixture.basedUponTemeraire();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
     IndividualResource temeraireToRebeccaLoan = checkOutFixture.checkOutByBarcode(temeraire, rebecca, loanDate);
     IndividualResource dunkirkToRebeccaLoan = checkOutFixture.checkOutByBarcode(dunkirk, rebecca, loanDate);
+    addPatronInfoToLoan(temeraireToRebeccaLoan.getId().toString());
+    addPatronInfoToLoan(dunkirkToRebeccaLoan.getId().toString());
 
     verifyNumberOfScheduledNotices(4);
 
@@ -86,8 +95,9 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
-
-    final var loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
+    Map<String, Matcher<String>> matchers = getLoanPolicyContextMatchersForUnlimitedRenewals();
+    matchers.putAll(getLoanAdditionalInfoContextMatchers(LOAN_INFO_ADDED));
+    final var loanPolicyMatcher = toStringMatcher(matchers);
 
     final var noticeToJamesContextMatcher =
       getMultipleLoansContextMatcher(
@@ -443,6 +453,9 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     checkOutFixture.checkOutByBarcode(times, steve, loanDate.plusHours(4));
     IndividualResource uprootedToSteve = checkOutFixture.checkOutByBarcode(uprooted, steve, loanDate.plusHours(5));
     checkOutFixture.checkOutByBarcode(dunkirk, jessica, loanDate.plusHours(6));
+    addPatronInfoToLoan(nodToJames.getId().toString());
+    addPatronInfoToLoan(planetToJames.getId().toString());
+    addPatronInfoToLoan(uprootedToSteve.getId().toString());
 
     loansClient.delete(temeraireToJames);
     itemsClient.delete(times);
@@ -454,7 +467,9 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(dueDate.plusDays(1));
 
-    Matcher<? super String> loanPolicyMatcher = toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals());
+    Map<String, Matcher<String>> matchers = getLoanPolicyContextMatchersForUnlimitedRenewals();
+    matchers.putAll(getLoanAdditionalInfoContextMatchers(LOAN_INFO_ADDED));
+    Matcher<? super String> loanPolicyMatcher = toStringMatcher(matchers);
 
     Matcher<? super String> noticeToJamesContextMatcher =
       getMultipleLoansContextMatcher(
@@ -704,5 +719,10 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(scheduledNoticesNumber);
     verifyNumberOfPublishedEvents(NOTICE, sentNoticesNumber);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  private void addPatronInfoToLoan(String loanId){
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loanId,
+      "patronInfoAdded", LOAN_INFO_ADDED));
   }
 }
