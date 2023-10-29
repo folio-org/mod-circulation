@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateFormatUtil;
@@ -72,6 +73,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   private static final UUID UPON_AT_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID AFTER_RECURRING_TEMPLATE_ID = UUID.randomUUID();
+  private static final String LOAN_INFO_ADDED = "testing patron info";
 
   private static final ZonedDateTime LOAN_DATE = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
@@ -462,6 +464,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     var jessica = usersFixture.jessica();
 
     var jessicaNodLoan = checkOutFixture.checkOutByBarcode(basedUponNod, jessica);
+    addPatronInfoToLoan(jessicaNodLoan.getId().toString());
 
     usersClient.replace(borrower.getId(), new UserBuilder().withPatronGroupId(null));
     notices.get(1).put("loanId", jessicaNodLoan.getId());
@@ -687,6 +690,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     loanId = loan.getId();
 
+    addPatronInfoToLoan(loanId.toString());
+
     dueDate = DateFormatUtil.parseDateTime(loan.getJson().getString("dueDate"));
 
     verifyNumberOfScheduledNotices(patronNoticeConfigurations.length);
@@ -736,6 +741,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(checkoutResource));
     noticeContextMatchers.putAll(
       TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals());
+    noticeContextMatchers.putAll(
+      TemplateContextMatchers.getLoanAdditionalInfoContextMatchers(LOAN_INFO_ADDED));
 
     final var matchers = Stream.of(expectedTemplateIds)
       .map(templateId -> hasEmailNoticeProperties(userResource.getId(), templateId,
@@ -792,5 +799,10 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     assertThat(scheduledNotices, hasSize(noticeMatchers.length));
     assertThat(scheduledNotices, hasItems(noticeMatchers));
+  }
+
+  private void addPatronInfoToLoan(String loanId){
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loanId,
+      "patronInfoAdded", LOAN_INFO_ADDED));
   }
 }

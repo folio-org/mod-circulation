@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.FeeFineAction;
@@ -67,10 +68,15 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
   private static final Period AFTER_PERIOD = Period.days(1);
   private static final Period RECURRING_PERIOD = Period.hours(6);
   private static final String OVERDUE_FINE = "Overdue fine";
+  private static final String LOAN_INFO_ADDED = "testing patron info";
   private static final Map<NoticeTiming, UUID> TEMPLATE_IDS = new HashMap<>();
 
   private UUID checkInServicePointId;
   private UUID itemLocationId;
+
+  public OverdueFineScheduledNoticesProcessingTests() {
+    super(true, true);
+  }
 
   @BeforeEach
   void beforeEach() {
@@ -435,6 +441,7 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
       .getJsonObject("context").getJsonArray("feeCharges").getJsonObject(0).getJsonObject("loan");
     assertThat(loanInSentNotice.getString("numberOfRenewalsAllowed"), is("unlimited"));
     assertThat(loanInSentNotice.getString("numberOfRenewalsRemaining"), is("unlimited"));
+    assertThat(loanInSentNotice.getString("additionalInfo"), is(LOAN_INFO_ADDED));
 
     verifyNumberOfSentNotices(1);
     verifyNumberOfScheduledNotices(0);
@@ -669,6 +676,8 @@ class OverdueFineScheduledNoticesProcessingTests extends APITests {
     final ZonedDateTime checkInDate = checkOutDate.plusMonths(1);
 
     IndividualResource checkOutResponse = checkOutFixture.checkOutByBarcode(item, user, checkOutDate);
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(checkOutResponse.getId().toString(),
+      "patronInfoAdded", LOAN_INFO_ADDED));
     UUID loanId = UUID.fromString(checkOutResponse.getJson().getString("id"));
 
     switch (triggeringEvent) {

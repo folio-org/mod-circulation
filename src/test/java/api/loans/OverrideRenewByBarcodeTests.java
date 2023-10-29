@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -75,6 +76,10 @@ class OverrideRenewByBarcodeTests extends APITests {
   private static final String ITEM_IS_NOT_LOANABLE_MESSAGE = "item is not loanable";
   private static final String ACTION_COMMENT_KEY = "actionComment";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
+
+  public OverrideRenewByBarcodeTests() {
+    super(true, true);
+  }
 
   @Test
   void cannotOverrideRenewalWhenLoanPolicyDoesNotExist() {
@@ -703,12 +708,14 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
-    checkOutFixture.checkOutByBarcode(
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(UUID.randomUUID()));
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loan.getId().toString(),
+      "patronInfoAdded", "testing patron info"));
 
     final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(OVERRIDE_RENEWAL_PERMISSION);
     IndividualResource loanAfterRenewal =
@@ -727,6 +734,8 @@ class OverrideRenewByBarcodeTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRenewal));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       expectedRenewalLimit, expectedRenewalsRemaining));
+    noticeContextMatchers.putAll(
+      TemplateContextMatchers.getLoanAdditionalInfoContextMatchers("testing patron info"));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));

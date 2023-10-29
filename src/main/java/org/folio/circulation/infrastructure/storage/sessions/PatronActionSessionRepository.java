@@ -9,6 +9,7 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.SESSION_ID;
+import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.flatMapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -273,6 +274,7 @@ public class PatronActionSessionRepository {
     return loanRepository.findByIds(loanIds)
       .thenCompose(r -> r.after(this::fetchCampusesForLoanItems))
       .thenCompose(r -> r.after(this::fetchInstitutionsForLoanItems))
+      .thenCompose(r -> r.after(this::fetchLatestPatronInfoAddedComment))
       .thenCompose(r -> r.after(loanPolicyRepository::findLoanPoliciesForLoans))
       .thenApply(mapResult(loans -> setLoansForSessionRecords(sessionRecords, loans)));
   }
@@ -317,6 +319,12 @@ public class PatronActionSessionRepository {
     return locationRepository.getInstitutions(locations)
       .thenApply(mapResult(institutions ->
         loans.mapRecords(loan -> setInstitutionForLoanItem(loan, institutions))));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Loan>>> fetchLatestPatronInfoAddedComment(
+    MultipleRecords<Loan> loans) {
+    return allOf(loans.getRecords(), loanRepository::fetchLatestPatronInfoAddedComment)
+      .thenApply(r -> r.map(list -> new MultipleRecords<>(list, loans.getTotalRecords())));
   }
 
   private Loan setInstitutionForLoanItem(Loan loan, Map<String, Institution> institutions) {

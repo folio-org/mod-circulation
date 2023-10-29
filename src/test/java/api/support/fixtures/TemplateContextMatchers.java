@@ -36,6 +36,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
+import org.hamcrest.core.Is;
 
 public class TemplateContextMatchers {
 
@@ -149,6 +150,12 @@ public class TemplateContextMatchers {
   public static Map<String, Matcher<String>> getLoanContextMatchers(
     IndividualResource loanResource) {
     return getLoanContextMatchers(loanResource.getJson());
+  }
+
+  public static Map<String, Matcher<String>> getLoanAdditionalInfoContextMatchers(String info) {
+    Map<String, Matcher<String>> matchers = new HashMap<>();
+    matchers.put("loan.additionalInfo", Is.is(info));
+    return matchers;
   }
 
   public static Map<String, Matcher<String>> getLoanContextMatchers(

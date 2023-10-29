@@ -5,6 +5,7 @@ import static api.support.fixtures.TemplateContextMatchers.getItemContextMatcher
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getSingleFeeChargeContextMatcher;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.AccountMatchers.isAccount;
 import static api.support.matchers.ItemMatchers.isAvailable;
@@ -43,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.policy.Period;
@@ -87,6 +89,11 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
   public static final double PROCESSING_FEE_AMOUNT = 5;
   public static final double LOST_ITEM_FEE_PAYMENT_AMOUNT = LOST_ITEM_FEE_AMOUNT / 2;
   public static final double PROCESSING_FEE_PAYMENT_AMOUNT = PROCESSING_FEE_AMOUNT / 2;
+  private static final String LOAN_INFO_ADDED = "testing patron info";
+
+  public AgedToLostScheduledNoticesProcessingTests() {
+    super(true, true);
+  }
 
   @BeforeEach
   public void beforeEach() {
@@ -128,6 +135,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     final ZonedDateTime runTimeOfAfterNotices = TIMING_PERIOD.plusDate(runTimeOfUponAtNotice);
 
     final UUID loanId = agedToLostLoan.getLoanId();
+    addPatronInfoToLoan(loanId.toString());
 
     // before first run, all three scheduled notices should exist
     verifyNumberOfSentNotices(0);
@@ -196,6 +204,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
             .recurring(RECURRENCE_PERIOD)
             .create()
         )));
+    addPatronInfoToLoan(agedToLostLoan.getLoanId().toString());
 
     final ZonedDateTime firstRunTime = TIMING_PERIOD.plusDate(getAgedToLostDate(agedToLostLoan));
     final UUID loanId = agedToLostLoan.getLoanId();
@@ -227,6 +236,9 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
+      hasEmailNoticeProperties(agedToLostLoan.getUser().getId(), AFTER_RECURRING_TEMPLATE_ID,
+        getLoanAdditionalInfoContextMatchers(LOAN_INFO_ADDED))));
   }
 
   @Test
@@ -322,6 +334,7 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     UUID userId = agedToLostLoan.getUser().getId();
     UUID loanId = agedToLostLoan.getLoanId();
+    addPatronInfoToLoan(loanId.toString());
 
     final List<JsonObject> existingAccounts = accountsClient.getAll();
 
@@ -435,6 +448,8 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final UUID loanId = agedToLostLoan.getLoanId();
     final UUID userId = agedToLostLoan.getUser().getId();
+
+    addPatronInfoToLoan(loanId.toString());
 
     final List<JsonObject> existingAccounts = accountsClient.getAll();
 
@@ -728,7 +743,6 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
 
     final List<JsonObject> sentNotices = FakeModNotify.getSentPatronNotices();
     assertThat(sentNotices, hasSize(templateIds.size()));
-
     templateIds.forEach(templateId -> assertThat(sentNotices, hasItem(
         hasEmailNoticeProperties(userId, templateId, getBaseNoticeContextMatcher(agedToLostResult)))));
   }
@@ -751,7 +765,13 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     noticeContextMatchers.putAll(getUserContextMatchers(agedToLostResult.getUser()));
     noticeContextMatchers.putAll(getLoanContextMatchers(agedToLostResult.getLoan()));
     noticeContextMatchers.putAll(getItemContextMatchers(itemResource, true));
+    noticeContextMatchers.putAll(getLoanAdditionalInfoContextMatchers(LOAN_INFO_ADDED));
 
     return toStringMatcher(noticeContextMatchers);
+  }
+
+  private void addPatronInfoToLoan(String loanId){
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loanId,
+      "patronInfoAdded", LOAN_INFO_ADDED));
   }
 }
