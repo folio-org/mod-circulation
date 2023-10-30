@@ -218,7 +218,7 @@ public class UpdateRequestQueue {
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
 
-    log.debug("Using time zone {} and period {}",
+    log.info("Using time zone {} and period {}",
       tenantTimeZone,
       holdShelfExpiryPeriod.getInterval()
     );
@@ -365,9 +365,11 @@ public class UpdateRequestQueue {
 
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
       .addTo(now, holdShelfExpiryPeriod.getDuration());
-
+    log.info("calculateHoldShelfExpirationDate:: holdShelfExpirationDate: {}", holdShelfExpirationDate);
     if (holdShelfExpiryPeriod.isLongTermPeriod()) {
       holdShelfExpirationDate = atEndOfDay(holdShelfExpirationDate);
+      log.info("calculateHoldShelfExpirationDate:: long term period holdShelfExpirationDate: {}", holdShelfExpirationDate);
+
     }
 
     return holdShelfExpirationDate;
