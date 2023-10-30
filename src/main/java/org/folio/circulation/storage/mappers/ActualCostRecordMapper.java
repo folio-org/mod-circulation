@@ -1,6 +1,5 @@
 package org.folio.circulation.storage.mappers;
 
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
@@ -161,11 +160,11 @@ public class ActualCostRecordMapper {
         .withIdentifiers(getArrayProperty(instance, "identifiers").stream()
           .map(JsonObject.class::cast)
           .map(ActualCostRecordIdentifier::fromRepresentation)
-          .collect(toList()))
+          .toList())
         .withContributors(getArrayProperty(instance, "contributors").stream()
           .map(JsonObject.class::cast)
           .map(new ContributorMapper()::toDomain)
-          .collect(toList())),
+          .toList()),
       new ActualCostRecordFeeFine()
         .withAccountId(getProperty(feeFine, "accountId"))
         .withOwnerId(getProperty(feeFine, "ownerId"))
@@ -178,6 +177,6 @@ public class ActualCostRecordMapper {
   private static JsonArray mapIdentifiersToJson(Collection<ActualCostRecordIdentifier> identifiers) {
     return new JsonArray(identifiers.stream()
       .map(JsonObject::mapFrom)
-      .collect(toList()));
+      .toList());
   }
 }
