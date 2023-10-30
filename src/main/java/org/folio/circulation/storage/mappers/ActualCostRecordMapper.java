@@ -1,5 +1,6 @@
 package org.folio.circulation.storage.mappers;
 
+import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.representations.CallNumberComponentsRepresentation.createCallNumberComponents;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
@@ -9,7 +10,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import java.util.stream.Collectors;
+import java.util.Collection;
 
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordFeeFine;
@@ -21,6 +22,7 @@ import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordUser;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.ItemLossType;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ActualCostRecordMapper {
@@ -30,6 +32,7 @@ public class ActualCostRecordMapper {
 
   public static JsonObject toJson(ActualCostRecord actualCostRecord) {
     JsonObject json = new JsonObject();
+    write(json, "id", actualCostRecord.getId());
     write(json, "lossType", actualCostRecord.getLossType().getValue());
     write(json, "lossDate", actualCostRecord.getLossDate());
     write(json, "expirationDate", actualCostRecord.getExpirationDate());
@@ -53,7 +56,6 @@ public class ActualCostRecordMapper {
     ActualCostRecordLoan loan = actualCostRecord.getLoan();
     if (loan != null) {
       write(loanJson, "id", loan.getId());
-
       write(json, "loan", loanJson);
     }
 
@@ -86,7 +88,7 @@ public class ActualCostRecordMapper {
     if (item != null) {
       write(instanceJson, "id", instance.getId());
       write(instanceJson, "title", instance.getTitle());
-      write(instanceJson, "identifiers", instance.getIdentifiers());
+      write(instanceJson, "identifiers", mapIdentifiersToJson(instance.getIdentifiers()));
       write(instanceJson, "contributors", mapContributorNamesToJson(instance.getContributors()));
 
       write(json, "instance", instanceJson);
@@ -131,7 +133,9 @@ public class ActualCostRecordMapper {
         .withBarcode(getProperty(user, "barcode"))
         .withFirstName(getProperty(user, "firstName"))
         .withLastName(getProperty(user, "lastName"))
-        .withMiddleName(getProperty(user, "middleName")),
+        .withMiddleName(getProperty(user, "middleName"))
+        .withPatronGroup(getProperty(user, "patronGroup"))
+        .withPatronGroupId(getProperty(user, "patronGroupId")),
       new ActualCostRecordLoan()
         .withId(getProperty(loan, "id")),
       new ActualCostRecordItem()
@@ -146,6 +150,10 @@ public class ActualCostRecordMapper {
         .withLoanTypeId(getProperty(item, "loanTypeId"))
         .withLoanType(getProperty(item, "loanType"))
         .withHoldingsRecordId(getProperty(item, "holdingsRecordId"))
+        .withVolume(getProperty(item, "volume"))
+        .withEnumeration(getProperty(item, "enumeration"))
+        .withChronology(getProperty(item, "chronology"))
+        .withCopyNumber(getProperty(item, "copyNumber"))
         .withEffectiveCallNumberComponents(CallNumberComponents.fromItemJson(item)),
       new ActualCostRecordInstance()
         .withId(getProperty(instance, "id"))
@@ -153,11 +161,11 @@ public class ActualCostRecordMapper {
         .withIdentifiers(getArrayProperty(instance, "identifiers").stream()
           .map(JsonObject.class::cast)
           .map(ActualCostRecordIdentifier::fromRepresentation)
-          .collect(Collectors.toList()))
+          .collect(toList()))
         .withContributors(getArrayProperty(instance, "contributors").stream()
           .map(JsonObject.class::cast)
           .map(new ContributorMapper()::toDomain)
-          .collect(Collectors.toList())),
+          .collect(toList())),
       new ActualCostRecordFeeFine()
         .withAccountId(getProperty(feeFine, "accountId"))
         .withOwnerId(getProperty(feeFine, "ownerId"))
@@ -165,5 +173,11 @@ public class ActualCostRecordMapper {
         .withTypeId(getProperty(feeFine, "typeId"))
         .withType(getProperty(feeFine, "type")),
       getNestedDateTimeProperty(representation, "metadata", "createdDate"));
+  }
+
+  private static JsonArray mapIdentifiersToJson(Collection<ActualCostRecordIdentifier> identifiers) {
+    return new JsonArray(identifiers.stream()
+      .map(JsonObject::mapFrom)
+      .collect(toList()));
   }
 }
