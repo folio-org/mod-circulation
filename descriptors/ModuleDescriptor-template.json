@@ -57,6 +57,23 @@
       ]
     },
     {
+      "id": "search-slips",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/search-slips/{servicePointId}",
+          "permissionsRequired": [
+            "circulation.search-slips.get"
+          ],
+          "modulePermissions": [
+          ]
+        }
+      ]
+    },
+    {
       "id": "request-move",
       "version": "0.7",
       "handlers": [

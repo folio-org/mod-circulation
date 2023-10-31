@@ -129,6 +129,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/pick-slips"  + servicePointId);
   }
 
+  static URL searchSlipsUrl(String servicePointId) {
+    return circulationModuleUrl("/circulation/search-slips"  + servicePointId);
+  }
+
   public static URL requestQueueUrl(UUID itemId) {
     return requestsUrl(String.format("/queue/item/%s", itemId));
   }
