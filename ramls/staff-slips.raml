@@ -1,15 +1,15 @@
 #%RAML 1.0
-title: Slips
+title: Stuff Slips
 version: v0.3
 protocols: [ HTTP, HTTPS ]
 baseUri: http://localhost:9130
 
 documentation:
-  - title: API for fetching current pick and search slips
-    content: <b>API for pick and search slips generation</b>
+  - title: API for fetching current staff slips
+    content: <b>API for staff slips generation</b>
 
 types:
-  pick-slips: !include pick-slips-response.json
+  stuff-slips: !include staff-slips-response.json
 
 traits:
   language: !include raml-util/traits/language.raml
@@ -22,11 +22,11 @@ resourceTypes:
       /{servicePointId}:
         type:
           collection-get:
-            exampleCollection: !include examples/pick-slips-response.json
-            schemaCollection: pick-slips
+            exampleCollection: !include examples/staff-slips-response.json
+            schemaCollection: stuff-slips
     /search-slips:
       /{servicePointId}:
         type:
           collection-get:
-            exampleCollection: !include examples/pick-slips-response.json
-            schemaCollection: pick-slips
+            exampleCollection: !include examples/staff-slips-response.json
+            schemaCollection: stuff-slips
