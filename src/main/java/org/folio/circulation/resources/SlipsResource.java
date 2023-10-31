@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,7 +53,7 @@ public abstract class SlipsResource extends Resource {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
 
-  public SlipsResource(HttpClient client) {
+  protected SlipsResource(HttpClient client) {
     super(client);
   }
 
@@ -125,7 +124,7 @@ public abstract class SlipsResource extends Resource {
     log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
       .map(TemplateContextUtil::createStaffSlipContext)
-      .collect(Collectors.toList());
+      .toList();
     JsonObject jsonRepresentations = new JsonObject()
       .put(slipsKey, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());

@@ -3,11 +3,8 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.support.RouteRegistration;
@@ -20,7 +17,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class SearchSlipsResource extends SlipsResource {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
   private final String rootPath;
 
