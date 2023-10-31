@@ -182,7 +182,6 @@ public class UpdateRequestQueue {
 
     ClosedLibraryStrategy closedLibraryStrategy = determineClosedLibraryStrategyForHoldShelfExpirationDate
       (finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(), tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod());
-    log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: getHoldShelfExpirationDate : {}, getHoldShelfExpirationDate().toLocalDate() : {}",calculatedRequest.getHoldShelfExpirationDate(), calculatedRequest.getHoldShelfExpirationDate().toLocalDate());
     calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenApply(calculatedDate -> {
@@ -218,7 +217,7 @@ public class UpdateRequestQueue {
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
 
-    log.info("Using time zone {} and period {}",
+    log.debug("Using time zone {} and period {}",
       tenantTimeZone,
       holdShelfExpiryPeriod.getInterval()
     );
@@ -365,11 +364,8 @@ public class UpdateRequestQueue {
 
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
       .addTo(now, holdShelfExpiryPeriod.getDuration());
-    log.info("calculateHoldShelfExpirationDate:: holdShelfExpirationDate: {}", holdShelfExpirationDate);
     if (holdShelfExpiryPeriod.isLongTermPeriod()) {
       holdShelfExpirationDate = atEndOfDay(holdShelfExpirationDate);
-      log.info("calculateHoldShelfExpirationDate:: long term period holdShelfExpirationDate: {}", holdShelfExpirationDate);
-
     }
 
     return holdShelfExpirationDate;
