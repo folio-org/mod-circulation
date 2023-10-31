@@ -8,6 +8,7 @@ import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.circulation.domain.ActualCostRecord.Status.EXPIRED;
 import static org.folio.circulation.domain.ActualCostRecord.Status.OPEN;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
@@ -122,6 +123,18 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
     assertThatLoanIsClosedAsLostAndPaid(firstRecord);
     assertThatLoanIsClosedAsLostAndPaid(secondRecord);
     assertThatLoanIsClosedAsLostAndPaid(thirdRecord);
+  }
+
+  @Test
+  void expiredRecordHasSamePropertiesAsOriginalOpenRecord() {
+    JsonObject openRecord = generateActualCostRecord(OPEN);
+    UUID recordId = UUID.fromString(openRecord.getString("id"));
+    runProcessingAfterExpirationDate();
+    JsonObject expiredRecord = actualCostRecordsClient.getById(recordId).getJson();
+    assertThat(expiredRecord, isInStatus(EXPIRED));
+    openRecord.putNull("metadata");
+    expiredRecord.putNull("metadata");
+    assertThat(openRecord.put("status", "Expired"), equalTo(expiredRecord));
   }
 
   private void assertThatActualCostRecordIsInStatus(JsonObject actualCostRecord,
