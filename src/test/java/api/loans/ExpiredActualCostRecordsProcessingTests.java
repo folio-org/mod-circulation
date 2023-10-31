@@ -130,8 +130,8 @@ class ExpiredActualCostRecordsProcessingTests extends APITests {
     JsonObject openRecord = generateActualCostRecord(OPEN);
     UUID recordId = UUID.fromString(openRecord.getString("id"));
     runProcessingAfterExpirationDate();
-    assertThatActualCostRecordIsInStatus(openRecord, EXPIRED);
     JsonObject expiredRecord = actualCostRecordsClient.getById(recordId).getJson();
+    assertThat(expiredRecord, isInStatus(EXPIRED));
     openRecord.putNull("metadata");
     expiredRecord.putNull("metadata");
     assertThat(openRecord.put("status", "Expired"), equalTo(expiredRecord));
