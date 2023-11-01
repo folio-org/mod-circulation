@@ -106,6 +106,33 @@ class ItemRepositoryTests {
     assertThat(get(repository.fetchByBarcode(itemId)).value().getItemId(), is(itemId));
   }
 
+  @Test
+  void canUpdateCirculationItemThatHasBeenFetched(){
+    final var itemsClient = mock(CollectionResourceClient.class);
+    final var circulationItemsClient = mock(CollectionResourceClient.class);
+    final var repository = createRepository(itemsClient, circulationItemsClient);
+    final var itemId = UUID.randomUUID().toString();
+
+    final var circulationItemJson = new JsonObject()
+      .put("id", itemId)
+      .put("holdingsRecordId", UUID.randomUUID())
+      .put("effectiveLocationId", UUID.randomUUID())
+      .put("dcbItem", true);
+    final var emptyResult = new JsonObject()
+      .put("items", new JsonArray()).toString();
+
+    mockedClientGet(itemsClient, circulationItemJson.encodePrettily());
+    when(itemsClient.get(anyString())).thenReturn(Result.ofAsync(
+      () -> new Response(200, emptyResult, "application/json")));
+    when(circulationItemsClient.put(any(), any())).thenReturn(ofAsync(
+      () -> new Response(204, circulationItemJson.toString(), "application/json")));
+
+    final var fetchedItem = get(repository.fetchById(itemId)).value();
+    final var updateResult = get(repository.updateItem(fetchedItem));
+
+    assertThat(updateResult, succeeded());
+  }
+
   private void mockedClientGet(CollectionResourceClient client, String body) {
     when(client.get(anyString())).thenReturn(Result.ofAsync(
       () -> new Response(200, body, "application/json")));
