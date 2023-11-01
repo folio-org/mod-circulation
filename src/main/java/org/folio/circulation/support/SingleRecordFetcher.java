@@ -61,9 +61,7 @@ public class SingleRecordFetcher<T> {
   }
 
   public CompletableFuture<Result<T>> fetch(String id) {
-    if (log.isInfoEnabled()) {
-      log.info("Fetching {} with ID: {}", recordType, sanitizeLogParameter(id));
-    }
+    log.info(() -> format("Fetching %s with ID: %s", recordType, sanitizeLogParameter(id)));
 
     requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
@@ -73,9 +71,7 @@ public class SingleRecordFetcher<T> {
   }
 
   public CompletableFuture<Result<T>> fetchWithQueryStringParameters(Map<String, String> queryParameters) {
-    if (log.isInfoEnabled()) {
-      log.info("Fetching {} with query parameters: {}", recordType, sanitizeLogParameter(queryParameters.toString()));
-    }
+    log.info(() -> format("Fetching %s with query parameters: %s", recordType, sanitizeLogParameter(queryParameters.toString())));
 
     requireNonNull(queryParameters, format("Cannot fetch  %s with null parameters", recordType));
 

@@ -93,15 +93,15 @@ class ItemRepositoryTests {
     final var circulationItemJson = new JsonObject()
       .put("id", itemId)
       .put("holdingsRecordId", UUID.randomUUID())
-      .put("effectiveLocationId", UUID.randomUUID());
+      .put("effectiveLocationId", UUID.randomUUID()).toString();
 
     final var emptyResult = new JsonObject()
-      .put("items", new JsonArray());
+      .put("items", new JsonArray()).toString();
 
     when(itemsClient.getMany(any(), any())).thenReturn(Result.ofAsync(
-      () -> new Response(200, emptyResult.toString(), "application/json")));
+      () -> new Response(200, emptyResult, "application/json")));
     when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(Result.ofAsync(
-      () -> new Response(200, circulationItemJson.toString(), "application/json")));
+      () -> new Response(200, circulationItemJson, "application/json")));
 
     assertThat(get(repository.fetchByBarcode(itemId)).value().getItemId(), is(itemId));
   }
