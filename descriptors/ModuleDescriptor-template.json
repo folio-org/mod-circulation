@@ -57,6 +57,23 @@
       ]
     },
     {
+      "id": "search-slips",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/search-slips/{servicePointId}",
+          "permissionsRequired": [
+            "circulation.search-slips.get"
+          ],
+          "modulePermissions": [
+          ]
+        }
+      ]
+    },
+    {
       "id": "request-move",
       "version": "0.7",
       "handlers": [
@@ -1454,6 +1471,11 @@
       "permissionName": "circulation.pick-slips.get",
       "displayName": "circulation - pick slips",
       "description": "get items for pick slips generation"
+    },
+    {
+      "permissionName": "circulation.search-slips.get",
+      "displayName": "circulation - search slips",
+      "description": "get items for search slips generation"
     },
     {
       "permissionName": "circulation.end-patron-action-session.post",

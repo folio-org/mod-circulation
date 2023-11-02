@@ -53,6 +53,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::pickSlipsUrl, "pickSlips");
   }
 
+  public static ResourceClient forSearchSlips() {
+    return new ResourceClient(InterfaceUrls::searchSlipsUrl, "searchSlips");
+  }
+
   public static ResourceClient forLoans() {
     return new ResourceClient(InterfaceUrls::loansUrl, "loans");
   }
