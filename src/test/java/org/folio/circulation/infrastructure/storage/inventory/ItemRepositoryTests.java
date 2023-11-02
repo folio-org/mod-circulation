@@ -97,9 +97,9 @@ class ItemRepositoryTests {
     final var emptyResult = new JsonObject()
       .put("items", new JsonArray()).toString();
 
-    when(itemsClient.getMany(any(), any())).thenReturn(Result.ofAsync(
+    when(itemsClient.getMany(any(), any())).thenReturn(ofAsync(
       () -> new Response(200, emptyResult, "application/json")));
-    when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(Result.ofAsync(
+    when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(ofAsync(
       () -> new Response(200, circulationItemJson, "application/json")));
 
     assertThat(get(repository.fetchByBarcode(itemId)).value().getItemId(), is(itemId));
@@ -121,7 +121,7 @@ class ItemRepositoryTests {
       .put("items", new JsonArray()).toString();
 
     mockedClientGet(itemsClient, circulationItemJson.encodePrettily());
-    when(itemsClient.get(anyString())).thenReturn(Result.ofAsync(
+    when(itemsClient.get(anyString())).thenReturn(ofAsync(
       () -> new Response(200, emptyResult, "application/json")));
     when(circulationItemsClient.put(any(), any())).thenReturn(ofAsync(
       () -> new Response(204, circulationItemJson.toString(), "application/json")));
@@ -133,7 +133,7 @@ class ItemRepositoryTests {
   }
 
   private void mockedClientGet(CollectionResourceClient client, String body) {
-    when(client.get(anyString())).thenReturn(Result.ofAsync(
+    when(client.get(anyString())).thenReturn(ofAsync(
       () -> new Response(200, body, "application/json")));
   }
 
