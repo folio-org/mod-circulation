@@ -1,3 +1,7 @@
+## 24.0.3 2023-11-02
+
+* User primary address Country token fetches the Country code in the patron notices (CIRC-1931)
+
 ## 24.0.2 2023-10-27
 
 * Partial revert of CIRC-1527: bring back the correct delay for scheduled Aged To Lost Fee charging job (CIRC-1947)
