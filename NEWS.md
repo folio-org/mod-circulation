@@ -1,3 +1,7 @@
+## 24.0.4 2023-11-02
+
+* Add missing permission set for allowed service points endpoint (CIRC-1953)
+
 ## 24.0.3 2023-11-02
 
 * User primary address Country token fetches the Country code in the patron notices (CIRC-1931)

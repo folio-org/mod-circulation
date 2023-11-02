@@ -1481,6 +1481,11 @@
       "description": "patron block override"
     },
     {
+      "permissionName": "circulation.requests.allowed-service-points.get",
+      "displayName": "circulation - get allowed pickup service points for request",
+      "description": "get allowed pickup service points for request"
+    },
+    {
       "permissionName": "mod-settings.global.write.mod-circulation",
       "displayName": "circulation settings - Create configuration",
       "description": "To create new configuration in mod settings"
