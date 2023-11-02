@@ -94,7 +94,6 @@ class ItemRepositoryTests {
       .put("id", itemId)
       .put("holdingsRecordId", UUID.randomUUID())
       .put("effectiveLocationId", UUID.randomUUID()).toString();
-
     final var emptyResult = new JsonObject()
       .put("items", new JsonArray()).toString();
 
