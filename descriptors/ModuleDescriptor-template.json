@@ -1473,6 +1473,11 @@
       "description": "get items for pick slips generation"
     },
     {
+      "permissionName": "circulation.search-slips.get",
+      "displayName": "circulation - search slips",
+      "description": "get items for search slips generation"
+    },
+    {
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
