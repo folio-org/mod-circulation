@@ -71,7 +71,7 @@ public class SingleRecordFetcher<T> {
   }
 
   public CompletableFuture<Result<T>> fetchWithQueryStringParameters(Map<String, String> queryParameters) {
-    log.info(() -> format("Fetching %s with query parameters: %s", recordType, sanitizeLogParameter(queryParameters.toString())));
+    log.info("Fetching {} with query parameters: {}", () -> recordType, () -> mapAsString(queryParameters)));
 
     requireNonNull(queryParameters, format("Cannot fetch  %s with null parameters", recordType));
 
