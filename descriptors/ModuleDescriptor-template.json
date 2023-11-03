@@ -1254,6 +1254,12 @@
       "version": "1.0"
     }
   ],
+  "optional": [
+    {
+      "id": "mod-circulation-item",
+      "version": "1.0"
+    }
+  ],
   "permissionSets": [
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
