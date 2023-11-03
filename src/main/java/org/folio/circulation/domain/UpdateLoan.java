@@ -4,8 +4,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -16,14 +19,15 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
 public class UpdateLoan {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final LoanScheduledNoticeService scheduledNoticeService;
 
-  public UpdateLoan(Clients clients,
-      LoanRepository loanRepository,
-      LoanPolicyRepository loanPolicyRepository) {
+  public UpdateLoan(Clients clients, LoanRepository loanRepository,
+    LoanPolicyRepository loanPolicyRepository) {
+
     closedLibraryStrategyService = ClosedLibraryStrategyService.using(clients,
       ClockUtil.getZonedDateTime(), false);
     this.loanPolicyRepository = loanPolicyRepository;
@@ -40,8 +44,10 @@ public class UpdateLoan {
    * @return the request and related records with the possibly updated loan.
    */
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("onRequestCreateOrUpdate:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Request request = requestAndRelatedRecords.getRequest();
     Loan loan = request.getLoan();
 
@@ -56,7 +62,9 @@ public class UpdateLoan {
     }
   }
 
-  private Result<LoanAndRelatedRecords> updateLoanAction(LoanAndRelatedRecords loanAndRelatedRecords, Request request) {
+  private Result<LoanAndRelatedRecords> updateLoanAction(
+    LoanAndRelatedRecords loanAndRelatedRecords, Request request) {
+
     Loan loan = loanAndRelatedRecords.getLoan();
     LoanAction action = request.actionOnCreateOrUpdate();
 
@@ -70,7 +78,10 @@ public class UpdateLoan {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> recall(Loan loan,
-      RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
+    RequestAndRelatedRecords requestAndRelatedRecords, Request request) {
+
+    log.debug("recall:: parameters loan: {}, requestAndRelatedRecords: {}, request: {}",
+      () -> loan, () -> requestAndRelatedRecords, () -> request);
     if (loan.wasDueDateChangedByRecall()) {
       // We don't need to apply the recall
       return completedFuture(succeeded(requestAndRelatedRecords));
@@ -95,6 +106,6 @@ public class UpdateLoan {
     // loanPolicy.recall is a public method and may be called outside of the context of the
     // loan.wasDueDateChangedByRecall() condition found in the recall method of this class.
     return loanPolicy.recall(loan)
-        .map(loanAndRelatedRecords::withLoan);
+      .map(loanAndRelatedRecords::withLoan);
   }
 }

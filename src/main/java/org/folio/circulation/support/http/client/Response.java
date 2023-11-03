@@ -7,12 +7,15 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
+import lombok.ToString;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.http.ContentType;
-
+@ToString(onlyExplicitlyIncluded = true)
 public class Response {
+  @ToString.Include
   protected final String body;
+  @ToString.Include
   private final int statusCode;
   private final String contentType;
   private final MultiMap headers;

@@ -8,11 +8,14 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Request.Operation;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.ErrorCode;
@@ -24,15 +27,20 @@ public class RequestServiceUtility {
   private static final String ITEM_ID = "itemId";
   private static final String REQUESTER_ID = "requesterId";
   private static final String REQUEST_ID = "requestId";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private RequestServiceUtility() { }
 
   static Result<RequestAndRelatedRecords> refuseWhenInstanceDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenInstanceDoesNotExist:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     if (requestAndRelatedRecords.getRequest().getInstance().isNotFound()) {
-      return failedValidation("Instance does not exist", INSTANCE_ID,
-        requestAndRelatedRecords.getRequest().getInstanceId());
+      String instanceId = requestAndRelatedRecords.getRequest().getInstanceId();
+      log.error("refuseWhenInstanceDoesNotExist:: instance {} does not exist",
+        instanceId);
+      return failedValidation("Instance does not exist", INSTANCE_ID, instanceId);
     } else {
       return succeeded(requestAndRelatedRecords);
     }
@@ -41,7 +49,12 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenItemDoesNotExist(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenItemDoesNotExist:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
+      String itemId = requestAndRelatedRecords.getRequest().getItemId();
+      log.error("refuseWhenItemDoesNotExist:: item {} does not exist",
+        itemId);
       return failedValidation("Item does not exist", ITEM_ID,
         requestAndRelatedRecords.getRequest().getItemId());
     } else {
@@ -52,15 +65,21 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenRequestCannotBeFulfilled(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenRequestCannotBeFulfilled:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     RequestPolicy requestPolicy = requestAndRelatedRecords.getRequestPolicy();
     Request request = requestAndRelatedRecords.getRequest();
     RequestType requestType = request.getRequestType();
 
     if (!requestPolicy.allowsType(requestType)) {
+      log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow " +
+        "the requestType {}", requestType);
       return failureDisallowedForRequestType(requestType);
     }
 
     if (!requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {
+      log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
+        request.getPickupServicePointId());
       return failedValidation("One or more Pickup locations are no longer available",
         Map.of(PICKUP_SERVICE_POINT_ID, request.getPickupServicePointId(),
           REQUEST_TYPE, requestType.toString(),
@@ -75,11 +94,15 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenRequestTypeIsNotAllowedForItem(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenRequestTypeIsNotAllowedForItem:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Request request = requestAndRelatedRecords.getRequest();
 
     if (request.getItem().isNotFound() || request.allowedForItem()) {
       return succeeded(requestAndRelatedRecords);
     } else {
+      log.error("refuseWhenRequestTypeIsNotAllowedForItem:: requestType is not allowed {}" +
+          "for item {}", request.getRequestType(), request.getItem().getItemId());
       return failureDisallowedForRequestType(request.getRequestType());
     }
   }
@@ -101,9 +124,11 @@ public class RequestServiceUtility {
     User requester = request.getRequester();
 
     if (requester == null) {
+      log.error("refuseWhenInvalidUserAndPatronGroup:: user {} is null", request.getUserId());
       return failedValidation("A valid user and patron group are required. User is null", "userId",
         request.getUserId());
     } else if (requester.getPatronGroupId() == null) {
+      log.error("refuseWhenInvalidUserAndPatronGroup:: patronGroup is null");
       return failedValidation("A valid patron group is required. PatronGroup ID is null", "PatronGroupId", null);
     } else {
       return succeeded(requestAndRelatedRecords);
@@ -113,6 +138,8 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenUserIsInactive(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenUserIsInactive:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Request request = requestAndRelatedRecords.getRequest();
     User requester = request.getRequester();
 
@@ -123,7 +150,7 @@ public class RequestServiceUtility {
       parameters.put(ITEM_ID, request.getItemId());
 
       String message = "Inactive users cannot make requests";
-
+      log.warn("refuseWhenUserIsInactive:: {}", message);
       return failedValidation(new ValidationError(message, parameters));
     } else {
       return of(() -> requestAndRelatedRecords);
@@ -133,15 +160,17 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseWhenMovedToDifferentInstance(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseWhenMovedToDifferentInstance:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Request request = requestAndRelatedRecords.getRequest();
     Item item = request.getItem();
     if (!Objects.equals(item.getInstanceId(), request.getInstanceId())) {
       HashMap<String, String> parameters = new HashMap<>();
       parameters.put(ITEM_ID, request.getItemId());
       parameters.put(INSTANCE_ID, item.getInstanceId());
-      return failedValidation(
-        new ValidationError("Request can only be moved to an item with the same instance ID",
-          parameters));
+      String message = "Request can only be moved to an item with the same instance ID";
+      log.warn("refuseWhenMovedToDifferentInstance:: {}", message);
+      return failedValidation(new ValidationError(message, parameters));
     }
 
     return succeeded(requestAndRelatedRecords);
@@ -150,10 +179,13 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseTlrProcessingWhenFeatureIsDisabled(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("refuseTlrProcessingWhenFeatureIsDisabled:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Request request = requestAndRelatedRecords.getRequest();
     if (!requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
-      return failedValidation(new ValidationError("Can not process TLR - TLR feature is disabled",
-        REQUEST_ID, request.getId()));
+      String message = "Can not process TLR - TLR feature is disabled";
+      log.warn("refuseWhenMovedToDifferentInstance:: {}", message);
+      return failedValidation(new ValidationError(message, REQUEST_ID, request.getId()));
     }
 
     return succeeded(requestAndRelatedRecords);
@@ -162,12 +194,16 @@ public class RequestServiceUtility {
   static Result<RequestAndRelatedRecords> refuseMovingToOrFromHoldTlr(
     RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
 
+    log.debug("refuseMovingToOrFromHoldTlr:: parameters requestAndRelatedRecords: {}, " +
+      "originalRequest: {}", requestAndRelatedRecords, originalRequest);
     Request request = requestAndRelatedRecords.getRequest();
     if ((request.isHold() && request.isTitleLevel())
       || (originalRequest.isHold() && originalRequest.isTitleLevel())) {
 
-      return failedValidation(new ValidationError("Not allowed to move from/to Hold TLR",
-        REQUEST_ID, request.getId()));
+      String message = "Not allowed to move from/to Hold TLR";
+      log.warn("refuseWhenMovedToDifferentInstance:: {}", message);
+
+      return failedValidation(new ValidationError(message, REQUEST_ID, request.getId()));
     }
 
     return succeeded(requestAndRelatedRecords);
@@ -175,6 +211,9 @@ public class RequestServiceUtility {
 
   static Result<RequestAndRelatedRecords> refuseWhenAlreadyRequested(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("refuseWhenAlreadyRequested:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
 
     return requestAndRelatedRecords.getRequestQueue().getRequests().stream()
       .filter(isAlreadyRequested(requestAndRelatedRecords))
@@ -184,6 +223,7 @@ public class RequestServiceUtility {
   }
 
   private static Predicate<Request> isAlreadyRequested(RequestAndRelatedRecords records) {
+    log.debug("isAlreadyRequested:: parameters records: {}", () -> records);
     Request request = records.getRequest();
     if (records.isTlrFeatureEnabled() && request.isTitleLevel()) {
       return req -> {
@@ -209,6 +249,8 @@ public class RequestServiceUtility {
   private static Result<RequestAndRelatedRecords> alreadyRequestedFailure(
     RequestAndRelatedRecords requestAndRelatedRecords, Request existingRequest) {
 
+    log.debug("alreadyRequestedFailure:: parameters requestAndRelatedRecords: {}, " +
+      "existingRequest: {}", () -> requestAndRelatedRecords, () -> existingRequest);
     Request requestBeingPlaced = requestAndRelatedRecords.getRequest();
     HashMap<String, String> parameters = new HashMap<>();
     String message;
@@ -234,6 +276,7 @@ public class RequestServiceUtility {
 
       message = "This requester already has an open request for this item";
     }
+    log.info("alreadyRequestedFailure:: message: {}", message);
 
     return failedValidation(message, parameters, ITEM_ALREADY_REQUESTED);
   }

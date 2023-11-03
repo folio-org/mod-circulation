@@ -6,6 +6,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -13,6 +14,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collector;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.utils.DateTimeUtil;
 
 import lombok.AllArgsConstructor;
@@ -31,6 +34,7 @@ public class OpeningDay {
   private static final String ALL_DAY_KEY = "allDay";
   private static final String OPEN_KEY = "open";
   private static final String OPENINGS_KEY = "openings";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final List<OpeningHour> openings;
   private final LocalDate date;
@@ -99,6 +103,7 @@ public class OpeningDay {
     write(json, ALL_DAY_KEY, allDay);
     write(json, OPEN_KEY, open);
     write(json, OPENINGS_KEY, openingHourToJsonArray());
+    log.debug("toJson:: result: {}", () -> json);
 
     return json;
   }
@@ -107,6 +112,7 @@ public class OpeningDay {
    * Create a list of {@link OpeningHour OpeningHour} from the provided daily opening object
    */
   private static List<OpeningHour> createOpeningTimes(JsonObject representation) {
+    log.debug("createOpeningTimes:: parameters representation: {}", () -> representation);
     return mapToList(representation, OPENINGS_KEY, OpeningHour::new);
   }
 }

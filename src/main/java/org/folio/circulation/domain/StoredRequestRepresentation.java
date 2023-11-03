@@ -18,6 +18,7 @@ public class StoredRequestRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject storedRequest(Request request) {
+    log.debug("storedRequest:: parameters request: {}", () -> request);
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
@@ -32,6 +33,8 @@ public class StoredRequestRepresentation {
   }
 
   private static void addStoredItemProperties(JsonObject request, Item item) {
+    log.debug("addStoredItemProperties:: parameters request: {}, item: {}",
+      () -> request, () -> item);
     if (item == null || item.isNotFound()) {
       logUnableAddItemToTheRequest(request, item);
       return;
@@ -101,6 +104,8 @@ public class StoredRequestRepresentation {
   }
 
   private static void addSearchIndexProperties(JsonObject requestJson, Request request) {
+    log.debug("addSearchIndexProperties:: parameters requestJson: {}, request: {}",
+      () -> requestJson, () -> request);
     JsonObject searchIndex = new JsonObject();
 
     if (request.hasItem()) {
