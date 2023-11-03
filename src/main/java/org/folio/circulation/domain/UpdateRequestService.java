@@ -4,9 +4,12 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.REQ
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
@@ -14,6 +17,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
 public class UpdateRequestService {
+  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final RequestRepository requestRepository;
   private final UpdateRequestQueue updateRequestQueue;
   private final ClosedRequestValidator closedRequestValidator;
@@ -36,6 +40,8 @@ public class UpdateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("replaceRequest:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Request updated = requestAndRelatedRecords.getRequest();
 
     return requestRepository.getById(updated.getId())
@@ -65,6 +71,8 @@ public class UpdateRequestService {
     final Request request = requestAndRelatedRecords.getRequest();
 
     if(request.isCancelled()) {
+      log.info("removeRequestQueuePositionWhenCancelled:: request {} is cancelled, " +
+        "removing from the request queue", request.getId());
       requestAndRelatedRecords.getRequestQueue().remove(request);
     }
 
