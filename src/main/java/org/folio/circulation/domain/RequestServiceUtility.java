@@ -53,8 +53,7 @@ public class RequestServiceUtility {
       () -> requestAndRelatedRecords);
     if (requestAndRelatedRecords.getRequest().getItem().isNotFound()) {
       String itemId = requestAndRelatedRecords.getRequest().getItemId();
-      log.error("refuseWhenItemDoesNotExist:: item {} does not exist",
-        itemId);
+      log.error("refuseWhenItemDoesNotExist:: item {} does not exist", itemId);
       return failedValidation("Item does not exist", ITEM_ID,
         requestAndRelatedRecords.getRequest().getItemId());
     } else {
@@ -101,8 +100,8 @@ public class RequestServiceUtility {
     if (request.getItem().isNotFound() || request.allowedForItem()) {
       return succeeded(requestAndRelatedRecords);
     } else {
-      log.error("refuseWhenRequestTypeIsNotAllowedForItem:: requestType is not allowed {}" +
-          "for item {}", request.getRequestType(), request.getItem().getItemId());
+      log.error("refuseWhenRequestTypeIsNotAllowedForItem:: {} is not allowed for item {}",
+        request.getRequestType(), request.getItem().getItemId());
       return failureDisallowedForRequestType(request.getRequestType());
     }
   }
@@ -150,7 +149,7 @@ public class RequestServiceUtility {
       parameters.put(ITEM_ID, request.getItemId());
 
       String message = "Inactive users cannot make requests";
-      log.warn("refuseWhenUserIsInactive:: {}", message);
+      log.warn("refuseWhenUserIsInactive:: user {} is inactive", requester.getId());
       return failedValidation(new ValidationError(message, parameters));
     } else {
       return of(() -> requestAndRelatedRecords);
@@ -169,7 +168,8 @@ public class RequestServiceUtility {
       parameters.put(ITEM_ID, request.getItemId());
       parameters.put(INSTANCE_ID, item.getInstanceId());
       String message = "Request can only be moved to an item with the same instance ID";
-      log.warn("refuseWhenMovedToDifferentInstance:: {}", message);
+      log.warn("refuseWhenMovedToDifferentInstance:: requested instance ID {}" +
+        "does not match item's instance ID {}", request.getInstanceId(), item.getInstanceId());
       return failedValidation(new ValidationError(message, parameters));
     }
 

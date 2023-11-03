@@ -7,6 +7,7 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isWithinMillis;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
@@ -94,7 +95,7 @@ public class OverduePeriodCalculatorService {
     ZonedDateTime dueDate, ZonedDateTime returnDate) {
 
     log.debug("getOpeningDaysDurationMinutes:: parameters openingDays: {}, " +
-      "dueDate: {}, returnDate: {}", () -> LogUtil.collectionAsString(openingDays),
+      "dueDate: {}, returnDate: {}", () -> collectionAsString(openingDays),
       () -> dueDate, () -> returnDate);
 
     return succeeded(
@@ -163,7 +164,7 @@ public class OverduePeriodCalculatorService {
     int result;
 
     if (shouldIgnoreGracePeriod(loan)) {
-      log.info("adjustOverdueWithGracePeriod should be ignored");
+      log.info("adjustOverdueWithGracePeriod:: grace period should be ignored");
       result = overdueMinutes;
     }
     else {
