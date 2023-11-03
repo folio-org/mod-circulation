@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

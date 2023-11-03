@@ -184,7 +184,7 @@ public class RequestServiceUtility {
     Request request = requestAndRelatedRecords.getRequest();
     if (!requestAndRelatedRecords.isTlrFeatureEnabled() && request.isTitleLevel()) {
       String message = "Can not process TLR - TLR feature is disabled";
-      log.warn("refuseWhenMovedToDifferentInstance:: {}", message);
+      log.warn("refuseTlrProcessingWhenFeatureIsDisabled:: {}", message);
       return failedValidation(new ValidationError(message, REQUEST_ID, request.getId()));
     }
 
@@ -201,7 +201,7 @@ public class RequestServiceUtility {
       || (originalRequest.isHold() && originalRequest.isTitleLevel())) {
 
       String message = "Not allowed to move from/to Hold TLR";
-      log.warn("refuseWhenMovedToDifferentInstance:: {}", message);
+      log.warn("refuseMovingToOrFromHoldTlr:: {}", message);
 
       return failedValidation(new ValidationError(message, REQUEST_ID, request.getId()));
     }
