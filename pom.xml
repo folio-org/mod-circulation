@@ -25,9 +25,9 @@
   <properties>
     <antlr4.version>4.11.1</antlr4.version>
     <drools.version>7.74.1.Final</drools.version>
-    <rmb.version>35.0.4</rmb.version>
-    <vertx.version>4.3.5</vertx.version>
-    <log4j2.version>2.19.0</log4j2.version>
+    <rmb.version>35.1.1</rmb.version>
+    <vertx.version>4.4.6</vertx.version>
+    <log4j2.version>2.20.0</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <lombok.version>1.18.28</lombok.version>
@@ -37,6 +37,13 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-bom</artifactId>
+        <version>${log4j2.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
@@ -65,12 +72,10 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
-      <version>${log4j2.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <version>${log4j2.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -126,7 +131,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>2.7.0</version>
+      <version>2.11.2</version>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
@@ -249,8 +254,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j2.version}</version>
+      <artifactId>log4j-slf4j2-impl</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
