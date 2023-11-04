@@ -10,12 +10,15 @@ import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.results.Result;
@@ -24,25 +27,32 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class UpdateItem {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ItemRepository itemRepository;
   private final RequestQueueService requestQueueService;
 
   public CompletableFuture<Result<Item>> onCheckIn(Item item, Request request,
     UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
 
+    log.debug("onCheckIn:: parameters item: {}, request: {}, checkInServicePointId: {}, " +
+      "loggedInUserId: {}, dateTime: {}", () -> item, () -> request, () -> checkInServicePointId,
+      () -> loggedInUserId, () -> dateTime);
+
     return changeItemOnCheckIn(item, request, checkInServicePointId)
       .next(addLastCheckInProperties(checkInServicePointId, loggedInUserId, dateTime))
       .after(this::storeItem);
   }
 
-  private Function<Item, Result<Item>> addLastCheckInProperties(
-      UUID checkInServicePointId, String loggedInUserId, ZonedDateTime dateTime) {
+  private Function<Item, Result<Item>> addLastCheckInProperties(UUID checkInServicePointId,
+    String loggedInUserId, ZonedDateTime dateTime) {
+
     return item -> succeeded(item.withLastCheckIn(
       new LastCheckIn(dateTime, checkInServicePointId, loggedInUserId)));
   }
 
   private Result<Item> changeItemOnCheckIn(Item item, Request request, UUID checkInServicePointId) {
-
+    log.debug("changeItemOnCheckIn parameters item: {}, request: {}, checkInServicePointId: {}",
+      () -> item, () -> request, () -> checkInServicePointId);
     if (request != null) {
       return changeItemWithOutstandingRequest(item, request, checkInServicePointId);
     } else {
@@ -60,6 +70,8 @@ public class UpdateItem {
   private Result<Item> changeItemWithOutstandingRequest(Item item, Request request,
     UUID checkInServicePointId) {
 
+    log.debug("changeItemWithOutstandingRequest:: parameters item: {}, request: {}, " +
+      "checkInServicePointId: {}", () -> item, () -> request, () -> checkInServicePointId);
     Result<Item> itemResult;
     switch (request.getfulfillmentPreference()) {
       case HOLD_SHELF:
@@ -81,6 +93,7 @@ public class UpdateItem {
     String pickupServicePointIdString = request.getPickupServicePointId();
 
     if (pickupServicePointIdString == null) {
+      log.warn("changeItemWithHoldRequest:: pickupServicePointIdString is null");
       return failedValidation(
         "Failed to check in item due to the highest priority " +
           "request missing a pickup service point",
@@ -102,6 +115,7 @@ public class UpdateItem {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanCreated(
     LoanAndRelatedRecords relatedRecords) {
 
+    log.debug("onLoanCreated:: parameters relatedRecords: {}", () -> relatedRecords);
     //Hack for creating returned loan - should distinguish further up the chain
     return succeeded(relatedRecords).after(when(
       records -> loanIsClosed(relatedRecords), UpdateItem::skip,
@@ -111,16 +125,22 @@ public class UpdateItem {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onLoanUpdate(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    log.debug("onLoanUpdate:: parameters loanAndRelatedRecords: {}",
+      () -> loanAndRelatedRecords);
+
     return onLoanUpdate(loanAndRelatedRecords.getLoan(),
       loanAndRelatedRecords.getRequestQueue())
       .thenApply(itemResult -> itemResult.map(loanAndRelatedRecords::withItem));
   }
 
   public CompletableFuture<Result<Request>> onRequestDeletion(Request request) {
+    log.debug("onRequestDeletion:: parameters request: {}", () -> request);
     // Only page request changes item status to 'Paged'
     // Other request types (Hold and Recall) don't change item status, it stays 'Checked out'
     if (request.getRequestType() != null && request.getRequestType().isPage()
       && request.getItem() != null && PAGED.equals(request.getItem().getStatus())) {
+
+      log.info("onRequestDeletion:: updating item with Available status");
 
       return itemRepository.updateItem(request.getItem().changeStatus(AVAILABLE))
         .thenApply(r -> r.map(item -> request));
@@ -130,6 +150,8 @@ public class UpdateItem {
   }
 
   private CompletableFuture<Result<Item>> onLoanUpdate(Loan loan, RequestQueue requestQueue) {
+    log.debug("onLoanUpdate parameters loan: {}, requestQueue: {}", () -> loan,
+      () -> requestQueue);
     return itemStatusOnLoanUpdate(loan, requestQueue)
       .thenCompose(r -> r.after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,
         loan.getItem())));
@@ -137,6 +159,9 @@ public class UpdateItem {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("onRequestCreateOrUpdate:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
 
     return of(() -> itemStatusOnRequestCreateOrUpdate(requestAndRelatedRecords))
       .after(prospectiveStatus -> updateItemWhenNotSameStatus(prospectiveStatus,

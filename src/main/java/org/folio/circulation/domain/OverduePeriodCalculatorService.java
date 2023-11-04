@@ -7,7 +7,9 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isWithinMillis;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
+import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -15,12 +17,16 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.LogUtil;
 
 public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CalendarRepository calendarRepository;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -33,9 +39,12 @@ public class OverduePeriodCalculatorService {
   }
 
   public CompletableFuture<Result<Integer>> getMinutes(Loan loan, ZonedDateTime systemTime) {
+    log.debug("getMinutes:: parameters loan: {}, systemTime: {}", () -> loan, () -> systemTime);
     final Boolean shouldCountClosedPeriods = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
 
     if (preconditionsAreMet(loan, systemTime, shouldCountClosedPeriods)) {
+      log.info("getMinutes:: preconditions must be included");
+
       return completedFuture(loan)
         .thenComposeAsync(loanPolicyRepository::lookupPolicy)
         .thenApply(r -> r.map(loan::withLoanPolicy))
@@ -50,28 +59,44 @@ public class OverduePeriodCalculatorService {
     return shouldCountClosedPeriods != null && loan.isOverdue(systemTime);
   }
 
-  CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, ZonedDateTime systemTime, boolean shouldCountClosedPeriods) {
+  CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, ZonedDateTime systemTime,
+    boolean shouldCountClosedPeriods) {
+
     return shouldCountClosedPeriods || getItemLocationPrimaryServicePoint(loan) == null
       ? minutesOverdueIncludingClosedPeriods(loan, systemTime)
       : minutesOverdueExcludingClosedPeriods(loan, systemTime);
   }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan, ZonedDateTime systemTime) {
+  private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan,
+    ZonedDateTime systemTime) {
+
+    log.debug("minutesOverdueIncludingClosedPeriods:: parameters loan: {}, systemTime: {}",
+      () -> loan, () -> systemTime);
     int overdueMinutes = calculateDiffInMinutes(loan.getDueDate(), systemTime);
+
     return completedFuture(succeeded(overdueMinutes));
   }
 
-  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan, ZonedDateTime returnDate) {
+  private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan,
+    ZonedDateTime returnDate) {
+
+    log.debug("minutesOverdueExcludingClosedPeriods:: parameters loan: {}, returnDate: {}",
+      () -> loan, () -> returnDate);
     ZonedDateTime dueDate = loan.getDueDate();
     String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
+
     return calendarRepository
       .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate)
       .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
         openingDays, dueDate, returnDate)));
   }
 
-  Result<Integer> getOpeningDaysDurationMinutes(
-    Collection<OpeningDay> openingDays, ZonedDateTime dueDate, ZonedDateTime returnDate) {
+  Result<Integer> getOpeningDaysDurationMinutes(Collection<OpeningDay> openingDays,
+    ZonedDateTime dueDate, ZonedDateTime returnDate) {
+
+    log.debug("getOpeningDaysDurationMinutes:: parameters openingDays: {}, " +
+      "dueDate: {}, returnDate: {}", () -> collectionAsString(openingDays),
+      () -> dueDate, () -> returnDate);
 
     return succeeded(
       openingDays.stream()
@@ -80,9 +105,11 @@ public class OverduePeriodCalculatorService {
         .sum());
   }
 
-  private int getOpeningDayDurationMinutes(
-    OpeningDay openingDay, ZonedDateTime dueDate, ZonedDateTime systemTime) {
+  private int getOpeningDayDurationMinutes(OpeningDay openingDay, ZonedDateTime dueDate,
+    ZonedDateTime systemTime) {
 
+    log.debug("getOpeningDayDurationMinutes:: parameters openingDay: {}, " +
+        "dueDate: {}, returnDate: {}", () -> openingDay, () -> dueDate, () -> systemTime);
     ZonedDateTime datePart = openingDay.getDayWithTimeZone();
 
     return openingDay.getOpenings()
@@ -95,21 +122,28 @@ public class OverduePeriodCalculatorService {
   private int getOpeningHourDurationMinutes(OpeningHour openingHour,
     ZonedDateTime datePart, ZonedDateTime dueDate, ZonedDateTime returnDate) {
 
+    log.debug("getOpeningHourDurationMinutes:: parameters openingHour: {}, " +
+      "datePart: {}, dueDate: {}, returnDate: {}", () -> openingHour, () -> datePart,
+      () -> dueDate, () -> returnDate);
+
     if (allNotNull(datePart, dueDate, openingHour.getStartTime(), openingHour.getEndTime())) {
       final LocalDate date = datePart.toLocalDate();
       ZonedDateTime startTime = ZonedDateTime.of(date, openingHour.getStartTime(), datePart.getZone());
       ZonedDateTime endTime = ZonedDateTime.of(date, openingHour.getEndTime(), datePart.getZone());
 
       if (isWithinMillis(dueDate, startTime, endTime)) {
+        log.info("getOpeningHourDurationMinutes:: dueDate is within startTime and endTime");
         startTime = dueDate;
       }
 
       if (isWithinMillis(returnDate, startTime, endTime)) {
+        log.info("getOpeningHourDurationMinutes:: returnDate is within startTime and endTime");
         endTime = returnDate;
       }
 
       if (isAfterMillis(endTime, startTime) && isAfterMillis(endTime, dueDate)
         && isBeforeMillis(startTime, returnDate)) {
+        log.info("getOpeningHourDurationMinutes:: calculating difference in minutes");
         return calculateDiffInMinutes(startTime, endTime);
       }
     }
@@ -125,14 +159,18 @@ public class OverduePeriodCalculatorService {
   }
 
   Result<Integer> adjustOverdueWithGracePeriod(Loan loan, int overdueMinutes) {
+    log.debug("adjustOverdueWithGracePeriod:: parameters loan: {}, overdueMinutes: {}",
+      () -> loan, () -> overdueMinutes);
     int result;
 
     if (shouldIgnoreGracePeriod(loan)) {
+      log.info("adjustOverdueWithGracePeriod:: grace period should be ignored");
       result = overdueMinutes;
     }
     else {
       result = overdueMinutes > getGracePeriodMinutes(loan) ? overdueMinutes : ZERO_MINUTES;
     }
+    log.info("adjustOverdueWithGracePeriod:: result: {}", result);
 
     return Result.succeeded(result);
   }
