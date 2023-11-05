@@ -3,8 +3,11 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
 import static org.folio.circulation.support.results.Result.of;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
@@ -24,6 +27,7 @@ public class MoveRequestService {
   private final ConfigurationRepository configurationRepository;
   private final EventPublisher eventPublisher;
   private final RequestQueueRepository requestQueueRepository;
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
     UpdateUponRequest updateUponRequest, MoveRequestProcessAdapter moveRequestHelper,
@@ -71,11 +75,14 @@ public class MoveRequestService {
   }
 
   private RequestAndRelatedRecords pagedRequestIfDestinationItemAvailable(
-      RequestAndRelatedRecords requestAndRelatedRecords) {
+    RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("pagedRequestIfDestinationItemAvailable parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     Item item = requestAndRelatedRecords.getRequest().getItem();
 
     if (item.getStatus().equals(ItemStatus.AVAILABLE)) {
+      log.info("pagedRequestIfDestinationItemAvailable:: item: {} is available", item.getItemId());
       return requestAndRelatedRecords.withRequestType(RequestType.PAGE);
     }
 
@@ -84,6 +91,9 @@ public class MoveRequestService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> validateUpdateRequest(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("validateUpdateRequest parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
 
     return of(() -> requestAndRelatedRecords)
       .next(RequestServiceUtility::refuseWhenItemDoesNotExist)
@@ -97,6 +107,9 @@ public class MoveRequestService {
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> updateRelatedObjects(
       RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("updateRelatedObjects parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
 
     return updateUponRequest.updateItem.onRequestCreateOrUpdate(requestAndRelatedRecords)
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate));

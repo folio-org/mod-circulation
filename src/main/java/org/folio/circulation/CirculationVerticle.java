@@ -38,6 +38,7 @@ import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
+import org.folio.circulation.resources.SearchSlipsResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
@@ -99,6 +100,8 @@ public class CirculationVerticle extends AbstractVerticle {
     new ItemsInTransitResource("/inventory-reports/items-in-transit", client)
       .register(router);
     new PickSlipsResource("/circulation/pick-slips/:servicePointId", client)
+      .register(router);
+    new SearchSlipsResource("/circulation/search-slips/:servicePointId", client)
       .register(router);
 
     new CirculationRulesResource("/circulation/rules", client)

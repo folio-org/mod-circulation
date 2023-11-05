@@ -46,7 +46,7 @@ public class EndPatronActionSessionResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     PatronActionSessionService patronActionSessionService =
       PatronActionSessionService.using(clients,
-        PatronActionSessionRepository.using(clients, loanRepository, userRepository), loanRepository);
+        PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     List<Result<EndPatronSessionRequest>> resultListOfEndSessionRequestResult =
       EndPatronSessionRequest.from(routingContext.getBodyAsJson());

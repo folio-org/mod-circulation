@@ -20,6 +20,9 @@ import static org.folio.circulation.support.results.CommonFailures.failedDueToSe
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.listAsString;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -86,14 +89,13 @@ import io.vertx.ext.web.RoutingContext;
 
 public class RequestByInstanceIdResource extends Resource {
 
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final List<RequestType> ORDERED_REQUEST_TYPES = List.of(PAGE, RECALL, HOLD);
   private static final RequestFulfillmentPreference DEFAULT_FULFILLMENT_PREFERENCE = HOLD_SHELF;
 
-  private final Logger log;
 
   public RequestByInstanceIdResource(HttpClient client) {
     super(client);
-    log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   }
 
   @Override
@@ -154,8 +156,9 @@ public class RequestByInstanceIdResource extends Resource {
     InstanceRequestRelatedRecords instanceRequestPackage, LoanRepository loanRepository) {
 
     final List<Item> unsortedUnavailableItems = instanceRequestPackage.getUnsortedUnavailableItems();
-    if (unsortedUnavailableItems == null ||
-        unsortedUnavailableItems.isEmpty()) {
+    if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
+      log.info("getLoanItems:: unsortedUnavailableItems is null or empty");
+
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
@@ -182,6 +185,8 @@ public class RequestByInstanceIdResource extends Resource {
           }
         }
         instanceRequestPackage.setItemsWithoutLoans(itemsWithoutLoansList);
+        log.debug("getLoanItems:: result: {}", () -> mapAsString(itemDueDateMap));
+
         return succeeded(itemDueDateMap);
       });
   }
@@ -223,6 +228,8 @@ public class RequestByInstanceIdResource extends Resource {
         }
         instanceRequestPackage.setItemsWithoutRequests(itemsWithoutRequestQueues);
         instanceRequestPackage.setItemRequestQueueMap(itemQueueMap);
+        log.debug("getRequestQueues:: result: {}", () -> mapAsString(itemQueueMap));
+
         return succeeded(itemQueueMap);
     });
   }
@@ -248,6 +255,9 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<List<JsonObject>>> buildTitleLevelRequests(
     JsonObject requestRepresentation) {
 
+    log.debug("buildTitleLevelRequests:: parameters requestRepresentation: {}",
+      () -> requestRepresentation);
+
     return ofAsync(() -> ORDERED_REQUEST_TYPES.stream()
       .map(requestType -> requestRepresentation.copy()
         .put(REQUEST_TYPE, requestType.getValue())
@@ -260,6 +270,8 @@ public class RequestByInstanceIdResource extends Resource {
   private CompletableFuture<Result<List<JsonObject>>> buildItemLevelRequests(
     JsonObject requestBody, ItemByInstanceIdFinder itemFinder,
     RequestRelatedRepositories repositories) {
+
+    log.debug("buildItemLevelRequests:: parameters requestBody: {}", () -> requestBody);
 
     return RequestByInstanceIdRequest.from(requestBody.put(REQUEST_LEVEL, RequestLevel.ITEM.getValue()))
       .map(InstanceRequestRelatedRecords::new)
@@ -301,6 +313,8 @@ public class RequestByInstanceIdResource extends Resource {
 
     if (startIndex >= itemRequests.size()) {
       String aggregateFailures = String.format("%n%s", String.join("%n", errors));
+      log.warn("placeRequest:: Failed to place a request for the instance. Reasons: {}",
+        aggregateFailures);
 
       return CompletableFuture.completedFuture(failedDueToServerError(
         "Failed to place a request for the instance. Reasons: " + aggregateFailures));
@@ -338,6 +352,8 @@ public class RequestByInstanceIdResource extends Resource {
     InstanceRequestRelatedRecords records) {
 
     final Collection<Item> unsortedAvailableItems = records.getUnsortedAvailableItems();
+    log.debug("rankItemsByMatchingServicePoint:: unsortedAvailableItems: {}",
+      () -> collectionAsString(unsortedAvailableItems));
     final UUID pickupServicePointId = records.getInstanceLevelRequest().getPickupServicePointId();
 
     return of(() -> {
@@ -363,6 +379,8 @@ public class RequestByInstanceIdResource extends Resource {
     InstanceRequestRelatedRecords requestRecords) {
 
     final RequestByInstanceIdRequest requestByInstanceIdRequest = requestRecords.getInstanceLevelRequest();
+    log.debug("instanceToItemRequests:: requestByInstanceIdRequest: {}",
+      () -> requestByInstanceIdRequest);
     final List<Item> combinedItems = requestRecords.getCombinedSortedItemsList();
 
     if (combinedItems == null || combinedItems.isEmpty()) {
@@ -397,7 +415,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private Result<InstanceRequestRelatedRecords> segregateItemsList(
-    InstanceRequestRelatedRecords requestRelatedRecords ){
+    InstanceRequestRelatedRecords requestRelatedRecords) {
 
     Collection<Item> items = requestRelatedRecords.getAllUnsortedItems();
 
@@ -413,13 +431,16 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private Result<InstanceRequestRelatedRecords> combineWithUnavailableItems(
-    Map<Item, ZonedDateTime> itemDueDateMap,
-    InstanceRequestRelatedRecords records){
+    Map<Item, ZonedDateTime> itemDueDateMap, InstanceRequestRelatedRecords records) {
+
+    log.debug("combineWithUnavailableItems:: parameters itemDueDateMap: {}, records: {}",
+      () -> mapAsString(itemDueDateMap), () -> mapAsString(records.getItemRequestQueueMap()));
 
     return of(() -> {
         Map<Item, RequestQueue> itemQueueMap = records.getItemRequestQueueMap();
 
         if (itemDueDateMap == null && itemQueueMap == null) {
+          log.info("combineWithUnavailableItems:: itemDueDateMap and itemQueueMap are null");
           return records;
         }
 
@@ -443,6 +464,8 @@ public class RequestByInstanceIdResource extends Resource {
         if (records.getItemsWithoutRequests() != null)
           finalOrderedList.addAll(records.getItemsWithoutRequests());
         records.setSortedUnavailableItems(finalOrderedList);
+        log.info("combineWithUnavailableItems:: result: {}", listAsString(finalOrderedList));
+
       return records;
     });
   }
@@ -476,14 +499,14 @@ public class RequestByInstanceIdResource extends Resource {
 
   private Result<Collection<Item>> validateItems(Collection<Item> items) {
     if (items == null || items.isEmpty()) {
+      log.warn("validateItems:: there are no items for this instance");
       return failedValidation("There are no items for this instance", "items", "empty");
     }
     return succeeded(items);
   }
 
   private ProxyRelationshipValidator createProxyRelationshipValidator(
-    JsonObject representation,
-    Clients clients) {
+    JsonObject representation, Clients clients) {
 
     return new ProxyRelationshipValidator(clients, () ->
       singleValidationError("proxyUserId is not valid",

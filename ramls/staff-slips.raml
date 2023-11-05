@@ -1,0 +1,32 @@
+#%RAML 1.0
+title: Stuff Slips
+version: v0.3
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for fetching current staff slips
+    content: <b>API for staff slips generation</b>
+
+types:
+  stuff-slips: !include staff-slips-response.json
+
+traits:
+  language: !include raml-util/traits/language.raml
+
+resourceTypes:
+  collection-get: !include raml-util/rtypes/collection-get.raml
+
+/circulation:
+    /pick-slips:
+      /{servicePointId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/staff-slips-response.json
+            schemaCollection: stuff-slips
+    /search-slips:
+      /{servicePointId}:
+        type:
+          collection-get:
+            exampleCollection: !include examples/staff-slips-response.json
+            schemaCollection: stuff-slips

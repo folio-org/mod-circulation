@@ -37,7 +37,7 @@ public class ConfigurationService {
       .findFirst()
       .orElse(DEFAULT_DATE_TIME_ZONE);
 
-    log.info("Chosen timezone: `{}`", chosenTimeZone);
+    log.debug("findDateTimeZone:: timezone={}", chosenTimeZone);
 
     return chosenTimeZone;
   }
@@ -48,7 +48,7 @@ public class ConfigurationService {
       .findFirst()
       .orElse(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT);
 
-    log.info("Scheduled notices processing limit: `{}`", noticesLimit);
+    log.debug("findSchedulerNoticesLimit:: limit={}", noticesLimit);
 
     return noticesLimit;
   }
@@ -59,7 +59,7 @@ public class ConfigurationService {
       .findFirst()
       .orElse(DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
 
-    log.info("Session timeout: `{}`", sessionTimeout);
+    log.debug("findSessionTimeout:: timeout={}", sessionTimeout);
 
     return sessionTimeout;
   }
@@ -67,6 +67,7 @@ public class ConfigurationService {
   private Integer applySessionTimeout(Configuration config) {
     String value = config.getValue();
     JsonObject otherSettingsConfigJson = new JsonObject(value);
+
     return isConfigurationEmptyOrUnavailable(otherSettingsConfigJson)
       ? DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES
       : findTimeoutDuration(otherSettingsConfigJson);
@@ -81,9 +82,8 @@ public class ConfigurationService {
       return Integer.parseInt(configJson
         .getValue(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES).toString());
     } catch (NumberFormatException e) {
-      log.warn("Can't parse property {} {}. Will be returned default value: {}",
-        CHECKOUT_TIMEOUT_DURATION_KEY, e.getMessage(),
-        DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
+      log.warn("findTimeoutDuration:: can't parse property {} {}. Using default value: {}",
+        CHECKOUT_TIMEOUT_DURATION_KEY, e.getMessage(), DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
       return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
     }
   }

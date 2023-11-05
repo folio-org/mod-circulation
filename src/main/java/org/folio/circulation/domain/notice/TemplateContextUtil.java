@@ -9,9 +9,12 @@ import static org.folio.circulation.support.utils.FeeFineActionHelper.getPatronI
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
@@ -315,8 +318,6 @@ public class TemplateContextUtil {
       }
     }
 
-    write(loanContext, "additionalInfo", loan.getLatestPatronInfoAddedComment());
-
     return loanContext;
   }
 
@@ -414,11 +415,24 @@ public class TemplateContextUtil {
           .with(UserContext.CITY, address.getString("city", null))
           .with(UserContext.REGION, address.getString("region", null))
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.COUNTRY_ID, address.getString("countryId", null))
+          .with(UserContext.COUNTRY_ID, getCountryNameByCodeIgnoreCase(address.getString(COUNTRY_ID, null)))
           .with(UserContext.ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
       }
+    }
+
+    public String getCountryNameByCodeIgnoreCase(String code) {
+      if (StringUtils.isEmpty(code)) {
+        return null;
+      }
+
+      if (!Stream.of(Locale.getISOCountries()).toList().contains(code)) {
+        log.error("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
+        throw new IllegalArgumentException("Not a valid country code to determine the country name.");
+      }
+
+      return new Locale("",code).getDisplayName();
     }
 
     public UserContext withPrimaryAddressProperties(JsonObject address) {
@@ -429,7 +443,7 @@ public class TemplateContextUtil {
           .with(UserContext.PRIMARY_ADDRESS_CITY, address.getString("city", null))
           .with(UserContext.PRIMARY_ADDRESS_REGION, address.getString("region", null))
           .with(UserContext.PRIMARY_ADDRESS_POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, address.getString("countryId", null))
+          .with(UserContext.PRIMARY_ADDRESS_COUNTRY_ID, getCountryNameByCodeIgnoreCase(address.getString(COUNTRY_ID, null)))
           .with(UserContext.PRIMARY_ADDRESS_ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;

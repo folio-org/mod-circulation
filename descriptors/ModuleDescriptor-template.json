@@ -57,6 +57,23 @@
       ]
     },
     {
+      "id": "search-slips",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/search-slips/{servicePointId}",
+          "permissionsRequired": [
+            "circulation.search-slips.get"
+          ],
+          "modulePermissions": [
+          ]
+        }
+      ]
+    },
+    {
       "id": "request-move",
       "version": "0.7",
       "handlers": [
@@ -623,8 +640,7 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
-            "pubsub.publish.post",
-            "circulation-storage.loans-history.collection.get"
+            "pubsub.publish.post"
           ]
         }
       ]
@@ -882,8 +898,7 @@
             "users.collection.get",
             "addresstypes.collection.get",
             "pubsub.publish.post",
-            "templates.item.get",
-            "circulation-storage.loans-history.collection.get"
+            "templates.item.get"
           ],
           "unit": "minute",
           "delay": "2"
@@ -956,8 +971,7 @@
             "anonymize-storage-loans.post",
             "accounts.collection.get",
             "feefineactions.collection.get",
-            "pubsub.publish.post",
-            "circulation-storage.loans-history.collection.get"
+            "pubsub.publish.post"
           ],
           "unit": "minute",
           "delay": "60"
@@ -1019,10 +1033,8 @@
             "actual-cost-record-storage.actual-cost-records.item.post",
             "circulation-storage.loans-history.collection.get"
           ],
-          "schedule": {
-            "cron": "1 0 * * *",
-            "zone": "CET"
-          }
+          "unit": "minute",
+          "delay": "35"
         },
         {
           "methods": [
@@ -1207,7 +1219,7 @@
     },
     {
       "id": "feesfines",
-      "version": "18.0"
+      "version": "19.0"
     },
     {
       "id": "location-units",
@@ -1461,6 +1473,11 @@
       "description": "get items for pick slips generation"
     },
     {
+      "permissionName": "circulation.search-slips.get",
+      "displayName": "circulation - search slips",
+      "description": "get items for search slips generation"
+    },
+    {
       "permissionName": "circulation.end-patron-action-session.post",
       "displayName": "circulation - end patron action session",
       "description": "end patron action session"
@@ -1484,6 +1501,11 @@
       "permissionName": "circulation.override-patron-block",
       "displayName": "circulation - override patron block",
       "description": "patron block override"
+    },
+    {
+      "permissionName": "circulation.requests.allowed-service-points.get",
+      "displayName": "circulation - get allowed pickup service points for request",
+      "description": "get allowed pickup service points for request"
     },
     {
       "permissionName": "mod-settings.global.write.mod-circulation",
@@ -1640,8 +1662,7 @@
         "patron-notice.post",
         "configuration.entries.collection.get",
         "calendar.endpoint.dates.get",
-        "pubsub.publish.post",
-        "circulation-storage.loans-history.collection.get"
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1750,8 +1771,7 @@
         "actual-cost-record-storage.actual-cost-records.item.get",
         "actual-cost-fee-fine-cancel.post",
         "departments.item.get",
-        "departments.collection.get",
-        "circulation-storage.loans-history.collection.get"
+        "departments.collection.get"
       ],
       "visible": false
     },
@@ -1803,8 +1823,7 @@
         "manualblocks.item.get",
         "actual-cost-record-storage.actual-cost-records.collection.get",
         "actual-cost-record-storage.actual-cost-records.item.get",
-        "actual-cost-fee-fine-cancel.post",
-        "circulation-storage.loans-history.collection.get"
+        "actual-cost-fee-fine-cancel.post"
       ],
       "visible": false
     },
@@ -1840,8 +1859,7 @@
         "patron-notice.post",
         "anonymize-storage-loans.post",
         "feefineactions.collection.get",
-        "pubsub.publish.post",
-        "circulation-storage.loans-history.collection.get"
+        "pubsub.publish.post"
       ],
       "visible": false
     },
@@ -1969,8 +1987,7 @@
         "configuration.entries.collection.get",
         "manualblocks.collection.get",
         "pubsub.publish.post",
-        "automated-patron-blocks.collection.get",
-        "circulation-storage.loans-history.collection.get"
+        "automated-patron-blocks.collection.get"
       ],
       "visible": false
     },
@@ -2049,8 +2066,7 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
         "manualblocks.collection.get",
-        "automated-patron-blocks.collection.get",
-        "circulation-storage.loans-history.collection.get"
+        "automated-patron-blocks.collection.get"
       ],
       "visible": false
     },
@@ -2128,8 +2144,7 @@
         "manualblocks.collection.get",
         "automated-patron-blocks.collection.get",
         "pubsub.publish.post",
-        "circulation-storage.fixed-due-date-schedules.collection.get",
-        "circulation-storage.loans-history.collection.get"
+        "circulation-storage.fixed-due-date-schedules.collection.get"
       ],
       "visible": false
     },
@@ -2180,8 +2195,7 @@
         "users.item.get",
         "addresstypes.collection.get",
         "pubsub.publish.post",
-        "patron-notice.post",
-        "circulation-storage.loans-history.collection.get"
+        "patron-notice.post"
       ],
       "visible": false
     },
@@ -2264,8 +2278,7 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
         "configuration.entries.collection.get",
-        "patron-notice.post",
-        "circulation-storage.loans-history.collection.get"
+        "patron-notice.post"
       ],
       "visible": false
     },

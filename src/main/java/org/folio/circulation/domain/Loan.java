@@ -1,7 +1,7 @@
 package org.folio.circulation.domain;
 
-import static java.lang.Boolean.TRUE;
 import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
@@ -21,6 +21,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
+import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.BILL_NUMBER;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
@@ -29,20 +31,18 @@ import static org.folio.circulation.domain.representations.LoanProperties.DECLAR
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
+import static org.folio.circulation.domain.representations.LoanProperties.LAST_FEE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_HAS_BEEN_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.METADATA;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY_ID;
+import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
 import static org.folio.circulation.domain.representations.LoanProperties.RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
-import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
-import static org.folio.circulation.domain.representations.LoanProperties.LAST_FEE_BILLED;
-import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
-import static org.folio.circulation.domain.representations.LoanProperties.BILL_NUMBER;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
@@ -62,6 +62,7 @@ import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.mostRecentDate;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.UUID;
@@ -69,6 +70,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicyRemindersPolicy;
@@ -85,6 +88,7 @@ import lombok.ToString;
 @AllArgsConstructor(access = PRIVATE)
 @ToString(onlyExplicitlyIncluded = true)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   @ToString.Include
   private final JsonObject representation;
   @Getter
@@ -112,8 +116,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   @Getter
   private boolean dueDateChangedByNearExpireUser;
-  @Getter
-  private final String latestPatronInfoAddedComment;
 
   public static Loan from(JsonObject representation) {
     defaultStatusAndAction(representation);
@@ -126,7 +128,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, null, null, null, null, null,
       getDateTimeProperty(representation, DUE_DATE), getDateTimeProperty(representation, DUE_DATE),
-      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList(), null, false, false, null);
+      new Policies(loanPolicy, overdueFinePolicy, lostItemPolicy), emptyList(), null, false, false);
   }
 
   public JsonObject asJson() {
@@ -142,6 +144,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeDueDate(ZonedDateTime newDueDate) {
+    log.debug("changeDueDate:: parameters newDueDate: {}", () -> newDueDate);
     write(representation, DUE_DATE, newDueDate.withZoneSameInstant(UTC));
 
     return this;
@@ -170,18 +173,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeReturnDate(ZonedDateTime returnDate) {
+    log.debug("changeReturnDate:: parameters returnDate: {}", () -> returnDate);
     write(representation, RETURN_DATE, returnDate);
   }
 
   private void changeSystemReturnDate(ZonedDateTime systemReturnDate) {
+    log.debug("changeSystemReturnDate:: parameters systemReturnDate: {}", () -> systemReturnDate);
     write(representation, SYSTEM_RETURN_DATE, systemReturnDate);
   }
 
   public void changeAction(LoanAction action) {
+    log.debug("changeAction:: parameters action: {}", action);
     changeAction(action.getValue());
   }
 
   public void changeAction(String action) {
+    log.debug("changeAction:: parameters action: {}", action);
     write(representation, LoanProperties.ACTION, action);
   }
 
@@ -190,10 +197,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
+    log.debug("changeCheckInServicePointId:: parameters servicePointId: {}", servicePointId);
     write(representation, "checkinServicePointId", servicePointId);
   }
 
   public Loan changeItemStatusForItemAndLoan(ItemStatus itemStatus) {
+    log.debug("changeItemStatusForItemAndLoan:: parameters itemStatus: {}", itemStatus);
     Item itemToChange = getItem();
 
     executeIfNotNull(itemToChange, f -> f.changeStatus(itemStatus));
@@ -204,19 +213,23 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private void changeStatus(LoanStatus status) {
+    log.debug("changeStatus:: parameters status: {}", status);
     representation.put(STATUS, new JsonObject().put("name", status.getValue()));
   }
 
   public Loan changeItemEffectiveLocationIdAtCheckOut(String locationId) {
+    log.debug("changeItemEffectiveLocationIdAtCheckOut:: parameters locationId: {}", locationId);
     representation.put(ITEM_LOCATION_ID_AT_CHECKOUT, locationId);
     return this;
   }
 
   public void changeActionComment(String comment) {
+    log.debug("changeActionComment:: parameters comment: {}", comment);
     representation.put(ACTION_COMMENT, comment);
   }
 
   public void removeActionComment() {
+    log.debug("removeActionComment:: ");
     representation.remove(ACTION_COMMENT);
   }
 
@@ -226,13 +239,16 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> isValidStatus() {
     if (!representation.containsKey(STATUS)) {
-      return failedDueToServerError("Loan does not have a status");
+      String errorMessage = "Loan does not have a status";
+      log.warn("isValidStatus:: {}", errorMessage);
+      return failedDueToServerError(errorMessage);
     }
 
     // Provided status name is not present in the enum
     if (getStatus() == null) {
-      return failedValidation("Loan status must be \"Open\" or \"Closed\"",
-        STATUS, getStatusName());
+      String errorMessage = "Loan status must be \"Open\" or \"Closed\"";
+      log.warn("isValidStatus:: {}", errorMessage);
+      return failedValidation(errorMessage, STATUS, getStatusName());
     }
 
     return succeeded(null);
@@ -240,8 +256,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> openLoanHasUserId() {
     if (isOpen() && getUserId() == null) {
-      return failedValidation("Open loan must have a user ID",
-        USER_ID, getUserId());
+      String errorMessage = "Open loan must have a user ID";
+      log.warn("openLoanHasUserId::{}", errorMessage);
+      return failedValidation(errorMessage, USER_ID, getUserId());
     } else {
       return succeeded(null);
     }
@@ -249,8 +266,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Result<Void> closedLoanHasCheckInServicePointId() {
     if (isClosed() && getCheckInServicePointId() == null) {
-      return failedValidation("A Closed loan must have a Checkin Service Point",
-          CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
+      String errorMessage = "A Closed loan must have a Checkin Service Point";
+      log.warn("closedLoanHasCheckInServicePointId:: {}", errorMessage);
+      return failedValidation(errorMessage, CHECKIN_SERVICE_POINT_ID, getCheckInServicePointId());
     } else {
       return succeeded(null);
     }
@@ -313,7 +331,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan replaceRepresentation(JsonObject newRepresentation) {
     return new Loan(newRepresentation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withItem(Item newItem) {
@@ -324,7 +342,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, newItem, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   @Override
@@ -340,12 +358,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, item, newUser, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withActualCostRecord(ActualCostRecord actualCostRecord) {
     return new Loan(representation, item, user, proxy, checkinServicePoint, checkoutServicePoint,
-      originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withPatronGroupAtCheckout(PatronGroup patronGroup) {
@@ -368,22 +386,22 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     }
 
     return new Loan(newRepresentation, item, user, newProxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withCheckinServicePoint(ServicePoint newCheckinServicePoint) {
     return new Loan(representation, item, user, proxy, newCheckinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withCheckoutServicePoint(ServicePoint newCheckoutServicePoint) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      newCheckoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withAccounts(Collection<Account> newAccounts) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, newAccounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withLoanPolicy(LoanPolicy newLoanPolicy) {
@@ -391,7 +409,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withLoanPolicy(newLoanPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      policies.withLoanPolicy(newLoanPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
@@ -399,7 +417,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
@@ -407,12 +425,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withLostItemPolicy(newLostItemPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
-  }
-
-  public Loan withLatestPatronInfoAddedComment(String newLatestPatronInfoAddedComment) {
-    return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, newLatestPatronInfoAddedComment);
+      policies.withLostItemPolicy(newLostItemPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public String getLoanPolicyId() {
@@ -454,6 +467,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan renew(ZonedDateTime dueDate, String basedUponLoanPolicyId) {
+    log.debug("renew:: parameters dueDate: {}, basedUponLoanPolicyId: {}",
+      () -> dueDate, () -> basedUponLoanPolicyId);
     changeAction(RENEWED);
     removeActionComment();
     setLoanPolicyId(basedUponLoanPolicyId);
@@ -463,10 +478,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return this;
   }
 
-  public Loan overrideRenewal(ZonedDateTime dueDate,
-   String basedUponLoanPolicyId,
+  public Loan overrideRenewal(ZonedDateTime dueDate, String basedUponLoanPolicyId,
     String actionComment) {
 
+    log.debug("overrideRenewal:: parameters dueDate: {}, basedUponLoanPolicyId: {}, " +
+      "actionComment: {}", () -> dueDate, () -> basedUponLoanPolicyId, () -> actionComment);
     changeAction(RENEWED_THROUGH_OVERRIDE);
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
@@ -479,6 +495,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private Loan checkIn(LoanAction action, ZonedDateTime returnDateTime,
     ZonedDateTime systemReturnDateTime, UUID servicePointId) {
 
+    log.debug("checkIn:: parameters action: {}, returnDateTime: {}, " +
+      "systemReturnDateTime: {}, servicePointId: {}", () -> action, () -> returnDateTime,
+      () -> systemReturnDateTime, () -> servicePointId);
     closeLoan(action);
     changeReturnDate(returnDateTime);
     changeSystemReturnDate(systemReturnDateTime);
@@ -500,6 +519,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
+    log.debug("declareItemLost:: parameters comment: {}, dateTime: {}", () -> comment, () -> dateTime);
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
@@ -583,10 +603,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeItemStatus(String itemStatus) {
+    log.debug("changeItemStatus:: parameters itemStatus: {}", itemStatus);
     representation.put(LoanProperties.ITEM_STATUS, itemStatus);
   }
 
   public void changeDeclaredLostDateTime(ZonedDateTime dateTime) {
+    log.debug("changeDeclaredLostDateTime:: parameters dateTime: {}", () -> dateTime);
     write(representation, DECLARED_LOST_DATE, dateTime);
   }
 
@@ -646,6 +668,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
+    log.debug("claimItemReturned:: parameters comment: {}, claimedReturnedDate: {}",
+      () -> comment, () -> claimedReturnedDate);
     changeAction(CLAIMED_RETURNED);
     if (StringUtils.isNotBlank(comment)) {
       changeActionComment(comment);
@@ -662,6 +686,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action) {
+    log.debug("closeLoan:: parameters action: {}", action);
     changeStatus(LoanStatus.CLOSED);
 
     changeAction(action);
@@ -671,6 +696,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action, String comment) {
+    log.debug("closeLoan:: parameters action: {}, comment: {}", action, comment);
     changeStatus(LoanStatus.CLOSED);
 
     changeAction(action);
@@ -680,6 +706,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan markItemMissing(String comment) {
+    log.debug("markItemMissing:: parameters comment: {}", comment);
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
     return closeLoan(MISSING, comment);
@@ -698,6 +725,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void closeLoanAsLostAndPaid() {
+    log.debug("closeLoanAsLostAndPaid:: ");
     closeLoan(CLOSED_LOAN);
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
@@ -705,10 +733,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan copy() {
     final JsonObject representationCopy = representation.copy();
     return new Loan(representationCopy, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser);
   }
 
   public Loan ageOverdueItemToLost(ZonedDateTime ageToLostDate) {
+    log.debug("ageOverdueItemToLost:: parameters ageToLostDate: {}", () -> ageToLostDate);
     changeAction(ITEM_AGED_TO_LOST);
     removeActionComment();
     changeItemStatusForItemAndLoan(ItemStatus.AGED_TO_LOST);

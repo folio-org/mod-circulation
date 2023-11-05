@@ -23,32 +23,39 @@ public class LoanRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject extendedLoan(Loan loan) {
-    if(loan == null) {
+    if (loan == null) {
+      log.warn("extendedLoan:: loan is null");
       return null;
     }
 
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
 
     if(loan.isDueDateChangedByNearExpireUser()) {
-      extendedRepresentation.put("dueDateChangedByNearExpireUser",loan.isDueDateChangedByNearExpireUser());
+      log.info("extendedLoan:: due date changed by near expire user");
+      extendedRepresentation.put("dueDateChangedByNearExpireUser", loan.isDueDateChangedByNearExpireUser());
     }
 
     if(loan.isDueDateChangedByHold()) {
+      log.info("extendedLoan:: due date changed by hold");
       extendedRepresentation.put("dueDateChangedByHold",loan.isDueDateChangedByHold());
     }
 
     if(loan.getCheckinServicePoint() != null) {
+      log.info("extendedLoan:: checkinServicePoint is not null");
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }
 
     if(loan.getCheckoutServicePoint() != null) {
+      log.info("extendedLoan:: checkoutServicePoint is not null");
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
     }
 
     if (loan.getUser() != null) {
+      log.info("extendedLoan:: user is not null");
       additionalBorrowerProperties(extendedRepresentation, loan.getUser());
-    }else{
+    } else {
       //When there is no user, it means that the loan has been anonymized
+      log.info("extendedLoan:: there is no user, removing borrower");
       extendedRepresentation.remove(BORROWER);
     }
 
@@ -64,6 +71,7 @@ public class LoanRepresentation {
 
   private void addPolicy(JsonObject extendedRepresentation, Policy policy,
     String policyName) {
+
     if (policy != null) {
       additionalPolicyProperties(extendedRepresentation, policy, policyName);
     } else {
@@ -82,7 +90,7 @@ public class LoanRepresentation {
     //and could be confused with aggregation of current status
     loan.remove("itemStatus");
 
-    if(item != null && item.isFound()) {
+    if (item != null && item.isFound()) {
       loan.put("item", new ItemSummaryRepresentation()
         .createItemSummary(item));
     }
@@ -93,7 +101,10 @@ public class LoanRepresentation {
   }
 
   private void additionalAccountProperties(JsonObject loanRepresentation, Loan loan) {
+    log.debug("additionalAccountProperties:: parameters loanRepresentation: {}, loan: {}",
+      () -> loanRepresentation, () -> loan);
     if (loan.getAccounts() == null) {
+      log.info("additionalAccountProperties:: accounts is null");
       return;
     }
 
@@ -108,6 +119,7 @@ public class LoanRepresentation {
 
   private void additionalPolicyProperties(JsonObject representation,
     Policy policy, String policyName) {
+
     JsonObject summary = representation.containsKey(policyName)
       ? representation.getJsonObject(policyName)
       : new JsonObject();
@@ -121,7 +133,7 @@ public class LoanRepresentation {
     ServicePoint servicePoint,
     String fieldName) {
 
-    if(servicePoint == null) {
+    if (servicePoint == null) {
       log.info("Unable to add servicepoint properties to loan {},"
           + " servicepoint is null", loanRepresentation.getString("id"));
       return;
@@ -160,8 +172,11 @@ public class LoanRepresentation {
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
 
-  private void additionalPatronGroupProperties(JsonObject loanRepresentation, PatronGroup patronGroupAtCheckout) {
+  private void additionalPatronGroupProperties(JsonObject loanRepresentation,
+    PatronGroup patronGroupAtCheckout) {
+
     if (isNull(patronGroupAtCheckout)) {
+      log.info("additionalPatronGroupProperties:: patronGroupAtCheckout is null");
       return;
     }
 
