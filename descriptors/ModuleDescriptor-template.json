@@ -1249,6 +1249,12 @@
       "version": "1.0"
     }
   ],
+  "optional": [
+    {
+      "id": "circulation-item",
+      "version": "1.0"
+    }
+  ],
   "permissionSets": [
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
@@ -1669,6 +1675,7 @@
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "inventory-storage.items.item.put",
+        "circulation-item-storage.items.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
@@ -1716,6 +1723,7 @@
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "inventory-storage.items.item.put",
+        "circulation-item-storage.items.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
@@ -2294,6 +2302,8 @@
       "description" : "Internal permission set for fetching item(s)",
       "subPermissions": [
         "inventory-storage.items.item.get",
+        "circulation-item-storage.items.item.get",
+        "circulation-item-storage.items.collection.get",
         "inventory-storage.items.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.holdings.collection.get",
