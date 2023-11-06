@@ -118,12 +118,8 @@ public class ItemRepository {
       write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
     }
 
-    if (item.isDcbItem()) {
-      return circulationItemClient.put(item.getItemId(), updatedItemRepresentation)
-        .thenApply(noContentRecordInterpreter(item)::flatMap)
-        .thenCompose(x -> ofAsync(() -> item));
-    }
-    return itemsClient.put(item.getItemId(), updatedItemRepresentation)
+    return (item.isDcbItem() ? circulationItemClient : itemsClient)
+      .put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
   }
