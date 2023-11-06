@@ -1256,7 +1256,7 @@
   ],
   "optional": [
     {
-      "id": "mod-circulation-item",
+      "id": "circulation-item",
       "version": "1.0"
     }
   ],
