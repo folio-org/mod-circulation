@@ -67,6 +67,8 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
     LoanAndRelatedRecords relatedRecords) {
 
+    log.debug("onCheckIn:: parameters relatedRecords: {}", () -> relatedRecords);
+
     //Do not attempt check in for open loan
     if(relatedRecords.getLoan().isOpen()) {
       return ofAsync(() -> relatedRecords);
@@ -82,6 +84,9 @@ public class UpdateRequestQueue {
 
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
     RequestQueue requestQueue, Item item, String checkInServicePointId) {
+
+    log.debug("onCheckIn:: parameters requestQueue: {}, item: {}, checkInServicePointId: {}",
+      () -> requestQueue, () -> item, () -> checkInServicePointId);
 
     return requestQueueService.findRequestFulfillableByItem(item, requestQueue)
       .thenCompose(r -> r.after(request -> updateOutstandingRequestOnCheckIn(
@@ -99,7 +104,8 @@ public class UpdateRequestQueue {
 
     if (requestBeingFulfilled.getItemId() == null || !requestBeingFulfilled.isFor(item)) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
-
+      log.info("updateOutstandingRequestOnCheckIn:: replacing request in the queue because " +
+        "another instance of it has been created");
       // Replacing request in the queue because another instance of it has been created
       requestQueue.replaceRequest(requestBeingFulfilled);
     }
@@ -110,18 +116,18 @@ public class UpdateRequestQueue {
 
     CompletableFuture<Result<Request>> updatedReq;
 
-    log.info("updateOutstandingRequestOnCheckIn :: preference:{} ",
+    log.info("updateOutstandingRequestOnCheckIn:: preference:{} ",
       requestBeingFulfilled.getfulfillmentPreference());
-    log.info("updateOutstandingRequestOnCheckIn :: requestBeingFulfilled.pickupServicePointId:{} ",
+    log.info("updateOutstandingRequestOnCheckIn:: requestBeingFulfilled.pickupServicePointId:{} ",
       requestBeingFulfilled.getPickupServicePointId());
 
     switch (requestBeingFulfilled.getfulfillmentPreference()) {
       case HOLD_SHELF:
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
-          log.info("updateOutstandingRequestOnCheckIn :: Updating to awaitingPickUp");
+          log.info("updateOutstandingRequestOnCheckIn:: Updating to awaitingPickUp");
           return awaitPickup(requestBeingFulfilled,requestQueue);
         } else {
-          log.info("updateOutstandingRequestOnCheckIn :: Updating to inTransit");
+          log.info("updateOutstandingRequestOnCheckIn:: Updating to inTransit");
           updatedReq = putInTransit(requestBeingFulfilled);
         }
 
@@ -142,11 +148,16 @@ public class UpdateRequestQueue {
       .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
   }
 
-  private CompletableFuture<Result<RequestQueue>> awaitPickup(Request request, RequestQueue requestQueue) {
+  private CompletableFuture<Result<RequestQueue>> awaitPickup(Request request,
+    RequestQueue requestQueue) {
+
+    log.debug("awaitPickup:: parameters request: {}, requestQueue: {}",
+      () -> request, () -> requestQueue);
     Request originalRequest = Request.from(request.asJson());
     request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
     if (request.getHoldShelfExpirationDate() == null) {
+      log.info("awaitPickup:: holdShelfExpirationDate for request {} is null", request.getId());
       String pickupServicePointId = request.getPickupServicePointId();
 
       return servicePointRepository.getServicePointById(pickupServicePointId)
@@ -167,12 +178,16 @@ public class UpdateRequestQueue {
     }
   }
 
-  private RequestQueue setHoldShelfExpirationDateWithExpirationDateManagement(ZoneId tenantTimeZone, Request calculatedRequest,
-                                                                                RequestQueue requestQueue, Request originalRequest) {
+  private RequestQueue setHoldShelfExpirationDateWithExpirationDateManagement(
+    ZoneId tenantTimeZone, Request calculatedRequest, RequestQueue requestQueue,
+    Request originalRequest) {
 
-    ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint().getHoldShelfClosedLibraryDateManagement();
-    String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId().toUpperCase();
-    log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",calculatedRequest.getHoldShelfExpirationDate());
+    ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
+      .getHoldShelfClosedLibraryDateManagement();
+    String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
+      .getIntervalId().toUpperCase();
+    log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
+      calculatedRequest.getHoldShelfExpirationDate());
     // Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
     if (ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE == expirationDateManagement && isShortTerm(intervalId)) {
       expirationDateManagement = ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE_TIME;
@@ -182,8 +197,7 @@ public class UpdateRequestQueue {
 
     ClosedLibraryStrategy closedLibraryStrategy = determineClosedLibraryStrategyForHoldShelfExpirationDate
       (finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(), tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod());
-
-    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
+    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenApply(calculatedDate -> {
         log.info("calculatedDate after :{}",calculatedDate.value());
@@ -215,17 +229,15 @@ public class UpdateRequestQueue {
   }
 
   private Result<Request> populateHoldShelfExpirationDate(Request request, ZoneId tenantTimeZone) {
+    log.debug("populateHoldShelfExpirationDate:: parameters request: {}, tenantTimeZone: {}",
+      () -> request, () -> tenantTimeZone);
     ServicePoint pickupServicePoint = request.getPickupServicePoint();
     TimePeriod holdShelfExpiryPeriod = pickupServicePoint.getHoldShelfExpiryPeriod();
 
-    log.debug("Using time zone {} and period {}",
-      tenantTimeZone,
-      holdShelfExpiryPeriod.getInterval()
-    );
-
-    ZonedDateTime holdShelfExpirationDate =
-      calculateHoldShelfExpirationDate(holdShelfExpiryPeriod, tenantTimeZone);
-
+    log.debug("populateHoldShelfExpirationDate:: using time zone {} and period {}",
+      () -> tenantTimeZone, holdShelfExpiryPeriod::getInterval);
+    ZonedDateTime holdShelfExpirationDate = calculateHoldShelfExpirationDate(
+      holdShelfExpiryPeriod, tenantTimeZone);
     request.changeHoldShelfExpirationDate(holdShelfExpirationDate);
 
     return succeeded(request);
@@ -239,17 +251,20 @@ public class UpdateRequestQueue {
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckOut(
     LoanAndRelatedRecords relatedRecords, Request firstRequest) {
 
+    log.debug("onCheckOut:: parameters relatedRecords: {}, firstRequest: {}",
+      () -> relatedRecords, () -> firstRequest);
     if (firstRequest == null) {
+      log.info("onCheckOut:: first request is null");
       return completedFuture(succeeded(relatedRecords));
     }
 
     RequestQueue requestQueue = relatedRecords.getRequestQueue();
     Request originalRequest = Request.from(firstRequest.asJson());
 
-    log.info("Closing request '{}'", firstRequest.getId());
+    log.info("onCheckOut:: Closing request '{}'", firstRequest.getId());
     firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 
-    log.info("Removing request '{}' from queue", firstRequest.getId());
+    log.info("onCheckOut:: Removing request '{}' from queue", firstRequest.getId());
     requestQueue.remove(firstRequest);
 
     Request updatedRequest = Request.from(firstRequest.asJson());
@@ -265,16 +280,23 @@ public class UpdateRequestQueue {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onCreate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("onCreate:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
     final Request request = requestAndRelatedRecords.getRequest();
     final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
     requestQueue.add(request);
+
     return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
         .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onCancellation(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("onCancellation:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     if(requestAndRelatedRecords.getRequest().isCancelled()) {
+      log.info("onCancellation:: request is cancelled");
       return requestQueueRepository.updateRequestsWithChangedPositions(
         requestAndRelatedRecords.getRequestQueue())
         .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
@@ -287,10 +309,13 @@ public class UpdateRequestQueue {
   CompletableFuture<Result<RequestAndRelatedRecords>> onMovedFrom(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
+    log.debug("onMovedFrom:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     final Request request = requestAndRelatedRecords.getRequest();
     if (requestAndRelatedRecords.getSourceItemId().equals(request.getItemId()) &&
       !requestAndRelatedRecords.isTlrFeatureEnabled()) {
 
+      log.info("onMovedFrom:: removing request from the requestQueue");
       final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       requestQueue.remove(request);
       return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
@@ -303,11 +328,15 @@ public class UpdateRequestQueue {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onMovedTo(
     RequestAndRelatedRecords requestAndRelatedRecords) {
+
+    log.debug("onMovedTo:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     final Request request = requestAndRelatedRecords.getRequest();
     if (requestAndRelatedRecords.getDestinationItemId().equals(request.getItemId())) {
       final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
       // NOTE: it is important to remove position when moving request from one queue to another
       if (requestAndRelatedRecords.isTlrFeatureEnabled()) {
+        log.info("onMovedTo:: removing request from the requestQueue");
         requestQueue.remove(request);
       }
       request.removePosition();
@@ -321,6 +350,8 @@ public class UpdateRequestQueue {
   }
 
   public CompletableFuture<Result<Request>> onDeletion(Request request) {
+    log.debug("onDeletion:: parameters request: {}", () -> request);
+
     return requestQueueRepository.getByItemId(request.getItemId())
       .thenApply(r -> r.map(requestQueue -> {
         requestQueue.remove(request);
@@ -365,8 +396,8 @@ public class UpdateRequestQueue {
 
     ZonedDateTime holdShelfExpirationDate = holdShelfExpiryPeriod.getInterval()
       .addTo(now, holdShelfExpiryPeriod.getDuration());
-
     if (holdShelfExpiryPeriod.isLongTermPeriod()) {
+      log.info("calculateHoldShelfExpirationDate:: holdShelfExpiryPeriod is long term");
       holdShelfExpirationDate = atEndOfDay(holdShelfExpirationDate);
     }
 
