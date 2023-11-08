@@ -415,7 +415,7 @@ public class TemplateContextUtil {
           .with(UserContext.CITY, address.getString("city", null))
           .with(UserContext.REGION, address.getString("region", null))
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.COUNTRY_ID, getCountryNameByCodeIgnoreCase(address.getString(COUNTRY_ID, null)))
+          .with(UserContext.COUNTRY_ID,  address.getString("countryId", null))
           .with(UserContext.ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
