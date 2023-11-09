@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import java.util.UUID;
 
-public class OverdueFinePolicyWithReminderFees implements Builder {
+public class OverdueFinePolicyWithReminderFeesBuilder implements Builder {
   JsonObject overdueFinePolicyJson = new JsonObject();
   public static final String ID = "id";
   public static final String NAME = "name";
@@ -15,8 +15,9 @@ public class OverdueFinePolicyWithReminderFees implements Builder {
   public static final String REMINDER_FEE = "reminderFee";
   public static final String NOTICE_FORMAT = "noticeFormat";
   public static final String NOTICE_TEMPLATE_ID = "noticeTemplateId";
+  public static final String COUNT_CLOSED = "countClosed";
 
-  public OverdueFinePolicyWithReminderFees(UUID id, String name) {
+  public OverdueFinePolicyWithReminderFeesBuilder(UUID id, String name) {
     overdueFinePolicyJson
       .put(ID, id.toString())
       .put(NAME, name)
@@ -26,11 +27,17 @@ public class OverdueFinePolicyWithReminderFees implements Builder {
       .put(REMINDER_SCHEDULE, new JsonArray());
   }
 
+
   JsonArray getReminderSchedule () {
     return overdueFinePolicyJson.getJsonObject(REMINDER_FEES_POLICY).getJsonArray(REMINDER_SCHEDULE);
   }
 
-  public OverdueFinePolicyWithReminderFees withAddedReminderEntry (
+  public OverdueFinePolicyWithReminderFeesBuilder withCanSendReminderUponClosedDay(Boolean val) {
+    overdueFinePolicyJson.getJsonObject(REMINDER_FEES_POLICY).put(COUNT_CLOSED, val);
+    return this;
+  }
+
+  public OverdueFinePolicyWithReminderFeesBuilder withAddedReminderEntry (
     Integer interval,
     String timeUnitId,
     Double reminderFee,

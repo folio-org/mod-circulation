@@ -17,12 +17,12 @@ import io.vertx.core.json.JsonObject;
 public class OverdueFinePolicy extends Policy {
   private final OverdueFinePolicyFineInfo fineInfo;
   private final OverdueFinePolicyLimitInfo limitInfo;
-  private final OverdueFinePolicyRemindersPolicy remindersPolicy;
+  private final RemindersPolicy remindersPolicy;
   private final Flags flags;
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private OverdueFinePolicy(String id, String name, OverdueFinePolicyFineInfo fineInfo,
-                            OverdueFinePolicyLimitInfo limitInfo, OverdueFinePolicyRemindersPolicy remindersPolicy, Flags flags) {
+                            OverdueFinePolicyLimitInfo limitInfo, RemindersPolicy remindersPolicy, Flags flags) {
     super(id, name);
     this.fineInfo = fineInfo;
     this.limitInfo = limitInfo;
@@ -46,7 +46,7 @@ public class OverdueFinePolicy extends Policy {
       ),
       new OverdueFinePolicyLimitInfo(getBigDecimalProperty(json, "maxOverdueFine"),
         getBigDecimalProperty(json, "maxOverdueRecallFine")),
-      OverdueFinePolicyRemindersPolicy.from(getObjectProperty(json, "reminderFeesPolicy")),
+      RemindersPolicy.from(getObjectProperty(json, "reminderFeesPolicy")),
       new Flags(
         getBooleanProperty(json, "gracePeriodRecall"),
         getBooleanProperty(json, "countClosed"),
@@ -109,7 +109,7 @@ public class OverdueFinePolicy extends Policy {
     return remindersPolicy.hasReminderSchedule();
   }
 
-  public OverdueFinePolicyRemindersPolicy getRemindersPolicy() {
+  public RemindersPolicy getRemindersPolicy() {
     return remindersPolicy;
   }
 
@@ -117,7 +117,7 @@ public class OverdueFinePolicy extends Policy {
     UnknownOverdueFinePolicy(String id) {
       super(id, null, new OverdueFinePolicyFineInfo(null, null, null, null),
         new OverdueFinePolicyLimitInfo(null, null),
-        OverdueFinePolicyRemindersPolicy.from(null),
+        RemindersPolicy.from(null),
         new Flags(false, false, false));
     }
   }

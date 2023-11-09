@@ -26,6 +26,7 @@ import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.*;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 public class ScheduledDigitalRemindersProcessingResource extends ScheduledNoticeProcessingResource {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -37,7 +38,7 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(ConfigurationRepository configurationRepository, ScheduledNoticesRepository scheduledNoticesRepository, PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
-    return CqlQuery.lessThan("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
+    return CqlQuery.lessThanOrEqualTo("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
       .combine(exactMatch("noticeConfig.sendInRealTime", "true"), CqlQuery::and)
       .combine(exactMatch("triggeringEvent", DUE_DATE_WITH_REMINDER_FEE.getRepresentation()), CqlQuery::and)
       .combine(exactMatch("noticeConfig.format", "Email"), CqlQuery::and)
@@ -47,6 +48,10 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> handleNotices(Clients clients, RequestRepository requestRepository, LoanRepository loanRepository, MultipleRecords<ScheduledNotice> noticesResult) {
+
+    log.debug("handleNotices:: parameters noticesResult: {}",
+      () -> multipleRecordsAsString(noticesResult));
+
     return new ScheduledDigitalReminderHandler(clients, loanRepository)
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
