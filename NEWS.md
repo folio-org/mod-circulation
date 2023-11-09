@@ -1,3 +1,8 @@
+## 24.0.5 2023-11-09
+
+* Request delivery staff slip: Requester country token information displayed wrong 'stripes-components.countries.' (CIRC-1955)
+
+
 ## 24.0.4 2023-11-02
 
 * Add missing permission set for allowed service points endpoint (CIRC-1953)
