@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.AWAITING_PICKUP;
@@ -11,6 +10,7 @@ import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.ItemStatus.MISSING;
 import static org.folio.circulation.domain.ItemStatus.PAGED;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
@@ -397,5 +397,9 @@ public class Item {
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
       this.permanentLocation, servicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.description);
+  }
+
+  public boolean isDcbItem(){
+    return getBooleanProperty(itemRepresentation, "dcbItem");
   }
 }
