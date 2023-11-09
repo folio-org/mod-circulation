@@ -74,7 +74,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.domain.policy.OverdueFinePolicyRemindersPolicy;
+import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
 import org.folio.circulation.support.results.Result;
@@ -653,7 +653,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return (Integer) getValueByPath(representation, REMINDERS, LAST_FEE_BILLED, BILL_NUMBER);
   }
 
-  public OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry getNextReminder() {
+  public RemindersPolicy.ReminderConfig getNextReminder() {
     Integer latestReminderNumber = getLastReminderFeeBilledNumber();
     if (latestReminderNumber == null) {
       latestReminderNumber = 0;
@@ -662,7 +662,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       || getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule() == null) {
       return null;
     } else {
-      OverdueFinePolicyRemindersPolicy.ReminderSequence schedule = getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule();
+      RemindersPolicy.Sequence schedule = getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule();
       return schedule.getEntryAfter(latestReminderNumber);
     }
   }

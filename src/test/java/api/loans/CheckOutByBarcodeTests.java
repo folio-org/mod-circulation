@@ -127,7 +127,6 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
@@ -413,7 +412,7 @@ class CheckOutByBarcodeTests extends APITests {
   void canCheckOutUsingReminderFeePolicy() {
 
     IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
-    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.reminderFeesPolicy();
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.remindersTwoDaysBetween(true);
     IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
 
     useFallbackPolicies(loanPolicy.getId(),

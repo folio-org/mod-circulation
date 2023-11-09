@@ -5,7 +5,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 import java.util.UUID;
 
-import api.support.builders.OverdueFinePolicyWithReminderFees;
+import api.support.builders.OverdueFinePolicyWithReminderFeesBuilder;
 import api.support.http.IndividualResource;
 
 import api.support.builders.NoticePolicyBuilder;
@@ -104,17 +104,33 @@ public class OverdueFinePoliciesFixture {
     return overdueFinePolicyRecordCreator.createIfAbsent(overdueFinePolicy);
   }
 
-  public IndividualResource reminderFeesPolicy() {
-    OverdueFinePolicyWithReminderFees policy = new OverdueFinePolicyWithReminderFees(
+  public IndividualResource remindersTwoDaysBetween(boolean canScheduleRemindersOnClosedDays) {
+    OverdueFinePolicyWithReminderFeesBuilder policy = new OverdueFinePolicyWithReminderFeesBuilder(
       UUID.randomUUID(),
-      "Overdue fine policy with scheduled reminder fees")
+      "Reminder fee policy 1-2-2: schedule on closed: " + canScheduleRemindersOnClosedDays)
       .withAddedReminderEntry(
-        1,"minute",1.50,
+        1,"day",1.50,
         "Email",FIRST_REMINDER_TEMPLATE_ID.toString())
-      .withAddedReminderEntry(1, "minute", 2.00,
+      .withAddedReminderEntry(2, "day", 2.00,
         "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
-      .withAddedReminderEntry(1,"minute", 2.15,
-        "Email", THIRD_REMINDER_TEMPLATE_ID.toString());
+      .withAddedReminderEntry(2,"day", 2.15,
+        "Email", THIRD_REMINDER_TEMPLATE_ID.toString())
+      .withCanSendReminderUponClosedDay(canScheduleRemindersOnClosedDays);
+    return overdueFinePolicyRecordCreator.createIfAbsent(policy.create());
+  }
+
+  public IndividualResource remindersOneDayBetween(boolean canScheduleRemindersOnClosedDays) {
+    OverdueFinePolicyWithReminderFeesBuilder policy = new OverdueFinePolicyWithReminderFeesBuilder(
+      UUID.randomUUID(),
+      "Reminder fee policy 0-1-1: send on closed " + canScheduleRemindersOnClosedDays)
+      .withAddedReminderEntry(
+        0,"day",1.50,
+        "Email",FIRST_REMINDER_TEMPLATE_ID.toString())
+      .withAddedReminderEntry(1, "day", 2.00,
+        "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
+      .withAddedReminderEntry(1,"day", 2.15,
+        "Email", THIRD_REMINDER_TEMPLATE_ID.toString())
+      .withCanSendReminderUponClosedDay(canScheduleRemindersOnClosedDays);
     return overdueFinePolicyRecordCreator.createIfAbsent(policy.create());
   }
 

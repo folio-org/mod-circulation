@@ -113,7 +113,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final LoanScheduledNoticeService scheduledNoticeService =
       new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
     final ReminderFeeScheduledNoticeService reminderFeeScheduledNoticesService =
-      new ReminderFeeScheduledNoticeService(scheduledNoticesRepository);
+      new ReminderFeeScheduledNoticeService(clients);
 
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(permissions);
