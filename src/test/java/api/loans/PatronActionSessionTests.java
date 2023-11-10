@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
 import static api.support.matchers.JsonObjectMatcher.toStringMatcher;
@@ -23,11 +24,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matcher;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -115,6 +121,11 @@ class PatronActionSessionTests extends APITests {
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     IndividualResource nodToJamesLoan = checkOutFixture.checkOutByBarcode(nod, james);
     IndividualResource interestingTimesToJamesLoan = checkOutFixture.checkOutByBarcode(interestingTimes, james);
+    String infoAdded = "testing patron info";
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(nodToJamesLoan.getId().toString(),
+      "patronInfoAdded", infoAdded));
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(interestingTimesToJamesLoan.getId().toString(),
+      "patronInfoAdded", infoAdded));
 
     verifyNumberOfExistingActionSessions(2);
 
@@ -122,10 +133,11 @@ class PatronActionSessionTests extends APITests {
 
     //Wait until session records are deleted
     verifyNumberOfExistingActionSessions(0);
-
+    Map<String, Matcher<String>> noticeContextMatchers = getLoanPolicyContextMatchersForUnlimitedRenewals();
+    noticeContextMatchers.putAll(getLoanAdditionalInfoContextMatchers(infoAdded));
     final var multipleLoansToJamesContextMatcher = getMultipleLoansContextMatcher(james,
       Arrays.asList(Pair.of(nodToJamesLoan, nod), Pair.of(interestingTimesToJamesLoan, interestingTimes)),
-      toStringMatcher(getLoanPolicyContextMatchersForUnlimitedRenewals()));
+      toStringMatcher(noticeContextMatchers));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_NOTICE_TEMPLATE_ID, multipleLoansToJamesContextMatcher)));
@@ -206,7 +218,7 @@ class PatronActionSessionTests extends APITests {
     UUID checkInServicePointId = servicePointsFixture.cd1().getId();
     ItemResource nod = itemsFixture.basedUponNod();
 
-    checkOutFixture.checkOutByBarcode(nod, steve);
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, steve);
     checkInFixture.checkInByBarcode(
       new CheckInByBarcodeRequestBuilder()
         .forItem(nod)
@@ -216,6 +228,9 @@ class PatronActionSessionTests extends APITests {
     verifyNumberOfSentNotices(0);
     verifyNumberOfPublishedEvents(NOTICE, 0);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    String infoAdded = "testing patron info";
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loan.getId().toString(),
+      "patronInfoAdded", infoAdded));
 
     endPatronSessionClient.endCheckInSession(steve.getId());
 
@@ -224,6 +239,10 @@ class PatronActionSessionTests extends APITests {
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    Map<String, Matcher<String>> noticeContextMatchers = new HashMap<>();
+    noticeContextMatchers.put("loans[0].loan.additionalInfo", Is.is(infoAdded));
+    assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
+      hasEmailNoticeProperties(steve.getId(), CHECK_IN_NOTICE_TEMPLATE_ID, noticeContextMatchers)));
   }
 
   @Test

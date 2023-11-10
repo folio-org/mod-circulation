@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
@@ -36,7 +37,7 @@ class ItemRepositoryTests {
   @Test
   void canUpdateAnItemThatHasBeenFetched() {
     final var itemsClient = mock(CollectionResourceClient.class);
-    final var repository = createRepository(itemsClient);
+    final var repository = createRepository(itemsClient, null);
 
     final var itemId = UUID.randomUUID().toString();
 
@@ -62,7 +63,7 @@ class ItemRepositoryTests {
 
   @Test
   void cannotUpdateAnItemThatHasNotBeenFetched() {
-    final var repository = createRepository(null);
+    final var repository = createRepository(null, null);
 
     final var notFetchedItem = dummyItem();
 
@@ -74,7 +75,7 @@ class ItemRepositoryTests {
 
   @Test
   void nullItemIsNotUpdated() {
-    final var repository = createRepository(null);
+    final var repository = createRepository(null, null);
 
     final var updateResult = get(repository.updateItem(null));
 
@@ -82,12 +83,61 @@ class ItemRepositoryTests {
     assertThat(updateResult.value(), is(nullValue()));
   }
 
+  @Test
+  void returnCirculationItemWhenNotFound() {
+    final var itemsClient = mock(CollectionResourceClient.class);
+    final var circulationItemsClient = mock(CollectionResourceClient.class);
+    final var repository = createRepository(itemsClient, circulationItemsClient);
+    final var itemId = UUID.randomUUID().toString();
+
+    final var circulationItemJson = new JsonObject()
+      .put("id", itemId)
+      .put("holdingsRecordId", UUID.randomUUID())
+      .put("effectiveLocationId", UUID.randomUUID()).toString();
+    final var emptyResult = new JsonObject()
+      .put("items", new JsonArray()).toString();
+
+    when(itemsClient.getMany(any(), any())).thenReturn(ofAsync(
+      () -> new Response(200, emptyResult, "application/json")));
+    when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(ofAsync(
+      () -> new Response(200, circulationItemJson, "application/json")));
+
+    assertThat(get(repository.fetchByBarcode(itemId)).value().getItemId(), is(itemId));
+  }
+
+  @Test
+  void canUpdateCirculationItemThatHasBeenFetched(){
+    final var itemsClient = mock(CollectionResourceClient.class);
+    final var circulationItemsClient = mock(CollectionResourceClient.class);
+    final var repository = createRepository(itemsClient, circulationItemsClient);
+    final var itemId = UUID.randomUUID().toString();
+
+    final var circulationItemJson = new JsonObject()
+      .put("id", itemId)
+      .put("holdingsRecordId", UUID.randomUUID())
+      .put("effectiveLocationId", UUID.randomUUID())
+      .put("dcbItem", true);
+    final var emptyResult = new JsonObject()
+      .put("items", new JsonArray()).toString();
+
+    mockedClientGet(itemsClient, circulationItemJson.encodePrettily());
+    when(itemsClient.get(anyString())).thenReturn(ofAsync(
+      () -> new Response(200, emptyResult, "application/json")));
+    when(circulationItemsClient.put(any(), any())).thenReturn(ofAsync(
+      () -> new Response(204, circulationItemJson.toString(), "application/json")));
+
+    final var fetchedItem = get(repository.fetchById(itemId)).value();
+    final var updateResult = get(repository.updateItem(fetchedItem));
+
+    assertThat(updateResult, succeeded());
+  }
+
   private void mockedClientGet(CollectionResourceClient client, String body) {
-    when(client.get(anyString())).thenReturn(Result.ofAsync(
+    when(client.get(anyString())).thenReturn(ofAsync(
       () -> new Response(200, body, "application/json")));
   }
 
-  private ItemRepository createRepository(CollectionResourceClient itemsClient) {
+  private ItemRepository createRepository(CollectionResourceClient itemsClient, CollectionResourceClient circulationItemClient) {
     final var locationRepository = mock(LocationRepository.class);
     final var materialTypeRepository = mock(MaterialTypeRepository.class);
     final var instanceRepository = mock(InstanceRepository.class);
@@ -108,7 +158,7 @@ class ItemRepositoryTests {
 
     return new ItemRepository(itemsClient, locationRepository,
       materialTypeRepository, instanceRepository,
-      holdingsRepository, loanTypeRepository);
+      holdingsRepository, loanTypeRepository, circulationItemClient);
   }
 
   private Item dummyItem() {
