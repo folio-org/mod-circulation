@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequ
 import static org.folio.circulation.domain.notice.schedule.TriggeringEvent.HOLD_EXPIRATION;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
@@ -160,8 +161,17 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
     }
 
     return requestRepository.fetchRelatedRecords(context.getRequest())
+      .thenCompose(r -> r.after(this::fetchLatestPatronInfoAddedComment))
       .thenApply(mapResult(context::withRequest))
       .thenApply(r -> r.next(this::failWhenRequestHasNoUser));
+  }
+
+  private CompletableFuture<Result<Request>> fetchLatestPatronInfoAddedComment(Request request) {
+    if (request.getLoan() != null) {
+      return loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan())
+        .thenApply(mapResult(request::withLoan));
+    }
+    return ofAsync(request);
   }
 
 }

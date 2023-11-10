@@ -7,8 +7,10 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.logging.LogMessageSanitizer.sanitizeLogParameter;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -60,13 +62,21 @@ public class SingleRecordFetcher<T> {
   }
 
   public CompletableFuture<Result<T>> fetch(String id) {
-    if (log.isInfoEnabled()) {
-      log.info("Fetching {} with ID: {}", recordType, sanitizeLogParameter(id));
-    }
+    log.info("Fetching {} with ID: {}", () -> recordType, () -> sanitizeLogParameter(id));
 
     requireNonNull(id, format("Cannot fetch single %s with null ID", recordType));
 
     return client.get(id)
+      .thenApply(flatMapResult(interpreter::apply))
+      .exceptionally(CommonFailures::failedDueToServerError);
+  }
+
+  public CompletableFuture<Result<T>> fetchWithQueryStringParameters(Map<String, String> queryParameters) {
+    log.info("Fetching {} with query parameters: {}", () -> recordType, () -> mapAsString(queryParameters));
+
+    requireNonNull(queryParameters, format("Cannot fetch  %s with null parameters", recordType));
+
+    return client.getManyWithQueryStringParameters(queryParameters)
       .thenApply(flatMapResult(interpreter::apply))
       .exceptionally(CommonFailures::failedDueToServerError);
   }
