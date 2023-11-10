@@ -115,7 +115,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       })
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
-
+//
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
     return ofAsync(() -> context)
