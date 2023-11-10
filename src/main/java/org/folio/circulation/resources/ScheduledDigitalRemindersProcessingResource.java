@@ -38,7 +38,7 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(ConfigurationRepository configurationRepository, ScheduledNoticesRepository scheduledNoticesRepository, PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
-    return CqlQuery.lessThanOrEqualTo("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
+    return CqlQuery.lessThan("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
       .combine(exactMatch("noticeConfig.sendInRealTime", "true"), CqlQuery::and)
       .combine(exactMatch("triggeringEvent", DUE_DATE_WITH_REMINDER_FEE.getRepresentation()), CqlQuery::and)
       .combine(exactMatch("noticeConfig.format", "Email"), CqlQuery::and)
