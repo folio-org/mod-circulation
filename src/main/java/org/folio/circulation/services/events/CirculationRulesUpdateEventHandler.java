@@ -24,9 +24,10 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
     log.debug("handle:: payload={}", event::value);
 
     JsonObject payload = new JsonObject(event.value());
+    JsonObject data = payload.getJsonObject("data");
     Result<Rules> result = CirculationRulesCache.getInstance()
       .reloadRules(payload.getString("tenant"),
-        payload.getJsonObject("new").getString("rulesAsText"));
+        data.getJsonObject("new").getString("rulesAsText"));
 
     if (result.succeeded()) {
       log.info("handle:: circulation rules update event processed");
