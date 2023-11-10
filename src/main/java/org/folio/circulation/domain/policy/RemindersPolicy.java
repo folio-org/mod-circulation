@@ -207,7 +207,7 @@ public class RemindersPolicy {
       return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
 
-    public LocalDate getRequestedRunTime(ZoneId zoneId, ZonedDateTime offset) {
+    private LocalDate getRequestedRunTime(ZoneId zoneId, ZonedDateTime offset) {
       return  getRequestedRunTime(offset).withZoneSameInstant(zoneId).toLocalDate();
     }
 
@@ -216,9 +216,9 @@ public class RemindersPolicy {
     }
 
     public CompletableFuture<Result<ZonedDateTime>> calculateNextRunTime(
-      ZoneId zoneId, ZonedDateTime offsetDate, Boolean canSendRemindersUponClosedDay,
+      ZoneId zoneId, ZonedDateTime offsetDate, Boolean canScheduleRemindersUponClosedDay,
       CalendarRepository calendars, String servicePointId) {
-      if (canSendRemindersUponClosedDay) {
+      if (canScheduleRemindersUponClosedDay) {
         return ofAsync(getRequestedRunTime(offsetDate));
       } else {
         final LocalDate requestedRunTime = getRequestedRunTime(zoneId,offsetDate);

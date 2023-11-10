@@ -23,6 +23,7 @@ import org.folio.circulation.support.utils.DateFormatUtil;
 import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -253,7 +254,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
         calendarRepository, loan.getCheckoutServicePointId())
       .thenCompose(nextRunTimeResult -> {
         ScheduledNotice nextReminderNotice = context.getNotice()
-          .withNextRunTime(nextRunTimeResult.value());
+          .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
         nextReminderNotice.getConfiguration()
           .setTemplateId(nextReminder.getNoticeTemplateId())
           .setFormat(nextReminder.getNoticeFormat());
