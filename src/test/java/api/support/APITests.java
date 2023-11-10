@@ -1,11 +1,14 @@
 package api.support;
 
+import static api.support.APITestContext.createKafkaAdminClient;
+import static api.support.APITestContext.createKafkaProducer;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
+import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -19,12 +22,16 @@ import java.time.Clock;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
@@ -37,6 +44,7 @@ import api.support.fixtures.CancellationReasonsFixture;
 import api.support.fixtures.ChangeDueDateFixture;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
+import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.ConfigurationsFixture;
@@ -68,20 +76,30 @@ import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
 import api.support.fixtures.ServicePointsFixture;
+import api.support.fixtures.SettingsFixture;
 import api.support.fixtures.TemplateFixture;
 import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
 import api.support.fixtures.policies.PoliciesActivationFixture;
-import api.support.fixtures.SettingsFixture;
-import api.support.fixtures.CheckOutLockFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public abstract class APITests {
   private static boolean okapiAlreadyDeployed = false;
+
+  protected static String kafkaUrl;
+  protected static KafkaProducer<String, JsonObject> kafkaProducer;
+  protected static KafkaAdminClient kafkaAdminClient;
+  private static final KafkaContainer kafkaContainer
+    = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.2.0"));
 
   protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
@@ -298,6 +316,7 @@ public abstract class APITests {
       return;
     }
 
+    runKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -307,6 +326,16 @@ public abstract class APITests {
       }
     }));
     okapiAlreadyDeployed = true;
+  }
+
+  @SneakyThrows
+  @AfterAll
+  static void afterAll() {
+    kafkaProducer.close()
+      .compose(v -> kafkaAdminClient.close())
+      .toCompletionStage()
+      .toCompletableFuture()
+      .get(10, TimeUnit.SECONDS);
   }
 
   @BeforeEach
@@ -334,6 +363,23 @@ public abstract class APITests {
     scheduledNoticesClient.deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();
+  }
+
+  private static void runKafka() {
+    log.info("runKafka:: starting Kafka container...");
+    kafkaContainer.start();
+    String host = kafkaContainer.getHost();
+    String port = String.valueOf(kafkaContainer.getFirstMappedPort());
+    log.info("runKafka:: Kafka container started: host={}, port={}", host, port);
+
+    System.setProperty("kafka-host", host);
+    System.setProperty("kafka-port", port);
+
+    kafkaUrl = format("%s:%s", host, port);
+    kafkaProducer = createKafkaProducer(kafkaUrl);
+    kafkaAdminClient = createKafkaAdminClient(kafkaUrl);
+
+    Runtime.getRuntime().addShutdownHook(new Thread(kafkaContainer::stop));
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

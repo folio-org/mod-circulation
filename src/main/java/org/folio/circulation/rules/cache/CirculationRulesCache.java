@@ -9,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,7 +30,7 @@ public final class CirculationRulesCache {
 
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** rules and Drools for each tenantId */
-  private Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
+  private final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
   public static CirculationRulesCache getInstance() {
     return instance;
@@ -114,5 +115,11 @@ public final class CirculationRulesCache {
 
     return reloadRules(tenantId, circulationRulesClient)
       .thenApply(r -> r.map(Rules::getDrools));
+  }
+
+  public String getRules(String tenant) {
+    return Optional.ofNullable(rulesMap.get(tenant)).
+      map(Rules::getRulesAsText)
+      .orElse("missing");
   }
 }

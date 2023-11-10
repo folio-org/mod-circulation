@@ -1,8 +1,8 @@
 package org.folio.circulation;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
-
 import java.lang.invoke.MethodHandles;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -13,18 +13,20 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.logging.Logging;
 
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonObject;
 
 public class Launcher {
   private final VertxAssistant vertxAssistant;
   private final Logger log;
-  private String moduleDeploymentId;
+  private final Set<String> deploymentIds;
 
   public Launcher(VertxAssistant vertxAssistant) {
     Logging.initialiseFormat();
 
     this.vertxAssistant = vertxAssistant;
     this.log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+    this.deploymentIds = new HashSet<>();
   }
 
   public static void main(String[] args) throws
@@ -45,33 +47,49 @@ public class Launcher {
   private void stop() {
     log.info("Server Stopping");
 
-    undeploy()
+    undeployVerticles()
       .thenComposeAsync(v -> vertxAssistant.stop())
       .thenAccept(v -> log.info("Server Stopped"));
   }
 
   public CompletableFuture<Void> undeploy() {
-    return vertxAssistant.undeployVerticle(moduleDeploymentId);
+    return undeployVerticles();
   }
 
   public CompletableFuture<Void> start(Integer port) {
-
     if(port == null) {
       throw new IllegalArgumentException("port should not be null");
     }
 
     vertxAssistant.start();
 
-    log.info("Server Starting");
+    log.info("start:: server starting");
 
-    JsonObject config = new JsonObject();
-    write(config, "port", port);
-
-    CompletableFuture<String> deployed =
-      vertxAssistant.deployVerticle(CirculationVerticle.class, config);
-
-    return deployed
-      .thenApply(result -> moduleDeploymentId = result)
-      .thenAccept(result -> log.info("Server Started"));
+    return deployVerticle(CirculationVerticle.class, new JsonObject().put("port", port))
+      .thenAccept(result -> log.info("start:: server started"))
+      .thenCompose(v -> deployVerticle(EventConsumerVerticle.class, EventConsumerVerticle.buildConfig()));
   }
+
+  private CompletableFuture<Void> deployVerticle(Class<? extends AbstractVerticle> verticleClass,
+    JsonObject config) {
+
+    return vertxAssistant.deployVerticle(verticleClass, config)
+      .thenAccept(deploymentIds::add)
+      .whenComplete((v, t) -> {
+        String verticleName = verticleClass.getSimpleName();
+        if (t == null) {
+          log.info("deployVerticle:: verticle deployed: {}", verticleName);
+        } else {
+          log.error("deployVerticle:: deployment failed: {}", verticleName, t);
+        }
+      });
+  }
+
+  private CompletableFuture<Void> undeployVerticles() {
+    return CompletableFuture.allOf(
+      deploymentIds.stream()
+        .map(vertxAssistant::undeployVerticle)
+        .toArray(CompletableFuture[]::new));
+  }
+
 }
