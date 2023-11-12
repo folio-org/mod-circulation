@@ -33,7 +33,7 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
 
   public ScheduledDigitalRemindersProcessingResource(HttpClient client) {
     super("/circulation/scheduled-digital-reminders-processing", client);
-    log.debug("Instantiating digital reminders processing - notices and fees");
+    log.info("Instantiating digital reminders processing - notices and fees");
   }
 
   @Override

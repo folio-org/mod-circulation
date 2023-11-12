@@ -1070,7 +1070,8 @@
             "accounts.collection.get",
             "accounts.item.post",
             "feefineactions.item.post",
-            "circulation-storage.loans-history.collection.get"
+            "circulation-storage.loans-history.collection.get",
+            "calendar.endpoint.dates.get"
           ],
           "schedule": {
             "cron": "1 0 * * *",
