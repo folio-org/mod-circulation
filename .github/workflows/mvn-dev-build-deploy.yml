@@ -1,0 +1,139 @@
+name: mvn-dev-build-deploy
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  PUBLISH_BRANCH: 'deployment'
+  OKAPI_URL: 'https://orchid-dev-okapi.folio-dev.indexdata.com' 
+  OKAPI_SECRET_USER: "${{ secrets.ORCHID_DEV_OKAPI_USER }}"
+  OKAPI_SECRET_PASSWORD: "${{ secrets.ORCHID_DEV_OKAPI_PASSWORD }}"
+
+jobs:
+  mvn-dev-build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          submodules: recursive
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin' # Alternative distribution options are available.
+
+      - name: Gather some variables
+        run: |
+          echo "MODULE_NAME=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+          echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "CURRENT_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      - name: Set module version
+        run: |
+          echo "MODULE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)-${SHA_SHORT}" >> $GITHUB_ENV
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build and SQ analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=indexdata -Dsonar.projectKey=indexdata_${{ github.event.repository.name }}
+
+      - name: Update ModuleDescriptor Id
+        run: |
+          if test -f "$MOD_DESCRIPTOR"; then
+            echo "Found $MOD_DESCRIPTOR"
+            cat <<< $(jq '.id = "${{ env.MODULE_NAME}}-${{ env.MODULE_VERSION }}"' $MOD_DESCRIPTOR) > $MOD_DESCRIPTOR
+            echo "MODULE_DESCRIPTOR=$MOD_DESCRIPTOR" >> $GITHUB_ENV
+          else
+            echo "Could not find $MOD_DESCRIPTOR"
+            exit 1
+          fi
+        env:
+          MOD_DESCRIPTOR: './target/ModuleDescriptor.json'
+
+      - name: Read ModuleDescriptor
+        id: moduleDescriptor
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ${{ env.MODULE_DESCRIPTOR }}
+
+      - name: Login to dev Okapi instance
+        #if: ${{ env.CURRENT_BRANCH == env.PUBLISH_BRANCH }}
+        id: login-okapi
+        uses: cyberman54/curl@master
+        with:
+          url: "${{ env.OKAPI_URL }}/authn/login"
+          method: "POST"
+          accept: 201
+          timeout: 5000
+          retries: 3
+          headers: |
+            {
+              "content-type": "application/json",
+              "x-okapi-tenant": "supertenant"
+            }
+          body: |
+            {
+              "username": "${{ env.OKAPI_SECRET_USER }}",
+              "password": "${{ env.OKAPI_SECRET_PASSWORD }}"
+            }
+
+      - name: Login to Index Data Docker Hub account
+        if: ${{ env.CURRENT_BRANCH == env.PUBLISH_BRANCH }}
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and publish Docker image
+        if: ${{ env.CURRENT_BRANCH == env.PUBLISH_BRANCH }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: indexdata/${{ env.MODULE_NAME }}:${{ env.MODULE_VERSION }},indexdata/${{ env.MODULE_NAME }}:latest
+
+      - name: Get the Okapi login token
+        if: ${{ env.CURRENT_BRANCH == env.PUBLISH_BRANCH }}
+        run: |
+          echo "OKAPI_TOKEN=${{ fromJSON(steps.login-okapi.outputs.response).headers['x-okapi-token'] }}" >> $GITHUB_ENV
+
+      - name: Publish ModuleDescriptor to Okapi
+        if: ${{ env.CURRENT_BRANCH == env.PUBLISH_BRANCH }}
+        id: result-okapi
+        # uses: indiesdev/curl@v1.1
+        uses: cyberman54/curl@master
+        with:
+          url: "${{ env.OKAPI_URL }}/_/proxy/modules"
+          method: "POST"
+          accept: 201
+          timeout: 10000
+          headers: | 
+            {
+              "content-type": "application/json",
+              "x-okapi-tenant": "supertenant",
+              "x-okapi-token": "${{ env.OKAPI_TOKEN }}"
+            }
+          body: ${{ steps.moduleDescriptor.outputs.content }}
+
+      - name: Print module version to job summary
+        run: |
+          echo "#### Module Version: ${{ env.MODULE_VERSION }}" >> $GITHUB_STEP_SUMMARY
