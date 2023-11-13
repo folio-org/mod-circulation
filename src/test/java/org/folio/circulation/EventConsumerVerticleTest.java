@@ -109,6 +109,26 @@ public class EventConsumerVerticleTest extends APITests {
     checkOutFixture.checkOutByBarcode(item, user); // checks for status 201
   }
 
+  @Test
+  void circulationRulesUpdateEventsAreDeliveredToMultipleConsumers() {
+    final String subgroup0 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 0);
+    final String subgroup1 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 1);
+
+    // first verticle has been deployed beforehand, so we should already see subgroup0 with 1 consumer
+    verifyConsumerGroups(Map.of(subgroup0, 1));
+    deployVerticle();
+    verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
+
+    int initialOffset0 = getOffsetForCirculationRulesUpdateEvents(0);
+    int initialOffset1 = getOffsetForCirculationRulesUpdateEvents(1);
+
+    JsonObject rules = circulationRulesFixture.getRules().getJson();
+    publishCirculationRulesUpdateEvent(rules, rules);
+
+    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(0), initialOffset0 + 1);
+    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(1), initialOffset1 + 1);
+  }
+
   private static int getOffsetForCirculationRulesUpdateEvents() {
     return getOffsetForCirculationRulesUpdateEvents(0);
   }
