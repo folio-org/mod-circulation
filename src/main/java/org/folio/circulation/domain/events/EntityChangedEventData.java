@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.events.kafka;
+package org.folio.circulation.domain.events;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

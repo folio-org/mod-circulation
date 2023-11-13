@@ -9,7 +9,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
-import static org.folio.circulation.domain.events.kafka.DomainEventType.CIRCULATION_RULES_UPDATED;
+import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.circulation.domain.events.kafka.DomainEventType;
+import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.util.pubsub.support.PomReader;

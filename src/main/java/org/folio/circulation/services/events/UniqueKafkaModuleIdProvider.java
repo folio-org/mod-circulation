@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.folio.circulation.domain.events.kafka.DomainEventType;
+import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.kafka.KafkaConfig;
 
 import io.vertx.core.Future;

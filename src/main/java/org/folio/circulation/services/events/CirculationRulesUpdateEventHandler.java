@@ -3,12 +3,12 @@ package org.folio.circulation.services.events;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.folio.circulation.domain.events.kafka.DomainEventMapper.toEntityChangedEvent;
+import static org.folio.circulation.domain.events.DomainEventMapper.toEntityChangedEvent;
 
 import java.util.Optional;
 
-import org.folio.circulation.domain.events.kafka.DomainEvent;
-import org.folio.circulation.domain.events.kafka.EntityChangedEventData;
+import org.folio.circulation.domain.events.DomainEvent;
+import org.folio.circulation.domain.events.EntityChangedEventData;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.results.Result;

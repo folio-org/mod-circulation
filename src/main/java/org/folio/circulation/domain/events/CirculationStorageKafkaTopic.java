@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.events.kafka;
+package org.folio.circulation.domain.events;
 
 import org.folio.kafka.services.KafkaTopic;
 

@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.events.kafka;
+package org.folio.circulation.domain.events;
 
 public record DomainEvent<T> (
   String id,
