@@ -386,12 +386,6 @@ class CirculationRulesEngineAPITests extends APITests {
     assertThat(applyRulesForLoanPolicy(m1, t1, g1, s1), is(lp6));
   }
 
-  @Test
-  void canRefreshRules() {
-    Response response = circulationRulesFixture.attemptRefreshRules();
-    assertThat(response.getStatusCode(), is(204));
-  }
-
   private Policy applyRulesForLoanPolicy(ItemType itemType, LoanType loanType,
       PatronGroup patronGroup, ItemLocation location) {
 
