@@ -47,7 +47,7 @@ public class Launcher {
   private void stop() {
     log.info("Server Stopping");
 
-    undeployVerticles()
+    undeploy()
       .thenComposeAsync(v -> vertxAssistant.stop())
       .thenAccept(v -> log.info("Server Stopped"));
   }
