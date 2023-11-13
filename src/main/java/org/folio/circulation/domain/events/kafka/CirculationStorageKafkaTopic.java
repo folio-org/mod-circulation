@@ -11,7 +11,6 @@ public enum CirculationStorageKafkaTopic implements KafkaTopic {
   private final String topic;
   private final int partitions;
 
-
   @Override
   public String moduleName() {
     return "circulation";

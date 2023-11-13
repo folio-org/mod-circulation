@@ -143,10 +143,10 @@ public class EventConsumerVerticleTest extends APITests {
   @SneakyThrows
   private static int getOffset(String topic, String consumerGroupId) {
     return waitFor(kafkaAdminClient.listConsumerGroupOffsets(consumerGroupId)
-        .map(partitions -> Optional.ofNullable(partitions.get(new TopicPartition(topic, 0)))
-          .map(OffsetAndMetadata::getOffset)
-          .map(Long::intValue)
-          .orElse(0))); // if topic does not exist yet
+      .map(partitions -> Optional.ofNullable(partitions.get(new TopicPartition(topic, 0)))
+        .map(OffsetAndMetadata::getOffset)
+        .map(Long::intValue)
+        .orElse(0))); // if topic does not exist yet
   }
 
   private void publishCirculationRulesUpdateEvent(JsonObject oldRules, JsonObject newRules) {

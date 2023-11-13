@@ -117,6 +117,7 @@ public final class CirculationRulesCache {
       .thenApply(r -> r.map(Rules::getDrools));
   }
 
+  // TODO: for debugging, remove eventually
   public String getRules(String tenant) {
     return Optional.ofNullable(rulesMap.get(tenant)).
       map(Rules::getRulesAsText)

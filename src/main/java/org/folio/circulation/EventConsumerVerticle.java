@@ -48,6 +48,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     super.init(vertx, context);
     kafkaConfig = buildKafkaConfig();
 
+    // TODO: for debugging, remove eventually
     vertx.setPeriodic(20000, r -> log.debug("Cached rules: " + CirculationRulesCache.getInstance().getRules("diku")));
   }
 
