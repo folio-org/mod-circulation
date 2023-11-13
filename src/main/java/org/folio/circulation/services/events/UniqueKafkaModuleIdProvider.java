@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.folio.circulation.domain.events.kafka.KafkaEventType;
+import org.folio.circulation.domain.events.kafka.DomainEventType;
 import org.folio.kafka.KafkaConfig;
 
 import io.vertx.core.Future;
@@ -19,9 +19,9 @@ import io.vertx.kafka.admin.KafkaAdminClient;
 
 public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
   private final KafkaAdminClient kafkaAdminClient;
-  private final KafkaEventType eventType;
+  private final DomainEventType eventType;
 
-  public UniqueKafkaModuleIdProvider(Vertx vertx, KafkaConfig kafkaConfig, KafkaEventType eventType) {
+  public UniqueKafkaModuleIdProvider(Vertx vertx, KafkaConfig kafkaConfig, DomainEventType eventType) {
     Properties config = new Properties();
     config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getKafkaUrl());
 

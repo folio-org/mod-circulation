@@ -1,7 +1,7 @@
 package org.folio.circulation;
 
 import static java.lang.System.getenv;
-import static org.folio.circulation.domain.events.kafka.KafkaEventType.CIRCULATION_RULES_UPDATED;
+import static org.folio.circulation.domain.events.kafka.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_ENV;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_HOST;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_MAX_REQUEST_SIZE;
@@ -12,7 +12,7 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL
 import java.util.ArrayList;
 import java.util.List;
 
-import org.folio.circulation.domain.events.kafka.KafkaEventType;
+import org.folio.circulation.domain.events.kafka.DomainEventType;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
 import org.folio.circulation.services.events.ModuleIdProvider;
@@ -89,7 +89,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     )).mapEmpty();
   }
 
-  private Future<KafkaConsumerWrapper<String, String>> createConsumer(KafkaEventType eventType,
+  private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
     AsyncRecordHandler<String, String> handler, ModuleIdProvider moduleIdProvider) {
 
     KafkaConsumerWrapper<String, String> consumer = KafkaConsumerWrapper.<String, String>builder()
@@ -107,7 +107,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .onSuccess(consumers::add);
   }
 
-  private static SubscriptionDefinition buildSubscriptionDefinition(KafkaEventType eventType) {
+  private static SubscriptionDefinition buildSubscriptionDefinition(DomainEventType eventType) {
     return SubscriptionDefinition.builder()
       .eventType(eventType.name())
       .subscriptionPattern(eventType.getKafkaTopic().fullTopicName(TENANT_ID_PATTERN))

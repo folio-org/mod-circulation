@@ -9,7 +9,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
-import static org.folio.circulation.domain.events.kafka.KafkaEventType.CIRCULATION_RULES_UPDATED;
+import static org.folio.circulation.domain.events.kafka.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.circulation.domain.events.kafka.KafkaEventType;
+import org.folio.circulation.domain.events.kafka.DomainEventType;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.util.pubsub.support.PomReader;
@@ -118,11 +118,11 @@ public class EventConsumerVerticleTest extends APITests {
       buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, subgroupOrdinal));
   }
 
-  private static String buildConsumerSubgroupId(KafkaEventType eventType, int subgroupOrdinal) {
+  private static String buildConsumerSubgroupId(DomainEventType eventType, int subgroupOrdinal) {
     return String.format("%s-subgroup-%d", buildConsumerGroupId(eventType), subgroupOrdinal);
   }
 
-  private static String buildConsumerGroupId(KafkaEventType eventType) {
+  private static String buildConsumerGroupId(DomainEventType eventType) {
     return format("%s.%s-%s", eventType, PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
   }
 
@@ -163,7 +163,7 @@ public class EventConsumerVerticleTest extends APITests {
     return new JsonObject()
       .put("id", randomId())
       .put("tenant", TENANT_ID)
-      .put("type", "UPDATE")
+      .put("type", "UPDATED")
       .put("timestamp", System.currentTimeMillis())
       .put("data", new JsonObject()
         .put("old", oldVersion)
