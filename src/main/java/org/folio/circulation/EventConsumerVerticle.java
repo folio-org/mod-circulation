@@ -77,8 +77,8 @@ public class EventConsumerVerticle extends AbstractVerticle {
       consumers.stream()
         .map(KafkaConsumerWrapper::stop)
         .toList())
-      .onSuccess(v -> log.info("stop:: event consumers stopped"))
-      .onFailure(t -> log.error("stop:: failed to stop event consumers", t))
+      .onSuccess(v -> log.info("stopConsumers:: event consumers stopped"))
+      .onFailure(t -> log.error("stopConsumers:: failed to stop event consumers", t))
       .mapEmpty();
   }
 
@@ -115,7 +115,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private KafkaConfig buildKafkaConfig() {
-    log.info("getKafkaConfig:: building Kafka config");
+    log.info("buildKafkaConfig:: building Kafka config");
     final JsonObject vertxConfig = config();
 
     KafkaConfig config = KafkaConfig.builder()
@@ -127,7 +127,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .maxRequestSize(Integer.parseInt(vertxConfig.getString(KAFKA_MAX_REQUEST_SIZE, "10")))
       .build();
 
-    log.info("getKafkaConfig:: {}", config);
+    log.info("buildKafkaConfig:: {}", config);
     return config;
   }
 
