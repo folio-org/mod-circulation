@@ -332,7 +332,7 @@ public abstract class APITests {
   @AfterAll
   static void afterAll() {
     kafkaProducer.close()
-      .compose(v -> kafkaAdminClient.close())
+//      .compose(v -> kafkaAdminClient.close())
       .toCompletionStage()
       .toCompletableFuture()
       .get(10, TimeUnit.SECONDS);
