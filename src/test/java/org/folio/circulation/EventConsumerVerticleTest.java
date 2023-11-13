@@ -88,6 +88,26 @@ public class EventConsumerVerticleTest extends APITests {
   }
 
   @Test
+  void circulationRulesUpdateEventsAreDeliveredToMultipleConsumers() {
+    final String subgroup0 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 0);
+    final String subgroup1 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 1);
+
+    // first verticle has been deployed beforehand, so we should already see subgroup0 with 1 consumer
+    verifyConsumerGroups(Map.of(subgroup0, 1));
+    deployVerticle();
+    verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
+
+    int initialOffsetForSubgroup0 = getOffsetForCirculationRulesUpdateEvents(0);
+    int initialOffsetForSubgroup1 = getOffsetForCirculationRulesUpdateEvents(1);
+
+    JsonObject rules = circulationRulesFixture.getRules().getJson();
+    publishCirculationRulesUpdateEvent(rules, rules);
+
+    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(0), initialOffsetForSubgroup0 + 1);
+    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(1), initialOffsetForSubgroup1 + 1);
+  }
+
+  @Test
   void circulationRulesUpdateEventUpdatesCirculationRulesCache() {
     UUID nonLoanableLoanPolicyId = UUID.randomUUID();
     use(new LoanPolicyBuilder().withLoanable(false).withId(nonLoanableLoanPolicyId));
@@ -107,26 +127,6 @@ public class EventConsumerVerticleTest extends APITests {
     waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
 
     checkOutFixture.checkOutByBarcode(item, user); // checks for status 201
-  }
-
-  @Test
-  void circulationRulesUpdateEventsAreDeliveredToMultipleConsumers() {
-    final String subgroup0 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 0);
-    final String subgroup1 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 1);
-
-    // first verticle has been deployed beforehand, so we should already see subgroup0 with 1 consumer
-    verifyConsumerGroups(Map.of(subgroup0, 1));
-    deployVerticle();
-    verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
-
-    int initialOffset0 = getOffsetForCirculationRulesUpdateEvents(0);
-    int initialOffset1 = getOffsetForCirculationRulesUpdateEvents(1);
-
-    JsonObject rules = circulationRulesFixture.getRules().getJson();
-    publishCirculationRulesUpdateEvent(rules, rules);
-
-    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(0), initialOffset0 + 1);
-    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(1), initialOffset1 + 1);
   }
 
   private static int getOffsetForCirculationRulesUpdateEvents() {

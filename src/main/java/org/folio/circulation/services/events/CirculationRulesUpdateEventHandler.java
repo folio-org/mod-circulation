@@ -35,6 +35,7 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
       .map(newRules -> newRules.getString("rulesAsText"))
       .orElse(EMPTY);
 
+    log.debug("handle:: new rules: {}", newRulesAsText);
     Result<Rules> result = CirculationRulesCache.getInstance()
       .reloadRules(event.tenantId(), newRulesAsText);
 
