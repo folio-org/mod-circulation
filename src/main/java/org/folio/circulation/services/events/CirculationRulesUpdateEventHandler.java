@@ -22,9 +22,9 @@ import lombok.extern.log4j.Log4j2;
 public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<String, String> {
 
   @Override
-  public Future<String> handle(KafkaConsumerRecord<String, String> record) {
-    final String eventKey = record.key();
-    final String eventValue = record.value();
+  public Future<String> handle(KafkaConsumerRecord<String, String> consumerRecord) {
+    final String eventKey = consumerRecord.key();
+    final String eventValue = consumerRecord.value();
 
     log.info("handle:: event received: key={}", eventKey);
     log.debug("handle:: payload={}", eventValue);

@@ -3,7 +3,9 @@ package org.folio.circulation.domain.events.kafka;
 import java.util.function.Function;
 
 import io.vertx.core.json.JsonObject;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class DomainEventMapper {
 
   public static <T> DomainEvent<T> toDomainEvent(String eventJsonString,
