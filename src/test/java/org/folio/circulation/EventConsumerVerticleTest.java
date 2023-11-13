@@ -1,7 +1,6 @@
 package org.folio.circulation;
 
 import static api.support.APITestContext.TENANT_ID;
-import static api.support.Wait.waitForSize;
 import static api.support.Wait.waitForValue;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static java.lang.String.format;
@@ -12,11 +11,9 @@ import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
 import static org.folio.circulation.domain.events.kafka.KafkaEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +24,6 @@ import org.folio.circulation.domain.events.kafka.KafkaEventType;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.util.pubsub.support.PomReader;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,20 +45,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class EventConsumerVerticleTest extends APITests {
-  private static final String CIRCULATION_RULES_ID = randomId();
   private static final String CIRCULATION_RULES_TOPIC = buildTopicName("circulation", "rules");
-  private static final String CIRCULATION_RULES_UPDATED_CONSUMER_GROUP_ID =
-    String.format("CIRCULATION_RULES_UPDATED.%s", buildModuleId());
-
-  @BeforeAll
-  public static void setUp() {
-  }
-
-//  @AfterAll
-//  public static void tearDown() {
-//    waitFor(producer.close()
-//      .compose(v -> adminClient.close()));
-//  }
 
   @BeforeEach
   public void beforeEach() {
@@ -70,27 +53,36 @@ public class EventConsumerVerticleTest extends APITests {
   }
 
   @Test
-  void circulationRulesUpdateEventConsumerJoinsExistingEmptyConsumerGroup() {
+  void circulationRulesUpdateEventConsumerJoinsVacantConsumerSubgroup() {
     final String subgroup0 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 0);
     final String subgroup1 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 1);
     final String subgroup2 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 2);
 
-    // first verticle has already been deployed, its consumer is a member of its own subgroup
+    // verticle1 has already been deployed, its consumer is a member of its own subgroup0
     verifyConsumerGroups(Map.of(subgroup0, 1));
 
-    // second verticle is deployed, new consumer is created in a separate subgroup1
-    String secondDeploymentId = deployVerticle();
+    // verticle2 is deployed, new consumer is created in a separate subgroup1
+    String verticle2DeploymentId = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
 
-    // third verticle is deployed, new consumer is created in a separate subgroup
+    // verticle3 is deployed, new consumer is created in a separate subgroup2
     deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
 
-    // second verticle is undeployed, its consumer is removed, its subgroup is now empty
-    undeployVerticle(secondDeploymentId);
+    // verticle2 is undeployed, its consumer and subgroup1 are removed
+    undeployVerticle(verticle2DeploymentId);
+    waitFor(kafkaAdminClient.deleteConsumerGroups(List.of(subgroup1)));
+    verifyConsumerGroups(Map.of(subgroup0, 1, subgroup2, 1));
+
+    // verticle4 is deployed, the now vacant subgroup1 is recreated and new consumer joins it
+    String verticle4DeploymentId = deployVerticle();
+    verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
+
+    // verticle4 is undeployed, its consumer is removed, but empty subgroup1 is not removed
+    undeployVerticle(verticle4DeploymentId);
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 0, subgroup2, 1));
 
-    // fourth verticle is deployed, new consumer joins the empty subgroup
+    // verticle5 is deployed, new consumer joins the empty subgroup1
     deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
   }
@@ -169,10 +161,13 @@ public class EventConsumerVerticleTest extends APITests {
 
   private static JsonObject buildUpdateEvent(JsonObject oldVersion, JsonObject newVersion) {
     return new JsonObject()
+      .put("id", randomId())
       .put("tenant", TENANT_ID)
       .put("type", "UPDATE")
-      .put("old", oldVersion)
-      .put("new", newVersion);
+      .put("timestamp", System.currentTimeMillis())
+      .put("data", new JsonObject()
+        .put("old", oldVersion)
+        .put("new", newVersion));
   }
 
   private static String buildTopicName(String module, String topic) {
@@ -202,20 +197,10 @@ public class EventConsumerVerticleTest extends APITests {
       .get(timeoutSeconds, SECONDS);
   }
 
-  private void waitForConsumerGroups(String... consumerGroupIds) {
-    assertThat(
-      waitForSize(this::listConsumerGroupIds, consumerGroupIds.length),
-      hasItems(consumerGroupIds));
-  }
-
-  private Collection<MemberDescription> waitForConsumers(String consumerGroupId, int consumerCount) {
-    return waitForSize(() -> listConsumers(consumerGroupId), consumerCount);
-  }
-
   private Map<String, ConsumerGroupDescription> verifyConsumerGroups(
     Map<String, Integer> groupIdToSize) {
 
-    return waitAtMost(20, SECONDS)
+    return waitAtMost(30, SECONDS)
       .until(() -> waitFor(
         kafkaAdminClient.describeConsumerGroups(new ArrayList<>(groupIdToSize.keySet()))),
         groups -> groups.entrySet()
@@ -224,6 +209,5 @@ public class EventConsumerVerticleTest extends APITests {
           .equals(groupIdToSize)
       );
   }
-
 
 }

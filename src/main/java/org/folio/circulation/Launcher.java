@@ -75,13 +75,10 @@ public class Launcher {
 
     return vertxAssistant.deployVerticle(verticleClass, config)
       .thenAccept(deploymentIds::add)
-      .whenComplete((v, t) -> {
-        String verticleName = verticleClass.getSimpleName();
-        if (t == null) {
-          log.info("deployVerticle:: verticle deployed: {}", verticleName);
-        } else {
-          log.error("deployVerticle:: deployment failed: {}", verticleName, t);
-        }
+      .thenAccept(r -> log.info("deployVerticle:: verticle deployed: {}", verticleClass.getSimpleName()))
+      .exceptionally(t -> {
+        log.error("deployVerticle:: deployment failed: {}", verticleClass.getSimpleName(), t);
+        return null;
       });
   }
 
