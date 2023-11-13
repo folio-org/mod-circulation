@@ -22,11 +22,9 @@ import java.time.Clock;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,7 +85,6 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.client.producer.KafkaProducer;
-import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import lombok.extern.log4j.Log4j2;
 
@@ -326,16 +323,6 @@ public abstract class APITests {
       }
     }));
     okapiAlreadyDeployed = true;
-  }
-
-  @SneakyThrows
-  @AfterAll
-  static void afterAll() {
-    kafkaProducer.close()
-//      .compose(v -> kafkaAdminClient.close())
-      .toCompletionStage()
-      .toCompletableFuture()
-      .get(10, TimeUnit.SECONDS);
   }
 
   @BeforeEach
