@@ -105,10 +105,11 @@ public class EventPublisher {
         .ifPresent(json -> write(payloadJsonObject, GRACE_PERIOD_FIELD, json));
 
       runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
-        .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
-          Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
+        .thenApplyAsync(r -> r.after(loggedInUser -> completedFuture(
+          succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+            mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
-      return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
+      pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .handle((result, error) -> handlePublishEventError(error, loanAndRelatedRecords));
     }
     else {

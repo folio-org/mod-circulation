@@ -1607,7 +1607,7 @@ class CheckOutByBarcodeTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
 
     FakePubSub.setFailPublishingWithBadRequestError(true);
-    checkOutFixture.attemptCheckOutByBarcode(200,
+    checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)

@@ -269,11 +269,9 @@ public class CheckOutByBarcodeResource extends Resource {
 
     log.debug("publishItemCheckedOutEvent:: parameters records: {}", () -> records);
 
-    eventPublisher.publishItemCheckedOutEvent(records, userRepository)
+    return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
         succeeded(records)));
-
-    return ofAsync(records);
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
