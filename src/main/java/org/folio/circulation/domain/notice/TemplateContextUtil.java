@@ -48,6 +48,7 @@ public class TemplateContextUtil {
   private static final String UNLIMITED = "unlimited";
   public static final String CURRENT_DATE_TIME = "currentDateTime";
   private static final String PICK_SLIPS_KEY = "pickSlips";
+  private static final String ADDITIONAL_INFO_KEY = "additionalInfo";
 
   private TemplateContextUtil() {
   }
@@ -86,7 +87,7 @@ public class TemplateContextUtil {
       .put(REQUEST, createRequestContext(request))
       .put(ITEM, createItemContext(request));
 
-    if (request.isRecall() && request.getLoan() != null) {
+    if (request.hasLoan()) {
       requestNoticeContext.put(LOAN, createLoanContext(request.getLoan()));
     }
     return requestNoticeContext;
@@ -278,7 +279,7 @@ public class TemplateContextUtil {
       .ifPresent(value -> write(requestContext, "holdShelfExpirationDate", value));
     optionalRequest
       .map(Request::getCancellationAdditionalInformation)
-      .ifPresent(value -> requestContext.put("additionalInfo", value));
+      .ifPresent(value -> requestContext.put(ADDITIONAL_INFO_KEY, value));
     optionalRequest
       .map(Request::getCancellationReasonPublicDescription)
       .map(Optional::of)
@@ -317,6 +318,8 @@ public class TemplateContextUtil {
         loanContext.put("numberOfRenewalsRemaining", Integer.toString(renewalsRemaining));
       }
     }
+
+    write(loanContext, ADDITIONAL_INFO_KEY, loan.getLatestPatronInfoAddedComment());
 
     return loanContext;
   }
@@ -357,7 +360,7 @@ public class TemplateContextUtil {
     if (chargeAction != null) {
       log.info("createFeeChargeContext:: adding charge action info. account: {}, chargeAction: {}",
         account, chargeAction);
-      write(context, "additionalInfo", getPatronInfoFromComment(chargeAction));
+      write(context, ADDITIONAL_INFO_KEY, getPatronInfoFromComment(chargeAction));
     }
 
     return context;
@@ -415,7 +418,7 @@ public class TemplateContextUtil {
           .with(UserContext.CITY, address.getString("city", null))
           .with(UserContext.REGION, address.getString("region", null))
           .with(UserContext.POSTAL_CODE, address.getString("postalCode", null))
-          .with(UserContext.COUNTRY_ID, getCountryNameByCodeIgnoreCase(address.getString(COUNTRY_ID, null)))
+          .with(UserContext.COUNTRY_ID,  address.getString(COUNTRY_ID, null))
           .with(UserContext.ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
       } else {
         return this;
