@@ -109,7 +109,8 @@ public class EventPublisher {
           succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
             mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
-      logger.info("publishItemCheckedOutEvent:: publishing ITEM_CHECKED_OUT event");
+      logger.info("publishItemCheckedOutEvent:: publishing ITEM_CHECKED_OUT event for loan {}",
+        loan.getId());
       pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
         .handle((result, error) -> handlePublishEventError(error, loanAndRelatedRecords));
     } else {
