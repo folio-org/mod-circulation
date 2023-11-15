@@ -49,7 +49,9 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.LoanHistory;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.policy.Policy;
@@ -78,6 +80,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private final CollectionResourceClient loansStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
+  private final LoanHistoryRepository loanHistoryRepository;
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String ITEM_STATUS = "itemStatus";
   private static final String ITEM_ID = "itemId";
@@ -91,6 +94,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     loansStorageClient = clients.loansStorage();
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
+    this.loanHistoryRepository = new LoanHistoryRepository(clients);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> createLoan(
@@ -204,6 +208,28 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private CompletableFuture<Result<Loan>> fetchUser(Result<Loan> result) {
     log.debug("fetchUser:: parameters result: {}", () -> resultAsString(result));
     return result.combineAfter(userRepository::getUser, Loan::withUser);
+  }
+
+  public CompletableFuture<Result<Loan>> fetchLatestPatronInfoAddedComment(Loan loan) {
+    log.debug("fetchLatestPatronInfoAddedComment:: parameters loan: {}", () ->loan);
+    if (LoanAction.PATRON_INFO_ADDED.getValue().equals(loan.getAction())) {
+      // If latest action is patron info then we don't need to check history
+      log.debug("fetchLatestPatronInfoAddedComment:: the latest action is patron info");
+      return completedFuture(Result.succeeded(loan.withLatestPatronInfoAddedComment(loan.getActionComment())));
+    }
+    return loanHistoryRepository.getLatestPatronInfoAdded(loan)
+      .thenApply(r -> r.map(records -> loan.withLatestPatronInfoAddedComment(
+        mapToLatestPatronInfoAddedComment(records))));
+  }
+
+  private String mapToLatestPatronInfoAddedComment(MultipleRecords<LoanHistory> loanHistoryRecords) {
+    LoanHistory loanHistory = loanHistoryRecords.firstOrNull();
+    String latestPatronInfoAddedComment = null;
+    if (loanHistory != null) {
+      latestPatronInfoAddedComment = loanHistory.getLoan().getActionComment();
+      log.debug("mapToLatestPatronInfoAddedComment:: loan history contains patron info: {}", latestPatronInfoAddedComment);
+    }
+    return latestPatronInfoAddedComment;
   }
 
   public CompletableFuture<Result<MultipleRecords<Loan>>> findLoansToAnonymize(
