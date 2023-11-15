@@ -17,13 +17,18 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.folio.circulation.domain.notice.session.PatronActionType;
+import org.hamcrest.Matcher;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -41,8 +46,13 @@ import lombok.val;
 class EndExpiredPatronActionSessionTests extends APITests {
   private static final String CHECK_OUT = "Check-out";
   private static final String CHECK_IN = "Check-in";
+  private static final String LOAN_INFO_ADDED = "testing patron info";
   private static final UUID CHECK_OUT_TEMPLATE_ID = UUID.randomUUID();
   private static final UUID CHECK_IN_TEMPLATE_ID = UUID.randomUUID();
+
+  public EndExpiredPatronActionSessionTests() {
+    super(true, true);
+  }
 
   @BeforeEach
   public void before() {
@@ -229,9 +239,9 @@ class EndExpiredPatronActionSessionTests extends APITests {
     ItemResource interestingTimes = itemsFixture.basedUponInterestingTimes();
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
 
-    checkOutFixture.checkOutByBarcode(nod, james);
-    checkOutFixture.checkOutByBarcode(interestingTimes, jessica);
-    checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    checkOutAndAddPatronNotice(nod, james);
+    checkOutAndAddPatronNotice(interestingTimes, jessica);
+    checkOutAndAddPatronNotice(smallAngryPlanet, steve);
     checkInFixture.checkInByBarcode(nod);
     checkInFixture.checkInByBarcode(interestingTimes);
     checkInFixture.checkInByBarcode(smallAngryPlanet);
@@ -270,9 +280,11 @@ class EndExpiredPatronActionSessionTests extends APITests {
         FakeModNotify.getSentPatronNotices().stream()
           .filter(pn -> pn.getString("templateId").equals(templateId.toString()))
           .filter(pn -> pn.getString("recipientId").equals(patron.getId().toString()))
-          .forEach(patronNotice ->
-            assertThat(patronNotice, hasEmailNoticeProperties(patron.getId(), templateId,
-              TemplateContextMatchers.getUserContextMatchers(patron))))));
+          .forEach(patronNotice -> {
+            Map<String, Matcher<String>> matchers = TemplateContextMatchers.getUserContextMatchers(patron);
+            matchers.put("loans[0].loan.additionalInfo", Is.is(LOAN_INFO_ADDED));
+            assertThat(patronNotice, hasEmailNoticeProperties(patron.getId(), templateId, matchers));
+          })));
 
     verifyNumberOfSentNotices(6);
     verifyNumberOfPublishedEvents(NOTICE, 6);
@@ -391,7 +403,7 @@ class EndExpiredPatronActionSessionTests extends APITests {
   void patronNoticeContextContainsUserTokensWhenNoticeIsTriggeredByExpiredSession() {
     IndividualResource james = usersFixture.james();
     ItemResource nod = itemsFixture.basedUponNod();
-    checkOutFixture.checkOutByBarcode(nod, james);
+    checkOutAndAddPatronNotice(nod, james);
 
     patronSessionRecordsClient.getAll().stream()
       .filter(session -> session.getMap().get(ACTION_TYPE)
@@ -407,10 +419,11 @@ class EndExpiredPatronActionSessionTests extends APITests {
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
+    Map<String, Matcher<String>> matchers = TemplateContextMatchers.getUserContextMatchers(james);
+    matchers.put("loans[0].loan.additionalInfo", Is.is(LOAN_INFO_ADDED));
     assertThat(FakeModNotify.getFirstSentPatronNotice(),
       hasEmailNoticeProperties(james.getId(), CHECK_OUT_TEMPLATE_ID,
-        TemplateContextMatchers.getUserContextMatchers(james)));
+        matchers));
   }
 
   @Test
@@ -455,6 +468,12 @@ class EndExpiredPatronActionSessionTests extends APITests {
     createExpiredEndSession(patronId, CHECK_OUT);
     expiredSessionProcessingClient.runRequestExpiredSessionsProcessing(204);
     assertThat(patronSessionRecordsClient.getAll(), empty());
+  }
+
+  private void checkOutAndAddPatronNotice(ItemResource item, IndividualResource user){
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, user);
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loan.getId().toString(),
+      "patronInfoAdded", LOAN_INFO_ADDED));
   }
 
   private void checkThatBunchOfExpiredSessionsWereAddedAndRemovedByTimer(

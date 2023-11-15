@@ -77,6 +77,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.policy.DueDateManagement;
@@ -129,6 +130,10 @@ public abstract class RenewalAPITests extends APITests {
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
   private static final String ITEM_IS_DECLARED_LOST = "item is Declared lost";
+
+  public RenewalAPITests() {
+    super(true, true);
+  }
 
   abstract Response attemptRenewal(IndividualResource user, IndividualResource item);
 
@@ -1437,12 +1442,16 @@ public abstract class RenewalAPITests extends APITests {
 
     final ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 18, 11, 43, 54, 0, UTC);
 
-    checkOutFixture.checkOutByBarcode(
+    IndividualResource laon = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
         .forItem(smallAngryPlanet)
         .to(steve)
         .on(loanDate)
         .at(UUID.randomUUID()));
+
+    String infoAdded = "testing patron info";
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(laon.getId().toString(),
+      "patronInfoAdded", infoAdded));
 
     IndividualResource loanAfterRenewal = loansFixture.renewLoan(smallAngryPlanet, steve);
 
@@ -1458,6 +1467,8 @@ public abstract class RenewalAPITests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterRenewal));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(
       expectedRenewalLimit, expectedRenewalsRemaining));
+    noticeContextMatchers.putAll(
+      TemplateContextMatchers.getLoanAdditionalInfoContextMatchers(infoAdded));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(steve.getId(), renewalTemplateId, noticeContextMatchers)));
