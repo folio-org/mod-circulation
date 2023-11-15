@@ -112,8 +112,8 @@ public class EventPublisher {
       logger.info("publishItemCheckedOutEvent:: publishing ITEM_CHECKED_OUT event for loan {}",
         loan.getId());
       // run ITEM_CHECKED_OUT event publishing asynchronously to prevent any impact on the performance of check-out
-      runAsync(() -> pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
-        .handle((result, error) -> handlePublishEventError(error, loanAndRelatedRecords)));
+      runAsync(() -> pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(),
+        payloadJsonObject.encode()));
     } else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
     }
