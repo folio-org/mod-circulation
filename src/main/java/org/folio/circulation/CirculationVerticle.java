@@ -79,7 +79,7 @@ public class CirculationVerticle extends AbstractVerticle {
       .handler(rc -> LogHelper.logRequest(rc, log));
 
     new HealthResource().register(router);
-    new TenantActivationResource().register(router);
+    new TenantActivationResource(client).register(router);
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
     new CheckInByBarcodeResource(client).register(router);

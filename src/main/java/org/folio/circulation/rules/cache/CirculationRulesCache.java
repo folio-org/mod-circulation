@@ -41,7 +41,7 @@ public final class CirculationRulesCache {
     rulesMap.clear();
   }
 
-  private CompletableFuture<Result<Drools>> reloadRules(String tenantId,
+  public CompletableFuture<Result<Drools>> reloadRules(String tenantId,
     CollectionResourceClient circulationRulesClient) {
 
     log.info("reloadRules:: reloading rules for tenant {}", tenantId);

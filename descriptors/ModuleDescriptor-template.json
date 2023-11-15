@@ -1112,7 +1112,8 @@
           "modulePermissions": [
             "pubsub.event-types.post",
             "pubsub.publishers.post",
-            "pubsub.subscribers.post"
+            "pubsub.subscribers.post",
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
