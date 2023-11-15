@@ -108,6 +108,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .loadLimit(DEFAULT_LOAD_LIMIT)
       .globalLoadSensor(new GlobalLoadSensor())
       .subscriptionDefinition(buildSubscriptionDefinition(eventType))
+      .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
       .build();
 
 

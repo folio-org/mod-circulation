@@ -150,17 +150,36 @@ public class EventConsumerVerticleTest extends APITests {
     assertThat(originalRulesJson, not(equalTo(newRulesJson)));
     JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson);
 
+    JsonObject eventWithoutTenant = event.copy();
+    eventWithoutTenant.remove("tenant");
+
+    JsonObject eventWithoutType = event.copy();
+    eventWithoutType.remove("type");
+
+    JsonObject eventWithoutTimestamp = event.copy();
+    eventWithoutTimestamp.remove("timestamp");
+
+    JsonObject eventWithoutData = event.copy();
+    eventWithoutData.remove("data");
+
+    JsonObject eventWithoutOldRules = event.copy();
+    eventWithoutOldRules.getJsonObject("data").remove("old");
+
+    JsonObject eventWithoutNewRules = event.copy();
+    eventWithoutNewRules.getJsonObject("data").remove("new");
+
+    JsonObject eventWithoutNewRulesAsText = event.copy();
+    eventWithoutNewRulesAsText.getJsonObject("data").getJsonObject("new").remove("rulesAsText");
+
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("id"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("tenant"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("type"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("timestamp"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("data"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().getJsonObject("data").putNull("old"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().getJsonObject("data").putNull("new"));
-    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().getJsonObject("data").getJsonObject("new")
-      .putNull("rulesAsText"));
-    waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 8);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutTenant);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutType);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutTimestamp);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutData);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutOldRules);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutNewRules);
+    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutNewRulesAsText);
+    waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 7);
 
     Rules newCachedRules = getInstance().getRules(TENANT_ID);
     assertThat(originalCachedRules.getReloadTimestamp(), equalTo(newCachedRules.getReloadTimestamp()));

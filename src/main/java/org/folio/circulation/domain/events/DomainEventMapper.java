@@ -16,7 +16,7 @@ public class DomainEventMapper {
     final JsonObject eventJson = new JsonObject(eventJsonString);
 
     return new DomainEvent<>(
-      requireNonNull(eventJson.getString("id")),
+      eventJson.getString("id"),
       requireNonNull(eventJson.getString("tenant")),
       requireNonNull(DomainEventPayloadType.valueOf(eventJson.getString("type"))),
       requireNonNull(eventJson.getLong("timestamp")),
