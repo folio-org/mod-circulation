@@ -1,3 +1,7 @@
+## 24.0.7 2023-11-15
+
+* Asynchronously publish the ITEM_CHECKED_OUT event and ignore the result (CIRC-1950)
+
 ## 24.0.6 2023-11-10
 
 * Fix Hold Shelf Expiration to respect Closed Library Dates (CIRC-1893)
