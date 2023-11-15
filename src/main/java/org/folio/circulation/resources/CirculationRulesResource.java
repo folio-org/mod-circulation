@@ -102,6 +102,8 @@ public class CirculationRulesResource extends Resource {
             }
             JsonObject circulationRules = new JsonObject(response.getBody());
 
+            // TODO refresh cache
+
             context.write(ok(circulationRules));
           }
           catch (Exception e) {

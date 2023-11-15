@@ -6,6 +6,6 @@ import io.vertx.core.Future;
 
 public interface ModuleIdProvider {
   String REAL_MODULE_ID = PomReader.INSTANCE.getModuleName() + "-" + PomReader.INSTANCE.getVersion();
-  Future<String> getModuleId();
 
+  Future<String> getModuleId();
 }
