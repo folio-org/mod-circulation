@@ -15,6 +15,7 @@ import java.util.List;
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
+import org.folio.circulation.services.events.DefaultModuleIdProvider;
 import org.folio.circulation.services.events.ModuleIdProvider;
 import org.folio.circulation.services.events.UniqueKafkaModuleIdProvider;
 import org.folio.kafka.AsyncRecordHandler;
@@ -49,7 +50,8 @@ public class EventConsumerVerticle extends AbstractVerticle {
     kafkaConfig = buildKafkaConfig();
 
     // TODO: for debugging, remove eventually
-    vertx.setPeriodic(20000, r -> log.debug("Cached rules: " + CirculationRulesCache.getInstance().getRules("diku")));
+    vertx.setPeriodic(20000, r -> log.debug("Cached rules: " +
+      CirculationRulesCache.getInstance().getRules("diku").getRulesAsText()));
   }
 
   @Override
@@ -90,6 +92,12 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
+    AsyncRecordHandler<String, String> handler) {
+
+    return createConsumer(eventType, handler, new DefaultModuleIdProvider());
+  }
+
+  private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
     AsyncRecordHandler<String, String> handler, ModuleIdProvider moduleIdProvider) {
 
     KafkaConsumerWrapper<String, String> consumer = KafkaConsumerWrapper.<String, String>builder()
@@ -100,6 +108,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .globalLoadSensor(new GlobalLoadSensor())
       .subscriptionDefinition(buildSubscriptionDefinition(eventType))
       .build();
+
 
     return moduleIdProvider.getModuleId()
       .compose(moduleId -> consumer.start(handler, moduleId))

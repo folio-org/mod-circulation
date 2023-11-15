@@ -157,7 +157,7 @@ public class CirculationRulesResource extends Resource {
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenApply(this::failWhenResponseOtherThanNoContent)
       .thenApply(result -> result.map(response -> CirculationRulesCache.getInstance()
-        .reloadRules(webContext.getTenantId(), rulesAsText)))
+        .buildRules(webContext.getTenantId(), rulesAsText)))
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
   }

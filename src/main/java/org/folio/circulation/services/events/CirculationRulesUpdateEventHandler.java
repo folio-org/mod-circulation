@@ -2,16 +2,9 @@ package org.folio.circulation.services.events;
 
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.circulation.domain.events.DomainEventMapper.toEntityChangedEvent;
 
-import java.util.Optional;
-
-import org.folio.circulation.domain.events.DomainEvent;
-import org.folio.circulation.domain.events.EntityChangedEventData;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
-import org.folio.circulation.rules.cache.Rules;
-import org.folio.circulation.support.results.Result;
 import org.folio.kafka.AsyncRecordHandler;
 
 import io.vertx.core.Future;
@@ -23,28 +16,21 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> consumerRecord) {
-    final String eventKey = consumerRecord.key();
-    final String eventValue = consumerRecord.value();
+    try {
+      final String eventKey = consumerRecord.key();
+      final String eventValue = consumerRecord.value();
 
-    log.info("handle:: event received: key={}", eventKey);
-    log.debug("handle:: payload={}", eventValue);
+      log.info("handle:: event received: key={}", eventKey);
+      log.debug("handle:: value={}", eventValue);
 
-    DomainEvent<EntityChangedEventData> event = toEntityChangedEvent(eventValue);
-    String newRulesAsText = Optional.ofNullable(event.data())
-      .map(EntityChangedEventData::newVersion)
-      .map(newRules -> newRules.getString("rulesAsText"))
-      .orElse(EMPTY);
+      CirculationRulesCache.getInstance()
+        .handleRulesUpdateEvent(toEntityChangedEvent(eventValue));
 
-    log.debug("handle:: new rules: {}", newRulesAsText);
-    Result<Rules> result = CirculationRulesCache.getInstance()
-      .reloadRules(event.tenantId(), newRulesAsText);
-
-    if (result.succeeded()) {
-      log.info("handle:: circulation rules update event processed");
+      log.info("handle:: circulation rules update event processed: {}", eventKey);
       return succeededFuture(eventKey);
-    } else {
-      log.error("handle:: failed to process circulation rules update event: {}", result.cause());
-      return failedFuture(result.cause().toString());
+    } catch (Exception e) {
+      log.error("handle:: failed to process circulation rules update event", e);
+      return failedFuture(e);
     }
   }
 

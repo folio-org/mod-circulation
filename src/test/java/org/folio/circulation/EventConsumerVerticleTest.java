@@ -10,9 +10,16 @@ import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
+import static org.folio.circulation.rules.cache.CirculationRulesCache.getInstance;
 import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,8 +28,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.events.DomainEventType;
-import org.folio.circulation.rules.cache.CirculationRulesCache;
+import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.util.pubsub.support.PomReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +57,7 @@ public class EventConsumerVerticleTest extends APITests {
 
   @BeforeEach
   public void beforeEach() {
-    CirculationRulesCache.getInstance().dropCache();
+    getInstance().dropCache();
   }
 
   @Test
@@ -125,8 +133,85 @@ public class EventConsumerVerticleTest extends APITests {
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
     publishCirculationRulesUpdateEvent(originalRules, newRules);
     waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
+    assertThat(getInstance().getRules(TENANT_ID).getRulesAsText(), equalTo(newRulesAsText));
 
     checkOutFixture.checkOutByBarcode(item, user); // checks for status 201
+  }
+
+  @Test
+  void invalidCirculationRulesEventsDoNotAffectCachedRules() {
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod()); // to warm up rules cache
+    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
+    Rules originalCachedRules = getInstance().getRules(TENANT_ID);
+    String originalCachedRulesText = originalCachedRules.getRulesAsText();
+    assertThat(originalCachedRulesText, not(emptyOrNullString()));
+
+    JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
+    assertThat(originalRulesJson, not(equalTo(newRulesJson)));
+    JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson);
+
+    int initialOffset = getOffsetForCirculationRulesUpdateEvents();
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("id"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("tenant"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("type"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("timestamp"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().putNull("data"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().getJsonObject("data").putNull("old"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().getJsonObject("data").putNull("new"));
+    publishEvent(CIRCULATION_RULES_TOPIC, event.copy().getJsonObject("data").getJsonObject("new")
+      .putNull("rulesAsText"));
+    waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 8);
+
+    Rules newCachedRules = getInstance().getRules(TENANT_ID);
+    assertThat(originalCachedRules.getReloadTimestamp(), equalTo(newCachedRules.getReloadTimestamp()));
+    assertThat(originalCachedRules.getRulesAsText(), equalTo(newCachedRules.getRulesAsText()));
+  }
+
+  @Test
+  void circulationRulesUpdateEventDoesNotAffectEmptyCache() {
+    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
+    assertThat(originalRulesJson, not(emptyIterable()));
+    JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
+    assertThat(newRulesJson, not(equalTo(originalRulesJson)));
+
+    assertThat(getInstance().getRules(TENANT_ID), nullValue()); // cache is empty
+
+    int initialOffset = getOffsetForCirculationRulesUpdateEvents();
+    publishCirculationRulesUpdateEvent(originalRulesJson, newRulesJson);
+    waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
+
+    assertThat(getInstance().getRules(TENANT_ID), nullValue()); // cache is still empty
+  }
+
+  @Test
+  void outdatedCirculationRulesUpdateEventDoesNotAffectCache() {
+    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod()); // to warm up rules cache
+    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
+    Rules originalCachedRules = getInstance().getRules(TENANT_ID);
+    String originalCachedRulesText = originalCachedRules.getRulesAsText();
+    assertThat(originalCachedRulesText, not(emptyOrNullString()));
+
+    JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
+    assertThat(originalRulesJson, not(equalTo(newRulesJson)));
+    JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson)
+      .put("timestamp", ClockUtil.getInstant().minus(1, ChronoUnit.MINUTES).toEpochMilli());
+
+    int initialOffset = getOffsetForCirculationRulesUpdateEvents();
+    publishEvent(CIRCULATION_RULES_TOPIC, event);
+    waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
+
+    Rules newCachedRules = getInstance().getRules(TENANT_ID);
+    assertThat(newCachedRules.getRulesAsText(), equalTo(originalCachedRules.getRulesAsText()));
+    assertThat(newCachedRules.getReloadTimestamp(), equalTo(originalCachedRules.getReloadTimestamp()));
+  }
+
+  private String buildNewRules() {
+    return circulationRulesFixture.soleFallbackPolicyRule(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.pageRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.noOverdueFine().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
   }
 
   private static int getOffsetForCirculationRulesUpdateEvents() {
@@ -200,10 +285,6 @@ public class EventConsumerVerticleTest extends APITests {
 
   private static void undeployVerticle(String deploymentId) {
     APITestContext.undeployVerticle(deploymentId);
-  }
-
-  public static String buildModuleId() {
-    return PomReader.INSTANCE.getModuleName() + "-" + PomReader.INSTANCE.getVersion();
   }
 
   public static <T> T waitFor(Future<T> future) {
