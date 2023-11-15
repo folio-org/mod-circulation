@@ -15,7 +15,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
 import static org.folio.circulation.support.results.MappingFunctions.when;
-import static org.folio.circulation.support.results.Result.*;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
@@ -250,55 +251,10 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<String> itemIds) {
-    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
-    final var mapper = new ItemMapper();
     return fetchItemsByIds(itemIds.stream().toList());
-//      return fetchItemsByIds(itemIds.stream().toList())
-//        .thenApply(mapResult(identityMap::add))
-//      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
-//    return finder.findByIds(itemIds)
-//      .thenCompose(findByIdsResult -> {
-//        if (findByIdsResult.succeeded() && !findByIdsResult.value().getRecords().isEmpty()) {
-//          Collection<String> availableIds = findByIdsResult.value().getRecords().stream()
-//            .map(itemJson -> itemJson.getString("id"))
-//            .filter(Objects::nonNull)
-//            .toList();
-//          Collection<String> filteredItemIds = itemIds.stream()
-//            .filter(id -> !availableIds.contains(id))
-//            .toList();
-//          if (filteredItemIds.isEmpty()) {
-//            // Return the result after applying mapping logic when filteredItemIds is empty
-//            return CompletableFuture.completedFuture(findByIdsResult.map(records -> records.mapRecords(mapper::toDomain)));
-//          }
-//          return fetchCirculationItems(filteredItemIds)
-//            .thenApply(fetchCirculationItemsResult -> {
-//              if (fetchCirculationItemsResult.succeeded()) {
-//                MultipleRecords<Item> findByIdsMultipleRecords = findByIdsResult.value().mapRecords(mapper::toDomain);
-//                MultipleRecords<Item> fetchCirculationItemsMultipleRecords = fetchCirculationItemsResult.value();
-//                List<Item> combinedItems = Stream.concat(
-//                  findByIdsMultipleRecords.getRecords().stream(),
-//                  fetchCirculationItemsMultipleRecords.getRecords().stream()
-//                ).toList();
-//
-//                MultipleRecords<Item> combinedMultipleRecords = new MultipleRecords<>(
-//                  combinedItems,
-//                  combinedItems.size()
-//                );
-//                return Result.succeeded(combinedMultipleRecords);
-//              } else {
-//                return Result.failed(fetchCirculationItemsResult.cause());
-//              }
-//            });
-//        } else {
-//          //return CompletableFuture.completedFuture(Result.failed(findByIdsResult.cause()));
-//          return completedFuture(of(MultipleRecords::empty));
-//        }
-//      });
-//    return finder.findByIds(itemIds)
-//      .thenApply(mapResult(identityMap::add))
-//      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
   }
-    public CompletableFuture<Result<MultipleRecords<Item>>> fetchItemsByIds(List<String> itemIds) {
+
+  public CompletableFuture<Result<MultipleRecords<Item>>> fetchItemsByIds(List<String> itemIds) {
     List<CompletableFuture<Result<Item>>> futures = itemIds.stream()
       .map(this::fetchById).toList();
     CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
@@ -315,7 +271,6 @@ public class ItemRepository {
       return null;
     });
   }
-
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
     final var mapper = new ItemMapper();
