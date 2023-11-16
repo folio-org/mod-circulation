@@ -15,8 +15,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
 import static org.folio.circulation.support.results.MappingFunctions.when;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
@@ -25,9 +24,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,10 +45,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.SingleRecordFetcher;
+import org.folio.circulation.support.*;
 import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -65,6 +65,8 @@ public class ItemRepository {
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
   private final CollectionResourceClient circulationItemClient;
+  private final CollectionResourceClient circulationItemsByIdsClient;
+
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -73,7 +75,7 @@ public class ItemRepository {
         new ServicePointRepository(clients)),
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
-      new LoanTypeRepository(clients.loanTypesStorage()), clients.circulationItemClient());
+      new LoanTypeRepository(clients.loanTypesStorage()), clients.circulationItemClient(), clients.circulationItemsByIdsClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -160,6 +162,7 @@ public class ItemRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
+
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
@@ -167,13 +170,35 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
+
   private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
     final var mapper = new ItemMapper();
-
     return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
       .fetch(id)
       .thenApply(mapResult(identityMap::add))
       .thenApply(r -> r.map(mapper::toDomain));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>> fetchCirculationItems(List<String> ids) {
+    final var mapper = new ItemMapper();
+    System.out.println("ID1:-"+ids);
+    String commaSeparatedIds = String.join(",", ids);
+    if (ids.isEmpty()) {
+      System.out.println("ID5:-"+ids);
+      return CompletableFuture.completedFuture(Result.of(MultipleRecords::empty));
+    } else {
+      System.out.println("ID2:-"+ids);
+      return SingleRecordFetcher.jsonOrNull(circulationItemsByIdsClient, "items")
+        .fetch(commaSeparatedIds)
+        .thenApply(response -> response.succeeded()
+          ? mapToMultipleRecords(response.value(), mapper)
+          : Result.failed(response.cause()));
+    }
+  }
+
+  private Result<MultipleRecords<Item>> mapToMultipleRecords(JsonObject value, ItemMapper mapper) {
+    List<Item> itemList = mapper.convertJsonToItems(value);
+    return Result.succeeded(new MultipleRecords<>(itemList, itemList.size()));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLocations(
@@ -251,26 +276,62 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<String> itemIds) {
-    return fetchItemsByIds(itemIds.stream().toList());
+    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
+    final var mapper = new ItemMapper();
+
+    return finder.findByIds(itemIds)
+      .thenCompose(findByIdsResult -> findByIdsResult.succeeded()
+        ? processSuccessfulFindByIdsResult(findByIdsResult, itemIds, mapper)
+        : CompletableFuture.completedFuture(Result.failed(findByIdsResult.cause())));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Item>>> fetchItemsByIds(List<String> itemIds) {
-    List<CompletableFuture<Result<Item>>> futures = itemIds.stream()
-      .map(this::fetchById).toList();
-    CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-    return allOf.thenApplyAsync(v -> {
-      List<Item> items = futures.stream()
-        .map(CompletableFuture::join)
-        .filter(result -> result.succeeded())
-        .map(Result::value)
-        .toList();
-      if (items.size() == itemIds.size()) {
-        MultipleRecords<Item> multipleRecords = new MultipleRecords<>(items, items.size());
-        return Result.succeeded(multipleRecords);
-      }
-      return null;
-    });
+  private CompletableFuture<Result<MultipleRecords<Item>>> processSuccessfulFindByIdsResult(
+    Result<MultipleRecords<JsonObject>> findByIdsResult,
+    Collection<String> itemIds,
+    ItemMapper mapper
+  ) {
+    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
+
+
+    System.out.println("ID4:-"+itemIds);
+    Collection<String> availableIds = findByIdsResult.value().getRecords().stream()
+      .map(itemJson -> itemJson.getString("id"))
+      .filter(Objects::nonNull)
+      .toList();
+
+    Collection<String> filteredItemIds = itemIds.stream()
+      .filter(id -> !availableIds.contains(id))
+      .toList();
+    System.out.println("ID3:-"+itemIds);
+//    if (filteredItemIds.size()==0) {
+//
+//      CompletableFuture<Result<MultipleRecords<Item>>> resultCompletableFuture = finder.findByIds(itemIds)
+//        .thenApply(mapResult(identityMap::add))
+//        .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
+//      resultCompletableFuture
+//        .thenAccept(multipleRecordsResult -> System.out.println("00000000000"+multipleRecordsResult.value().getRecords()));
+//
+//      return resultCompletableFuture;
+//    }
+    return fetchCirculationItems(filteredItemIds.stream().toList())
+      .thenApply(fetchCirculationItemsResult -> fetchCirculationItemsResult.succeeded()
+        ? combineResults(findByIdsResult.value(), fetchCirculationItemsResult.value(), mapper)
+        : Result.failed(fetchCirculationItemsResult.cause()));
   }
+
+  private Result<MultipleRecords<Item>> combineResults(
+    MultipleRecords<JsonObject> findByIdsMultipleRecords,
+    MultipleRecords<Item> fetchCirculationItemsMultipleRecords,
+    ItemMapper mapper
+  ) {
+    List<Item> combinedItems = Stream.concat(
+      findByIdsMultipleRecords.getRecords().stream().map(mapper::toDomain),
+      fetchCirculationItemsMultipleRecords.getRecords().stream()
+    ).toList();
+    System.out.println("pppppppp"+combinedItems);
+    return Result.succeeded(new MultipleRecords<>(combinedItems, combinedItems.size()));
+  }
+
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
     final var mapper = new ItemMapper();
@@ -318,7 +379,7 @@ public class ItemRepository {
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
   fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap,
-    Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>> fetcher) {
+                Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>> fetcher) {
 
     return result.combineAfter(
       r -> fetcher.apply(r.toKeys(ItemRelatedRecord::getItemId)),

@@ -4,8 +4,11 @@ import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
@@ -33,8 +36,25 @@ public class ItemMapper {
       MaterialType.unknown(getProperty(representation, "materialTypeId")),
       LoanType.unknown(getLoanTypeId(representation)), getDescription(representation));
   }
+  public List<Item> convertJsonToItems(JsonObject jsonObject) {
+    List<Item> itemList = new ArrayList<>();
 
-  private ItemDescription getDescription(JsonObject representation) {
+    JsonArray itemsArray = jsonObject.getJsonArray("items");
+    if (itemsArray != null) {
+      for (Object itemObj : itemsArray) {
+        if (itemObj instanceof JsonObject) {
+          JsonObject itemJson = (JsonObject) itemObj;
+          Item item = toDomain(itemJson);
+          itemList.add(item);
+        }
+      }
+    }
+    return itemList;
+  }
+
+
+
+    private ItemDescription getDescription(JsonObject representation) {
     return new ItemDescription(
       getProperty(representation, "barcode"),
       getProperty(representation, "enumeration"),
