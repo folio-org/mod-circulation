@@ -43,8 +43,6 @@ public class TenantActivationResource extends Resource {
         ServerErrorResponse.internalError(routingContext.response(), throwable.getLocalizedMessage());
         return null;
       });
-
-    warmUpCirculationRulesCache(webContext, clients);
   }
 
   private CompletableFuture<Void> warmUpCirculationRulesCache(WebContext context, Clients clients) {
