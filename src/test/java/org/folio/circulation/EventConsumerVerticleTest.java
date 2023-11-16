@@ -143,10 +143,11 @@ public class EventConsumerVerticleTest extends APITests {
   @Test
   void invalidCirculationRulesEventsDoNotAffectCachedRules() {
     warmUpCirculationRulesCache();
+    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
+
     Rules originalCachedRules = getInstance().getRules(TENANT_ID);
     assertThat(originalCachedRules.getRulesAsText(), not(emptyOrNullString()));
 
-    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
     JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
     assertThat(originalRulesJson, not(equalTo(newRulesJson)));
     JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson);
@@ -193,6 +194,7 @@ public class EventConsumerVerticleTest extends APITests {
     JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
     assertThat(newRulesJson, not(equalTo(originalRulesJson)));
 
+    getInstance().dropCache();
     assertThat(getInstance().getRules(TENANT_ID), nullValue()); // cache is empty
 
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
@@ -229,13 +231,12 @@ public class EventConsumerVerticleTest extends APITests {
   @EnumSource(value = DomainEventPayloadType.class, names = "UPDATED", mode = EXCLUDE)
   void circulationRulesEventOfUnsupportedTypeIsIgnored(DomainEventPayloadType eventType) {
     warmUpCirculationRulesCache();
-    Rules originalCachedRules = getInstance().getRules(TENANT_ID);
     JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
     JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
     assertThat(originalRulesJson, not(equalTo(newRulesJson)));
-
     JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson)
       .put("type", eventType.name());
+    Rules originalCachedRules = getInstance().getRules(TENANT_ID);
 
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
     publishEvent(CIRCULATION_RULES_TOPIC, event);
