@@ -187,7 +187,8 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    // Second reminder has zero fee, don't create account
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     // Fifth processing (don't send yet).
@@ -198,7 +199,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     // Sixth processing (send now).
@@ -209,7 +210,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     // Seventh processing (no reminders to send).
@@ -220,7 +221,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
   }
 
   @Test
@@ -281,12 +282,12 @@ class ReminderFeeTests extends APITests {
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
 
-    // Two days after latest reminder, send second.
+    // Two days after latest reminder, send second (has zero fee so no additional account)
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -296,7 +297,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -306,7 +307,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -316,7 +317,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
   }
 
   @Test
@@ -370,7 +371,8 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    // Fee was zero, no additional account
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -379,7 +381,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
 
   }
 
@@ -447,7 +449,8 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    // Zero fee, no additional account
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -457,7 +460,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -467,7 +470,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
 
     latestRunTime = latestRunTime.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -477,7 +480,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
   }
 
 

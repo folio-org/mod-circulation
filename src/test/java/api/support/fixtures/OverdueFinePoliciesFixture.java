@@ -111,7 +111,7 @@ public class OverdueFinePoliciesFixture {
       .withAddedReminderEntry(
         1,"day",1.50,
         "Email",FIRST_REMINDER_TEMPLATE_ID.toString())
-      .withAddedReminderEntry(2, "day", 2.00,
+      .withAddedReminderEntry(2, "day", 0.00,
         "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
       .withAddedReminderEntry(2,"day", 2.15,
         "Email", THIRD_REMINDER_TEMPLATE_ID.toString())
@@ -126,7 +126,7 @@ public class OverdueFinePoliciesFixture {
       .withAddedReminderEntry(
         0,"day",1.50,
         "Email",FIRST_REMINDER_TEMPLATE_ID.toString())
-      .withAddedReminderEntry(1, "day", 2.00,
+      .withAddedReminderEntry(1, "day", 0.00,
         "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
       .withAddedReminderEntry(1,"day", 2.15,
         "Email", THIRD_REMINDER_TEMPLATE_ID.toString())

@@ -199,6 +199,10 @@ public class RemindersPolicy {
       return NoticeFormat.from(noticeFormat);
     }
 
+    public boolean hasZeroFee () {
+      return reminderFee.doubleValue() == 0.0;
+    }
+
     /**
      * Normalizes "HOUR", "HOURS", "hour", "hours" to "Hours"
      */
