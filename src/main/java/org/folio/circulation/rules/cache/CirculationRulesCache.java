@@ -123,13 +123,7 @@ public final class CirculationRulesCache {
       return;
     }
 
-    final String newRulesAsText = event.data().newVersion().getString("rulesAsText");
-    if (isBlank(newRulesAsText)) {
-      log.warn("handleRulesUpdateEvent:: new rules are empty, ignoring event: {}", event);
-      return;
-    }
-
-    buildRules(tenantId, newRulesAsText);
+    buildRules(tenantId, event.data().newVersion().getString("rulesAsText"));
   }
 
   public Rules getRules(String tenantId) {
