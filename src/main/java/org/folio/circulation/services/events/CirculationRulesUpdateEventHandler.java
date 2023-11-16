@@ -2,8 +2,14 @@ package org.folio.circulation.services.events;
 
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.domain.events.DomainEventMapper.toEntityChangedEvent;
+import static org.folio.circulation.domain.events.DomainEventPayloadType.UPDATED;
 
+import org.apache.commons.lang3.StringUtils;
+import org.folio.circulation.domain.events.DomainEvent;
+import org.folio.circulation.domain.events.DomainEventPayloadType;
+import org.folio.circulation.domain.events.EntityChangedEventData;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.kafka.AsyncRecordHandler;
 
@@ -19,12 +25,16 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
     try {
       final String eventKey = consumerRecord.key();
       final String eventValue = consumerRecord.value();
-
       log.info("handle:: event received: key={}", eventKey);
       log.debug("handle:: value={}", eventValue);
 
-      CirculationRulesCache.getInstance()
-        .handleRulesUpdateEvent(toEntityChangedEvent(eventValue));
+      final DomainEvent<EntityChangedEventData> event = toEntityChangedEvent(eventValue);
+      if (event.payloadType() != UPDATED) {
+        log.warn("handle:: unsupported event type: {}", event.payloadType());
+        return succeededFuture(eventKey);
+      }
+      validate(event);
+      CirculationRulesCache.getInstance().handleRulesUpdateEvent(event);
 
       log.info("handle:: circulation rules update event processed: {}", eventKey);
       return succeededFuture(eventKey);
@@ -32,6 +42,14 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
       log.error("handle:: failed to process circulation rules update event", e);
       return failedFuture(e);
     }
+  }
+
+  private static void validate(DomainEvent<EntityChangedEventData> event) {
+    log.info("validate:: validating event: {}", event.id());
+    if (isBlank(event.data().newVersion().getString("rulesAsText"))) {
+      throw new IllegalArgumentException("Event does not contain new circulation rules: " + event);
+    }
+    log.info("validate:: event validation complete: {}", event.id());
   }
 
 }

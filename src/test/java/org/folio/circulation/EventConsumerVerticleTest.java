@@ -4,6 +4,7 @@ import static api.support.APITestContext.TENANT_ID;
 import static api.support.Wait.waitForValue;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toMap;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -13,20 +14,19 @@ import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RU
 import static org.folio.circulation.rules.cache.CirculationRulesCache.getInstance;
 import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.circulation.domain.events.DomainEventPayloadType;
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.http.client.Response;
@@ -34,6 +34,8 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.util.pubsub.support.PomReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.APITestContext;
 import api.support.APITests;
@@ -140,12 +142,11 @@ public class EventConsumerVerticleTest extends APITests {
 
   @Test
   void invalidCirculationRulesEventsDoNotAffectCachedRules() {
-    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod()); // to warm up rules cache
-    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
+    warmUpCirculationRulesCache();
     Rules originalCachedRules = getInstance().getRules(TENANT_ID);
-    String originalCachedRulesText = originalCachedRules.getRulesAsText();
-    assertThat(originalCachedRulesText, not(emptyOrNullString()));
+    assertThat(originalCachedRules.getRulesAsText(), not(emptyOrNullString()));
 
+    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
     JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
     assertThat(originalRulesJson, not(equalTo(newRulesJson)));
     JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson);
@@ -189,7 +190,6 @@ public class EventConsumerVerticleTest extends APITests {
   @Test
   void circulationRulesUpdateEventDoesNotAffectEmptyCache() {
     JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
-    assertThat(originalRulesJson, not(emptyIterable()));
     JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
     assertThat(newRulesJson, not(equalTo(originalRulesJson)));
 
@@ -204,16 +204,17 @@ public class EventConsumerVerticleTest extends APITests {
 
   @Test
   void outdatedCirculationRulesUpdateEventDoesNotAffectCache() {
-    checkOutFixture.checkOutByBarcode(itemsFixture.basedUponNod()); // to warm up rules cache
+    warmUpCirculationRulesCache();
     JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
     Rules originalCachedRules = getInstance().getRules(TENANT_ID);
     String originalCachedRulesText = originalCachedRules.getRulesAsText();
     assertThat(originalCachedRulesText, not(emptyOrNullString()));
+    assertThat(originalCachedRulesText, equalTo(originalRulesJson.getString("rulesAsText")));
 
     JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
     assertThat(originalRulesJson, not(equalTo(newRulesJson)));
     JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson)
-      .put("timestamp", ClockUtil.getInstant().minus(1, ChronoUnit.MINUTES).toEpochMilli());
+      .put("timestamp", ClockUtil.getInstant().minus(1, MINUTES).toEpochMilli());
 
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
     publishEvent(CIRCULATION_RULES_TOPIC, event);
@@ -222,6 +223,31 @@ public class EventConsumerVerticleTest extends APITests {
     Rules newCachedRules = getInstance().getRules(TENANT_ID);
     assertThat(newCachedRules.getRulesAsText(), equalTo(originalCachedRules.getRulesAsText()));
     assertThat(newCachedRules.getReloadTimestamp(), equalTo(originalCachedRules.getReloadTimestamp()));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = DomainEventPayloadType.class, names = "UPDATED", mode = EXCLUDE)
+  void circulationRulesEventOfUnsupportedTypeIsIgnored(DomainEventPayloadType eventType) {
+    warmUpCirculationRulesCache();
+    Rules originalCachedRules = getInstance().getRules(TENANT_ID);
+    JsonObject originalRulesJson = circulationRulesFixture.getRules().getJson();
+    JsonObject newRulesJson = originalRulesJson.copy().put("rulesAsText", buildNewRules());
+    assertThat(originalRulesJson, not(equalTo(newRulesJson)));
+
+    JsonObject event = buildUpdateEvent(originalRulesJson, newRulesJson)
+      .put("type", eventType.name());
+
+    int initialOffset = getOffsetForCirculationRulesUpdateEvents();
+    publishEvent(CIRCULATION_RULES_TOPIC, event);
+    waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
+
+    Rules newCachedRules = getInstance().getRules(TENANT_ID);
+    assertThat(newCachedRules.getRulesAsText(), equalTo(originalCachedRules.getRulesAsText()));
+    assertThat(newCachedRules.getReloadTimestamp(), equalTo(originalCachedRules.getReloadTimestamp()));
+  }
+
+  private void warmUpCirculationRulesCache() {
+    tenantActivationFixture.postTenant();
   }
 
   private String buildNewRules() {
@@ -248,20 +274,6 @@ public class EventConsumerVerticleTest extends APITests {
 
   private static String buildConsumerGroupId(DomainEventType eventType) {
     return format("%s.%s-%s", eventType, PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
-  }
-
-  private List<String> listConsumerGroupIds() {
-    return waitFor(kafkaAdminClient.listConsumerGroups()
-      .map(groups -> groups.stream().map(ConsumerGroupListing::getGroupId).toList()));
-  }
-
-  private List<MemberDescription> listConsumers(String consumerGroupId) {
-    return waitFor(kafkaAdminClient.describeConsumerGroups(List.of(consumerGroupId))
-      .map(groups -> groups.values()
-        .stream()
-        .findFirst()
-        .map(ConsumerGroupDescription::getMembers)
-        .orElseGet(Collections::emptyList)));
   }
 
   @SneakyThrows

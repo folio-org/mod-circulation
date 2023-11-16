@@ -2,6 +2,7 @@ package org.folio.circulation;
 
 import static java.lang.System.getenv;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
+import static org.folio.circulation.rules.cache.CirculationRulesCache.getInstance;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_ENV;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_HOST;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_MAX_REQUEST_SIZE;
@@ -11,9 +12,11 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
+import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
 import org.folio.circulation.services.events.DefaultModuleIdProvider;
 import org.folio.circulation.services.events.ModuleIdProvider;
@@ -51,7 +54,9 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
     // TODO: for debugging, remove eventually
     vertx.setPeriodic(20000, r -> log.debug("Cached rules: " +
-      CirculationRulesCache.getInstance().getRules("diku").getRulesAsText()));
+      Optional.ofNullable(getInstance().getRules("diku"))
+        .map(Rules::getRulesAsText)
+        .orElse("empty")));
   }
 
   @Override

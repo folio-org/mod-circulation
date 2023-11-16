@@ -94,27 +94,19 @@ public final class CirculationRulesCache {
 
     log.info("getDrools:: getting Drools for tenant {}", tenantId);
 
-    return Optional.ofNullable(getRulesFromCache(tenantId))
+    return Optional.ofNullable(getRules(tenantId))
       .map(Rules::getDrools)
       .map(Result::ofAsync)
       .orElseGet(() -> reloadRules(tenantId, circulationRulesClient));
   }
 
-  public Rules getRules(String tenantId) {
-    return rulesMap.get(tenantId);
-  }
-
   public void handleRulesUpdateEvent(DomainEvent<EntityChangedEventData> event) {
     log.debug("handleRulesUpdateEvent:: event={}", () -> event);
-    if (event == null) {
-      log.warn("handleRulesUpdateEvent:: event is null");
-      return;
-    }
 
     final String tenantId = event.tenantId();
     log.info("handleRulesUpdateEvent:: handling rules update event {} for tenant {}",
       event.id(), event.tenantId());
-    final Rules cachedRules = getRulesFromCache(tenantId);
+    final Rules cachedRules = getRules(tenantId);
 
     if (cachedRules == null) {
       // if cache is empty, rules are downloaded from storage anyway when they are first requested
@@ -123,23 +115,24 @@ public final class CirculationRulesCache {
       return;
     }
 
-    long eventTimestamp = event.timestamp();
-    long cacheTimestamp = cachedRules.getReloadTimestamp();
-    if (eventTimestamp == 0 || cacheTimestamp == 0 || eventTimestamp < cacheTimestamp) {
+    final long eventTimestamp = event.timestamp();
+    final long cacheTimestamp = cachedRules.getReloadTimestamp();
+    if (eventTimestamp < cacheTimestamp) {
       log.info("handleRulesUpdateEvent:: ignoring event {}: event timestamp is {}, " +
           "cache timestamp is {}", event.id(), eventTimestamp, cacheTimestamp);
       return;
     }
 
-    Optional.ofNullable(event.data())
-      .map(EntityChangedEventData::newVersion)
-      .map(json -> json.getString("rulesAsText"))
-      .map(rules -> buildRules(tenantId, rules))
-      .orElseThrow(() -> new IllegalArgumentException(
-        String.format("Event does not contain new circulation rules: %s", event)));
+    final String newRulesAsText = event.data().newVersion().getString("rulesAsText");
+    if (isBlank(newRulesAsText)) {
+      log.warn("handleRulesUpdateEvent:: new rules are empty, ignoring event: {}", event);
+      return;
+    }
+
+    buildRules(tenantId, newRulesAsText);
   }
 
-  private Rules getRulesFromCache(String tenantId) {
+  public Rules getRules(String tenantId) {
     final Rules cachedRules = rulesMap.get(tenantId);
     if (cachedRules == null) {
       log.info("getRulesFromCache:: cache miss for tenant {}", tenantId);
