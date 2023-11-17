@@ -33,16 +33,16 @@ public class ItemMapper {
   }
 
   private ItemDescription getDescription(JsonObject representation) {
-  return new ItemDescription(
-    getProperty(representation, "barcode"),
-    getProperty(representation, "enumeration"),
-    getProperty(representation, "copyNumber"),
-    getProperty(representation, "volume"),
-    getProperty(representation, "chronology"),
-    getProperty(representation, "numberOfPieces"),
-    getProperty(representation, "descriptionOfPieces"),
-    toStream(representation, "yearCaption")
-      .toList());
+    return new ItemDescription(
+      getProperty(representation, "barcode"),
+      getProperty(representation, "enumeration"),
+      getProperty(representation, "copyNumber"),
+      getProperty(representation, "volume"),
+      getProperty(representation, "chronology"),
+      getProperty(representation, "numberOfPieces"),
+      getProperty(representation, "descriptionOfPieces"),
+      toStream(representation, "yearCaption")
+        .toList());
   }
 
   private ServicePoint getInTransitServicePoint(JsonObject representation) {
