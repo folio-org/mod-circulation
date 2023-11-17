@@ -170,7 +170,6 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
-
   private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
     final var mapper = new ItemMapper();
     return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
@@ -181,18 +180,15 @@ public class ItemRepository {
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchCirculationItems(List<String> ids) {
     final var mapper = new ItemMapper();
-    System.out.println("ID1:-"+ids);
     String commaSeparatedIds = String.join(",", ids);
     if (ids.isEmpty()) {
-      System.out.println("ID5:-"+ids);
       return CompletableFuture.completedFuture(Result.of(MultipleRecords::empty));
     } else {
-      System.out.println("ID2:-"+ids);
       return SingleRecordFetcher.jsonOrNull(circulationItemsByIdsClient, "items")
         .fetch(commaSeparatedIds)
-        .thenApply(response -> response.succeeded()
+        .thenApplyAsync(response -> response.succeeded()
           ? mapToMultipleRecords(response.value(), mapper)
-          : Result.failed(response.cause()));
+          : Result.of(MultipleRecords::empty));
     }
   }
 
@@ -278,58 +274,30 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<String> itemIds) {
     final var finder = new CqlIndexValuesFinder<>(createItemFinder());
     final var mapper = new ItemMapper();
-
+    System.out.println("---------"+itemIds);
     return finder.findByIds(itemIds)
-      .thenCompose(findByIdsResult -> findByIdsResult.succeeded()
-        ? processSuccessfulFindByIdsResult(findByIdsResult, itemIds, mapper)
-        : CompletableFuture.completedFuture(Result.failed(findByIdsResult.cause())));
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(mapResult(records -> {
+        System.out.println("Printing");
+        records.getRecords().stream().forEach(System.out::println);
+        return records.mapRecords(mapper::toDomain);
+      }))
+      .thenCompose(res -> res.value().getTotalRecords() == itemIds.size()
+        ? CompletableFuture.completedFuture(res)
+        : res.combineAfter(x -> lookupDcbItem(res, itemIds), MultipleRecords::combine));
   }
-
-  private CompletableFuture<Result<MultipleRecords<Item>>> processSuccessfulFindByIdsResult(
-    Result<MultipleRecords<JsonObject>> findByIdsResult,
-    Collection<String> itemIds,
-    ItemMapper mapper
-  ) {
-    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
-
-
-    System.out.println("ID4:-"+itemIds);
-    Collection<String> availableIds = findByIdsResult.value().getRecords().stream()
-      .map(itemJson -> itemJson.getString("id"))
-      .filter(Objects::nonNull)
+  private CompletableFuture<Result<MultipleRecords<Item>>> lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
+    var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
+    System.out.println("---------"+inventoryItemIds);
+    final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
+    var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids))
       .toList();
-
-    Collection<String> filteredItemIds = itemIds.stream()
-      .filter(id -> !availableIds.contains(id))
-      .toList();
-    System.out.println("ID3:-"+itemIds);
-//    if (filteredItemIds.size()==0) {
-//
-//      CompletableFuture<Result<MultipleRecords<Item>>> resultCompletableFuture = finder.findByIds(itemIds)
-//        .thenApply(mapResult(identityMap::add))
-//        .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
-//      resultCompletableFuture
-//        .thenAccept(multipleRecordsResult -> System.out.println("00000000000"+multipleRecordsResult.value().getRecords()));
-//
-//      return resultCompletableFuture;
-//    }
-    return fetchCirculationItems(filteredItemIds.stream().toList())
-      .thenApply(fetchCirculationItemsResult -> fetchCirculationItemsResult.succeeded()
-        ? combineResults(findByIdsResult.value(), fetchCirculationItemsResult.value(), mapper)
-        : Result.failed(fetchCirculationItemsResult.cause()));
-  }
-
-  private Result<MultipleRecords<Item>> combineResults(
-    MultipleRecords<JsonObject> findByIdsMultipleRecords,
-    MultipleRecords<Item> fetchCirculationItemsMultipleRecords,
-    ItemMapper mapper
-  ) {
-    List<Item> combinedItems = Stream.concat(
-      findByIdsMultipleRecords.getRecords().stream().map(mapper::toDomain),
-      fetchCirculationItemsMultipleRecords.getRecords().stream()
-    ).toList();
-    System.out.println("pppppppp"+combinedItems);
-    return Result.succeeded(new MultipleRecords<>(combinedItems, combinedItems.size()));
+    final var mapper = new ItemMapper();
+    finder.findByIds(dcbItemIds)
+      .thenAccept(multipleRecordsResult -> System.out.println("Size is --"+multipleRecordsResult.value().getRecords().size()));
+    return finder.findByIds(dcbItemIds)
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
   }
 
 
@@ -472,5 +440,8 @@ public class ItemRepository {
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
     return new CqlQueryFinder<>(itemsClient, "items", identity());
+  }
+  private CqlQueryFinder<JsonObject> createCirculationItemFinder() {
+    return new CqlQueryFinder<>(circulationItemsByIdsClient, "items", identity());
   }
 }
