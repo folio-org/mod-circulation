@@ -105,13 +105,16 @@ public class EventPublisher {
         .ifPresent(json -> write(payloadJsonObject, GRACE_PERIOD_FIELD, json));
 
       runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
-        .thenApplyAsync(r -> r.after(loggedInUser -> CompletableFuture.completedFuture(
-          Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(), mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
+        .thenApplyAsync(r -> r.after(loggedInUser -> completedFuture(
+          succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+            mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
-      return pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(), payloadJsonObject.encode())
-        .handle((result, error) -> handlePublishEventError(error, loanAndRelatedRecords));
-    }
-    else {
+      logger.info("publishItemCheckedOutEvent:: publishing ITEM_CHECKED_OUT event for loan {}",
+        loan.getId());
+      // run ITEM_CHECKED_OUT event publishing asynchronously to prevent any impact on the performance of check-out
+      runAsync(() -> pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(),
+        payloadJsonObject.encode()));
+    } else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
     }
 
