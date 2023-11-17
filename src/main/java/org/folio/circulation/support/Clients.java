@@ -810,7 +810,7 @@ public class Clients {
   private CollectionResourceClient createCirculationItemsByIdsClient(
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
-    return  getCollectionResourceClient(client, context, "/circulation-item/byIds");
+    return  getCollectionResourceClient(client, context, "/circulation-item/items");
   }
 
   private GetManyRecordsClient createSettingsStorageClient(
