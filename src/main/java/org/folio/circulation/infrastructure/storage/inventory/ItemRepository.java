@@ -15,7 +15,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
 import static org.folio.circulation.support.results.MappingFunctions.when;
-import static org.folio.circulation.support.results.Result.*;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
@@ -160,8 +161,8 @@ public class ItemRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
-
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
+
     return fetchItem(itemId)
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
         item -> fetchCirculationItem(itemId), item -> completedFuture(itemResult))))
@@ -263,14 +264,14 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
-      var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
-      final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
-      var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids)).toList();
-      final var mapper = new ItemMapper();
+    var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
+    final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
+    var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids)).toList();
+    final var mapper = new ItemMapper();
 
-      return finder.findByIds(dcbItemIds)
-        .thenApply(mapResult(identityMap::add))
-        .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
+    return finder.findByIds(dcbItemIds)
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
    }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
@@ -319,7 +320,7 @@ public class ItemRepository {
 
   public <T extends ItemRelatedRecord> CompletableFuture<Result<MultipleRecords<T>>>
   fetchItemsFor(Result<MultipleRecords<T>> result, BiFunction<T, Item, T> includeItemMap,
-                Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>> fetcher) {
+    Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>> fetcher) {
 
     return result.combineAfter(
       r -> fetcher.apply(r.toKeys(ItemRelatedRecord::getItemId)),
