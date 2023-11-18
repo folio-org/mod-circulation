@@ -52,7 +52,7 @@ public class TenantActivationResource extends Resource {
       .reloadRules(context.getTenantId(), clients.circulationRulesStorage())
       .thenAccept(r -> r.applySideEffect(
         rules -> log.info("warmUpCirculationRulesCache:: warm-up complete"),
-        failure -> log.error("warmUpCirculationRulesCache:: warm-up failed: {}", failure.toString())
+        failure -> log.error("warmUpCirculationRulesCache:: warm-up failed: {}", failure)
       ));
   }
 }

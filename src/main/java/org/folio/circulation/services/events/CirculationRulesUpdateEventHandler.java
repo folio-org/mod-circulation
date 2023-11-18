@@ -49,7 +49,7 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
     if (isBlank(event.data().newVersion().getString("rulesAsText"))) {
       throw new IllegalArgumentException("Event does not contain new circulation rules: " + event);
     }
-    log.info("validate:: event validation complete: {}", event.id());
+    log.debug("validate:: event validation complete: {}", event.id());
   }
 
 }

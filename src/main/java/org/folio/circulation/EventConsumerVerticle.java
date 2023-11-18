@@ -80,6 +80,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private Future<Void> stopConsumers() {
+    log.info("stopConsumers:: stopping consumers");
     return Future.all(
       consumers.stream()
         .map(KafkaConsumerWrapper::stop)
@@ -90,6 +91,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private Future<Void> createConsumers() {
+    log.info("createConsumers:: creating consumers");
     return Future.all(List.of(
       createConsumer(CIRCULATION_RULES_UPDATED, new CirculationRulesUpdateEventHandler(),
         // puts consumers into separate groups so that they all receive the same event
@@ -105,6 +107,8 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
     AsyncRecordHandler<String, String> handler, ModuleIdProvider moduleIdProvider) {
+
+    log.info("createConsumer:: creating consumer for event type {}", eventType);
 
     KafkaConsumerWrapper<String, String> consumer = KafkaConsumerWrapper.<String, String>builder()
       .context(context)
@@ -148,6 +152,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   public static JsonObject buildConfig() {
+    log.info("buildConfig:: building config for {}", EventConsumerVerticle.class.getSimpleName());
     return new JsonObject()
       .put(KAFKA_HOST, KafkaEnvironmentProperties.host())
       .put(KAFKA_PORT, KafkaEnvironmentProperties.port())
