@@ -1,3 +1,7 @@
+## 24.0.8 2023-11-20
+
+* Handle circulation rules update events (CIRC-1958)
+
 ## 24.0.7 2023-11-15
 
 * Asynchronously publish the ITEM_CHECKED_OUT event and ignore the result (CIRC-1950)
