@@ -4,12 +4,11 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
-import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
-import org.folio.circulation.resources.CirculationRulesReloadResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
@@ -38,6 +37,7 @@ import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
+import org.folio.circulation.resources.ScheduledDigitalRemindersProcessingResource;
 import org.folio.circulation.resources.SearchSlipsResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
@@ -46,7 +46,6 @@ import org.folio.circulation.resources.handlers.FeeFineBalanceChangedHandlerReso
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
-import org.folio.circulation.resources.ScheduledDigitalRemindersProcessingResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
 
@@ -80,7 +79,7 @@ public class CirculationVerticle extends AbstractVerticle {
       .handler(rc -> LogHelper.logRequest(rc, log));
 
     new HealthResource().register(router);
-    new TenantActivationResource().register(router);
+    new TenantActivationResource(client).register(router);
 
     new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
     new CheckInByBarcodeResource(client).register(router);
@@ -105,8 +104,6 @@ public class CirculationVerticle extends AbstractVerticle {
       .register(router);
 
     new CirculationRulesResource("/circulation/rules", client)
-      .register(router);
-    new CirculationRulesReloadResource("/circulation/rules-reload", client)
       .register(router);
     new LoanCirculationRulesEngineResource(
       "/circulation/rules/loan-policy",
