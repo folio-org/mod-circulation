@@ -1,5 +1,7 @@
 package api.support;
 
+import static org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
 
 import java.lang.invoke.MethodHandles;
@@ -7,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,12 +29,17 @@ import api.support.fakes.FakeOkapi;
 import api.support.fakes.FakeStorageModule;
 import api.support.http.OkapiHeaders;
 import api.support.http.URLHelper;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import lombok.SneakyThrows;
 
 public class APITestContext {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String TENANT_ID = "test_tenant";
+  public static final String TENANT_ID = "test_tenant";
   private static String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
   private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
@@ -45,7 +53,7 @@ public class APITestContext {
 
   private static final String REQUEST_ID = createFakeRequestId();
 
-  private static VertxAssistant vertxAssistant;
+  private static final VertxAssistant vertxAssistant = initVertxAssistant();
   private static Launcher launcher;
   private static final int PORT = nextFreePort();
 
@@ -125,10 +133,7 @@ public class APITestContext {
     useOkapiForInitialRequests = Boolean.parseBoolean(
       System.getProperty("use.okapi.initial.requests", "false"));
 
-    vertxAssistant = new VertxAssistant();
     launcher = new Launcher(vertxAssistant);
-
-    vertxAssistant.start();
 
     final CompletableFuture<String> fakeStorageModuleDeployed;
 
@@ -191,5 +196,39 @@ public class APITestContext {
 
   private static String createFakeRequestId() {
     return String.format("%s/fake-context", new Random().nextInt(999999));
+  }
+
+  @SneakyThrows
+  public static String deployVerticle(Class<? extends AbstractVerticle> verticle, JsonObject config) {
+    return vertxAssistant.deployVerticle(verticle, config)
+      .get(30, TimeUnit.SECONDS);
+  }
+
+  @SneakyThrows
+  public static void undeployVerticle(String deploymentId) {
+    vertxAssistant.undeployVerticle(deploymentId)
+      .get(30, TimeUnit.SECONDS);
+  }
+
+  public static KafkaProducer<String, JsonObject> createKafkaProducer(String kafkaUrl) {
+    Properties config = new Properties();
+    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+    config.put(ACKS_CONFIG, "1");
+
+    return vertxAssistant.createUsingVertx(vertx ->
+      KafkaProducer.create(vertx, config, String.class, JsonObject.class));
+  }
+
+  public static KafkaAdminClient createKafkaAdminClient(String kafkaUrl) {
+    Properties config = new Properties();
+    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+
+    return vertxAssistant.createUsingVertx(vertx -> KafkaAdminClient.create(vertx, config));
+  }
+
+  private static VertxAssistant initVertxAssistant() {
+    VertxAssistant assistant = new VertxAssistant();
+    assistant.start();
+    return assistant;
   }
 }
