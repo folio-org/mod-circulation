@@ -84,11 +84,14 @@ public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
       .map(ConsumerGroupDescription::getGroupId)
       .toList();
 
+    log.info("findUniqueModuleId:: looking for gaps in list of group IDs: {}", existingGroupIds);
+
     for (int i = 0; i < existingGroupIds.size(); i++) {
       String candidateModuleId = buildUniqueModuleId(i);
       String candidateGroupId = formatGroupName(eventType.name(), candidateModuleId);
+      log.debug("findUniqueModuleId:: checking group ID: {}", candidateGroupId);
       if (!existingGroupIds.get(i).equals(candidateGroupId)) {
-        log.info("findUniqueModuleId:: found gap in list of group IDs, using moduleId {}",
+        log.info("findUniqueModuleId:: found a gap in list of group IDs, using module ID {}",
           candidateModuleId);
         return candidateModuleId;
       }
