@@ -135,5 +135,9 @@ public class OverdueFinePolicyRemindersPolicy {
       return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
 
+    public boolean hasZeroFee () {
+      return reminderFee.doubleValue() == 0.0;
+    }
+
   }
 }

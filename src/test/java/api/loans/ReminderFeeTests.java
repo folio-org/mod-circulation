@@ -107,7 +107,7 @@ class ReminderFeeTests extends APITests {
   }
 
   @Test
-  void willSendThreeRemindersAndCreateThreeAccountsThenStop() {
+  void willSendThreeRemindersAndCreateTwoAccountsThenStop() {
 
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -137,7 +137,8 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+    // Second reminder has zero fee, don't create account
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
     ZonedDateTime thirdRunTime = dueDate.plusMinutes(6);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(thirdRunTime);
@@ -146,7 +147,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
 
     ZonedDateTime fourthRunTime = dueDate.plusMinutes(8);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(fourthRunTime);
@@ -155,7 +156,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(3);
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(3));
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
   }
 
   @Test
