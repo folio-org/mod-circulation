@@ -58,7 +58,7 @@ public final class PoliciesActivationFixture {
   private final LocationsFixture locationsFixture;
   private final MaterialTypesFixture materialTypesFixture;
 
-  public PoliciesActivationFixture() {
+  public PoliciesActivationFixture(CirculationRulesFixture circulationRulesFixture) {
     restAssuredClient = defaultRestAssuredClient();
 
     loanPoliciesFixture = new LoanPoliciesFixture(forLoanPolicies(), forFixedDueDateSchedules());
@@ -66,7 +66,7 @@ public final class PoliciesActivationFixture {
     noticePoliciesFixture = new NoticePoliciesFixture(forNoticePolicies());
     overdueFinePoliciesFixture = new OverdueFinePoliciesFixture();
     lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
-    circulationRulesFixture = new CirculationRulesFixture(restAssuredClient);
+    this.circulationRulesFixture = circulationRulesFixture;
     locationsFixture = new LocationsFixture(forLocations(), forInstitutions(),
       forCampuses(), forLibraries(), new ServicePointsFixture(forServicePoints()));
     materialTypesFixture = new MaterialTypesFixture(forMaterialTypes());

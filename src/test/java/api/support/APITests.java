@@ -1,14 +1,11 @@
 package api.support;
 
-import static api.support.APITestContext.createKafkaAdminClient;
-import static api.support.APITestContext.createKafkaProducer;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
-import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -28,8 +25,6 @@ import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
@@ -82,9 +77,8 @@ import api.support.fixtures.UsersFixture;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
+import api.support.utl.KafkaHelper;
 import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.admin.KafkaAdminClient;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import lombok.experimental.Delegate;
 import lombok.extern.log4j.Log4j2;
 
@@ -92,14 +86,10 @@ import lombok.extern.log4j.Log4j2;
 public abstract class APITests {
   private static boolean okapiAlreadyDeployed = false;
 
-  protected static String kafkaUrl;
-  protected static KafkaProducer<String, JsonObject> kafkaProducer;
-  protected static KafkaAdminClient kafkaAdminClient;
-  private static final KafkaContainer kafkaContainer
-    = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.2.0"));
-
   protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
+
+  protected static final KafkaHelper kafkaHelper = KafkaHelper.getInstance();
 
   private final boolean initialiseCirculationRules;
 
@@ -289,9 +279,10 @@ public abstract class APITests {
   @Delegate
   // The @Delegate annotation will instruct lombok to auto generate delegating methods
   // in this class for all public methods of the PoliciesActivationFixture class
-  protected final PoliciesActivationFixture policiesActivation = new PoliciesActivationFixture();
+  protected final PoliciesActivationFixture policiesActivation =
+    new PoliciesActivationFixture(circulationRulesFixture);
   protected final AgeToLostFixture ageToLostFixture =
-    new AgeToLostFixture(itemsFixture, usersFixture, checkOutFixture);
+    new AgeToLostFixture(itemsFixture, usersFixture, checkOutFixture, circulationRulesFixture);
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
@@ -313,7 +304,6 @@ public abstract class APITests {
       return;
     }
 
-    runKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -350,23 +340,6 @@ public abstract class APITests {
     scheduledNoticesClient.deleteAll();
 
     mockClockManagerToReturnDefaultDateTime();
-  }
-
-  private static void runKafka() {
-    log.info("runKafka:: starting Kafka container...");
-    kafkaContainer.start();
-    String host = kafkaContainer.getHost();
-    String port = String.valueOf(kafkaContainer.getFirstMappedPort());
-    log.info("runKafka:: Kafka container started: host={}, port={}", host, port);
-
-    System.setProperty("kafka-host", host);
-    System.setProperty("kafka-port", port);
-
-    kafkaUrl = format("%s:%s", host, port);
-    kafkaProducer = createKafkaProducer(kafkaUrl);
-    kafkaAdminClient = createKafkaAdminClient(kafkaUrl);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(kafkaContainer::stop));
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

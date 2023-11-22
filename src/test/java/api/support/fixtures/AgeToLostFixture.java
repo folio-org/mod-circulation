@@ -42,9 +42,9 @@ public final class AgeToLostFixture {
   private final ResourceClient loanStorageClient;
 
   public AgeToLostFixture(ItemsFixture itemsFixture, UsersFixture usersFixture,
-    CheckOutFixture checkOutFixture) {
+    CheckOutFixture checkOutFixture, CirculationRulesFixture circulationRulesFixture) {
 
-    this.policiesActivation = new PoliciesActivationFixture();
+    this.policiesActivation = new PoliciesActivationFixture(circulationRulesFixture);
     this.lostItemFeePoliciesFixture = new LostItemFeePoliciesFixture();
     this.noticePoliciesFixture = new NoticePoliciesFixture(ResourceClient.forNoticePolicies());
     this.itemsFixture = itemsFixture;

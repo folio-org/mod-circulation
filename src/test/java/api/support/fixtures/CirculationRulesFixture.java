@@ -1,6 +1,7 @@
 package api.support.fixtures;
 
 import static api.support.RestAssuredResponseConversion.toResponse;
+import static api.support.Wait.waitForValue;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
 import static api.support.http.api.support.NamedQueryStringParameter.namedParameter;
@@ -15,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.http.HttpStatus;
 import org.folio.circulation.rules.ItemLocation;
 import org.folio.circulation.rules.ItemType;
 import org.folio.circulation.rules.LoanType;
@@ -24,15 +26,17 @@ import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
 import api.support.http.QueryStringParameter;
+import api.support.utl.KafkaHelper;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class CirculationRulesFixture {
   private final RestAssuredClient restAssuredClient;
+  private final KafkaHelper kafkaHelper;
 
   public CirculationRulesFixture(RestAssuredClient restAssuredClient) {
-
     this.restAssuredClient = restAssuredClient;
+    this.kafkaHelper = KafkaHelper.getInstance();
   }
 
   public String getCirculationRules() {
@@ -45,11 +49,21 @@ public class CirculationRulesFixture {
   }
 
   public Response putRules(String body) {
-    return toResponse(restAssuredClient
+    JsonObject oldRules = getRules().getJson();
+
+    Response putResponse = toResponse(restAssuredClient
       .beginRequest("put-circulation-rules")
       .body(body)
       .when().put(circulationRulesUrl())
       .then().extract().response());
+
+    if (putResponse.getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+      int initialOffset = kafkaHelper.getOffsetForCirculationRulesUpdateEvents();
+      kafkaHelper.publishCirculationRulesUpdateEvent(oldRules, new JsonObject(body));
+      waitForValue(kafkaHelper::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
+    }
+
+    return putResponse;
   }
 
   public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId,
@@ -245,4 +259,5 @@ public class CirculationRulesFixture {
       namedParameter("patron_type_id", patronGroup.id),
       namedParameter("location_id", location.id));
   }
+
 }

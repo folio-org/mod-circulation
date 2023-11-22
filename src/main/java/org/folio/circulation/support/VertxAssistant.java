@@ -1,6 +1,7 @@
 package org.folio.circulation.support;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -94,5 +95,9 @@ public class VertxAssistant {
     });
 
     return undeployed;
+  }
+
+  public Collection<String> getDeploymentIds() {
+    return vertx.deploymentIDs();
   }
 }

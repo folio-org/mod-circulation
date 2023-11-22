@@ -1,7 +1,5 @@
 package api.support;
 
-import static org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.folio.rest.tools.utils.NetworkUtils.nextFreePort;
 
 import java.lang.invoke.MethodHandles;
@@ -9,7 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Properties;
+import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,8 +30,6 @@ import api.support.http.URLHelper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.admin.KafkaAdminClient;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import lombok.SneakyThrows;
 
 public class APITestContext {
@@ -210,25 +206,13 @@ public class APITestContext {
       .get(30, TimeUnit.SECONDS);
   }
 
-  public static KafkaProducer<String, JsonObject> createKafkaProducer(String kafkaUrl) {
-    Properties config = new Properties();
-    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
-    config.put(ACKS_CONFIG, "1");
-
-    return vertxAssistant.createUsingVertx(vertx ->
-      KafkaProducer.create(vertx, config, String.class, JsonObject.class));
-  }
-
-  public static KafkaAdminClient createKafkaAdminClient(String kafkaUrl) {
-    Properties config = new Properties();
-    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
-
-    return vertxAssistant.createUsingVertx(vertx -> KafkaAdminClient.create(vertx, config));
-  }
-
   private static VertxAssistant initVertxAssistant() {
     VertxAssistant assistant = new VertxAssistant();
     assistant.start();
     return assistant;
+  }
+
+  public static Collection<String> getDeploymentIds() {
+    return vertxAssistant.getDeploymentIds();
   }
 }
