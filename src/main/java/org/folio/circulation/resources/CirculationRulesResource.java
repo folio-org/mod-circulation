@@ -29,6 +29,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.rules.CirculationRulesException;
 import org.folio.circulation.rules.CirculationRulesParser;
 import org.folio.circulation.rules.Text2Drools;
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
@@ -155,6 +156,8 @@ public class CirculationRulesResource extends Resource {
 
     clients.circulationRulesStorage().put(rulesInput.copy())
       .thenApply(this::failWhenResponseOtherThanNoContent)
+      .thenApply(result -> result.map(response -> CirculationRulesCache.getInstance()
+        .buildRules(webContext.getTenantId(), rulesAsText)))
       .thenApply(result -> result.map(response -> noContent()))
       .thenAccept(webContext::writeResultToHttpResponse);
   }

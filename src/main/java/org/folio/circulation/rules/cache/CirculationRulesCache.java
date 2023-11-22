@@ -59,7 +59,7 @@ public final class CirculationRulesCache {
     return circulationRules.getString("rulesAsText");
   }
 
-  private Result<Drools> buildRules(String tenantId, String rulesAsText) {
+  public Result<Drools> buildRules(String tenantId, String rulesAsText) {
     log.info("buildRules:: building rules for tenant {}", tenantId);
     log.debug("buildRules:: rules={}", rulesAsText);
 
