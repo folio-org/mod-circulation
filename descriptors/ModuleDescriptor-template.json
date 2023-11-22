@@ -1741,7 +1741,6 @@
         "inventory-storage.items.item.put",
         "circulation-item-storage.items.item.put",
         "circulation.internal.fetch-items",
-        "circulation-items-storage.items.collection.get",
         "users.item.get",
         "users.collection.get",
         "addresstypes.collection.get",
