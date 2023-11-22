@@ -371,6 +371,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
     // Fee was zero, no additional account
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
