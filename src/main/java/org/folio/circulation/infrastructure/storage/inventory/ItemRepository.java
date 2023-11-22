@@ -264,7 +264,10 @@ public class ItemRepository {
         : res.combineAfter(x -> lookupDcbItem(res, itemIds), MultipleRecords::combine));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Item>>> lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
+  private CompletableFuture<Result<MultipleRecords<Item>>>
+    lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
+    log.debug("lookupDcbItem:: Looking up for DCB items");
+
     var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
     final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
     var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids)).toList();
