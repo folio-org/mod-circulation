@@ -86,6 +86,22 @@ system property variables in this order, and uses the default 9801 as fallback. 
 
 The Docker container exposes port 9801.
 
+## Environment variables
+
+Module integrates with Kafka in order to consume/publish domain events. Some configuration is required to make this integration work,
+so mod-circulation expects the following environment variables:
+
+| Variable name      | Default value     |
+|--------------------|-------------------|
+| KAFKA_HOST         | localhost         |
+| KAFKA_PORT         | 9092              |
+| REPLICATION FACTOR | 1                 |
+| MAX_REQUEST_SIZE   | 4000000           |
+| ENV                | folio             |
+| OKAPI_URL          | http://okapi:9130 |
+
+If a variable is not present, its default values is used as a fallback.
+
 ## Design Notes
 
 ### Known Limitations
