@@ -111,7 +111,7 @@ public class OverdueFinePoliciesFixture {
       .withAddedReminderEntry(
         1,"minute",1.50,
         "Email",FIRST_REMINDER_TEMPLATE_ID.toString())
-      .withAddedReminderEntry(1, "minute", 2.00,
+      .withAddedReminderEntry(1, "minute", 0.00,
         "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
       .withAddedReminderEntry(1,"minute", 2.15,
         "Email", THIRD_REMINDER_TEMPLATE_ID.toString());
