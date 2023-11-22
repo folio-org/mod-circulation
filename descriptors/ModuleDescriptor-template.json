@@ -1741,6 +1741,7 @@
         "inventory-storage.items.item.put",
         "circulation-item-storage.items.item.put",
         "circulation.internal.fetch-items",
+        "circulation-items-storage.items.collection.get",
         "users.item.get",
         "users.collection.get",
         "addresstypes.collection.get",
@@ -2326,8 +2327,9 @@
       "description" : "Internal permission set for fetching item(s)",
       "subPermissions": [
         "inventory-storage.items.item.get",
-        "circulation-item-storage.items.item.get",
+        "circulation-item-storage.item.collection.get",
         "circulation-item-storage.items.collection.get",
+        "circulation-item-storage.items.item.get",
         "inventory-storage.items.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.holdings.collection.get",
