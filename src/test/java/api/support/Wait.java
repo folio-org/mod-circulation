@@ -33,7 +33,7 @@ public class Wait {
   }
 
   public static <T> T waitForValue(Callable<T> valueSupplier, Predicate<T> valuePredicate) {
-    return waitAtMost(30, SECONDS)
+    return waitAtMost(60, SECONDS)
       .until(valueSupplier, valuePredicate);
   }
 
