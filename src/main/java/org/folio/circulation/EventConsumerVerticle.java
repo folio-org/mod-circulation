@@ -112,6 +112,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
 
     return moduleIdProvider.getModuleId()
+      .onSuccess(moduleId -> log.info("createConsumer:: moduleId={}", moduleId))
       .compose(moduleId -> consumer.start(handler, moduleId))
       .map(consumer)
       .onSuccess(consumers::add);
