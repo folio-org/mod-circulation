@@ -64,6 +64,7 @@ public class EventConsumerVerticleTest extends APITests {
 
     // verticle2 is undeployed, its consumer and subgroup1 are removed
     undeployVerticle(verticle2DeploymentId);
+    kafkaHelper.verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 0, subgroup2, 1));
     waitFor(kafkaHelper.deleteConsumerGroup(subgroup1));
     kafkaHelper.verifyConsumerGroups(Map.of(subgroup0, 1, subgroup2, 1));
 
