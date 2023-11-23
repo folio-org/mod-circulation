@@ -24,16 +24,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
-
-import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
-import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.AddInfoFixture;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.AgeToLostFixture;
@@ -43,6 +33,7 @@ import api.support.fixtures.ChangeDueDateFixture;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CheckOutLockFixture;
+import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.ConfigurationsFixture;
@@ -79,6 +70,16 @@ import api.support.fixtures.TemplateFixture;
 import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
+import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
+
+import api.support.fakes.FakeModNotify;
+import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
@@ -238,6 +239,9 @@ public abstract class APITests {
 
   protected final ProxyRelationshipsFixture proxyRelationshipsFixture
     = new ProxyRelationshipsFixture(proxyRelationshipsClient);
+
+  protected final CirculationItemsFixture circulationItemsFixture = new CirculationItemsFixture(
+    materialTypesFixture, loanTypesFixture);
 
   protected final UsersFixture usersFixture = new UsersFixture(usersClient,
     patronGroupsFixture);
