@@ -66,6 +66,7 @@ public class VertxAssistant {
     options.setConfig(config);
     options.setWorker(true);
 
+    log.info("Deploying verticle: {}", verticleClass.getSimpleName());
     vertx.deployVerticle(verticleClass1, options, result -> {
       if (result.succeeded()) {
         long elapsedTime = System.currentTimeMillis() - startTime;

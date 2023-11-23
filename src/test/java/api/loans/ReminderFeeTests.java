@@ -341,7 +341,6 @@ class ReminderFeeTests extends APITests {
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
     assertThat(dueDate, is(ZonedDateTime.of(FIRST_DAY.minusDays(1), LocalTime.MIDNIGHT.minusHours(14), UTC)));
 
-    // Due date 28. First reminder after 1 day but 29 is closed so move to 30
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
 
     ZonedDateTime latestRunTime = dueDate.plusDays(1).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
@@ -371,6 +370,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(2);
     verifyNumberOfPublishedEvents(NOTICE, 2);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
     // Fee was zero, no additional account
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 

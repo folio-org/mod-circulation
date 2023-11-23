@@ -214,9 +214,6 @@ public class InterfaceUrls {
     return circulationRulesUrl("");
   }
 
-  public static URL circulationRulesReloadUrl(String subPath) {
-    return circulationModuleUrl("/circulation/rules-reload" + subPath);
-  }
 
   public static URL circulationRulesUrl(String subPath) {
     return circulationModuleUrl("/circulation/rules" + subPath);

@@ -1,5 +1,6 @@
 package api;
 
+import static api.support.APITestContext.TENANT_ID;
 import static api.support.fakes.FakePubSub.getCreatedEventTypes;
 import static api.support.fakes.FakePubSub.getDeletedEventTypes;
 import static api.support.fakes.FakePubSub.getRegisteredPublishers;
@@ -16,14 +17,20 @@ import static api.support.matchers.EventTypeMatchers.isLoanDueDateChangedEventTy
 import static api.support.matchers.EventTypeMatchers.isLogRecordEventType;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidPublishersRegistration;
 import static api.support.matchers.PubSubRegistrationMatchers.isValidSubscribersRegistration;
+import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static org.folio.HttpStatus.HTTP_CREATED;
 import static org.folio.HttpStatus.HTTP_INTERNAL_SERVER_ERROR;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import org.folio.circulation.rules.cache.CirculationRulesCache;
+import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,5 +85,16 @@ class TenantActivationResourceTests extends APITests {
 
     assertThat(response.getStatusCode(), is(HTTP_NO_CONTENT.toInt()));
     assertThat(getDeletedEventTypes().size(), is(0));
+  }
+
+  @Test
+  void tenantActivationWarmsUpCirculationRulesCache() {
+    CirculationRulesCache.getInstance().dropCache();
+    assertThat(CirculationRulesCache.getInstance().getRules(TENANT_ID), nullValue());
+    Response response = tenantActivationFixture.postTenant();
+    assertThat(response, hasStatus(HTTP_CREATED));
+    Rules cachedRules = CirculationRulesCache.getInstance().getRules(TENANT_ID);
+    assertThat(cachedRules, not(nullValue()));
+    assertThat(cachedRules.getRulesAsText(), equalTo(circulationRulesFixture.getCirculationRules()));
   }
 }
