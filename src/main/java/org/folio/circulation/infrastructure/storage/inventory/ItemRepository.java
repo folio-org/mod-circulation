@@ -64,6 +64,7 @@ public class ItemRepository {
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
   private final CollectionResourceClient circulationItemClient;
+  private final CollectionResourceClient circulationItemsByIdsClient;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -72,7 +73,9 @@ public class ItemRepository {
         new ServicePointRepository(clients)),
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
-      new LoanTypeRepository(clients.loanTypesStorage()), clients.circulationItemClient());
+      new LoanTypeRepository(clients.loanTypesStorage()),
+      clients.circulationItemClient(),
+      clients.circulationItemsByIdsClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -255,6 +258,23 @@ public class ItemRepository {
 
     return finder.findByIds(itemIds)
       .thenApply(mapResult(identityMap::add))
+      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)))
+      .thenCompose(res -> res.value().getTotalRecords() == itemIds.size()
+        ? CompletableFuture.completedFuture(res)
+        : res.combineAfter(x -> lookupDcbItem(res, itemIds), MultipleRecords::combine));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>>
+    lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
+    log.debug("lookupDcbItem:: Looking up for DCB items");
+
+    var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
+    final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
+    var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids)).toList();
+    final var mapper = new ItemMapper();
+
+    return finder.findByIds(dcbItemIds)
+      .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
   }
 
@@ -397,5 +417,9 @@ public class ItemRepository {
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
     return new CqlQueryFinder<>(itemsClient, "items", identity());
+  }
+
+  private CqlQueryFinder<JsonObject> createCirculationItemFinder() {
+    return new CqlQueryFinder<>(circulationItemsByIdsClient, "items", identity());
   }
 }
