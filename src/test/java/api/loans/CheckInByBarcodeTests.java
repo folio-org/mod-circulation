@@ -7,6 +7,7 @@ import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AddressExamples.SiriusBlack;
+import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.isPreferredName;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.AddInfoRequestBuilder;
 import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
@@ -118,6 +120,11 @@ class CheckInByBarcodeTests extends APITests {
   private final static String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   private final static String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
   private final static String REQUEST_POSITION = "position";
+  private static final String LOAN_INFO_ADDED = "testing patron info";
+
+  public CheckInByBarcodeTests() {
+    super(true, true);
+  }
 
   @Test
   void canCloseAnOpenLoanByCheckingInTheItem() {
@@ -306,7 +313,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(userContext.getString("city"), is(address.getCity()));
     assertThat(userContext.getString("region"), is(address.getRegion()));
     assertThat(userContext.getString("postalCode"), is(address.getPostalCode()));
-    assertThat(userContext.getString("countryId"), is("United Kingdom"));
+    assertThat(userContext.getString("countryId"), is(address.getCountryId()));
     assertThat(requestContext.getString("deliveryAddressType"), is(addressTypesFixture.home().getJson().getString("addressType")));
     assertThat(requestContext.getString("requestExpirationDate"), isEquivalentTo(
       ZonedDateTime.of(requestExpiration.atTime(23, 59, 59), ZoneOffset.UTC)));
@@ -629,7 +636,8 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   void patronNoticeOnCheckInAfterCheckOutAndRequestToItem() {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
-    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    CheckOutResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    addPatronInfoToLoan(loan.getId().toString());
 
     ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -661,7 +669,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     ZonedDateTime checkInDate = ZonedDateTime.of(2019, 7, 25, 14, 23, 41, 0, UTC);
     checkInFixture.checkInByBarcode(item, checkInDate, servicePointId);
 
-    checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
+    checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId, true);
   }
 
   @Test
@@ -698,7 +706,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       ZonedDateTime.of(2019, 5, 10, 14, 23, 41, 0, UTC),
       servicePointId);
 
-    checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId);
+    checkPatronNoticeEvent(request, requester, item, availableNoticeTemplateId, false);
   }
 
   @Test
@@ -965,8 +973,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
-    checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId);
+    checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId, false);
 
     clearSentPatronNoticesAndPubsubEvents();
 
@@ -1004,7 +1011,6 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThatRequestStatusIs(firstRequest.getId(), firstRequestUpdateStatus);
 
     // check the item in again
-
     checkInFixture.checkInByBarcode(item, secondCheckInDate, pickupServicePointId);
 
     // verify that item is still awaiting pickup, and that second request is now awaiting pickup
@@ -1018,7 +1024,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId);
+    checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId, false);
 
     clearSentPatronNoticesAndPubsubEvents();
 
@@ -1960,7 +1966,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   private void checkPatronNoticeEvent(IndividualResource request, IndividualResource requester,
-    ItemResource item, UUID expectedTemplateId) {
+    ItemResource item, UUID expectedTemplateId, boolean checkPatronInfo) {
 
     verifyNumberOfSentNotices(1);
 
@@ -1968,6 +1974,9 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     noticeContextMatchers.putAll(getUserContextMatchers(requester));
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
+    if (checkPatronInfo) {
+      noticeContextMatchers.putAll(getLoanAdditionalInfoContextMatchers(LOAN_INFO_ADDED));
+    }
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), expectedTemplateId, noticeContextMatchers)));
@@ -2009,5 +2018,10 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   private void updateRequestPosition(IndividualResource request, int position) {
     requestsFixture.replaceRequest(request.getId(),
       RequestBuilder.from(request).withPosition(position));
+  }
+
+  private void addPatronInfoToLoan(String loanId){
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loanId,
+      "patronInfoAdded", LOAN_INFO_ADDED));
   }
 }

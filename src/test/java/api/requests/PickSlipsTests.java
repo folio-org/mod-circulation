@@ -1,7 +1,6 @@
 package api.requests;
 
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
-import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
@@ -16,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -37,9 +38,6 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -50,7 +48,6 @@ import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 import api.support.matchers.UUIDMatcher;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -125,18 +122,13 @@ class PickSlipsTests extends APITests {
     assertResponseHasItems(response, 0);
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {
-    "US",
-    StringUtils.EMPTY,
-    "XX"
-  })
-  void responseContainsPickSlipWithAllAvailableTokens(String countryCode) {
+  @Test
+  void responseContainsPickSlipWithAllAvailableTokens() {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
-    Address address = AddressExamples.mainStreet(countryCode);
+    Address address = AddressExamples.mainStreet();
     var departmentId1 = UUID.randomUUID().toString();
     var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
@@ -162,8 +154,8 @@ class PickSlipsTests extends APITests {
         .withPermanentLoanType(loanTypeResource.getId()));
 
     ZonedDateTime now = ClockUtil.getZonedDateTime();
-    var checkoutResource =  checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
-    var checkinResource = checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
+    checkOutFixture.checkOutByBarcode(itemResource, requesterResource);
+    checkInFixture.checkInByBarcode(itemResource, now, servicePointId);
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
     ZonedDateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
@@ -182,88 +174,80 @@ class PickSlipsTests extends APITests {
 
     Response response = ResourceClient.forPickSlips().getById(servicePointId);
 
-    if (StringUtils.isNoneEmpty(countryCode) && !countryCode.equalsIgnoreCase("US")) {
-      assertThat(response.getStatusCode(), is(HTTP_INTERNAL_ERROR));
-      assertEquals(true, response.getBody().
-        contains("IllegalArgumentException: Not a valid country code to determine the country name."));
-    }
-    else {
-      assertThat(response.getStatusCode(), is(HTTP_OK));
-      assertResponseHasItems(response, 1);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1);
 
-      JsonObject pickSlip = getPickSlipsList(response).get(0);
-      JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
-      assertNotNull(pickSlip.getString(CURRENT_DATE_TIME));
+    JsonObject pickSlip = getPickSlipsList(response).get(0);
+    JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
+    assertNotNull(pickSlip.getString(CURRENT_DATE_TIME));
 
-      ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
+    ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
 
-      Item item = Item.from(itemResource.getJson())
-        .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
+    Item item = Item.from(itemResource.getJson())
+      .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
-      String contributorNames = item.getContributorNames().collect(joining("; "));
+    String contributorNames = item.getContributorNames().collect(joining("; "));
 
-      String yearCaptionsToken = String.join("; ", item.getYearCaption());
-      String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
-      String materialTypeName = getName(materialTypeResource.getJson());
-      String loanTypeName = getName(loanTypeResource.getJson());
-      Location location = new LocationMapper().toDomain(locationResource.getJson());
+    String yearCaptionsToken = String.join("; ", item.getYearCaption());
+    String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
+    String materialTypeName = getName(materialTypeResource.getJson());
+    String loanTypeName = getName(loanTypeResource.getJson());
+    Location location = new LocationMapper().toDomain(locationResource.getJson());
 
-      assertEquals(item.getTitle(), itemContext.getString("title"));
-      assertEquals(item.getBarcode(), itemContext.getString("barcode"));
-      assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
-      assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
-      assertEquals(contributorNames, itemContext.getString("allContributors"));
-      assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
-      assertEquals(item.getVolume(), itemContext.getString("volume"));
-      assertEquals(item.getChronology(), itemContext.getString("chronology"));
-      assertEquals(yearCaptionsToken, itemContext.getString("yearCaption"));
-      assertEquals(materialTypeName, itemContext.getString("materialType"));
-      assertEquals(loanTypeName, itemContext.getString("loanType"));
-      assertEquals(copyNumber, itemContext.getString("copy"));
-      assertEquals(item.getNumberOfPieces(), itemContext.getString("numberOfPieces"));
-      assertEquals(item.getDescriptionOfPieces(), itemContext.getString("descriptionOfPieces"));
-      assertDatetimeEquivalent(actualCheckinDateTime, requestCheckinDateTime);
-      assertEquals(location.getName(), itemContext.getString("effectiveLocationSpecific"));
-      assertEquals(location.getPrimaryServicePoint().getName(), itemContext.getString("effectiveLocationPrimaryServicePointName"));
-      CallNumberComponents callNumberComponents = item.getCallNumberComponents();
-      assertEquals(callNumberComponents.getCallNumber(), itemContext.getString("callNumber"));
-      assertEquals(callNumberComponents.getPrefix(), itemContext.getString("callNumberPrefix"));
-      assertEquals(callNumberComponents.getSuffix(), itemContext.getString("callNumberSuffix"));
+    assertEquals(item.getTitle(), itemContext.getString("title"));
+    assertEquals(item.getBarcode(), itemContext.getString("barcode"));
+    assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
+    assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
+    assertEquals(contributorNames, itemContext.getString("allContributors"));
+    assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
+    assertEquals(item.getVolume(), itemContext.getString("volume"));
+    assertEquals(item.getChronology(), itemContext.getString("chronology"));
+    assertEquals(yearCaptionsToken, itemContext.getString("yearCaption"));
+    assertEquals(materialTypeName, itemContext.getString("materialType"));
+    assertEquals(loanTypeName, itemContext.getString("loanType"));
+    assertEquals(copyNumber, itemContext.getString("copy"));
+    assertEquals(item.getNumberOfPieces(), itemContext.getString("numberOfPieces"));
+    assertEquals(item.getDescriptionOfPieces(), itemContext.getString("descriptionOfPieces"));
+    assertDatetimeEquivalent(actualCheckinDateTime, requestCheckinDateTime);
+    assertEquals(location.getName(), itemContext.getString("effectiveLocationSpecific"));
+    assertEquals(location.getPrimaryServicePoint().getName(), itemContext.getString("effectiveLocationPrimaryServicePointName"));
+    CallNumberComponents callNumberComponents = item.getCallNumberComponents();
+    assertEquals(callNumberComponents.getCallNumber(), itemContext.getString("callNumber"));
+    assertEquals(callNumberComponents.getPrefix(), itemContext.getString("callNumberPrefix"));
+    assertEquals(callNumberComponents.getSuffix(), itemContext.getString("callNumberSuffix"));
 
-      User requester = new User(requesterResource.getJson());
-      JsonObject requesterContext = pickSlip.getJsonObject("requester");
+    User requester = new User(requesterResource.getJson());
+    JsonObject requesterContext = pickSlip.getJsonObject("requester");
 
-      assertThat(requesterContext.getString("firstName"), is(requester.getFirstName()));
-      assertThat(requesterContext.getString("lastName"), is(requester.getLastName()));
-      assertThat(requesterContext.getString("middleName"), is(requester.getMiddleName()));
-      assertThat(requesterContext.getString("barcode"), is(requester.getBarcode()));
-      assertThat(requesterContext.getString("addressLine1"), is(address.getAddressLineOne()));
-      assertThat(requesterContext.getString("addressLine2"), is(address.getAddressLineTwo()));
-      assertThat(requesterContext.getString("city"), is(address.getCity()));
-      assertThat(requesterContext.getString("region"), is(address.getRegion()));
-      assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
-      assertThat(requesterContext.getString("countryId"), is(address.getCountryId().isEmpty() ?
-        null : ("United States")));
-      assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
-      assertThat(requesterContext.getString("departments").split("; "),
-        arrayContainingInAnyOrder(equalTo("test department1"), equalTo("test department2")));
+    assertThat(requesterContext.getString("firstName"), is(requester.getFirstName()));
+    assertThat(requesterContext.getString("lastName"), is(requester.getLastName()));
+    assertThat(requesterContext.getString("middleName"), is(requester.getMiddleName()));
+    assertThat(requesterContext.getString("barcode"), is(requester.getBarcode()));
+    assertThat(requesterContext.getString("addressLine1"), is(address.getAddressLineOne()));
+    assertThat(requesterContext.getString("addressLine2"), is(address.getAddressLineTwo()));
+    assertThat(requesterContext.getString("city"), is(address.getCity()));
+    assertThat(requesterContext.getString("region"), is(address.getRegion()));
+    assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
+    assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
+    assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
+    assertThat(requesterContext.getString("departments").split("; "),
+      arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
 
-      JsonObject requestContext = pickSlip.getJsonObject("request");
+    JsonObject requestContext = pickSlip.getJsonObject("request");
 
-      assertThat(requestContext.getString("deliveryAddressType"),
-        is(addressTypeResource.getJson().getString("addressType")));
-      assertThat(requestContext.getString("requestExpirationDate"),
-        isEquivalentTo(requestExpiration.atTime(23, 59, 59).atZone(UTC)));
-      assertThat(requestContext.getString("holdShelfExpirationDate"),
-        isEquivalentTo(ZonedDateTime.of(
-          holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
-      assertThat(requestContext.getString("requestID"),
-        UUIDMatcher.is(requestResource.getId()));
-      assertThat(requestContext.getString("servicePointPickup"),
-        is(servicePoint.getJson().getString("name")));
-      assertThat(requestContext.getString("patronComments"), is("I need the book"));
-      assertThat(requestContext.getString("requestDate"), isEquivalentTo(requestDate));
-    }
+    assertThat(requestContext.getString("deliveryAddressType"),
+      is(addressTypeResource.getJson().getString("addressType")));
+    assertThat(requestContext.getString("requestExpirationDate"),
+      isEquivalentTo(requestExpiration.atTime(23, 59, 59).atZone(UTC)));
+    assertThat(requestContext.getString("holdShelfExpirationDate"),
+      isEquivalentTo(ZonedDateTime.of(
+        holdShelfExpiration.atStartOfDay(), ZoneOffset.UTC)));
+    assertThat(requestContext.getString("requestID"),
+      UUIDMatcher.is(requestResource.getId()));
+    assertThat(requestContext.getString("servicePointPickup"),
+      is(servicePoint.getJson().getString("name")));
+    assertThat(requestContext.getString("patronComments"), is("I need the book"));
+    assertThat(requestContext.getString("requestDate"), isEquivalentTo(requestDate));
   }
 
   @Test

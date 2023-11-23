@@ -11,6 +11,7 @@ import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_IT
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE;
 import static api.support.fixtures.TemplateContextMatchers.getInstanceContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getRequestContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.http.CqlQuery.exactMatch;
@@ -101,6 +102,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -2289,7 +2291,10 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource requester = usersFixture.steve();
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
 
-    checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(item, usersFixture.jessica());
+    String infoAdded = "testing patron info";
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loan.getId().toString(),
+      "patronInfoAdded", infoAdded));
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withId(id)
@@ -2312,6 +2317,7 @@ public class RequestsAPICreationTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getUserContextMatchers(requester));
     noticeContextMatchers.putAll(getItemContextMatchers(item, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getRequestContextMatchers(request));
+    noticeContextMatchers.putAll(getLoanAdditionalInfoContextMatchers(infoAdded));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(requester.getId(), holdConfirmationTemplateId, noticeContextMatchers)));

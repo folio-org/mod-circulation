@@ -3,6 +3,7 @@ package api.loans.scenarios;
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
+import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
@@ -42,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.awaitility.Awaitility;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
@@ -238,6 +240,9 @@ class ChangeDueDateAPITests extends APITests {
     IndividualResource steve = usersFixture.steve();
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    String infoAdded = "testing patron info";
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loan.getId().toString(),
+      "patronInfoAdded", infoAdded));
 
     ZonedDateTime newDueDate = dueDate.plusWeeks(2);
 
@@ -257,6 +262,7 @@ class ChangeDueDateAPITests extends APITests {
     matchers.putAll(getItemContextMatchers(smallAngryPlanet, true));
     matchers.putAll(getLoanContextMatchers(loanAfterUpdate));
     matchers.putAll(getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
+    matchers.putAll(getLoanAdditionalInfoContextMatchers(infoAdded));
 
     assertThat(FakeModNotify.getSentPatronNotices(), hasItems(
       hasEmailNoticeProperties(steve.getId(), templateId, matchers)));

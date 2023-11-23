@@ -28,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.util.Objects.isNull;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -131,6 +132,10 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   private CompletableFuture<Result<ScheduledNoticeContext>> buildAccountObject(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
+    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry reminder = context.getLoan().getNextReminder();
+    if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
+      return ofAsync(() -> context);
+    }
     Item item = context.getLoan().getItem();
     ReminderFeeAccount reminderFeeAccount = new ReminderFeeAccount()
         .with(ReminderFeeAccount.FEE_FINE_ID, ACCOUNT_FEE_FINE_ID_VALUE)
@@ -165,7 +170,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> persistAccount(ScheduledNoticeContext context) {
-    if (isNoticeIrrelevant(context)) {
+    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry reminder = context.getLoan().getNextReminder();
+    if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
       return ofAsync(() -> context);
     }
     return accountsStorageClient.post(context.getAccount().toJson())
@@ -173,7 +179,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> createFeeFineAction(ScheduledNoticeContext context) {
-    if (isNoticeIrrelevant(context)) {
+    OverdueFinePolicyRemindersPolicy.ReminderSequenceEntry reminder = context.getLoan().getNextReminder();
+    if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
       return ofAsync(() -> context);
     }
     Account account = context.getAccount();
@@ -223,7 +230,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
-    return createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(), context.getChargeAction());
+    Loan loan = context.getLoan();
+    if (loan.getNextReminder().hasZeroFee()) {
+      return createLoanNoticeContext(loan);
+    } else {
+      return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
+    }
   }
 
   static class ReminderFeeAccount {

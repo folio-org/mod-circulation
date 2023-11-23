@@ -117,6 +117,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
     // Also fetches user, item and item-related records (holdings, instance, location, etc.)
     return loanRepository.getById(context.getNotice().getLoanId())
+      .thenCompose(r -> r.after(loanRepository::fetchLatestPatronInfoAddedComment))
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
       .thenApply(mapResult(context::withLoan))
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
