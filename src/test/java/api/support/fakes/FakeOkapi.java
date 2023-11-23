@@ -409,6 +409,18 @@ public class FakeOkapi extends AbstractVerticle {
       .withRecordConstraint(this::userHasAlreadyAcquiredLock)
       .create().register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRootPath("/circulation-item/items")
+      .withCollectionPropertyName("items")
+      .withChangeMetadata()
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRootPath("/circulation-item")
+      .withCollectionPropertyName("items")
+      .withChangeMetadata()
+      .create().register(router);
+
     new FakeFeeFineOperationsModule().register(router);
 
     server.requestHandler(router)

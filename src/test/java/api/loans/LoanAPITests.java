@@ -1284,6 +1284,21 @@ class LoanAPITests extends APITests {
   }
 
   @Test
+  void loanInCollectionDoesProvideItemInformationForCirculationItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(UUID.randomUUID(), "100002222", holdings.getId(), locationsResource.getId());
+    loansFixture.createLoan(circulationItem, usersFixture.jessica());
+
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("should be item information available",
+      loan.containsKey("item"), is(true));
+  }
+
+  @Test
   void canPageLoans() {
     val user = usersFixture.steve();
 
