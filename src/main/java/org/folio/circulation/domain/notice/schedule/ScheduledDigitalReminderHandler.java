@@ -21,6 +21,7 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateFormatUtil;
 
 import java.math.BigDecimal;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -128,7 +129,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
-    ZonedDateTime today = ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC);
+    ZoneId zone = noticeContext.getLoan().getDueDate().getZone();
+    ZonedDateTime today = ClockUtil.getZonedDateTime().withZoneSameInstant(zone);
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
     return calendarRepository.lookupOpeningDays(today.toLocalDate(),servicePointId)
         .thenCompose(days -> {
