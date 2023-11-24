@@ -1,3 +1,22 @@
+## 24.0.8 2023-11-20
+
+* Handle circulation rules update events (CIRC-1958)
+
+## 24.0.7 2023-11-15
+
+* Asynchronously publish the ITEM_CHECKED_OUT event and ignore the result (CIRC-1950)
+
+## 24.0.6 2023-11-10
+
+* Fix Hold Shelf Expiration to respect Closed Library Dates (CIRC-1893)
+* Add `loan.additionalInfo` field to the Notice context (CIRC-1946)
+* Drools 7.74.1, xstream 1.4.20 (CIRC-1954)
+* RMB 35.1.1, Vert.x 4.4.6, mod-pubsub-client 2.11.2 (CIRC-1962)
+
+## 24.0.5 2023-11-09
+
+* Request delivery staff slip: Requester country token information displayed wrong 'stripes-components.countries.' (CIRC-1955)
+
 ## 24.0.4 2023-11-02
 
 * Add missing permission set for allowed service points endpoint (CIRC-1953)

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.AddInfoRequestBuilder;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,11 @@ import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
 class ChangeDueDateByReplacingLoanTests extends APITests {
+
+  public ChangeDueDateByReplacingLoanTests() {
+    super(true, true);
+  }
+
   @Test
   void canManuallyChangeTheDueDateOfLoan() {
     final ItemResource item = itemsFixture.basedUponNod();
@@ -228,6 +234,9 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
 
 
     IndividualResource loan = checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve);
+    String infoAdded = "testing patron info";
+    addInfoFixture.addInfo(new AddInfoRequestBuilder(loan.getId().toString(),
+      "patronInfoAdded", infoAdded));
     JsonObject loanToChange = loan.getJson().copy();
 
     ZonedDateTime dueDate = parseDateTime(loanToChange.getString("dueDate"));
@@ -249,6 +258,7 @@ class ChangeDueDateByReplacingLoanTests extends APITests {
     noticeContextMatchers.putAll(TemplateContextMatchers.getItemContextMatchers(smallAngryPlanet, true));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanContextMatchers(loanAfterUpdate));
     noticeContextMatchers.putAll(TemplateContextMatchers.getLoanPolicyContextMatchers(renewalLimit, renewalLimit));
+    noticeContextMatchers.putAll(TemplateContextMatchers.getLoanAdditionalInfoContextMatchers(infoAdded));
 
     assertThat(FakeModNotify.getSentPatronNotices(),
       hasItems(hasEmailNoticeProperties(steve.getId(), manualDueDateChangeTemplateId, noticeContextMatchers)));
