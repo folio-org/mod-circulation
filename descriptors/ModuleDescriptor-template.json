@@ -2305,6 +2305,7 @@
       "subPermissions": [
         "inventory-storage.items.item.get",
         "circulation-item-storage.items.item.get",
+        "circulation-item-storage.item.collection.get",
         "circulation-item-storage.items.collection.get",
         "inventory-storage.items.collection.get",
         "inventory-storage.holdings.item.get",
