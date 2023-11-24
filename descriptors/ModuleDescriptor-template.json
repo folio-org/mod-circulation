@@ -2304,6 +2304,7 @@
       "description" : "Internal permission set for fetching item(s)",
       "subPermissions": [
         "inventory-storage.items.item.get",
+        "circulation-item-storage.item.item.get",
         "circulation-item-storage.items.item.get",
         "circulation-item-storage.items.collection.get",
         "inventory-storage.items.collection.get",
