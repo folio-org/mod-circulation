@@ -1,3 +1,7 @@
+## 24.0.9 2023-11-24
+
+* Skip account creation for reminders without a fee (CIRC-1970)
+
 ## 24.0.8 2023-11-20
 
 * Handle circulation rules update events (CIRC-1958)
