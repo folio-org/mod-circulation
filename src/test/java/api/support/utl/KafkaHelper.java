@@ -94,8 +94,7 @@ public class KafkaHelper {
     Map<String, Integer> groupIdToSize) {
 
     return waitAtMost(30, SECONDS)
-      .until(() -> waitFor(
-          kafkaAdminClient.describeConsumerGroups(new ArrayList<>(groupIdToSize.keySet()))),
+      .until(() -> waitFor(kafkaAdminClient.describeConsumerGroups(new ArrayList<>(groupIdToSize.keySet()))),
         groups -> groups.entrySet()
           .stream()
           .collect(toMap(Map.Entry::getKey, e -> e.getValue().getMembers().size()))
