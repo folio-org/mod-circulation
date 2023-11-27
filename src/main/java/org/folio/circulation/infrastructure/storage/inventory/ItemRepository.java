@@ -21,6 +21,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -275,7 +276,14 @@ public class ItemRepository {
 
     return finder.findByIds(dcbItemIds)
       .thenApply(mapResult(identityMap::add))
-      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
+      .thenApply(recordsResult -> {
+        if (recordsResult.succeeded()) {
+          MultipleRecords<JsonObject> records = recordsResult.value();
+          return Result.succeeded(records.mapRecords(mapper::toDomain));
+        } else {
+          return Result.succeeded(new MultipleRecords<>(new ArrayList<>(), 0));
+        }
+      });
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
