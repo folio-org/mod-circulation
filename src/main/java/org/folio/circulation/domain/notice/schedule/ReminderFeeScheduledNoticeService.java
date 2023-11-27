@@ -14,6 +14,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.utils.DateTimeUtil;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -67,7 +68,7 @@ public class ReminderFeeScheduledNoticeService {
             null,
             null,
             TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
-            DateTimeUtil.atEndOfDay(nextRunTime.value(),loanRecords.getTimeZone()),
+            DateTimeUtil.atEndOfDay(nextRunTime.value(),loanRecords.getTimeZone()).withZoneSameInstant(ZoneOffset.UTC),
             instantiateNoticeConfig(reminderConfig))));
   }
 
