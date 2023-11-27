@@ -263,7 +263,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
         calendarRepository, loan.getCheckoutServicePointId())
       .thenCompose(nextRunTimeResult -> {
         ScheduledNotice nextReminderNotice = context.getNotice()
-          .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
+          .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS).withZoneSameInstant(ZoneOffset.UTC));
         nextReminderNotice.getConfiguration()
           .setTemplateId(nextReminder.getNoticeTemplateId())
           .setFormat(nextReminder.getNoticeFormat());
