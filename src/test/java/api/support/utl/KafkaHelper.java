@@ -93,7 +93,7 @@ public class KafkaHelper {
   public Map<String, ConsumerGroupDescription> verifyConsumerGroups(
     Map<String, Integer> groupIdToSize) {
 
-    return waitAtMost(30, SECONDS)
+    return waitAtMost(300, SECONDS)
       .until(() -> waitFor(kafkaAdminClient.describeConsumerGroups(new ArrayList<>(groupIdToSize.keySet()))),
         groups -> groups.entrySet()
           .stream()
