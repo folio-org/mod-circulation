@@ -5,16 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeTiming;
-import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.domain.policy.RemindersPolicy.ReminderConfig;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.utils.DateTimeUtil;
 
 import java.lang.invoke.MethodHandles;
-import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,10 +34,9 @@ public class ReminderFeeScheduledNoticeService {
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
-      RemindersPolicy remindersPolicy = loan.getOverdueFinePolicy().getRemindersPolicy();
       ReminderConfig firstReminder =
         loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
-      instantiateFirstScheduledNotice(records, firstReminder, remindersPolicy.canScheduleReminderUponClosedDay())
+      instantiateFirstScheduledNotice(records, firstReminder)
         .thenAccept(r -> r.after(scheduledNoticesRepository::create));
     } else {
       log.debug("The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
@@ -50,15 +46,13 @@ public class ReminderFeeScheduledNoticeService {
 
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
     LoanAndRelatedRecords loanRecords,
-    ReminderConfig reminderConfig,
-    Boolean reminderCanBecomeDueOnClosedDay) {
+    ReminderConfig reminderConfig) {
 
     final Loan loan = loanRecords.getLoan();
 
-    return reminderConfig.calculateNextRunTime(
-      loanRecords.getTimeZone(), loan.getDueDate(), reminderCanBecomeDueOnClosedDay,
-        calendarRepository, loan.getCheckoutServicePointId())
-      .thenCompose(nextRunTime ->
+    return reminderConfig.nextNoticeDueOn(
+        loan.getDueDate(), loanRecords.getTimeZone(), loan.getCheckoutServicePointId(), calendarRepository)
+      .thenCompose(nextDueTime ->
         ofAsync(
           new ScheduledNotice(
             UUID.randomUUID().toString(),
@@ -68,7 +62,7 @@ public class ReminderFeeScheduledNoticeService {
             null,
             null,
             TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
-            DateTimeUtil.atEndOfDay(nextRunTime.value(),loanRecords.getTimeZone()).withZoneSameInstant(ZoneOffset.UTC),
+            nextDueTime.value(),
             instantiateNoticeConfig(reminderConfig))));
   }
 

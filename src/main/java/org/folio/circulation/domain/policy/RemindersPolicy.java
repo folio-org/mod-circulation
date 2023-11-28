@@ -4,8 +4,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
 import org.apache.commons.lang.WordUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.notice.NoticeFormat;
@@ -13,11 +11,11 @@ import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
-import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -48,8 +46,6 @@ public class RemindersPolicy {
   private Boolean allowRenewalOfItemsWithReminderFees = true;
   @Getter
   private Boolean clearPatronBlockWhenPaid = true;
-
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static RemindersPolicy from (JsonObject json) {
     Sequence sequence =
@@ -92,7 +88,8 @@ public class RemindersPolicy {
   }
 
   private RemindersPolicy(Sequence sequence) {
-    this.sequence = sequence;
+    this.sequence = sequence.withPolicy(this);
+
   }
 
   public boolean hasReminderSchedule () {
@@ -100,22 +97,29 @@ public class RemindersPolicy {
   }
 
   public Sequence getReminderSchedule() {
-    return sequence;
+    return sequence.withPolicy(this);
   }
 
   public ReminderConfig getReminderSequenceEntry (int reminderNumber) {
-    return sequence.getEntry(reminderNumber);
+    return sequence.getEntry(reminderNumber).withPolicy(this);
   }
 
   public ReminderConfig getFirstReminder () {
     return getReminderSequenceEntry(1);
   }
 
+  @Getter
   public static class Sequence {
+    private RemindersPolicy policy;
     private final Map<Integer, ReminderConfig> reminderSequenceEntries;
 
     private Sequence() {
       reminderSequenceEntries = new HashMap<>();
+    }
+
+    public Sequence withPolicy(RemindersPolicy policy) {
+      this.policy = policy;
+      return this;
     }
 
     /**
@@ -137,7 +141,7 @@ public class RemindersPolicy {
 
     public ReminderConfig getEntry(int sequenceNumber) {
       if (reminderSequenceEntries.size() >= sequenceNumber) {
-        return reminderSequenceEntries.get(sequenceNumber);
+        return reminderSequenceEntries.get(sequenceNumber).withPolicy(policy);
       } else {
         return null;
       }
@@ -168,6 +172,7 @@ public class RemindersPolicy {
     private final String noticeFormat;
     private final String noticeTemplateId;
     private final String blockTemplateId;
+    private RemindersPolicy policy;
 
     public ReminderConfig(
       int sequenceNumber,
@@ -195,6 +200,11 @@ public class RemindersPolicy {
         entry.getString(BLOCK_TEMPLATE_ID));
     }
 
+    public ReminderConfig withPolicy(RemindersPolicy policy) {
+      this.policy = policy;
+      return this;
+    }
+
     public NoticeFormat getNoticeFormat () {
       return NoticeFormat.from(noticeFormat);
     }
@@ -211,42 +221,37 @@ public class RemindersPolicy {
       return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
 
-    private LocalDate getRequestedRunTime(ZoneId zoneId, ZonedDateTime offset) {
-      return  getRequestedRunTime(offset).withZoneSameInstant(zoneId).toLocalDate();
-    }
 
-    public ZonedDateTime getRequestedRunTime(ZonedDateTime offset) {
-      return getPeriod().plusDate(offset);
-    }
-
-    public CompletableFuture<Result<ZonedDateTime>> calculateNextRunTime(
-      ZoneId zoneId, ZonedDateTime offsetDate, Boolean canScheduleRemindersUponClosedDay,
-      CalendarRepository calendars, String servicePointId) {
-      if (canScheduleRemindersUponClosedDay) {
-        return ofAsync(getRequestedRunTime(offsetDate));
+    public CompletableFuture<Result<ZonedDateTime>> nextNoticeDueOn(
+      ZonedDateTime offsetDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars) {
+      ZonedDateTime scheduledForDateTime = getPeriod().plusDate(offsetDate);
+      if (policy.canScheduleReminderUponClosedDay()) {
+        return ofAsync(scheduledForDateTime);
       } else {
-        final LocalDate requestedRunTime = getRequestedRunTime(zoneId,offsetDate);
-        return calendars.lookupOpeningDays(requestedRunTime, servicePointId)
-          .thenApply(adjacentOpeningDaysResult ->
-            findOpenDate(getRequestedRunTime(offsetDate), adjacentOpeningDaysResult.value(), zoneId));
+        return firstOpenDayFrom(scheduledForDateTime, tenantTimeZone, servicePointId, calendars);
       }
     }
 
-    public Result<ZonedDateTime> findOpenDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays, ZoneId zone) {
+    private CompletableFuture<Result<ZonedDateTime>> firstOpenDayFrom(
+      ZonedDateTime scheduledDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars)  {
+      LocalDate scheduledDayInTenantTimeZone = scheduledDate.withZoneSameInstant(tenantTimeZone).toLocalDate();
+      return calendars.lookupOpeningDays(scheduledDayInTenantTimeZone, servicePointId)
+        .thenApply(adjacentOpeningDaysResult -> countDaysUntilOpen(adjacentOpeningDaysResult.value()))
+        .thenCompose(daysUntilOpen -> ofAsync(scheduledDate.plusDays(daysUntilOpen.value())));
+    }
+
+    private Result<Long> countDaysUntilOpen(AdjacentOpeningDays openingDays) {
       if (openingDays.getRequestedDay().isOpen()) {
-        return succeeded(requestedDate);
+        return succeeded(0L);
+      } else {
+        OpeningDay nextDay = openingDays.getNextDay();
+        if (!nextDay.isOpen()) {
+          return failed(singleValidationError(
+            new ValidationError("No calendar time table found for requested date", emptyMap())
+          ));
+        }
+        return succeeded(ChronoUnit.DAYS.between(openingDays.getRequestedDay().getDate(),nextDay.getDate()));
       }
-      OpeningDay nextDay = openingDays.getNextDay();
-      if (!nextDay.isOpen()) {
-        return failed(singleValidationError(
-          new ValidationError("No calendar time table found for requested date", emptyMap())
-        ));
-      }
-      return succeeded(nextDay.getDate().atStartOfDay(zone))
-        .next(dateTime -> {
-          log.info("calculateDueDate:: result: {}", dateTime);
-          return succeeded(dateTime);
-        });
     }
 
   }
