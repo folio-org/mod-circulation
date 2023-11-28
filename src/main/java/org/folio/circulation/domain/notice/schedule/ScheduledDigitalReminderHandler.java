@@ -9,6 +9,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -21,7 +22,6 @@ import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateFormatUtil;
 
 import java.math.BigDecimal;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -61,6 +61,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   private final CollectionResourceClient accountsStorageClient;
   private final CollectionResourceClient feeFineActionsStorageClient;
 
+  private final ConfigurationRepository configurationRepository;
 
 
   static final String ACCOUNT_FEE_FINE_ID_VALUE = "6b830703-f828-4e38-a0bb-ee81deacbd03";
@@ -72,6 +73,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   public ScheduledDigitalReminderHandler(Clients clients, LoanRepository loanRepository) {
     super(clients, loanRepository);
+    configurationRepository = new ConfigurationRepository(clients);
     this.systemTime = ClockUtil.getZonedDateTime();
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
     this.calendarRepository = new CalendarRepository(clients);
@@ -129,14 +131,21 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
-    ZoneId zone = noticeContext.getLoan().getDueDate().getZone();
-    ZonedDateTime today = ClockUtil.getZonedDateTime().withZoneSameInstant(zone);
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
-    return calendarRepository.lookupOpeningDays(today.toLocalDate(),servicePointId)
-        .thenCompose(days -> {
-          Boolean openDay = days.value().getRequestedDay().isOpen();
-          return ofAsync(openDay);
-        });
+    return getSystemTimeInTenantsZone()
+      .thenCompose(tenantTime -> {
+        return calendarRepository.lookupOpeningDays(tenantTime.toLocalDate(),servicePointId)
+          .thenCompose(days -> {
+            Boolean openDay = days.value().getRequestedDay().isOpen();
+            return ofAsync(openDay);
+          });
+      });
+  }
+
+  private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
+    return configurationRepository
+      .findTimeZoneConfiguration()
+      .thenApply(tenantTimeZone -> systemTime.withZoneSameInstant(tenantTimeZone.value()));
   }
 
   private CompletableFuture<Result<ScheduledNotice>> skip(ScheduledNoticeContext previousResult) {
@@ -254,21 +263,25 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
 
     Loan loan = context.getLoan();
-    Boolean canSendReminderUponClosedDate = loan.getOverdueFinePolicy().getRemindersPolicy().canScheduleReminderUponClosedDay();
+    Boolean canScheduleReminderUponClosedDate = loan.getOverdueFinePolicy().getRemindersPolicy().canScheduleReminderUponClosedDay();
 
-    return nextReminder
-      .calculateNextRunTime(
-        loan.getDueDate().getZone(),
-        systemTime, canSendReminderUponClosedDate,
-        calendarRepository, loan.getCheckoutServicePointId())
-      .thenCompose(nextRunTimeResult -> {
-        ScheduledNotice nextReminderNotice = context.getNotice()
-          .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS).withZoneSameInstant(ZoneOffset.UTC));
-        nextReminderNotice.getConfiguration()
-          .setTemplateId(nextReminder.getNoticeTemplateId())
-          .setFormat(nextReminder.getNoticeFormat());
-
-        return ofAsync(nextReminderNotice);
+    return configurationRepository.findTimeZoneConfiguration()
+      .thenCompose(tenantTimeZone -> {
+        return nextReminder
+          .nextNoticeDueOn(
+            systemTime,
+            tenantTimeZone.value(),
+            loan.getCheckoutServicePointId(),
+            calendarRepository
+          )
+          .thenCompose(nextRunTimeResult -> {
+            ScheduledNotice nextReminderNotice = context.getNotice()
+              .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
+            nextReminderNotice.getConfiguration()
+              .setTemplateId(nextReminder.getNoticeTemplateId())
+              .setFormat(nextReminder.getNoticeFormat());
+            return ofAsync(nextReminderNotice);
+          });
       });
   }
 
