@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Awaitility.waitAtMost;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -24,8 +25,8 @@ public class Wait {
     return waitForValue(supplier, (Predicate<Collection<T>>) c -> c.size() == expectedSize);
   }
 
-  public static <T> T waitForValue(Callable<T> valueSupplier, T expectedValue) {
-    return waitForValue(valueSupplier, (Predicate<T>) actualValue -> actualValue == expectedValue);
+  public static <T> T waitForValue(Callable<T> valueSupplier, T expected) {
+    return waitForValue(valueSupplier, (Predicate<T>) actual -> Objects.equals(actual, expected));
   }
 
   public static <T> T waitForValue(Callable<T> valueSupplier, Predicate<T> valuePredicate) {
