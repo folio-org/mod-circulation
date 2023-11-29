@@ -411,7 +411,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withLoanPolicy(newLoanPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      policies.withLoanPolicy(newLoanPolicy), accounts, actualCostRecord, dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withOverdueFinePolicy(OverdueFinePolicy newOverdueFinePolicy) {
@@ -419,7 +419,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      policies.withOverdueFinePolicy(newOverdueFinePolicy), accounts, actualCostRecord, dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withLostItemPolicy(LostItemPolicy newLostItemPolicy) {
@@ -427,12 +427,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Loan(representation, item, user, proxy, checkinServicePoint,
       checkoutServicePoint, originalDueDate, previousDueDate,
-      policies.withLostItemPolicy(newLostItemPolicy), accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
+      policies.withLostItemPolicy(newLostItemPolicy), accounts, actualCostRecord, dueDateChangedByHold, dueDateChangedByNearExpireUser, latestPatronInfoAddedComment);
   }
 
   public Loan withLatestPatronInfoAddedComment(String newLatestPatronInfoAddedComment) {
     return new Loan(representation, item, user, proxy, checkinServicePoint,
-      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord,dueDateChangedByHold, dueDateChangedByNearExpireUser, newLatestPatronInfoAddedComment);
+      checkoutServicePoint, originalDueDate, previousDueDate, policies, accounts, actualCostRecord, dueDateChangedByHold, dueDateChangedByNearExpireUser, newLatestPatronInfoAddedComment);
   }
 
   public String getLoanPolicyId() {
@@ -645,11 +645,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withRemindersLastFeeBilled(int number, ZonedDateTime date) {
-    JsonObject lastFeeBilled = getNestedObjectProperty(representation,REMINDERS,LAST_FEE_BILLED);
+    JsonObject lastFeeBilled = getNestedObjectProperty(representation, REMINDERS, LAST_FEE_BILLED);
     if (lastFeeBilled == null) {
-      write(representation,REMINDERS,new JsonObject());
-      write(representation.getJsonObject(REMINDERS),LAST_FEE_BILLED,new JsonObject());
-      lastFeeBilled = getNestedObjectProperty(representation,REMINDERS,LAST_FEE_BILLED);
+      write(representation, REMINDERS, new JsonObject());
+      write(representation.getJsonObject(REMINDERS), LAST_FEE_BILLED, new JsonObject());
+      lastFeeBilled = getNestedObjectProperty(representation, REMINDERS, LAST_FEE_BILLED);
     }
     write(lastFeeBilled, BILL_DATE, date);
     write(lastFeeBilled, BILL_NUMBER, number);

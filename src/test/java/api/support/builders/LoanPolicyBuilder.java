@@ -1,14 +1,13 @@
 package api.support.builders;
 
-import java.util.Objects;
-import java.util.UUID;
-
-import org.folio.circulation.domain.policy.LoanPolicy;
-import org.folio.circulation.domain.policy.Period;
-
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.With;
+import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.domain.policy.Period;
+
+import java.util.Objects;
+import java.util.UUID;
 
 @With
 @AllArgsConstructor
@@ -73,7 +72,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   public JsonObject create() {
     JsonObject request = new JsonObject();
 
-    if(id != null) {
+    if (id != null) {
       put(request, "id", id.toString());
     }
 
@@ -82,15 +81,15 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
     put(request, "loanable", loanable);
     put(request, "renewable", renewable);
 
-    if(loanable) {
+    if (loanable) {
       JsonObject loansPolicy = new JsonObject();
 
       put(loansPolicy, "profileId", loansProfile);
       put(loansPolicy, "itemLimit", itemLimit);
       putIfNotNull(loansPolicy, "gracePeriod", gracePeriod, Period::asJson);
 
-      //TODO: Replace with sub-builders
-      if(Objects.equals(loansProfile, "Rolling")) {
+      // TODO: Replace with sub-builders
+      if (Objects.equals(loansProfile, "Rolling")) {
         putIfNotNull(loansPolicy, "period", loanPeriod, Period::asJson);
 
         //Due date limited rolling policy, maybe should be separate property
@@ -102,7 +101,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
         putIfNotNull(loansPolicy, "openingTimeOffset", openingTimeOffsetPeriod,
           Period::asJson);
       }
-      else if(Objects.equals(loansProfile, "Fixed")) {
+      else if (Objects.equals(loansProfile, "Fixed")) {
         put(loansPolicy, "fixedDueDateScheduleId", fixedDueDateScheduleId);
 
         put(loansPolicy, "closedLibraryDueDateManagementId",
@@ -115,23 +114,23 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       put(request, "loansPolicy", loansPolicy);
     }
 
-    if(renewable) {
+    if (renewable) {
       JsonObject renewalsPolicy = new JsonObject();
 
       put(renewalsPolicy, "unlimited", unlimitedRenewals);
 
-      if(!unlimitedRenewals) {
+      if (!unlimitedRenewals) {
         put(renewalsPolicy, "numberAllowed", numberAllowed);
       }
 
       put(renewalsPolicy, "renewFromId", renewFrom);
       put(renewalsPolicy, "differentPeriod", renewWithDifferentPeriod);
 
-      if(renewWithDifferentPeriod) {
+      if (renewWithDifferentPeriod) {
         putIfNotNull(renewalsPolicy, "period", differentRenewalPeriod,
           Period::asJson);
 
-        if(alternateFixedDueDateScheduleId != null) {
+        if (alternateFixedDueDateScheduleId != null) {
           put(renewalsPolicy, "alternateFixedDueDateScheduleId",
             alternateFixedDueDateScheduleId);
         }
@@ -175,7 +174,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       put(requestManagement, "recalls", recalls);
     }
 
-    JsonObject newHolds = null;
+    JsonObject newHolds;
     if (alternateCheckoutLoanPeriod != null) {
       if (requestManagement == null) {
         requestManagement = new JsonObject();
