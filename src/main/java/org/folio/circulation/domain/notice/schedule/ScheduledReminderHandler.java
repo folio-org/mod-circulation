@@ -49,7 +49,7 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeF
  * and to apply different isNoticeRelevant logic.
  * Reuses a handful of methods to set the notice contexts and fail if loan id is missing.
  */
-public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler {
+public class ScheduledReminderHandler extends LoanScheduledNoticeHandler {
 
   private final ZonedDateTime systemTime;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -71,7 +71,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
 
 
-  public ScheduledDigitalReminderHandler(Clients clients, LoanRepository loanRepository) {
+  public ScheduledReminderHandler(Clients clients, LoanRepository loanRepository) {
     super(clients, loanRepository);
     configurationRepository = new ConfigurationRepository(clients);
     this.systemTime = ClockUtil.getZonedDateTime();
@@ -82,7 +82,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     this.accountsStorageClient = clients.accountsStorageClient();
     this.feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
 
-    log.debug("Instantiated ScheduledDigitalReminderHandler");
+    log.debug("Instantiated ScheduledReminderHandler");
   }
 
   @Override

@@ -37,7 +37,7 @@ import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
-import org.folio.circulation.resources.ScheduledDigitalRemindersProcessingResource;
+import org.folio.circulation.resources.ScheduledRemindersProcessingResource;
 import org.folio.circulation.resources.SearchSlipsResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
@@ -127,7 +127,7 @@ public class CirculationVerticle extends AbstractVerticle {
       .register(router);
 
     new LoanScheduledNoticeProcessingResource(client).register(router);
-    new ScheduledDigitalRemindersProcessingResource(client).register(router);
+    new ScheduledRemindersProcessingResource(client).register(router);
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);

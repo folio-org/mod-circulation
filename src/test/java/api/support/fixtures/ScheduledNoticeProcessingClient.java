@@ -96,10 +96,10 @@ public class ScheduledNoticeProcessingClient {
 
   public void runScheduledDigitalRemindersProcessing() {
     URL url = circulationModuleUrl(
-      "/circulation/scheduled-digital-reminders-processing");
+      "/circulation/scheduled-reminders-processing");
 
     timedTaskClient.start(url, 204,
-      "scheduled-digital-reminders-processing-request");
+      "scheduled-reminders-processing-request");
   }
 
   private void runWithFrozenClock(Runnable runnable, ZonedDateTime mockSystemTime) {

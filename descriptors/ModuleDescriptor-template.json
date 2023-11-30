@@ -1032,7 +1032,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/scheduled-digital-reminders-processing",
+          "pathPattern": "/circulation/scheduled-reminders-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
