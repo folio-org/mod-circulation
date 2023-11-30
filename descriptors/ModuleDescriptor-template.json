@@ -69,6 +69,7 @@
             "circulation.search-slips.get"
           ],
           "modulePermissions": [
+            "modperms.circulation.search-slips.get"
           ]
         }
       ]
@@ -1556,7 +1557,8 @@
         "circulation.requests.hold-shelf-clearance-report.get",
         "circulation.requests.allowed-service-points.get",
         "circulation.inventory.items-in-transit-report.get",
-        "circulation.pick-slips.get"
+        "circulation.pick-slips.get",
+        "circulation.search-slips.get"
       ]
     },
     {
@@ -2307,6 +2309,21 @@
     },
     {
       "permissionName": "modperms.circulation.pick-slips.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation.internal.fetch-items",
+        "circulation-storage.requests.item.get",
+        "circulation-storage.requests.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "addresstypes.item.get",
+        "addresstypes.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.search-slips.get",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
