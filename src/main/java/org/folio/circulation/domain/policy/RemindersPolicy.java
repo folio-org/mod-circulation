@@ -30,12 +30,12 @@ import static org.folio.circulation.support.results.Result.succeeded;
 @Getter
 public class RemindersPolicy {
 
-  public final static String REMINDER_SCHEDULE = "reminderSchedule";
-  public final static String COUNT_CLOSED = "countClosed";
-  public final static String IGNORE_GRACE_PERIOD_RECALL = "ignoreGracePeriodRecall";
-  public final static String IGNORE_GRACE_PERIOD_HOLDS = "ignoreGracePeriodHolds";
-  public final static String ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES = "allowRenewalOfItemsWithReminderFees";
-  public final static String CLEAR_PATRON_BLOCK_WHEN_PAID = "clearPatronBlockWhenPaid";
+  public static final String REMINDER_SCHEDULE = "reminderSchedule";
+  public static final String COUNT_CLOSED = "countClosed";
+  public static final String IGNORE_GRACE_PERIOD_RECALL = "ignoreGracePeriodRecall";
+  public static final String IGNORE_GRACE_PERIOD_HOLDS = "ignoreGracePeriodHolds";
+  public static final String ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES = "allowRenewalOfItemsWithReminderFees";
+  public static final String CLEAR_PATRON_BLOCK_WHEN_PAID = "clearPatronBlockWhenPaid";
 
   private final Schedule schedule;
   @Getter

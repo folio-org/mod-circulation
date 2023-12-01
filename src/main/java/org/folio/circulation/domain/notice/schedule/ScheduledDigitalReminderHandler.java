@@ -133,13 +133,13 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
     return getSystemTimeInTenantsZone()
-      .thenCompose(tenantTime -> {
-        return calendarRepository.lookupOpeningDays(tenantTime.toLocalDate(),servicePointId)
+      .thenCompose(tenantTime ->
+        calendarRepository.lookupOpeningDays(tenantTime.toLocalDate(),servicePointId)
           .thenCompose(days -> {
             Boolean openDay = days.value().getRequestedDay().isOpen();
             return ofAsync(openDay);
-          });
-      });
+          })
+      );
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
