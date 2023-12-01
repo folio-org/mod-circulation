@@ -4,6 +4,8 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
+import static org.folio.circulation.domain.RequestType.HOLD;
+import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
@@ -15,22 +17,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LocationMapper;
@@ -38,6 +41,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -48,18 +54,21 @@ import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 import api.support.matchers.UUIDMatcher;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.val;
 
-class PickSlipsTests extends APITests {
+class StaffSlipsTests extends APITests {
   private static final String TOTAL_RECORDS = "totalRecords";
-  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String ITEM_KEY = "item";
   private static final String REQUEST_KEY = "request";
   private static final String REQUESTER_KEY = "requester";
 
-  @Test
-  void responseContainsNoPickSlipsForNonExistentServicePointId() {
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -70,13 +79,14 @@ class PickSlipsTests extends APITests {
       .forItem(item)
       .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlips().getById(UUID.randomUUID());
+    Response response = slipsType.get(UUID.randomUUID());
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 0);
+    assertResponseHasItems(response, 0, slipsType);
   }
 
-  @Test
-  void responseContainsNoPickSlipsForWrongServicePointId() {
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -88,42 +98,74 @@ class PickSlipsTests extends APITests {
       .by(usersFixture.james()));
 
     UUID differentServicePointId = servicePointsFixture.cd2().getId();
-    Response response = ResourceClient.forPickSlips()
-      .getById(differentServicePointId);
+    Response response = slipsType.get(differentServicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 0);
+    assertResponseHasItems(response, 0, slipsType);
   }
 
-  @Test
-  void responseContainsNoPickSlipsWhenThereAreNoPagedItems() {
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    Response response = ResourceClient.forPickSlips().getById(servicePointId);
+    Response response = slipsType.get(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 0);
+    assertResponseHasItems(response, 0, slipsType);
   }
 
-  @Test
-  void responseContainsNoPickSlipsWhenItemHasOpenPageRequestWithWrongStatus() {
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
+    if (slipsType == SlipsType.SEARCH_SLIPS) {
+      checkOutFixture.checkOutByBarcode(item);
+    }
+
     requestsFixture.place(new RequestBuilder()
-      .page()
+      .withRequestType(slipsType.getRequestType().getValue())
       .withStatus(RequestStatus.OPEN_AWAITING_PICKUP.getValue())
       .withPickupServicePointId(servicePointId)
       .forItem(item)
       .by(usersFixture.james()));
 
-    Response response = ResourceClient.forPickSlips().getById(servicePointId);
+    Response response = slipsType.get(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 0);
+    assertResponseHasItems(response, 0, slipsType);
   }
 
-  @Test
-  void responseContainsPickSlipWithAllAvailableTokens() {
+  @ParameterizedTest
+  @MethodSource(value = "getAllowedStatusesForHoldRequest")
+  void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    ItemResource item = itemsFixture.basedUponNod(b -> b.withStatus(itemStatus.getValue()));
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .withStatus(RequestStatus.OPEN_AWAITING_PICKUP.getValue())
+      .withPickupServicePointId(servicePointId)
+      .forItem(item)
+      .by(usersFixture.james()));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 0, SlipsType.SEARCH_SLIPS);
+  }
+
+  private static Collection<ItemStatus> getAllowedStatusesForHoldRequest() {
+    return RequestTypeItemStatusWhiteList.getItemStatusesAllowedForRequestType(HOLD)
+      .stream()
+      .filter(status -> status != ItemStatus.NONE)
+      .toList();
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseContainsSlipWithAllAvailableTokens(SlipsType slipsType) {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
@@ -132,7 +174,8 @@ class PickSlipsTests extends APITests {
     var departmentId1 = UUID.randomUUID().toString();
     var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
-      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2))));
+      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(
+        new JsonArray(List.of(departmentId1, departmentId2))));
     ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     final var requestExpiration = LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
@@ -159,10 +202,17 @@ class PickSlipsTests extends APITests {
     JsonObject lastCheckIn = itemsClient.get(itemResource.getId())
       .getJson().getJsonObject("lastCheckIn");
     ZonedDateTime actualCheckinDateTime = getDateTimeProperty(lastCheckIn, "dateTime");
+
+    ItemStatus expectedItemStatus = ItemStatus.PAGED;
+    if (slipsType == SlipsType.SEARCH_SLIPS) {
+      checkOutFixture.checkOutByBarcode(itemResource);
+      expectedItemStatus = ItemStatus.CHECKED_OUT;
+    }
+
     IndividualResource requestResource = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .open()
-      .page()
+      .withRequestType(slipsType.getRequestType().getValue())
       .withRequestDate(requestDate)
       .withRequestExpiration(requestExpiration)
       .withHoldShelfExpiration(holdShelfExpiration)
@@ -172,14 +222,14 @@ class PickSlipsTests extends APITests {
       .withPatronComments("I need the book")
       .by(requesterResource));
 
-    Response response = ResourceClient.forPickSlips().getById(servicePointId);
+    Response response = slipsType.get(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 1);
+    assertResponseHasItems(response, 1, slipsType);
 
-    JsonObject pickSlip = getPickSlipsList(response).get(0);
-    JsonObject itemContext = pickSlip.getJsonObject(ITEM_KEY);
-    assertNotNull(pickSlip.getString(CURRENT_DATE_TIME));
+    JsonObject slip = getPickSlipsList(response, slipsType).get(0);
+    JsonObject itemContext = slip.getJsonObject(ITEM_KEY);
+    assertNotNull(slip.getString(CURRENT_DATE_TIME));
 
     ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
 
@@ -196,7 +246,7 @@ class PickSlipsTests extends APITests {
 
     assertEquals(item.getTitle(), itemContext.getString("title"));
     assertEquals(item.getBarcode(), itemContext.getString("barcode"));
-    assertEquals(ItemStatus.PAGED.getValue(), itemContext.getString("status"));
+    assertEquals(expectedItemStatus.getValue(), itemContext.getString("status"));
     assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
@@ -217,7 +267,7 @@ class PickSlipsTests extends APITests {
     assertEquals(callNumberComponents.getSuffix(), itemContext.getString("callNumberSuffix"));
 
     User requester = new User(requesterResource.getJson());
-    JsonObject requesterContext = pickSlip.getJsonObject("requester");
+    JsonObject requesterContext = slip.getJsonObject("requester");
 
     assertThat(requesterContext.getString("firstName"), is(requester.getFirstName()));
     assertThat(requesterContext.getString("lastName"), is(requester.getLastName()));
@@ -233,7 +283,7 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("departments").split("; "),
       arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
 
-    JsonObject requestContext = pickSlip.getJsonObject("request");
+    JsonObject requestContext = slip.getJsonObject("request");
 
     assertThat(requestContext.getString("deliveryAddressType"),
       is(addressTypeResource.getJson().getString("addressType")));
@@ -273,15 +323,46 @@ class PickSlipsTests extends APITests {
     IndividualResource firstRequest = requestsClient.create(firstRequestBuilder);
     requestsClient.create(secondRequestBuilder);
 
-    Response response = ResourceClient.forPickSlips().getById(servicePointId);
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 1);
-    assertResponseContains(response, item, firstRequest, james);
+    assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
+    assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
   }
 
   @Test
-  void responseIncludesItemsFromDifferentLocationsForSameServicePoint() {
+  void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    val item = itemsFixture.basedUponSmallAngryPlanet();
+    UserResource steve = usersFixture.steve();
+
+    RequestBuilder pageRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .page()
+      .withPickupServicePointId(servicePointId)
+      .forItem(item)
+      .by(usersFixture.james());
+
+    RequestBuilder holdRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .withPickupServicePointId(servicePointId)
+      .forItem(item)
+      .by(steve);
+
+    requestsClient.create(pageRequestBuilder);
+    IndividualResource holdRequest = requestsClient.create(holdRequestBuilder);
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, item, holdRequest, steve);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -294,15 +375,6 @@ class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    val james = usersFixture.james();
-
-    val temeraireRequest = requestsFixture.place(new RequestBuilder()
-      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .page()
-      .withPickupServicePointId(circDesk1)
-      .forItem(temeraireSecondFloorCd1)
-      .by(james));
-
     // Circ desk 1: Third floor
     val thirdFloorCd1 = locationsFixture.thirdFloor();
     val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
@@ -313,46 +385,51 @@ class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
+    val james = usersFixture.james();
     val charlotte = usersFixture.charlotte();
+
+    if (slipsType == SlipsType.SEARCH_SLIPS) {
+      checkOutFixture.checkOutByBarcode(temeraireSecondFloorCd1);
+      checkOutFixture.checkOutByBarcode(planetThirdFloorCd1);
+    }
+
+    val temeraireRequest = requestsFixture.place(new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .withRequestType(slipsType.getRequestType().getValue())
+      .withPickupServicePointId(circDesk1)
+      .forItem(temeraireSecondFloorCd1)
+      .by(james));
 
     val planetRequest = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .page()
+      .withRequestType(slipsType.getRequestType().getValue())
       .withPickupServicePointId(circDesk1)
       .forItem(planetThirdFloorCd1)
       .by(charlotte));
 
-    val response = ResourceClient.forPickSlips().getById(circDesk1);
+    val response = slipsType.get(circDesk1);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 2);
-    assertResponseContains(response, temeraireSecondFloorCd1, temeraireRequest, james);
-    assertResponseContains(response, planetThirdFloorCd1, planetRequest, charlotte);
+    assertResponseHasItems(response, 2, slipsType);
+    assertResponseContains(response, slipsType, temeraireSecondFloorCd1, temeraireRequest, james);
+    assertResponseContains(response, slipsType, planetThirdFloorCd1, planetRequest, charlotte);
   }
 
-  @Test
-  void responseDoesNotIncludePickSlipsFromDifferentServicePoint() {
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
     // Circ desk 1: Third floor
     val thirdFloorCd1 = locationsFixture.thirdFloor();
-    val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+    val temeraireThirdFloorCd1 = itemsFixture.basedUponTemeraire(
       holdingBuilder -> holdingBuilder
         .withPermanentLocation(thirdFloorCd1)
         .withNoTemporaryLocation(),
       itemBuilder -> itemBuilder
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
-
-    val charlotte = usersFixture.charlotte();
-
-    val requestForThirdFloorCd1 = requestsFixture.place(new RequestBuilder()
-      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .page()
-      .withPickupServicePointId(circDesk1)
-      .forItem(planetThirdFloorCd1)
-      .by(charlotte));
 
     // Circ desk 4: Second floor
     val secondFloorCd4 = locationsFixture.fourthServicePoint();
@@ -364,32 +441,46 @@ class PickSlipsTests extends APITests {
         .withNoPermanentLocation()
         .withNoTemporaryLocation());
 
-    val jessica = usersFixture.jessica();
+    if (slipsType == SlipsType.SEARCH_SLIPS) {
+      checkOutFixture.checkOutByBarcode(temeraireThirdFloorCd1);
+      checkOutFixture.checkOutByBarcode(planetSecondFloorCd4);
+    }
+
+    val charlotte = usersFixture.charlotte();
+    val steve = usersFixture.steve();
+
+    val requestForThirdFloorCd1 = requestsFixture.place(new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .withRequestType(slipsType.getRequestType().getValue())
+      .withPickupServicePointId(circDesk1)
+      .forItem(temeraireThirdFloorCd1)
+      .by(charlotte));
 
     val requestForSecondFloorCd4 = requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .page()
+      .withRequestType(slipsType.getRequestType().getValue())
       .withPickupServicePointId(circDesk1)
       .forItem(planetSecondFloorCd4)
-      .by(jessica));
+      .by(steve));
 
     // response for Circ Desk 1
-    val responseForCd1 = ResourceClient.forPickSlips().getById(circDesk1);
+    val responseForCd1 = slipsType.get(circDesk1);
 
     assertThat(responseForCd1.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(responseForCd1, 1);
-    assertResponseContains(responseForCd1, planetThirdFloorCd1, requestForThirdFloorCd1, charlotte);
+    assertResponseHasItems(responseForCd1, 1, slipsType);
+    assertResponseContains(responseForCd1, slipsType, temeraireThirdFloorCd1, requestForThirdFloorCd1, charlotte);
 
     // response for Circ Desk 4
-    val responseForCd4 = ResourceClient.forPickSlips().getById(circDesk4);
+    val responseForCd4 = slipsType.get(circDesk4);
 
     assertThat(responseForCd4.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(responseForCd4, 1);
-    assertResponseContains(responseForCd4, planetSecondFloorCd4, requestForSecondFloorCd4, jessica);
+    assertResponseHasItems(responseForCd4, 1, slipsType);
+    assertResponseContains(responseForCd4, slipsType, planetSecondFloorCd4, requestForSecondFloorCd4, steve);
   }
 
-  @Test
-  void responseContainsPickSlipsWhenServicePointHasManyLocations() {
+  @ParameterizedTest
+  @EnumSource(value = SlipsType.class)
+  void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 
@@ -413,34 +504,38 @@ class PickSlipsTests extends APITests {
 
     RequestBuilder pageRequestBuilder = new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .page()
+      .withRequestType(slipsType.getRequestType().getValue())
       .withPickupServicePointId(servicePointId)
       .forItem(item)
       .by(james);
 
+    if (slipsType == SlipsType.SEARCH_SLIPS) {
+      checkOutFixture.checkOutByBarcode(item);
+    }
+
     val pageRequest = requestsClient.create(pageRequestBuilder);
 
-    val response = ResourceClient.forPickSlips().getById(servicePointId);
+    val response = slipsType.get(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 1);
-    assertResponseContains(response, item, pageRequest, james);
+    assertResponseHasItems(response, 1, slipsType);
+    assertResponseContains(response, slipsType, item, pageRequest, james);
   }
 
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
 
-  private void assertResponseHasItems(Response response, int itemsCount) {
+  private void assertResponseHasItems(Response response, int itemsCount, SlipsType slipsType) {
     JsonObject responseJson = response.getJson();
-    assertThat(responseJson.getJsonArray(PICK_SLIPS_KEY).size(), is(itemsCount));
+    assertThat(responseJson.getJsonArray(slipsType.getCollectionName()).size(), is(itemsCount));
     assertThat(responseJson.getInteger(TOTAL_RECORDS), is(itemsCount));
   }
 
-  private void assertResponseContains(Response response, ItemResource item,
+  private void assertResponseContains(Response response, SlipsType slipsType, ItemResource item,
     IndividualResource request, UserResource requester) {
 
-    long count = getPickSlipsStream(response)
+    long count = getSlipsStream(response, slipsType)
       .filter(ps ->
         item.getBarcode().equals(
           getNestedStringProperty(ps, ITEM_KEY, "barcode"))
@@ -461,16 +556,33 @@ class PickSlipsTests extends APITests {
     }
   }
 
-  private Stream<JsonObject> getPickSlipsStream(Response response) {
-    return JsonObjectArrayPropertyFetcher.toStream(response.getJson(), PICK_SLIPS_KEY);
+  private Stream<JsonObject> getSlipsStream(Response response, SlipsType slipsType) {
+    return JsonObjectArrayPropertyFetcher.toStream(response.getJson(), slipsType.getCollectionName());
   }
 
-  private List<JsonObject> getPickSlipsList(Response response) {
-    return getPickSlipsStream(response)
+  private List<JsonObject> getPickSlipsList(Response response, SlipsType slipsType) {
+    return getSlipsStream(response, slipsType)
       .collect(Collectors.toList());
   }
 
   private String getName(JsonObject jsonObject) {
     return jsonObject.getString("name");
+  }
+
+  @AllArgsConstructor
+  private enum SlipsType {
+    PICK_SLIPS(ResourceClient.forPickSlips(), "pickSlips", PAGE),
+    SEARCH_SLIPS(ResourceClient.forSearchSlips(), "searchSlips", HOLD);
+
+    private final ResourceClient client;
+    @Getter
+    private final String collectionName;
+    @Getter
+    private final RequestType requestType;
+
+    private Response get(UUID servicePointId) {
+      return client.getById(servicePointId);
+    }
+
   }
 }

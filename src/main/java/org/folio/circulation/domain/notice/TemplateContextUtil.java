@@ -47,7 +47,6 @@ public class TemplateContextUtil {
   private static final String FEE_ACTION = "feeAction";
   private static final String UNLIMITED = "unlimited";
   public static final String CURRENT_DATE_TIME = "currentDateTime";
-  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String ADDITIONAL_INFO_KEY = "additionalInfo";
 
   private TemplateContextUtil() {
@@ -120,25 +119,30 @@ public class TemplateContextUtil {
     return createStaffSlipContext(request.getItem(), request);
   }
 
-  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries, ServicePoint primaryServicePoint) {
-    log.debug("addPrimaryServicePointNameToStaffSlipContext:: parameters entries: {} primaryServicePoint: {}", entries, primaryServicePoint);
+  public static JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject entries,
+    ServicePoint primaryServicePoint, String slipsCollectionName) {
+
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: parameters entries: {}, " +
+      "primaryServicePoint: {}, slipsCollectionName: {}", entries, primaryServicePoint, slipsCollectionName);
     if (primaryServicePoint == null) {
       log.info("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePoint object is null");
       return entries;
     }
 
     if (entries == null) {
-      log.info("addPrimaryServicePointNameToStaffSlipContext:: entries JsonObject is null, primaryServicePointName: {}", primaryServicePoint.getName());
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: entries JsonObject is null, " +
+        "primaryServicePointName: {}", primaryServicePoint.getName());
       return new JsonObject();
     }
 
-    entries.getJsonArray(PICK_SLIPS_KEY)
+    entries.getJsonArray(slipsCollectionName)
       .stream()
       .map(JsonObject.class::cast)
       .map(pickSlip -> pickSlip.getJsonObject(ITEM))
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
-    log.info("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}, primaryServicePointName: {}", entries, primaryServicePoint.getName());
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}, " +
+      "primaryServicePointName: {}", () -> entries, primaryServicePoint::getName);
 
     return entries;
   }

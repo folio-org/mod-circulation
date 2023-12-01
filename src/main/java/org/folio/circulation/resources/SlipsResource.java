@@ -33,6 +33,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -70,24 +71,24 @@ public abstract class SlipsResource extends Resource {
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
 
   private final String rootPath;
+  private final String collectionName;
   private final RequestType requestType;
   private final Collection<ItemStatus> itemStatuses;
-  private final String jsonCollectionName;
 
-  public SlipsResource(String rootPath, HttpClient client, RequestType requestType,
-    ItemStatus itemStatus, String jsonCollectionName) {
+  public SlipsResource(String rootPath, HttpClient client, String collectionName,
+    RequestType requestType, ItemStatus itemStatus) {
 
-    this(rootPath, client, requestType, List.of(itemStatus), jsonCollectionName);
+    this(rootPath, client, collectionName, requestType, List.of(itemStatus));
   }
 
-  public SlipsResource(String rootPath, HttpClient client, RequestType requestType,
-    Collection<ItemStatus> itemStatuses, String jsonCollectionName) {
+  public SlipsResource(String rootPath, HttpClient client, String collectionName,
+    RequestType requestType, Collection<ItemStatus> itemStatuses) {
 
     super(client);
     this.rootPath = rootPath;
     this.requestType = requestType;
     this.itemStatuses = itemStatuses;
-    this.jsonCollectionName = jsonCollectionName;
+    this.collectionName = collectionName;
   }
 
   @Override
@@ -120,7 +121,7 @@ public abstract class SlipsResource extends Resource {
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
       .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-        TemplateContextUtil::addPrimaryServicePointNameToStaffSlipContext))
+        this::addPrimaryServicePointNameToStaffSlipContext))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
   }
@@ -243,9 +244,16 @@ public abstract class SlipsResource extends Resource {
       .map(TemplateContextUtil::createStaffSlipContext)
       .toList();
     JsonObject jsonRepresentations = new JsonObject()
-      .put(jsonCollectionName, representations)
+      .put(collectionName, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
 
     return succeeded(jsonRepresentations);
+  }
+
+  private JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject context,
+    ServicePoint servicePoint) {
+
+    return TemplateContextUtil.addPrimaryServicePointNameToStaffSlipContext(
+      context, servicePoint, collectionName);
   }
 }

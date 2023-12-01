@@ -8,6 +8,6 @@ import io.vertx.core.http.HttpClient;
 public class SearchSlipsResource extends SlipsResource {
 
   public SearchSlipsResource(String rootPath, HttpClient client) {
-    super(rootPath, client, HOLD, getItemStatusesAllowedForRequestType(HOLD), "searchSlips");
+    super(rootPath, client, "searchSlips", HOLD, getItemStatusesAllowedForRequestType(HOLD));
   }
 }

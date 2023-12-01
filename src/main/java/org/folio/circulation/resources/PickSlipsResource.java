@@ -8,6 +8,6 @@ import io.vertx.core.http.HttpClient;
 public class PickSlipsResource extends SlipsResource {
 
   public PickSlipsResource(String rootPath, HttpClient client) {
-    super(rootPath, client, PAGE, PAGED, "pickSlips");
+    super(rootPath, client, "pickSlips", PAGE, PAGED);
   }
 }
