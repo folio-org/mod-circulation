@@ -21,7 +21,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.KEEP_THE_CUR
 import static org.folio.circulation.domain.representations.ItemProperties.CALL_NUMBER_COMPONENTS;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_MOVED;
-import static org.folio.circulation.support.ErrorCode.ITEM_ALREADY_REQUESTED;
+import static org.folio.circulation.support.ErrorCode.MOVING_REQUEST_TO_THE_SAME_ITEM;
 import static org.folio.circulation.support.utils.ClockUtil.getClock;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -428,7 +428,7 @@ class MoveRequestTests extends APITests {
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(nodPage.getId(), item.getId()));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Not allowed to move title level page request to the same item"),
-      hasCode(ITEM_ALREADY_REQUESTED),
+      hasCode(MOVING_REQUEST_TO_THE_SAME_ITEM),
       hasParameter("requesterId", jessica.getId().toString()),
       hasParameter("instanceId", item.getInstanceId().toString()))));
   }
