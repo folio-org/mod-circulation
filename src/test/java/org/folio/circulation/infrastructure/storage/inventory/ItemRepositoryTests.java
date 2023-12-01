@@ -37,7 +37,7 @@ class ItemRepositoryTests {
   @Test
   void canUpdateAnItemThatHasBeenFetched() {
     final var itemsClient = mock(CollectionResourceClient.class);
-    final var repository = createRepository(itemsClient, null);
+    final var repository = createRepository(itemsClient, null, null);
 
     final var itemId = UUID.randomUUID().toString();
 
@@ -63,7 +63,7 @@ class ItemRepositoryTests {
 
   @Test
   void cannotUpdateAnItemThatHasNotBeenFetched() {
-    final var repository = createRepository(null, null);
+    final var repository = createRepository(null, null, null);
 
     final var notFetchedItem = dummyItem();
 
@@ -75,7 +75,7 @@ class ItemRepositoryTests {
 
   @Test
   void nullItemIsNotUpdated() {
-    final var repository = createRepository(null, null);
+    final var repository = createRepository(null, null, null);
 
     final var updateResult = get(repository.updateItem(null));
 
@@ -87,8 +87,9 @@ class ItemRepositoryTests {
   void returnCirculationItemWhenNotFound() {
     final var itemsClient = mock(CollectionResourceClient.class);
     final var circulationItemsClient = mock(CollectionResourceClient.class);
-    final var repository = createRepository(itemsClient, circulationItemsClient);
     final var itemId = UUID.randomUUID().toString();
+    final var circulationItemsByIdsClient = mock(CollectionResourceClient.class);
+    final var repository = createRepository(itemsClient, circulationItemsClient, circulationItemsByIdsClient);
 
     final var circulationItemJson = new JsonObject()
       .put("id", itemId)
@@ -109,8 +110,9 @@ class ItemRepositoryTests {
   void canUpdateCirculationItemThatHasBeenFetched(){
     final var itemsClient = mock(CollectionResourceClient.class);
     final var circulationItemsClient = mock(CollectionResourceClient.class);
-    final var repository = createRepository(itemsClient, circulationItemsClient);
     final var itemId = UUID.randomUUID().toString();
+    final var circulationItemsByIdsClient = mock(CollectionResourceClient.class);
+    final var repository = createRepository(itemsClient, circulationItemsClient, circulationItemsByIdsClient);
 
     final var circulationItemJson = new JsonObject()
       .put("id", itemId)
@@ -137,12 +139,13 @@ class ItemRepositoryTests {
       () -> new Response(200, body, "application/json")));
   }
 
-  private ItemRepository createRepository(CollectionResourceClient itemsClient, CollectionResourceClient circulationItemClient) {
+  private ItemRepository createRepository(CollectionResourceClient itemsClient, CollectionResourceClient circulationItemClient, CollectionResourceClient circulationItemsByIdsClient) {
     final var locationRepository = mock(LocationRepository.class);
     final var materialTypeRepository = mock(MaterialTypeRepository.class);
     final var instanceRepository = mock(InstanceRepository.class);
     final var holdingsRepository = mock(HoldingsRepository.class);
     final var loanTypeRepository = mock(LoanTypeRepository.class);
+
 
     when(locationRepository.getEffectiveLocation(any()))
       .thenReturn(ofAsync(Location::unknown));
@@ -158,7 +161,7 @@ class ItemRepositoryTests {
 
     return new ItemRepository(itemsClient, locationRepository,
       materialTypeRepository, instanceRepository,
-      holdingsRepository, loanTypeRepository, circulationItemClient);
+      holdingsRepository, loanTypeRepository, circulationItemClient, circulationItemsByIdsClient);
   }
 
   private Item dummyItem() {
