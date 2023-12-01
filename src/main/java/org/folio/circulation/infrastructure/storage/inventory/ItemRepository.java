@@ -277,13 +277,12 @@ public class ItemRepository {
     return finder.findByIds(dcbItemIds)
       .thenApply(mapResult(identityMap::add))
       .thenApply(recordsResult -> {
-        if (recordsResult.succeeded()) {
-          MultipleRecords<JsonObject> records = recordsResult.value();
-          return Result.succeeded(records.mapRecords(mapper::toDomain));
-        } else {
-          return Result.succeeded(new MultipleRecords<>(new ArrayList<>(), 0));
-        }
-      });
+        MultipleRecords<JsonObject> records = recordsResult.value();
+        return Result.succeeded(records.mapRecords(mapper::toDomain));
+      })
+      .thenApply(recordsResult ->
+        recordsResult.mapFailure(failure -> succeeded(new MultipleRecords<>(new ArrayList<>(), 0)))
+      );
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
