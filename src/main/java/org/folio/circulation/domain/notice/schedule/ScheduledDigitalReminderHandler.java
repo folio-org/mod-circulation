@@ -262,16 +262,13 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected CompletableFuture<Result<ScheduledNotice>> buildNextNotice (
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
 
-    Loan loan = context.getLoan();
-    Boolean canScheduleReminderUponClosedDate = loan.getOverdueFinePolicy().getRemindersPolicy().canScheduleReminderUponClosedDay();
-
     return configurationRepository.findTimeZoneConfiguration()
       .thenCompose(tenantTimeZone -> {
         return nextReminder
           .nextNoticeDueOn(
             systemTime,
             tenantTimeZone.value(),
-            loan.getCheckoutServicePointId(),
+            context.getLoan().getCheckoutServicePointId(),
             calendarRepository
           )
           .thenCompose(nextRunTimeResult -> {
