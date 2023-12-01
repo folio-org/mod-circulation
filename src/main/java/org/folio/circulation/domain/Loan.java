@@ -665,12 +665,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     if (latestReminderNumber == null) {
       latestReminderNumber = 0;
     }
-    if (getOverdueFinePolicy().getRemindersPolicy() == null
-      || getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule() == null) {
+    RemindersPolicy remindersPolicy = getOverdueFinePolicy().getRemindersPolicy();
+    if (remindersPolicy == null || !remindersPolicy.hasReminderSchedule()) {
       return null;
     } else {
-      RemindersPolicy.Sequence schedule = getOverdueFinePolicy().getRemindersPolicy().getReminderSchedule();
-      return schedule.getEntryAfter(latestReminderNumber);
+      return remindersPolicy.getNextReminderAfter(latestReminderNumber);
     }
   }
 

@@ -46,7 +46,7 @@ public class OverdueFinePolicy extends Policy {
       ),
       new OverdueFinePolicyLimitInfo(getBigDecimalProperty(json, "maxOverdueFine"),
         getBigDecimalProperty(json, "maxOverdueRecallFine")),
-      RemindersPolicy.from(getObjectProperty(json, "reminderFeesPolicy")),
+      new RemindersPolicy(getObjectProperty(json, "reminderFeesPolicy")),
       new Flags(
         getBooleanProperty(json, "gracePeriodRecall"),
         getBooleanProperty(json, "countClosed"),
@@ -117,7 +117,7 @@ public class OverdueFinePolicy extends Policy {
     UnknownOverdueFinePolicy(String id) {
       super(id, null, new OverdueFinePolicyFineInfo(null, null, null, null),
         new OverdueFinePolicyLimitInfo(null, null),
-        RemindersPolicy.from(null),
+        new RemindersPolicy(null),
         new Flags(false, false, false));
     }
   }

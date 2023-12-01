@@ -27,6 +27,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.*;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+@Getter
 public class RemindersPolicy {
 
   public final static String REMINDER_SCHEDULE = "reminderSchedule";
@@ -35,128 +36,84 @@ public class RemindersPolicy {
   public final static String IGNORE_GRACE_PERIOD_HOLDS = "ignoreGracePeriodHolds";
   public final static String ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES = "allowRenewalOfItemsWithReminderFees";
   public final static String CLEAR_PATRON_BLOCK_WHEN_PAID = "clearPatronBlockWhenPaid";
-  private final Sequence sequence;
+
+  private final Schedule schedule;
   @Getter
-  private Boolean countClosed = true; // Means "can send reminder upon closed day"
+  private final Boolean countClosed; // Means "can make reminder due on closed day"
   @Getter
-  private Boolean ignoreGracePeriodRecall = true;
+  private final Boolean ignoreGracePeriodRecall;
   @Getter
-  private Boolean ignoreGracePeriodHolds = true;
+  private final Boolean ignoreGracePeriodHolds;
   @Getter
-  private Boolean allowRenewalOfItemsWithReminderFees = true;
+  private final Boolean allowRenewalOfItemsWithReminderFees;
   @Getter
-  private Boolean clearPatronBlockWhenPaid = true;
+  private final Boolean clearPatronBlockWhenPaid;
 
-  public static RemindersPolicy from (JsonObject json) {
-    Sequence sequence =
-      Sequence.from(getArrayProperty(json, REMINDER_SCHEDULE));
-    return new RemindersPolicy(sequence)
-      .withCountClosed(getBooleanProperty(json,COUNT_CLOSED))
-      .withAllowRenewalOfItemsWithReminderFees(getBooleanProperty(json,ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES))
-      .withIgnoreGracePeriodRecall(getBooleanProperty(json,IGNORE_GRACE_PERIOD_RECALL))
-      .withIgnoreGracePeriodHolds(getBooleanProperty(json,IGNORE_GRACE_PERIOD_HOLDS))
-      .withClearPatronBlockWhenPaid(getBooleanProperty(json,CLEAR_PATRON_BLOCK_WHEN_PAID));
-  }
-
-  public RemindersPolicy withCountClosed(Boolean countClosed) {
-    this.countClosed = countClosed;
-    return this;
-  }
-
-  public RemindersPolicy withIgnoreGracePeriodRecall(Boolean ignoreGracePeriodRecall) {
-    this.ignoreGracePeriodRecall = ignoreGracePeriodRecall;
-    return this;
-  }
-
-  public RemindersPolicy withIgnoreGracePeriodHolds(Boolean ignoreGracePeriodHolds) {
-    this.ignoreGracePeriodHolds = ignoreGracePeriodHolds;
-    return this;
-  }
-
-  public RemindersPolicy withAllowRenewalOfItemsWithReminderFees(Boolean allowRenewalOfItemsWithReminderFees) {
-    this.allowRenewalOfItemsWithReminderFees = allowRenewalOfItemsWithReminderFees;
-    return this;
-  }
-
-  public RemindersPolicy withClearPatronBlockWhenPaid(Boolean clearPatronBlockWhenPaid) {
-    this.clearPatronBlockWhenPaid = clearPatronBlockWhenPaid;
-    return this;
+  public RemindersPolicy (JsonObject reminderFeesPolicy) {
+    this.schedule = new Schedule(this, getArrayProperty(reminderFeesPolicy, REMINDER_SCHEDULE));
+    this.countClosed = getBooleanProperty(reminderFeesPolicy,COUNT_CLOSED);
+    this.ignoreGracePeriodRecall = getBooleanProperty(reminderFeesPolicy,ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES);
+    this.ignoreGracePeriodHolds = getBooleanProperty(reminderFeesPolicy,IGNORE_GRACE_PERIOD_RECALL);
+    this.allowRenewalOfItemsWithReminderFees = getBooleanProperty(reminderFeesPolicy,IGNORE_GRACE_PERIOD_HOLDS);
+    this.clearPatronBlockWhenPaid = getBooleanProperty(reminderFeesPolicy,CLEAR_PATRON_BLOCK_WHEN_PAID);
   }
 
   public boolean canScheduleReminderUponClosedDay() {
     return countClosed;
   }
 
-  private RemindersPolicy(Sequence sequence) {
-    this.sequence = sequence.withPolicy(this);
-
-  }
-
   public boolean hasReminderSchedule () {
-    return !sequence.isEmpty();
-  }
-
-  public Sequence getReminderSchedule() {
-    return sequence.withPolicy(this);
-  }
-
-  public ReminderConfig getReminderSequenceEntry (int reminderNumber) {
-    return sequence.getEntry(reminderNumber).withPolicy(this);
+    return !schedule.isEmpty();
   }
 
   public ReminderConfig getFirstReminder () {
-    return getReminderSequenceEntry(1);
+    return schedule.getEntry(1);
   }
 
-  @Getter
-  public static class Sequence {
-    private RemindersPolicy policy;
+  public ReminderConfig getNextReminderAfter(int sequenceNumber) {
+    return schedule.getEntryAfter(sequenceNumber);
+  }
+
+  private static class Schedule {
     private final Map<Integer, ReminderConfig> reminderSequenceEntries;
-
-    private Sequence() {
-      reminderSequenceEntries = new HashMap<>();
-    }
-
-    public Sequence withPolicy(RemindersPolicy policy) {
-      this.policy = policy;
-      return this;
-    }
 
     /**
      * Creates schedule of reminder entries ordered by sequence numbers starting with 1 (not zero)
      * @param remindersArray JsonArray 'reminderSchedule' from the reminder fees policy
      */
-    public static Sequence from (JsonArray remindersArray) {
-      Sequence sequence = new Sequence();
+    private Schedule(RemindersPolicy policy, JsonArray remindersArray) {
+      reminderSequenceEntries = new HashMap<>();
       for (int i = 1; i<=remindersArray.size(); i++) {
-        sequence.reminderSequenceEntries.put(
-          i, ReminderConfig.from(i, remindersArray.getJsonObject(i-1)));
+        reminderSequenceEntries.put(
+          i, new ReminderConfig(i, remindersArray.getJsonObject(i-1)).withPolicy(policy));
       }
-      return sequence;
     }
 
-    public boolean isEmpty() {
+    private boolean isEmpty() {
       return reminderSequenceEntries.isEmpty();
     }
 
-    public ReminderConfig getEntry(int sequenceNumber) {
+    private ReminderConfig getEntry(int sequenceNumber) {
       if (reminderSequenceEntries.size() >= sequenceNumber) {
-        return reminderSequenceEntries.get(sequenceNumber).withPolicy(policy);
+        return reminderSequenceEntries.get(sequenceNumber);
       } else {
         return null;
       }
     }
 
-    public boolean hasEntryAfter(int sequenceNumber) {
+    private boolean hasEntryAfter(int sequenceNumber) {
       return reminderSequenceEntries.size() >= sequenceNumber+1;
     }
 
-    public ReminderConfig getEntryAfter(int sequenceNumber) {
+    private ReminderConfig getEntryAfter(int sequenceNumber) {
       return hasEntryAfter(sequenceNumber) ? getEntry(sequenceNumber+1) : null;
     }
 
   }
 
+  /**
+   *  Represents single entry in a sequence of reminder configurations.
+   */
   @Getter
   public static class ReminderConfig {
     private static final String INTERVAL = "interval";
@@ -174,33 +131,18 @@ public class RemindersPolicy {
     private final String blockTemplateId;
     private RemindersPolicy policy;
 
-    public ReminderConfig(
-      int sequenceNumber,
-      Period period,
-      BigDecimal reminderFee,
-      String noticeFormat,
-      String noticeTemplateId,
-      String blockTemplateId) {
+    private ReminderConfig (int sequenceNumber, JsonObject entry) {
       this.sequenceNumber = sequenceNumber;
-      this.period = period;
-      this.reminderFee = reminderFee;
-      this.noticeFormat = noticeFormat;
-      this.noticeTemplateId= noticeTemplateId;
-      this.blockTemplateId = blockTemplateId;
-    }
-    public static ReminderConfig from (int sequenceNumber, JsonObject entry) {
-      Period period = Period.from(
+      this.period = Period.from(
         entry.getInteger(INTERVAL),
         normalizeTimeUnit(entry.getString(TIME_UNIT_ID)));
-      BigDecimal fee = getBigDecimalProperty(entry,REMINDER_FEE);
-      return new ReminderConfig(
-        sequenceNumber, period, fee,
-        entry.getString(NOTICE_FORMAT),
-        entry.getString(NOTICE_TEMPLATE_ID),
-        entry.getString(BLOCK_TEMPLATE_ID));
+      this.reminderFee = getBigDecimalProperty(entry,REMINDER_FEE);
+      this.noticeFormat =  entry.getString(NOTICE_FORMAT);
+      this.noticeTemplateId= entry.getString(NOTICE_TEMPLATE_ID);
+      this.blockTemplateId = entry.getString(BLOCK_TEMPLATE_ID);
     }
 
-    public ReminderConfig withPolicy(RemindersPolicy policy) {
+    private ReminderConfig withPolicy(RemindersPolicy policy) {
       this.policy = policy;
       return this;
     }
@@ -214,33 +156,34 @@ public class RemindersPolicy {
     }
 
     /**
-     * Normalizes "HOUR", "HOURS", "hour", "hours" to "Hours"
+     * Calculates when the next reminder will become due, potentially avoiding closed days depending on the closed days setting.
+     * Takes a date in UTC, returns the result in UTC, and retains the time part of the offset date.
+     *
+     * @param offsetDate The loan due date/time, or the date/time of the most recent reminder, in UTC
+     * @param tenantTimeZone The zone ID for checking the dates in the right timezone
+     * @param servicePointId For retrieving the calendar with open/closed days
+     * @param calendars Access to stored calendars
+     * @return The resulting date/time in UTC.
      */
-    private static String normalizeTimeUnit (String timeUnitId) {
-      String capitalized = WordUtils.capitalizeFully(timeUnitId);
-      return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
-    }
-
-
     public CompletableFuture<Result<ZonedDateTime>> nextNoticeDueOn(
       ZonedDateTime offsetDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars) {
       ZonedDateTime scheduledForDateTime = getPeriod().plusDate(offsetDate);
       if (policy.canScheduleReminderUponClosedDay()) {
         return ofAsync(scheduledForDateTime);
       } else {
-        return firstOpenDayFrom(scheduledForDateTime, tenantTimeZone, servicePointId, calendars);
+        return getFirstComingOpenDay(scheduledForDateTime, tenantTimeZone, servicePointId, calendars);
       }
     }
 
-    private CompletableFuture<Result<ZonedDateTime>> firstOpenDayFrom(
+    private CompletableFuture<Result<ZonedDateTime>> getFirstComingOpenDay(
       ZonedDateTime scheduledDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars)  {
       LocalDate scheduledDayInTenantTimeZone = scheduledDate.withZoneSameInstant(tenantTimeZone).toLocalDate();
       return calendars.lookupOpeningDays(scheduledDayInTenantTimeZone, servicePointId)
-        .thenApply(adjacentOpeningDaysResult -> countDaysUntilOpen(adjacentOpeningDaysResult.value()))
+        .thenApply(adjacentOpeningDaysResult -> daysUntilNextOpenDay(adjacentOpeningDaysResult.value()))
         .thenCompose(daysUntilOpen -> ofAsync(scheduledDate.plusDays(daysUntilOpen.value())));
     }
 
-    private Result<Long> countDaysUntilOpen(AdjacentOpeningDays openingDays) {
+    private Result<Long> daysUntilNextOpenDay(AdjacentOpeningDays openingDays) {
       if (openingDays.getRequestedDay().isOpen()) {
         return succeeded(0L);
       } else {
@@ -253,6 +196,15 @@ public class RemindersPolicy {
         return succeeded(ChronoUnit.DAYS.between(openingDays.getRequestedDay().getDate(),nextDay.getDate()));
       }
     }
+
+    /**
+     * Normalizes "HOUR", "HOURS", "hour", "hours" to "Hours"
+     */
+    private static String normalizeTimeUnit (String timeUnitId) {
+      String capitalized = WordUtils.capitalizeFully(timeUnitId);
+      return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
+    }
+
 
   }
 }
