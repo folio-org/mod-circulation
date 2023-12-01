@@ -62,8 +62,11 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.domain.representations.logs.LogEventType.REQUEST_CREATED_THROUGH_OVERRIDE;
 import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
-import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
 import static org.folio.circulation.support.ErrorCode.HOLD_AND_RECALL_TLR_NOT_ALLOWED_PAGEABLE_AVAILABLE_ITEM_FOUND;
+import static org.folio.circulation.support.ErrorCode.HOLD_SHELF_REQUESTS_REQUIRE_PICKUP_SERVICE_POINT;
+import static org.folio.circulation.support.ErrorCode.INSTANCE_ALREADY_REQUESTED;
+import static org.folio.circulation.support.ErrorCode.ITEM_ALREADY_REQUESTED;
+import static org.folio.circulation.support.ErrorCode.ITEM_OF_THIS_INSTANCE_ALREADY_REQUESTED;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
@@ -102,7 +105,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.builders.AddInfoRequestBuilder;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -132,6 +134,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
+import api.support.builders.AddInfoRequestBuilder;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.HoldingBuilder;
@@ -697,6 +700,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("This requester already has an open request for this instance"),
+      hasCode(INSTANCE_ALREADY_REQUESTED),
       hasParameter("requesterId", usersFixture.james().getId().toString()),
       hasParameter("instanceId", instanceId.toString()))));
   }
@@ -727,6 +731,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrors(1));
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("This requester already has an open request for one of the instance's items"),
+      hasCode(ITEM_OF_THIS_INSTANCE_ALREADY_REQUESTED),
       hasParameter("requesterId", jessica.getId().toString()),
       hasParameter("instanceId", item1.getInstanceId().toString()))));
   }
@@ -1497,8 +1502,10 @@ public class RequestsAPICreationTests extends APITests {
       patronId, pickupServicePointId, instanceId, secondItem));
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(
-      "This requester already has an open request for this item")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this item"),
+      hasCode(ITEM_ALREADY_REQUESTED)
+    )));
   }
 
   @Test
@@ -1517,8 +1524,10 @@ public class RequestsAPICreationTests extends APITests {
     Response response = requestsClient.attemptCreate(buildPageTitleLevelRequest(
       patronId, pickupServicePointId, instanceId));
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(
-      "This requester already has an open request for one of the instance's items")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for one of the instance's items"),
+      hasCode(ITEM_OF_THIS_INSTANCE_ALREADY_REQUESTED)
+    )));
   }
 
   @Test
@@ -1556,8 +1565,10 @@ public class RequestsAPICreationTests extends APITests {
     Response response = requestsClient.attemptCreate(buildPageTitleLevelRequest(
       userId, pickupServicePointId, instanceId));
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(
-      "This requester already has an open request for this instance")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this instance"),
+      hasCode(INSTANCE_ALREADY_REQUESTED)
+    )));
     assertThat(requestsClient.getAll(), hasSize(1));
   }
 
@@ -1575,8 +1586,10 @@ public class RequestsAPICreationTests extends APITests {
     Response response = requestsClient.attemptCreate(buildItemLevelRequest(userId,
       pickupServicePointId, instanceId, item));
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(
-      "This requester already has an open request for this item")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this item"),
+      hasCode(ITEM_ALREADY_REQUESTED)
+    )));
     assertThat(requestsClient.getAll(), hasSize(1));
   }
 
@@ -2127,10 +2140,10 @@ public class RequestsAPICreationTests extends APITests {
 
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
     assertThat(response.getJson(), hasErrors(1));
-    assertThat(
-      response.getJson(),
-      hasErrorWith(hasMessage("This requester already has an open request for this item"))
-    );
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this item"),
+      hasCode(ITEM_ALREADY_REQUESTED)
+    )));
   }
 
   @Test
