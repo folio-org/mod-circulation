@@ -263,8 +263,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
 
     return configurationRepository.findTimeZoneConfiguration()
-      .thenCompose(tenantTimeZone -> {
-        return nextReminder
+      .thenCompose(tenantTimeZone ->
+        nextReminder
           .nextNoticeDueOn(
             systemTime,
             tenantTimeZone.value(),
@@ -278,8 +278,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
               .setTemplateId(nextReminder.getNoticeTemplateId())
               .setFormat(nextReminder.getNoticeFormat());
             return ofAsync(nextReminderNotice);
-          });
-      });
+          })
+      );
   }
 
   @Override
