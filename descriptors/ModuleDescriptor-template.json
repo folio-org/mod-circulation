@@ -690,17 +690,6 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/rules-reload",
-          "modulePermissions": [
-            "circulation-storage.circulation-rules.get"
-          ],
-          "unit": "minute",
-          "delay": "3"
-        },
-        {
-          "methods": [
-            "POST"
-          ],
           "pathPattern": "/circulation/notice-session-expiration-by-timeout",
           "modulePermissions": [
             "patron-action-session-storage.expired-session-patron-ids.collection.get",
@@ -1043,7 +1032,7 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/circulation/scheduled-digital-reminders-processing",
+          "pathPattern": "/circulation/scheduled-reminders-processing",
           "modulePermissions": [
             "scheduled-notice-storage.scheduled-notices.collection.get",
             "scheduled-notice-storage.scheduled-notices.item.delete",
@@ -1124,7 +1113,8 @@
           "modulePermissions": [
             "pubsub.event-types.post",
             "pubsub.publishers.post",
-            "pubsub.subscribers.post"
+            "pubsub.subscribers.post",
+            "circulation-storage.circulation-rules.get"
           ]
         },
         {
@@ -2397,6 +2387,22 @@
       {
         "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
         "value": "50000"
+      },
+      {
+        "name": "KAFKA_HOST",
+        "value": "kafka"
+      },
+      {
+        "name": "KAFKA_PORT",
+        "value": "9092"
+      },
+      {
+        "name": "REPLICATION_FACTOR",
+        "value": "1"
+      },
+      {
+        "name": "ENV",
+        "value": "folio"
       }
     ]
   }

@@ -4,7 +4,7 @@ import io.vertx.core.http.HttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.notice.schedule.ScheduledDigitalReminderHandler;
+import org.folio.circulation.domain.notice.schedule.ScheduledReminderHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -28,12 +28,12 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
-public class ScheduledDigitalRemindersProcessingResource extends ScheduledNoticeProcessingResource {
+public class ScheduledRemindersProcessingResource extends ScheduledNoticeProcessingResource {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  public ScheduledDigitalRemindersProcessingResource(HttpClient client) {
-    super("/circulation/scheduled-digital-reminders-processing", client);
-    log.info("Instantiating digital reminders processing - notices and fees");
+  public ScheduledRemindersProcessingResource(HttpClient client) {
+    super("/circulation/scheduled-reminders-processing", client);
+    log.debug("Instantiating reminders processing - notices and fees");
   }
 
   @Override
@@ -41,7 +41,6 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
     return CqlQuery.lessThanOrEqualTo("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
       .combine(exactMatch("noticeConfig.sendInRealTime", "true"), CqlQuery::and)
       .combine(exactMatch("triggeringEvent", DUE_DATE_WITH_REMINDER_FEE.getRepresentation()), CqlQuery::and)
-      .combine(exactMatch("noticeConfig.format", "Email"), CqlQuery::and)
       .map(cqlQuery -> cqlQuery.sortBy(CqlSortBy.ascending("nextRunTime")))
       .after(query -> scheduledNoticesRepository.findBy(query, pageLimit));
   }
@@ -52,7 +51,7 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
     log.debug("handleNotices:: parameters noticesResult: {}",
       () -> multipleRecordsAsString(noticesResult));
 
-    return new ScheduledDigitalReminderHandler(clients, loanRepository)
+    return new ScheduledReminderHandler(clients, loanRepository)
       .handleNotices(noticesResult.getRecords())
       .thenApply(mapResult(v -> noticesResult));
   }

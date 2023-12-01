@@ -2,18 +2,18 @@ package org.folio.circulation.rules.cache;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.events.DomainEvent;
+import org.folio.circulation.domain.events.EntityChangedEventData;
 import org.folio.circulation.rules.Drools;
 import org.folio.circulation.rules.ExecutableRules;
 import org.folio.circulation.rules.Text2Drools;
@@ -29,7 +29,7 @@ public final class CirculationRulesCache {
 
   private static final CirculationRulesCache instance = new CirculationRulesCache();
   /** rules and Drools for each tenantId */
-  private Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
+  private final Map<String, Rules> rulesMap = new ConcurrentHashMap<>();
 
   public static CirculationRulesCache getInstance() {
     return instance;
@@ -41,52 +41,44 @@ public final class CirculationRulesCache {
     rulesMap.clear();
   }
 
-  private boolean rulesExist(String tenantId) {
-    log.debug("rulesExist:: parameters tenantId: {}", tenantId);
-    Rules rules = rulesMap.get(tenantId);
-    log.info("rulesExist:: result: {}", rules != null);
-    return rules != null;
-  }
-
-  public CompletableFuture<Result<Rules>> reloadRules(String tenantId,
+  public CompletableFuture<Result<Drools>> reloadRules(String tenantId,
     CollectionResourceClient circulationRulesClient) {
 
-    log.debug("reloadRules:: parameters tenant: {}", tenantId);
+    log.info("reloadRules:: reloading rules for tenant {}", tenantId);
 
     return circulationRulesClient.get()
       .thenApply(r -> r.map(response -> getRulesAsText(response, tenantId)))
-      .thenApply(r -> r.next(rulesAsText -> reloadRules(tenantId, rulesAsText)));
+      .thenApply(r -> r.next(rulesAsText -> buildRules(tenantId, rulesAsText)));
   }
 
   private static String getRulesAsText(Response response, String tenantId) {
     log.debug("getRulesAsText:: parameters tenantId: {}", tenantId);
-
     final var circulationRules = new JsonObject(response.getBody());
-    var encodeRules = circulationRules.encodePrettily();
-    log.info("getRulesAsText:: circulationRules: {}", encodeRules);
+    log.debug("getRulesAsText:: circulationRules: {}", circulationRules::encodePrettily);
 
     return circulationRules.getString("rulesAsText");
   }
 
-  public Result<Rules> reloadRules(String tenantId, String rulesAsText) {
-     log.debug("reloadRules:: parameters tenantId: {}, rulesAsText: {}", tenantId, rulesAsText);
+  public Result<Drools> buildRules(String tenantId, String rulesAsText) {
+    log.info("buildRules:: building rules for tenant {}", tenantId);
+    log.debug("buildRules:: rules={}", rulesAsText);
 
-        if (isBlank(rulesAsText)) {
-          log.info("Rules text is blank for tenant {}", tenantId);
-          return failed(new ServerErrorFailure(
-            "Cannot apply blank circulation rules"));
-        }
+    if (isBlank(rulesAsText)) {
+      log.warn("buildRules:: rules are blank for tenant {}", tenantId);
+      return failed(new ServerErrorFailure("Cannot apply blank circulation rules"));
+    }
 
-        String droolsText = Text2Drools.convert(rulesAsText);
-        Drools drools =  new Drools(tenantId, droolsText);
-        log.info("rulesAsDrools = {}", droolsText);
+    String droolsText = Text2Drools.convert(rulesAsText);
+    Drools drools = new Drools(tenantId, droolsText);
+    log.info("buildRules:: done building Drools for tenant {}", tenantId);
+    log.debug("buildRules:: Drools as text: {}", droolsText);
 
-        Rules rules = new Rules(rulesAsText, droolsText, drools, System.currentTimeMillis());
-        log.info("Done building Drools object for tenant {}", tenantId);
+    long timestamp = System.currentTimeMillis();
+    log.debug("buildRules:: timestamp={}", timestamp);
+    Rules rules = new Rules(rulesAsText, droolsText, drools, timestamp);
+    rulesMap.put(tenantId, rules);
 
-        rulesMap.put(tenantId, rules);
-
-        return succeeded(rules);
+    return succeeded(drools);
   }
 
   public CompletableFuture<Result<ExecutableRules>> getExecutableRules(String tenantId,
@@ -100,19 +92,49 @@ public final class CirculationRulesCache {
   public CompletableFuture<Result<Drools>> getDrools(String tenantId,
     CollectionResourceClient circulationRulesClient) {
 
-    log.debug("getDrools:: parameters: tenantId, circulationRulesClient: Getting Drools for tenant {}", tenantId);
+    log.info("getDrools:: getting Drools for tenant {}", tenantId);
 
-    if (tenantId != null && rulesExist(tenantId)) {
-      Rules rules = rulesMap.get(tenantId);
-      DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-      String strDate = dateFormat.format(rules.getReloadTimestamp());
-      log.info("Rules object found, last updated: {}", strDate);
-      return ofAsync(rules.getDrools());
+    return Optional.ofNullable(getRules(tenantId))
+      .map(Rules::getDrools)
+      .map(Result::ofAsync)
+      .orElseGet(() -> reloadRules(tenantId, circulationRulesClient));
+  }
+
+  public void handleRulesUpdateEvent(DomainEvent<EntityChangedEventData> event) {
+    log.debug("handleRulesUpdateEvent:: event={}", () -> event);
+
+    final String tenantId = event.tenantId();
+    log.info("handleRulesUpdateEvent:: handling rules update event {} for tenant {}",
+      event.id(), event.tenantId());
+    final Rules cachedRules = getRules(tenantId);
+
+    if (cachedRules == null) {
+      // if cache is empty, rules are downloaded from storage anyway when they are first requested
+      log.info("handleRulesUpdateEvent:: no cached rules for tenant {}, ignoring event {}",
+        tenantId, event.id());
+      return;
     }
 
-    log.info("Circulation rules have not been loaded, initializing");
+    final long eventTimestamp = event.timestamp();
+    final long cacheTimestamp = cachedRules.getReloadTimestamp();
+    if (eventTimestamp < cacheTimestamp) {
+      log.info("handleRulesUpdateEvent:: ignoring event {}: event timestamp is {}, " +
+          "cache timestamp is {}", event.id(), eventTimestamp, cacheTimestamp);
+      return;
+    }
 
-    return reloadRules(tenantId, circulationRulesClient)
-      .thenApply(r -> r.map(Rules::getDrools));
+    buildRules(tenantId, event.data().newVersion().getString("rulesAsText"));
+  }
+
+  public Rules getRules(String tenantId) {
+    final Rules cachedRules = rulesMap.get(tenantId);
+    if (cachedRules == null) {
+      log.info("getRulesFromCache:: cache miss for tenant {}", tenantId);
+    } else {
+      log.info("getRulesFromCache:: cache hit for tenant {}", tenantId);
+      log.debug("getRulesFromCache:: cached rules: {}", cachedRules::getRulesAsText);
+    }
+
+    return cachedRules;
   }
 }

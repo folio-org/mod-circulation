@@ -1,16 +1,21 @@
 package api;
 
+import static api.support.APITestContext.TENANT_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
+import api.support.APITestContext;
 import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -425,6 +430,15 @@ class CirculationRulesAPITests extends APITests {
       is("Tabulator character is not allowed, use spaces instead."));
     assertThat(json.getInteger("line"), is(1));
     assertThat(json.getInteger("column"), is(2));
+  }
+
+  @Test
+  void getRefreshesCirculationRulesCache() {
+    CirculationRulesCache cache = CirculationRulesCache.getInstance();
+    cache.dropCache();
+    assertThat(cache.getRules(TENANT_ID), nullValue());
+    String rules = circulationRulesFixture.getCirculationRules();
+    assertThat(cache.getRules(TENANT_ID).getRulesAsText(), equalTo(rules));
   }
 
   /** @return rulesAsText field */

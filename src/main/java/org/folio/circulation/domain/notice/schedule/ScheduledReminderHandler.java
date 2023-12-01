@@ -9,6 +9,7 @@ import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -31,6 +32,7 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
+import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.representations.ContributorsToNamesMapper.mapContributorNamesToJson;
 import static org.folio.circulation.support.results.Result.*;
 import static org.folio.circulation.support.results.MappingFunctions.when;
@@ -47,7 +49,7 @@ import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeF
  * and to apply different isNoticeRelevant logic.
  * Reuses a handful of methods to set the notice contexts and fail if loan id is missing.
  */
-public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler {
+public class ScheduledReminderHandler extends LoanScheduledNoticeHandler {
 
   private final ZonedDateTime systemTime;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -59,6 +61,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   private final CollectionResourceClient accountsStorageClient;
   private final CollectionResourceClient feeFineActionsStorageClient;
 
+  private final ConfigurationRepository configurationRepository;
 
 
   static final String ACCOUNT_FEE_FINE_ID_VALUE = "6b830703-f828-4e38-a0bb-ee81deacbd03";
@@ -68,8 +71,9 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
 
 
-  public ScheduledDigitalReminderHandler(Clients clients, LoanRepository loanRepository) {
+  public ScheduledReminderHandler(Clients clients, LoanRepository loanRepository) {
     super(clients, loanRepository);
+    configurationRepository = new ConfigurationRepository(clients);
     this.systemTime = ClockUtil.getZonedDateTime();
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
     this.calendarRepository = new CalendarRepository(clients);
@@ -78,7 +82,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     this.accountsStorageClient = clients.accountsStorageClient();
     this.feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
 
-    log.debug("Instantiated ScheduledDigitalReminderHandler");
+    log.debug("Instantiated ScheduledReminderHandler");
   }
 
   @Override
@@ -127,13 +131,21 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
-    ZonedDateTime today = ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC);
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
-    return calendarRepository.lookupOpeningDays(today.toLocalDate(),servicePointId)
-        .thenCompose(days -> {
-          Boolean openDay = days.value().getRequestedDay().isOpen();
-          return ofAsync(openDay);
-        });
+    return getSystemTimeInTenantsZone()
+      .thenCompose(tenantTime -> {
+        return calendarRepository.lookupOpeningDays(tenantTime.toLocalDate(),servicePointId)
+          .thenCompose(days -> {
+            Boolean openDay = days.value().getRequestedDay().isOpen();
+            return ofAsync(openDay);
+          });
+      });
+  }
+
+  private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
+    return configurationRepository
+      .findTimeZoneConfiguration()
+      .thenApply(tenantTimeZone -> systemTime.withZoneSameInstant(tenantTimeZone.value()));
   }
 
   private CompletableFuture<Result<ScheduledNotice>> skip(ScheduledNoticeContext previousResult) {
@@ -162,6 +174,10 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   private CompletableFuture<Result<ScheduledNoticeContext>> instantiateReminderFeeAccount(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
+    RemindersPolicy.ReminderConfig reminder = context.getLoan().getNextReminder();
+    if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
+      return ofAsync(() -> context);
+    }
     Item item = context.getLoan().getItem();
     ReminderFeeAccount reminderFeeAccount = new ReminderFeeAccount()
         .with(ReminderFeeAccount.FEE_FINE_ID, ACCOUNT_FEE_FINE_ID_VALUE)
@@ -196,7 +212,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> persistAccount(ScheduledNoticeContext context) {
-    if (isNoticeIrrelevant(context)) {
+    RemindersPolicy.ReminderConfig reminder = context.getLoan().getNextReminder();
+    if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
       return ofAsync(() -> context);
     }
     return accountsStorageClient.post(context.getAccount().toJson())
@@ -204,7 +221,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> createFeeFineAction(ScheduledNoticeContext context) {
-    if (isNoticeIrrelevant(context)) {
+    RemindersPolicy.ReminderConfig reminder = context.getLoan().getNextReminder();
+    if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
       return ofAsync(() -> context);
     }
     Account account = context.getAccount();
@@ -245,21 +263,25 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
 
     Loan loan = context.getLoan();
-    Boolean canSendReminderUponClosedDate = loan.getOverdueFinePolicy().getRemindersPolicy().canScheduleReminderUponClosedDay();
+    Boolean canScheduleReminderUponClosedDate = loan.getOverdueFinePolicy().getRemindersPolicy().canScheduleReminderUponClosedDay();
 
-    return nextReminder
-      .calculateNextRunTime(
-        loan.getDueDate().getZone(),
-        systemTime, canSendReminderUponClosedDate,
-        calendarRepository, loan.getCheckoutServicePointId())
-      .thenCompose(nextRunTimeResult -> {
-        ScheduledNotice nextReminderNotice = context.getNotice()
-          .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
-        nextReminderNotice.getConfiguration()
-          .setTemplateId(nextReminder.getNoticeTemplateId())
-          .setFormat(nextReminder.getNoticeFormat());
-
-        return ofAsync(nextReminderNotice);
+    return configurationRepository.findTimeZoneConfiguration()
+      .thenCompose(tenantTimeZone -> {
+        return nextReminder
+          .nextNoticeDueOn(
+            systemTime,
+            tenantTimeZone.value(),
+            loan.getCheckoutServicePointId(),
+            calendarRepository
+          )
+          .thenCompose(nextRunTimeResult -> {
+            ScheduledNotice nextReminderNotice = context.getNotice()
+              .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
+            nextReminderNotice.getConfiguration()
+              .setTemplateId(nextReminder.getNoticeTemplateId())
+              .setFormat(nextReminder.getNoticeFormat());
+            return ofAsync(nextReminderNotice);
+          });
       });
   }
 
@@ -271,7 +293,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
-    return createFeeFineChargeNoticeContext(context.getAccount(), context.getLoan(), context.getChargeAction());
+    Loan loan = context.getLoan();
+    if (loan.getNextReminder().hasZeroFee()) {
+      return createLoanNoticeContext(loan);
+    } else {
+      return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
+    }
   }
 
   static class ReminderFeeAccount {
