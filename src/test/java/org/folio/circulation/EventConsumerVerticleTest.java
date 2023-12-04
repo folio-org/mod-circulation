@@ -45,8 +45,6 @@ import api.support.http.UserResource;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
-import io.vertx.kafka.admin.ConsumerGroupListing;
-import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
@@ -72,29 +70,35 @@ public class EventConsumerVerticleTest extends APITests {
     verifyConsumerGroups(Map.of(subgroup0, 1));
 
     // verticle2 is deployed, new consumer is created in a separate subgroup1
-    String verticle2DeploymentId = deployVerticle();
+    String verticleId2 = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
 
     // verticle3 is deployed, new consumer is created in a separate subgroup2
-    deployVerticle();
+    String verticleId3 = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
 
     // verticle2 is undeployed, its consumer and subgroup1 are removed
-    undeployVerticle(verticle2DeploymentId);
+    undeployVerticle(verticleId2);
     waitFor(kafkaAdminClient.deleteConsumerGroups(List.of(subgroup1)));
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup2, 1));
 
     // verticle4 is deployed, the now vacant subgroup1 is recreated and new consumer joins it
-    String verticle4DeploymentId = deployVerticle();
+    String verticleId4 = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
 
     // verticle4 is undeployed, its consumer is removed, but empty subgroup1 is not removed
-    undeployVerticle(verticle4DeploymentId);
+    undeployVerticle(verticleId4);
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 0, subgroup2, 1));
 
     // verticle5 is deployed, new consumer joins the empty subgroup1
-    deployVerticle();
+    String verticleId5 = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
+
+    // clean up: undeploy all active verticles deployed in this test, delete their consumer groups
+    undeployVerticle(verticleId3);
+    undeployVerticle(verticleId5);
+    waitFor(kafkaAdminClient.deleteConsumerGroups(List.of(subgroup1, subgroup2)));
+    verifyConsumerGroups(Map.of(subgroup0, 1));
   }
 
   @Test
@@ -104,7 +108,7 @@ public class EventConsumerVerticleTest extends APITests {
 
     // first verticle has been deployed beforehand, so we should already see subgroup0 with 1 consumer
     verifyConsumerGroups(Map.of(subgroup0, 1));
-    deployVerticle();
+    String verticleId = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
 
     int initialOffsetForSubgroup0 = getOffsetForCirculationRulesUpdateEvents(0);
@@ -115,6 +119,11 @@ public class EventConsumerVerticleTest extends APITests {
 
     waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(0), initialOffsetForSubgroup0 + 1);
     waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(1), initialOffsetForSubgroup1 + 1);
+
+    // clean up: undeploy verticle, delete its consumer group
+    undeployVerticle(verticleId);
+    waitFor(kafkaAdminClient.deleteConsumerGroups(List.of(subgroup1)));
+    verifyConsumerGroups(Map.of(subgroup0, 1));
   }
 
   @Test
