@@ -275,7 +275,8 @@ public class ItemRepository {
 
     return finder.findByIds(dcbItemIds)
       .thenApply(mapResult(identityMap::add))
-      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
+      .thenApply(r -> r.map(records -> records.mapRecords(mapper::toDomain)))
+      .thenApply(r -> r.mapFailure(failure -> succeeded(MultipleRecords.empty())));
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
