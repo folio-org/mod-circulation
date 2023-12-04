@@ -22,8 +22,9 @@ public enum LoanAction {
   PATRON_INFO_ADDED("patronInfoAdded"),
   STAFF_INFO_ADDED("staffInfoAdded"),
   RESOLVE_CLAIM_AS_RETURNED_BY_PATRON("checkedInReturnedByPatron"),
-  RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary");
+  RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary"),
 
+  REMINDER_FEE("reminderFee");
 
   private final String value;
 

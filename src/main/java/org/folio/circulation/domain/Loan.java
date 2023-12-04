@@ -194,6 +194,13 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, LoanProperties.ACTION, action);
   }
 
+  public Loan updateAction(String action) {
+    log.debug("changeAction:: parameters action: {}", action);
+    write(representation, LoanProperties.ACTION, action);
+
+    return this;
+  }
+
   public String getAction() {
     return getProperty(representation, ACTION);
   }
@@ -645,11 +652,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withRemindersLastFeeBilled(int number, ZonedDateTime date) {
-    JsonObject lastFeeBilled = getNestedObjectProperty(representation,REMINDERS,LAST_FEE_BILLED);
+    JsonObject lastFeeBilled = getNestedObjectProperty(representation, REMINDERS,LAST_FEE_BILLED);
     if (lastFeeBilled == null) {
-      write(representation,REMINDERS,new JsonObject());
-      write(representation.getJsonObject(REMINDERS),LAST_FEE_BILLED,new JsonObject());
-      lastFeeBilled = getNestedObjectProperty(representation,REMINDERS,LAST_FEE_BILLED);
+      write(representation, REMINDERS,new JsonObject());
+      write(representation.getJsonObject(REMINDERS), LAST_FEE_BILLED, new JsonObject());
+      lastFeeBilled = getNestedObjectProperty(representation, REMINDERS, LAST_FEE_BILLED);
     }
     write(lastFeeBilled, BILL_DATE, date);
     write(lastFeeBilled, BILL_NUMBER, number);

@@ -2,11 +2,7 @@ package org.folio.circulation.domain.notice.schedule;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Account;
-import org.folio.circulation.domain.FeeFineAction;
-import org.folio.circulation.domain.FeeFineOwner;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -159,7 +155,9 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     }
 
     return loanRepository.updateLoan(
-      context.getLoan().withIncrementedRemindersLastFeeBilled(systemTime))
+      context.getLoan()
+        .withIncrementedRemindersLastFeeBilled(systemTime)
+        .updateAction(LoanAction.REMINDER_FEE.getValue()))
       .thenApply(r -> r.map(v -> context));
   }
 
