@@ -1,5 +1,6 @@
 package api.support.fixtures;
 
+import static api.support.APITestContext.getTenantId;
 import static api.support.RestAssuredResponseConversion.toResponse;
 import static api.support.http.InterfaceUrls.circulationRulesStorageUrl;
 import static api.support.http.InterfaceUrls.circulationRulesUrl;
@@ -15,11 +16,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.http.HttpStatus;
 import org.folio.circulation.rules.ItemLocation;
 import org.folio.circulation.rules.ItemType;
 import org.folio.circulation.rules.LoanType;
 import org.folio.circulation.rules.PatronGroup;
 import org.folio.circulation.rules.Policy;
+import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
@@ -45,11 +48,18 @@ public class CirculationRulesFixture {
   }
 
   public Response putRules(String body) {
-    return toResponse(restAssuredClient
+    Response response = toResponse(restAssuredClient
       .beginRequest("put-circulation-rules")
       .body(body)
       .when().put(circulationRulesUrl())
       .then().extract().response());
+
+    if (response.getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+      String rulesAsText = new JsonObject(body).getString("rulesAsText");
+      CirculationRulesCache.getInstance().buildRules(getTenantId(), rulesAsText);
+    }
+
+    return response;
   }
 
   public void updateCirculationRules(UUID loanPolicyId, UUID requestPolicyId,
