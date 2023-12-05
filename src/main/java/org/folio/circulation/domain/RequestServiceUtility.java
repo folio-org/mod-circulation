@@ -3,16 +3,22 @@ package org.folio.circulation.domain;
 import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.RequestProperties.PICKUP_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
+import static org.folio.circulation.support.ErrorCode.INSTANCE_ALREADY_REQUESTED;
 import static org.folio.circulation.support.ErrorCode.ITEM_ALREADY_REQUESTED;
+import static org.folio.circulation.support.ErrorCode.ITEM_OF_THIS_INSTANCE_ALREADY_REQUESTED;
+import static org.folio.circulation.support.ErrorCode.MOVING_REQUEST_TO_THE_SAME_ITEM;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Request.Operation;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.support.ErrorCode;
@@ -24,6 +30,7 @@ public class RequestServiceUtility {
   private static final String ITEM_ID = "itemId";
   private static final String REQUESTER_ID = "requesterId";
   private static final String REQUEST_ID = "requestId";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private RequestServiceUtility() { }
 
@@ -212,20 +219,26 @@ public class RequestServiceUtility {
     Request requestBeingPlaced = requestAndRelatedRecords.getRequest();
     HashMap<String, String> parameters = new HashMap<>();
     String message;
+    ErrorCode errorCode;
 
     if (requestBeingPlaced.isTitleLevel()) {
       if (existingRequest.isTitleLevel()) {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
-        message = requestBeingPlaced.getOperation() == Operation.MOVE
-          ? "Not allowed to move title level page request to the same item"
-          : "This requester already has an open request for this instance";
+        if (requestBeingPlaced.getOperation() == Operation.MOVE) {
+          message = "Not allowed to move title level page request to the same item";
+          errorCode = MOVING_REQUEST_TO_THE_SAME_ITEM;
+        } else {
+          message = "This requester already has an open request for this instance";
+          errorCode = INSTANCE_ALREADY_REQUESTED;
+        }
       } else {
         parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
         parameters.put(INSTANCE_ID, requestBeingPlaced.getInstanceId());
 
         message = "This requester already has an open request for one of the instance's items";
+        errorCode = ITEM_OF_THIS_INSTANCE_ALREADY_REQUESTED;
       }
     } else {
       parameters.put(REQUESTER_ID, requestBeingPlaced.getUserId());
@@ -233,9 +246,11 @@ public class RequestServiceUtility {
       parameters.put(REQUEST_ID, requestBeingPlaced.getId());
 
       message = "This requester already has an open request for this item";
+      errorCode = ITEM_ALREADY_REQUESTED;
     }
+    log.info("alreadyRequestedFailure:: message: {}, errorCode: {}", message, errorCode);
 
-    return failedValidation(message, parameters, ITEM_ALREADY_REQUESTED);
+    return failedValidation(message, parameters, errorCode);
   }
 
   static boolean isTheSameRequester(RequestAndRelatedRecords it, Request that) {
