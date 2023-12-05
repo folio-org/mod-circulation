@@ -1,3 +1,8 @@
+## 24.0.10 2023-12-05
+
+* Fix returning same error code for different error messages (CIRC-1961)
+* Do not refresh circulation rules cache on GET and PUT `/circulation/rules` (CIRC-1977)
+
 ## 24.0.9 2023-11-24
 
 * Skip account creation for reminders without a fee (CIRC-1970)
