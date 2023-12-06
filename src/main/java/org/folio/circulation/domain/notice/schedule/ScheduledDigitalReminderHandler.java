@@ -130,9 +130,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     return getSystemTimeInTenantsZone()
       .thenCompose(tenantTime -> calendarRepository.lookupOpeningDays(
         tenantTime.toLocalDate(),servicePointId))
-      .thenApply(r -> r.next(days -> {
-        return succeeded(days.getRequestedDay().isOpen());
-      }));
+      .thenApply(r -> r.next(days ->  succeeded(days.getRequestedDay().isOpen())
+      ));
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
@@ -261,9 +260,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime,
             tenantTimeZone.value(), context.getLoan().getCheckoutServicePointId(),
             calendarRepository))
-        .thenApply(r -> r.next(nextRunTime -> {
-          return succeeded(buildNextNotice(context, nextReminder, nextRunTime));
-        }));
+        .thenApply(r -> r.next(nextRunTime -> succeeded(buildNextNotice(context, nextReminder, nextRunTime))
+        ));
   }
 
   private static ScheduledNotice buildNextNotice(
