@@ -426,13 +426,9 @@ public class TemplateContextUtil {
     }
 
     public String getCountryNameByCodeIgnoreCase(String code) {
-      if (StringUtils.isEmpty(code)) {
+      if (StringUtils.isEmpty(code) || !Stream.of(Locale.getISOCountries()).toList().contains(code)) {
+        log.info("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
         return null;
-      }
-
-      if (!Stream.of(Locale.getISOCountries()).toList().contains(code)) {
-        log.error("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
-        throw new IllegalArgumentException("Not a valid country code to determine the country name.");
       }
 
       return new Locale("",code).getDisplayName();
