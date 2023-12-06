@@ -112,14 +112,9 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
       .thenCompose(overdueFinePolicyRepository::findOverdueFinePolicyForLoan)
       .thenApply(mapResult(context::withLoan))
-      .thenApply(r -> {
-        String servicePointId = r.value().getLoan().getCheckoutServicePointId();
-        calendarRepository.lookupOpeningDays(ClockUtil.getZonedDateTime().toLocalDate(),servicePointId);
-        return r;
-      })
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
-//
+
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
     return ofAsync(() -> context)
@@ -133,13 +128,10 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
     return getSystemTimeInTenantsZone()
-      .thenCompose(tenantTime ->
-        calendarRepository.lookupOpeningDays(tenantTime.toLocalDate(),servicePointId)
-          .thenCompose(days -> {
-            Boolean openDay = days.value().getRequestedDay().isOpen();
-            return ofAsync(openDay);
-          })
-      );
+      .thenCompose(tenantTime -> calendarRepository.lookupOpeningDays(
+        tenantTime.toLocalDate(),servicePointId))
+      .thenApply(r -> r.next(days ->  succeeded(days.getRequestedDay().isOpen())
+      ));
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
@@ -254,32 +246,33 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     } else if (isNoticeIrrelevant(context)) {
       return deleteNotice(context.getNotice(), "further reminder notices became irrelevant");
     } else {
-      return buildNextNotice(context, nextReminder)
+      return findNextRuntimeAndBuildNotice(context, nextReminder)
         .thenCompose(scheduledNoticeResult -> scheduledNoticesRepository.update(scheduledNoticeResult.value()));
     }
   }
 
-  protected CompletableFuture<Result<ScheduledNotice>> buildNextNotice (
+  protected CompletableFuture<Result<ScheduledNotice>> findNextRuntimeAndBuildNotice(
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
+    log.debug("buildNextNotice:: parameters notice context: {}, reminder config: {}",
+      () -> context, () -> nextReminder);
 
     return configurationRepository.findTimeZoneConfiguration()
-      .thenCompose(tenantTimeZone ->
-        nextReminder
-          .nextNoticeDueOn(
-            systemTime,
-            tenantTimeZone.value(),
-            context.getLoan().getCheckoutServicePointId(),
-            calendarRepository
-          )
-          .thenCompose(nextRunTimeResult -> {
-            ScheduledNotice nextReminderNotice = context.getNotice()
-              .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
-            nextReminderNotice.getConfiguration()
-              .setTemplateId(nextReminder.getNoticeTemplateId())
-              .setFormat(nextReminder.getNoticeFormat());
-            return ofAsync(nextReminderNotice);
-          })
-      );
+      .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime,
+            tenantTimeZone.value(), context.getLoan().getCheckoutServicePointId(),
+            calendarRepository))
+        .thenApply(r -> r.next(nextRunTime -> succeeded(buildNextNotice(context, nextReminder, nextRunTime))
+        ));
+  }
+
+  private static ScheduledNotice buildNextNotice(
+    ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder,
+    ZonedDateTime nextRunTimeResult) {
+    ScheduledNotice nextReminderNotice = context.getNotice()
+      .withNextRunTime(nextRunTimeResult.truncatedTo(ChronoUnit.HOURS));
+    nextReminderNotice.getConfiguration()
+      .setTemplateId(nextReminder.getNoticeTemplateId())
+      .setFormat(nextReminder.getNoticeFormat());
+    return nextReminderNotice;
   }
 
   @Override
@@ -292,8 +285,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     if (loan.getNextReminder().hasZeroFee()) {
+      log.debug("buildNoticeContextJson: reminder without fee, notice context: {} ",
+        () -> context);
       return createLoanNoticeContext(loan);
     } else {
+      log.debug("buildNoticeContextJson: reminder with reminder fee, notice context: {} ",
+        () -> context);
       return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
     }
   }

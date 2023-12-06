@@ -18,7 +18,6 @@ import java.time.ZoneId;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class ReminderFeeScheduledNoticeService {
@@ -40,6 +39,8 @@ public class ReminderFeeScheduledNoticeService {
    * @return the (unmodified) objects handed back to the check-out chain of procedures
    */
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
+    log.debug("scheduleFirstReminder:: parameters loanAndRelatedRecords: {}",
+      () -> records);
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       scheduleFirstReminder(loan, records.getTimeZone());
@@ -82,29 +83,21 @@ public class ReminderFeeScheduledNoticeService {
     Loan loan,
     ZoneId timeZone,
     ReminderConfig reminderConfig) {
-    return reminderConfig.nextNoticeDueOn(
-        loan.getDueDate(), timeZone, loan.getCheckoutServicePointId(), calendarRepository)
-      .thenCompose(nextDueTime ->
-        ofAsync(
-          new ScheduledNotice(
-            UUID.randomUUID().toString(),
-            loan.getId(),
-            null,
-            loan.getUserId(),
-            null,
-            null,
-            TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
-            nextDueTime.value(),
-            instantiateNoticeConfig(reminderConfig))));
+
+    log.debug("instantiateFirstScheduledNotice:: parameters loan: {}, timeZone: {}" +
+        "reminderConfig: {}", () -> loan, () -> timeZone, () -> reminderConfig);
+    
+    return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
+        loan.getCheckoutServicePointId(), calendarRepository)
+      .thenApply(r -> r.next(nextDueTime -> succeeded(new ScheduledNotice(UUID.randomUUID().toString(),
+        loan.getId(), null, loan.getUserId(), null, null,
+        TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime,
+        instantiateNoticeConfig(reminderConfig)))));
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
-    return new ScheduledNoticeConfig(
-      NoticeTiming.AFTER,
-      null, // recurrence handled using reminder fee policy
-      reminderConfig.getNoticeTemplateId(),
-      reminderConfig.getNoticeFormat(),
-      true);
+    return new ScheduledNoticeConfig(NoticeTiming.AFTER, null,
+      reminderConfig.getNoticeTemplateId(), reminderConfig.getNoticeFormat(), true);
   }
 
 }
