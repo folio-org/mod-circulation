@@ -112,11 +112,6 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
       .thenCompose(overdueFinePolicyRepository::findOverdueFinePolicyForLoan)
       .thenApply(mapResult(context::withLoan))
-      .thenApply(r -> {
-        String servicePointId = r.value().getLoan().getCheckoutServicePointId();
-        calendarRepository.lookupOpeningDays(ClockUtil.getZonedDateTime().toLocalDate(),servicePointId);
-        return r;
-      })
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
 
