@@ -32,6 +32,8 @@ public class ReminderFeeScheduledNoticeService {
   }
 
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
+    log.debug("scheduleFirstReminder:: parameters loanAndRelatedRecords: {}",
+      () -> records);
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       ReminderConfig firstReminder =
@@ -47,6 +49,9 @@ public class ReminderFeeScheduledNoticeService {
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
     LoanAndRelatedRecords loanRecords,
     ReminderConfig reminderConfig) {
+
+    log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
+        "reminderConfig: {}", () -> loanRecords, () -> reminderConfig);
 
     final Loan loan = loanRecords.getLoan();
 

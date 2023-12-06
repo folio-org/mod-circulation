@@ -4,6 +4,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.Getter;
 import org.apache.commons.lang.WordUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.AdjacentOpeningDays;
 import org.folio.circulation.domain.OpeningDay;
 import org.folio.circulation.domain.notice.NoticeFormat;
@@ -11,6 +13,7 @@ import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
+import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -75,6 +78,7 @@ public class RemindersPolicy {
   }
 
   private static class Schedule {
+
     private final Map<Integer, ReminderConfig> reminderSequenceEntries;
 
     /**
@@ -116,6 +120,9 @@ public class RemindersPolicy {
    */
   @Getter
   public static class ReminderConfig {
+
+    final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
     private static final String INTERVAL = "interval";
     private static final String TIME_UNIT_ID = "timeUnitId";
     private static final String REMINDER_FEE = "reminderFee";
@@ -166,16 +173,26 @@ public class RemindersPolicy {
      */
     public CompletableFuture<Result<ZonedDateTime>> nextNoticeDueOn(
       ZonedDateTime offsetDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars) {
+
+      log.debug("nextNoticeDueOn:: parameters offsetDate: {}, tenantTimeZone: {}" +
+          ", servicePointId: {}", () -> offsetDate, () -> tenantTimeZone, () -> servicePointId );
+
       ZonedDateTime scheduledForDateTime = getPeriod().plusDate(offsetDate);
       if (policy.canScheduleReminderUponClosedDay()) {
+        log.debug("nextNoticeDueOn: ignoring closed days");
         return ofAsync(scheduledForDateTime);
       } else {
+        log.debug("nextNoticeDueOn: taking closed days into account");
         return getFirstComingOpenDay(scheduledForDateTime, tenantTimeZone, servicePointId, calendars);
       }
     }
 
     private CompletableFuture<Result<ZonedDateTime>> getFirstComingOpenDay(
       ZonedDateTime scheduledDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars)  {
+
+      log.debug("getFirstComingOpenDay:: parameters scheduledDate: {}, tenantTimeZone: {}" +
+        ", servicePointId: {}", () -> scheduledDate, () -> tenantTimeZone, () -> servicePointId );
+
       LocalDate scheduledDayInTenantTimeZone = scheduledDate.withZoneSameInstant(tenantTimeZone).toLocalDate();
       return calendars.lookupOpeningDays(scheduledDayInTenantTimeZone, servicePointId)
         .thenApply(adjacentOpeningDaysResult -> daysUntilNextOpenDay(adjacentOpeningDaysResult.value()))

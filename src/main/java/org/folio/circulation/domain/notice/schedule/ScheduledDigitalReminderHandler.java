@@ -261,6 +261,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   protected CompletableFuture<Result<ScheduledNotice>> buildNextNotice (
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
+    log.debug("buildNextNotice:: parameters notice context: {}, reminder config: {}",
+      () -> context, () -> nextReminder);
 
     return configurationRepository.findTimeZoneConfiguration()
       .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime,
@@ -287,8 +289,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     if (loan.getNextReminder().hasZeroFee()) {
+      log.debug("buildNoticeContextJson: reminder without fee, notice context: ",
+        () -> context);
       return createLoanNoticeContext(loan);
     } else {
+      log.debug("buildNoticeContextJson: reminder with reminder fee, notice context: ",
+        () -> context);
       return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
     }
   }
