@@ -134,12 +134,10 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
     return getSystemTimeInTenantsZone()
       .thenCompose(tenantTime -> calendarRepository.lookupOpeningDays(
-        tenantTime.toLocalDate(),servicePointId)
-          .thenCompose(days -> {
-            Boolean openDay = days.value().getRequestedDay().isOpen();
-            return ofAsync(openDay);
-          })
-      );
+        tenantTime.toLocalDate(),servicePointId))
+      .thenApply(r -> r.next(days -> {
+        return succeeded(days.getRequestedDay().isOpen());
+      }));
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
@@ -289,11 +287,11 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     if (loan.getNextReminder().hasZeroFee()) {
-      log.debug("buildNoticeContextJson: reminder without fee, notice context: ",
+      log.debug("buildNoticeContextJson: reminder without fee, notice context: {} ",
         () -> context);
       return createLoanNoticeContext(loan);
     } else {
-      log.debug("buildNoticeContextJson: reminder with reminder fee, notice context: ",
+      log.debug("buildNoticeContextJson: reminder with reminder fee, notice context: {} ",
         () -> context);
       return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
     }

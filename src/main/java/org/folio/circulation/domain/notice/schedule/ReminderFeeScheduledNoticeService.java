@@ -15,7 +15,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class ReminderFeeScheduledNoticeService {
@@ -57,10 +56,10 @@ public class ReminderFeeScheduledNoticeService {
 
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), loanRecords.getTimeZone(),
         loan.getCheckoutServicePointId(), calendarRepository)
-      .thenCompose(nextDueTime -> ofAsync(new ScheduledNotice(UUID.randomUUID().toString(),
-            loan.getId(),null, loan.getUserId(), null, null,
-            TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime.value(),
-            instantiateNoticeConfig(reminderConfig))));
+      .thenApply(r -> r.next(nextDueTime -> succeeded(new ScheduledNotice(UUID.randomUUID().toString(),
+        loan.getId(), null, loan.getUserId(), null, null,
+        TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime,
+        instantiateNoticeConfig(reminderConfig)))));
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
