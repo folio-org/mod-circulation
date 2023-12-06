@@ -56,6 +56,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
@@ -147,6 +148,7 @@ public abstract class RenewalResource extends Resource {
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
+    final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
@@ -195,6 +197,7 @@ public abstract class RenewalResource extends Resource {
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))

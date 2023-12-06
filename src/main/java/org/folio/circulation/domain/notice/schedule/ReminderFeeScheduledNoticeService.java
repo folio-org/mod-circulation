@@ -7,11 +7,14 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.policy.RemindersPolicy.ReminderConfig;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.Clients;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZoneId;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -21,37 +24,66 @@ import static org.folio.circulation.support.results.Result.succeeded;
 public class ReminderFeeScheduledNoticeService {
 
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final CalendarRepository calendarRepository;
+  final OverdueFinePolicyRepository overdueFinePolicyRepository;
 
-
-  public ReminderFeeScheduledNoticeService (Clients clients) {
+  public ReminderFeeScheduledNoticeService(Clients clients) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     this.calendarRepository = new CalendarRepository(clients);
+    this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
   }
 
+  /**
+   * Used for scheduling first reminder after checkout
+   * @param records the objects passed in from the check-out chain of procedures
+   * @return the (unmodified) objects handed back to the check-out chain of procedures
+   */
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
-      ReminderConfig firstReminder =
-        loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
-      instantiateFirstScheduledNotice(records, firstReminder)
-        .thenAccept(r -> r.after(scheduledNoticesRepository::create));
+      scheduleFirstReminder(loan, records.getTimeZone());
     } else {
       log.debug("The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
     }
     return succeeded(records);
   }
 
+  /**
+   * Used for scheduling first reminder after renewal
+   * @param renewalContext the objects passed in from the renewal chain of procedures
+   * @return the (unmodified) objects handed back to the renewal chain of procedures
+   */
+  public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
+    Loan loan = renewalContext.getLoan();
+    overdueFinePolicyRepository.lookupPolicy(loan)
+      .thenApply(p -> {
+        if (p.value().isReminderFeesPolicy()) {
+          Loan loanWithReminderFeesPolicy = loan.withOverdueFinePolicy(p.value());
+          scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(
+              loanWithReminderFeesPolicy.getId(), TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
+            .thenAccept(r -> scheduleFirstReminder(loanWithReminderFeesPolicy, renewalContext.getTimeZone()));
+        } else {
+          log.debug("The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
+        }
+        return succeeded(null);
+      });
+    return succeeded(renewalContext);
+  }
+
+  private void scheduleFirstReminder(Loan loan, ZoneId timeZone) {
+    ReminderConfig firstReminder =
+      loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
+    instantiateFirstScheduledNotice(loan, timeZone, firstReminder).
+      thenAccept(r ->r.after(scheduledNoticesRepository::create));
+  }
+
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
-    LoanAndRelatedRecords loanRecords,
+    Loan loan,
+    ZoneId timeZone,
     ReminderConfig reminderConfig) {
-
-    final Loan loan = loanRecords.getLoan();
-
     return reminderConfig.nextNoticeDueOn(
-        loan.getDueDate(), loanRecords.getTimeZone(), loan.getCheckoutServicePointId(), calendarRepository)
+        loan.getDueDate(), timeZone, loan.getCheckoutServicePointId(), calendarRepository)
       .thenCompose(nextDueTime ->
         ofAsync(
           new ScheduledNotice(
@@ -74,6 +106,5 @@ public class ReminderFeeScheduledNoticeService {
       reminderConfig.getNoticeFormat(),
       true);
   }
-
 
 }
