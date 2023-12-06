@@ -119,7 +119,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       })
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
-//
+
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
     return ofAsync(() -> context)
@@ -133,8 +133,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
     return getSystemTimeInTenantsZone()
-      .thenCompose(tenantTime ->
-        calendarRepository.lookupOpeningDays(tenantTime.toLocalDate(),servicePointId)
+      .thenCompose(tenantTime -> calendarRepository.lookupOpeningDays(
+        tenantTime.toLocalDate(),servicePointId)
           .thenCompose(days -> {
             Boolean openDay = days.value().getRequestedDay().isOpen();
             return ofAsync(openDay);
@@ -263,14 +263,9 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
 
     return configurationRepository.findTimeZoneConfiguration()
-      .thenCompose(tenantTimeZone ->
-        nextReminder
-          .nextNoticeDueOn(
-            systemTime,
-            tenantTimeZone.value(),
-            context.getLoan().getCheckoutServicePointId(),
-            calendarRepository
-          )
+      .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime,
+            tenantTimeZone.value(), context.getLoan().getCheckoutServicePointId(),
+            calendarRepository)
           .thenCompose(nextRunTimeResult -> {
             ScheduledNotice nextReminderNotice = context.getNotice()
               .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));

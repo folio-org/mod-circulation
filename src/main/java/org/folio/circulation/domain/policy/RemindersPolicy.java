@@ -133,8 +133,7 @@ public class RemindersPolicy {
 
     private ReminderConfig (int sequenceNumber, JsonObject entry) {
       this.sequenceNumber = sequenceNumber;
-      this.period = Period.from(
-        entry.getInteger(INTERVAL),
+      this.period = Period.from(entry.getInteger(INTERVAL),
         normalizeTimeUnit(entry.getString(TIME_UNIT_ID)));
       this.reminderFee = getBigDecimalProperty(entry,REMINDER_FEE);
       this.noticeFormat =  entry.getString(NOTICE_FORMAT);
@@ -204,7 +203,6 @@ public class RemindersPolicy {
       String capitalized = WordUtils.capitalizeFully(timeUnitId);
       return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
-
 
   }
 }

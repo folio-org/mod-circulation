@@ -50,30 +50,17 @@ public class ReminderFeeScheduledNoticeService {
 
     final Loan loan = loanRecords.getLoan();
 
-    return reminderConfig.nextNoticeDueOn(
-        loan.getDueDate(), loanRecords.getTimeZone(), loan.getCheckoutServicePointId(), calendarRepository)
-      .thenCompose(nextDueTime ->
-        ofAsync(
-          new ScheduledNotice(
-            UUID.randomUUID().toString(),
-            loan.getId(),
-            null,
-            loan.getUserId(),
-            null,
-            null,
-            TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE,
-            nextDueTime.value(),
+    return reminderConfig.nextNoticeDueOn(loan.getDueDate(), loanRecords.getTimeZone(),
+        loan.getCheckoutServicePointId(), calendarRepository)
+      .thenCompose(nextDueTime -> ofAsync(new ScheduledNotice(UUID.randomUUID().toString(),
+            loan.getId(),null, loan.getUserId(), null, null,
+            TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime.value(),
             instantiateNoticeConfig(reminderConfig))));
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
-    return new ScheduledNoticeConfig(
-      NoticeTiming.AFTER,
-      null, // recurrence handled using reminder fee policy
-      reminderConfig.getNoticeTemplateId(),
-      reminderConfig.getNoticeFormat(),
-      true);
+    return new ScheduledNoticeConfig(NoticeTiming.AFTER, null,
+      reminderConfig.getNoticeTemplateId(), reminderConfig.getNoticeFormat(), true);
   }
-
 
 }
