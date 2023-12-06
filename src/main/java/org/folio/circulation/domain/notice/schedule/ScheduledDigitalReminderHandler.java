@@ -247,12 +247,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     } else if (isNoticeIrrelevant(context)) {
       return deleteNotice(context.getNotice(), "further reminder notices became irrelevant");
     } else {
-      return buildNextNotice(context, nextReminder)
+      return findNextRuntimeAndBuildNotice(context, nextReminder)
         .thenCompose(scheduledNoticeResult -> scheduledNoticesRepository.update(scheduledNoticeResult.value()));
     }
   }
 
-  protected CompletableFuture<Result<ScheduledNotice>> buildNextNotice (
+  protected CompletableFuture<Result<ScheduledNotice>> findNextRuntimeAndBuildNotice(
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
     log.debug("buildNextNotice:: parameters notice context: {}, reminder config: {}",
       () -> context, () -> nextReminder);
@@ -260,16 +260,21 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     return configurationRepository.findTimeZoneConfiguration()
       .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime,
             tenantTimeZone.value(), context.getLoan().getCheckoutServicePointId(),
-            calendarRepository)
-          .thenCompose(nextRunTimeResult -> {
-            ScheduledNotice nextReminderNotice = context.getNotice()
-              .withNextRunTime(nextRunTimeResult.value().truncatedTo(ChronoUnit.HOURS));
-            nextReminderNotice.getConfiguration()
-              .setTemplateId(nextReminder.getNoticeTemplateId())
-              .setFormat(nextReminder.getNoticeFormat());
-            return ofAsync(nextReminderNotice);
-          })
-      );
+            calendarRepository))
+        .thenApply(r -> r.next(nextRunTime -> {
+          return succeeded(buildNextNotice(context, nextReminder, nextRunTime));
+        }));
+  }
+
+  private static ScheduledNotice buildNextNotice(
+    ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder,
+    ZonedDateTime nextRunTimeResult) {
+    ScheduledNotice nextReminderNotice = context.getNotice()
+      .withNextRunTime(nextRunTimeResult.truncatedTo(ChronoUnit.HOURS));
+    nextReminderNotice.getConfiguration()
+      .setTemplateId(nextReminder.getNoticeTemplateId())
+      .setFormat(nextReminder.getNoticeFormat());
+    return nextReminderNotice;
   }
 
   @Override
