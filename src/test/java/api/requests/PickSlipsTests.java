@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -25,7 +24,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -38,6 +36,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.builders.Address;
@@ -48,6 +48,7 @@ import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 import api.support.http.UserResource;
 import api.support.matchers.UUIDMatcher;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -122,17 +123,27 @@ class PickSlipsTests extends APITests {
     assertResponseHasItems(response, 0);
   }
 
-  @Test
-  void responseContainsPickSlipWithAllAvailableTokens() {
+
+  @ParameterizedTest
+  @CsvSource({
+    "US, false",
+    ", false",
+    "XX, false",
+    "US, true",
+    ", true",
+    "XX, true"
+  })
+  void responseContainsPickSlipWithAllAvailableTokens(String countryCode, String primaryAddress) {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
-    Address address = AddressExamples.mainStreet();
+    Address address = AddressExamples.mainStreet(countryCode);
     var departmentId1 = UUID.randomUUID().toString();
     var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
-      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2))));
+      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2)))
+        .withPrimaryAddress(primaryAddress));
     ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     final var requestExpiration = LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
@@ -229,6 +240,10 @@ class PickSlipsTests extends APITests {
     assertThat(requesterContext.getString("region"), is(address.getRegion()));
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
+    if(Boolean.valueOf(primaryAddress)) {
+        assertThat(requesterContext.getString("primaryCountry"), is((countryCode!=null && countryCode.equalsIgnoreCase("US")) ?
+          "United States" : null));
+    }
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
     assertThat(requesterContext.getString("departments").split("; "),
       arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));
