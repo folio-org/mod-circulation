@@ -21,11 +21,16 @@ public class AddressExamples {
 
   public static Address SiriusBlack() {
     return new Address(HOME_ADDRESS_TYPE, "12 Grimmauld Place",
-      null, "London", "London region", "123456", "GB");
+      null, "London", "London region", "123456", "XX");
   }
 
   public static Address mainStreet() {
     return new Address(HOME_ADDRESS_TYPE, "16 Main St",
       "Apt 3a", "Northampton", "MA", "01060", "US");
+  }
+
+  public static Address mainStreet(String countryCode) {
+    return new Address(HOME_ADDRESS_TYPE, "16 Main St",
+      "Apt 3a", "Northampton", "MA", "01060", countryCode);
   }
 }
