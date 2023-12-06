@@ -1,3 +1,7 @@
+## 24.0.11 2023-12-06
+
+* The option to print picks slips doesn't activate (CIRC-1994)
+
 ## 24.0.10 2023-12-05
 
 * Fix returning same error code for different error messages (CIRC-1961)
