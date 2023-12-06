@@ -427,6 +427,7 @@ public class TemplateContextUtil {
 
     public String getCountryNameByCodeIgnoreCase(String code) {
       if (StringUtils.isEmpty(code) || !Stream.of(Locale.getISOCountries()).toList().contains(code)) {
+        log.info("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
         return null;
       }
 
