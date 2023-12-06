@@ -221,5 +221,14 @@ public class RemindersPolicy {
       return (capitalized.endsWith("s") ? capitalized : capitalized + "s");
     }
 
+    public String toString() {
+      return "ReminderConfig{" +
+        "Sequence=#" + sequenceNumber +
+        ", " + period +
+        ", reminderFee=" + reminderFee +
+        ", noticeFormat=" + noticeFormat +
+        ", noticeTemplateId=" + noticeTemplateId +
+        ", blockTemplateId=" + blockTemplateId + "}";
+    }
   }
 }
