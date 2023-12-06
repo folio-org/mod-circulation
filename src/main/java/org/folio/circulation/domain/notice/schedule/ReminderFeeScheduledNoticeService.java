@@ -58,25 +58,31 @@ public class ReminderFeeScheduledNoticeService {
   public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
     Loan loan = renewalContext.getLoan();
     overdueFinePolicyRepository.lookupPolicy(loan)
-      .thenApply(p -> {
-        if (p.value().isReminderFeesPolicy()) {
-          Loan loanWithReminderFeesPolicy = loan.withOverdueFinePolicy(p.value());
+      .thenApply(policyResult -> policyResult.next(policy -> {
+        if (policy.isReminderFeesPolicy()) {
+          log.debug("Renewal: Loan has reminder policy. Barcode: {}. Renewal context: {}.",
+            loan.getItem().getBarcode(), renewalContext);
           scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(
-              loanWithReminderFeesPolicy.getId(), TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
-            .thenAccept(r -> scheduleFirstReminder(loanWithReminderFeesPolicy, renewalContext.getTimeZone()));
+              loan.getId(), TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
+            .thenAccept(deleteResult -> deleteResult.next(response ->
+              scheduleFirstReminder(loan.withOverdueFinePolicy(policy), renewalContext.getTimeZone())));
         } else {
-          log.debug("The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
+          log.debug("The current item, barcode {}, is not subject to a reminder fees policy.",
+            loan.getItem().getBarcode());
         }
-        return succeeded(null);
-      });
+        return succeeded(renewalContext);
+      }));
     return succeeded(renewalContext);
   }
 
-  private void scheduleFirstReminder(Loan loan, ZoneId timeZone) {
-    ReminderConfig firstReminder =
-      loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
-    instantiateFirstScheduledNotice(loan, timeZone, firstReminder).
-      thenAccept(r ->r.after(scheduledNoticesRepository::create));
+  private Result<Void> scheduleFirstReminder(Loan loan, ZoneId timeZone) {
+    log.debug("scheduleFirstReminder:: parameters loan: {}, timeZone: {}",
+      () -> loan, () -> timeZone);
+
+    ReminderConfig firstReminder = loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
+    instantiateFirstScheduledNotice(loan, timeZone, firstReminder).thenAccept(
+      r -> r.after(scheduledNoticesRepository::create));
+    return succeeded(null);
   }
 
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
@@ -84,9 +90,9 @@ public class ReminderFeeScheduledNoticeService {
     ZoneId timeZone,
     ReminderConfig reminderConfig) {
 
-    log.debug("instantiateFirstScheduledNotice:: parameters loan: {}, timeZone: {}" +
+    log.debug("instantiateFirstScheduledNotice:: parameters loan: {}, timeZone: {}, " +
         "reminderConfig: {}", () -> loan, () -> timeZone, () -> reminderConfig);
-    
+
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
         loan.getCheckoutServicePointId(), calendarRepository)
       .thenApply(r -> r.next(nextDueTime -> succeeded(new ScheduledNotice(UUID.randomUUID().toString(),
@@ -96,6 +102,7 @@ public class ReminderFeeScheduledNoticeService {
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
+    log.debug("instantiateNoticeConfig:: parameters: {}", () -> reminderConfig);
     return new ScheduledNoticeConfig(NoticeTiming.AFTER, null,
       reminderConfig.getNoticeTemplateId(), reminderConfig.getNoticeFormat(), true);
   }
