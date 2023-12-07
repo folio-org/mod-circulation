@@ -86,9 +86,7 @@ public class ReminderFeeScheduledNoticeService {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
-    Loan loan,
-    ZoneId timeZone,
-    ReminderConfig reminderConfig) {
+    Loan loan, ZoneId timeZone, ReminderConfig reminderConfig) {
 
     log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
         " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
