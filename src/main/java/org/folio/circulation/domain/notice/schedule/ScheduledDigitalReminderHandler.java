@@ -129,9 +129,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
     return getSystemTimeInTenantsZone()
       .thenCompose(tenantTime -> calendarRepository.lookupOpeningDays(
-        tenantTime.toLocalDate(),servicePointId))
-      .thenApply(r -> r.next(days ->  succeeded(days.getRequestedDay().isOpen())
-      ));
+        tenantTime.toLocalDate(), servicePointId))
+      .thenApply(r -> r.map(days -> days.getRequestedDay().isOpen()));
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
@@ -254,14 +253,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected CompletableFuture<Result<ScheduledNotice>> findNextRuntimeAndBuildNotice(
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
     log.debug("buildNextNotice:: parameters notice context: {}, reminder config: {}",
-      () -> context, () -> nextReminder);
+      context, nextReminder);
 
     return configurationRepository.findTimeZoneConfiguration()
-      .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime,
-            tenantTimeZone.value(), context.getLoan().getCheckoutServicePointId(),
-            calendarRepository))
-        .thenApply(r -> r.next(nextRunTime -> succeeded(buildNextNotice(context, nextReminder, nextRunTime))
-        ));
+      .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime, tenantTimeZone.value(),
+        context.getLoan().getCheckoutServicePointId(), calendarRepository))
+      .thenApply(r -> r.map(nextRunTime -> buildNextNotice(context, nextReminder, nextRunTime)));
   }
 
   private static ScheduledNotice buildNextNotice(
@@ -286,11 +283,11 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     Loan loan = context.getLoan();
     if (loan.getNextReminder().hasZeroFee()) {
       log.debug("buildNoticeContextJson: reminder without fee, notice context: {} ",
-        () -> context);
+        context);
       return createLoanNoticeContext(loan);
     } else {
       log.debug("buildNoticeContextJson: reminder with reminder fee, notice context: {} ",
-        () -> context);
+        context);
       return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
     }
   }

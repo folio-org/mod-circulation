@@ -32,7 +32,7 @@ public class ReminderFeeScheduledNoticeService {
 
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
     log.debug("scheduleFirstReminder:: parameters loanAndRelatedRecords: {}",
-      () -> records);
+      records);
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       ReminderConfig firstReminder =
@@ -46,20 +46,19 @@ public class ReminderFeeScheduledNoticeService {
   }
 
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
-    LoanAndRelatedRecords loanRecords,
-    ReminderConfig reminderConfig) {
+    LoanAndRelatedRecords loanRecords, ReminderConfig reminderConfig) {
 
     log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
-        "reminderConfig: {}", () -> loanRecords, () -> reminderConfig);
+        "reminderConfig: {}", loanRecords, reminderConfig);
 
     final Loan loan = loanRecords.getLoan();
 
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), loanRecords.getTimeZone(),
         loan.getCheckoutServicePointId(), calendarRepository)
-      .thenApply(r -> r.next(nextDueTime -> succeeded(new ScheduledNotice(UUID.randomUUID().toString(),
+      .thenApply(r -> r.map(nextDueTime -> new ScheduledNotice(UUID.randomUUID().toString(),
         loan.getId(), null, loan.getUserId(), null, null,
         TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime,
-        instantiateNoticeConfig(reminderConfig)))));
+        instantiateNoticeConfig(reminderConfig))));
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
