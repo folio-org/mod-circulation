@@ -209,7 +209,7 @@ public class RemindersPolicy {
             new ValidationError("No calendar time table found for requested date", emptyMap())
           ));
         }
-        return succeeded(ChronoUnit.DAYS.between(openingDays.getRequestedDay().getDate(),nextDay.getDate()));
+        return succeeded(ChronoUnit.DAYS.between(openingDays.getRequestedDay().getDate(), nextDay.getDate()));
       }
     }
 
