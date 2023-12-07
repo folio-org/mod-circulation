@@ -40,7 +40,7 @@ public class ReminderFeeScheduledNoticeService {
    */
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
     log.debug("scheduleFirstReminder:: parameters loanAndRelatedRecords: {}",
-      () -> records);
+      records);
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       scheduleFirstReminder(loan, records.getTimeZone());
@@ -77,7 +77,7 @@ public class ReminderFeeScheduledNoticeService {
 
   private Result<Void> scheduleFirstReminder(Loan loan, ZoneId timeZone) {
     log.debug("scheduleFirstReminder:: parameters loan: {}, timeZone: {}",
-      () -> loan, () -> timeZone);
+      loan, timeZone);
 
     ReminderConfig firstReminder = loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
     instantiateFirstScheduledNotice(loan, timeZone, firstReminder).thenAccept(
@@ -90,19 +90,19 @@ public class ReminderFeeScheduledNoticeService {
     ZoneId timeZone,
     ReminderConfig reminderConfig) {
 
-    log.debug("instantiateFirstScheduledNotice:: parameters loan: {}, timeZone: {}, " +
-        "reminderConfig: {}", () -> loan, () -> timeZone, () -> reminderConfig);
+    log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
+        " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
 
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
         loan.getCheckoutServicePointId(), calendarRepository)
-      .thenApply(r -> r.next(nextDueTime -> succeeded(new ScheduledNotice(UUID.randomUUID().toString(),
+      .thenApply(r -> r.map(nextDueTime -> new ScheduledNotice(UUID.randomUUID().toString(),
         loan.getId(), null, loan.getUserId(), null, null,
         TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime,
-        instantiateNoticeConfig(reminderConfig)))));
+        instantiateNoticeConfig(reminderConfig))));
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
-    log.debug("instantiateNoticeConfig:: parameters: {}", () -> reminderConfig);
+    log.debug("instantiateNoticeConfig:: parameters: {}", reminderConfig);
     return new ScheduledNoticeConfig(NoticeTiming.AFTER, null,
       reminderConfig.getNoticeTemplateId(), reminderConfig.getNoticeFormat(), true);
   }

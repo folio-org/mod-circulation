@@ -175,7 +175,7 @@ public class RemindersPolicy {
       ZonedDateTime offsetDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars) {
 
       log.debug("nextNoticeDueOn:: parameters offsetDate: {}, tenantTimeZone: {}" +
-          ", servicePointId: {}", () -> offsetDate, () -> tenantTimeZone, () -> servicePointId );
+          ", servicePointId: {}", offsetDate, tenantTimeZone, servicePointId );
 
       ZonedDateTime scheduledForDateTime = getPeriod().plusDate(offsetDate);
       if (policy.canScheduleReminderUponClosedDay()) {
@@ -191,7 +191,7 @@ public class RemindersPolicy {
       ZonedDateTime scheduledDate, ZoneId tenantTimeZone, String servicePointId, CalendarRepository calendars)  {
 
       log.debug("getFirstComingOpenDay:: parameters scheduledDate: {}, tenantTimeZone: {}" +
-        ", servicePointId: {}", () -> scheduledDate, () -> tenantTimeZone, () -> servicePointId );
+        ", servicePointId: {}", scheduledDate, tenantTimeZone, servicePointId );
 
       LocalDate scheduledDayInTenantTimeZone = scheduledDate.withZoneSameInstant(tenantTimeZone).toLocalDate();
       return calendars.lookupOpeningDays(scheduledDayInTenantTimeZone, servicePointId)
@@ -209,7 +209,7 @@ public class RemindersPolicy {
             new ValidationError("No calendar time table found for requested date", emptyMap())
           ));
         }
-        return succeeded(ChronoUnit.DAYS.between(openingDays.getRequestedDay().getDate(),nextDay.getDate()));
+        return succeeded(ChronoUnit.DAYS.between(openingDays.getRequestedDay().getDate(), nextDay.getDate()));
       }
     }
 
