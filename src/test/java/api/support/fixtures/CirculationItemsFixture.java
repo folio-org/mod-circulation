@@ -7,7 +7,7 @@ import api.support.http.ResourceClient;
 import java.util.UUID;
 
 public class CirculationItemsFixture {
-  private final ResourceClient circulationItemsByIdsClient;
+  private final ResourceClient circulationItemsClient;
   private final ResourceClient circulationItemClient;
   private final MaterialTypesFixture materialTypesFixture;
   private final LoanTypesFixture loanTypesFixture;
@@ -16,15 +16,17 @@ public class CirculationItemsFixture {
     MaterialTypesFixture materialTypesFixture,
     LoanTypesFixture loanTypesFixture) {
 
-    circulationItemsByIdsClient = ResourceClient.forCirculationItemsByIds();
+    circulationItemsClient = ResourceClient.forCirculationItems();
     circulationItemClient = ResourceClient.forCirculationItem();
     this.materialTypesFixture = materialTypesFixture;
     this.loanTypesFixture = loanTypesFixture;
   }
 
-  public IndividualResource createCirculationItem(UUID itemId, String barcode, UUID holdingId, UUID locationId) {
-    CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder(itemId, barcode, holdingId, locationId, materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId(), true);
+  public IndividualResource createCirculationItem(String barcode, UUID holdingId, UUID locationId) {
+    CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder().withBarcode(barcode).withHoldingId(holdingId)
+      .withLoanType(loanTypesFixture.canCirculate().getId()).withMaterialType(materialTypesFixture.book().getId())
+      .withLocationId(locationId);
     circulationItemClient.create(circulationItemsBuilder);
-    return circulationItemsByIdsClient.create(circulationItemsBuilder);
+    return circulationItemsClient.create(circulationItemsBuilder);
   }
 }

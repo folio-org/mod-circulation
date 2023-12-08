@@ -23,7 +23,6 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -64,7 +63,7 @@ public class ItemRepository {
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
   private final CollectionResourceClient circulationItemClient;
-  private final CollectionResourceClient circulationItemsByIdsClient;
+  private final CollectionResourceClient circulationItemsClient;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -75,7 +74,7 @@ public class ItemRepository {
       new HoldingsRepository(clients.holdingsStorage()),
       new LoanTypeRepository(clients.loanTypesStorage()),
       clients.circulationItemClient(),
-      clients.circulationItemsByIdsClient());
+      clients.circulationItemsClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -147,19 +146,11 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
-    return fetchItemByBarcode(barcode)
+    return fetchItemByBarcode(barcode, createItemFinder())
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
-        item -> fetchCirculationItemByBarcode(barcode), item -> completedFuture(itemResult))))
+        item -> fetchItemByBarcode(barcode, createCirculationItemFinder())
+        , item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
-  }
-
-  private CompletableFuture<Result<Item>> fetchCirculationItemByBarcode(String barcode) {
-    final var mapper = new ItemMapper();
-
-    return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
-      .fetchWithQueryStringParameters(Map.of("barcode", barcode))
-      .thenApply(mapResult(identityMap::add))
-      .thenApply(r -> r.map(mapper::toDomain));
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
@@ -292,10 +283,9 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add));
   }
 
-  private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
+  private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode, CqlQueryFinder<JsonObject> finder) {
     log.info("Fetching item with barcode: {}", barcode);
 
-    final var finder = createItemFinder();
     final var mapper = new ItemMapper();
 
     return finder.findByQuery(exactMatch("barcode", barcode), one())
@@ -421,6 +411,6 @@ public class ItemRepository {
   }
 
   private CqlQueryFinder<JsonObject> createCirculationItemFinder() {
-    return new CqlQueryFinder<>(circulationItemsByIdsClient, "items", identity());
+    return new CqlQueryFinder<>(circulationItemsClient, "items", identity());
   }
 }

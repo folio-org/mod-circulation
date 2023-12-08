@@ -139,7 +139,7 @@ class ItemRepositoryTests {
       () -> new Response(200, body, "application/json")));
   }
 
-  private ItemRepository createRepository(CollectionResourceClient itemsClient, CollectionResourceClient circulationItemClient, CollectionResourceClient circulationItemsByIdsClient) {
+  private ItemRepository createRepository(CollectionResourceClient itemsClient, CollectionResourceClient circulationItemClient, CollectionResourceClient circulationItemsClient) {
     final var locationRepository = mock(LocationRepository.class);
     final var materialTypeRepository = mock(MaterialTypeRepository.class);
     final var instanceRepository = mock(InstanceRepository.class);
@@ -161,7 +161,7 @@ class ItemRepositoryTests {
 
     return new ItemRepository(itemsClient, locationRepository,
       materialTypeRepository, instanceRepository,
-      holdingsRepository, loanTypeRepository, circulationItemClient, circulationItemsByIdsClient);
+      holdingsRepository, loanTypeRepository, circulationItemClient, circulationItemsClient);
   }
 
   private Item dummyItem() {

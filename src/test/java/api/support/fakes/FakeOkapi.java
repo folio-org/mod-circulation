@@ -417,7 +417,6 @@ public class FakeOkapi extends AbstractVerticle {
 
     new FakeStorageModuleBuilder()
       .withRootPath("/circulation-item")
-      .withCollectionPropertyName("items")
       .withChangeMetadata()
       .create().register(router);
 
