@@ -87,23 +87,26 @@ class ItemRepositoryTests {
   void returnCirculationItemWhenNotFound() {
     final var itemsClient = mock(CollectionResourceClient.class);
     final var circulationItemsClient = mock(CollectionResourceClient.class);
-    final var itemId = UUID.randomUUID().toString();
-    final var circulationItemsByIdsClient = mock(CollectionResourceClient.class);
-    final var repository = createRepository(itemsClient, circulationItemsClient, circulationItemsByIdsClient);
+    final var barcode = "HZFRKBNXIA";
+    final var repository = createRepository(itemsClient, null, circulationItemsClient);
 
-    final var circulationItemJson = new JsonObject()
-      .put("id", itemId)
-      .put("holdingsRecordId", UUID.randomUUID())
-      .put("effectiveLocationId", UUID.randomUUID()).toString();
+    final var circulationItemJson = new JsonObject();
+    circulationItemJson.put("id", "673bc784-6536-4286-a528-b0de544cf037");
+    circulationItemJson.put("dcbItem", true);
+    circulationItemJson.put("barcode", barcode);
+    circulationItemJson.put("lendingLibraryCode", "123456");
+    circulationItemJson.put("holdingsRecordId", "d0b9f1c8-8f3d-4c7e-8aef-5b9b5a7f9b7e");
+
     final var emptyResult = new JsonObject()
       .put("items", new JsonArray()).toString();
+    final var circulationItems = new JsonObject()
+      .put("items", new JsonArray().add(circulationItemJson));
 
     when(itemsClient.getMany(any(), any())).thenReturn(ofAsync(
       () -> new Response(200, emptyResult, "application/json")));
-    when(circulationItemsClient.getManyWithQueryStringParameters(any())).thenReturn(ofAsync(
-      () -> new Response(200, circulationItemJson, "application/json")));
-
-    assertThat(get(repository.fetchByBarcode(itemId)).value().getItemId(), is(itemId));
+    when(circulationItemsClient.getMany(any(), any())).thenReturn(ofAsync(
+      () -> new Response(200, circulationItems.toString(), "application/json")));
+    assertThat(get(repository.fetchByBarcode(barcode)).value().getBarcode(), is(barcode));
   }
 
   @Test
