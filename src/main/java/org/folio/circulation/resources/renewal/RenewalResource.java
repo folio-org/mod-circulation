@@ -139,6 +139,8 @@ public abstract class RenewalResource extends Resource {
       itemRepository, userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
@@ -177,8 +179,8 @@ public abstract class RenewalResource extends Resource {
         automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
       .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
-      .thenComposeAsync(r -> blockRenewalOfItemsWithReminderFees(
-        r, errorHandler))
+      .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(r, errorHandler)))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
         RenewalContext::withTlrSettings))
@@ -327,6 +329,19 @@ public abstract class RenewalResource extends Resource {
 
     return loanPolicyRepository.lookupLoanPolicy(renewalContext);
   }
+
+  private CompletableFuture<Result<RenewalContext>> lookupOverdueFinePolicy(
+    RenewalContext renewalContext, OverdueFinePolicyRepository overdueFinePolicyRepository,
+    CirculationErrorHandler errorHandler) {
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+      return completedFuture(succeeded(renewalContext));
+    }
+
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(renewalContext.getLoan()))
+      .thenApply(mapResult(renewalContext::withLoan));
+ }
 
   private CompletableFuture<Result<RenewalContext>> lookupRequestQueue(
     RenewalContext renewalContext, RequestQueueRepository requestQueueRepository,

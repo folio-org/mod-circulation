@@ -2,6 +2,7 @@ package api.loans;
 
 import api.support.APITests;
 import api.support.builders.*;
+import api.support.fixtures.OverdueFinePoliciesFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
@@ -87,8 +88,9 @@ class ReminderFeeTests extends APITests {
     remindersTwoDaysBetweenIncludeClosedDaysPolicyId = overdueFinePoliciesFixture
       .remindersTwoDaysBetween(true).getId();
 
-    remindersOneDayBetweenNotOnClosedDaysId = overdueFinePoliciesFixture
-      .remindersOneDayBetween(false).getId();
+    IndividualResource policy = overdueFinePoliciesFixture
+      .remindersOneDayBetween(false);
+    remindersOneDayBetweenNotOnClosedDaysId = policy.getId();
 
     remindersTwoDaysBetweenNotOnClosedDaysPolicyId = overdueFinePoliciesFixture
       .remindersTwoDaysBetween(false).getId();
@@ -572,7 +574,7 @@ class ReminderFeeTests extends APITests {
 
     // Assert that error message for renewal block is received in response
     assertThat(renewalResponse.getBody(), containsString(
-      "Patron's fee/fine balance exceeds the limit for their patron group! Pay up!"));
+      "Loan cannot be renewed because it has reminders."));
   }
 
   @Test
@@ -609,6 +611,48 @@ class ReminderFeeTests extends APITests {
 
     // Attempt renewal when Reminders Policy allowRenewalOfItemsWithReminderFees
     // is set to 'False' but loan has no reminders yet
+    JsonObject renewedLoan = loansFixture.attemptRenewal(200,
+      item, borrower).getJson();
+
+    assertThat("renewal count should be 1 after renewal",
+      renewedLoan.getInteger("renewalCount"), is(1));
+
+  }
+
+  @Test
+  void willAllowRenewalIfHasRemindersButRemindersAllowed() {
+    useFallbackPolicies(
+      loanPolicyId,
+      requestPolicyId,
+      noticePolicyId,
+      remindersOneDayBetweenNotOnClosedDaysId,
+      lostItemFeePolicyId);
+
+    // Check out item, all days open service point
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+    final JsonObject loan = response.getJson();
+    ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
+
+    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+
+    ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
+    // One day after due date, no reminder yet
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
+
+    assertThat("has no renewals yet", not(loan.containsKey("renewalCount")));
+
+    // Attempt renewal when there are reminders but Reminders Policy
+    // allowRenewalOfItemsWithReminderFees is set to 'True'
     JsonObject renewedLoan = loansFixture.attemptRenewal(200,
       item, borrower).getJson();
 

@@ -16,6 +16,7 @@ public class OverdueFinePolicyWithReminderFeesBuilder implements Builder {
   public static final String NOTICE_FORMAT = "noticeFormat";
   public static final String NOTICE_TEMPLATE_ID = "noticeTemplateId";
   public static final String COUNT_CLOSED = "countClosed";
+  public static final String ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES = "allowRenewalOfItemsWithReminderFees";
 
   public OverdueFinePolicyWithReminderFeesBuilder(UUID id, String name) {
     overdueFinePolicyJson
@@ -34,6 +35,11 @@ public class OverdueFinePolicyWithReminderFeesBuilder implements Builder {
 
   public OverdueFinePolicyWithReminderFeesBuilder withCanSendReminderUponClosedDay(Boolean val) {
     overdueFinePolicyJson.getJsonObject(REMINDER_FEES_POLICY).put(COUNT_CLOSED, val);
+    return this;
+  }
+
+  public OverdueFinePolicyWithReminderFeesBuilder withAllowRenewalOfItemsWithReminderFees (Boolean val) {
+    overdueFinePolicyJson.getJsonObject(REMINDER_FEES_POLICY).put(ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES, val);
     return this;
   }
 

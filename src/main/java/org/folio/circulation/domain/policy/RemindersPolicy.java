@@ -54,11 +54,11 @@ public class RemindersPolicy {
 
   public RemindersPolicy (JsonObject reminderFeesPolicy) {
     this.schedule = new Schedule(this, getArrayProperty(reminderFeesPolicy, REMINDER_SCHEDULE));
-    this.countClosed = getBooleanProperty(reminderFeesPolicy,COUNT_CLOSED);
-    this.ignoreGracePeriodRecall = getBooleanProperty(reminderFeesPolicy,ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES);
-    this.ignoreGracePeriodHolds = getBooleanProperty(reminderFeesPolicy,IGNORE_GRACE_PERIOD_RECALL);
-    this.allowRenewalOfItemsWithReminderFees = getBooleanProperty(reminderFeesPolicy,IGNORE_GRACE_PERIOD_HOLDS);
-    this.clearPatronBlockWhenPaid = getBooleanProperty(reminderFeesPolicy,CLEAR_PATRON_BLOCK_WHEN_PAID);
+    this.countClosed = getBooleanProperty(reminderFeesPolicy, COUNT_CLOSED);
+    this.ignoreGracePeriodRecall = getBooleanProperty(reminderFeesPolicy, IGNORE_GRACE_PERIOD_RECALL);
+    this.ignoreGracePeriodHolds = getBooleanProperty(reminderFeesPolicy, IGNORE_GRACE_PERIOD_HOLDS);
+    this.allowRenewalOfItemsWithReminderFees = getBooleanProperty(reminderFeesPolicy, ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES);
+    this.clearPatronBlockWhenPaid = getBooleanProperty(reminderFeesPolicy, CLEAR_PATRON_BLOCK_WHEN_PAID);
   }
 
   public boolean canScheduleReminderUponClosedDay() {
