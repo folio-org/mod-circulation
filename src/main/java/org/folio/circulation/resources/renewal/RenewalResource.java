@@ -180,7 +180,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
-      .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(r, errorHandler)))
+      .thenComposeAsync(r ->  blockRenewalOfItemsWithReminderFees(r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
         RenewalContext::withTlrSettings))
