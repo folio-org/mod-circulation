@@ -38,7 +38,7 @@ public class RenewalOfItemsWithReminderFeesValidator {
 
     if ((lastFeeBilledCount != null && lastFeeBilledCount > 0) && Boolean.FALSE.equals(allowRenewalWhenThereAreReminders)) {
       String reason = "Renewals not allowed for loans with reminders.";
-      log.info(String.format("createBlockedRenewalDueToReminderFeesPolicyError:: %s", reason));
+      log.info("createBlockedRenewalDueToReminderFeesPolicyError:: {}", reason);
       String message = "Loan cannot be renewed because it has reminders.";
       return failed(createBlockedRenewalDueToReminderFeesPolicyError(message, reason));
     } else {
