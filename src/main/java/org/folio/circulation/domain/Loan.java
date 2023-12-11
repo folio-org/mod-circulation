@@ -194,10 +194,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, LoanProperties.ACTION, action);
   }
 
-  public Loan updateAction(String action) {
-    log.debug("changeAction:: parameters action: {}", action);
-    write(representation, LoanProperties.ACTION, action);
-
+  public Loan withAction(String action) {
+    changeAction(action);
     return this;
   }
 
