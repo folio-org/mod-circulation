@@ -59,7 +59,11 @@ import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
-import org.folio.circulation.domain.validation.*;
+import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
+import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
+import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
+import org.folio.circulation.domain.validation.UserManualBlocksValidator;
+import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
@@ -171,8 +175,7 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
-      .thenComposeAsync(r -> refuseWhenPatronIsInactive(
-        r, errorHandler, USER_IS_INACTIVE))
+      .thenComposeAsync(r -> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(

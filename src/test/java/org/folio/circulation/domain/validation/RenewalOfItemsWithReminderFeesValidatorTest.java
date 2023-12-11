@@ -54,7 +54,7 @@ class RenewalOfItemsWithReminderFeesValidatorTest {
 
     assertThat(result.failed(), is(true));
     assertThat(result, hasValidationFailure(
-      "Patron's fee/fine balance exceeds the limit for their patron group! Pay up!"));
+      "Loan cannot be renewed because it has reminders."));
   }
 
   private Loan createLoan(Boolean allowRenewalOfItemsWithReminderFees, boolean hasReminders) {
