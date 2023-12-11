@@ -29,12 +29,8 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::itemsStorageUrl, "items");
   }
 
-  public static ResourceClient forCirculationItems() {
-    return new ResourceClient(InterfaceUrls::circulationItemsUrl, "items");
-  }
-
   public static ResourceClient forCirculationItem() {
-    return new ResourceClient(InterfaceUrls::circulationItemUrl, "item");
+    return new ResourceClient(InterfaceUrls::circulationItemUrl, "items");
   }
 
   public static ResourceClient forHoldings() {

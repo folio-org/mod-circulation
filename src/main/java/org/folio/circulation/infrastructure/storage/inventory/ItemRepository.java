@@ -63,7 +63,6 @@ public class ItemRepository {
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
   private final CollectionResourceClient circulationItemClient;
-  private final CollectionResourceClient circulationItemsClient;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -73,8 +72,7 @@ public class ItemRepository {
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
       new LoanTypeRepository(clients.loanTypesStorage()),
-      clients.circulationItemClient(),
-      clients.circulationItemsClient());
+      clients.circulationItemClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -411,6 +409,6 @@ public class ItemRepository {
   }
 
   private CqlQueryFinder<JsonObject> createCirculationItemFinder() {
-    return new CqlQueryFinder<>(circulationItemsClient, "items", identity());
+    return new CqlQueryFinder<>(circulationItemClient, "items", identity());
   }
 }
