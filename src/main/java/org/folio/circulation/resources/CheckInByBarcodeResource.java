@@ -89,6 +89,8 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
         CheckInContext::withTlrSettings))
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        CheckInContext::withTimeZone))
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))

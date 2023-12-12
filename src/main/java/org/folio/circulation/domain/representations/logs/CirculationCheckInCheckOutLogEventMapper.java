@@ -10,6 +10,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.LogUtil.listAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -137,17 +138,17 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
   private static void populateLoanData(CheckInContext checkInContext, JsonObject logEventPayload, User userFromLastLoan) {
     if (nonNull(checkInContext.getLoan())) {
-      populateLoanData(checkInContext.getLoan(), logEventPayload);
+      populateLoanData(checkInContext.getLoan(), logEventPayload, checkInContext.getTimeZone());
     } else {
       enrichWithUserBarcode(logEventPayload, userFromLastLoan);
     }
   }
 
   private static void populateLoanData(LoanAndRelatedRecords loanAndRelatedRecords, JsonObject logEventPayload) {
-    populateLoanData(loanAndRelatedRecords.getLoan(), logEventPayload);
+    populateLoanData(loanAndRelatedRecords.getLoan(), logEventPayload, loanAndRelatedRecords.getTimeZone());
   }
 
-  private static void populateLoanData(Loan checkInCheckOutLoan, JsonObject logEventPayload) {
+  private static void populateLoanData(Loan checkInCheckOutLoan, JsonObject logEventPayload, ZoneId zoneId) {
     log.debug("populateLoanData:: parameters checkInCheckOutLoan: {}, logEventPayload: {}",
       checkInCheckOutLoan, logEventPayload);
 
@@ -156,6 +157,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, SYSTEM_RETURN_DATE.value(), checkInCheckOutLoan.getSystemReturnDate());
     write(logEventPayload, RETURN_DATE.value(), checkInCheckOutLoan.getReturnDate());
     write(logEventPayload, DUE_DATE.value(), checkInCheckOutLoan.getDueDate());
+    write(logEventPayload, ZONE_ID.value(), zoneId.getId());
     ofNullable(checkInCheckOutLoan.getUser())
       .ifPresent(user -> {
         write(logEventPayload, USER_ID.value(), user.getId());

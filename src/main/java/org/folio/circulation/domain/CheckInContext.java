@@ -1,5 +1,6 @@
 package org.folio.circulation.domain;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,10 +38,11 @@ public class CheckInContext {
   private final ZonedDateTime checkInProcessedDateTime;
   private final boolean inHouseUse;
   private final ItemStatus itemStatusBeforeCheckIn;
+  private final ZoneId timeZone;
 
   public CheckInContext(CheckInByBarcodeRequest checkInRequest) {
     this(checkInRequest, null, null, null, null, null, null, null,
-      ClockUtil.getZonedDateTime(), false, null);
+      ClockUtil.getZonedDateTime(), false, null, null);
   }
 
   public CheckInContext withTlrSettings(TlrSettingsConfiguration tlrSettingsConfiguration) {
@@ -55,7 +57,8 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withItem(Item item) {
@@ -77,7 +80,8 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withLoan(Loan loan) {
@@ -92,7 +96,8 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withRequestQueue(RequestQueue requestQueue) {
@@ -107,7 +112,8 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withCheckInServicePoint(ServicePoint checkInServicePoint) {
@@ -122,7 +128,8 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withHighestPriorityFulfillableRequest(Request request) {
@@ -137,7 +144,8 @@ public class CheckInContext {
       loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withLoggedInUserId(String userId) {
@@ -152,7 +160,8 @@ public class CheckInContext {
       userId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withInHouseUse(boolean inHouseUse) {
@@ -167,7 +176,8 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       inHouseUse,
-      this.itemStatusBeforeCheckIn);
+      this.itemStatusBeforeCheckIn,
+      this.timeZone);
   }
 
   public CheckInContext withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
@@ -182,7 +192,24 @@ public class CheckInContext {
       this.loggedInUserId,
       this.checkInProcessedDateTime,
       this.inHouseUse,
-      itemStatus);
+      itemStatus,
+      this.timeZone);
+  }
+
+  public CheckInContext withTimeZone(ZoneId timeZone) {
+    return new CheckInContext(
+      this.checkInRequest,
+      this.tlrSettings,
+      this.item,
+      this.loan,
+      this.requestQueue,
+      this.checkInServicePoint,
+      this.highestPriorityFulfillableRequest,
+      this.loggedInUserId,
+      this.checkInProcessedDateTime,
+      this.inHouseUse,
+      this.itemStatusBeforeCheckIn,
+      timeZone);
   }
 
   public boolean isInHouseUse() {
@@ -239,5 +266,9 @@ public class CheckInContext {
 
   public ItemStatus getItemStatusBeforeCheckIn() {
     return itemStatusBeforeCheckIn;
+  }
+
+  public ZoneId getTimeZone() {
+    return timeZone;
   }
 }
