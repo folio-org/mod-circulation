@@ -215,7 +215,7 @@ public class TemplateContextUtil {
         .put("effectiveLocationSpecific", location.getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
-        .put("effectiveLocationInstitution", location.getInstitutionName())
+        .put("effectiveLocationInstitution", item.isDcbItem()?item.getLendingLibraryCode():location.getInstitutionName())
         .put("effectiveLocationDiscoveryDisplayName", location.getDiscoveryDisplayName());
 
       var primaryServicePoint = location.getPrimaryServicePoint();
