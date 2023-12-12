@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.support.http.client.Offset.noOffset;
 
 import java.net.URL;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -85,6 +86,13 @@ public class CollectionResourceClient implements GetManyRecordsClient {
       : collectionRoot.toString();
 
     return client.get(url);
+  }
+
+  public CompletableFuture<Result<Response>> getManyWithQueryStringParameters(Map<String, String> queryParameters) {
+    return getManyWithRawQueryStringParameters(queryParameters.entrySet().stream()
+      .map(entry -> entry.getKey() + "=" + entry.getValue())
+      .reduce((a, b) -> a + "&" + b)
+      .orElse(""));
   }
 
   @Override

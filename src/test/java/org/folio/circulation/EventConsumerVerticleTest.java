@@ -70,6 +70,7 @@ public class EventConsumerVerticleTest extends APITests {
     verifyConsumerGroups(Map.of(subgroup0, 1));
 
     // verticle2 is deployed, new consumer is created in a separate subgroup1
+
     String verticleId2 = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
 
@@ -83,6 +84,7 @@ public class EventConsumerVerticleTest extends APITests {
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup2, 1));
 
     // verticle4 is deployed, the now vacant subgroup1 is recreated and new consumer joins it
+
     String verticleId4 = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1, subgroup2, 1));
 
@@ -108,6 +110,7 @@ public class EventConsumerVerticleTest extends APITests {
 
     // first verticle has been deployed beforehand, so we should already see subgroup0 with 1 consumer
     verifyConsumerGroups(Map.of(subgroup0, 1));
+
     String verticleId = deployVerticle();
     verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
 

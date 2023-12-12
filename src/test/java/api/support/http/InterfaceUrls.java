@@ -44,6 +44,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/item-storage/items" + subPath);
   }
 
+  public static URL circulationItemUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/circulation-item" + subPath);
+  }
+
   public static URL holdingsStorageUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/holdings-storage/holdings" + subPath);
   }

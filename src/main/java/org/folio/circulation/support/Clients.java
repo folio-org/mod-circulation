@@ -67,6 +67,7 @@ public class Clients {
   private final CollectionResourceClient actualCostFeeFineCancelClient;
   private final CollectionResourceClient departmentClient;
   private final CollectionResourceClient checkOutLockStorageClient;
+  private final CollectionResourceClient circulationItemClient;
   private final GetManyRecordsClient settingsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
@@ -134,6 +135,7 @@ public class Clients {
       departmentClient = createDepartmentClient(client, context);
       checkOutLockStorageClient = createCheckoutLockClient(client, context);
       settingsStorageClient = createSettingsStorageClient(client, context);
+      circulationItemClient = createCirculationItemClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -366,6 +368,10 @@ public class Clients {
 
   public GetManyRecordsClient settingsStorageClient() {
     return settingsStorageClient;
+  }
+
+  public CollectionResourceClient circulationItemClient() {
+    return circulationItemClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -787,6 +793,12 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return  getCollectionResourceClient(client, context, "/check-out-lock-storage");
+  }
+
+  private CollectionResourceClient createCirculationItemClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return  getCollectionResourceClient(client, context, "/circulation-item");
   }
 
   private GetManyRecordsClient createSettingsStorageClient(
