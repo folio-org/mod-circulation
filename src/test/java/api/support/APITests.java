@@ -45,6 +45,7 @@ import api.support.fixtures.ChangeDueDateFixture;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CheckOutLockFixture;
+import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.ConfigurationsFixture;
