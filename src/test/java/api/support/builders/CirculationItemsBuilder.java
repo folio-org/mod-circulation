@@ -109,6 +109,18 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.lendingLibraryCode);
   }
 
+  public CirculationItemsBuilder withLendingLibraryCode(String lendingLibraryCode) {
+    return new CirculationItemsBuilder(
+      this.itemId,
+      this.barcode,
+      this.holdingId,
+      this.locationId,
+      this.materialTypeId,
+      this.loanTypeId,
+      this.isDcb,
+      lendingLibraryCode);
+  }
+
   public CirculationItemsBuilder withLoanType(UUID loanTypeId) {
     return new CirculationItemsBuilder(
       this.itemId,
