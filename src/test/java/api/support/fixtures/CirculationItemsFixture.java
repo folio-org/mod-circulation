@@ -26,4 +26,11 @@ public class CirculationItemsFixture {
       .withLocationId(locationId);
     return circulationItemClient.create(circulationItemsBuilder);
   }
+
+  public IndividualResource createCirculationItemWithLandingLibrary(String barcode, UUID holdingId, UUID locationId, String landingLibrary) {
+    CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder().withBarcode(barcode).withHoldingId(holdingId)
+      .withLoanType(loanTypesFixture.canCirculate().getId()).withMaterialType(materialTypesFixture.book().getId())
+      .withLocationId(locationId).withLendingLibraryCode(landingLibrary);
+    return circulationItemClient.create(circulationItemsBuilder);
+  }
 }
