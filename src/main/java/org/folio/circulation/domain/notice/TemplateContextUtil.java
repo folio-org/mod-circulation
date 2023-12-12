@@ -101,7 +101,7 @@ public class TemplateContextUtil {
 
     if (ObjectUtils.allNotNull(item, itemContext)) {
       write(itemContext, "lastCheckedInDateTime", ClockUtil.getZonedDateTime());
-      if (item.getInTransitDestinationServicePoint() != null) {
+      if (item != null && item.getInTransitDestinationServicePoint() != null) {
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
       }
       if (context.getCheckInServicePoint() != null) {
