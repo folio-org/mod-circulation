@@ -45,6 +45,8 @@ import api.support.http.UserResource;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
+import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;

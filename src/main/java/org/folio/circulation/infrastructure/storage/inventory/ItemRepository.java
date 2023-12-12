@@ -14,6 +14,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.json.JsonPropertyWriter.remove;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.AsynchronousResultBindings.combineAfter;
+import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -61,6 +62,7 @@ public class ItemRepository {
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
+  private final CollectionResourceClient circulationItemClient;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -69,7 +71,8 @@ public class ItemRepository {
         new ServicePointRepository(clients)),
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
-      new LoanTypeRepository(clients.loanTypesStorage()));
+      new LoanTypeRepository(clients.loanTypesStorage()),
+      clients.circulationItemClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -115,7 +118,8 @@ public class ItemRepository {
       write(updatedItemRepresentation, LAST_CHECK_IN, lastCheckIn.toJson());
     }
 
-    return itemsClient.put(item.getItemId(), updatedItemRepresentation)
+    return (item.isDcbItem() ? circulationItemClient : itemsClient)
+      .put(item.getItemId(), updatedItemRepresentation)
       .thenApply(noContentRecordInterpreter(item)::flatMap)
       .thenCompose(x -> ofAsync(() -> item));
   }
@@ -140,13 +144,27 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
-    return fetchItemByBarcode(barcode)
+    return fetchItemByBarcode(barcode, createItemFinder())
+      .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
+        item -> fetchItemByBarcode(barcode, createCirculationItemFinder())
+        , item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
+      .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
+        item -> fetchCirculationItem(itemId), item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
+  }
+
+  private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
+    final var mapper = new ItemMapper();
+
+    return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
+      .fetch(id)
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(r -> r.map(mapper::toDomain));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLocations(
@@ -229,7 +247,25 @@ public class ItemRepository {
 
     return finder.findByIds(itemIds)
       .thenApply(mapResult(identityMap::add))
-      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)));
+      .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)))
+      .thenCompose(res -> res.value().getTotalRecords() == itemIds.size()
+        ? CompletableFuture.completedFuture(res)
+        : res.combineAfter(x -> lookupDcbItem(res, itemIds), MultipleRecords::combine));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>>
+    lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
+    log.debug("lookupDcbItem:: Looking up for DCB items");
+
+    var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
+    final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
+    var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids)).toList();
+    final var mapper = new ItemMapper();
+
+    return finder.findByIds(dcbItemIds)
+      .thenApply(mapResult(identityMap::add))
+      .thenApply(r -> r.map(records -> records.mapRecords(mapper::toDomain)))
+      .thenApply(r -> r.mapFailure(failure -> succeeded(MultipleRecords.empty())));
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
@@ -245,10 +281,9 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add));
   }
 
-  private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode) {
+  private CompletableFuture<Result<Item>> fetchItemByBarcode(String barcode, CqlQueryFinder<JsonObject> finder) {
     log.info("Fetching item with barcode: {}", barcode);
 
-    final var finder = createItemFinder();
     final var mapper = new ItemMapper();
 
     return finder.findByQuery(exactMatch("barcode", barcode), one())
@@ -371,5 +406,9 @@ public class ItemRepository {
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
     return new CqlQueryFinder<>(itemsClient, "items", identity());
+  }
+
+  private CqlQueryFinder<JsonObject> createCirculationItemFinder() {
+    return new CqlQueryFinder<>(circulationItemClient, "items", identity());
   }
 }
