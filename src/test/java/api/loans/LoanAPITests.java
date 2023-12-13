@@ -1289,7 +1289,7 @@ class LoanAPITests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
 
     IndividualResource locationsResource = locationsFixture.mainFloor();
-    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(UUID.randomUUID(), "100002222", holdings.getId(), locationsResource.getId());
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem("100002222", holdings.getId(), locationsResource.getId());
     loansFixture.createLoan(circulationItem, usersFixture.jessica());
 
     JsonObject loan = loansFixture.getLoans().getFirst();
