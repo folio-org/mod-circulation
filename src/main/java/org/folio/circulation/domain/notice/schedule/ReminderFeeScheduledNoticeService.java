@@ -5,9 +5,9 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.NoticeTiming;
+import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.domain.policy.RemindersPolicy.ReminderConfig;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.results.Result;
@@ -25,16 +25,14 @@ public class ReminderFeeScheduledNoticeService {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final CalendarRepository calendarRepository;
-  final OverdueFinePolicyRepository overdueFinePolicyRepository;
 
   public ReminderFeeScheduledNoticeService(Clients clients) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     this.calendarRepository = new CalendarRepository(clients);
-    this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
   }
 
   /**
-   * Used for scheduling first reminder after checkout
+   * Schedules first reminder after checkout
    * @param records the objects passed in from the check-out chain of procedures
    * @return the (unmodified) objects handed back to the check-out chain of procedures
    */
@@ -51,27 +49,23 @@ public class ReminderFeeScheduledNoticeService {
   }
 
   /**
-   * Used for scheduling first reminder after renewal
-   * @param renewalContext the objects passed in from the renewal chain of procedures
-   * @return the (unmodified) objects handed back to the renewal chain of procedures
+   * Schedules first reminder after renewal
+   * @param renewalContext passed in from the renewal process
+   * @return the renewal context back to the renewal process
    */
   public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
     Loan loan = renewalContext.getLoan();
-    overdueFinePolicyRepository.lookupPolicy(loan)
-      .thenApply(policyResult -> policyResult.next(policy -> {
-        if (policy.isReminderFeesPolicy()) {
-          log.debug("Renewal: Loan has reminder policy. Barcode: {}. Renewal context: {}.",
-            loan.getItem().getBarcode(), renewalContext);
-          scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(
-              loan.getId(), TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
-            .thenAccept(deleteResult -> deleteResult.next(response ->
-              scheduleFirstReminder(loan.withOverdueFinePolicy(policy), renewalContext.getTimeZone())));
-        } else {
-          log.debug("The current item, barcode {}, is not subject to a reminder fees policy.",
-            loan.getItem().getBarcode());
-        }
-        return succeeded(renewalContext);
-      }));
+    OverdueFinePolicy policy = loan.getOverdueFinePolicy();
+    if (policy.isReminderFeesPolicy()) {
+      log.debug("Reschedule reminder on renewal: Loan has reminder policy. Barcode: {}. Renewal context: {}.",
+        loan.getItem().getBarcode(), renewalContext);
+      scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(),
+          TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
+        .thenAccept(r -> r.next(deleted -> scheduleFirstReminder(loan, renewalContext.getTimeZone())));
+    } else {
+      log.debug("Reschedule reminder on renewal: The current item, barcode {}, is not subject to a reminder fees policy.",
+        loan.getItem().getBarcode());
+    }
     return succeeded(renewalContext);
   }
 
