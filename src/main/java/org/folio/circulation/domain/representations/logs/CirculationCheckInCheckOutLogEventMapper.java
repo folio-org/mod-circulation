@@ -149,7 +149,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
   }
 
   private static void populateLoanData(Loan checkInCheckOutLoan, JsonObject logEventPayload, ZoneId zoneId) {
-    log.debug("populateLoanData:: parameters checkInCheckOutLoan: {}, logEventPayload: {}",
+    log.info("populateLoanData:: parameters checkInCheckOutLoan: {}, logEventPayload: {}",
       checkInCheckOutLoan, logEventPayload);
 
     write(logEventPayload, LOAN_ID.value(), checkInCheckOutLoan.getId());
@@ -158,6 +158,8 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, RETURN_DATE.value(), checkInCheckOutLoan.getReturnDate());
     write(logEventPayload, DUE_DATE.value(), checkInCheckOutLoan.getDueDate());
     write(logEventPayload, ZONE_ID.value(), zoneId.getId());
+    log.info("The zone is " + zoneId);
+    log.info("The zone id is " + zoneId.getId());
     ofNullable(checkInCheckOutLoan.getUser())
       .ifPresent(user -> {
         write(logEventPayload, USER_ID.value(), user.getId());
