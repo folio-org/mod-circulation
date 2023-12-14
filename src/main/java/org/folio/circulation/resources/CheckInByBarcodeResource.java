@@ -83,7 +83,7 @@ public class CheckInByBarcodeResource extends Resource {
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
       .combineAfter(processAdapter::findItem, (records, item) -> records
-        .withItemProvided(item)
+        .withItemAndUpdatedLoan(item)
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
@@ -106,11 +106,11 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
         .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
-        processAdapter::updateItem, CheckInContext::withItemProvided))
+        processAdapter::updateItem, CheckInContext::withItemAndUpdatedLoan))
       .thenApply(handleItemStatus -> handleItemStatus.next(
         requestNoticeSender::sendNoticeOnRequestAwaitingPickup))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getDestinationServicePoint, CheckInContext::withItemProvided))
+        processAdapter::getDestinationServicePoint, CheckInContext::withItemAndUpdatedLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getCheckInServicePoint, CheckInContext::withCheckInServicePoint))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(

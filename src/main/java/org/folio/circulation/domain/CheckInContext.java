@@ -49,30 +49,20 @@ public class CheckInContext {
       ClockUtil.getZonedDateTime(), false, null, null);
   }
 
-
-  public CheckInContext withItemProvided(Item item) {
-
-    //When the item is updated, also update the item for the loan,
-    //as they should be the same
+  /**
+   * Updates the item in the check-in context.
+   * Also updates the item for the loan, as they should be the same.
+   * @param item the item to put into the check-in context
+   * @return new CheckInContext with an updated item and loan
+   */
+  public CheckInContext withItemAndUpdatedLoan(Item item) {
     final Loan updatedLoan = Optional.ofNullable(loan)
       .map(l -> l.withItem(item))
       .orElse(null);
 
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      item,
-      updatedLoan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
+    return withItem(item)
+      .withLoan(updatedLoan);
   }
-
 
   public String getCheckInRequestBarcode() {
     return checkInRequest.getItemBarcode();
