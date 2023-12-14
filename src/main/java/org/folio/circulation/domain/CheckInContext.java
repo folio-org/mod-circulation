@@ -10,7 +10,9 @@ import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.ToString;
+import lombok.With;
 
 /**
  * The loan captures a snapshot of the item status
@@ -22,6 +24,8 @@ import lombok.ToString;
  *
  * Which requires passing the records between processes.
  */
+@With
+@Getter
 @AllArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 public class CheckInContext {
@@ -45,23 +49,8 @@ public class CheckInContext {
       ClockUtil.getZonedDateTime(), false, null, null);
   }
 
-  public CheckInContext withTlrSettings(TlrSettingsConfiguration tlrSettingsConfiguration) {
-    return new CheckInContext(
-      this.checkInRequest,
-      tlrSettingsConfiguration,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
 
-  public CheckInContext withItem(Item item) {
+  public CheckInContext withItemProvided(Item item) {
 
     //When the item is updated, also update the item for the loan,
     //as they should be the same
@@ -84,137 +73,6 @@ public class CheckInContext {
       this.timeZone);
   }
 
-  public CheckInContext withLoan(Loan loan) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
-
-  public CheckInContext withRequestQueue(RequestQueue requestQueue) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      requestQueue,
-      this.checkInServicePoint,
-      null, // needs to be reset when requestQueue is updated
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
-
-  public CheckInContext withCheckInServicePoint(ServicePoint checkInServicePoint) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
-
-  public CheckInContext withHighestPriorityFulfillableRequest(Request request) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      request,
-      loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
-
-  public CheckInContext withLoggedInUserId(String userId) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      userId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
-
-  public CheckInContext withInHouseUse(boolean inHouseUse) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      this.timeZone);
-  }
-
-  public CheckInContext withItemStatusBeforeCheckIn(ItemStatus itemStatus) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      itemStatus,
-      this.timeZone);
-  }
-
-  public CheckInContext withTimeZone(ZoneId timeZone) {
-    return new CheckInContext(
-      this.checkInRequest,
-      this.tlrSettings,
-      this.item,
-      this.loan,
-      this.requestQueue,
-      this.checkInServicePoint,
-      this.highestPriorityFulfillableRequest,
-      this.loggedInUserId,
-      this.checkInProcessedDateTime,
-      this.inHouseUse,
-      this.itemStatusBeforeCheckIn,
-      timeZone);
-  }
-
-  public boolean isInHouseUse() {
-    return inHouseUse;
-  }
 
   public String getCheckInRequestBarcode() {
     return checkInRequest.getItemBarcode();
@@ -228,47 +86,4 @@ public class CheckInContext {
     return checkInRequest.getSessionId();
   }
 
-  public TlrSettingsConfiguration getTlrSettings() {
-    return tlrSettings;
-  }
-
-  public Item getItem() {
-    return item;
-  }
-
-  public Loan getLoan() {
-    return loan;
-  }
-
-  public CheckInByBarcodeRequest getCheckInRequest() {
-    return checkInRequest;
-  }
-
-  public RequestQueue getRequestQueue() {
-    return requestQueue;
-  }
-
-  public ServicePoint getCheckInServicePoint() {
-    return checkInServicePoint;
-  }
-
-  public Request getHighestPriorityFulfillableRequest() {
-    return highestPriorityFulfillableRequest;
-  }
-
-  public String getLoggedInUserId() {
-    return loggedInUserId;
-  }
-
-  public ZonedDateTime getCheckInProcessedDateTime() {
-    return checkInProcessedDateTime;
-  }
-
-  public ItemStatus getItemStatusBeforeCheckIn() {
-    return itemStatusBeforeCheckIn;
-  }
-
-  public ZoneId getTimeZone() {
-    return timeZone;
-  }
 }
