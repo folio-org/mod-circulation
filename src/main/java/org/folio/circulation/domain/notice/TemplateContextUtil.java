@@ -219,7 +219,7 @@ public class TemplateContextUtil {
         .put("effectiveLocationSpecific", location.getName())
         .put("effectiveLocationLibrary", location.getLibraryName())
         .put("effectiveLocationCampus", location.getCampusName())
-        .put("effectiveLocationInstitution", location.getInstitutionName())
+        .put("effectiveLocationInstitution", item.isDcbItem()?item.getLendingLibraryCode():location.getInstitutionName())
         .put("effectiveLocationDiscoveryDisplayName", location.getDiscoveryDisplayName());
 
       var primaryServicePoint = location.getPrimaryServicePoint();
@@ -430,13 +430,9 @@ public class TemplateContextUtil {
     }
 
     public String getCountryNameByCodeIgnoreCase(String code) {
-      if (StringUtils.isEmpty(code)) {
+      if (StringUtils.isEmpty(code) || !Stream.of(Locale.getISOCountries()).toList().contains(code)) {
+        log.info("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
         return null;
-      }
-
-      if (!Stream.of(Locale.getISOCountries()).toList().contains(code)) {
-        log.error("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
-        throw new IllegalArgumentException("Not a valid country code to determine the country name.");
       }
 
       return new Locale("",code).getDisplayName();

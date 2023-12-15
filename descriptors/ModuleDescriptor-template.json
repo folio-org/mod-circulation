@@ -1060,7 +1060,8 @@
             "accounts.collection.get",
             "accounts.item.post",
             "feefineactions.item.post",
-            "circulation-storage.loans-history.collection.get"
+            "circulation-storage.loans-history.collection.get",
+            "calendar.endpoint.dates.get"
           ],
           "schedule": {
             "cron": "1 0 * * *",
@@ -1693,7 +1694,7 @@
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "inventory-storage.items.item.put",
-        "circulation-item-storage.items.item.put",
+        "circulation-item.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
@@ -1741,7 +1742,7 @@
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "inventory-storage.items.item.put",
-        "circulation-item-storage.items.item.put",
+        "circulation-item.item.put",
         "circulation.internal.fetch-items",
         "users.item.get",
         "users.collection.get",
@@ -2343,9 +2344,8 @@
       "description" : "Internal permission set for fetching item(s)",
       "subPermissions": [
         "inventory-storage.items.item.get",
-        "circulation-item-storage.item.collection.get",
-        "circulation-item-storage.items.collection.get",
-        "circulation-item-storage.items.item.get",
+        "circulation-item.collection.get",
+        "circulation-item.item.get",
         "inventory-storage.items.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.holdings.collection.get",

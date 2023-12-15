@@ -42,6 +42,7 @@ import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -164,18 +165,33 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
-  void responseContainsSlipWithAllAvailableTokens(SlipsType slipsType) {
+  @CsvSource({
+    "US, false, PICK_SLIPS",
+    "US, false, SEARCH_SLIPS",
+    ", false, PICK_SLIPS",
+    ", false, SEARCH_SLIPS",
+    "XX, false, PICK_SLIPS",
+    "XX, false, SEARCH_SLIPS",
+    "US, true, PICK_SLIPS",
+    "US, true, SEARCH_SLIPS",
+    ", true, PICK_SLIPS",
+    ", true, SEARCH_SLIPS",
+    "XX, true, PICK_SLIPS",
+    "XX, true, SEARCH_SLIPS"
+  })
+  void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
+    String slipsTypeName) {
+    SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
     IndividualResource locationResource = locationsFixture.thirdFloor();
     IndividualResource addressTypeResource = addressTypesFixture.home();
-    Address address = AddressExamples.mainStreet();
+    Address address = AddressExamples.mainStreet(countryCode);
     var departmentId1 = UUID.randomUUID().toString();
     var departmentId2 = UUID.randomUUID().toString();
     IndividualResource requesterResource =
-      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(
-        new JsonArray(List.of(departmentId1, departmentId2))));
+      usersFixture.steve(builder -> builder.withAddress(address).withDepartments(new JsonArray(List.of(departmentId1, departmentId2)))
+        .withPrimaryAddress(primaryAddress));
     ZonedDateTime requestDate = ZonedDateTime.of(2019, 7, 22, 10, 22, 54, 0, UTC);
     final var requestExpiration = LocalDate.of(2019, 7, 30);
     final var holdShelfExpiration = LocalDate.of(2019, 8, 31);
@@ -279,6 +295,10 @@ class StaffSlipsTests extends APITests {
     assertThat(requesterContext.getString("region"), is(address.getRegion()));
     assertThat(requesterContext.getString("postalCode"), is(address.getPostalCode()));
     assertThat(requesterContext.getString("countryId"), is(address.getCountryId()));
+    if(Boolean.valueOf(primaryAddress)) {
+        assertThat(requesterContext.getString("primaryCountry"), is((countryCode!=null && countryCode.equalsIgnoreCase("US")) ?
+          "United States" : null));
+    }
     assertThat(requesterContext.getString("patronGroup"), is("Regular Group"));
     assertThat(requesterContext.getString("departments").split("; "),
       arrayContainingInAnyOrder(equalTo("test department1"),equalTo("test department2")));

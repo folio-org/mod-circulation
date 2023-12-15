@@ -44,6 +44,7 @@ public class CalendarExamples {
 
   public static final String CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_CLOSED = "6ab38b7a-c889-4839-a337-86aad0297d7c";
   public static final String CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN = "6ab38b7a-c889-4839-a337-86aad0297d8d";
+  public static final String CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN = "309392b5-8ce8-4142-a983-b1162cab01aa";
   public static final String CASE_MON_WED_FRI_OPEN_TUE_THU_CLOSED = "87291415-9f43-42ec-ba6b-d590f33509a0";
 
   static final String CASE_START_DATE_MONTHS_AGO_AND_END_DATE_THU = "12345698-2f09-4bc9-8924-3734882d44a3";
@@ -86,6 +87,8 @@ public class CalendarExamples {
   public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);
   public static final LocalDate THIRD_DAY_CLOSED = LocalDate.of(2020, 10, 31);
   public static final LocalDate THIRD_DAY_OPEN = LocalDate.of(2020, 10, 31);
+
+  public static final LocalDate FIRST_DAY = LocalDate.of(2023, 10, 29);
 
   private static final String REQUESTED_DATE_PARAM = "date";
 
@@ -492,6 +495,42 @@ public class CalendarExamples {
             )
           )
         );
+      case CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN:
+        LocalDate requestedDay = LocalDate.parse(queries.get(REQUESTED_DATE_PARAM));
+        if (requestedDay.isEqual(FIRST_DAY)) {
+          return new CalendarBuilder(
+            new OpeningDayPeriodBuilder(
+              CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN,
+              new AdjacentOpeningDays(
+                new OpeningDay(new ArrayList<>(), requestedDay.minusDays(1), true, true),
+                new OpeningDay(new ArrayList<>(), requestedDay, true, false),
+                new OpeningDay(new ArrayList<>(), requestedDay.plusDays(1), true, true)
+              )
+            )
+          );
+        } else if (requestedDay.isEqual(FIRST_DAY.plusDays(1))) {
+          return new CalendarBuilder(
+            new OpeningDayPeriodBuilder(
+              CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN,
+              new AdjacentOpeningDays(
+                new OpeningDay(new ArrayList<>(), requestedDay.minusDays(2), true, true),
+                new OpeningDay(new ArrayList<>(), requestedDay, true, true),
+                new OpeningDay(new ArrayList<>(), requestedDay.plusDays(1), true, true)
+              )
+            )
+          );
+        } else {
+          return new CalendarBuilder(
+            new OpeningDayPeriodBuilder(
+              CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN,
+              new AdjacentOpeningDays(
+                new OpeningDay(new ArrayList<>(), requestedDay.minusDays(1), true, true),
+                new OpeningDay(new ArrayList<>(), requestedDay, true, true),
+                new OpeningDay(new ArrayList<>(), requestedDay.plusDays(1), true, true)
+              )
+            )
+          );
+        }
       default:
         LocalDate requestedDate = LocalDate.parse(queries.get(REQUESTED_DATE_PARAM));
         return new CalendarBuilder(buildAllDayOpenCalenderResponse(requestedDate, serviceId));
