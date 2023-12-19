@@ -93,6 +93,7 @@ public class EventMatchers {
         hasJsonPath("dueDate", is(checkedInLoan.getString("dueDate"))),
         hasJsonPath("userId", is(checkedInLoan.getString("userId"))),
         hasJsonPath("itemId", is(checkedInLoan.getString("itemId"))),
+        hasJsonPath("zoneId", is("Z")),
         hasJsonPath("itemBarcode", is(checkedInLoan.getJsonObject("item").getString("barcode"))),
         hasJsonPath("itemStatusName", is(checkedInLoan.getJsonObject("item").getJsonObject("status").getString("name")))
       ))),
