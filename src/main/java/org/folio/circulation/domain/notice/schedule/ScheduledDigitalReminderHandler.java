@@ -162,7 +162,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     return loanRepository.updateLoan(
       context.getLoan()
         .withIncrementedRemindersLastFeeBilled(systemTime)
-        .withAction(LoanAction.REMINDER_FEE.getValue()))
+        .withAction(LoanAction.REMINDER_FEE))
       .thenApply(r -> r.map(v -> context));
   }
 

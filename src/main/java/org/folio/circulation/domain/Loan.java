@@ -194,7 +194,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, LoanProperties.ACTION, action);
   }
 
-  public Loan withAction(String action) {
+  public Loan withAction(LoanAction action) {
     changeAction(action);
     return this;
   }
@@ -650,9 +650,9 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan withRemindersLastFeeBilled(int number, ZonedDateTime date) {
-    JsonObject lastFeeBilled = getNestedObjectProperty(representation, REMINDERS,LAST_FEE_BILLED);
+    JsonObject lastFeeBilled = getNestedObjectProperty(representation, REMINDERS, LAST_FEE_BILLED);
     if (lastFeeBilled == null) {
-      write(representation, REMINDERS,new JsonObject());
+      write(representation, REMINDERS, new JsonObject());
       write(representation.getJsonObject(REMINDERS), LAST_FEE_BILLED, new JsonObject());
       lastFeeBilled = getNestedObjectProperty(representation, REMINDERS, LAST_FEE_BILLED);
     }
