@@ -7,6 +7,7 @@ import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -159,7 +160,9 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     }
 
     return loanRepository.updateLoan(
-      context.getLoan().withIncrementedRemindersLastFeeBilled(systemTime))
+      context.getLoan()
+        .withIncrementedRemindersLastFeeBilled(systemTime)
+        .withAction(LoanAction.REMINDER_FEE))
       .thenApply(r -> r.map(v -> context));
   }
 
