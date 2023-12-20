@@ -83,12 +83,14 @@ public class CheckInByBarcodeResource extends Resource {
       .next(notUsed -> checkInRequestResult)
       .map(CheckInContext::new)
       .combineAfter(processAdapter::findItem, (records, item) -> records
-        .withItem(item)
+        .withItemAndUpdatedLoan(item)
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
         CheckInContext::withTlrSettings))
+      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+        CheckInContext::withTimeZone))
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
       .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
@@ -104,11 +106,11 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
         .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
-        processAdapter::updateItem, CheckInContext::withItem))
+        processAdapter::updateItem, CheckInContext::withItemAndUpdatedLoan))
       .thenApply(handleItemStatus -> handleItemStatus.next(
         requestNoticeSender::sendNoticeOnRequestAwaitingPickup))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
-        processAdapter::getDestinationServicePoint, CheckInContext::withItem))
+        processAdapter::getDestinationServicePoint, CheckInContext::withItemAndUpdatedLoan))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(
         processAdapter::getCheckInServicePoint, CheckInContext::withCheckInServicePoint))
       .thenComposeAsync(updateItemResult -> updateItemResult.combineAfter(

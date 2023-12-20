@@ -31,6 +31,7 @@ public enum LogEventPayloadField {
   SYSTEM_RETURN_DATE("systemReturnDate"),
   RETURN_DATE("returnDate"),
   DUE_DATE("dueDate"),
+  ZONE_ID("zoneId"),
   USER_ID("userId"),
   USER_BARCODE("userBarcode"),
   PROXY_BARCODE("proxyBarcode"),
