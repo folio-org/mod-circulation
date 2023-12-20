@@ -1,12 +1,17 @@
 package api.loans;
 
 import api.support.APITests;
-import api.support.builders.*;
+import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.FeeFineOwnerBuilder;
+import api.support.builders.HoldingBuilder;
+import api.support.builders.ItemBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.support.utils.DateFormatUtil;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +20,15 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
-import static api.support.fixtures.CalendarExamples.*;
+import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN;
+import static api.support.fixtures.CalendarExamples.FIRST_DAY;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.utl.PatronNoticeTestHelper.*;
 import static java.time.ZoneOffset.UTC;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
+import static org.folio.circulation.domain.representations.LoanProperties.ACTION;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -139,7 +146,11 @@ class ReminderFeeTests extends APITests {
         .to(borrower)
         .on(loanDate)
         .at(servicePointsFixture.cd1()));
-    final JsonObject loan = response.getJson();
+    JsonObject loan = response.getJson();
+
+    // Assert that loan action is Checked out initially
+    assertThat(loan.getString(ACTION), Is.is(LoanAction.CHECKED_OUT.getValue()));
+
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
@@ -222,6 +233,10 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
+
+    // Assert that loan action is changed to Reminder fee after sending reminders
+    loan = loansFixture.getLoanById(response.getId()).getJson();
+    assertThat(loan.getString(ACTION), Is.is(LoanAction.REMINDER_FEE.getValue()));
   }
 
   @Test

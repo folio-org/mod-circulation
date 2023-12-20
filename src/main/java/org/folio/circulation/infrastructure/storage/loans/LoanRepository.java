@@ -127,11 +127,10 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   public CompletableFuture<Result<Loan>> updateLoan(Loan loan) {
     log.debug("updateLoan:: parameters loan: {}", loan);
-    if(loan == null) {
+    if (loan == null) {
       log.info("updateLoan:: loan is null");
       return completedFuture(of(() -> null));
     }
-
     JsonObject storageLoan = mapToStorageRepresentation(loan, loan.getItem());
 
     return loansStorageClient.put(loan.getId(), storageLoan)
