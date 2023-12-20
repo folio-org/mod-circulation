@@ -43,7 +43,7 @@ public class ReminderFeeScheduledNoticeService {
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       scheduleFirstReminder(loan, records.getTimeZone());
     } else {
-      log.debug("The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
+      log.debug("scheduleFirstReminder:: The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
     }
     return succeeded(records);
   }
@@ -57,13 +57,13 @@ public class ReminderFeeScheduledNoticeService {
     Loan loan = renewalContext.getLoan();
     OverdueFinePolicy policy = loan.getOverdueFinePolicy();
     if (policy.isReminderFeesPolicy()) {
-      log.debug("Reschedule reminder on renewal: Loan has reminder policy. Barcode: {}. Renewal context: {}.",
+      log.debug("rescheduleFirstReminder:: Reschedule reminder on renewal: Loan has reminder policy. Barcode: {}. Renewal context: {}.",
         loan.getItem().getBarcode(), renewalContext);
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(),
           TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
         .thenAccept(r -> r.next(deleted -> scheduleFirstReminder(loan, renewalContext.getTimeZone())));
     } else {
-      log.debug("Reschedule reminder on renewal: The current item, barcode {}, is not subject to a reminder fees policy.",
+      log.debug("rescheduleFirstReminder:: Reschedule reminder on renewal: The current item, barcode {}, is not subject to a reminder fees policy.",
         loan.getItem().getBarcode());
     }
     return succeeded(renewalContext);
