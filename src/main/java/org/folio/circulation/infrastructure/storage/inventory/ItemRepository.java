@@ -277,6 +277,7 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<JsonObject>> fetchItemAsJson(String itemId) {
+
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
       .fetch(itemId)
       .thenApply(mapResult(identityMap::add));
