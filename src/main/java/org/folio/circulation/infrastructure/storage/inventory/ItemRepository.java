@@ -147,6 +147,7 @@ public class ItemRepository {
     return fetchItemByBarcode(barcode, createItemFinder())
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
         item -> fetchItemByBarcode(barcode, createCirculationItemFinder())
+          .thenApply(r -> r.mapFailure(failure -> Result.succeeded(item)))
         , item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
@@ -276,6 +277,7 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<JsonObject>> fetchItemAsJson(String itemId) {
+
     return SingleRecordFetcher.jsonOrNull(itemsClient, "item")
       .fetch(itemId)
       .thenApply(mapResult(identityMap::add));
