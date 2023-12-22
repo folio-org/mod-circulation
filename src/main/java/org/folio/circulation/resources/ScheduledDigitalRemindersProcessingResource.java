@@ -41,7 +41,6 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
     return CqlQuery.lessThanOrEqualTo("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
       .combine(exactMatch("noticeConfig.sendInRealTime", "true"), CqlQuery::and)
       .combine(exactMatch("triggeringEvent", DUE_DATE_WITH_REMINDER_FEE.getRepresentation()), CqlQuery::and)
-      .combine(exactMatch("noticeConfig.format", "Email"), CqlQuery::and)
       .map(cqlQuery -> cqlQuery.sortBy(CqlSortBy.ascending("nextRunTime")))
       .after(query -> scheduledNoticesRepository.findBy(query, pageLimit));
   }

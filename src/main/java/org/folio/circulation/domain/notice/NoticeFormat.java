@@ -5,7 +5,7 @@ import java.util.Arrays;
 public enum NoticeFormat {
 
   EMAIL("Email", "email", "text/html"),
-  PRINT("Print", "mail", "text"),
+  PRINT("Print", "mail", "text/html"),
   UNKNOWN("Unknown", "", "");
 
 
