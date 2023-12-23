@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -32,12 +31,12 @@ public class RenewalOfItemsWithReminderFeesValidator {
     Loan loan = renewalContext.getLoan();
     Integer lastFeeBilledCount = loan.getLastReminderFeeBilledNumber();
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
-Boolean allowRenewalWithReminders = overdueFinePolicy.getRemindersPolicy().getAllowRenewalOfItemsWithReminderFees();
+    Boolean allowRenewalWithReminders = overdueFinePolicy.getRemindersPolicy().getAllowRenewalOfItemsWithReminderFees();
 
-    if ((lastFeeBilledCount != null && lastFeeBilledCount > 0) && Boolean.FALSE.equals(allowRenewalWhenThereAreReminders)) {
+    if ((lastFeeBilledCount != null && lastFeeBilledCount > 0) && Boolean.FALSE.equals(allowRenewalWithReminders)) {
       String reason = "Renewals not allowed for loans with reminders.";
       log.info("createBlockedRenewalDueToReminderFeesPolicyError:: {}", reason);
-      return failed(createBlockedRenewalDueToReminderFeesPolicyError("Loan cannot be renewed because it has reminders", reason));
+      return failed(createBlockedRenewalDueToReminderFeesPolicyError("Renewals not allowed for loans with reminders.", reason));
     } else {
       return succeeded(renewalContext);
     }

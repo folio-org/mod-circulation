@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 class RenewalOfItemsWithReminderFeesValidatorTest {
 
   private final RenewalOfItemsWithReminderFeesValidator validator = new RenewalOfItemsWithReminderFeesValidator();
-  
+
   @Test
   void allowRenewalGivenRemindersPolicyAllowsRenewalOfItemsWithReminderFees() {
     final RenewalContext renewalContext = RenewalContext.create(
@@ -55,7 +55,7 @@ class RenewalOfItemsWithReminderFeesValidatorTest {
 
     assertThat(result.failed(), is(true));
     assertThat(result, hasValidationFailure(
-      "Loan cannot be renewed because it has reminders."));
+      "Renewals not allowed for loans with reminders."));
   }
 
   private Loan createLoan(Boolean allowRenewalOfItemsWithReminderFees, boolean hasReminders) {

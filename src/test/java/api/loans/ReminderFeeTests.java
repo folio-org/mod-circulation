@@ -588,7 +588,7 @@ class ReminderFeeTests extends APITests {
 
     // Assert that error message for renewal block is received in response
     assertThat(renewalResponse.getBody(), containsString(
-      "Loan cannot be renewed because it has reminders."));
+      "Renewals not allowed for loans with reminders."));
   }
 
   @Test

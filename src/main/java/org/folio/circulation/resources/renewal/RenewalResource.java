@@ -338,11 +338,11 @@ public abstract class RenewalResource extends Resource {
     CirculationErrorHandler errorHandler) {
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
       FAILED_TO_FETCH_USER)) {
-      
+
       return completedFuture(succeeded(renewalContext));
     }
 
-    return overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(ctx.getLoan()))
+    return overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(renewalContext.getLoan()))
       .thenApply(mapResult(renewalContext::withLoan));
  }
 
