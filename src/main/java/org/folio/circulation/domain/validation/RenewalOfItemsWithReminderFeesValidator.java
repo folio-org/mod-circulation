@@ -26,7 +26,7 @@ public class RenewalOfItemsWithReminderFeesValidator {
   }
 
   Result<RenewalContext> blockRenewalIfRuledByRemindersFeePolicy(RenewalContext renewalContext) {
-    log.debug("blockRenewalIfRuledByRemindersFeePolicy:: renewalContext: {}", renewalContext);
+    log.debug("blockRenewalIfRuledByRemindersFeePolicy:: parameters: renewalContext: {}", renewalContext);
 
     Loan loan = renewalContext.getLoan();
     Integer lastFeeBilledCount = loan.getLastReminderFeeBilledNumber();
