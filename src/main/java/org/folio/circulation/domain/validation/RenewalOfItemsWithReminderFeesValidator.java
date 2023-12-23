@@ -33,8 +33,7 @@ public class RenewalOfItemsWithReminderFeesValidator {
     Integer lastFeeBilledCount = loan.getLastReminderFeeBilledNumber();
 
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
-    RemindersPolicy remindersPolicy = overdueFinePolicy.getRemindersPolicy();
-    Boolean allowRenewalWhenThereAreReminders = remindersPolicy.getAllowRenewalOfItemsWithReminderFees();
+Boolean allowRenewalWithReminders = overdueFinePolicy.getRemindersPolicy().getAllowRenewalOfItemsWithReminderFees();
 
     if ((lastFeeBilledCount != null && lastFeeBilledCount > 0) && Boolean.FALSE.equals(allowRenewalWhenThereAreReminders)) {
       String reason = "Renewals not allowed for loans with reminders.";
