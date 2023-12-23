@@ -31,7 +31,6 @@ public class RenewalOfItemsWithReminderFeesValidator {
 
     Loan loan = renewalContext.getLoan();
     Integer lastFeeBilledCount = loan.getLastReminderFeeBilledNumber();
-
     OverdueFinePolicy overdueFinePolicy = loan.getOverdueFinePolicy();
 Boolean allowRenewalWithReminders = overdueFinePolicy.getRemindersPolicy().getAllowRenewalOfItemsWithReminderFees();
 
