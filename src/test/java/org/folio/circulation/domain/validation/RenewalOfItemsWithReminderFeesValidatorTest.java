@@ -64,12 +64,8 @@ class RenewalOfItemsWithReminderFeesValidatorTest {
       .put("remindersPolicy", new JsonObject()
         .put("allowRenewalOfItemsWithReminderFees", allowRenewalOfItemsWithReminderFees));
 
-    return hasReminders ?
-      Loan.from(new JsonObject())
-        .withOverdueFinePolicy(OverdueFinePolicy.from(overdueFinePolicyJsonObject))
-        .withRemindersLastFeeBilled(1, ClockUtil.getZonedDateTime())
-      :
-      Loan.from(new JsonObject())
-        .withOverdueFinePolicy(OverdueFinePolicy.from(overdueFinePolicyJsonObject));
+    return Loan.from(new JsonObject())
+      .withOverdueFinePolicy(OverdueFinePolicy.from(overdueFinePolicyJsonObject))
+      .withRemindersLastFeeBilled(hasReminders ? 1 : 0, ClockUtil.getZonedDateTime());
   }
 }
