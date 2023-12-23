@@ -19,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 class RenewalOfItemsWithReminderFeesValidatorTest {
 
   private final RenewalOfItemsWithReminderFeesValidator validator = new RenewalOfItemsWithReminderFeesValidator();
+  
   @Test
   void allowRenewalGivenRemindersPolicyAllowsRenewalOfItemsWithReminderFees() {
     final RenewalContext renewalContext = RenewalContext.create(
