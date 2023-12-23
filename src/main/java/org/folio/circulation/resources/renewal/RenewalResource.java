@@ -341,8 +341,7 @@ public abstract class RenewalResource extends Resource {
       return completedFuture(succeeded(renewalContext));
     }
 
-    return overdueFinePolicyRepository
-      .findOverdueFinePolicyForLoan(succeeded(renewalContext.getLoan()))
+    return overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(ctx.getLoan()))
       .thenApply(mapResult(renewalContext::withLoan));
  }
 
