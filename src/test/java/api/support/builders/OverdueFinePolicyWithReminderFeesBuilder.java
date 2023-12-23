@@ -38,7 +38,7 @@ public class OverdueFinePolicyWithReminderFeesBuilder implements Builder {
     return this;
   }
 
-  public OverdueFinePolicyWithReminderFeesBuilder withAllowRenewalOfItemsWithReminderFees (Boolean val) {
+  public OverdueFinePolicyWithReminderFeesBuilder withAllowRenewalOfItemsWithReminderFees(Boolean val) {
     overdueFinePolicyJson.getJsonObject(REMINDER_FEES_POLICY).put(ALLOW_RENEWAL_OF_ITEMS_WITH_REMINDER_FEES, val);
     return this;
   }
