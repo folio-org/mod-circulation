@@ -75,13 +75,13 @@ public abstract class SlipsResource extends Resource {
   private final RequestType requestType;
   private final Collection<ItemStatus> itemStatuses;
 
-  public SlipsResource(String rootPath, HttpClient client, String collectionName,
+  protected SlipsResource(String rootPath, HttpClient client, String collectionName,
     RequestType requestType, ItemStatus itemStatus) {
 
     this(rootPath, client, collectionName, requestType, List.of(itemStatus));
   }
 
-  public SlipsResource(String rootPath, HttpClient client, String collectionName,
+  protected SlipsResource(String rootPath, HttpClient client, String collectionName,
     RequestType requestType, Collection<ItemStatus> itemStatuses) {
 
     super(client);
