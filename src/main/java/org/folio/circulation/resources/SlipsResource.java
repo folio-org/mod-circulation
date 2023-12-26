@@ -103,10 +103,10 @@ public abstract class SlipsResource extends Resource {
 
     final var userRepository = new UserRepository(clients);
     final var itemRepository = new ItemRepository(clients);
-    final AddressTypeRepository addressTypeRepository = new AddressTypeRepository(clients);
-    final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
-    final DepartmentRepository departmentRepository = new DepartmentRepository(clients);
+    final var addressTypeRepository = new AddressTypeRepository(clients);
+    final var servicePointRepository = new ServicePointRepository(clients);
+    final var patronGroupRepository = new PatronGroupRepository(clients);
+    final var departmentRepository = new DepartmentRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
@@ -142,7 +142,6 @@ public abstract class SlipsResource extends Resource {
     log.debug("fetchPagedItemsForLocations:: parameters multipleLocations: {}",
       () -> multipleRecordsAsString(multipleLocations));
     Collection<Location> locations = multipleLocations.getRecords();
-
     Set<String> locationIds = locations.stream()
       .map(Location::getId)
       .filter(StringUtils::isNoneBlank)
@@ -157,7 +156,6 @@ public abstract class SlipsResource extends Resource {
     List<String> itemStatusValues = itemStatuses.stream()
       .map(ItemStatus::getValue)
       .toList();
-
     Result<CqlQuery> statusQuery = exactMatchAny(STATUS_NAME_KEY, itemStatusValues);
 
     return itemRepository.findByIndexNameAndQuery(locationIds, EFFECTIVE_LOCATION_ID_KEY, statusQuery)
