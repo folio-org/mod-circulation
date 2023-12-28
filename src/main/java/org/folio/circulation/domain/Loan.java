@@ -483,6 +483,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       () -> dueDate, () -> basedUponLoanPolicyId);
     changeAction(RENEWED);
     removeActionComment();
+    resetReminders();
     setLoanPolicyId(basedUponLoanPolicyId);
     changeDueDate(dueDate);
     incrementRenewalCount();
@@ -574,6 +575,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   private void incrementRenewalCount() {
     write(representation, "renewalCount", getRenewalCount() + 1);
+  }
+
+  private void resetReminders() {
+    remove(representation, "reminders");
   }
 
   public Integer getRenewalCount() {
