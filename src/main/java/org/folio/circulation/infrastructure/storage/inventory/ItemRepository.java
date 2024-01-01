@@ -147,6 +147,7 @@ public class ItemRepository {
     return fetchItemByBarcode(barcode, createItemFinder())
       .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
         item -> fetchItemByBarcode(barcode, createCirculationItemFinder())
+          .thenApply(r -> r.mapFailure(failure -> Result.succeeded(item)))
         , item -> completedFuture(itemResult))))
       .thenComposeAsync(this::fetchItemRelatedRecords);
   }
