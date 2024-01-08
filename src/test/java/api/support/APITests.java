@@ -123,6 +123,7 @@ public abstract class APITests {
   protected final ResourceClient instancesClient = ResourceClient.forInstances();
   protected final ResourceClient holdingsClient = ResourceClient.forHoldings();
   protected final ResourceClient itemsClient = ResourceClient.forItems();
+  protected final ResourceClient circulationItemsClient = ResourceClient.forCirculationItem();
 
   protected final ResourceClient loansClient = ResourceClient.forLoans();
   protected final ResourceClient accountsClient = ResourceClient.forAccounts();
