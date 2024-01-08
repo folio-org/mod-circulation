@@ -960,6 +960,38 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  void canCheckOutAnDcbItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    var barcode = "100002222";
+    IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(barcode, holdings.getId(), locationsResource.getId());
+    final IndividualResource jessica = usersFixture.jessica();
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(circulationItem)
+        .to(jessica)
+        .at(servicePointsFixture.cd1()));
+
+    final JsonObject loan = response.getJson();
+
+    assertThat(loan.getString("id"), is(notNullValue()));
+
+    assertThat("user ID should match barcode",
+      loan.getString("userId"), is(jessica.getId()));
+
+    assertThat("item ID should match barcode",
+      loan.getString("itemId"), is(circulationItem.getId()));
+
+    assertThat("status should be open",
+      loan.getJsonObject("status").getString("name"), is("Open"));
+
+    circulationItem = circulationItemsClient.get(circulationItem);
+
+    assertThat(circulationItem, hasItemStatus(CHECKED_OUT));
+  }
+
+  @Test
   void canCheckOutInProcessItem() {
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet(
