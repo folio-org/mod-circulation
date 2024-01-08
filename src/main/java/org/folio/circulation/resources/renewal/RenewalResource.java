@@ -62,6 +62,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
+import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
@@ -176,7 +177,7 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
-      .thenComposeAsync(r-> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
+      .thenComposeAsync(r -> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
@@ -184,6 +185,7 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
         RenewalContext::withTlrSettings))
@@ -290,6 +292,24 @@ public abstract class RenewalResource extends Resource {
 
     return result.after(renewalContext -> validator.validate(renewalContext)
       .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
+  }
+
+  private CompletableFuture<Result<RenewalContext>> blockRenewalOfItemsWithReminderFees(
+    RenewalContext context, CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return Result.ofAsync(context);
+    }
+
+    final var renewalOfItemsWithReminderFeesValidator = new RenewalOfItemsWithReminderFeesValidator();
+
+    final var validator = new BlockValidator<>(RENEWAL_IS_BLOCKED,
+      renewalOfItemsWithReminderFeesValidator::blockRenewalIfReminderFeesExistAndDisallowRenewalWithReminders);
+
+    return validator.validate(context)
+      .thenApply(r -> errorHandler.handleValidationResult(r, CirculationErrorType.RENEWAL_IS_BLOCKED, r));
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(

@@ -130,7 +130,8 @@ public class OverdueFinePoliciesFixture {
         "Email", SECOND_REMINDER_TEMPLATE_ID.toString())
       .withAddedReminderEntry(1,"day", 2.15,
         "Email", THIRD_REMINDER_TEMPLATE_ID.toString())
-      .withCanSendReminderUponClosedDay(canScheduleRemindersOnClosedDays);
+      .withCanSendReminderUponClosedDay(canScheduleRemindersOnClosedDays)
+      .withAllowRenewalOfItemsWithReminderFees(true);
     return overdueFinePolicyRecordCreator.createIfAbsent(policy.create());
   }
 
