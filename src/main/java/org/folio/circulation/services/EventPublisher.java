@@ -37,6 +37,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.Request;
@@ -125,15 +127,18 @@ public class EventPublisher {
     CheckInContext checkInContext, UserRepository userRepository, LoanRepository loanRepository) {
 
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
-      .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
+      .thenCombineAsync(
+        loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
         if (nonNull(lastLoan.value())) {
           return userRepository.getUser(lastLoan.value().getUserId())
             .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(), userFromLastLoan.value()))));
+              mapToCheckInLogEventContent(checkInContext, userResult.value(), isItemAvailable(checkInContext.getItem()) ?
+                null : userFromLastLoan.value()))));
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-          mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
+          mapToCheckInLogEventContent(checkInContext, isItemAvailable(checkInContext.getItem()) ?
+            null : loggedInUser, null)))));
       }));
 
     if (checkInContext.getLoan() != null) {
@@ -149,6 +154,10 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(checkInContext));
+  }
+
+  private boolean isItemAvailable(Item item) {
+    return item.getStatus().equals(ItemStatus.AVAILABLE);
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
