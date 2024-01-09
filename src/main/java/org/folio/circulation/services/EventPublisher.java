@@ -13,7 +13,9 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
-import static org.folio.circulation.domain.LoanAction.*;
+import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -37,7 +39,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.EventType;
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
@@ -132,13 +133,12 @@ public class EventPublisher {
         if (nonNull(lastLoan.value())) {
           return userRepository.getUser(lastLoan.value().getUserId())
             .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(), isItemAvailable(checkInContext.getItem()) ?
+              mapToCheckInLogEventContent(checkInContext, userResult.value(), checkInContext.getItem().getStatus().equals(ItemStatus.AVAILABLE) ?
                 null : userFromLastLoan.value()))));
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-          mapToCheckInLogEventContent(checkInContext, isItemAvailable(checkInContext.getItem()) ?
-            null : loggedInUser, null)))));
+          mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
       }));
 
     if (checkInContext.getLoan() != null) {
@@ -154,10 +154,6 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(checkInContext));
-  }
-
-  private boolean isItemAvailable(Item item) {
-    return item.getStatus().equals(ItemStatus.AVAILABLE);
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
