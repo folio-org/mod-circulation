@@ -127,13 +127,12 @@ public class EventPublisher {
     CheckInContext checkInContext, UserRepository userRepository, LoanRepository loanRepository) {
 
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
-      .thenCombineAsync(
-        loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
+      .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
         if (nonNull(lastLoan.value())) {
           return userRepository.getUser(lastLoan.value().getUserId())
             .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(), checkInContext.isInHouseUse() ?
-                null : userFromLastLoan.value()))));
+              mapToCheckInLogEventContent(checkInContext, userResult.value(),
+                checkInContext.isInHouseUse() ? null : userFromLastLoan.value()))));
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
