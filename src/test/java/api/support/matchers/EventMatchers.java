@@ -79,6 +79,13 @@ public class EventMatchers {
       isItemCheckedInEventType());
   }
 
+  public static Matcher<JsonObject> doesNotContainUserBarcode() {
+    return allOf(JsonObjectMatcher.allOfPaths(
+        hasJsonPath("eventPayload", allOf(
+          hasNoJsonPath("userBarcode")
+        ))),
+      isItemCheckedInEventType());
+  }
   public static Matcher<JsonObject> isValidCheckInLogEvent(JsonObject checkedInLoan) {
     return allOf(JsonObjectMatcher.allOfPaths(
       hasJsonPath("eventPayload", allOf(

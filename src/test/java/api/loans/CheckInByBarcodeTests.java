@@ -11,6 +11,7 @@ import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfo
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.isPreferredName;
 import static api.support.matchers.CheckOutByBarcodeResponseMatchers.hasItemBarcodeParameter;
+import static api.support.matchers.EventMatchers.doesNotContainUserBarcode;
 import static api.support.matchers.EventMatchers.isValidCheckInLogEvent;
 import static api.support.matchers.EventMatchers.isValidItemCheckedInEvent;
 import static api.support.matchers.ItemMatchers.isAvailable;
@@ -61,9 +62,9 @@ import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -75,8 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import api.support.builders.AddInfoRequestBuilder;
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -91,6 +90,7 @@ import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
 import api.support.TlrFeatureStatus;
+import api.support.builders.AddInfoRequestBuilder;
 import api.support.builders.Address;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -110,6 +110,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import api.support.matchers.RequestMatchers;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
@@ -1570,6 +1571,18 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(checkInLogEvent, isValidCheckInLogEvent(checkedInLoan));
     assertThatPublishedLoanLogRecordEventsAreValid(checkedInLoan);
+
+    // Second CheckIn for In-House
+    checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(checkInDate)
+        .at(checkInServicePointId));
+
+    final var secondPublishedEvents = waitAtMost(2, SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(5));
+    final var checkedInEvent2 = secondPublishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
+    assertThat(checkedInEvent2, doesNotContainUserBarcode());
   }
 
   @Test
