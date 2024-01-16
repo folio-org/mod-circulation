@@ -13,7 +13,9 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOAN_DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
-import static org.folio.circulation.domain.LoanAction.*;
+import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
+import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -129,7 +131,8 @@ public class EventPublisher {
         if (nonNull(lastLoan.value())) {
           return userRepository.getUser(lastLoan.value().getUserId())
             .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(), userFromLastLoan.value()))));
+              mapToCheckInLogEventContent(checkInContext, userResult.value(),
+                checkInContext.isInHouseUse() ? null : userFromLastLoan.value()))));
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
