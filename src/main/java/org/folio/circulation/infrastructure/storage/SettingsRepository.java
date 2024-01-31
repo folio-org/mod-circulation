@@ -40,7 +40,10 @@ public class SettingsRepository {
           .map(JsonObject::new)
           .orElse(new JsonObject())))
         .thenApply(r -> r.map(CheckoutLockConfiguration::from))
-        .thenApply(r -> r.mapFailure(failure -> succeeded(CheckoutLockConfiguration.from(new JsonObject()))));
+        .thenApply(r -> r.mapFailure(failure -> {
+          log.warn("lookUpCheckOutLockSettings:: Error while fetching checkout lock settings {}", failure);
+          return succeeded(CheckoutLockConfiguration.from(new JsonObject()));
+        }));
     } catch (Exception ex) {
       log.warn("lookUpCheckOutLockSettings:: Unable to retrieve checkoutLockFeature settings ", ex);
       return CompletableFuture.completedFuture(succeeded(CheckoutLockConfiguration.from(new JsonObject())));
