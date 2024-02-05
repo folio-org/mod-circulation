@@ -1,3 +1,7 @@
+## 24.0.12 2024-02-05
+
+* Handle exception while calling mod-settings (CIRC-2023)
+
 ## 24.0.11 2023-12-06
 
 * The option to print picks slips doesn't activate (CIRC-1994)
