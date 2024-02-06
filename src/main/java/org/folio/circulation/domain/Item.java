@@ -127,7 +127,7 @@ public class Item {
   }
 
   public String getTitle() {
-    return instance.getTitle();
+    return isDcbItem() ? getDcbItemTitle() : instance.getTitle();
   }
 
   public Stream<String> getContributorNames() {
