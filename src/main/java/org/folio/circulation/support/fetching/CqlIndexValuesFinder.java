@@ -4,10 +4,10 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.collectingAndThen;
 import static org.apache.commons.collections4.ListUtils.partition;
 import static org.folio.circulation.domain.MultipleRecords.empty;
-import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byId;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
+import static org.folio.circulation.support.results.Result.of;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.results.Result;
 
 import lombok.val;
 

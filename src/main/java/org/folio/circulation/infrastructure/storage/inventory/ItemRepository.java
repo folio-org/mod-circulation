@@ -196,11 +196,10 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchMaterialTypes(
     Result<MultipleRecords<Item>> result) {
 
-    return result.after(items ->
-      materialTypeRepository.getMaterialTypes(items)
-        .thenApply(mapResult(materialTypes -> items.combineRecords(materialTypes,
-          matchRecordsById(Item::getMaterialTypeId, MaterialType::getId),
-          Item::withMaterialType, MaterialType.unknown()))));
+    return result.after(items -> materialTypeRepository.getMaterialTypesAndCombine(
+      items, mapResult(materialTypes -> items.combineRecords(materialTypes,
+        matchRecordsById(Item::getMaterialTypeId, MaterialType::getId),
+        Item::withMaterialType, MaterialType.unknown()))));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLoanTypes(
@@ -209,8 +208,8 @@ public class ItemRepository {
     return result.after(items -> {
       final var loanTypeIdsToFetch = items.toKeys(Item::getLoanTypeId);
 
-      return loanTypeRepository.findByIds(loanTypeIdsToFetch)
-        .thenApply(mapResult(loanTypes -> items.combineRecords(loanTypes,
+      return loanTypeRepository.findByIdsAndCombine(loanTypeIdsToFetch, mapResult(
+        loanTypes -> items.combineRecords(loanTypes,
           matchRecordsById(Item::getLoanTypeId, LoanType::getId),
           Item::withLoanType, LoanType.unknown())));
     });
@@ -222,10 +221,9 @@ public class ItemRepository {
     return result.after(items -> {
       final var instanceIds = items.toKeys(Item::getInstanceId);
 
-      return instanceRepository.fetchByIds(instanceIds)
-        .thenApply(mapResult(instances -> items.combineRecords(instances,
-          matchRecordsById(Item::getInstanceId, Instance::getId),
-          Item::withInstance, Instance.unknown())));
+      return instanceRepository.fetchByIdsAndCombine(instanceIds, mapResult(
+        instances -> items.combineRecords(instances, matchRecordsById(
+          Item::getInstanceId, Instance::getId), Item::withInstance, Instance.unknown())));
     });
   }
 
@@ -235,8 +233,8 @@ public class ItemRepository {
     return result.after(items -> {
       final var holdingsIds = items.toKeys(Item::getHoldingsRecordId);
 
-      return holdingsRepository.fetchByIds(holdingsIds)
-        .thenApply(mapResult(holdings -> items.combineRecords(holdings,
+      return holdingsRepository.fetchByIdsAndCombine(holdingsIds,
+        mapResult(holdings -> items.combineRecords(holdings,
           matchRecordsById(Item::getHoldingsRecordId, Holdings::getId),
           Item::withHoldings, Holdings.unknown())));
     });

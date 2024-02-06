@@ -3,13 +3,16 @@ package org.folio.circulation.infrastructure.storage.inventory;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValuesAndCombine;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.domain.Holdings;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -55,5 +58,16 @@ public class HoldingsRepository {
     return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords",
         mapper::toDomain)
       .findByIds(holdingsRecordIds);
+  }
+
+  CompletableFuture<Result<MultipleRecords<Item>>> fetchByIdsAndCombine(
+    Collection<String> holdingsRecordIds,
+    Function<Result<MultipleRecords<Holdings>>, Result<MultipleRecords<Item>>> combiner) {
+
+    final var mapper = new HoldingsMapper();
+
+    return findWithMultipleCqlIndexValuesAndCombine(holdingsClient,
+      "holdingsRecords", mapper::toDomain, combiner)
+      .findByIdsAndCombine(holdingsRecordIds);
   }
 }
