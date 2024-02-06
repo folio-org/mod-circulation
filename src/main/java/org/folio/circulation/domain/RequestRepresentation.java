@@ -27,7 +27,7 @@ public class RequestRepresentation {
     final JsonObject requestRepresentation = request.asJson();
 
     addItemProperties(requestRepresentation, request.getItem());
-    addInstanceProperties(requestRepresentation, request.getInstance());
+    addInstanceProperties(requestRepresentation, request.getInstance(), request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
     addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
     addAdditionalProxyProperties(requestRepresentation, request.getProxy());
@@ -94,14 +94,15 @@ public class RequestRepresentation {
     write(request, "item", itemSummary);
   }
 
-  private static void addInstanceProperties(JsonObject request, Instance instance) {
+  private static void addInstanceProperties(JsonObject request, Instance instance, Item item) {
     if (instance == null || instance.isNotFound()) {
       log.info("Unable to add instance properties to request {}, instance is {}",
         request.getString("id"), request.getString("instanceId"));
       return;
     }
     JsonObject instanceSummary = new JsonObject();
-    write(instanceSummary, "title", instance.getTitle());
+    write(instanceSummary, "title", item != null && item.isDcbItem() ?
+      item.getDcbItemTitle() : instance.getTitle());
     write(instanceSummary, "identifiers", identifiersToJson(instance.getIdentifiers()));
     write(instanceSummary, "contributorNames", mapContributorNamesToJson(instance));
     write(instanceSummary, "publication", publicationsToJson(instance.getPublication()));
