@@ -70,7 +70,7 @@ public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValue
     List<CompletableFuture<Result<MultipleRecords<R>>>> results = queries.stream()
       .map(query -> cqlFinder.findByQuery(query, maximumLimit()))
       .map(pageRecords -> pageRecords.thenApply(combiner))
-      .collect(Collectors.toList());
+      .toList();
 
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[0]))
       .thenApply(notUsed -> results.stream()
