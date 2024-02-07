@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -24,6 +25,7 @@ public class UpdateLoan {
   private final LoanRepository loanRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final LoanScheduledNoticeService scheduledNoticeService;
+  private final ReminderFeeScheduledNoticeService reminderFeeScheduledNoticeService;
 
   public UpdateLoan(Clients clients, LoanRepository loanRepository,
     LoanPolicyRepository loanPolicyRepository) {
@@ -33,6 +35,7 @@ public class UpdateLoan {
     this.loanPolicyRepository = loanPolicyRepository;
     this.loanRepository = loanRepository;
     this.scheduledNoticeService = LoanScheduledNoticeService.using(clients);
+    this.reminderFeeScheduledNoticeService = new ReminderFeeScheduledNoticeService(clients);
   }
 
   /**
@@ -95,6 +98,7 @@ public class UpdateLoan {
             closedLibraryStrategyService.applyClosedLibraryDueDateManagement(records, true)))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+          .thenApply(r -> r.next(reminderFeeScheduledNoticeService::rescheduleFirstReminder))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     }
   }
