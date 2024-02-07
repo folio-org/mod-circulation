@@ -4822,6 +4822,36 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(recallTlr5.getJson().getString("itemId"), is(notRecalledItem.getId().toString()));
   }
 
+  @Test
+  void createHoldRequestForDcbItemAndResponseContainsDcbTitle() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "virtual Title";
+
+    IndividualResource locationsResource = locationsFixture.thirdFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle);
+
+    final IndividualResource requestPickupServicePoint = servicePointsFixture.cd2();
+
+    checkInFixture.checkInByBarcode(circulationItem, requestPickupServicePoint.getId());
+
+    final IndividualResource holdRequest = requestsClient.create(new RequestBuilder()
+      .hold()
+      .forItem(circulationItem)
+      .withInstanceId(instance.getId())
+      .withPickupServicePointId(requestPickupServicePoint.getId())
+      .by(usersFixture.james()));
+
+    JsonObject requestedItem = holdRequest.getJson().getJsonObject("item");
+
+    assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
+    assertThat(requestedItem.getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
+    assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+    assertThat(holdRequest.getJson().getJsonObject("instance").getString("title"), is(instanceTitle));
+
+  }
+
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
     boolean isNoticeEnabledInNoticePolicy) {
 
