@@ -19,6 +19,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
@@ -78,6 +79,8 @@ public class ChangeDueDateResource extends Resource {
 
     final LoanScheduledNoticeService scheduledNoticeService
       = LoanScheduledNoticeService.using(clients);
+    final ReminderFeeScheduledNoticeService scheduledRemindersService =
+      new ReminderFeeScheduledNoticeService(clients);
 
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
         ChangeDueDateResource::errorWhenInIncorrectStatus);
@@ -101,6 +104,7 @@ public class ChangeDueDateResource extends Resource {
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
   }
 
