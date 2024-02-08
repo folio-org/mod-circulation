@@ -58,7 +58,7 @@ public class MaterialTypeRepository {
     final var materialTypeIds = inventoryRecords.toKeys(Item::getMaterialTypeId);
 
     final var fetcher
-      = findWithMultipleCqlIndexValues(materialTypesStorageClient, "mtypes", mapper::toDomain);
+      = findWithMultipleCqlIndexValues(materialTypesStorageClient, MATERIAL_TYPES, mapper::toDomain);
 
     return fetcher.findByIds(materialTypeIds);
   }

@@ -46,7 +46,7 @@ public class HoldingsRepository {
     final var mapper = new HoldingsMapper();
 
     final var holdingsRecordFetcher = findWithCqlQuery(
-      holdingsClient, "holdingsRecords", mapper::toDomain);
+      holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
     return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
   }
@@ -56,7 +56,7 @@ public class HoldingsRepository {
 
     final var mapper = new HoldingsMapper();
 
-    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords",
+    return findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_RECORDS,
         mapper::toDomain)
       .findByIds(holdingsRecordIds);
   }

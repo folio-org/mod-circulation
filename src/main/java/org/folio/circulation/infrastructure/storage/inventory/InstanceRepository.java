@@ -69,7 +69,7 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValuesAndCombine(instancesClient, "instances",
+    return findWithMultipleCqlIndexValuesAndCombine(instancesClient, INSTANCES,
       mapper::toDomain, combiner)
       .findByIdsAndCombine(instanceIds);
   }
@@ -93,7 +93,7 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances", mapper::toDomain)
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES, mapper::toDomain)
       .findByIds(instanceIdsToFetch)
       .thenApply(multipleInstancesResult -> multipleInstancesResult.next(
         multipleInstances -> {

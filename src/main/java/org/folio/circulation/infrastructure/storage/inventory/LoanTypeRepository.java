@@ -39,7 +39,7 @@ public class LoanTypeRepository {
     final var mapper = new LoanTypeMapper();
 
     return findWithMultipleCqlIndexValues(loanTypesClient,
-      "loantypes", mapper::toDomain)
+      LOAN_TYPES, mapper::toDomain)
       .findByIds(ids);
   }
 
