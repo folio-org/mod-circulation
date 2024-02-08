@@ -18,6 +18,7 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
 public class LoanTypeRepository {
+  private static final String LOAN_TYPES = "loantypes";
   public final CollectionResourceClient loanTypesClient;
 
   public LoanTypeRepository(CollectionResourceClient loanTypesClient) {
@@ -48,7 +49,7 @@ public class LoanTypeRepository {
     final var mapper = new LoanTypeMapper();
 
     return findWithMultipleCqlIndexValuesAndCombine(loanTypesClient,
-      "loantypes", mapper::toDomain, combiner)
+      LOAN_TYPES, mapper::toDomain, combiner)
       .findByIdsAndCombine(ids);
   }
 }

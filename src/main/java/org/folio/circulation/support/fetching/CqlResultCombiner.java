@@ -60,7 +60,7 @@ public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValue
 
     return findByBatchQueries(queries.stream()
       .map(query -> query.combine(andQuery, CqlQuery::and))
-      .collect(Collectors.toList()));
+      .toList());
   }
 
   public CompletableFuture<Result<MultipleRecords<R>>> findByBatchQueries(

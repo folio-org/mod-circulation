@@ -17,10 +17,10 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
-public class CqlResultCombinerTest {
+class CqlResultCombinerTest {
 
   @Test
-  public void testFindByBatchQueries() {
+  void testFindByBatchQueries() {
     Function<Result<MultipleRecords<Item>>, Result<MultipleRecords<Item>>> combiner = mock(Function.class);
     FindWithCqlQuery<Item> cqlFinder = mock(FindWithCqlQuery.class);
     CqlResultCombiner<Item, Item> cqlResultCombiner = new CqlResultCombiner<>(cqlFinder, combiner);

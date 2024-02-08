@@ -30,6 +30,7 @@ import org.folio.circulation.support.results.Result;
 
 public class InstanceRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String INSTANCES = "instances";
   private final CollectionResourceClient instancesClient;
 
   public InstanceRepository(Clients clients) {
@@ -57,7 +58,7 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances",
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES,
       mapper::toDomain)
       .findByIds(instanceIds);
   }

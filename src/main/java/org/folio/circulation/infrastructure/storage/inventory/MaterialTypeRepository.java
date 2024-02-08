@@ -23,6 +23,7 @@ import org.folio.circulation.support.results.Result;
 
 public class MaterialTypeRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String MATERIAL_TYPES = "mtypes";
   private final CollectionResourceClient materialTypesStorageClient;
 
   public MaterialTypeRepository(Clients clients) {
@@ -71,7 +72,7 @@ public class MaterialTypeRepository {
     final var materialTypeIds = inventoryRecords.toKeys(Item::getMaterialTypeId);
 
     final var fetcher = findWithMultipleCqlIndexValuesAndCombine(materialTypesStorageClient,
-      "mtypes", mapper::toDomain, combiner);
+      MATERIAL_TYPES, mapper::toDomain, combiner);
 
     return fetcher.findByIdsAndCombine(materialTypeIds);
   }
