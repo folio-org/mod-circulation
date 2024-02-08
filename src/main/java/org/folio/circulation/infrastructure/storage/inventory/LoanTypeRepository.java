@@ -43,8 +43,8 @@ public class LoanTypeRepository {
       .findByIds(ids);
   }
 
-  CompletableFuture<Result<MultipleRecords<Item>>> findByIdsAndCombine(Set<String> ids,
-    Function<Result<MultipleRecords<LoanType>>, Result<MultipleRecords<Item>>> combiner) {
+  <T> CompletableFuture<Result<MultipleRecords<T>>> findByIdsAndCombine(Set<String> ids,
+    Function<Result<MultipleRecords<LoanType>>, Result<MultipleRecords<T>>> combiner) {
 
     final var mapper = new LoanTypeMapper();
 

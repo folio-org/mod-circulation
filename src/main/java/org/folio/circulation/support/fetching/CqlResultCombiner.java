@@ -20,7 +20,7 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
-public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValues<T, R> {
+public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValues<R> {
 
   private static final int DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
   private final FindWithCqlQuery<T> cqlFinder;

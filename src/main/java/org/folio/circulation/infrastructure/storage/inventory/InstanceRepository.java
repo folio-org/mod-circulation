@@ -63,9 +63,9 @@ public class InstanceRepository {
       .findByIds(instanceIds);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Item>>> fetchByIdsAndCombine(
+  public <T> CompletableFuture<Result<MultipleRecords<T>>> fetchByIdsAndCombine(
     Collection<String> instanceIds,
-    Function<Result<MultipleRecords<Instance>>, Result<MultipleRecords<Item>>> combiner) {
+    Function<Result<MultipleRecords<Instance>>, Result<MultipleRecords<T>>> combiner) {
 
     InstanceMapper mapper = new InstanceMapper();
 

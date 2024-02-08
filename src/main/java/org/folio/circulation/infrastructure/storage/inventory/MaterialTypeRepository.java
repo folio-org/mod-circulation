@@ -63,9 +63,9 @@ public class MaterialTypeRepository {
     return fetcher.findByIds(materialTypeIds);
   }
 
-  public CompletableFuture<Result<MultipleRecords<Item>>> getMaterialTypesAndCombine(
+  public <T> CompletableFuture<Result<MultipleRecords<T>>> getMaterialTypesAndCombine(
     MultipleRecords<Item> inventoryRecords,
-    Function<Result<MultipleRecords<MaterialType>>, Result<MultipleRecords<Item>>> combiner) {
+    Function<Result<MultipleRecords<MaterialType>>, Result<MultipleRecords<T>>> combiner) {
 
     final var mapper = new MaterialTypeMapper();
 

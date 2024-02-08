@@ -28,7 +28,7 @@ public class RecordFetching {
     return new CqlQueryFinder<>(client, recordsPropertyName, recordMapper);
   }
 
-  public static <T, R> CombineWithMultipleCqlIndexValues<T, R> findWithMultipleCqlIndexValuesAndCombine(
+  public static <T, R> CombineWithMultipleCqlIndexValues<R> findWithMultipleCqlIndexValuesAndCombine(
     GetManyRecordsClient client, String recordsPropertyName, Function<JsonObject, T> recordMapper,
     Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combiner) {
 
