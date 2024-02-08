@@ -407,4 +407,8 @@ public class Item {
   public String getLendingLibraryCode() {
     return getProperty(itemRepresentation, "lendingLibraryCode");
   }
+
+  public String getDcbItemTitle() {
+    return getProperty(itemRepresentation, "instanceTitle");
+  }
 }
