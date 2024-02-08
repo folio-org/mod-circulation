@@ -56,11 +56,13 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
+import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
 import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.BlockValidator;
@@ -142,11 +144,14 @@ public abstract class RenewalResource extends Resource {
       itemRepository, userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
+    final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
 
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
@@ -172,13 +177,15 @@ public abstract class RenewalResource extends Resource {
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
       .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
-      .thenComposeAsync(r-> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
+      .thenComposeAsync(r -> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
       .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
+      .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
         RenewalContext::withTlrSettings))
@@ -191,10 +198,11 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients,
-        itemRepository, userRepository, loanRepository)))
+        itemRepository, userRepository, loanRepository, overdueFinePolicyRepository)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
@@ -223,32 +231,35 @@ public abstract class RenewalResource extends Resource {
 
   private CompletableFuture<Result<RenewalContext>> processFeesFines(
     RenewalContext renewalContext, Clients clients, ItemRepository itemRepository,
-    UserRepository userRepository, LoanRepository loanRepository) {
+    UserRepository userRepository, LoanRepository loanRepository,
+    OverdueFinePolicyRepository overdueFinePolicyRepository) {
 
     return isRenewalBlockOverrideRequested
       ? processFeesFinesForRenewalBlockOverride(renewalContext, clients,
-        itemRepository, userRepository, loanRepository)
-      : processFeesFinesForRegularRenew(renewalContext, clients, itemRepository);
+        itemRepository, userRepository, loanRepository, overdueFinePolicyRepository)
+      : processFeesFinesForRegularRenew(renewalContext, clients, itemRepository,
+      overdueFinePolicyRepository);
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRenewalBlockOverride(
     RenewalContext renewalContext, Clients clients,
     ItemRepository itemRepository, UserRepository userRepository,
-    LoanRepository loanRepository) {
+    LoanRepository loanRepository, OverdueFinePolicyRepository overdueFinePolicyRepository) {
 
     final LostItemFeeRefundService lostFeeRefundService = new LostItemFeeRefundService(clients,
       itemRepository, userRepository, loanRepository);
 
     return lostFeeRefundService.refundLostItemFees(renewalContext, servicePointId(renewalContext))
       .thenCompose(r -> r.after(context -> processFeesFinesForRegularRenew(context, clients,
-        itemRepository)));
+        itemRepository, overdueFinePolicyRepository)));
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFinesForRegularRenew(
-    RenewalContext renewalContext, Clients clients, ItemRepository itemRepository) {
+    RenewalContext renewalContext, Clients clients, ItemRepository itemRepository,
+    OverdueFinePolicyRepository overdueFinePolicyRepository) {
 
     final var overdueFineService = new OverdueFineService(
-      new OverdueFinePolicyRepository(clients),
+      overdueFinePolicyRepository,
       itemRepository,
       new FeeFineOwnerRepository(clients),
       new FeeFineRepository(clients),
@@ -283,6 +294,24 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
   }
 
+  private CompletableFuture<Result<RenewalContext>> blockRenewalOfItemsWithReminderFees(
+    RenewalContext context, CirculationErrorHandler errorHandler) {
+
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+
+      return Result.ofAsync(context);
+    }
+
+    final var renewalOfItemsWithReminderFeesValidator = new RenewalOfItemsWithReminderFeesValidator();
+
+    final var validator = new BlockValidator<>(RENEWAL_IS_BLOCKED,
+      renewalOfItemsWithReminderFeesValidator::blockRenewalIfReminderFeesExistAndDisallowRenewalWithReminders);
+
+    return validator.validate(context)
+      .thenApply(r -> errorHandler.handleValidationResult(r, CirculationErrorType.RENEWAL_IS_BLOCKED, r));
+  }
+
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
     Validator<RenewalContext> validator, Result<RenewalContext> result,
     CirculationErrorHandler errorHandler, CirculationErrorType errorType) {
@@ -308,6 +337,20 @@ public abstract class RenewalResource extends Resource {
     }
 
     return loanPolicyRepository.lookupLoanPolicy(renewalContext);
+  }
+
+  private CompletableFuture<Result<RenewalContext>> lookupOverdueFinePolicy(
+    RenewalContext renewalContext, OverdueFinePolicyRepository overdueFinePolicyRepository,
+    CirculationErrorHandler errorHandler)
+  {
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+      return completedFuture(succeeded(renewalContext));
+    }
+
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(renewalContext.getLoan()))
+      .thenApply(mapResult(renewalContext::withLoan));
   }
 
   private CompletableFuture<Result<RenewalContext>> lookupRequestQueue(
