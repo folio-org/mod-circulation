@@ -67,13 +67,11 @@ public class MaterialTypeRepository {
     MultipleRecords<Item> inventoryRecords,
     Function<Result<MultipleRecords<MaterialType>>, Result<MultipleRecords<T>>> combiner) {
 
-    final var mapper = new MaterialTypeMapper();
-
-    final var materialTypeIds = inventoryRecords.toKeys(Item::getMaterialTypeId);
-
+    log.debug("getMaterialTypesAndCombine:: parameters inventoryRecords: {}",
+      () -> multipleRecordsAsString(inventoryRecords));
     final var fetcher = findWithMultipleCqlIndexValuesAndCombine(materialTypesStorageClient,
-      MATERIAL_TYPES, mapper::toDomain, combiner);
+      MATERIAL_TYPES, new MaterialTypeMapper()::toDomain, combiner);
 
-    return fetcher.findByIdsAndCombine(materialTypeIds);
+    return fetcher.findByIdsAndCombine(inventoryRecords.toKeys(Item::getMaterialTypeId));
   }
 }

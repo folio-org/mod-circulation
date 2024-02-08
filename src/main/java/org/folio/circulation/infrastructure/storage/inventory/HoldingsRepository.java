@@ -12,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Holdings;
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.support.CollectionResourceClient;
