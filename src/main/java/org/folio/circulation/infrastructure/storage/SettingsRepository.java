@@ -16,7 +16,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.results.Result.succeeded;
 
 public class SettingsRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -39,14 +38,10 @@ public class SettingsRepository {
           .map(Configuration::getValue)
           .map(JsonObject::new)
           .orElse(new JsonObject())))
-        .thenApply(r -> r.map(CheckoutLockConfiguration::from))
-        .thenApply(r -> r.mapFailure(failure -> {
-          log.warn("lookUpCheckOutLockSettings:: Error while fetching checkout lock settings {}", failure);
-          return succeeded(CheckoutLockConfiguration.from(new JsonObject()));
-        }));
+        .thenApply(r -> r.map(CheckoutLockConfiguration::from));
     } catch (Exception ex) {
       log.warn("lookUpCheckOutLockSettings:: Unable to retrieve checkoutLockFeature settings ", ex);
-      return CompletableFuture.completedFuture(succeeded(CheckoutLockConfiguration.from(new JsonObject())));
+      return CompletableFuture.completedFuture(Result.succeeded(CheckoutLockConfiguration.from(new JsonObject())));
     }
   }
 }
