@@ -1,3 +1,7 @@
+## 24.0.13 2024-02-09
+
+* Revert CIRC-2023 changes (CIRC-2033)
+
 ## 24.0.12 2024-02-05
 
 * Handle exception while calling mod-settings (CIRC-2023)
