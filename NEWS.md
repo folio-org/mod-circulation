@@ -1,4 +1,4 @@
-## 24.0.12 2024-02-05
+## 24.1.0 2024-02-09
 
 * Handle exception while calling mod-settings (CIRC-2023)
 
