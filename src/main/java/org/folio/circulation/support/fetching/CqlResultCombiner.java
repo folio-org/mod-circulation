@@ -15,16 +15,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.support.CombineWithMultipleCqlIndexValues;
+import org.folio.circulation.support.FindByIdsAndCombine;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
-public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValues<R> {
+public class CqlResultCombiner<T, R> implements FindByIdsAndCombine<R> {
 
   private static final int DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY = 50;
   private final FindWithCqlQuery<T> cqlFinder;
-  private final Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combiner;
+  private final Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combineFunction;
   private final int maxValuesPerCqlSearchQuery;
 
   public CqlResultCombiner(FindWithCqlQuery<T> cqlFinder,
@@ -32,7 +32,7 @@ public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValue
     int maxValuesPerCqlSearchQuery) {
 
     this.cqlFinder = cqlFinder;
-    this.combiner = combiner;
+    this.combineFunction = combiner;
     this.maxValuesPerCqlSearchQuery = maxValuesPerCqlSearchQuery;
   }
 
@@ -69,7 +69,7 @@ public class CqlResultCombiner<T, R> implements CombineWithMultipleCqlIndexValue
     // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<Result<MultipleRecords<R>>>> results = queries.stream()
       .map(query -> cqlFinder.findByQuery(query, maximumLimit()))
-      .map(pageRecords -> pageRecords.thenApply(combiner))
+      .map(pageRecords -> pageRecords.thenApply(combineFunction))
       .toList();
 
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[0]))
