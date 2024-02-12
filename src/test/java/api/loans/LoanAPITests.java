@@ -1287,15 +1287,20 @@ class LoanAPITests extends APITests {
   void loanInCollectionDoesProvideItemInformationForCirculationItem() {
     IndividualResource instance = instancesFixture.basedUponDunkirk();
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "virtual Title";
 
     IndividualResource locationsResource = locationsFixture.mainFloor();
-    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem("100002222", holdings.getId(), locationsResource.getId());
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle);
     loansFixture.createLoan(circulationItem, usersFixture.jessica());
 
     JsonObject loan = loansFixture.getLoans().getFirst();
 
     assertThat("should be item information available",
       loan.containsKey("item"), is(true));
+
+    assertThat("item title should match dcb instance title",
+      loan.getJsonObject("item").getString("title"), is(instanceTitle));
   }
 
   @Test

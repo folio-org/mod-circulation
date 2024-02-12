@@ -20,17 +20,17 @@ public class CirculationItemsFixture {
     this.loanTypesFixture = loanTypesFixture;
   }
 
-  public IndividualResource createCirculationItem(String barcode, UUID holdingId, UUID locationId) {
+  public IndividualResource createCirculationItem(String barcode, UUID holdingId, UUID locationId, String instanceTitle) {
     CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder().withBarcode(barcode).withHoldingId(holdingId)
       .withLoanType(loanTypesFixture.canCirculate().getId()).withMaterialType(materialTypesFixture.book().getId())
-      .withLocationId(locationId);
+      .withLocationId(locationId).withInstanceTitle(instanceTitle);
     return circulationItemClient.create(circulationItemsBuilder);
   }
 
-  public IndividualResource createCirculationItemWithLandingLibrary(String barcode, UUID holdingId, UUID locationId, String landingLibrary) {
+  public IndividualResource createCirculationItemWithLendingLibrary(String barcode, UUID holdingId, UUID locationId, String lendingLibrary) {
     CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder().withBarcode(barcode).withHoldingId(holdingId)
       .withLoanType(loanTypesFixture.canCirculate().getId()).withMaterialType(materialTypesFixture.book().getId())
-      .withLocationId(locationId).withLendingLibraryCode(landingLibrary);
+      .withLocationId(locationId).withLendingLibraryCode(lendingLibrary);
     return circulationItemClient.create(circulationItemsBuilder);
   }
 }
