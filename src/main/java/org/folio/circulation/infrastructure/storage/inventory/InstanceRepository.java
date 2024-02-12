@@ -62,14 +62,12 @@ public class InstanceRepository {
       .findByIds(instanceIds);
   }
 
-  public <T> CompletableFuture<Result<MultipleRecords<T>>> fetchByIdsAndCombine(
+  <T> CompletableFuture<Result<MultipleRecords<T>>> fetchByIdsAndCombine(
     Collection<String> instanceIds,
     Function<Result<MultipleRecords<Instance>>, Result<MultipleRecords<T>>> combiner) {
 
-    InstanceMapper mapper = new InstanceMapper();
-
     return findWithMultipleCqlIndexValuesAndCombine(instancesClient, INSTANCES,
-      mapper::toDomain, combiner)
+      new InstanceMapper()::toDomain, combiner)
       .findByIdsAndCombine(instanceIds);
   }
 
