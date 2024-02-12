@@ -40,13 +40,14 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private List<String> yearCaption;
   private String volume;
   private final String chronology;
+  private String displaySummary;
   private String numberOfPieces;
   private String descriptionOfPieces;
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
       null, null, null, null, null, null, null, null, null, null, null, Collections.emptyList(),
-      null, null, null);
+      null, null, null, null);
   }
 
   private ItemBuilder(
@@ -67,6 +68,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     String volume,
     List<String> yearCaption,
     String chronology,
+    String displaySummary,
     String numberOfPieces,
     String descriptionOfPieces) {
 
@@ -87,6 +89,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.volume = volume;
     this.yearCaption = yearCaption;
     this.chronology = chronology;
+    this.displaySummary = displaySummary;
     this.numberOfPieces = numberOfPieces;
     this.descriptionOfPieces = descriptionOfPieces;
   }
@@ -112,6 +115,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "volume", volume);
     put(itemRequest, "yearCaption", yearCaption);
     put(itemRequest, "chronology", chronology);
+    put(itemRequest, "displaySummary", displaySummary);
     put(itemRequest, "numberOfPieces", numberOfPieces);
     put(itemRequest, "descriptionOfPieces", descriptionOfPieces);
 
@@ -181,6 +185,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -204,6 +209,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -235,6 +241,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -266,6 +273,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -293,6 +301,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -316,6 +325,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -339,6 +349,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -362,6 +373,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -385,6 +397,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -408,6 +421,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -431,6 +445,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -458,6 +473,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -481,6 +497,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -504,6 +521,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
         this.volume,
         yearCaption,
         this.chronology,
+        this.displaySummary,
         this.numberOfPieces,
         this.descriptionOfPieces);
     }
@@ -527,6 +545,31 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       chronology,
+      this.displaySummary,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
+  }
+
+  public ItemBuilder withDisplaySummary(String displaySummary) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      this.copyNumber,
+      this.itemLevelCallNumber,
+      this.itemLevelCallNumberPrefix,
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption,
+      this.chronology,
+      displaySummary,
       this.numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -550,6 +593,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       numberOfPieces,
       this.descriptionOfPieces);
   }
@@ -573,6 +617,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.volume,
       this.yearCaption,
       this.chronology,
+      this.displaySummary,
       this.numberOfPieces,
       descriptionOfPieces);
   }

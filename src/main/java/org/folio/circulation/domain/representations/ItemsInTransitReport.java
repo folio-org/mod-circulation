@@ -112,6 +112,7 @@ public class ItemsInTransitReport {
     write(entry, "contributors", mapContributorNamesToJson(item));
     write(entry, "callNumber", item.getCallNumber());
     write(entry, "enumeration", item.getEnumeration());
+    write(entry, "displaySummary", item.getDisplaySummary());
     write(entry, "volume", item.getVolume());
     write(entry, "yearCaption", item.getYearCaption());
     writeNamedObject(entry, "status", ofNullable(item.getStatus())

@@ -208,6 +208,7 @@ public class TemplateContextUtil {
       .put("loanType", item.getLoanTypeName())
       .put("copy", copyNumber)
       .put("numberOfPieces", item.getNumberOfPieces())
+      .put("displaySummary", item.getDisplaySummary())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 
     Location location = item.getLocation();

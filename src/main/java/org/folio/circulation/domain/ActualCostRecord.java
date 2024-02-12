@@ -72,6 +72,7 @@ public class ActualCostRecord {
     private final String volume;
     private final String enumeration;
     private final String chronology;
+    private final String displaySummary;
     private final String copyNumber;
   }
 
