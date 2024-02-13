@@ -38,6 +38,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.equalTo;
 
 class ReminderFeeTests extends APITests {
 
@@ -710,6 +711,8 @@ class ReminderFeeTests extends APITests {
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
       hasJsonPath("reminders.lastFeeBilled.number", is(1)));
 
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().get(0);
+
     JsonObject loanAfterRenewal = loansFixture.attemptRenewal(200,
       item, borrower).getJson();
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
@@ -717,6 +720,9 @@ class ReminderFeeTests extends APITests {
 
     assertThat("renewal count should be 1 after renewal",
       loanAfterRenewal.getInteger("renewalCount"), is(1));
+    assertThat("rescheduled reminder should have different runtime than previous, second reminder",
+      scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),
+      is(not(equalTo(rescheduledNotice.getInstant("nextRunTime").toString()))));
     assertThat("rescheduled notice should be scheduled later than initial notice",
       rescheduledNotice.getInstant("nextRunTime")
         .isAfter(initialScheduledNotice.getInstant("nextRunTime")));
@@ -755,6 +761,8 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().get(0);
+
     JsonObject loanAfterReminder = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
       hasJsonPath("reminders.lastFeeBilled.number", is(1)));
@@ -767,11 +775,14 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
     JsonObject rescheduledNotice = scheduledNoticesClient.getAll().get(0);
 
+    assertThat("Loan should have no reminders after due date change",
+      not(loanAfterDueDateChange.containsKey("reminders")));
+    assertThat("rescheduled reminder should have different runtime than previous, second reminder",
+      scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),
+      is(not(equalTo(rescheduledNotice.getInstant("nextRunTime").toString()))));
     assertThat("rescheduled notice should be scheduled later than initial notice",
       rescheduledNotice.getInstant("nextRunTime")
         .isAfter(initialScheduledNotice.getInstant("nextRunTime")));
-    assertThat("Loan should have no reminders after due date change",
-      not(loanAfterDueDateChange.containsKey("reminders")));
   }
 
 }

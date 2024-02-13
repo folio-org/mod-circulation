@@ -1,12 +1,15 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.*;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -26,13 +29,17 @@ import org.folio.circulation.domain.validation.LoanValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
@@ -73,12 +80,19 @@ public class ChangeDueDateResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final WebContext webContext = new WebContext(routingContext);
+    final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
+
+    final CirculationErrorHandler errorHandler = new OverridingErrorHandler(okapiPermissions);
+
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final LoanScheduledNoticeService scheduledNoticeService
       = LoanScheduledNoticeService.using(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository =
+      new OverdueFinePolicyRepository(clients);
     final ReminderFeeScheduledNoticeService scheduledRemindersService =
       new ReminderFeeScheduledNoticeService(clients);
 
@@ -99,6 +113,7 @@ public class ChangeDueDateResource extends Resource {
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
+      .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
       .thenApply(r -> changeDueDate(r, request))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
@@ -106,6 +121,20 @@ public class ChangeDueDateResource extends Resource {
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
+    LoanAndRelatedRecords context, OverdueFinePolicyRepository overdueFinePolicyRepository,
+    CirculationErrorHandler errorHandler)
+  {
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+      return completedFuture(succeeded(context));
+    }
+
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(context.getLoan()))
+      .thenApply(mapResult(context::withLoan));
   }
 
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
