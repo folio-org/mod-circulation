@@ -3,6 +3,7 @@ package org.folio.circulation.domain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
@@ -15,6 +16,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -23,6 +25,7 @@ public class UpdateLoan {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ClosedLibraryStrategyService closedLibraryStrategyService;
   private final LoanRepository loanRepository;
+  private final OverdueFinePolicyRepository overdueFinePolicyRepository;
   private final LoanPolicyRepository loanPolicyRepository;
   private final LoanScheduledNoticeService scheduledNoticeService;
   private final ReminderFeeScheduledNoticeService reminderFeeScheduledNoticeService;
@@ -33,6 +36,7 @@ public class UpdateLoan {
     closedLibraryStrategyService = ClosedLibraryStrategyService.using(clients,
       ClockUtil.getZonedDateTime(), false);
     this.loanPolicyRepository = loanPolicyRepository;
+    this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
     this.loanRepository = loanRepository;
     this.scheduledNoticeService = LoanScheduledNoticeService.using(clients);
     this.reminderFeeScheduledNoticeService = new ReminderFeeScheduledNoticeService(clients);
@@ -96,11 +100,19 @@ public class UpdateLoan {
           .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
           .thenComposeAsync(r -> r.after(records ->
             closedLibraryStrategyService.applyClosedLibraryDueDateManagement(records, true)))
+          .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository)))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.next(reminderFeeScheduledNoticeService::rescheduleFirstReminder))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     }
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
+    LoanAndRelatedRecords context, OverdueFinePolicyRepository overdueFinePolicyRepository) {
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(context.getLoan()))
+      .thenApply(mapResult(context::withLoan));
   }
 
   private Result<LoanAndRelatedRecords> recall(LoanAndRelatedRecords loanAndRelatedRecords) {
