@@ -177,7 +177,7 @@ public class ChangeDueDateResource extends Resource {
 
     log.debug("changeDueDate:: parameters loanAndRelatedRecords: {}, dueDate: {}",
       () -> loanAndRelatedRecords, () -> dueDate);
-    loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
+    loanAndRelatedRecords.getLoan().changeDueDate(dueDate).resetReminders();
 
     return loanAndRelatedRecords;
   }
