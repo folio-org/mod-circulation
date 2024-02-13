@@ -783,7 +783,7 @@ class ReminderFeeTests extends APITests {
       scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),
       is(not(equalTo(rescheduledNotice.getInstant("nextRunTime").toString()))));
     assertThat("Loan should have no reminders after recall",
-      not(loanAfterRecall.containsKey("reminders")));
+      !loanAfterRecall.containsKey("reminders"));
     assertThat("a new, rescheduled notice with a new ID should be created",
       rescheduledNotice.getString("id"),
         is(not(equalTo(initialScheduledNotice.getString("id")))));
