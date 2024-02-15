@@ -28,18 +28,18 @@ public class CqlResultCombiner<T, R> implements FindByIdsAndCombine<R> {
   private final int maxValuesPerCqlSearchQuery;
 
   public CqlResultCombiner(FindWithCqlQuery<T> cqlFinder,
-    Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combiner,
+    Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combineFunction,
     int maxValuesPerCqlSearchQuery) {
 
     this.cqlFinder = cqlFinder;
-    this.combineFunction = combiner;
+    this.combineFunction = combineFunction;
     this.maxValuesPerCqlSearchQuery = maxValuesPerCqlSearchQuery;
   }
 
   public CqlResultCombiner(FindWithCqlQuery<T> cqlFinder,
-    Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combiner) {
+    Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combineFunction) {
 
-    this(cqlFinder, combiner, DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY);
+    this(cqlFinder, combineFunction, DEFAULT_MAX_ID_VALUES_PER_CQL_SEARCH_QUERY);
   }
 
   @Override
