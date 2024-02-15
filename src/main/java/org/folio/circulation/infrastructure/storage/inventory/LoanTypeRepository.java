@@ -43,10 +43,10 @@ public class LoanTypeRepository {
   }
 
   <T> CompletableFuture<Result<MultipleRecords<T>>> findByIdsAndCombine(Set<String> ids,
-    Function<Result<MultipleRecords<LoanType>>, Result<MultipleRecords<T>>> combiner) {
+    Function<Result<MultipleRecords<LoanType>>, Result<MultipleRecords<T>>> combineFunction) {
 
     return findWithMultipleCqlIndexValuesAndCombine(loanTypesClient,
-      LOAN_TYPES, new LoanTypeMapper()::toDomain, combiner)
+      LOAN_TYPES, new LoanTypeMapper()::toDomain, combineFunction)
       .findByIdsAndCombine(ids);
   }
 }

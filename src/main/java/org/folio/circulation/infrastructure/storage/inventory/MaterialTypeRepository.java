@@ -65,12 +65,12 @@ public class MaterialTypeRepository {
 
   <T> CompletableFuture<Result<MultipleRecords<T>>> getMaterialTypesAndCombine(
     MultipleRecords<Item> inventoryRecords,
-    Function<Result<MultipleRecords<MaterialType>>, Result<MultipleRecords<T>>> combiner) {
+    Function<Result<MultipleRecords<MaterialType>>, Result<MultipleRecords<T>>> combineFunction) {
 
     log.debug("getMaterialTypesAndCombine:: parameters inventoryRecords: {}",
       () -> multipleRecordsAsString(inventoryRecords));
     final var fetcher = findWithMultipleCqlIndexValuesAndCombine(materialTypesStorageClient,
-      MATERIAL_TYPES, new MaterialTypeMapper()::toDomain, combiner);
+      MATERIAL_TYPES, new MaterialTypeMapper()::toDomain, combineFunction);
 
     return fetcher.findByIdsAndCombine(inventoryRecords.toKeys(Item::getMaterialTypeId));
   }

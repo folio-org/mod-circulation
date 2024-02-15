@@ -62,10 +62,10 @@ public class HoldingsRepository {
 
   <T> CompletableFuture<Result<MultipleRecords<T>>> fetchByIdsAndCombine(
     Collection<String> holdingsRecordIds,
-    Function<Result<MultipleRecords<Holdings>>, Result<MultipleRecords<T>>> combiner) {
+    Function<Result<MultipleRecords<Holdings>>, Result<MultipleRecords<T>>> combineFunction) {
 
     return findWithMultipleCqlIndexValuesAndCombine(holdingsClient,
-      HOLDINGS_RECORDS, new HoldingsMapper()::toDomain, combiner)
+      HOLDINGS_RECORDS, new HoldingsMapper()::toDomain, combineFunction)
       .findByIdsAndCombine(holdingsRecordIds);
   }
 }

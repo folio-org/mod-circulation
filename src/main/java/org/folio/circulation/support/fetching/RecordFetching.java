@@ -30,9 +30,9 @@ public class RecordFetching {
 
   public static <T, R> FindByIdsAndCombine<R> findWithMultipleCqlIndexValuesAndCombine(
     GetManyRecordsClient client, String recordsPropertyName, Function<JsonObject, T> recordMapper,
-    Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combiner) {
+    Function<Result<MultipleRecords<T>>, Result<MultipleRecords<R>>> combineFunction) {
 
     return new CqlResultCombiner<>(
-      new CqlQueryFinder<>(client, recordsPropertyName, recordMapper), combiner);
+      new CqlQueryFinder<>(client, recordsPropertyName, recordMapper), combineFunction);
   }
 }
