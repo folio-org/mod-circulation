@@ -66,6 +66,9 @@ public class InstanceRepository {
     Collection<String> instanceIds,
     Function<Result<MultipleRecords<Instance>>, Result<MultipleRecords<T>>> combineFunction) {
 
+    log.debug("fetchByIdsAndCombine:: parameters instanceIds: {}",
+      () -> collectionAsString(instanceIds));
+
     return findWithMultipleCqlIndexValuesAndCombine(instancesClient, INSTANCES,
       new InstanceMapper()::toDomain, combineFunction)
       .findByIdsAndCombine(instanceIds);
