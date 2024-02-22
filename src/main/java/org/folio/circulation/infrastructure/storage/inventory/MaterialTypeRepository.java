@@ -2,11 +2,13 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.Objects.isNull;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValuesAndCombine;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +23,7 @@ import org.folio.circulation.support.results.Result;
 
 public class MaterialTypeRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String MATERIAL_TYPES = "mtypes";
   private final CollectionResourceClient materialTypesStorageClient;
 
   public MaterialTypeRepository(Clients clients) {
@@ -55,8 +58,20 @@ public class MaterialTypeRepository {
     final var materialTypeIds = inventoryRecords.toKeys(Item::getMaterialTypeId);
 
     final var fetcher
-      = findWithMultipleCqlIndexValues(materialTypesStorageClient, "mtypes", mapper::toDomain);
+      = findWithMultipleCqlIndexValues(materialTypesStorageClient, MATERIAL_TYPES, mapper::toDomain);
 
     return fetcher.findByIds(materialTypeIds);
+  }
+
+  <T> CompletableFuture<Result<MultipleRecords<T>>> getMaterialTypesAndCombine(
+    MultipleRecords<Item> inventoryRecords,
+    Function<Result<MultipleRecords<MaterialType>>, Result<MultipleRecords<T>>> combineFunction) {
+
+    log.debug("getMaterialTypesAndCombine:: parameters inventoryRecords: {}",
+      () -> multipleRecordsAsString(inventoryRecords));
+    final var fetcher = findWithMultipleCqlIndexValuesAndCombine(materialTypesStorageClient,
+      MATERIAL_TYPES, new MaterialTypeMapper()::toDomain, combineFunction);
+
+    return fetcher.findByIdsAndCombine(inventoryRecords.toKeys(Item::getMaterialTypeId));
   }
 }

@@ -1,3 +1,11 @@
+## 24.1.1 2024-02-22
+
+* Combine items with related records during the pagination process (CIRC-2018)
+
+## 24.1.0 2024-02-09
+
+* Handle exception while calling mod-settings (CIRC-2023)
+
 ## 24.0.11 2023-12-06
 
 * The option to print picks slips doesn't activate (CIRC-1994)
