@@ -428,7 +428,8 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
     var barcode = "100002222";
-    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(barcode, holdings.getId(), locationsResource.getId());
+    var instanceTitle = "virtual title";
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(barcode, holdings.getId(), locationsResource.getId(), instanceTitle);
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(circulationItem, ZonedDateTime.now(), checkInServicePointId);
 
     assertThat("Response should include an item",
@@ -438,6 +439,9 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat("barcode is included for item",
       itemFromResponse.getString("barcode"), is(barcode));
+
+    assertThat("item title should match dcb instance title",
+      itemFromResponse.getString("title"), is(instanceTitle));
   }
 
   @Test
@@ -448,7 +452,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource locationsResource = locationsFixture.mainFloor();
     var barcode = "100002222";
     var lendingLibraryCode = "11223";
-    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItemWithLandingLibrary(barcode, holdings.getId(), locationsResource.getId(), lendingLibraryCode);
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItemWithLendingLibrary(barcode, holdings.getId(), locationsResource.getId(), lendingLibraryCode);
 
     final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(circulationItem, ZonedDateTime.now(), checkInServicePointId);
     JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();

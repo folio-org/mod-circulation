@@ -197,7 +197,7 @@ public class TemplateContextUtil {
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
 
-    JsonObject itemContext = createInstanceContext(item.getInstance())
+    JsonObject itemContext = createInstanceContext(item.getInstance(), item)
       .put("barcode", item.getBarcode())
       .put("status", item.getStatus().getValue())
       .put("enumeration", item.getEnumeration())
@@ -245,15 +245,16 @@ public class TemplateContextUtil {
   private static JsonObject createItemContext(Request request) {
     return request.hasItem()
       ? createItemContext(request.getItem())
-      : createInstanceContext(request.getInstance());
+      : createInstanceContext(request.getInstance(), request.getItem());
   }
 
-  private static JsonObject createInstanceContext(Instance instance) {
+  private static JsonObject createInstanceContext(Instance instance, Item item) {
     JsonObject instanceContext = new JsonObject();
 
     if (instance != null) {
       instanceContext
-        .put("title", instance.getTitle())
+        .put("title", item != null && item.isDcbItem() ?
+          item.getDcbItemTitle() : instance.getTitle())
         .put("primaryContributor", instance.getPrimaryContributorName())
         .put("allContributors", instance.getContributorNames().collect(joining("; ")));
     }

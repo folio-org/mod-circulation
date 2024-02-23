@@ -14,6 +14,7 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
   private final UUID loanTypeId;
   private final boolean isDcb;
   private final String lendingLibraryCode;
+  private final String instanceTitle;
 
   public CirculationItemsBuilder() {
     this(UUID.randomUUID(),
@@ -23,7 +24,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       true,
-      "11223");
+      "11223",
+      null);
   }
 
   private CirculationItemsBuilder(
@@ -34,7 +36,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
     UUID materialTypeId,
     UUID loanTypeId,
     boolean isDcb,
-    String lendingLibraryCode) {
+    String lendingLibraryCode,
+    String instanceTitle) {
 
     this.itemId = itemId;
     this.barcode = barcode;
@@ -44,6 +47,7 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
     this.loanTypeId = loanTypeId;
     this.isDcb = isDcb;
     this.lendingLibraryCode = lendingLibraryCode;
+    this.instanceTitle = instanceTitle;
   }
 
   public JsonObject create() {
@@ -57,6 +61,7 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
     representation.put("temporaryLoanTypeId", loanTypeId);
     representation.put("dcbItem", isDcb);
     representation.put("lendingLibraryCode", lendingLibraryCode);
+    representation.put("instanceTitle", instanceTitle);
 
     return representation;
   }
@@ -70,7 +75,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.loanTypeId,
       this.isDcb,
-      this.lendingLibraryCode);
+      this.lendingLibraryCode,
+      this.instanceTitle);
   }
 
   public CirculationItemsBuilder withHoldingId(UUID holdingId) {
@@ -82,7 +88,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.loanTypeId,
       this.isDcb,
-      this.lendingLibraryCode);
+      this.lendingLibraryCode,
+      this.instanceTitle);
   }
 
   public CirculationItemsBuilder withItemId(UUID itemId) {
@@ -94,7 +101,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.loanTypeId,
       this.isDcb,
-      this.lendingLibraryCode);
+      this.lendingLibraryCode,
+      this.instanceTitle);
   }
 
   public CirculationItemsBuilder withLocationId(UUID locationId) {
@@ -106,7 +114,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.loanTypeId,
       this.isDcb,
-      this.lendingLibraryCode);
+      this.lendingLibraryCode,
+      this.instanceTitle);
   }
 
   public CirculationItemsBuilder withLendingLibraryCode(String lendingLibraryCode) {
@@ -118,7 +127,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       this.loanTypeId,
       this.isDcb,
-      lendingLibraryCode);
+      lendingLibraryCode,
+      this.instanceTitle);
   }
 
   public CirculationItemsBuilder withLoanType(UUID loanTypeId) {
@@ -130,7 +140,8 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       this.materialTypeId,
       loanTypeId,
       this.isDcb,
-      this.lendingLibraryCode);
+      this.lendingLibraryCode,
+      this.instanceTitle);
   }
 
   public CirculationItemsBuilder withMaterialType(UUID materialTypeId) {
@@ -142,7 +153,21 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       materialTypeId,
       this.loanTypeId,
       this.isDcb,
-      this.lendingLibraryCode);
+      this.lendingLibraryCode,
+      this.instanceTitle);
+  }
+
+  public CirculationItemsBuilder withInstanceTitle(String instanceTitle) {
+    return new CirculationItemsBuilder(
+      this.itemId,
+      this.barcode,
+      this.holdingId,
+      this.locationId,
+      this.materialTypeId,
+      this.loanTypeId,
+      this.isDcb,
+      this.lendingLibraryCode,
+      instanceTitle);
   }
 
 }

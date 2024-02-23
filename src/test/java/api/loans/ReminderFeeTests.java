@@ -2,6 +2,7 @@ package api.loans;
 
 import api.support.APITests;
 import api.support.builders.*;
+import api.support.fakes.FakeModNotify;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
@@ -400,7 +401,9 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE, 3);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(2));
-
+    waitAtMost(1, SECONDS).until(() ->
+      FakeModNotify.getSentPatronNotices().stream()
+        .filter(r -> r.getString("deliveryChannel").equals("mail")).toList(), hasSize(1));
   }
 
   @Test
