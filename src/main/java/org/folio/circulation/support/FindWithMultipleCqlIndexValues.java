@@ -9,7 +9,7 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
 public interface FindWithMultipleCqlIndexValues<T> {
-    CompletableFuture<Result<MultipleRecords<T>>> findByIds(
+  CompletableFuture<Result<MultipleRecords<T>>> findByIds(
       Collection<String> ids);
 
   CompletableFuture<Result<MultipleRecords<T>>> findByIdIndexAndQuery(

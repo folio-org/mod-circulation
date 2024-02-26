@@ -965,7 +965,9 @@ class CheckOutByBarcodeTests extends APITests {
     IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
     IndividualResource locationsResource = locationsFixture.mainFloor();
     var barcode = "100002222";
-    IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(barcode, holdings.getId(), locationsResource.getId());
+    var instanceTitle = "virtual Title";
+    IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      barcode, holdings.getId(), locationsResource.getId(), instanceTitle);
     final IndividualResource jessica = usersFixture.jessica();
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
@@ -985,6 +987,9 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat("status should be open",
       loan.getJsonObject("status").getString("name"), is("Open"));
+
+    assertThat("item title should match dcb instance title",
+      loan.getJsonObject("item").getString("title"), is(instanceTitle));
 
     circulationItem = circulationItemsClient.get(circulationItem);
 
