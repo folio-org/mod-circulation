@@ -34,6 +34,7 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -130,9 +131,17 @@ public class EventPublisher {
       .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
         if (nonNull(lastLoan.value())) {
           return userRepository.getUser(lastLoan.value().getUserId())
-            .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(),
-                checkInContext.isInHouseUse() ? null : userFromLastLoan.value()))));
+            .thenApply(userFromLastLoan -> {
+              try {
+                return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+                  mapToCheckInLogEventContent(checkInContext, userResult.value(),
+                    (checkInContext.isInHouseUse() || !loanRepository.hasOpenLoan(checkInContext.
+                      getItem().getItemId()).get().value() || checkInContext.getRequestQueue().getRequests().isEmpty())
+                      ? null : userFromLastLoan.value())));
+              } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+              }
+            });
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
