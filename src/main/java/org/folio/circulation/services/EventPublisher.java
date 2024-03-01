@@ -143,7 +143,7 @@ public class EventPublisher {
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
          Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-           mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
+          mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
       }));
 
     if (checkInContext.getLoan() != null) {
