@@ -129,27 +129,24 @@ public class EventPublisher {
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
       .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
         if (nonNull(lastLoan.value())) {
-          return loanRepository.findOpenLoanForItem(checkInContext.getItem()).thenApply(loanResult -> {
-            if(nonNull(loanResult)) {
+          return loanRepository.findOpenLoanForItem(checkInContext.getItem()).thenApply(openLoanResult -> {
+            if(nonNull(openLoanResult.value())) {
               userRepository.getUser(lastLoan.value().getUserId())
-                .thenApply(userFromLastLoan -> {
-                  return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-                    mapToCheckInLogEventContent(checkInContext, userResult.value(),
-                      checkInContext.isInHouseUse() ||
-                        checkInContext.getRequestQueue().getRequests().isEmpty() ? null :
-                        userFromLastLoan.value()
-                    )));
-                });
-            } else {
-              return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-                mapToCheckInLogEventContent(checkInContext, userResult.value(), null)));
+                .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+                  mapToCheckInLogEventContent(checkInContext, userResult.value(),
+                    checkInContext.isInHouseUse() ||
+                      checkInContext.getRequestQueue().getRequests().isEmpty() ? null :
+                      userFromLastLoan.value()
+                  ))));
             }
-            return null;
+            return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+              mapToCheckInLogEventContent(checkInContext, userResult.value(), null)));
+
           });
-      }
+        }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
-        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-          mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
+          Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+            mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
       }));
 
     if (checkInContext.getLoan() != null) {
