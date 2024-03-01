@@ -142,8 +142,8 @@ public class EventPublisher {
               ));
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
-          Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-            mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
+         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+           mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
       }));
 
     if (checkInContext.getLoan() != null) {
@@ -342,7 +342,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
-                                                               Result<?> previousStepResult, Throwable throwable) {
+    Result<?> previousStepResult, Throwable throwable) {
 
     return throwable != null
       ? publishNoticeErrorLogEvent(noticeLogContext, throwable)
@@ -350,7 +350,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
-                                                               Result<?> previousStepResult) {
+    Result<?> previousStepResult) {
 
     return previousStepResult.succeeded()
       ? publishNoticeLogEvent(noticeLogContext)
@@ -362,7 +362,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
-                                                               LogEventType eventType) {
+    LogEventType eventType) {
 
     return publishLogRecord(noticeLogContext.withDate(getZonedDateTime()).asJson(), eventType);
   }
