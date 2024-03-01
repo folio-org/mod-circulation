@@ -129,20 +129,17 @@ public class EventPublisher {
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
       .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
         if (nonNull(lastLoan.value())) {
-          return loanRepository.findOpenLoanForItem(checkInContext.getItem()).thenApply(openLoanResult -> {
-            if(nonNull(openLoanResult.value())) {
-              userRepository.getUser(lastLoan.value().getUserId())
-                .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+          return userRepository.getUser(lastLoan.value().getUserId())
+            .thenApply(userFromLastLoan ->
+              loanRepository.findOpenLoanForItem(checkInContext.getItem())
+                .thenApply( loanResult -> (
+                Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
                   mapToCheckInLogEventContent(checkInContext, userResult.value(),
-                    checkInContext.isInHouseUse() ||
-                      checkInContext.getRequestQueue().getRequests().isEmpty() ? null :
-                      userFromLastLoan.value()
-                  ))));
-            }
-            return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(), null)));
-
-          });
+                    (checkInContext.isInHouseUse()
+                      || checkInContext.getRequestQueue().getRequests().isEmpty()
+                      || loanResult.value() == null) ? null : userFromLastLoan.value())))
+                )
+              ));
         }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
           Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
@@ -345,7 +342,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
-    Result<?> previousStepResult, Throwable throwable) {
+                                                               Result<?> previousStepResult, Throwable throwable) {
 
     return throwable != null
       ? publishNoticeErrorLogEvent(noticeLogContext, throwable)
@@ -353,7 +350,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
-    Result<?> previousStepResult) {
+                                                               Result<?> previousStepResult) {
 
     return previousStepResult.succeeded()
       ? publishNoticeLogEvent(noticeLogContext)
@@ -365,7 +362,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
-    LogEventType eventType) {
+                                                               LogEventType eventType) {
 
     return publishLogRecord(noticeLogContext.withDate(getZonedDateTime()).asJson(), eventType);
   }
