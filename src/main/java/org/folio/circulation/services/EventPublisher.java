@@ -34,7 +34,6 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -130,19 +129,24 @@ public class EventPublisher {
     runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
       .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
         if (nonNull(lastLoan.value())) {
-          return userRepository.getUser(lastLoan.value().getUserId())
-            .thenApply(userFromLastLoan -> {
-              try {
-                return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-                  mapToCheckInLogEventContent(checkInContext, userResult.value(),
-                    (checkInContext.isInHouseUse() || !loanRepository.hasOpenLoan(checkInContext.
-                      getItem().getItemId()).get().value() || checkInContext.getRequestQueue().getRequests().isEmpty())
-                      ? null : userFromLastLoan.value())));
-              } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-              }
-            });
-        }
+          return loanRepository.findOpenLoanForItem(checkInContext.getItem()).thenApply(loanResult -> {
+            if(nonNull(loanResult)) {
+              userRepository.getUser(lastLoan.value().getUserId())
+                .thenApply(userFromLastLoan -> {
+                  return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+                    mapToCheckInLogEventContent(checkInContext, userResult.value(),
+                      checkInContext.isInHouseUse() ||
+                        checkInContext.getRequestQueue().getRequests().isEmpty() ? null :
+                        userFromLastLoan.value()
+                    )));
+                });
+            } else {
+              return Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+                mapToCheckInLogEventContent(checkInContext, userResult.value(), null)));
+            }
+            return null;
+          });
+      }
         return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
         Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
           mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
