@@ -160,7 +160,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context, Loan lastLoan,
-                                                             UserRepository userRepository, LoanRepository loanRepository) {
+    UserRepository userRepository, LoanRepository loanRepository) {
 
     if (lastLoan == null) {
       return emptyAsync();
