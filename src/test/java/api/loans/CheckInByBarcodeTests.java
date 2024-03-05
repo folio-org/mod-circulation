@@ -1840,11 +1840,22 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       overdueFinePoliciesFixture.noOverdueFine().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    checkInFixture.checkInByBarcode(item);
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(item);
     JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
 
     assertThat(requestAfterCheckIn.getString("itemId"), nullValue());
     assertThat(requestAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
+
+    final var publishedEvents = waitAtMost(2, SECONDS)
+     .until(FakePubSub::getPublishedEvents, hasSize(5));
+
+    System.out.println("The published events are ");
+    System.out.println(publishedEvents.toString());
+    final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
+    assertThat(checkedInEvent, isValidItemCheckedInEvent(checkInResponse.getLoan()));
+    final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));
+    assertThat(checkInLogEvent, isValidCheckInLogEvent(checkInResponse.getLoan()));
+
   }
 
   @Test
