@@ -1481,8 +1481,7 @@ public class RequestsAPICreationTests extends APITests {
     checkInFixture.checkInByBarcode(item);
     checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte()).getJson();
 
-    FakePubSub.getPublishedEvents().stream()
-      .map(event -> new JsonObject(event.getString("eventPayload")))
+    FakePubSub.getPublishedEvents().stream().map(event -> new JsonObject(event.getString("eventPayload")))
       .filter(event -> event.containsKey("logEventType") && event.getString("logEventType").equals("CHECK_IN_EVENT"))
       .forEach(event -> {
         if (event.containsKey("userBarcode")) {
