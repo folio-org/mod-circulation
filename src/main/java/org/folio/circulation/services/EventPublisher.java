@@ -149,7 +149,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context,
-                                                             UserRepository userRepository, LoanRepository loanRepository) {
+    UserRepository userRepository, LoanRepository loanRepository) {
 
     if (context.isInHouseUse() || context.getRequestQueue().getRequests().isEmpty()) {
       return emptyAsync();
