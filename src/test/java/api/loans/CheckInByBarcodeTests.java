@@ -120,7 +120,6 @@ class CheckInByBarcodeTests extends APITests {
   private final static String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
   private final static String OPEN_AWAITING_PICKUP = "Open - Awaiting pickup";
   private final static String OPEN_AWAITING_DELIVERY = "Open - Awaiting delivery";
-  private final static String REQUEST_POSITION = "position";
   private static final String LOAN_INFO_ADDED = "testing patron info";
 
   public CheckInByBarcodeTests() {
@@ -1840,11 +1839,19 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       overdueFinePoliciesFixture.noOverdueFine().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    checkInFixture.checkInByBarcode(item);
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(item);
     JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
 
     assertThat(requestAfterCheckIn.getString("itemId"), nullValue());
     assertThat(requestAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
+
+    final var publishedEvents = waitAtMost(2, SECONDS)
+     .until(FakePubSub::getPublishedEvents, hasSize(5));
+    final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
+    assertThat(checkedInEvent, isValidItemCheckedInEvent(checkInResponse.getLoan()));
+    final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));
+    assertThat(checkInLogEvent, isValidCheckInLogEvent(checkInResponse.getLoan()));
+
   }
 
   @Test
