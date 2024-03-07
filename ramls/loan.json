@@ -234,6 +234,10 @@
           "type": "string",
           "readonly": true
         },
+        "displaySummary": {
+          "description": "Display summary about the item",
+          "type": "string"
+        },
         "volume": {
           "description": "Item`s volume",
           "type": "string",
