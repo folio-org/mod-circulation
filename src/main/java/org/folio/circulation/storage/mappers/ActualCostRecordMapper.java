@@ -75,6 +75,7 @@ public class ActualCostRecordMapper {
       write(itemJson, "volume", item.getVolume());
       write(itemJson, "enumeration", item.getEnumeration());
       write(itemJson, "chronology", item.getChronology());
+      write(itemJson, "displaySummary", item.getDisplaySummary());
       write(itemJson, "copyNumber", item.getCopyNumber());
       write(itemJson, "effectiveCallNumberComponents",
         createCallNumberComponents(item.getEffectiveCallNumberComponents()));
@@ -152,6 +153,7 @@ public class ActualCostRecordMapper {
         .withVolume(getProperty(item, "volume"))
         .withEnumeration(getProperty(item, "enumeration"))
         .withChronology(getProperty(item, "chronology"))
+        .withDisplaySummary(getProperty(item, "displaySummary"))
         .withCopyNumber(getProperty(item, "copyNumber"))
         .withEffectiveCallNumberComponents(CallNumberComponents.fromItemJson(item)),
       new ActualCostRecordInstance()
