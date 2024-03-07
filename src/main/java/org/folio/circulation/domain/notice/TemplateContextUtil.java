@@ -13,7 +13,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,7 +97,7 @@ public class TemplateContextUtil {
     JsonObject staffSlipContext = createStaffSlipContext(item, firstRequest);
     JsonObject itemContext = staffSlipContext.getJsonObject(ITEM);
 
-    if (ObjectUtils.allNotNull(item, itemContext)) {
+    if (item != null && itemContext != null) {
       write(itemContext, "lastCheckedInDateTime", ClockUtil.getZonedDateTime());
       if (item.getInTransitDestinationServicePoint() != null) {
         itemContext.put("toServicePoint", item.getInTransitDestinationServicePoint().getName());
