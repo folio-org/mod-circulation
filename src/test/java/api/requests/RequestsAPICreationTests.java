@@ -313,6 +313,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestItem.getString("enumeration"), is("enumeration1"));
     assertThat(requestItem.getString("chronology"), is("chronology"));
     assertThat(requestItem.getString("volume"), is("vol.1"));
+    assertThat(requestItem.getString("displaySummary"), is("displaySummary"));
 
     JsonArray identifiers = requestInstance.getJsonArray("identifiers");
     assertThat(identifiers, notNullValue());
