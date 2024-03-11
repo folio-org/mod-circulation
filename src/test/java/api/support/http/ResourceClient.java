@@ -302,7 +302,7 @@ public class ResourceClient {
 
   public IndividualResource create(JsonObject representation) {
 
-    return  new IndividualResource(restAssuredClient.post(representation,
+    return new IndividualResource(restAssuredClient.post(representation,
       rootUrl(), 201, "create-record"));
   }
 

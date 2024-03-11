@@ -99,6 +99,10 @@
           "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes).",
           "type": "string"
         },
+        "displaySummary": {
+          "description": "Display summary about the item",
+          "type": "string"
+        },
         "inTransitDestinationServicePointId": {
           "description": "Service point an item is intended to be transited to (should only be present when in transit)",
           "type": "string",

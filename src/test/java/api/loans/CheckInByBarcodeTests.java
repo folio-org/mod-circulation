@@ -140,7 +140,8 @@ class CheckInByBarcodeTests extends APITests {
         .withTemporaryLocation(homeLocation.getId())
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
-        .withVolume("testVolume"));
+        .withVolume("testVolume")
+        .withDisplaySummary("test displaySummary"));
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james,
       ZonedDateTime.of(2018, 3, 1, 13, 25, 46, 0, UTC));
@@ -206,6 +207,9 @@ class CheckInByBarcodeTests extends APITests {
 
     assertThat("has item chronology",
       itemFromResponse.getString("chronology"), is("1987:Jan.-June"));
+
+    assertThat("has item displaySummary",
+      itemFromResponse.getString("displaySummary"), is("test displaySummary"));
 
     assertThat("has item volume",
       itemFromResponse.getString("volume"), is("testVolume"));
