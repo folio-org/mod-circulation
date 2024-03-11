@@ -41,7 +41,6 @@ public class ItemMapper {
       getProperty(representation, "copyNumber"),
       getProperty(representation, "volume"),
       getProperty(representation, "chronology"),
-      getProperty(representation, "displaySummary"),
       getProperty(representation, "numberOfPieces"),
       getProperty(representation, "descriptionOfPieces"),
       getProperty(representation, "displaySummary"),
