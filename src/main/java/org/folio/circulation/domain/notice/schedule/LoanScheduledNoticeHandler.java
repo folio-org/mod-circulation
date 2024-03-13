@@ -173,10 +173,6 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     ScheduledNotice notice = context.getNotice();
     List<String> logMessages = new ArrayList<>();
 
-    if (!isRecurringAfterNotice(notice)) {
-      return false;
-    }
-
     if (loan.hasItemWithAnyStatus(DECLARED_LOST, CLAIMED_RETURNED)) {
       logMessages.add(
         String.format("Recurring notice for item in status \"%s\"", loan.getItemStatus()));
@@ -199,10 +195,6 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
       notice.getId(), loan.getId(), logMessages);
 
     return true;
-  }
-
-  private static boolean isRecurringAfterNotice(ScheduledNotice notice) {
-    return notice.getConfiguration().isRecurring() && notice.getConfiguration().hasAfterTiming();
   }
 
   private static boolean nextRecurringNoticeIsNotRelevant(ScheduledNotice notice, Loan loan) {
