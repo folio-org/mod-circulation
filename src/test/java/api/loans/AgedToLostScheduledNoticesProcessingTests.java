@@ -293,6 +293,25 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
+  @Test
+  void shouldRemoveAgedToLostNoticeIfLoanIsClosed() {
+    AgeToLostResult agedToLostLoan = createOneTimeAgedToLostNotice();
+    checkInFixture.checkInByBarcode(agedToLostLoan.getItem());
+
+    assertThat(itemsFixture.getById(agedToLostLoan.getItemId()).getJson(), isAvailable());
+    assertThat(loansFixture.getLoanById(agedToLostLoan.getLoanId()).getJson(), isClosed());
+    verifyNumberOfScheduledNotices(1);
+
+    final ZonedDateTime firstRunTime = TIMING_PERIOD.plusDate(getAgedToLostDate(agedToLostLoan));
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(
+      RECURRENCE_PERIOD.plusDate(firstRunTime).plusMinutes(1));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfScheduledNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private AgeToLostResult createRecurringAgedToLostNotice() {
     val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
       new NoticePolicyBuilder()
@@ -303,6 +322,24 @@ class AgedToLostScheduledNoticesProcessingTests extends APITests {
           .withTemplateId(AFTER_RECURRING_TEMPLATE_ID)
           .withAfterTiming(TIMING_PERIOD)
           .recurring(RECURRENCE_PERIOD)
+          .create())));
+
+    Awaitility.await()
+      .atMost(1, TimeUnit.SECONDS)
+      .until(scheduledNoticesClient::getAll, hasSize(1));
+
+    return agedToLostLoan;
+  }
+
+  private AgeToLostResult createOneTimeAgedToLostNotice() {
+    val agedToLostLoan = ageToLostFixture.createAgedToLostLoan(
+      new NoticePolicyBuilder()
+        .active()
+        .withName("Aged to lost notice policy")
+        .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
+          .withAgedToLostEvent()
+          .withTemplateId(AFTER_RECURRING_TEMPLATE_ID)
+          .withAfterTiming(TIMING_PERIOD)
           .create())));
 
     Awaitility.await()
