@@ -6,6 +6,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.singleValidat
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
@@ -24,6 +25,7 @@ import org.folio.circulation.domain.UpdateItem;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
 import org.folio.circulation.domain.validation.AlreadyCheckedOutValidator;
 import org.folio.circulation.domain.validation.ChangeDueDateValidator;
@@ -171,6 +173,10 @@ public class LoanCollectionResource extends CollectionResource {
         new ServicePointLoanLocationValidator();
 
     final ChangeDueDateValidator changeDueDateValidator = new ChangeDueDateValidator();
+    final OverdueFinePolicyRepository overdueFinePolicyRepository =
+      new OverdueFinePolicyRepository(clients);
+    final ReminderFeeScheduledNoticeService scheduledRemindersService =
+      new ReminderFeeScheduledNoticeService(clients);
 
     final LoanScheduledNoticeService scheduledNoticeService
         = LoanScheduledNoticeService.using(clients);
@@ -190,6 +196,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(itemNotFoundValidator::refuseWhenItemNotFound)
       .thenCompose(changeDueDateValidator::refuseChangeDueDateForItemInDisallowedStatus)
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
+      .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository)))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
       .thenCombineAsync(requestQueueRepository.getByItemId(loan.getItemId()), this::addRequestQueue)
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
@@ -201,6 +208,7 @@ public class LoanCollectionResource extends CollectionResource {
       .thenComposeAsync(result -> result.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
@@ -432,4 +440,17 @@ public class LoanCollectionResource extends CollectionResource {
   private boolean dueDateHasNotChanged(Loan existingLoan, Loan changedLoan) {
     return existingLoan == null || isSameMillis(existingLoan.getDueDate(), changedLoan.getDueDate());
   }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
+    LoanAndRelatedRecords context, OverdueFinePolicyRepository overdueFinePolicyRepository)
+  {
+    if (context.getUser() == null) {
+      return CompletableFuture.completedFuture(succeeded(context));
+    }
+
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(context.getLoan()))
+      .thenApply(mapResult(context::withLoan));
+  }
+
 }
