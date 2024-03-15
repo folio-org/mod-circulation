@@ -59,9 +59,9 @@ public class ReminderFeeScheduledNoticeService {
   }
 
   /**
-   * Re-schedules first reminder after manual due date change
-   * @param relatedRecords context records passed in from the manual due date change process
-   * @return the due date change context back to the manual due date change process
+   * Re-schedules first reminder after manual due date change or recall
+   * @param relatedRecords context records passed in from the manual due date change or recall process
+   * @return the due date change context back to the manual due date change or recall process
    */
   public Result<LoanAndRelatedRecords> rescheduleFirstReminder(LoanAndRelatedRecords relatedRecords) {
     return rescheduleFirstReminder(relatedRecords.getLoan(), relatedRecords.getTimeZone(), relatedRecords);
@@ -93,7 +93,7 @@ public class ReminderFeeScheduledNoticeService {
     Loan loan, ZoneId timeZone, ReminderConfig reminderConfig) {
 
     log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
-        " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
+      " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
 
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
         loan.getCheckoutServicePointId(), calendarRepository)
