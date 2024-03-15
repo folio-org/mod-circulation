@@ -577,7 +577,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     write(representation, "renewalCount", getRenewalCount() + 1);
   }
 
-  private void resetReminders() {
+  public void resetReminders() {
     remove(representation, "reminders");
   }
 

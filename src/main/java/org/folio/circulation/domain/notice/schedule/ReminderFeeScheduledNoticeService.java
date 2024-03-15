@@ -48,27 +48,6 @@ public class ReminderFeeScheduledNoticeService {
     return succeeded(records);
   }
 
-  /**
-   * Schedules first reminder after renewal
-   * @param renewalContext passed in from the renewal process
-   * @return the renewal context back to the renewal process
-   */
-  public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
-    Loan loan = renewalContext.getLoan();
-    OverdueFinePolicy policy = loan.getOverdueFinePolicy();
-    if (policy.isReminderFeesPolicy()) {
-      log.debug("rescheduleFirstReminder:: Reschedule reminder on renewal: Loan has reminder policy. Barcode: {}. Renewal context: {}.",
-        loan.getItem().getBarcode(), renewalContext);
-      scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(),
-          TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
-        .thenAccept(r -> r.next(deleted -> scheduleFirstReminder(loan, renewalContext.getTimeZone())));
-    } else {
-      log.debug("rescheduleFirstReminder:: Reschedule reminder on renewal: The current item, barcode {}, is not subject to a reminder fees policy.",
-        loan.getItem().getBarcode());
-    }
-    return succeeded(renewalContext);
-  }
-
   private Result<Void> scheduleFirstReminder(Loan loan, ZoneId timeZone) {
     log.debug("scheduleFirstReminder:: parameters loan: {}, timeZone: {}",
       loan, timeZone);
@@ -79,11 +58,42 @@ public class ReminderFeeScheduledNoticeService {
     return succeeded(null);
   }
 
+  /**
+   * Re-schedules first reminder after manual due date change or recall
+   * @param relatedRecords context records passed in from the manual due date change or recall process
+   * @return the due date change context back to the manual due date change or recall process
+   */
+  public Result<LoanAndRelatedRecords> rescheduleFirstReminder(LoanAndRelatedRecords relatedRecords) {
+    return rescheduleFirstReminder(relatedRecords.getLoan(), relatedRecords.getTimeZone(), relatedRecords);
+  }
+
+  /**
+   * Re-schedules first reminder after renewal
+   * @param renewalContext passed in from the renewal process
+   * @return the renewal context back to the renewal process
+   */
+  public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
+    return rescheduleFirstReminder(renewalContext.getLoan(), renewalContext.getTimeZone(), renewalContext);
+  }
+
+  private <T> Result<T> rescheduleFirstReminder(Loan loan, ZoneId timeZone, T mapTo) {
+    OverdueFinePolicy policy = loan.getOverdueFinePolicy();
+    if (policy.isReminderFeesPolicy()) {
+      scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(),
+          TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
+        .thenAccept(r -> r.next(deleted -> scheduleFirstReminder(loan, timeZone)));
+    } else {
+      log.debug("rescheduleFirstReminder:: Reschedule reminder on due date change: The current item, barcode {}, is not subject to a reminder fees policy.",
+        loan.getItem().getBarcode());
+    }
+    return succeeded(mapTo);
+  }
+
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
     Loan loan, ZoneId timeZone, ReminderConfig reminderConfig) {
 
     log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
-        " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
+      " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
 
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
         loan.getCheckoutServicePointId(), calendarRepository)
