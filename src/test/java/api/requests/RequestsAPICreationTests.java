@@ -313,6 +313,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(requestItem.getString("enumeration"), is("enumeration1"));
     assertThat(requestItem.getString("chronology"), is("chronology"));
     assertThat(requestItem.getString("volume"), is("vol.1"));
+    assertThat(requestItem.getString("displaySummary"), is("displaySummary"));
 
     JsonArray identifiers = requestInstance.getJsonArray("identifiers");
     assertThat(identifiers, notNullValue());
@@ -1481,8 +1482,9 @@ public class RequestsAPICreationTests extends APITests {
     checkInFixture.checkInByBarcode(item);
     checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte()).getJson();
 
-    FakePubSub.getPublishedEvents().stream().map(event ->  new JsonObject(event.getString("eventPayload")))
-      .filter(event -> event.containsKey("logEventType") && event.getString("logEventType").equals("CHECK_IN_EVENT"))
+    FakePubSub.getPublishedEvents().stream().map(event -> new JsonObject(event.getString("eventPayload")))
+      .filter(event -> event.containsKey("logEventType") && event.getString("logEventType").equals("CHECK_IN_EVENT")
+        && !event.containsKey("requests"))
       .forEach(event -> assertTrue(event.containsKey("userBarcode")));
   }
 

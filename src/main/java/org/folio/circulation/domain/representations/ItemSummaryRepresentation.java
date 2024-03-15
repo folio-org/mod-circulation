@@ -39,6 +39,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, "enumeration", item.getEnumeration());
     write(itemSummary, "chronology", item.getChronology());
+    write(itemSummary, "displaySummary", item.getDisplaySummary());
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "copyNumber", item.getCopyNumber());
     write(itemSummary, CALL_NUMBER_COMPONENTS,

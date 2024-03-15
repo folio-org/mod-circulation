@@ -28,6 +28,7 @@ import static org.folio.circulation.domain.representations.logs.RequestUpdateLog
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
@@ -124,23 +125,16 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
-    CheckInContext checkInContext, UserRepository userRepository, LoanRepository loanRepository) {
+    CheckInContext context, UserRepository userRepository, LoanRepository loanRepository) {
 
-    runAsync(() -> userRepository.getUser(checkInContext.getLoggedInUserId())
-      .thenCombineAsync(loanRepository.findLastLoanForItem(checkInContext.getItem().getItemId()), (userResult, lastLoan) -> {
-        if (nonNull(lastLoan.value())) {
-          return userRepository.getUser(lastLoan.value().getUserId())
-            .thenApply(userFromLastLoan -> Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-              mapToCheckInLogEventContent(checkInContext, userResult.value(),
-                checkInContext.isInHouseUse() ? null : userFromLastLoan.value()))));
-        }
-        return userResult.after(loggedInUser -> CompletableFuture.completedFuture(
-        Result.succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
-          mapToCheckInLogEventContent(checkInContext, loggedInUser, null)))));
-      }));
+    runAsync(() -> userRepository.getUser(context.getLoggedInUserId())
+      .thenCompose(r1 -> r1.after(loggedInUser -> getUserForLastLoan(context, userRepository, loanRepository)
+        .thenCompose(r -> r.after(userFromLastLoan -> pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+          mapToCheckInLogEventContent(context, loggedInUser, userFromLastLoan)).thenApply(Result::succeeded)))))
+    );
 
-    if (checkInContext.getLoan() != null) {
-      Loan loan = checkInContext.getLoan();
+    if (context.getLoan() != null) {
+      Loan loan = context.getLoan();
 
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
@@ -148,10 +142,33 @@ public class EventPublisher {
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
       return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
-        .handle((result, error) -> handlePublishEventError(error, checkInContext));
+        .handle((result, error) -> handlePublishEventError(error, context));
     }
 
-    return completedFuture(succeeded(checkInContext));
+    return completedFuture(succeeded(context));
+  }
+
+  private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context,
+    UserRepository userRepository, LoanRepository loanRepository) {
+
+    if (context.isInHouseUse() || context.getRequestQueue().getRequests().isEmpty()) {
+      return emptyAsync();
+    }
+
+    return loanRepository.findLastLoanForItem(context.getItem().getItemId())
+      .thenCompose(r -> r.after(lastLoan -> getUserForLastLoan(context, lastLoan, userRepository, loanRepository)));
+  }
+
+  private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context, Loan lastLoan,
+    UserRepository userRepository, LoanRepository loanRepository) {
+
+    if (lastLoan == null) {
+      return emptyAsync();
+    }
+
+    return userRepository.getUser(lastLoan.getUserId())
+      .thenCompose(r1 -> r1.after(userFromLastLoan -> loanRepository.findOpenLoanForItem(context.getItem())
+        .thenApply(r2 -> r2.map(openLoan -> openLoan == null ? null : userFromLastLoan))));
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {

@@ -52,6 +52,10 @@
             "description": "The volume of the item",
             "type": "string"
           },
+          "displaySummary": {
+            "description": "Display summary about the item",
+            "type": "string"
+          },
           "yearCaption": {
             "description": "The year caption of the item",
             "type": "array",

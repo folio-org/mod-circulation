@@ -43,6 +43,7 @@ public class ItemMapper {
       getProperty(representation, "chronology"),
       getProperty(representation, "numberOfPieces"),
       getProperty(representation, "descriptionOfPieces"),
+      getProperty(representation, "displaySummary"),
       toStream(representation, "yearCaption")
         .collect(Collectors.toList()));
   }
