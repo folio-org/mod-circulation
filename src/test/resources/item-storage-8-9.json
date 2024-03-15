@@ -100,6 +100,10 @@
       "type": "string",
       "description": "Chronology is the descriptive information for the dating scheme of a serial."
     },
+    "displaySummary": {
+      "description": "Display summary about the item",
+      "type": "string"
+    },
     "yearCaption": {
       "type": "array",
       "description": "In multipart monographs, a caption is a character(s) used to label a level of chronology, e.g., year 1985.",

@@ -239,6 +239,10 @@
           "type": "string",
           "readonly": true
         },
+        "displaySummary": {
+          "description": "Display summary about the item",
+          "type": "string"
+        },
         "callNumberComponents": {
           "description": "Elements of a full call number",
           "$ref": "schema/call-number-components.json",

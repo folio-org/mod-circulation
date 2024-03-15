@@ -424,7 +424,8 @@ public class ItemsFixture {
       .withCallNumber(prefix + "itCn", prefix + "itCnPrefix", prefix + "itCnSuffix")
       .withEnumeration(prefix + "enumeration1")
       .withChronology(prefix + "chronology")
-      .withVolume(prefix + "vol.1");
+      .withVolume(prefix + "vol.1")
+      .withDisplaySummary(prefix + "displaySummary");
   }
 
   public Function<ItemBuilder, ItemBuilder> addCallNumberStringComponents() {

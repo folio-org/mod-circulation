@@ -80,6 +80,7 @@ public class RequestRepresentation {
     }
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "chronology", item.getChronology());
+    write(itemSummary, "displaySummary", item.getDisplaySummary());
 
     ItemStatus status = item.getStatus();
     if (status != null) {

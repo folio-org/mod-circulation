@@ -268,6 +268,7 @@ class StaffSlipsTests extends APITests {
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
     assertEquals(item.getVolume(), itemContext.getString("volume"));
     assertEquals(item.getChronology(), itemContext.getString("chronology"));
+    assertEquals(item.getDisplaySummary(), itemContext.getString("displaySummary"));
     assertEquals(yearCaptionsToken, itemContext.getString("yearCaption"));
     assertEquals(materialTypeName, itemContext.getString("materialType"));
     assertEquals(loanTypeName, itemContext.getString("loanType"));

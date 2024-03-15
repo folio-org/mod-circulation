@@ -70,7 +70,8 @@ class LoanAPITests extends APITests {
       item -> item
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
-        .withVolume("testVolume"));
+        .withVolume("testVolume")
+        .withDisplaySummary("testDisplaySummary"));
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -141,6 +142,9 @@ class LoanAPITests extends APITests {
 
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
+
+    assertThat("has item displaySummary",
+      loan.getJsonObject("item").getString("displaySummary"), is("testDisplaySummary"));
 
     JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
 

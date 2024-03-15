@@ -243,6 +243,10 @@ public class Item {
     return description.getChronology();
   }
 
+  public String getDisplaySummary() {
+    return description.getDisplaySummary();
+  }
+
   public String getNumberOfPieces() {
     return description.getNumberOfPieces();
   }

@@ -207,6 +207,7 @@ public class ActualCostRecordService {
         .withVolume(item.getVolume())
         .withChronology(item.getChronology())
         .withEnumeration(item.getEnumeration())
+        .withDisplaySummary(item.getDisplaySummary())
         .withCopyNumber(item.getCopyNumber()))
       .withInstance(new ActualCostRecordInstance()
         .withId(instance.getId())
