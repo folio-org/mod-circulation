@@ -25,13 +25,13 @@
   <properties>
     <antlr4.version>4.11.1</antlr4.version>
     <drools.version>7.74.1.Final</drools.version>
-    <rmb.version>35.1.1</rmb.version>
-    <vertx.version>4.4.6</vertx.version>
-    <log4j2.version>2.20.0</log4j2.version>
+    <rmb.version>35.2.0</rmb.version>
+    <vertx.version>4.5.5</vertx.version>
+    <log4j2.version>2.23.1</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <lombok.version>1.18.28</lombok.version>
-    <spring.version>5.3.24</spring.version>
+    <spring.version>6.1.5</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
   </properties>
 
