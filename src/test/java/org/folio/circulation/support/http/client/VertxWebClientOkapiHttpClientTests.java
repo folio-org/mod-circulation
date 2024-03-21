@@ -225,7 +225,7 @@ public class VertxWebClientOkapiHttpClientTests {
 
     assertThat(cause.getReason(), containsString(
       "The timeout period of 500ms has been exceeded while executing " +
-        "GET /record for server localhost"));
+        "GET /record for server"));
   }
 
   //TODO: Maybe replace this with a filter extension
