@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.LoanType;
-import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.MultipleRecordsMap;
 import org.folio.circulation.storage.mappers.LoanTypeMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
@@ -31,11 +31,11 @@ public class LoanTypeRepository {
       .thenApply(mapResult(mapper::toDomain));
   }
 
-  CompletableFuture<Result<MultipleRecords<LoanType>>> findByIds(Set<String> ids) {
+  CompletableFuture<Result<MultipleRecordsMap<LoanType>>> findByIds(Set<String> ids) {
     final var mapper = new LoanTypeMapper();
 
-    return findWithMultipleCqlIndexValues(loanTypesClient,
-      "loantypes", mapper::toDomain)
-      .findByIds(ids);
+    return findWithMultipleCqlIndexValues(loanTypesClient, "loantypes", mapper::toDomain)
+      .findByIds(ids)
+      .thenApply(r -> r.map(records -> new MultipleRecordsMap<>(records, LoanType::getId)));
   }
 }

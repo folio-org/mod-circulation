@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.MultipleRecordsMap;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.support.Clients;
@@ -48,16 +49,16 @@ public class InstanceRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
-  public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
+  public CompletableFuture<Result<MultipleRecordsMap<Instance>>> fetchByIds(
     Collection<String> instanceIds) {
 
     log.debug("fetchByIds:: parameters instanceIds: {}", () -> collectionAsString(instanceIds));
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances",
-      mapper::toDomain)
-      .findByIds(instanceIds);
+    return findWithMultipleCqlIndexValues(instancesClient, "instances", mapper::toDomain)
+      .findByIds(instanceIds)
+      .thenApply(r -> r.map(records -> new MultipleRecordsMap<>(records, Instance::getId)));
   }
 
 

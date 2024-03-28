@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MaterialType;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.MultipleRecordsMap;
 import org.folio.circulation.storage.mappers.MaterialTypeMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -44,7 +45,7 @@ public class MaterialTypeRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
-  public CompletableFuture<Result<MultipleRecords<MaterialType>>> getMaterialTypes(
+  public CompletableFuture<Result<MultipleRecordsMap<MaterialType>>> getMaterialTypes(
     MultipleRecords<Item> inventoryRecords) {
 
     log.debug("getMaterialTypes:: parameters inventoryRecords: {}",
@@ -57,6 +58,7 @@ public class MaterialTypeRepository {
     final var fetcher
       = findWithMultipleCqlIndexValues(materialTypesStorageClient, "mtypes", mapper::toDomain);
 
-    return fetcher.findByIds(materialTypeIds);
+    return fetcher.findByIds(materialTypeIds)
+      .thenApply(r -> r.map(records -> new MultipleRecordsMap<>(records, MaterialType::getId)));
   }
 }

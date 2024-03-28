@@ -28,10 +28,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecords<T> {
-  private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
+  static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final Collection<T> records;
+  final Collection<T> records;
   private final Integer totalRecords;
 
   public MultipleRecords(Collection<T> records, Integer totalRecords) {
@@ -68,6 +68,31 @@ public class MultipleRecords<T> {
   }
 
   public <R> MultipleRecords<T> combineRecords(MultipleRecords<R> otherRecords,
+    Function<T, Predicate<R>> matcher,
+    BiFunction<T, R, T> combiner, R defaultOtherRecord) {
+
+    log.debug("combineRecords:: parameters otherRecords: {}",
+      () -> multipleRecordsAsString(otherRecords));
+
+    return mapRecords(mainRecord -> combiner.apply(mainRecord, otherRecords
+      .filter(matcher.apply(mainRecord))
+      .firstOrElse(defaultOtherRecord)));
+  }
+
+  /**
+   * Avoids looping through the elements of otherRecords
+   */
+  public <R> MultipleRecords<T> combineRecords(MultipleRecordsMap<R> otherRecords,
+    Function<T, String> keyMapper, BiFunction<T, R, T> combiner, R defaultOtherRecord) {
+
+    log.debug("combineRecords:: parameters otherRecords: {}",
+      () -> multipleRecordsAsString(otherRecords));
+
+    return mapRecords(mainRecord -> combiner.apply(mainRecord,
+      otherRecords.getOrDefault(keyMapper.apply(mainRecord), defaultOtherRecord)));
+  }
+
+  public <R> MultipleRecords<T> combineRecordsById(MultipleRecords<R> otherRecords,
     Function<T, Predicate<R>> matcher,
     BiFunction<T, R, T> combiner, R defaultOtherRecord) {
 
