@@ -34,11 +34,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.HttpURLConnection;
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
@@ -884,12 +887,12 @@ class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      itemBuilder -> itemBuilder
-        .withBarcode("036000291452")
-        .withEnumeration("v.70:no.1-6")
-        .withChronology("1987:Jan.-June")
-        .withVolume("testVolume")
-        .withCopyNumber("cp.1"))
+        itemBuilder -> itemBuilder
+          .withBarcode("036000291452")
+          .withEnumeration("v.70:no.1-6")
+          .withChronology("1987:Jan.-June")
+          .withVolume("testVolume")
+          .withCopyNumber("cp.1"))
       .getId();
 
     val user = usersFixture.charlotte();
@@ -1052,7 +1055,7 @@ class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-      ItemBuilder::withNoBarcode)
+        ItemBuilder::withNoBarcode)
       .getId();
 
     UUID userId = usersFixture.charlotte().getId();
@@ -1366,7 +1369,7 @@ class LoanAPITests extends APITests {
       .withUserId(secondUserId));
 
     loansFixture.createLoan(new LoanBuilder().withItem(
-      itemsFixture.basedUponInterestingTimes())
+        itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
     String queryTemplate = "userId=%s";
@@ -1458,9 +1461,9 @@ class LoanAPITests extends APITests {
     openLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
 
     closedLoans.forEach(loan -> {
-        loanHasExpectedProperties(loan, user);
-        hasProperty("returnDate", loan, "loan");
-      });
+      loanHasExpectedProperties(loan, user);
+      hasProperty("returnDate", loan, "loan");
+    });
 
     assertThat(countOfDistinctTitles(openLoans.stream()), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(closedLoans.stream()), is(greaterThan(1)));
@@ -1544,7 +1547,7 @@ class LoanAPITests extends APITests {
 
     assertThat("Should have different 'userId' for different loans",
       uniqueUserIds, containsInAnyOrder(jessicaUser.getId().toString(),
-      steveUser.getId().toString()));
+        steveUser.getId().toString()));
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));
@@ -1669,6 +1672,82 @@ class LoanAPITests extends APITests {
     queryLoans(100);
   }
 
+  @Test void CanGetMultiplePagesOfLoans() {
+    var numberOfItems = 200;
+    var itemAdditionalProperties = IntStream.range(0, numberOfItems)
+      .boxed()
+      .map(num -> (Function<ItemBuilder, ItemBuilder>) itemBuilder -> itemBuilder
+        .withEnumeration(format("testEnumeration-%d", num))
+        .withChronology(format("testChronology-%d", num))
+        .withVolume(format("testVolume-%d", num))
+        .withCopyNumber(format("testCopyNumber-%d", num)))
+      .toList();
+    List<ItemResource> items = itemsFixture.createMultipleItemsOnePerInstance(numberOfItems,
+      itemAdditionalProperties);
+    items.forEach(checkOutFixture::checkOutByBarcode);
+    var loans = loansFixture.getLoans(limit(numberOfItems));
+
+    loans.forEach(loan -> {
+      var item = itemsFixture.getById(UUID.fromString(loan.getJsonObject("item").getString("id")));
+      assertThat("ID is taken from item",
+        loan.getJsonObject("item").containsKey("id"), is(true));
+
+      assertThat("title is taken from item",
+        loan.getJsonObject("item").getString("title"),
+        is("The Long Way to a Small, Angry Planet"));
+
+      assertThat("barcode is taken from item",
+        loan.getJsonObject("item").getString("barcode"),
+        is(item.getBarcode()));
+
+      assertThat("call number is 123456", loan.getJsonObject("item")
+        .getString("callNumber"), is("123456"));
+
+      assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+        loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+      assertThat("materialType is book", loan.getJsonObject("item")
+        .getJsonObject("materialType").getString("name"), is("Book"));
+
+      assertThat("item has contributors",
+        loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+      JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+
+      assertThat("item has a single contributor",
+        contributors.size(), is(1));
+
+      assertThat("Becky Chambers is a contributor",
+        contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+      assertThat("has item status",
+        loan.getJsonObject("item").containsKey("status"), is(true));
+
+      assertThat("status is taken from item",
+        loan.getJsonObject("item").getJsonObject("status").getString("name"),
+        is("Checked out"));
+
+      assertThat("has item location",
+        loan.getJsonObject("item").containsKey("location"), is(true));
+
+      assertThat("has item enumeration", loan.getJsonObject("item").getString("enumeration"),
+        is(item.getJson().getString("enumeration")));
+
+      assertThat("has item chronology", loan.getJsonObject("item").getString("chronology"),
+        is(item.getJson().getString("chronology")));
+
+      assertThat("has item volume", loan.getJsonObject("item").getString("volume"),
+        is(item.getJson().getString("volume")));
+
+      assertThat("has item copy number", loan.getJsonObject("item").getString("copyNumber"),
+        is(item.getJson().getString("copyNumber")));
+
+      assertThat("location is taken from holding",
+        loan.getJsonObject("item").getJsonObject("location").getString("name"),
+        is("3rd Floor"));
+    });
+  }
+
   private void createLoans(int total) {
     final IndividualResource mainFloor = locationsFixture.mainFloor();
     for(int i = 0; i < total; i++) {
@@ -1693,11 +1772,11 @@ class LoanAPITests extends APITests {
   private UUID getRandomUserId() {
     ThreadLocalRandom random = ThreadLocalRandom.current();
     switch(random.nextInt(5)) {
-    case 0: return usersFixture.charlotte().getId();
-    case 1: return usersFixture.james().getId();
-    case 2: return usersFixture.jessica().getId();
-    case 3: return usersFixture.rebecca().getId();
-    default: return usersFixture.steve().getId();
+      case 0: return usersFixture.charlotte().getId();
+      case 1: return usersFixture.james().getId();
+      case 2: return usersFixture.jessica().getId();
+      case 3: return usersFixture.rebecca().getId();
+      default: return usersFixture.steve().getId();
     }
   }
 
@@ -1740,13 +1819,13 @@ class LoanAPITests extends APITests {
     JsonObject savedLoan = loansStorageClient.get(individualResource.getId())
       .getResponse().getJson();
 
-     savedLoan.remove("userId");
+    savedLoan.remove("userId");
 
-     loansStorageClient.replace(individualResource.getId(), savedLoan);
+    loansStorageClient.replace(individualResource.getId(), savedLoan);
 
-     JsonObject loan = loansFixture.getLoanById(individualResource.getId()).getJson();
+    JsonObject loan = loansFixture.getLoanById(individualResource.getId()).getJson();
 
-     loanHasPatronGroupProperties(loan, "Regular Group");
+    loanHasPatronGroupProperties(loan, "Regular Group");
   }
 
   @Test
@@ -1946,10 +2025,10 @@ class LoanAPITests extends APITests {
     hasProperty("checkinServicePoint", loanJson, "loan");
 
     hasProperty("name", loanJson.getJsonObject("checkinServicePoint"),
-        "checkinServicePoint");
+      "checkinServicePoint");
 
     hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
-        "checkinServicePoint");
+      "checkinServicePoint");
   }
 
   private void loanHasCheckoutServicePointProperties(JsonObject loanJson) {
@@ -1957,10 +2036,10 @@ class LoanAPITests extends APITests {
     hasProperty("checkoutServicePoint", loanJson, "loan");
 
     hasProperty("name", loanJson.getJsonObject("checkoutServicePoint"),
-        "checkoutServicePoint");
+      "checkoutServicePoint");
 
     hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
-        "checkoutServicePoint");
+      "checkoutServicePoint");
   }
 
   private Integer countOfDistinctTitles(Stream<JsonObject> loans) {
