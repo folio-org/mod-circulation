@@ -887,12 +887,12 @@ class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-        itemBuilder -> itemBuilder
-          .withBarcode("036000291452")
-          .withEnumeration("v.70:no.1-6")
-          .withChronology("1987:Jan.-June")
-          .withVolume("testVolume")
-          .withCopyNumber("cp.1"))
+      itemBuilder -> itemBuilder
+        .withBarcode("036000291452")
+        .withEnumeration("v.70:no.1-6")
+        .withChronology("1987:Jan.-June")
+        .withVolume("testVolume")
+        .withCopyNumber("cp.1"))
       .getId();
 
     val user = usersFixture.charlotte();
@@ -1672,7 +1672,8 @@ class LoanAPITests extends APITests {
     queryLoans(100);
   }
 
-  @Test void CanGetMultiplePagesOfLoans() {
+  @Test
+  void canGetMultiplePagesOfLoans() {
     var numberOfItems = 200;
     var itemAdditionalProperties = IntStream.range(0, numberOfItems)
       .boxed()
@@ -1680,6 +1681,7 @@ class LoanAPITests extends APITests {
         .withEnumeration(format("testEnumeration-%d", num))
         .withChronology(format("testChronology-%d", num))
         .withVolume(format("testVolume-%d", num))
+        .withDisplaySummary(format("testDisplaySummary-%d", num))
         .withCopyNumber(format("testCopyNumber-%d", num)))
       .toList();
     List<ItemResource> items = itemsFixture.createMultipleItemsOnePerInstance(numberOfItems,
@@ -1738,6 +1740,9 @@ class LoanAPITests extends APITests {
 
       assertThat("has item volume", loan.getJsonObject("item").getString("volume"),
         is(item.getJson().getString("volume")));
+
+      assertThat("has item display summary", loan.getJsonObject("item").getString("displaySummary"),
+        is(item.getJson().getString("displaySummary")));
 
       assertThat("has item copy number", loan.getJsonObject("item").getString("copyNumber"),
         is(item.getJson().getString("copyNumber")));

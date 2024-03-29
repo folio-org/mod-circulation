@@ -4,6 +4,7 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Stream.concat;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
@@ -82,26 +83,14 @@ public class MultipleRecords<T> {
   /**
    * Avoids looping through the elements of otherRecords
    */
-  public <R> MultipleRecords<T> combineRecords(MultipleRecordsMap<R> otherRecords,
+  public <R> MultipleRecords<T> combineRecords(Map<String, R> otherRecordsMap,
     Function<T, String> keyMapper, BiFunction<T, R, T> combiner, R defaultOtherRecord) {
 
-    log.debug("combineRecords:: parameters otherRecords: {}",
-      () -> multipleRecordsAsString(otherRecords));
+    log.debug("combineRecords:: parameters otherRecordsMap: {}",
+      () -> mapAsString(otherRecordsMap));
 
     return mapRecords(mainRecord -> combiner.apply(mainRecord,
-      otherRecords.getOrDefault(keyMapper.apply(mainRecord), defaultOtherRecord)));
-  }
-
-  public <R> MultipleRecords<T> combineRecordsById(MultipleRecords<R> otherRecords,
-    Function<T, Predicate<R>> matcher,
-    BiFunction<T, R, T> combiner, R defaultOtherRecord) {
-
-    log.debug("combineRecords:: parameters otherRecords: {}",
-      () -> multipleRecordsAsString(otherRecords));
-
-    return mapRecords(mainRecord -> combiner.apply(mainRecord, otherRecords
-      .filter(matcher.apply(mainRecord))
-      .firstOrElse(defaultOtherRecord)));
+      otherRecordsMap.getOrDefault(keyMapper.apply(mainRecord), defaultOtherRecord)));
   }
 
   public T firstOrNull() {
@@ -162,7 +151,6 @@ public class MultipleRecords<T> {
       .collect(Collectors.toList());
 
     final int numberOfFilteredOutRecords = totalRecords - filteredRecords.size();
-    log.info("filter:: totalRecords: {}", totalRecords);
     return new MultipleRecords<>(filteredRecords, totalRecords - numberOfFilteredOutRecords);
   }
 
@@ -178,6 +166,10 @@ public class MultipleRecords<T> {
 
   public Collection<T> getRecords() {
     return records;
+  }
+
+  public Map<String, T> getRecordsMap(Function<T, String> keyMapper) {
+    return records.stream().collect(Collectors.toMap(keyMapper, identity()));
   }
 
   public Integer getTotalRecords() {

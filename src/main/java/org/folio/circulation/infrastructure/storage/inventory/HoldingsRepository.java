@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.MultipleRecordsMap;
 import org.folio.circulation.storage.mappers.HoldingsMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.SingleRecordFetcher;
@@ -48,14 +47,13 @@ public class HoldingsRepository {
     return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
   }
 
-  CompletableFuture<Result<MultipleRecordsMap<Holdings>>> fetchByIds(
+  CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(
     Collection<String> holdingsRecordIds) {
 
     final var mapper = new HoldingsMapper();
 
     return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords",
         mapper::toDomain)
-      .findByIds(holdingsRecordIds)
-      .thenApply(r -> r.map(records -> new MultipleRecordsMap<>(records, Holdings::getId)));
+      .findByIds(holdingsRecordIds);
   }
 }
