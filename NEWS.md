@@ -1,3 +1,7 @@
+## 24.2.1 2024-03-29
+
+* Fix item details not fully populated when response contains more than 50 loans (CIRC-2059)
+
 ## 24.2.0 2024-03-21
 
 * Update `feesfines` interface version to 19.0 (CIRC-1914)
