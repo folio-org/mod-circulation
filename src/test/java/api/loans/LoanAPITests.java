@@ -1777,11 +1777,11 @@ class LoanAPITests extends APITests {
   private UUID getRandomUserId() {
     ThreadLocalRandom random = ThreadLocalRandom.current();
     switch(random.nextInt(5)) {
-      case 0: return usersFixture.charlotte().getId();
-      case 1: return usersFixture.james().getId();
-      case 2: return usersFixture.jessica().getId();
-      case 3: return usersFixture.rebecca().getId();
-      default: return usersFixture.steve().getId();
+    case 0: return usersFixture.charlotte().getId();
+    case 1: return usersFixture.james().getId();
+    case 2: return usersFixture.jessica().getId();
+    case 3: return usersFixture.rebecca().getId();
+    default: return usersFixture.steve().getId();
     }
   }
 
@@ -1824,13 +1824,13 @@ class LoanAPITests extends APITests {
     JsonObject savedLoan = loansStorageClient.get(individualResource.getId())
       .getResponse().getJson();
 
-    savedLoan.remove("userId");
+     savedLoan.remove("userId");
 
-    loansStorageClient.replace(individualResource.getId(), savedLoan);
+     loansStorageClient.replace(individualResource.getId(), savedLoan);
 
-    JsonObject loan = loansFixture.getLoanById(individualResource.getId()).getJson();
+     JsonObject loan = loansFixture.getLoanById(individualResource.getId()).getJson();
 
-    loanHasPatronGroupProperties(loan, "Regular Group");
+     loanHasPatronGroupProperties(loan, "Regular Group");
   }
 
   @Test
@@ -2030,10 +2030,10 @@ class LoanAPITests extends APITests {
     hasProperty("checkinServicePoint", loanJson, "loan");
 
     hasProperty("name", loanJson.getJsonObject("checkinServicePoint"),
-      "checkinServicePoint");
+        "checkinServicePoint");
 
     hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
-      "checkinServicePoint");
+        "checkinServicePoint");
   }
 
   private void loanHasCheckoutServicePointProperties(JsonObject loanJson) {
@@ -2041,10 +2041,10 @@ class LoanAPITests extends APITests {
     hasProperty("checkoutServicePoint", loanJson, "loan");
 
     hasProperty("name", loanJson.getJsonObject("checkoutServicePoint"),
-      "checkoutServicePoint");
+        "checkoutServicePoint");
 
     hasProperty("code", loanJson.getJsonObject("checkinServicePoint"),
-      "checkoutServicePoint");
+        "checkoutServicePoint");
   }
 
   private Integer countOfDistinctTitles(Stream<JsonObject> loans) {
