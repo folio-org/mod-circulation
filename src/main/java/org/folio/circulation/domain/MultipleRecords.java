@@ -29,10 +29,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MultipleRecords<T> {
-  static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
+  private static final String TOTAL_RECORDS_PROPERTY_NAME = "totalRecords";
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  final Collection<T> records;
+  private final Collection<T> records;
   private final Integer totalRecords;
 
   public MultipleRecords(Collection<T> records, Integer totalRecords) {

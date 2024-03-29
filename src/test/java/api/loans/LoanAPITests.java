@@ -1055,7 +1055,7 @@ class LoanAPITests extends APITests {
     UUID id = UUID.randomUUID();
 
     UUID itemId = itemsFixture.basedUponSmallAngryPlanet(
-        ItemBuilder::withNoBarcode)
+      ItemBuilder::withNoBarcode)
       .getId();
 
     UUID userId = usersFixture.charlotte().getId();
@@ -1369,7 +1369,7 @@ class LoanAPITests extends APITests {
       .withUserId(secondUserId));
 
     loansFixture.createLoan(new LoanBuilder().withItem(
-        itemsFixture.basedUponInterestingTimes())
+      itemsFixture.basedUponInterestingTimes())
       .withUserId(secondUserId));
 
     String queryTemplate = "userId=%s";
@@ -1461,9 +1461,9 @@ class LoanAPITests extends APITests {
     openLoans.forEach(loan -> loanHasExpectedProperties(loan, user));
 
     closedLoans.forEach(loan -> {
-      loanHasExpectedProperties(loan, user);
-      hasProperty("returnDate", loan, "loan");
-    });
+        loanHasExpectedProperties(loan, user);
+        hasProperty("returnDate", loan, "loan");
+      });
 
     assertThat(countOfDistinctTitles(openLoans.stream()), is(greaterThan(1)));
     assertThat(countOfDistinctTitles(closedLoans.stream()), is(greaterThan(1)));
@@ -1547,7 +1547,7 @@ class LoanAPITests extends APITests {
 
     assertThat("Should have different 'userId' for different loans",
       uniqueUserIds, containsInAnyOrder(jessicaUser.getId().toString(),
-        steveUser.getId().toString()));
+      steveUser.getId().toString()));
 
     assertThat("Should have two loans",
       multipleLoans.size(), is(2));

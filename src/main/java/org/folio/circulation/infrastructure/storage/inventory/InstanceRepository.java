@@ -27,6 +27,7 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
 public class InstanceRepository {
+  private static final String INSTANCES = "instances";
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient instancesClient;
 
@@ -55,7 +56,7 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances", mapper::toDomain)
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES, mapper::toDomain)
       .findByIds(instanceIds);
   }
 
@@ -78,7 +79,7 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances", mapper::toDomain)
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES, mapper::toDomain)
       .findByIds(instanceIdsToFetch)
       .thenApply(multipleInstancesResult -> multipleInstancesResult.next(
         multipleInstances -> {
