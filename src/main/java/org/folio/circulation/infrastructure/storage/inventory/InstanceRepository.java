@@ -2,7 +2,6 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValuesAndCombine;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
@@ -28,8 +27,8 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
 public class InstanceRepository {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String INSTANCES = "instances";
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient instancesClient;
 
   public InstanceRepository(Clients clients) {
@@ -57,21 +56,8 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES,
-      mapper::toDomain)
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES, mapper::toDomain)
       .findByIds(instanceIds);
-  }
-
-  <T> CompletableFuture<Result<MultipleRecords<T>>> fetchByIdsAndCombine(
-    Collection<String> instanceIds,
-    Function<Result<MultipleRecords<Instance>>, Result<MultipleRecords<T>>> combineFunction) {
-
-    log.debug("fetchByIdsAndCombine:: parameters instanceIds: {}",
-      () -> collectionAsString(instanceIds));
-
-    return findWithMultipleCqlIndexValuesAndCombine(instancesClient, INSTANCES,
-      new InstanceMapper()::toDomain, combineFunction)
-      .findByIdsAndCombine(instanceIds);
   }
 
 

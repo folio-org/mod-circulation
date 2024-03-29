@@ -1,3 +1,7 @@
+## 24.1.2 2024-03-29
+
+* * Fix item details not fully populated when response contains more than 50 loans (CIRC-2056)
+
 ## 24.1.1 2024-02-22
 
 * Combine items with related records during the pagination process (CIRC-2018)
