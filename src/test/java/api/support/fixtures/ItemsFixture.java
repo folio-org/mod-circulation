@@ -412,7 +412,7 @@ public class ItemsFixture {
         identity(),
         itemBuilder -> itemAdditionalProperties.get(num)
           .apply(itemBuilder.withBarcode("0000" + num))))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private UUID booksInstanceTypeId() {
