@@ -1691,8 +1691,7 @@ class LoanAPITests extends APITests {
 
     loans.forEach(loan -> {
       var item = itemsFixture.getById(UUID.fromString(loan.getJsonObject("item").getString("id")));
-      assertThat("ID is taken from item",
-        loan.getJsonObject("item").containsKey("id"), is(true));
+      assertThat("ID is taken from item", loan.getJsonObject("item").containsKey("id"), is(true));
 
       assertThat("title is taken from item",
         loan.getJsonObject("item").getString("title"),
