@@ -1715,9 +1715,7 @@ class LoanAPITests extends APITests {
         loan.getJsonObject("item").containsKey("contributors"), is(true));
 
       JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
-
-      assertThat("item has a single contributor",
-        contributors.size(), is(1));
+      assertThat("item has a single contributor", contributors.size(), is(1));
 
       assertThat("Becky Chambers is a contributor",
         contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
