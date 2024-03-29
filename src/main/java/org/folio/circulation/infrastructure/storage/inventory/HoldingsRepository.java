@@ -19,6 +19,7 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class HoldingsRepository {
+  private static final String HOLDINGS_RECORDS = "holdingsRecords";
   private final CollectionResourceClient holdingsClient;
 
   public HoldingsRepository(CollectionResourceClient holdingsClient) {
@@ -42,7 +43,7 @@ public class HoldingsRepository {
     final var mapper = new HoldingsMapper();
 
     final var holdingsRecordFetcher = findWithCqlQuery(
-      holdingsClient, "holdingsRecords", mapper::toDomain);
+      holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
     return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
   }
@@ -52,7 +53,7 @@ public class HoldingsRepository {
 
     final var mapper = new HoldingsMapper();
 
-    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords",
+    return findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_RECORDS,
         mapper::toDomain)
       .findByIds(holdingsRecordIds);
   }
