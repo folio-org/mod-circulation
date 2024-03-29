@@ -197,8 +197,7 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchMaterialTypes(
     Result<MultipleRecords<Item>> result) {
 
-    return supplyAsync(() -> result.after(items ->
-      materialTypeRepository.getMaterialTypes(items)
+    return supplyAsync(() -> result.after(items -> materialTypeRepository.getMaterialTypes(items)
         .thenApply(r -> r.map(records -> records.getRecordsMap(MaterialType::getId)))
         .thenApply(mapResult(materialTypes -> items.combineRecords(materialTypes,
           Item::getMaterialTypeId, Item::withMaterialType, MaterialType.unknown())))))
