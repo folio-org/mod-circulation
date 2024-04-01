@@ -157,7 +157,8 @@ public class AllowedServicePointsService {
 
     if ("true".equals(request.getUseStubItem())) {
       return requestPolicyRepository.lookupRequestPolicy(user)
-        .thenCompose(r -> r.after(policy -> mappingFunction.apply(policy, new HashSet<>(items))));
+        .thenCompose(r -> r.after(policy -> extractAllowedServicePointsIgnoringItemStatus(
+          policy, new HashSet<>())));
     }
 
     return requestPolicyRepository.lookupRequestPolicies(items, user)

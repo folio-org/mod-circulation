@@ -767,14 +767,17 @@ class AllowedServicePointsAPITests extends APITests {
       "+ g " + patronGroup, "g " + patronGroup));
 
     var response = getCreateOp(requesterId, instanceId, null, "true", HttpStatus.SC_OK).getJson();
-    assertThat(response, hasNoJsonPath(HOLD.getValue()));
-    assertThat(response, hasNoJsonPath(RECALL.getValue()));
     assertThat(response, hasNoJsonPath(PAGE.getValue()));
+
+    JsonArray allowedPageServicePoints = response.getJsonArray(HOLD.getValue());
+    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
+    allowedPageServicePoints = response.getJsonArray(RECALL.getValue());
+    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
 
     response = getCreateOp(requesterId, instanceId, null, "false", HttpStatus.SC_OK).getJson();
     assertThat(response, hasNoJsonPath(HOLD.getValue()));
     assertThat(response, hasNoJsonPath(RECALL.getValue()));
-    JsonArray allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
+    allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
     assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
 
     response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
