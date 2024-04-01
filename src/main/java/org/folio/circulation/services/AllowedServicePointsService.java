@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,6 +154,11 @@ public class AllowedServicePointsService {
       Set<AllowedServicePoint>>>>> mappingFunction = request.isImplyingItemStatusIgnore()
       ? this::extractAllowedServicePointsIgnoringItemStatus
       : this::extractAllowedServicePointsConsideringItemStatus;
+
+    if ("true".equals(request.getUseStubItem())) {
+      return requestPolicyRepository.lookupRequestPolicy(user)
+        .thenCompose(r -> r.after(policy -> mappingFunction.apply(policy, new HashSet<>(items))));
+    }
 
     return requestPolicyRepository.lookupRequestPolicies(items, user)
       .thenCompose(r -> r.after(policies -> allOf(policies, mappingFunction)))

@@ -70,7 +70,7 @@ public class AllowedServicePointsResource extends Resource {
 
     AllowedServicePointsRequest request = new AllowedServicePointsRequest(operation,
       queryParams.get("requesterId"), queryParams.get("instanceId"), queryParams.get("itemId"),
-      queryParams.get("requestId"));
+      queryParams.get("requestId"), queryParams.get("useStubItem"));
 
     return validateAllowedServicePointsRequest(request);
   }
@@ -86,6 +86,7 @@ public class AllowedServicePointsResource extends Resource {
     String instanceId = allowedServicePointsRequest.getInstanceId();
     String itemId = allowedServicePointsRequest.getItemId();
     String requestId = allowedServicePointsRequest.getRequestId();
+    String useStubItem = allowedServicePointsRequest.getUseStubItem();
 
     List<String> errors = new ArrayList<>();
 
@@ -109,6 +110,11 @@ public class AllowedServicePointsResource extends Resource {
     if (requestId != null && !isUuid(requestId)) {
       log.warn("Request ID is not a valid UUID: {}", requestId);
       errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
+    }
+
+    if (useStubItem != null && !"true".equals(useStubItem) && !"false".equals(useStubItem)) {
+      log.warn("UseStubItem is not a valid value: {}", useStubItem);
+      errors.add(String.format("UseStubItem is not a valid value: %s.", useStubItem));
     }
 
     // Checking parameter combinations
