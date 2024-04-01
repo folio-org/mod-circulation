@@ -14,6 +14,7 @@ import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -782,7 +783,9 @@ class AllowedServicePointsAPITests extends APITests {
     allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
     assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
 
-    getCreateOp(requesterId, instanceId, null, "invalid", HttpStatus.SC_BAD_REQUEST);
+    Response errorResponse = getCreateOp(requesterId, instanceId, null, "invalid",
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(errorResponse.getBody(), is("UseStubItem is not a valid value: invalid."));
   }
 
   private void assertServicePointsMatch(JsonArray response,
