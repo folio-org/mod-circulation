@@ -93,27 +93,30 @@ public class AllowedServicePointsResource extends Resource {
     // Checking UUID validity
 
     if (requesterId != null && !isUuid(requesterId)) {
-      log.warn("Requester ID is not a valid UUID: {}", requesterId);
+      log.warn("validateAllowedServicePointsRequest:: requester ID is not a valid UUID: {}", requesterId);
       errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
     }
 
     if (instanceId != null && !isUuid(instanceId)) {
-      log.warn("Instance ID is not a valid UUID: {}", requesterId);
+      log.warn("validateAllowedServicePointsRequest:: instance ID is not a valid UUID: {}",
+        requesterId);
       errors.add(String.format("Instance ID is not a valid UUID: %s.", instanceId));
     }
 
     if (itemId != null && !isUuid(itemId)) {
-      log.warn("Item ID is not a valid UUID: {}", itemId);
+      log.warn("validateAllowedServicePointsRequest:: item ID is not a valid UUID: {}", itemId);
       errors.add(String.format("Item ID is not a valid UUID: %s.", itemId));
     }
 
     if (requestId != null && !isUuid(requestId)) {
-      log.warn("Request ID is not a valid UUID: {}", requestId);
+      log.warn("validateAllowedServicePointsRequest:: request ID is not a valid UUID: {}",
+        requestId);
       errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
     }
 
     if (useStubItem != null && !"true".equals(useStubItem) && !"false".equals(useStubItem)) {
-      log.warn("UseStubItem is not a valid value: {}", useStubItem);
+      log.warn("validateAllowedServicePointsRequest:: useStubItem is not a valid value: {}",
+        useStubItem);
       errors.add(String.format("UseStubItem is not a valid value: %s.", useStubItem));
     }
 
