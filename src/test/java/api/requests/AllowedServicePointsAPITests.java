@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
@@ -753,7 +752,7 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   @Test
-  void circulationRuleWithMaterialTypeConditionShouldBeIgnoredIfUseStubItemIsTrue() {
+  void shouldUseStubItemParameterInCirculationRuleMatchingWhenPresent() {
     var requesterId = usersFixture.steve().getId().toString();
     var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
       .getInstanceId().toString();
@@ -761,9 +760,6 @@ class AllowedServicePointsAPITests extends APITests {
     var cd2 = servicePointsFixture.cd2();
     var cd4 = servicePointsFixture.cd4();
     var cd5 = servicePointsFixture.cd5();
-    final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
-    allowedServicePointsInPolicy.put(PAGE, Set.of(cd1.getId(), cd2.getId()));
-    allowedServicePointsInPolicy.put(HOLD, Set.of(cd4.getId(), cd5.getId()));
     final UUID book = materialTypesFixture.book().getId();
     final UUID patronGroup = patronGroupsFixture.regular().getId();
     circulationRulesFixture.updateCirculationRules(createRules("m " + book +
@@ -785,6 +781,8 @@ class AllowedServicePointsAPITests extends APITests {
     assertThat(response, hasNoJsonPath(RECALL.getValue()));
     allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
     assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
+
+    getCreateOp(requesterId, instanceId, null, "invalid", HttpStatus.SC_BAD_REQUEST);
   }
 
   private void assertServicePointsMatch(JsonArray response,
