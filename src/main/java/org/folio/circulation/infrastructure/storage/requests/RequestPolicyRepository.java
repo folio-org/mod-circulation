@@ -97,6 +97,8 @@ public class RequestPolicyRepository {
   }
 
   public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(User user) {
+    // Circulation rules need to be executed with the patron group parameter only.
+    // All the item-related parameters should be random UUIDs.
     return lookupRequestPolicyId(UUID.randomUUID().toString(), user.getPatronGroupId(),
       UUID.randomUUID().toString(), UUID.randomUUID().toString())
       .thenCompose(r -> r.after(this::lookupRequestPolicy))

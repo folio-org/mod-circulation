@@ -25,6 +25,7 @@ public class AllowedServicePointsRequest {
   public boolean isForTitleLevelRequest() {
     return instanceId != null;
   }
+
   public boolean isForItemLevelRequest() {
     return itemId != null;
   }
