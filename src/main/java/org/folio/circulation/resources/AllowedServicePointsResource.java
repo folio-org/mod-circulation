@@ -115,9 +115,9 @@ public class AllowedServicePointsResource extends Resource {
     }
 
     if (useStubItem != null && !"true".equals(useStubItem) && !"false".equals(useStubItem)) {
-      log.warn("validateAllowedServicePointsRequest:: useStubItem is not a valid value: {}",
+      log.warn("validateAllowedServicePointsRequest:: useStubItem is not a valid boolean: {}",
         useStubItem);
-      errors.add(String.format("UseStubItem is not a valid value: %s.", useStubItem));
+      errors.add(String.format("useStubItem is not a valid boolean: %s.", useStubItem));
     }
 
     // Checking parameter combinations

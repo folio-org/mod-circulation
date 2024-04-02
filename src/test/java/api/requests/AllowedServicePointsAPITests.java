@@ -788,7 +788,7 @@ class AllowedServicePointsAPITests extends APITests {
 
     Response errorResponse = getCreateOp(requesterId, instanceId, null, "invalid",
       HttpStatus.SC_BAD_REQUEST);
-    assertThat(errorResponse.getBody(), is("UseStubItem is not a valid value: invalid."));
+    assertThat(errorResponse.getBody(), is("useStubItem is not a valid boolean: invalid."));
   }
 
   private void assertServicePointsMatch(JsonArray response,
