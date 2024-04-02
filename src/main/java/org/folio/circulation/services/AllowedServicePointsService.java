@@ -155,7 +155,7 @@ public class AllowedServicePointsService {
       ? this::extractAllowedServicePointsIgnoringItemStatus
       : this::extractAllowedServicePointsConsideringItemStatus;
 
-    if ("true".equals(request.getUseStubItem())) {
+    if (request.isUseStubItem()) {
       return requestPolicyRepository.lookupRequestPolicy(user)
         .thenCompose(r -> r.after(policy -> extractAllowedServicePointsIgnoringItemStatus(
           policy, new HashSet<>())));

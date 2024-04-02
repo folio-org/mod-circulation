@@ -67,61 +67,39 @@ public class AllowedServicePointsResource extends Resource {
       .map(String::toUpperCase)
       .map(Request.Operation::valueOf)
       .orElse(null);
-
-    AllowedServicePointsRequest request = new AllowedServicePointsRequest(operation,
-      queryParams.get("requesterId"), queryParams.get("instanceId"), queryParams.get("itemId"),
-      queryParams.get("requestId"), queryParams.get("useStubItem"));
-
-    return validateAllowedServicePointsRequest(request);
-  }
-
-  private static Result<AllowedServicePointsRequest> validateAllowedServicePointsRequest(
-    AllowedServicePointsRequest allowedServicePointsRequest) {
-
-    log.debug("validateAllowedServicePointsRequest:: parameters allowedServicePointsRequest: {}",
-      allowedServicePointsRequest);
-
-    Request.Operation operation = allowedServicePointsRequest.getOperation();
-    String requesterId = allowedServicePointsRequest.getRequesterId();
-    String instanceId = allowedServicePointsRequest.getInstanceId();
-    String itemId = allowedServicePointsRequest.getItemId();
-    String requestId = allowedServicePointsRequest.getRequestId();
-    String useStubItem = allowedServicePointsRequest.getUseStubItem();
+    String requesterId = queryParams.get("requesterId");
+    String instanceId = queryParams.get("instanceId");
+    String itemId = queryParams.get("itemId");
+    String requestId = queryParams.get("requestId");
+    String useStubItem = queryParams.get("useStubItem");
 
     List<String> errors = new ArrayList<>();
 
     // Checking UUID validity
-
     if (requesterId != null && !isUuid(requesterId)) {
       log.warn("validateAllowedServicePointsRequest:: requester ID is not a valid UUID: {}", requesterId);
       errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
     }
-
     if (instanceId != null && !isUuid(instanceId)) {
       log.warn("validateAllowedServicePointsRequest:: instance ID is not a valid UUID: {}",
         requesterId);
       errors.add(String.format("Instance ID is not a valid UUID: %s.", instanceId));
     }
-
     if (itemId != null && !isUuid(itemId)) {
       log.warn("validateAllowedServicePointsRequest:: item ID is not a valid UUID: {}", itemId);
       errors.add(String.format("Item ID is not a valid UUID: %s.", itemId));
     }
-
     if (requestId != null && !isUuid(requestId)) {
       log.warn("validateAllowedServicePointsRequest:: request ID is not a valid UUID: {}",
         requestId);
       errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
     }
-
     if (useStubItem != null && !"true".equals(useStubItem) && !"false".equals(useStubItem)) {
       log.warn("validateAllowedServicePointsRequest:: useStubItem is not a valid boolean: {}",
         useStubItem);
       errors.add(String.format("useStubItem is not a valid boolean: %s.", useStubItem));
     }
-
     // Checking parameter combinations
-
     boolean allowedCombinationOfParametersDetected = false;
 
     if (operation == Request.Operation.CREATE && requesterId != null && instanceId != null &&
@@ -130,40 +108,36 @@ public class AllowedServicePointsResource extends Resource {
       log.info("validateAllowedServicePointsRequest:: TLR request creation case");
       allowedCombinationOfParametersDetected = true;
     }
-
     if (operation == Request.Operation.CREATE && requesterId != null && instanceId == null &&
       itemId != null && requestId == null) {
 
       log.info("validateAllowedServicePointsRequest:: ILR request creation case");
       allowedCombinationOfParametersDetected = true;
     }
-
     if (operation == Request.Operation.REPLACE && requesterId == null && instanceId == null &&
       itemId == null && requestId != null) {
 
       log.info("validateAllowedServicePointsRequest:: request replacement case");
       allowedCombinationOfParametersDetected = true;
     }
-
     if (operation == Request.Operation.MOVE && requesterId == null && instanceId == null &&
       itemId != null && requestId != null) {
 
       log.info("validateAllowedServicePointsRequest:: request movement case");
       allowedCombinationOfParametersDetected = true;
     }
-
     if (!allowedCombinationOfParametersDetected) {
       String errorMessage = "Invalid combination of query parameters";
       errors.add(errorMessage);
     }
-
     if (!errors.isEmpty()) {
       String errorMessage = String.join(" ", errors);
       log.error("validateRequest:: allowed service points request failed: {}", errorMessage);
       return failed(new BadRequestFailure(errorMessage));
     }
 
-    return succeeded(allowedServicePointsRequest);
+    return succeeded(new AllowedServicePointsRequest(operation, requesterId, instanceId, itemId,
+      requestId, Boolean.parseBoolean(useStubItem)));
   }
 
   private static JsonObject toJson(Map<RequestType, Set<AllowedServicePoint>> allowedServicePoints) {

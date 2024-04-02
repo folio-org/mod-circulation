@@ -768,23 +768,22 @@ class AllowedServicePointsAPITests extends APITests {
 
     var response = getCreateOp(requesterId, instanceId, null, "true", HttpStatus.SC_OK).getJson();
     assertThat(response, hasNoJsonPath(PAGE.getValue()));
-
-    JsonArray allowedPageServicePoints = response.getJsonArray(HOLD.getValue());
-    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
-    allowedPageServicePoints = response.getJsonArray(RECALL.getValue());
-    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
+    JsonArray allowedServicePoints = response.getJsonArray(HOLD.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
+    allowedServicePoints = response.getJsonArray(RECALL.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
 
     response = getCreateOp(requesterId, instanceId, null, "false", HttpStatus.SC_OK).getJson();
     assertThat(response, hasNoJsonPath(HOLD.getValue()));
     assertThat(response, hasNoJsonPath(RECALL.getValue()));
-    allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
-    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
+    allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
 
     response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
     assertThat(response, hasNoJsonPath(HOLD.getValue()));
     assertThat(response, hasNoJsonPath(RECALL.getValue()));
-    allowedPageServicePoints = response.getJsonArray(PAGE.getValue());
-    assertServicePointsMatch(allowedPageServicePoints, List.of(cd1, cd2, cd4, cd5));
+    allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
 
     Response errorResponse = getCreateOp(requesterId, instanceId, null, "invalid",
       HttpStatus.SC_BAD_REQUEST);

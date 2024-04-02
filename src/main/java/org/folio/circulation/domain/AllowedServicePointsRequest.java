@@ -20,7 +20,7 @@ public class AllowedServicePointsRequest {
   private String instanceId;
   private String itemId;
   private String requestId;
-  private String useStubItem;
+  private boolean useStubItem;
 
   public boolean isForTitleLevelRequest() {
     return instanceId != null;
