@@ -61,6 +61,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.val;
 
@@ -322,7 +323,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final Loan loan = loanToChargeFees.getLoan();
 
     loan.setLostItemHasBeenBilled();
-    loan.closeLoanAsLostAndPaid();
+    loan.closeLoanAsLostAndPaid(ClockUtil.getZonedDateTime());
 
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }

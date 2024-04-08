@@ -40,6 +40,7 @@ import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -142,7 +143,7 @@ public class LostItemFeeChargingService {
   }
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaidAndUpdateInStorage(Loan loan) {
-    loan.closeLoanAsLostAndPaid();
+    loan.closeLoanAsLostAndPaid(ClockUtil.getZonedDateTime());
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }
 
