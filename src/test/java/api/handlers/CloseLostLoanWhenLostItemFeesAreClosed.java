@@ -7,6 +7,7 @@ import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.LoanMatchers.isClosed;
 import static api.support.matchers.LoanMatchers.isOpen;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -79,7 +80,9 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
   }
 
   protected void assertThatLoanIsClosedAsLostAndPaid() {
-    assertThat(loansFixture.getLoanById(loan.getId()).getJson(), isClosed());
+    JsonObject loan = loansFixture.getLoanById(this.loan.getId()).getJson();
+    assertThat(loan, isClosed());
+    assertNotNull(loan.getString("returnDate"));
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
   }
 
