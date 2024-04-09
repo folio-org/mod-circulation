@@ -53,15 +53,14 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
+import org.folio.circulation.services.actualcostrecord.ActualCostRecordService;
 import org.folio.circulation.services.support.CreateAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 
 import lombok.val;
 
@@ -323,7 +322,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final Loan loan = loanToChargeFees.getLoan();
 
     loan.setLostItemHasBeenBilled();
-    loan.closeLoanAsLostAndPaid(ClockUtil.getZonedDateTime());
+    loan.closeLoanAsLostAndPaid();
 
     return storeLoanAndItem.updateLoanAndItemInStorage(loan);
   }

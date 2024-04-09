@@ -21,7 +21,6 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.ClockUtil;
 
 public class CloseLoanWithLostItemService {
 
@@ -79,7 +78,7 @@ public class CloseLoanWithLostItemService {
     }
 
     boolean wasLoanOpen = loan.isOpen();
-    loan.closeLoanAsLostAndPaid(ClockUtil.getZonedDateTime());
+    loan.closeLoanAsLostAndPaid();
 
     return new StoreLoanAndItem(loanRepository, itemRepository).updateLoanAndItemInStorage(loan)
       .thenCompose(r -> r.after(l -> publishLoanClosedEvent(l, wasLoanOpen, eventPublisher)));

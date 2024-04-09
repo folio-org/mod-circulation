@@ -740,10 +740,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
       .orElse(noFeeAmount());
   }
 
-  public void closeLoanAsLostAndPaid(ZonedDateTime returnDate) {
+  public void closeLoanAsLostAndPaid() {
     log.debug("closeLoanAsLostAndPaid:: ");
     closeLoan(CLOSED_LOAN);
-    changeReturnDate(returnDate);
+    changeReturnDate(ClockUtil.getZonedDateTime());
     changeItemStatusForItemAndLoan(ItemStatus.LOST_AND_PAID);
   }
 
