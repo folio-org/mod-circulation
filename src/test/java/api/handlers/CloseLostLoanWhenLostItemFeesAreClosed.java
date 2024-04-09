@@ -79,11 +79,13 @@ public class CloseLostLoanWhenLostItemFeesAreClosed extends APITests {
     assertThatLoanIsClosedAsLostAndPaid();
   }
 
-  protected void assertThatLoanIsClosedAsLostAndPaid() {
+  protected JsonObject assertThatLoanIsClosedAsLostAndPaid() {
     JsonObject loan = loansFixture.getLoanById(this.loan.getId()).getJson();
     assertThat(loan, isClosed());
     assertNotNull(loan.getString("returnDate"));
     assertThat(itemsClient.getById(item.getId()).getJson(), isLostAndPaid());
+
+    return loan;
   }
 
   protected void assertThatLoanIsOpenAndLost() {
