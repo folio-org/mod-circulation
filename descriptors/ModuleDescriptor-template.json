@@ -1996,7 +1996,9 @@
         "manualblocks.collection.get",
         "pubsub.publish.post",
         "automated-patron-blocks.collection.get",
-        "circulation-storage.loans-history.collection.get"
+        "circulation-storage.loans-history.collection.get",
+        "overdue-fines-policies.item.get",
+        "overdue-fines-policies.collection.get"
       ],
       "visible": false
     },
@@ -2291,7 +2293,9 @@
         "pubsub.publish.post",
         "configuration.entries.collection.get",
         "patron-notice.post",
-        "circulation-storage.loans-history.collection.get"
+        "circulation-storage.loans-history.collection.get",
+        "overdue-fines-policies.item.get",
+        "overdue-fines-policies.collection.get"
       ],
       "visible": false
     },
