@@ -72,6 +72,7 @@ public class AllowedServicePointsResource extends Resource {
     String itemId = queryParams.get("itemId");
     String requestId = queryParams.get("requestId");
     String useStubItem = queryParams.get("useStubItem");
+    String ecsRequestRouting = queryParams.get("ecsRequestRouting");
 
     List<String> errors = new ArrayList<>();
 
@@ -98,6 +99,13 @@ public class AllowedServicePointsResource extends Resource {
       log.warn("validateAllowedServicePointsRequest:: useStubItem is not a valid boolean: {}",
         useStubItem);
       errors.add(String.format("useStubItem is not a valid boolean: %s.", useStubItem));
+    }
+    if (ecsRequestRouting != null && !"true".equals(ecsRequestRouting)
+      && !"false".equals(ecsRequestRouting)) {
+
+      log.warn("validateAllowedServicePointsRequest:: ecsRequestRouting is not a valid boolean: {}",
+        ecsRequestRouting);
+      errors.add(String.format("ecsRequestRouting is not a valid boolean: %s.", ecsRequestRouting));
     }
     // Checking parameter combinations
     boolean allowedCombinationOfParametersDetected = false;
@@ -137,7 +145,7 @@ public class AllowedServicePointsResource extends Resource {
     }
 
     return succeeded(new AllowedServicePointsRequest(operation, requesterId, instanceId, itemId,
-      requestId, Boolean.parseBoolean(useStubItem)));
+      requestId, Boolean.parseBoolean(useStubItem), Boolean.parseBoolean(ecsRequestRouting)));
   }
 
   private static JsonObject toJson(Map<RequestType, Set<AllowedServicePoint>> allowedServicePoints) {

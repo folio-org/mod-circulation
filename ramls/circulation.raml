@@ -347,6 +347,10 @@ resourceTypes:
               description: "When true, allows to apply circulation rules based on patron group only"
               type: boolean
               required: false
+            ecsRequestRouting:
+              description: "When true, returns only service points with ecsRequestRouting"
+              type: boolean
+              required: false
         responses:
           200:
             description: "List of allowed service points was retrieved successfully"
