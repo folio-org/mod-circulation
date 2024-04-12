@@ -793,7 +793,15 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   @Test
-  void shouldReturnEcsRequestRoutingServicePointsIfEcsRequestRoutingPresent() {
+  void shouldReturnErrorIfUseStubItemIsInvalid() {
+    Response errorResponse = getCreateOp(UUID.randomUUID().toString(),
+      UUID.randomUUID().toString(), null, "invalid", null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(errorResponse.getBody(), is("useStubItem is not a valid boolean: invalid."));
+  }
+
+  @Test
+  void shouldConsiderEcsRequestRoutingServicePointsParameterForAllowedServicePoints() {
     var requesterId = usersFixture.steve().getId().toString();
     var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
       .getInstanceId().toString();
@@ -829,9 +837,12 @@ class AllowedServicePointsAPITests extends APITests {
     assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2));
     assertThat(response, hasNoJsonPath(HOLD.getValue()));
     assertThat(response, hasNoJsonPath(RECALL.getValue()));
+  }
 
-    Response errorResponse = getCreateOp(requesterId, instanceId, null, null, "invalid",
-      HttpStatus.SC_BAD_REQUEST);
+  @Test
+  void shouldReturnErrorIfEcsRequestRoutingIsInvalid() {
+    Response errorResponse = getCreateOp(UUID.randomUUID().toString(),
+      UUID.randomUUID().toString(), null, null, "invalid", HttpStatus.SC_BAD_REQUEST);
     assertThat(errorResponse.getBody(), is("ecsRequestRouting is not a valid boolean: invalid."));
   }
 
