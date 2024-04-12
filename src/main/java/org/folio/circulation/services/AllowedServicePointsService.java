@@ -70,7 +70,7 @@ public class AllowedServicePointsService {
   private final InstanceRepository instanceRepository;
   private final String indexName;
 
-  public AllowedServicePointsService(Clients clients, Boolean isEcsRequestRouting) {
+  public AllowedServicePointsService(Clients clients, boolean isEcsRequestRouting) {
     itemRepository = new ItemRepository(clients);
     userRepository = new UserRepository(clients);
     requestRepository = new RequestRepository(clients);
@@ -284,14 +284,14 @@ public class AllowedServicePointsService {
       .collect(Collectors.toCollection(ArrayList::new)); // collect into a mutable list
 
     // TODO: fetch service points on a later stage, we only need IDs here
-    return fetchServicePoints(requestTypesAllowedByPolicy, servicePointAllowedByPolicy, indexName)
+    return fetchServicePoints(requestTypesAllowedByPolicy, servicePointAllowedByPolicy)
       .thenApply(r -> r.map(servicePoints -> groupAllowedServicePointsByRequestType(
         requestTypesAllowedByPolicyAndStatus, servicePoints, servicePointAllowedByPolicy)));
   }
 
   private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchServicePoints(
     List<RequestType> requestTypesAllowedByPolicy,
-    Map<RequestType, Set<String>> servicePointsAllowedByPolicy, String indexName) {
+    Map<RequestType, Set<String>> servicePointsAllowedByPolicy) {
 
     Set<String> allowedServicePointsIds = servicePointsAllowedByPolicy.values().stream()
       .flatMap(Collection::stream)
