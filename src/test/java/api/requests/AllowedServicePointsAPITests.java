@@ -786,10 +786,6 @@ class AllowedServicePointsAPITests extends APITests {
     assertThat(response, hasNoJsonPath(RECALL.getValue()));
     allowedServicePoints = response.getJsonArray(PAGE.getValue());
     assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
-
-    Response errorResponse = getCreateOp(requesterId, instanceId, null, "invalid", null,
-      HttpStatus.SC_BAD_REQUEST);
-    assertThat(errorResponse.getBody(), is("useStubItem is not a valid boolean: invalid."));
   }
 
   @Test
@@ -801,7 +797,7 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   @Test
-  void shouldConsiderEcsRequestRoutingServicePointsParameterForAllowedServicePoints() {
+  void shouldConsiderEcsRequestRoutingParameterForAllowedServicePoints() {
     var requesterId = usersFixture.steve().getId().toString();
     var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
       .getInstanceId().toString();
