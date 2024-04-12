@@ -237,18 +237,18 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   extractAllowedServicePointsIgnoringItemStatus(RequestPolicy requestPolicy, Set<Item> items) {
 
-    return extractAllowedServicePoints(requestPolicy, items, true, indexName);
+    return extractAllowedServicePoints(requestPolicy, items, true);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   extractAllowedServicePointsConsideringItemStatus(RequestPolicy requestPolicy, Set<Item> items) {
 
-    return extractAllowedServicePoints(requestPolicy, items, false, indexName);
+    return extractAllowedServicePoints(requestPolicy, items, false);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   extractAllowedServicePoints(RequestPolicy requestPolicy, Set<Item> items,
-    boolean ignoreItemStatus, String indexName) {
+    boolean ignoreItemStatus) {
 
     log.debug("extractAllowedServicePoints:: parameters requestPolicy: {}, items: {}, " +
         "ignoreItemStatus: {}", requestPolicy, items, ignoreItemStatus);
