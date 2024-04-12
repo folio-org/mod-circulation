@@ -53,7 +53,8 @@ public class AllowedServicePointsResource extends Resource {
 
     ofAsync(routingContext)
       .thenApply(r -> r.next(AllowedServicePointsResource::buildRequest))
-      .thenCompose(r -> r.after(new AllowedServicePointsService(clients)::getAllowedServicePoints))
+      .thenCompose(r -> r.after(request -> new AllowedServicePointsService(
+        clients, request.isEcsRequestRouting()).getAllowedServicePoints(request)))
       .thenApply(r -> r.map(AllowedServicePointsResource::toJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .exceptionally(CommonFailures::failedDueToServerError)

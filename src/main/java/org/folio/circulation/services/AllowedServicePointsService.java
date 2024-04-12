@@ -58,6 +58,8 @@ import org.folio.circulation.support.results.Result;
 
 public class AllowedServicePointsService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String ECS_REQUEST_ROUTING_INDEX_NAME = "ecsRequestRouting";
+  private static final String PICKUP_LOCATION_INDEX_NAME = "pickupLocation";
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private final RequestRepository requestRepository;
@@ -66,8 +68,9 @@ public class AllowedServicePointsService {
   private final ItemByInstanceIdFinder itemFinder;
   private final ConfigurationRepository configurationRepository;
   private final InstanceRepository instanceRepository;
+  private final String indexName;
 
-  public AllowedServicePointsService(Clients clients) {
+  public AllowedServicePointsService(Clients clients, Boolean isEcsRequestRouting) {
     itemRepository = new ItemRepository(clients);
     userRepository = new UserRepository(clients);
     requestRepository = new RequestRepository(clients);
@@ -76,6 +79,7 @@ public class AllowedServicePointsService {
     configurationRepository = new ConfigurationRepository(clients);
     instanceRepository = new InstanceRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
+    indexName = isEcsRequestRouting ? ECS_REQUEST_ROUTING_INDEX_NAME : PICKUP_LOCATION_INDEX_NAME;
   }
 
   public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
@@ -145,25 +149,20 @@ public class AllowedServicePointsService {
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   getAllowedServicePoints(AllowedServicePointsRequest request, User user, Collection<Item> items) {
 
-    String indexName = request.isEcsRequestRouting()
-      ? "ecsRequestRouting"
-      : "pickupLocation";
     if (items.isEmpty() && request.isForTitleLevelRequest()) {
       log.info("getAllowedServicePoints:: requested instance has no items");
-      return getAllowedServicePointsForTitleWithNoItems(request, indexName);
+      return getAllowedServicePointsForTitleWithNoItems(request);
     }
 
     BiFunction<RequestPolicy, Set<Item>, CompletableFuture<Result<Map<RequestType,
       Set<AllowedServicePoint>>>>> mappingFunction = request.isImplyingItemStatusIgnore()
-      ? (requestPolicy, itemsSet) -> extractAllowedServicePointsIgnoringItemStatus(
-        requestPolicy, itemsSet, indexName)
-      : (requestPolicy, itemsSet) -> extractAllowedServicePointsConsideringItemStatus(
-        requestPolicy, itemsSet, indexName);
+      ? this::extractAllowedServicePointsIgnoringItemStatus
+      : this::extractAllowedServicePointsConsideringItemStatus;
 
     if (request.isUseStubItem()) {
       return requestPolicyRepository.lookupRequestPolicy(user)
         .thenCompose(r -> r.after(policy -> extractAllowedServicePointsIgnoringItemStatus(
-          policy, new HashSet<>(), indexName)));
+          policy, new HashSet<>())));
     }
 
     return requestPolicyRepository.lookupRequestPolicies(items, user)
@@ -173,12 +172,12 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePointsForTitleWithNoItems(AllowedServicePointsRequest request, String indexName) {
+  getAllowedServicePointsForTitleWithNoItems(AllowedServicePointsRequest request) {
 
     if (request.isForTitleLevelRequest() && request.getOperation() == CREATE) {
       log.info("getAllowedServicePointsForTitleWithNoItems:: checking TLR settings");
       return configurationRepository.lookupTlrSettings()
-        .thenCompose(r -> r.after(tlrSettings -> considerTlrSettings(tlrSettings, indexName)));
+        .thenCompose(r -> r.after(this::considerTlrSettings));
     }
 
     log.info("getAllowedServicePointsForTitleWithNoItems:: no need to check TLR-settings");
@@ -186,7 +185,7 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>> considerTlrSettings(
-    TlrSettingsConfiguration tlrSettings, String indexName) {
+    TlrSettingsConfiguration tlrSettings) {
 
     if (!tlrSettings.isTitleLevelRequestsFeatureEnabled() ||
       tlrSettings.isTlrHoldShouldFollowCirculationRules()) {
@@ -197,7 +196,7 @@ public class AllowedServicePointsService {
 
     log.info("considerTlrSettings:: allowing all pickup locations for Hold");
 
-    return fetchAllowedServicePoints(indexName)
+    return fetchAllowedServicePoints()
       .thenApply(r -> r.map(sp -> sp.isEmpty() ? emptyMap() : Map.of(HOLD, sp)));
   }
 
@@ -236,15 +235,13 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  extractAllowedServicePointsIgnoringItemStatus(RequestPolicy requestPolicy, Set<Item> items,
-    String indexName) {
+  extractAllowedServicePointsIgnoringItemStatus(RequestPolicy requestPolicy, Set<Item> items) {
 
     return extractAllowedServicePoints(requestPolicy, items, true, indexName);
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  extractAllowedServicePointsConsideringItemStatus(RequestPolicy requestPolicy, Set<Item> items,
-    String indexName) {
+  extractAllowedServicePointsConsideringItemStatus(RequestPolicy requestPolicy, Set<Item> items) {
 
     return extractAllowedServicePoints(requestPolicy, items, false, indexName);
   }
@@ -301,8 +298,8 @@ public class AllowedServicePointsService {
       .collect(Collectors.toSet());
 
     return requestTypesAllowedByPolicy.size() == servicePointsAllowedByPolicy.size()
-      ? fetchPickupLocationServicePointsByIds(allowedServicePointsIds, indexName)
-      : fetchAllowedServicePoints(indexName);
+      ? fetchPickupLocationServicePointsByIds(allowedServicePointsIds)
+      : fetchAllowedServicePoints();
   }
 
   private Map<RequestType, Set<AllowedServicePoint>> groupAllowedServicePointsByRequestType(
@@ -366,9 +363,7 @@ public class AllowedServicePointsService {
       }, () -> new EnumMap<>(RequestType.class)));
   }
 
-  private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchAllowedServicePoints(
-    String indexName) {
-
+  private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchAllowedServicePoints() {
     return servicePointRepository.fetchServicePointsByIndexName(indexName)
       .thenApply(r -> r.map(servicePoints -> servicePoints.stream()
         .map(AllowedServicePoint::new)
@@ -376,7 +371,7 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchPickupLocationServicePointsByIds(
-    Set<String> ids, String indexName) {
+    Set<String> ids) {
 
     log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
       () -> collectionAsString(ids));
