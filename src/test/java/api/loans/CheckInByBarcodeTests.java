@@ -421,6 +421,46 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
+  void canCheckInAnDcbItem() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    var barcode = "100002222";
+    var instanceTitle = "virtual title";
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(barcode, holdings.getId(), locationsResource.getId(), instanceTitle);
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(circulationItem, ZonedDateTime.now(), checkInServicePointId);
+
+    assertThat("Response should include an item",
+      checkInResponse.getJson().containsKey("item"), is(true));
+
+    final JsonObject itemFromResponse = checkInResponse.getItem();
+
+    assertThat("barcode is included for item",
+      itemFromResponse.getString("barcode"), is(barcode));
+
+    assertThat("item title should match dcb instance title",
+      itemFromResponse.getString("title"), is(instanceTitle));
+  }
+
+  @Test
+  void slipContainsLendingLibraryCodeForDcb() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    var barcode = "100002222";
+    var lendingLibraryCode = "11223";
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItemWithLendingLibrary(barcode, holdings.getId(), locationsResource.getId(), lendingLibraryCode);
+
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(circulationItem, ZonedDateTime.now(), checkInServicePointId);
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+    JsonObject itemContext = staffSlipContext.getJsonObject("item");
+
+    assertThat(itemContext.getString("effectiveLocationInstitution"), is(lendingLibraryCode));
+  }
+
+  @Test
   void canCheckInAnItemWithoutAnOpenLoan() {
     final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
 
