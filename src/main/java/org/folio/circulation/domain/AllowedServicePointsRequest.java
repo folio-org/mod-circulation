@@ -19,8 +19,6 @@ public class AllowedServicePointsRequest {
   private String requesterId;
   private String instanceId;
   private String itemId;
-  private String requestId;
-  private boolean useStubItem;
 
   public boolean isForTitleLevelRequest() {
     return instanceId != null;
@@ -29,6 +27,7 @@ public class AllowedServicePointsRequest {
   public boolean isForItemLevelRequest() {
     return itemId != null;
   }
+  private String requestId;
 
   public AllowedServicePointsRequest updateWithRequestInformation(Request request) {
     log.debug("updateWithRequestInformation:: parameters request: {}", request);
