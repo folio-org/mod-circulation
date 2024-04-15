@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.VertxAssistant;
@@ -40,6 +42,9 @@ public class Launcher {
 
     Integer port = Integer.valueOf(
         System.getProperty("http.port", System.getProperty("port", "9801")));
+
+    OpenTelemetry openTelemetry = GlobalOpenTelemetry.get();
+
 
     launcher.start(port).get(10, TimeUnit.SECONDS);
   }

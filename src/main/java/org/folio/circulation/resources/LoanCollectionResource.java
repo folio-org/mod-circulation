@@ -12,6 +12,8 @@ import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
@@ -58,6 +60,8 @@ import io.vertx.ext.web.RoutingContext;
 
 public class LoanCollectionResource extends CollectionResource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
+  Tracer tracer = GlobalOpenTelemetry.get().getTracer("mod-circulation");
 
   public LoanCollectionResource(HttpClient client) {
     super(client, "/circulation/loans");
