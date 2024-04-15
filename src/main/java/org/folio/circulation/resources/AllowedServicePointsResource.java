@@ -53,7 +53,8 @@ public class AllowedServicePointsResource extends Resource {
 
     ofAsync(routingContext)
       .thenApply(r -> r.next(AllowedServicePointsResource::buildRequest))
-      .thenCompose(r -> r.after(new AllowedServicePointsService(clients)::getAllowedServicePoints))
+      .thenCompose(r -> r.after(request -> new AllowedServicePointsService(
+        clients, request.isEcsRequestRouting()).getAllowedServicePoints(request)))
       .thenApply(r -> r.map(AllowedServicePointsResource::toJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .exceptionally(CommonFailures::failedDueToServerError)
@@ -72,6 +73,7 @@ public class AllowedServicePointsResource extends Resource {
     String itemId = queryParams.get("itemId");
     String requestId = queryParams.get("requestId");
     String useStubItem = queryParams.get("useStubItem");
+    String ecsRequestRouting = queryParams.get("ecsRequestRouting");
 
     List<String> errors = new ArrayList<>();
 
@@ -94,11 +96,8 @@ public class AllowedServicePointsResource extends Resource {
         requestId);
       errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
     }
-    if (useStubItem != null && !"true".equals(useStubItem) && !"false".equals(useStubItem)) {
-      log.warn("validateAllowedServicePointsRequest:: useStubItem is not a valid boolean: {}",
-        useStubItem);
-      errors.add(String.format("useStubItem is not a valid boolean: %s.", useStubItem));
-    }
+    validateBoolean(useStubItem, "useStubItem", errors);
+    validateBoolean(ecsRequestRouting, "ecsRequestRouting", errors);
     // Checking parameter combinations
     boolean allowedCombinationOfParametersDetected = false;
 
@@ -137,7 +136,15 @@ public class AllowedServicePointsResource extends Resource {
     }
 
     return succeeded(new AllowedServicePointsRequest(operation, requesterId, instanceId, itemId,
-      requestId, Boolean.parseBoolean(useStubItem)));
+      requestId, Boolean.parseBoolean(useStubItem), Boolean.parseBoolean(ecsRequestRouting)));
+  }
+
+  private static void validateBoolean(String parameter, String parameterName, List<String> errors) {
+    if (parameter != null && !"true".equals(parameter) && !"false".equals(parameter)) {
+      log.warn("validateBoolean:: {} is not a valid boolean: {}",
+        parameterName, parameter);
+      errors.add(String.format("%s is not a valid boolean: %s.", parameterName, parameter));
+    }
   }
 
   private static JsonObject toJson(Map<RequestType, Set<AllowedServicePoint>> allowedServicePoints) {

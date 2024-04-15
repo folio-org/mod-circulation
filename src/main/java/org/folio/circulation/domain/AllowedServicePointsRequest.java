@@ -21,6 +21,7 @@ public class AllowedServicePointsRequest {
   private String itemId;
   private String requestId;
   private boolean useStubItem;
+  private boolean ecsRequestRouting;
 
   public boolean isForTitleLevelRequest() {
     return instanceId != null;
