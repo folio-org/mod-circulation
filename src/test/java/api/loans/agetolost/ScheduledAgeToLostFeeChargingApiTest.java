@@ -625,7 +625,7 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
-  void loanRelatedFeeFineClosedEventIsIgnoredIfLoanIsAlreadyClosed() {
+  void closingLostItemFeeDoesNotAffectMoreRecentLoanForSameItem() {
     ItemResource item = itemsFixture.basedUponNod();
     UUID itemId = item.getId();
     UserResource firstPatron = usersFixture.steve();
@@ -637,10 +637,9 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
           .withName("Processing fee only, no refund on check-in")
           .withItemAgedToLostAfterOverdue(Period.minutes(1))
           .withPatronBilledAfterItemAgedToLost(Period.minutes(1))
-          .withChargeAmountItem(ChargeAmountType.SET_COST.getValue(), 0.0)
+          .withNoChargeAmountItem()
           .withLostItemProcessingFee(1.0)
           .withChargeAmountItemPatron(true)
-          .withChargeAmountItemSystem(true)
           .doNotRefundProcessingFeeWhenReturned()
       )));
 
