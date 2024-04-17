@@ -200,22 +200,15 @@ public class LoanPolicy extends Policy {
   }
 
   private boolean isAlternatePeriod(RequestQueue requestQueue) {
-    final JsonObject holds = getHolds();
-    if(Objects.isNull(requestQueue)
-      || !holds.containsKey(ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
+    if (Objects.isNull(requestQueue) || !getHolds().containsKey(
+      ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
+
       return false;
     }
-    Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
-    boolean isAlternateDueDateSchedule = false;
-    if(potentialRequest.isPresent()) {
-      Request request = potentialRequest.get();
-      boolean isHold = request.getRequestType() == RequestType.HOLD;
-      boolean isOpenNotYetFilled = request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED;
-      if(isHold && isOpenNotYetFilled) {
-        isAlternateDueDateSchedule = true;
-      }
-    }
-    return isAlternateDueDateSchedule;
+
+    return requestQueue.getRequests().stream()
+      .anyMatch(request -> request.getRequestType() == RequestType.HOLD &&
+        request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED);
   }
 
   private JsonObject getLoansPolicy() {
