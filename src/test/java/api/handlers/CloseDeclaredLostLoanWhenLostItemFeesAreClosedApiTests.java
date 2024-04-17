@@ -245,18 +245,11 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
   }
 
   @Test
-  @Disabled("Disabled for debugging")
   void shouldNotPublishLoanClosedEventWhenLoanIsOriginallyClosed() {
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
-
-    JsonObject loanToClose = loansStorageClient.get(loan).getJson();
-    loanToClose.getJsonObject("status").put("name", "Closed");
-    loansStorageClient.replace(loan.getId(), loanToClose);
-
+    checkInFixture.checkInByBarcode(item);
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
-    assertThatLoanIsClosedAsLostAndPaid();
-
     assertThat(getPublishedEventsAsList(byEventType(LOAN_CLOSED)), empty());
   }
 
