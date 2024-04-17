@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
