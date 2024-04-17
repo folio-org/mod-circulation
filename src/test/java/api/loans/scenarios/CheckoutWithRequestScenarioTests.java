@@ -166,7 +166,7 @@ class CheckoutWithRequestScenarioTests extends APITests {
   }
 
   @Test
-  void checkingOutWithHoldRequestAppliesAlternatePeriod1() {
+  void alternatePeriodWithHoldRequestShouldBeAppliedForBothItemsInTheQueue() {
     configurationsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     var firstItem = items.get(0);
