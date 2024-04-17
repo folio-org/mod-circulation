@@ -762,7 +762,6 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
 
   private MultipleJsonRecords getLoanHistory(UUID loanId) {
     return loanHistoryClient.getMany(
-      queryFromTemplate("loan.id=\"%s\" sortBy " +
-        "createdDate/sort.descending", loanId));
+      queryFromTemplate("loan.id=\"%s\" sortBy createdDate/sort.descending", loanId));
   }
 }
