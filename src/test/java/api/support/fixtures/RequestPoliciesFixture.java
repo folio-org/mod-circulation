@@ -56,6 +56,15 @@ public class RequestPoliciesFixture {
     return requestPolicyRecordCreator.createIfAbsent(new RequestPolicyBuilder(types, id));
   }
 
+  public IndividualResource allowPageAndHoldRequestPolicy() {
+    ArrayList<RequestType> types = new ArrayList<>();
+    types.add(RequestType.HOLD);
+    types.add(RequestType.PAGE);
+    final RequestPolicyBuilder allowPageAndHoldPolicy = new RequestPolicyBuilder(types);
+
+    return requestPolicyRecordCreator.createIfAbsent(allowPageAndHoldPolicy);
+  }
+
   public IndividualResource customRequestPolicy(ArrayList<RequestType> types) {
 
     final RequestPolicyBuilder customPolicy = new RequestPolicyBuilder(types);

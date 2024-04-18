@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
@@ -88,7 +87,8 @@ public class LoanPolicy extends Policy {
 
   public Result<ZonedDateTime> calculateInitialDueDate(Loan loan, RequestQueue requestQueue) {
     final ZonedDateTime systemTime = ClockUtil.getZonedDateTime();
-    return determineStrategy(requestQueue, false, false, systemTime).calculateDueDate(loan);
+    return determineStrategy(requestQueue, false, false, systemTime, loan.getItemId())
+      .calculateDueDate(loan);
   }
 
   public boolean hasRenewalPeriod() {
@@ -139,11 +139,8 @@ public class LoanPolicy extends Policy {
     return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
-  public DueDateStrategy determineStrategy(
-    RequestQueue requestQueue,
-    boolean isRenewal,
-    boolean isRenewalWithHoldRequest,
-    ZonedDateTime systemDate) {
+  public DueDateStrategy determineStrategy(RequestQueue requestQueue, boolean isRenewal,
+    boolean isRenewalWithHoldRequest, ZonedDateTime systemDate, String itemId) {
 
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
@@ -163,7 +160,7 @@ public class LoanPolicy extends Policy {
       else {
         boolean useAlternatePeriod = false;
         Period rollingPeriod = getPeriod(loansPolicy);
-        if(isAlternatePeriod(requestQueue)) {
+        if (isAlternatePeriod(requestQueue, itemId)) {
           rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
           useAlternatePeriod = true;
         }
@@ -178,7 +175,7 @@ public class LoanPolicy extends Policy {
           getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
       }
       else {
-        if(isAlternatePeriod(requestQueue)) {
+        if (isAlternatePeriod(requestQueue, itemId)) {
           return new RollingCheckOutDueDateStrategy(getId(), getName(),
             getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY),
               fixedDueDateSchedules, this::loanPolicyValidationError, false);
@@ -199,23 +196,17 @@ public class LoanPolicy extends Policy {
     return RenewalValidator.loanPolicyValidationError(this, message);
   }
 
-  private boolean isAlternatePeriod(RequestQueue requestQueue) {
-    final JsonObject holds = getHolds();
-    if(Objects.isNull(requestQueue)
-      || !holds.containsKey(ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
+  private boolean isAlternatePeriod(RequestQueue requestQueue, String itemId) {
+    if (Objects.isNull(requestQueue) || !getHolds().containsKey(
+      ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY)) {
+
       return false;
     }
-    Optional<Request> potentialRequest = requestQueue.getRequests().stream().skip(1).findFirst();
-    boolean isAlternateDueDateSchedule = false;
-    if(potentialRequest.isPresent()) {
-      Request request = potentialRequest.get();
-      boolean isHold = request.getRequestType() == RequestType.HOLD;
-      boolean isOpenNotYetFilled = request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED;
-      if(isHold && isOpenNotYetFilled) {
-        isAlternateDueDateSchedule = true;
-      }
-    }
-    return isAlternateDueDateSchedule;
+
+    return requestQueue.getRequests().stream()
+      .anyMatch(request -> request.getRequestType() == RequestType.HOLD &&
+        request.getStatus() == RequestStatus.OPEN_NOT_YET_FILLED &&
+        (!request.hasItem() || itemId.equals(request.getItemId())));
   }
 
   private JsonObject getLoansPolicy() {
