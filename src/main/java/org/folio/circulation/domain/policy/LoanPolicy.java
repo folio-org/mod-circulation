@@ -466,12 +466,14 @@ public class LoanPolicy extends Policy {
 
     return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
       (minimumGuaranteedDueDate, recallDueDate) -> {
+        ZonedDateTime currentDueDate = loan.getDueDate();
+
         if (loan.isOverdue() && !allowRecallsToExtendOverdueLoans()) {
-          return loan.getDueDate();
+          return currentDueDate;
         }
 
-        if (isAfterMillis(recallDueDate, loan.getDueDate())) {
-          return loan.getDueDate();
+        if (isAfterMillis(recallDueDate, currentDueDate) && !allowRecallsToExtendOverdueLoans()) {
+          return currentDueDate;
         } else {
           if (minimumGuaranteedDueDate == null ||
             isAfterMillis(recallDueDate, minimumGuaranteedDueDate)) {
