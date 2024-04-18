@@ -12,6 +12,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
@@ -36,6 +39,8 @@ import lombok.ToString;
 
 @ToString(onlyExplicitlyIncluded = true)
 public class LoanPolicy extends Policy {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private static final String LOANS_POLICY_KEY = "loansPolicy";
   private static final String PERIOD_KEY = "period";
 
@@ -462,15 +467,19 @@ public class LoanPolicy extends Policy {
     return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
       (minimumGuaranteedDueDate, recallDueDate) -> {
         if (loan.isOverdue() && !allowRecallsToExtendOverdueLoans()) {
-
           return loan.getDueDate();
         }
 
-        if (minimumGuaranteedDueDate == null ||
-          isAfterMillis(recallDueDate, minimumGuaranteedDueDate)) {
-          return recallDueDate;
+        if (isAfterMillis(recallDueDate, loan.getDueDate())) {
+          return loan.getDueDate();
         } else {
-          return minimumGuaranteedDueDate;
+          if (minimumGuaranteedDueDate == null ||
+            isAfterMillis(recallDueDate, minimumGuaranteedDueDate)) {
+
+            return recallDueDate;
+          } else {
+            return minimumGuaranteedDueDate;
+          }
         }
       });
   }
