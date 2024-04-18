@@ -51,6 +51,13 @@ public final class AccountMatchers {
       hasJsonPath("paymentStatus.name", "Paid fully"));
   }
 
+  public static Matcher<JsonObject> isPaidFully() {
+    return allOf(
+      hasJsonPath("remaining", 0.0),
+      hasJsonPath("status.name", "Closed"),
+      hasJsonPath("paymentStatus.name", "Paid fully"));
+  }
+
   public static Matcher<JsonObject> isAccount(double amount, double remaining, String status,
     String paymentStatus, String feeFineType, UUID userId, UUID loanId) {
     return allOf(
