@@ -2,9 +2,13 @@ package api.loans.agetolost;
 
 import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.DeclareItemLostRequestBuilder.forLoan;
+import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.AccountMatchers.isOpen;
+import static api.support.matchers.AccountMatchers.isPaidFully;
 import static api.support.matchers.ActualCostRecordMatchers.isActualCostRecord;
 import static api.support.matchers.ItemMatchers.isAgedToLost;
+import static api.support.matchers.ItemMatchers.isAvailable;
+import static api.support.matchers.ItemMatchers.isCheckedOut;
 import static api.support.matchers.ItemMatchers.isDeclaredLost;
 import static api.support.matchers.ItemMatchers.isLostAndPaid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
@@ -25,6 +29,7 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -40,10 +45,12 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemLossType;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import api.support.MultipleJsonRecords;
 import api.support.builders.FeeFineOwnerBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
@@ -617,6 +624,77 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     assertThat(scheduledNoticesClient.getAll(), hasSize(0));
   }
 
+  @Test
+  void closingLostItemFeeDoesNotAffectMoreRecentLoanForSameItem() {
+    ItemResource item = itemsFixture.basedUponNod();
+    UUID itemId = item.getId();
+    UserResource firstPatron = usersFixture.steve();
+    UserResource secondPatron = usersFixture.james();
+
+    policiesActivation.use(PoliciesToActivate.builder().lostItemPolicy(
+      lostItemFeePoliciesFixture.create(
+        new LostItemFeePolicyBuilder()
+          .withName("Processing fee only, no refund on check-in")
+          .withItemAgedToLostAfterOverdue(Period.minutes(1))
+          .withPatronBilledAfterItemAgedToLost(Period.minutes(1))
+          .withNoChargeAmountItem()
+          .withLostItemProcessingFee(1.0)
+          .withChargeAmountItemPatron(true)
+          .doNotRefundProcessingFeeWhenReturned()
+      )));
+
+    // create first loan and declare item lost
+    CheckOutResource firstLoan = checkOutFixture.checkOutByBarcode(item, firstPatron);
+    UUID firstLoanId = firstLoan.getId();
+    assertThat(itemsFixture.getById(itemId).getJson(), isCheckedOut());
+    declareLostFixtures.declareItemLost(firstLoanId);
+
+    assertThat(feeFineAccountFixture.getAccounts(firstLoanId), hasSize(1));
+    assertThat(firstLoan, hasLostItemProcessingFee(isOpen(1.0)));
+    assertThat(itemsFixture.getById(itemId).getJson(), isDeclaredLost());
+    assertThat(loansFixture.getLoanById(firstLoanId).getJson(), isOpen());
+
+    // check in first loan
+    checkInFixture.checkInByBarcode(item);
+    int firstLoanHistorySizeAfterCheckIn = getLoanHistory(firstLoanId).size();
+
+    assertThat(feeFineAccountFixture.getAccounts(firstLoanId), hasSize(1));
+    assertThat(firstLoan, hasLostItemProcessingFee(isOpen(1.0)));
+    assertThat(itemsFixture.getById(itemId).getJson(), isAvailable());
+    assertThat(loansFixture.getLoanById(firstLoanId).getJson(), isClosed());
+
+    // create second loan and declare item lost
+    CheckOutResource secondLoan = checkOutFixture.checkOutByBarcode(item, secondPatron);
+    UUID secondLoanId = secondLoan.getId();
+    assertThat(itemsFixture.getById(itemId).getJson(), isCheckedOut());
+    declareLostFixtures.declareItemLost(secondLoanId);
+
+    assertThat(feeFineAccountFixture.getAccounts(secondLoanId), hasSize(1));
+    assertThat(secondLoan, hasLostItemProcessingFee(isOpen(1.0)));
+    assertThat(itemsFixture.getById(itemId).getJson(), isDeclaredLost());
+    assertThat(loansFixture.getLoanById(firstLoanId).getJson(), isClosed());
+    assertThat(loansFixture.getLoanById(secondLoanId).getJson(), isOpen());
+
+    // pay lost item fee for first loan
+    feeFineAccountFixture.payLostItemProcessingFee(firstLoanId);
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(firstLoanId);
+
+    assertThat(getLoanHistory(firstLoanId).size(), equalTo(firstLoanHistorySizeAfterCheckIn));
+    assertThat(firstLoan, hasLostItemProcessingFee(allOf(isClosed(), isPaidFully())));
+    assertThat(itemsFixture.getById(itemId).getJson(), isDeclaredLost());
+    assertThat(loansFixture.getLoanById(firstLoanId).getJson(), isClosed());
+    assertThat(loansFixture.getLoanById(secondLoanId).getJson(), isOpen());
+
+    // pay lost item fee for second loan
+    feeFineAccountFixture.payLostItemProcessingFee(secondLoanId);
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(secondLoanId);
+
+    assertThat(secondLoan, hasLostItemProcessingFee(allOf(isClosed(), isPaidFully())));
+    assertThat(itemsFixture.getById(itemId).getJson(), isLostAndPaid());
+    assertThat(loansFixture.getLoanById(firstLoanId).getJson(), isClosed());
+    assertThat(loansFixture.getLoanById(secondLoanId).getJson(), isClosed());
+  }
+
   private Map<IndividualResource, Double> checkoutTenItems() {
     val loanToFeeMap = new LinkedHashMap<IndividualResource, Double>();
 
@@ -680,5 +758,10 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
           .withTemplateId(UUID.randomUUID())
           .withUponAtTiming()
           .create()));
+  }
+
+  private MultipleJsonRecords getLoanHistory(UUID loanId) {
+    return loanHistoryClient.getMany(
+      queryFromTemplate("loan.id=\"%s\" sortBy createdDate/sort.descending", loanId));
   }
 }
