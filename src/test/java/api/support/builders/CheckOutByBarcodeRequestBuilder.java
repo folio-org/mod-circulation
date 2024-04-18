@@ -70,6 +70,16 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.overrideBlocks);
   }
 
+  public CheckOutByBarcodeRequestBuilder to(String userBarcode) {
+    return new CheckOutByBarcodeRequestBuilder(
+      this.itemBarcode,
+      userBarcode,
+      this.proxyBarcode,
+      this.loanDate,
+      this.servicePointId,
+      this.overrideBlocks);
+  }
+
   public CheckOutByBarcodeRequestBuilder on(ZonedDateTime loanDate) {
     return new CheckOutByBarcodeRequestBuilder(
       this.itemBarcode,
