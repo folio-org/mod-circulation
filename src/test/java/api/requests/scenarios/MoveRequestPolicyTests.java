@@ -289,7 +289,7 @@ class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesDoesNotChangeDueDate() {
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     final IndividualResource itemToMoveTo = items.get(0);
     final IndividualResource itemToMoveFrom = items.get(1);
@@ -345,11 +345,11 @@ class MoveRequestPolicyTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is the original date",
-      storedLoan.getString("dueDate"), not(originalDueDate));
+    assertThat("due date is not the original date",
+      storedLoan.getString("dueDate"), is(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date is not the recall due date (2 months)",
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date is not the original due date (3 weeks)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
@@ -361,7 +361,79 @@ class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final IndividualResource itemToMoveTo = items.get(0);
+    final IndividualResource itemToMoveFrom = items.get(1);
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(Period.months(2))
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(Period.weeks(3));
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      itemToMoveTo, steve, getZonedDateTime());
+
+    final String originalDueDate = loan.getJson().getString("dueDate");
+
+    // charlotte checks out itemToMoveFrom
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
+
+    // jessica places recall request on itemToMoveFrom
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
+      itemToMoveFrom, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
+
+    // One notice for the recall is expected
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
+    // move jessica's recall request from itemToMoveFrom to itemToMoveTo
+    IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
+      requestByJessica.getId(),
+      itemToMoveTo.getId(),
+      RequestType.RECALL.getValue()));
+
+    assertThat("Move request should have correct item id",
+      moveRequest.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
+
+    assertThat("Move request should have correct type",
+      moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("due date is the original date",
+      storedLoan.getString("dueDate"), not(originalDueDate));
+
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date is not the recall due date",
+      storedLoan.getString("dueDate"), is(expectedDueDate));
+
+    assertThat("move recall request notice has not been sent",
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesDoesNotChangeDueDate() {
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     final IndividualResource itemToMoveTo = items.get(0);
     final IndividualResource itemToMoveFrom = items.get(1);
@@ -397,11 +469,95 @@ class MoveRequestPolicyTests extends APITests {
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is the original date",
-      storedLoan.getString("dueDate"), not(originalDueDate));
+    assertThat("due date is not the original date",
+      storedLoan.getString("dueDate"), is(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date is not the recall due date (2 months)",
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date is not the original due date (3 weeks)",
+      storedLoan.getString("dueDate"), is(expectedDueDate));
+
+    // charlotte checks out itemToMoveFrom
+    checkOutFixture.checkOutByBarcode(itemToMoveFrom, charlotte);
+
+    // jessica places recall request on itemToMoveFrom
+    IndividualResource requestByJessica = requestsFixture.placeItemLevelHoldShelfRequest(
+      itemToMoveFrom, jessica, getZonedDateTime(), RequestType.RECALL.getValue());
+
+    // There should be 2 notices for each recall
+    waitAtMost(1, SECONDS)
+      .until(() -> patronNoticesForRecipientWasSent(steve));
+
+    waitAtMost(1, SECONDS)
+      .until(() -> patronNoticesForRecipientWasSent(charlotte));
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
+    // move jessica's recall request from itemToMoveFrom to itemToMoveTo
+    IndividualResource moveRequest = requestsFixture.move(new MoveRequestBuilder(
+      requestByJessica.getId(),
+      itemToMoveTo.getId(),
+      RequestType.RECALL.getValue()));
+
+    assertThat("Move request should have correct item id",
+      moveRequest.getJson().getString("itemId"), is(itemToMoveTo.getId().toString()));
+
+    assertThat("Move request should have correct type",
+      moveRequest.getJson().getString("requestType"), is(RequestType.RECALL.getValue()));
+
+    storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("due date has changed",
+      storedLoan.getString("dueDate"), is(expectedDueDate));
+
+    assertThat("move recall request unexpectedly sent another patron notice",
+      FakeModNotify.getSentPatronNotices(), hasSize(2));
+
+    verifyNumberOfSentNotices(2);
+    verifyNumberOfPublishedEvents(NOTICE, 2);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    final IndividualResource itemToMoveTo = items.get(0);
+    final IndividualResource itemToMoveFrom = items.get(1);
+    final IndividualResource steve = usersFixture.steve();
+    final IndividualResource charlotte = usersFixture.charlotte();
+    final IndividualResource jessica = usersFixture.jessica();
+
+    final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(Period.months(2))
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
+      .withRecallsRecallReturnInterval(Period.weeks(3));
+
+    final IndividualResource loanPolicy = loanPoliciesFixture.create(canCirculateRollingPolicy);
+
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      itemToMoveTo, steve, getZonedDateTime());
+
+    final String originalDueDate = loan.getJson().getString("dueDate");
+
+    // charlotte places recall request on itemToMoveTo
+    requestsFixture.placeItemLevelHoldShelfRequest(
+      itemToMoveTo, charlotte, getZonedDateTime().minusHours(1), RequestType.RECALL.getValue());
+
+    JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date is not the original due date",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // charlotte checks out itemToMoveFrom
