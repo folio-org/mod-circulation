@@ -11,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
+import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -466,20 +467,33 @@ public class LoanPolicy extends Policy {
 
     return minimumGuaranteedDueDateResult.combine(recallDueDateResult,
       (minimumGuaranteedDueDate, recallDueDate) -> {
+        log.debug("determineDueDate:: parameters minimumGuaranteedDueDateResult: {}, " +
+            "recallDueDateResult: {}, loan: {}", () -> resultAsString(minimumGuaranteedDueDateResult),
+          () -> resultAsString(recallDueDateResult), () -> loan);
+
         ZonedDateTime currentDueDate = loan.getDueDate();
 
         if (loan.isOverdue() && !allowRecallsToExtendOverdueLoans()) {
+          log.info("determineDueDate:: loan is overdue and allowRecallsToExtendOverdueLoans is " +
+            "disabled - keeping current due date");
           return currentDueDate;
         }
 
         if (isAfterMillis(recallDueDate, currentDueDate) && !allowRecallsToExtendOverdueLoans()) {
+          log.info("determineDueDate:: current due date is before recall due date and " +
+            "allowRecallsToExtendOverdueLoans is disabled - keeping current due date");
           return currentDueDate;
         } else {
           if (minimumGuaranteedDueDate == null ||
             isAfterMillis(recallDueDate, minimumGuaranteedDueDate)) {
 
+            log.info("determineDueDate:: minimum guaranteed period doesn't exist or recall due " +
+              "date is after minimum guaranteed due date - changing due date to recall due date");
             return recallDueDate;
           } else {
+            log.info("determineDueDate:: minimum guaranteed period exists and recall due " +
+              "date is before minimum guaranteed due date - changing due date to minimum " +
+              "guaranteed due date");
             return minimumGuaranteedDueDate;
           }
         }
