@@ -160,7 +160,7 @@ public class LoanPolicy extends Policy {
       else {
         boolean useAlternatePeriod = false;
         Period rollingPeriod = getPeriod(loansPolicy);
-        if(isAlternatePeriod(requestQueue, itemId)) {
+        if (isAlternatePeriod(requestQueue, itemId)) {
           rollingPeriod = getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY);
           useAlternatePeriod = true;
         }
@@ -175,7 +175,7 @@ public class LoanPolicy extends Policy {
           getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
       }
       else {
-        if(isAlternatePeriod(requestQueue, itemId)) {
+        if (isAlternatePeriod(requestQueue, itemId)) {
           return new RollingCheckOutDueDateStrategy(getId(), getName(),
             getPeriod(holds, ALTERNATE_CHECKOUT_LOAN_PERIOD_KEY),
               fixedDueDateSchedules, this::loanPolicyValidationError, false);
