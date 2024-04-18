@@ -687,7 +687,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
-    assertThat("second recall should not change the due date (2 months)",
+    assertThat("second recall should not change the due date (3 weeks)",
         storedLoan.getString("dueDate"), is(recalledDueDate));
   }
 
@@ -705,6 +705,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
         .rolling(Period.days(65))
         .unlimitedRenewals()
         .renewFromSystemDate()
+        .withAllowRecallsToExtendOverdueLoans(false)
         .withRecallsMinimumGuaranteedLoanPeriod(Period.days(15))
         .withRecallsRecallReturnInterval(Period.days(60));
 
@@ -725,7 +726,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
         recalledDueDate, not(originalDueDate));
 
     final String expectedDueDate = formatDateTime(getZonedDateTime().plusDays(60));
-    assertThat("due date after recall should be in 2 months",
+    assertThat("due date after recall should be in 60 days",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // Move the fixed clock so that the loan is now overdue
@@ -735,7 +736,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
-    assertThat("second recall should not change the due date (2 months)",
+    assertThat("second recall should not change the due date (60 days)",
         storedLoan.getString("dueDate"), is(recalledDueDate));
   }
 
@@ -889,7 +890,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
       .withRecallsMinimumGuaranteedLoanPeriod(Period.days(10))
       .withRecallsRecallReturnInterval(Period.days(5)));
 
-    final ZonedDateTime loanCreateDate =  getZonedDateTime().minusDays(1);
+    final ZonedDateTime loanCreateDate = getZonedDateTime().minusDays(1);
     final ZonedDateTime expectedLoanDueDate = loanPeriod.plusDate(loanCreateDate);
 
     final IndividualResource loan = checkOutFixture.checkOutByBarcode(
