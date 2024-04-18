@@ -289,7 +289,7 @@ class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithoutExistingRecallsAndWithMGDAndRDValuesDoesNotChangeDueDate() {
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     final IndividualResource itemToMoveTo = items.get(0);
     final IndividualResource itemToMoveFrom = items.get(1);
@@ -345,11 +345,11 @@ class MoveRequestPolicyTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is the original date",
-      storedLoan.getString("dueDate"), not(originalDueDate));
+    assertThat("due date is not the original date",
+      storedLoan.getString("dueDate"), is(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date is not the recall due date (2 months)",
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date is not the original due date (3 weeks)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     assertThat("move recall request notice has not been sent",
@@ -361,7 +361,7 @@ class MoveRequestPolicyTests extends APITests {
   }
 
   @Test
-  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesChangesDueDateToRD() {
+  void moveRecallRequestWithExistingRecallsAndWithMGDAndRDValuesDoesNotChangeDueDate() {
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     final IndividualResource itemToMoveTo = items.get(0);
     final IndividualResource itemToMoveFrom = items.get(1);
@@ -397,11 +397,11 @@ class MoveRequestPolicyTests extends APITests {
 
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date is the original date",
-      storedLoan.getString("dueDate"), not(originalDueDate));
+    assertThat("due date is not the original date",
+      storedLoan.getString("dueDate"), is(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date is not the recall due date (2 months)",
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date is not the original due date (3 weeks)",
       storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // charlotte checks out itemToMoveFrom
