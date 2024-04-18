@@ -537,7 +537,8 @@ public abstract class RenewalResource extends Resource {
 
   private Result<ZonedDateTime> calculateProposedDueDate(Loan loan, ZonedDateTime systemDate) {
     return loan.getLoanPolicy()
-      .determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
+      .determineStrategy(null, true, false, systemDate, loan.getItemId())
+      .calculateDueDate(loan);
   }
 
   private boolean newDueDateAfterCurrentDueDate(Loan loan, Result<ZonedDateTime> proposedDueDateResult) {
@@ -665,7 +666,7 @@ public abstract class RenewalResource extends Resource {
     final var loanPolicy = loan.getLoanPolicy();
     final var isRenewalWithHoldRequest = firstRequestForLoanedItemIsHold(requestQueue, loan);
 
-    return loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
+    return loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate, loan.getItemId())
       .calculateDueDate(loan);
   }
 
