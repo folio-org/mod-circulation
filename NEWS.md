@@ -1,3 +1,8 @@
+## 24.2.2 2024-04-19
+
+* Fix alternate loan period applying when multiple requests in fulfillment in progress (CIRC-2026)
+* Fix issue with closing a fee/fine for a previous loan if item is checked out again and lost (CIRC-2066)
+
 ## 24.2.1 2024-03-29
 
 * Fix item details not fully populated when response contains more than 50 loans (CIRC-2059)

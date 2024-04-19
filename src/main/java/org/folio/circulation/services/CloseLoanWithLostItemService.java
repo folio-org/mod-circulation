@@ -49,7 +49,7 @@ public class CloseLoanWithLostItemService {
   }
 
   public CompletableFuture<Result<Void>> closeLoanAsLostAndPaid(Loan loan) {
-    if (loan == null || !loan.isItemLost()) {
+    if (loan == null || loan.isClosed() || !loan.isItemLost()) {
       return emptyAsync();
     }
 
