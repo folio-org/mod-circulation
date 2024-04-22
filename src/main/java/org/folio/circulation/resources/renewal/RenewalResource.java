@@ -492,6 +492,9 @@ public abstract class RenewalResource extends Resource {
         return processRenewal(newDueDateResult, loan, comment);
       }
 
+      if (loan.getLastReminderFeeBilledNumber() != null && loan.getLastReminderFeeBilledNumber()>0) {
+        return processRenewal(newDueDateResult, loan, comment);
+      }
       return failedValidation(errorForNotMatchingOverrideCases(loanPolicy));
 
     } catch (Exception e) {
