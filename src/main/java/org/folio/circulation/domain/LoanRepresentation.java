@@ -6,6 +6,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOAN_P
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
+import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
+
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -58,6 +60,15 @@ public class LoanRepresentation {
       log.info("extendedLoan:: there is no user, removing borrower");
       extendedRepresentation.remove(BORROWER);
     }
+
+    if (loan.getOverdueFinePolicy().isReminderFeesPolicy()
+      && loan.getLastReminderFeeBilledNumber() != null) {
+      extendedRepresentation.getJsonObject(REMINDERS)
+        .put("renewalBlocked",
+          !loan.getOverdueFinePolicy()
+            .getRemindersPolicy().getAllowRenewalOfItemsWithReminderFees());
+    }
+
 
     addPolicy(extendedRepresentation, loan.getLoanPolicy(), LOAN_POLICY);
     addPolicy(extendedRepresentation, loan.getOverdueFinePolicy(), OVERDUE_FINE_POLICY);
