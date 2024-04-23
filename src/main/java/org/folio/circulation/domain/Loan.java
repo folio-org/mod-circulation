@@ -501,6 +501,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     changeDueDate(dueDate);
     incrementRenewalCount();
     changeActionComment(actionComment);
+    resetReminders();
 
     return this;
   }

@@ -1,3 +1,8 @@
+## 24.2.4 2024-04-23
+
+* Fix empty template token, 'chargeDate', in reminder notices (CIRC-2077)
+* Support override of renewal block due to reminders (CIRC-2019)
+
 ## 24.2.3 2024-04-23
 
 * Keep due date when it is within recall return interval (CIRC-2043)
