@@ -649,7 +649,7 @@
     },
     {
       "id": "allowed-service-points",
-      "version": "1.0",
+      "version": "1.2",
       "handlers": [
         {
           "methods": [

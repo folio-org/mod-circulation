@@ -57,6 +57,8 @@ import org.folio.circulation.support.results.Result;
 
 public class AllowedServicePointsService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String ECS_REQUEST_ROUTING_INDEX_NAME = "ecsRequestRouting";
+  private static final String PICKUP_LOCATION_INDEX_NAME = "pickupLocation";
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private final RequestRepository requestRepository;
@@ -65,8 +67,9 @@ public class AllowedServicePointsService {
   private final ItemByInstanceIdFinder itemFinder;
   private final ConfigurationRepository configurationRepository;
   private final InstanceRepository instanceRepository;
+  private final String indexName;
 
-  public AllowedServicePointsService(Clients clients) {
+  public AllowedServicePointsService(Clients clients, boolean isEcsRequestRouting) {
     itemRepository = new ItemRepository(clients);
     userRepository = new UserRepository(clients);
     requestRepository = new RequestRepository(clients);
@@ -75,6 +78,7 @@ public class AllowedServicePointsService {
     configurationRepository = new ConfigurationRepository(clients);
     instanceRepository = new InstanceRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
+    indexName = isEcsRequestRouting ? ECS_REQUEST_ROUTING_INDEX_NAME : PICKUP_LOCATION_INDEX_NAME;
   }
 
   public CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
@@ -353,7 +357,7 @@ public class AllowedServicePointsService {
   }
 
   private CompletableFuture<Result<Set<AllowedServicePoint>>> fetchAllowedServicePoints() {
-    return servicePointRepository.fetchPickupLocationServicePoints()
+    return servicePointRepository.fetchServicePointsByIndexName(indexName)
       .thenApply(r -> r.map(servicePoints -> servicePoints.stream()
         .map(AllowedServicePoint::new)
         .collect(Collectors.toSet())));
@@ -365,7 +369,7 @@ public class AllowedServicePointsService {
     log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
       () -> collectionAsString(ids));
 
-    return servicePointRepository.fetchPickupLocationServicePointsByIds(ids)
+    return servicePointRepository.fetchPickupLocationServicePointsByIdsAndIndexName(ids, indexName)
       .thenApply(servicePointsResult -> servicePointsResult
         .map(servicePoints -> servicePoints.stream()
           .map(AllowedServicePoint::new)

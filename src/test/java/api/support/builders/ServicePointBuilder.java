@@ -18,6 +18,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
   private final JsonObject holdShelfExpiryPeriod;
 
   private final String holdShelfClosedLibraryDateManagement;
+  private final Boolean ecsRequestRouting;
 
   public ServicePointBuilder(
       UUID id,
@@ -28,7 +29,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       Integer shelvingLagTime,
       Boolean pickupLocation,
       JsonObject holdShelfExpiryPeriod,
-      String holdShelfClosedLibraryDateManagement) {
+      String holdShelfClosedLibraryDateManagement,
+      Boolean ecsRequestRouting) {
     this.id = id;
     this.name = name;
     this.code = code;
@@ -38,6 +40,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
     this.pickupLocation = pickupLocation;
     this.holdShelfExpiryPeriod = holdShelfExpiryPeriod;
     this.holdShelfClosedLibraryDateManagement = holdShelfClosedLibraryDateManagement;
+    this.ecsRequestRouting = ecsRequestRouting;
   }
 
   public ServicePointBuilder(String name, String code, String discoveryDisplayName) {
@@ -50,6 +53,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
         null,
         false,
         null,
+      null,
       null);
   }
 
@@ -64,8 +68,9 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
         getIntegerProperty(representation, "shelvingLagTime", null),
         getBooleanProperty(representation, "pickupLocation"),
         getObjectProperty(representation, "holdShelfExpiryPeriod"),
-        getProperty(representation, "holdShelfClosedLibraryDateManagement")
-    );
+        getProperty(representation, "holdShelfClosedLibraryDateManagement"),
+        getBooleanProperty(representation, "ecsRequestRouting")
+      );
   }
 
   @Override
@@ -80,6 +85,7 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
     put(servicePoint, "pickupLocation", this.pickupLocation);
     put(servicePoint, "holdShelfExpiryPeriod", this.holdShelfExpiryPeriod);
     put(servicePoint, "holdShelfClosedLibraryDateManagement", this.holdShelfClosedLibraryDateManagement);
+    put(servicePoint, "ecsRequestRouting", this.ecsRequestRouting);
 
     return servicePoint;
   }
@@ -94,7 +100,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withName(String newName) {
@@ -107,7 +114,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withCode(String newCode) {
@@ -120,7 +128,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withDiscoveryDisplayName(String newDiscoveryDisplayName) {
@@ -133,7 +142,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withDescription(String newDescription) {
@@ -146,7 +156,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withShelvingLagTime(Integer newShelvingLagTime) {
@@ -159,7 +170,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       newShelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withPickupLocation(Boolean newPickupLocation) {
@@ -172,7 +184,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       newPickupLocation,
       this.holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withHoldShelfExpriyPeriod(int duration, String intervalId) {
@@ -190,7 +203,8 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       holdShelfExpiryPeriod,
-      this.holdShelfClosedLibraryDateManagement);
+      this.holdShelfClosedLibraryDateManagement,
+      this.ecsRequestRouting);
   }
 
   public ServicePointBuilder withholdShelfClosedLibraryDateManagement(String expirationDateManagement) {
@@ -203,6 +217,21 @@ public class ServicePointBuilder extends JsonBuilder implements Builder {
       this.shelvingLagTime,
       this.pickupLocation,
       this.holdShelfExpiryPeriod,
-      expirationDateManagement);
+      expirationDateManagement,
+      this.ecsRequestRouting);
+  }
+
+  public ServicePointBuilder withEcsRequestRouting(Boolean ecsRequestRouting) {
+    return new ServicePointBuilder(
+      this.id,
+      this.name,
+      this.code,
+      this.discoveryDisplayName,
+      this.description,
+      this.shelvingLagTime,
+      this.pickupLocation,
+      this.holdShelfExpiryPeriod,
+      this.holdShelfClosedLibraryDateManagement,
+      ecsRequestRouting);
   }
 }
