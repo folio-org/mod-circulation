@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.core.Is.is;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -926,5 +927,22 @@ class AllowedServicePointsAPITests extends APITests {
     return new ServicePointBuilder("SP name", "sp-code-" + randomId(), "SP description")
       .withPickupLocation(TRUE)
       .withHoldShelfExpriyPeriod(30, "Days");
+  }
+
+  private String createRules(String firstRuleCondition, String secondRuleCondition) {
+    final var loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final var allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy()
+      .getId().toString();
+    final var holdAndRecallRequestPolicy = requestPoliciesFixture.allowHoldAndRecallRequestPolicy()
+      .getId().toString();
+    final var noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final var overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final var lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    return String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicy + " r " + allowAllRequestPolicy + " n " + noticePolicy + " o " + overdueFinePolicy + " i " + lostItemFeePolicy,
+      firstRuleCondition + " : l " + loanPolicy + " r " + allowAllRequestPolicy + " n " + noticePolicy  + " o " + overdueFinePolicy + " i " + lostItemFeePolicy,
+      secondRuleCondition + " : l " + loanPolicy + " r " + holdAndRecallRequestPolicy + " n " + noticePolicy  + " o " + overdueFinePolicy + " i " + lostItemFeePolicy);
   }
 }
