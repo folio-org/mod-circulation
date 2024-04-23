@@ -592,7 +592,8 @@ class RequestsAPILoanRenewalTests extends APITests {
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
-        "renewal would not change the due date"))));
+        "renewal would not change the due date, " +
+        "loan has reminder fees"))));
   }
 
   @Test
@@ -623,7 +624,8 @@ class RequestsAPILoanRenewalTests extends APITests {
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
-        "renewal would not change the due date"))));
+        "renewal would not change the due date, " +
+        "loan has reminder fees"))));
   }
 
   @Test

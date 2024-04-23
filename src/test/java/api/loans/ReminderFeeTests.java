@@ -5,6 +5,7 @@ import api.support.builders.*;
 import api.support.fakes.FakeModNotify;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.Response;
@@ -22,6 +23,7 @@ import java.util.UUID;
 import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN;
 import static api.support.fixtures.CalendarExamples.FIRST_DAY;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.PatronNoticeTestHelper.*;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.time.ZoneOffset.UTC;
@@ -55,6 +57,8 @@ class ReminderFeeTests extends APITests {
   private UUID remindersOneDayBetweenNotOnClosedDaysId;
 
   private UUID remindersTwoDaysBetweenNotOnClosedDaysPolicyId;
+
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block";
 
   @BeforeEach
   void beforeEach() {
@@ -677,6 +681,56 @@ class ReminderFeeTests extends APITests {
     assertThat("renewal count should be 1 after renewal",
       renewedLoan.getInteger("renewalCount"), is(1));
 
+  }
+
+  @Test
+  void willRenewWithOverride() {
+    useFallbackPolicies(
+      loanPolicyId,
+      requestPolicyId,
+      noticePolicyId,
+      remindersTwoDaysBetweenIncludeClosedDaysPolicyId,
+      lostItemFeePolicyId);
+
+    // Check out item, all days open service point
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+    final JsonObject loan = response.getJson();
+    ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_RENEWAL_BLOCK_PERMISSION);
+
+    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+
+    ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
+    // Two days after due date, send reminder
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
+
+    // Attempt renewal with override when Reminders Policy allowRenewalOfItemsWithReminderFees
+    // is set to 'False' and loan has reminders already sent out
+    JsonObject renewedLoan = loansFixture.renewLoan(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(borrower)
+      .withServicePointId(servicePointsFixture.cd1().getId().toString())
+      .withOverrideBlocks(
+        new RenewBlockOverrides()
+          .withRenewalBlock(new JsonObject())
+          .withComment("TEST_COMMENT").create()),
+      okapiHeaders).getJson();
+
+    assertThat("renewal count should be 1 after renewal",
+      renewedLoan.getInteger("renewalCount"), is(1));
   }
 
   @Test
