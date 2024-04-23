@@ -1,3 +1,7 @@
+## 24.2.3 2024-04-23
+
+* Keep due date when it is within recall return interval (CIRC-2043)
+
 ## 24.2.2 2024-04-19
 
 * Fix alternate loan period applying when multiple requests in fulfillment in progress (CIRC-2026)

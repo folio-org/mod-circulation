@@ -116,7 +116,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  void recallRequestWithMGDAndRDValuesChangesDueDateToRD() {
+  void recallRequestWithMGDAndRDValuesShouldNotChangeDueDateToRD() {
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource steve = usersFixture.steve();
@@ -143,12 +143,12 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    assertThat("due date should not be the original date",
-        storedLoan.getString("dueDate"), not(originalDueDate));
+    assertThat("due date should be the original date", storedLoan.getString("dueDate"),
+      is(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date should be in 2 months",
-        storedLoan.getString("dueDate"), is(expectedDueDate));
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date should be in 3 weeks", storedLoan.getString("dueDate"),
+      is(expectedDueDate));
   }
 
   @Test
@@ -367,7 +367,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @Test
-  void initialLoanDueDateOnCreateWithPrexistingRequests() {
+  void initialLoanDueDateOnCreateWithPrexistingRequestsIsBeforeRecallInterval() {
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
@@ -403,12 +403,12 @@ class LoanDueDatesAfterRecallTests extends APITests {
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
-    final String expectedDueDate = formatDateTime(ZonedDateTime
-      .of(getZonedDateTime().plusMonths(2).toLocalDate(),
-        LocalTime.MIDNIGHT.minusSeconds(1),getZoneId()));
+    final String expectedDueDate = formatDateTime(ZonedDateTime.of(
+      getZonedDateTime().plusWeeks(3).toLocalDate(), LocalTime.MIDNIGHT.minusSeconds(1),
+      getZoneId()));
 
-    assertThat("due date should be in 2 months (recall return interval)",
-        storedLoan.getString("dueDate"), is(expectedDueDate));
+    assertThat("due date should be in 3 weeks (loan period) since it is before the recall " +
+        "return interval", storedLoan.getString("dueDate"), is(expectedDueDate));
   }
 
   @Test
@@ -674,11 +674,11 @@ class LoanDueDatesAfterRecallTests extends APITests {
     JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
 
     final String recalledDueDate = storedLoan.getString("dueDate");
-    assertThat("due date after recall should not be  the original date",
-        recalledDueDate, not(originalDueDate));
+    assertThat("due date after recall should be the original date",
+      recalledDueDate, is(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date after recall should be in 2 months",
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusWeeks(3));
+    assertThat("due date after recall should be in 3 weeks",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
     setClock(Clock.offset(getClock(), Duration.ofDays(7)));
@@ -687,7 +687,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
-    assertThat("second recall should not change the due date (2 months)",
+    assertThat("second recall should not change the due date (3 weeks)",
         storedLoan.getString("dueDate"), is(recalledDueDate));
   }
 
@@ -702,11 +702,12 @@ class LoanDueDatesAfterRecallTests extends APITests {
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
         .withName("Can Circulate Rolling With Recalls")
         .withDescription("Can circulate item With Recalls")
-        .rolling(Period.weeks(3))
+        .rolling(Period.days(65))
         .unlimitedRenewals()
         .renewFromSystemDate()
-        .withRecallsMinimumGuaranteedLoanPeriod(Period.weeks(2))
-        .withRecallsRecallReturnInterval(Period.months(2));
+        .withAllowRecallsToExtendOverdueLoans(false)
+        .withRecallsMinimumGuaranteedLoanPeriod(Period.days(15))
+        .withRecallsRecallReturnInterval(Period.days(60));
 
     setFallbackPolicies(canCirculateRollingPolicy);
 
@@ -724,8 +725,8 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat("due date after recall should not be the original date",
         recalledDueDate, not(originalDueDate));
 
-    final String expectedDueDate = formatDateTime(getZonedDateTime().plusMonths(2));
-    assertThat("due date after recall should be in 2 months",
+    final String expectedDueDate = formatDateTime(getZonedDateTime().plusDays(60));
+    assertThat("due date after recall should be in 60 days",
         storedLoan.getString("dueDate"), is(expectedDueDate));
 
     // Move the fixed clock so that the loan is now overdue
@@ -735,7 +736,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
         getZonedDateTime(), requestServicePoint.getId(), "Recall");
 
     storedLoan = loansStorageClient.getById(loan.getId()).getJson();
-    assertThat("second recall should not change the due date (2 months)",
+    assertThat("second recall should not change the due date (60 days)",
         storedLoan.getString("dueDate"), is(recalledDueDate));
   }
 
@@ -861,7 +862,6 @@ class LoanDueDatesAfterRecallTests extends APITests {
       .forItem(smallAngryPlanet)
       .fulfillToHoldShelf()
       .by(usersFixture.jessica())
-      .fulfillToHoldShelf()
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
     final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
@@ -874,6 +874,40 @@ class LoanDueDatesAfterRecallTests extends APITests {
     assertThat(publishedLoanLogEvents.size(), is(2));
     verifyLogEventDueDateChangedMessage(publishedLoanLogEvents.get(0), loan, expectedLoanDueDate);
     verifyLogEventDueDateChangedMessage(publishedLoanLogEvents.get(1), loan, expectedLoanDueDate);
+  }
+
+  @Test
+  void shouldNotExtendLoanDueDateWhenCurrentDueDateIsBeforeRecallDueDate() {
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final Period loanPeriod = Period.days(2);
+    setFallbackPolicies(new LoanPolicyBuilder()
+      .withName("Can Circulate Rolling With Recalls")
+      .withDescription("Can circulate item With Recalls")
+      .rolling(loanPeriod)
+      .unlimitedRenewals()
+      .renewFromSystemDate()
+      .withRecallsMinimumGuaranteedLoanPeriod(Period.days(10))
+      .withRecallsRecallReturnInterval(Period.days(5)));
+
+    final ZonedDateTime loanCreateDate = getZonedDateTime().minusDays(1);
+    final ZonedDateTime expectedLoanDueDate = loanPeriod.plusDate(loanCreateDate);
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(
+      smallAngryPlanet, usersFixture.steve(), loanCreateDate);
+
+    requestsFixture.place(new RequestBuilder()
+      .recall()
+      .forItem(smallAngryPlanet)
+      .fulfillToHoldShelf()
+      .by(usersFixture.jessica())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    final var updatedLoan = loansStorageClient.getById(loan.getId());
+
+    // verify that loan due date hasn't changed
+    assertThat(updatedLoan.getJson(),
+      hasJsonPath("dueDate", isEquivalentTo(expectedLoanDueDate)));
   }
 
   private void verifyLogEventDueDateChangedMessage(JsonObject eventLogJsonObject,
