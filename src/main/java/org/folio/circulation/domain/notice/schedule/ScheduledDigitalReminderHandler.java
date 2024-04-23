@@ -211,7 +211,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       return ofAsync(() -> context);
     }
     return accountsStorageClient.post(context.getAccount().toJson())
-      .thenApply(r -> Result.succeeded(context));
+      .thenApply(r -> Result.succeeded(context.withAccount(Account.from(r.value().getJson()))));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> createFeeFineAction(ScheduledNoticeContext context) {
