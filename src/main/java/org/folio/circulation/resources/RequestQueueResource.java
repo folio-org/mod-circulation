@@ -27,6 +27,7 @@ import org.folio.circulation.domain.validation.RequestQueueValidation;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -125,6 +126,7 @@ public class RequestQueueResource extends Resource {
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var configurationRepository = new ConfigurationRepository(clients);
+    final var settingsRepository = new SettingsRepository(clients);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
@@ -133,7 +135,7 @@ public class RequestQueueResource extends Resource {
 
     getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 
-    validateTlrFeatureStatus(configurationRepository, requestQueueType, idParamValue)
+    validateTlrFeatureStatus(settingsRepository, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->
         getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository)))
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
@@ -152,10 +154,10 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<TlrSettingsConfiguration>> validateTlrFeatureStatus(
-    ConfigurationRepository configurationRepository, RequestQueueType requestQueueType,
+    SettingsRepository settingsRepository, RequestQueueType requestQueueType,
     String idParamValue) {
 
-    return configurationRepository.lookupTlrSettings()
+    return settingsRepository.lookupTlrSettings()
       .thenApply(r -> r.failWhen(
         tlrSettings -> succeeded(
           requestQueueType == FOR_INSTANCE ^ tlrSettings.isTitleLevelRequestsFeatureEnabled()),

@@ -3,7 +3,9 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.*;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
@@ -26,7 +28,7 @@ import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeSe
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
@@ -80,6 +82,8 @@ public class ChangeDueDateResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var settingsRepository = new SettingsRepository(clients);
+
     final WebContext webContext = new WebContext(routingContext);
     final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
 
@@ -103,13 +107,12 @@ public class ChangeDueDateResource extends Resource {
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     log.info("starting change due date process for loan {}", request.getLoanId());
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)

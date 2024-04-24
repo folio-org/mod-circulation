@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.configuration.CheckoutLockConfiguration;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -13,9 +14,12 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class SettingsRepository {
@@ -48,5 +52,25 @@ public class SettingsRepository {
       log.warn("lookUpCheckOutLockSettings:: Unable to retrieve checkoutLockFeature settings ", ex);
       return CompletableFuture.completedFuture(succeeded(CheckoutLockConfiguration.from(new JsonObject())));
     }
+  }
+
+  public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
+    return fetchSettings("circulation", "generalTlr", "regularTlr")
+      .thenApply(r -> r.map(SettingsRepository::mergeValues))
+      .thenApply(r -> r.map(TlrSettingsConfiguration::from));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String... keys) {
+    return exactMatch("scope", scope)
+      .combine(exactMatchAny("key", Arrays.asList(keys)), CqlQuery::and)
+      .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
+      .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")));
+  }
+
+  private static JsonObject mergeValues(MultipleRecords<JsonObject> entries) {
+    return entries.getRecords()
+      .stream()
+      .map(record -> record.getJsonObject("value"))
+      .reduce(new JsonObject(), JsonObject::mergeIn);
   }
 }

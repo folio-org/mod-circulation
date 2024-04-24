@@ -12,7 +12,6 @@ import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.ConfigurationService;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -47,13 +46,6 @@ public class ConfigurationRepository {
       "CHECKOUT", "other_settings");
 
     return lookupConfigurations(otherSettingsQuery, applySessionTimeout());
-  }
-
-  public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
-    Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
-      "SETTINGS", "TLR");
-
-    return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
   }
 
   /**

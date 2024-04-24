@@ -2492,7 +2492,7 @@ class CheckOutByBarcodeTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.steve();
@@ -2519,7 +2519,7 @@ class CheckOutByBarcodeTests extends APITests {
     "Title, Title"
   })
   void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
     UserResource firstRequester = usersFixture.steve();
@@ -2582,7 +2582,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(4);
     UUID instanceId = items.stream().findAny().orElseThrow().getInstanceId();
@@ -2613,7 +2613,7 @@ class CheckOutByBarcodeTests extends APITests {
   void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(
     String firstRequestLevel, String secondRequestLevel) {
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource randomItem = items.stream().findAny().orElseThrow();
