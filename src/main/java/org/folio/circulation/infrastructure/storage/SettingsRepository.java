@@ -31,14 +31,10 @@ public class SettingsRepository {
   }
 
   public CompletableFuture<Result<CheckoutLockConfiguration>> lookUpCheckOutLockSettings() {
+    log.debug("lookUpCheckOutLockSettings:: fetching checkout lock settings");
     try {
-      log.debug("lookUpCheckOutLockSettings:: fetching checkout lock settings");
-      final Result<CqlQuery> moduleQuery = exactMatch("scope", "mod-circulation");
-      final Result<CqlQuery> configNameQuery = exactMatch("key", "checkoutLockFeature");
-
-      return moduleQuery.combine(configNameQuery, CqlQuery::and)
-        .after(cqlQuery -> settingsClient.getMany(cqlQuery, PageLimit.noLimit()))
-        .thenApply(result -> result.next(response -> MultipleRecords.from(response, Configuration::new, "items")))
+      return fetchSettings("mod-circulation", "checkoutLockFeature")
+        .thenApply(r -> r.map(records -> records.mapRecords(Configuration::new)))
         .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
           .map(Configuration::getValue)
           .map(JsonObject::new)
@@ -54,6 +50,7 @@ public class SettingsRepository {
     }
   }
 
+  // TODO: add permissions!
   public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
     return fetchSettings("circulation", "generalTlr", "regularTlr")
       .thenApply(r -> r.map(SettingsRepository::mergeValues))
@@ -70,7 +67,7 @@ public class SettingsRepository {
   private static JsonObject mergeValues(MultipleRecords<JsonObject> entries) {
     return entries.getRecords()
       .stream()
-      .map(record -> record.getJsonObject("value"))
+      .map(rec -> rec.getJsonObject("value"))
       .reduce(new JsonObject(), JsonObject::mergeIn);
   }
 }
