@@ -138,6 +138,8 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .build();
 
     log.info("buildKafkaConfig:: {}", config);
+    log.info("buildKafkaConfig:: consumer props {}", config.getConsumerProps());
+    log.info("buildKafkaConfig:: producer props {}", config.getProducerProps());
     return config;
   }
 
