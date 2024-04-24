@@ -37,8 +37,10 @@ public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
 
 //    this.kafkaAdminClient = KafkaAdminClient.create(vertx, config);
     var config = KafkaConfig.builder()
-      .kafkaHost(kafkaConfig.getKafkaHost())
-      .kafkaPort(kafkaConfig.getKafkaPort())
+//      .kafkaHost(kafkaConfig.getKafkaHost())
+//      .kafkaPort(kafkaConfig.getKafkaPort())
+      .kafkaHost(KafkaEnvironmentProperties.host())
+      .kafkaPort(KafkaEnvironmentProperties.port())
       .build()
       .getProducerProps();
 
@@ -52,11 +54,11 @@ public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
   public Future<String> getModuleId() {
     log.info("getModuleId:: getting unique module ID: eventType={}", eventType);
 
-    return succeededFuture(REAL_MODULE_ID);
-//    return kafkaAdminClient.listConsumerGroups()
-//      .map(this::extractConsumerGroupIds)
-//      .compose(kafkaAdminClient::describeConsumerGroups)
-//      .map(this::getUniqueModuleId);
+//    return succeededFuture(REAL_MODULE_ID);
+    return kafkaAdminClient.listConsumerGroups()
+      .map(this::extractConsumerGroupIds)
+      .compose(kafkaAdminClient::describeConsumerGroups)
+      .map(this::getUniqueModuleId);
   }
 
   private List<String> extractConsumerGroupIds(List<ConsumerGroupListing> groups) {
