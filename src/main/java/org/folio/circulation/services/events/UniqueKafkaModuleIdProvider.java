@@ -1,5 +1,6 @@
 package org.folio.circulation.services.events;
 
+import static io.vertx.core.Future.succeededFuture;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
@@ -8,6 +9,7 @@ import static org.folio.kafka.KafkaTopicNameHelper.formatGroupName;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
@@ -50,10 +52,11 @@ public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
   public Future<String> getModuleId() {
     log.info("getModuleId:: getting unique module ID: eventType={}", eventType);
 
-    return kafkaAdminClient.listConsumerGroups()
-      .map(this::extractConsumerGroupIds)
-      .compose(kafkaAdminClient::describeConsumerGroups)
-      .map(this::getUniqueModuleId);
+    return succeededFuture(REAL_MODULE_ID);
+//    return kafkaAdminClient.listConsumerGroups()
+//      .map(this::extractConsumerGroupIds)
+//      .compose(kafkaAdminClient::describeConsumerGroups)
+//      .map(this::getUniqueModuleId);
   }
 
   private List<String> extractConsumerGroupIds(List<ConsumerGroupListing> groups) {
