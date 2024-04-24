@@ -13,6 +13,8 @@ import java.util.function.UnaryOperator;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.kafka.KafkaConfig;
+import org.folio.kafka.services.KafkaAdminClientService;
+import org.folio.kafka.services.KafkaEnvironmentProperties;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -27,8 +29,18 @@ public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
   private final DomainEventType eventType;
 
   public UniqueKafkaModuleIdProvider(Vertx vertx, KafkaConfig kafkaConfig, DomainEventType eventType) {
-    Properties config = new Properties();
-    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getKafkaUrl());
+//    Properties config = new Properties();
+//    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getKafkaUrl());
+//    log.info("UniqueKafkaModuleIdProvider:: KafkaAdminClient config={}", config);
+
+//    this.kafkaAdminClient = KafkaAdminClient.create(vertx, config);
+    var config = KafkaConfig.builder()
+      .kafkaHost(kafkaConfig.getKafkaHost())
+      .kafkaPort(kafkaConfig.getKafkaPort())
+      .build()
+      .getProducerProps();
+
+    log.info("UniqueKafkaModuleIdProvider:: KafkaAdminClient config={}", config);
 
     this.kafkaAdminClient = KafkaAdminClient.create(vertx, config);
     this.eventType = eventType;
