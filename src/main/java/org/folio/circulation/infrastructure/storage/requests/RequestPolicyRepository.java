@@ -15,6 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
@@ -93,6 +94,15 @@ public class RequestPolicyRepository {
       .thenApply(r -> r.map(pair -> pair.stream()
         .collect(toMap(Pair::getKey, Pair::getValue, itemsMergeOperator()))))
       .thenCompose(r -> r.after(this::lookupRequestPolicies));
+  }
+
+  public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(User user) {
+    // Circulation rules need to be executed with the patron group parameter only.
+    // All the item-related parameters should be random UUIDs.
+    return lookupRequestPolicyId(UUID.randomUUID().toString(), user.getPatronGroupId(),
+      UUID.randomUUID().toString(), UUID.randomUUID().toString())
+      .thenCompose(r -> r.after(this::lookupRequestPolicy))
+      .thenApply(result -> result.map(RequestPolicy::from));
   }
 
   private BinaryOperator<Set<Item>> itemsMergeOperator() {
