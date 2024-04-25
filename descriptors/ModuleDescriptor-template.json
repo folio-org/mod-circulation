@@ -132,8 +132,7 @@
           "methods": ["POST"],
           "pathPattern": "/circulation/loans/{id}/change-due-date",
           "permissionsRequired": [
-            "circulation.loans.change-due-date.post",
-            "configuration.entries.collection.get"
+            "circulation.loans.change-due-date.post"
           ],
           "modulePermissions": [
             "modperms.circulation.loans.change-due-date.post"
@@ -677,7 +676,9 @@
             "inventory-storage.instances.item.get",
             "inventory-storage.instances.collection.get",
             "configuration.entries.item.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "mod-settings.entries.item.get",
+            "mod-settings.entries.collection.get"
           ]
         }
       ]
@@ -1663,6 +1664,8 @@
         "proxiesfor.collection.get",
         "patron-notice.post",
         "configuration.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
         "calendar.endpoint.dates.get",
         "pubsub.publish.post",
         "circulation-storage.loans-history.collection.get"
@@ -1777,7 +1780,9 @@
         "actual-cost-fee-fine-cancel.post",
         "departments.item.get",
         "departments.collection.get",
-        "circulation-storage.loans-history.collection.get"
+        "circulation-storage.loans-history.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get"
       ],
       "visible": false
     },
@@ -1809,6 +1814,8 @@
         "proxiesfor.collection.get",
         "calendar.endpoint.dates.get",
         "configuration.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "patron-notice.post",
@@ -1993,6 +2000,8 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "configuration.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
         "manualblocks.collection.get",
         "pubsub.publish.post",
         "automated-patron-blocks.collection.get",
@@ -2073,6 +2082,8 @@
         "proxiesfor.collection.get",
         "patron-notice.post",
         "configuration.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
@@ -2116,7 +2127,9 @@
         "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
-        "pubsub.publish.post"
+        "pubsub.publish.post",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get"
       ],
       "visible": false
     },
@@ -2151,6 +2164,8 @@
         "patron-notice.post",
         "calendar.endpoint.dates.get",
         "configuration.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
@@ -2209,7 +2224,9 @@
         "addresstypes.collection.get",
         "pubsub.publish.post",
         "patron-notice.post",
-        "circulation-storage.loans-history.collection.get"
+        "circulation-storage.loans-history.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get"
       ],
       "visible": false
     },
