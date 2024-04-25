@@ -2403,7 +2403,7 @@
     },
     "env": [
       { "name": "JAVA_OPTIONS",
-        "value": "-XX:MaxRAMPercentage=66.0 -Dspring.kafka.security.protocol=SSL -Dspring.kafka.ssl.trust-store-location=$JAVA_HOME/lib/security/cacerts"
+        "value": "-XX:MaxRAMPercentage=66.0"
       },
       {
         "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
