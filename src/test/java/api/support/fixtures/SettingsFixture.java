@@ -32,27 +32,15 @@ public class SettingsFixture {
   }
 
   public void enableTlrFeature() {
-    toggleTlrFeature(true);
+    createGeneralTlrSettings(true, false);
   }
 
   public void disableTlrFeature() {
-    toggleTlrFeature(false);
-  }
-
-  private void toggleTlrFeature(boolean enable) {
-    createGeneralTlrSettings(enable, false);
+    createGeneralTlrSettings(false, false);
   }
 
   public void deleteTlrFeatureSettings() {
-    deleteGeneralTlrFeatureSettings();
-    deleteRegularTlrFeatureSettings();
-  }
-
-  private void deleteGeneralTlrFeatureSettings() {
     settingsClient.delete(GENERAL_TLR_SETTINGS_ID);
-  }
-
-  private void deleteRegularTlrFeatureSettings() {
     settingsClient.delete(REGULAR_TLR_SETTINGS_ID);
   }
 

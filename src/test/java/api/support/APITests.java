@@ -447,7 +447,7 @@ public abstract class APITests {
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
       settingsFixture.disableTlrFeature();
     }
-    else if (tlrFeatureStatus == TlrFeatureStatus.NOT_CONFIGURED){
+    else {
       settingsFixture.deleteTlrFeatureSettings();
     }
   }
