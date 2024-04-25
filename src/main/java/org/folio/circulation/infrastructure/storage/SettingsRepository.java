@@ -14,7 +14,8 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.function.Function.identity;
@@ -50,21 +51,26 @@ public class SettingsRepository {
     }
   }
 
-  // TODO: add permissions!
   public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
-    return fetchSettings("circulation", "generalTlr", "regularTlr")
-      .thenApply(r -> r.map(SettingsRepository::mergeValues))
+    return fetchSettings("circulation", List.of("generalTlr", "regularTlr"))
+      .thenApply(r -> r.map(SettingsRepository::extractAndMergeValues))
       .thenApply(r -> r.map(TlrSettingsConfiguration::from));
   }
 
-  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String... keys) {
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String key) {
+    return fetchSettings(scope, List.of(key));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope,
+    Collection<String> keys) {
+
     return exactMatch("scope", scope)
-      .combine(exactMatchAny("key", Arrays.asList(keys)), CqlQuery::and)
+      .combine(exactMatchAny("key", keys), CqlQuery::and)
       .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
       .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")));
   }
 
-  private static JsonObject mergeValues(MultipleRecords<JsonObject> entries) {
+  private static JsonObject extractAndMergeValues(MultipleRecords<JsonObject> entries) {
     return entries.getRecords()
       .stream()
       .map(rec -> rec.getJsonObject("value"))
