@@ -180,7 +180,7 @@ public class APITestContext {
 
   static URL okapiUrl() {
     try {
-      if (false) {
+      if (useOkapiForStorage) {
         return new URL("http://localhost:9130");
       } else {
         return new URL(FakeOkapi.getAddress());
