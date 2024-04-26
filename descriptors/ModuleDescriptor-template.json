@@ -678,7 +678,8 @@
             "configuration.entries.item.get",
             "configuration.entries.collection.get",
             "mod-settings.entries.item.get",
-            "mod-settings.entries.collection.get"
+            "mod-settings.entries.collection.get",
+            "mod-settings.global.read.circulation"
           ]
         }
       ]
@@ -1666,6 +1667,7 @@
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation",
         "calendar.endpoint.dates.get",
         "pubsub.publish.post",
         "circulation-storage.loans-history.collection.get"
@@ -1719,7 +1721,8 @@
         "checkout-lock-storage.checkout-locks.item.delete",
         "mod-settings.entries.collection.get",
         "mod-settings.entries.item.get",
-        "mod-settings.global.read.mod-circulation"
+        "mod-settings.global.read.mod-circulation",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },
@@ -1782,7 +1785,8 @@
         "departments.collection.get",
         "circulation-storage.loans-history.collection.get",
         "mod-settings.entries.item.get",
-        "mod-settings.entries.collection.get"
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },
@@ -1816,6 +1820,7 @@
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "patron-notice.post",
@@ -2002,6 +2007,7 @@
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation",
         "manualblocks.collection.get",
         "pubsub.publish.post",
         "automated-patron-blocks.collection.get",
@@ -2084,6 +2090,7 @@
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
@@ -2129,7 +2136,8 @@
         "usergroups.item.get",
         "pubsub.publish.post",
         "mod-settings.entries.item.get",
-        "mod-settings.entries.collection.get"
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },
@@ -2166,6 +2174,7 @@
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
@@ -2226,7 +2235,8 @@
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "mod-settings.entries.item.get",
-        "mod-settings.entries.collection.get"
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },
