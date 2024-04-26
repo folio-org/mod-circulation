@@ -70,6 +70,7 @@ import org.folio.circulation.domain.validation.overriding.OverridingBlockValidat
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -150,6 +151,7 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final SettingsRepository settingsRepository = new SettingsRepository(clients);
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
     final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
 
@@ -187,7 +189,7 @@ public abstract class RenewalResource extends Resource {
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
-      .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         RenewalContext::withTlrSettings))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))

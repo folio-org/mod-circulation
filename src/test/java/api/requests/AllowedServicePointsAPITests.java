@@ -203,7 +203,7 @@ class AllowedServicePointsAPITests extends APITests {
       .map(UUID::fromString)
       .collect(Collectors.toSet()));
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     var pickupLocationId = allowedSpByPolicy.stream()
       .findFirst()
       .map(AllowedServicePoint::getId)
@@ -495,7 +495,7 @@ class AllowedServicePointsAPITests extends APITests {
     boolean instanceHasHoldings) {
 
     // allow TLR-holds for instances with no holdings/items
-    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
 
     IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
     IndividualResource sp2 = servicePointsFixture.cd2(); // pickup location
@@ -516,7 +516,7 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void noAllowedServicePointsAreReturnedForTitleLevelHoldWhenItIsDisabledAndInstanceHasItems() {
     // allow TLR-holds for instances with no holdings/items
-    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
 
     IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
     servicePointsFixture.cd2(); // pickup location
@@ -675,7 +675,7 @@ class AllowedServicePointsAPITests extends APITests {
 
     setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(sp1Uuid));
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withRequestType(PAGE.toString())

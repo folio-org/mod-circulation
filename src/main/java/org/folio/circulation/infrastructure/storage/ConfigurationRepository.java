@@ -12,7 +12,6 @@ import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.ConfigurationService;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
@@ -47,13 +46,6 @@ public class ConfigurationRepository {
       "CHECKOUT", "other_settings");
 
     return lookupConfigurations(otherSettingsQuery, applySessionTimeout());
-  }
-
-  public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
-    Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
-      "SETTINGS", "TLR");
-
-    return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
   }
 
   /**
@@ -123,26 +115,4 @@ public class ConfigurationRepository {
       .findSessionTimeout(configurations.getRecords());
   }
 
-  /**
-   * Find first configuration and maps it to an object with a provided mapper
-   */
-  private <T> CompletableFuture<Result<T>> findAndMapFirstConfiguration(
-    Result<CqlQuery> cqlQueryResult, Function<JsonObject, T> mapper) {
-
-    return cqlQueryResult
-      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
-      .thenApply(result -> result.next(r -> from(r, Configuration::new, CONFIGS_KEY)))
-      .thenApply(result -> result.map(this::findFirstConfigurationAsJsonObject))
-      .thenApply(result -> result.map(mapper));
-  }
-
-  private JsonObject findFirstConfigurationAsJsonObject(
-    MultipleRecords<Configuration> configurations) {
-
-    return configurations.getRecords().stream()
-      .findFirst()
-      .map(Configuration::getValue)
-      .map(JsonObject::new)
-      .orElse(new JsonObject());
-  }
 }

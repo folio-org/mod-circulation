@@ -154,7 +154,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenCompose(validators::refuseWhenRequestedByAnotherPatron)

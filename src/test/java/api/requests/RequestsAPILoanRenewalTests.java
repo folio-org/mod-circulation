@@ -302,7 +302,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWhenFirstRequestInQueueIsItemLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -316,7 +316,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWhenFirstRequestInQueueIsTitleLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -334,7 +334,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void forbidRenewalWhenFirstRequestInQueueIsTitleLevelHoldWithoutItemId() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.charlotte();
@@ -348,7 +348,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void alternateLoanPeriodIsNotUsedWhenFirstRequestInQueueIsItemLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     useRollingPolicyWithRenewingAllowedForHoldingRequest(); // base loan period - 3 weeks, alternate - 4 weeks
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -364,7 +364,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void alternateLoanPeriodIsNotUsedForRenewalWhenFirstRequestInQueueIsTitleLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     useRollingPolicyWithRenewingAllowedForHoldingRequest();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -384,7 +384,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void alternateLoanPeriodIsUsedForRenewalWhenFirstRequestInQueueIsTitleLevelHoldWithoutItemId() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     useRollingPolicyWithRenewingAllowedForHoldingRequest(); // base loan period - 3 weeks, alternate - 4 weeks
     ItemResource item = itemsFixture.basedUponNod();
     UUID instanceId = item.getInstanceId();
@@ -400,7 +400,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void forbidRenewalWhenTitleLevelRecallRequestExistsForSameItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.james();
     checkOutFixture.checkOutByBarcode(item, borrower);
@@ -418,7 +418,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWhenTitleLevelRecallRequestExistsForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
     ItemResource itemForRequest = items.get(1);
@@ -598,7 +598,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void forbidRenewalOverrideWhenTitleLevelRecallRequestExistsForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
     ItemResource itemForRequest = items.get(1);

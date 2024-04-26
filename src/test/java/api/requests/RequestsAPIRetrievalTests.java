@@ -244,7 +244,7 @@ class RequestsAPIRetrievalTests extends APITests {
 
   @Test
   void titleLevelRequestRetrievalById() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";

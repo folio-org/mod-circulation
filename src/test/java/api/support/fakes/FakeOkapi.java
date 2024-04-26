@@ -406,7 +406,6 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/settings/entries")
       .withCollectionPropertyName("items")
       .withChangeMetadata()
-      .withRecordConstraint(this::userHasAlreadyAcquiredLock)
       .create().register(router);
 
     new FakeStorageModuleBuilder()

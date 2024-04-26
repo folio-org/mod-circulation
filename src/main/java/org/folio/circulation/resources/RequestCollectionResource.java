@@ -30,6 +30,7 @@ import org.folio.circulation.domain.validation.ServicePointPickupLocationValidat
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -272,6 +273,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestPolicyRepository = new RequestPolicyRepository(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
+    final var settingsRepository = new SettingsRepository(clients);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(requestPolicyRepository, loanPolicyRepository)),
@@ -287,7 +289,7 @@ public class RequestCollectionResource extends CollectionResource {
       requestRepository, requestPolicyRepository,
       updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher,
-      requestQueueRepository);
+      requestQueueRepository, settingsRepository);
 
     fromFutureResult(requestRepository.getById(id))
       .map(request -> request.withOperation(Request.Operation.MOVE))
