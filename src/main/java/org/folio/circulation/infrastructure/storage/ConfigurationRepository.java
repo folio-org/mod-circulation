@@ -115,26 +115,4 @@ public class ConfigurationRepository {
       .findSessionTimeout(configurations.getRecords());
   }
 
-  /**
-   * Find first configuration and maps it to an object with a provided mapper
-   */
-  private <T> CompletableFuture<Result<T>> findAndMapFirstConfiguration(
-    Result<CqlQuery> cqlQueryResult, Function<JsonObject, T> mapper) {
-
-    return cqlQueryResult
-      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
-      .thenApply(result -> result.next(r -> from(r, Configuration::new, CONFIGS_KEY)))
-      .thenApply(result -> result.map(this::findFirstConfigurationAsJsonObject))
-      .thenApply(result -> result.map(mapper));
-  }
-
-  private JsonObject findFirstConfigurationAsJsonObject(
-    MultipleRecords<Configuration> configurations) {
-
-    return configurations.getRecords().stream()
-      .findFirst()
-      .map(Configuration::getValue)
-      .map(JsonObject::new)
-      .orElse(new JsonObject());
-  }
 }
