@@ -85,7 +85,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     return Future.all(List.of(
       createConsumer(CIRCULATION_RULES_UPDATED, new CirculationRulesUpdateEventHandler(),
         // puts consumers into separate groups so that they all receive the same event
-        new UniqueKafkaModuleIdProvider(vertx, kafkaConfig, CIRCULATION_RULES_UPDATED))
+        new UniqueKafkaModuleIdProvider(vertx, CIRCULATION_RULES_UPDATED))
     )).mapEmpty();
   }
 

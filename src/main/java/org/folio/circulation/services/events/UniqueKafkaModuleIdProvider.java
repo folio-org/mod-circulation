@@ -2,17 +2,16 @@ package org.folio.circulation.services.events;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.folio.kafka.KafkaTopicNameHelper.formatGroupName;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.kafka.KafkaConfig;
+import org.folio.kafka.services.KafkaEnvironmentProperties;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -26,9 +25,14 @@ public class UniqueKafkaModuleIdProvider implements ModuleIdProvider {
   private final KafkaAdminClient kafkaAdminClient;
   private final DomainEventType eventType;
 
-  public UniqueKafkaModuleIdProvider(Vertx vertx, KafkaConfig kafkaConfig, DomainEventType eventType) {
-    Properties config = new Properties();
-    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getKafkaUrl());
+  public UniqueKafkaModuleIdProvider(Vertx vertx, DomainEventType eventType) {
+    Map<String, String> config = KafkaConfig.builder()
+      .kafkaHost(KafkaEnvironmentProperties.host())
+      .kafkaPort(KafkaEnvironmentProperties.port())
+      .build()
+      .getProducerProps();
+
+    log.info("UniqueKafkaModuleIdProvider:: KafkaAdminClient config: {}", config);
 
     this.kafkaAdminClient = KafkaAdminClient.create(vertx, config);
     this.eventType = eventType;
