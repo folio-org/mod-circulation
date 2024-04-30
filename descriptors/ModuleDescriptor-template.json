@@ -177,6 +177,7 @@
           "permissionsRequired": [
           ],
           "modulePermissions": [
+            "search.instances.collection.get"
           ]
         }
       ]

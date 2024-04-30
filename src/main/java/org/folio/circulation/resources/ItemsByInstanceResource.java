@@ -6,7 +6,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.InstanceExtended;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.SearchRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -33,8 +33,8 @@ public class ItemsByInstanceResource extends Resource {
     final Clients clients = Clients.create(context, client);
     String instanceId = routingContext.pathParam("id");
     log.debug("getInstanceItems:: instanceId: " + instanceId);
-    final var itemRepository = new ItemRepository(clients);
-    itemRepository.getInstanceWithItems(instanceId)
+    final var searchRepository = new SearchRepository(clients);
+    searchRepository.getInstanceWithItems(instanceId)
       .thenApply(r -> r.map(InstanceExtended::toJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
