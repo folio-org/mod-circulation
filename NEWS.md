@@ -1,3 +1,7 @@
+## 24.2.5 2024-04-30
+
+* Fix Kafka configuration (CIRC-2037)
+
 ## 24.2.4 2024-04-23
 
 * Fix empty template token, 'chargeDate', in reminder notices (CIRC-2077)
