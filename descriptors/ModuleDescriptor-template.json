@@ -168,6 +168,20 @@
       ]
     },
     {
+      "id": "instance-items",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/items-by-instance/{id}",
+          "permissionsRequired": [
+          ],
+          "modulePermissions": [
+          ]
+        }
+      ]
+    },
+    {
       "id": "add-info",
       "version": "0.1",
       "handlers": [

@@ -18,12 +18,15 @@ import static org.folio.circulation.support.results.AsynchronousResultBindings.c
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -39,6 +42,7 @@ import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.InstanceExtended;
 import org.folio.circulation.infrastructure.storage.IdentityMap;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.storage.mappers.ItemMapper;
@@ -49,6 +53,7 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -65,6 +70,7 @@ public class ItemRepository {
   private final HoldingsRepository holdingsRepository;
   private final LoanTypeRepository loanTypeRepository;
   private final CollectionResourceClient circulationItemClient;
+  private final CollectionResourceClient searchClient;
   private final IdentityMap identityMap = new IdentityMap(
     item -> getProperty(item, "id"));
 
@@ -74,7 +80,8 @@ public class ItemRepository {
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
       new LoanTypeRepository(clients.loanTypesStorage()),
-      clients.circulationItemClient());
+      clients.circulationItemClient(),
+      clients.searchClient());
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
@@ -356,6 +363,39 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
       .thenComposeAsync(this::fetchItemsRelatedRecords);
+  }
+
+  public CompletableFuture<Result<InstanceExtended>> getInstanceWithItems(String instanceId) {
+    return searchClient.getManyWithQueryStringParameters(Map.of("expandAll",
+        "true", "query", String.format("id==%s", instanceId)))
+      .thenApply(flatMapResult(this::mapResponseToInstances))
+      .thenApply(mapResult(MultipleRecords::firstOrNull))
+      .thenCompose(r -> r.map(this::updateItemDetails)
+        .orElse(CompletableFuture.completedFuture(null)));
+  }
+
+  private Result<MultipleRecords<InstanceExtended>> mapResponseToInstances(Response response) {
+    return MultipleRecords.from(response, InstanceExtended::from, "instances");
+  }
+
+  private CompletableFuture<Result<InstanceExtended>> updateItemDetails(InstanceExtended searchInstance) {
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    List<Item> updatedItems = new ArrayList<>();
+
+    searchInstance.getItems().forEach(item -> {
+      var tenantId = item.getTenantId();
+      CompletableFuture<Void> updateFuture = fetchItem(item.getItemId())
+        .thenCompose(this::fetchItemRelatedRecords)
+        .thenAccept(updatedItem -> {
+          synchronized (updatedItems) {
+            updatedItems.add(updatedItem.value().changeTenantId(tenantId));
+          }
+        });
+      futures.add(updateFuture);
+    });
+
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+      .thenApply(v -> Result.of(() -> searchInstance.changeItems(updatedItems)));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchFor(

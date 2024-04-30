@@ -68,6 +68,7 @@ public class Clients {
   private final CollectionResourceClient departmentClient;
   private final CollectionResourceClient checkOutLockStorageClient;
   private final CollectionResourceClient circulationItemClient;
+  private final CollectionResourceClient searchClient;
   private final GetManyRecordsClient settingsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
@@ -136,6 +137,7 @@ public class Clients {
       checkOutLockStorageClient = createCheckoutLockClient(client, context);
       settingsStorageClient = createSettingsStorageClient(client, context);
       circulationItemClient = createCirculationItemClient(client, context);
+      searchClient = createSearchClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -372,6 +374,10 @@ public class Clients {
 
   public CollectionResourceClient circulationItemClient() {
     return circulationItemClient;
+  }
+
+  public CollectionResourceClient searchClient() {
+    return searchClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -799,6 +805,12 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return  getCollectionResourceClient(client, context, "/circulation-item");
+  }
+
+  private CollectionResourceClient createSearchClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return  getCollectionResourceClient(client, context, "/search/instances");
   }
 
   private GetManyRecordsClient createSettingsStorageClient(
