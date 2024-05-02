@@ -33,7 +33,7 @@ public class ItemsByInstanceResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
     String instanceId = routingContext.pathParam("id");
-    log.debug("getInstanceItems:: instanceId: " + instanceId);
+    log.debug("getInstanceItems:: instanceId {}", instanceId);
     final var searchRepository = new SearchRepository(clients);
     searchRepository.getInstanceWithItems(instanceId)
       .thenApply(r -> r.map(InstanceExtended::toJson))
