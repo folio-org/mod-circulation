@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
@@ -36,8 +37,14 @@ public class ItemsByInstanceResource extends Resource {
     log.debug("getInstanceItems:: instanceId {}", instanceId);
     final var searchRepository = new SearchRepository(clients);
     searchRepository.getInstanceWithItems(instanceId)
-      .thenApply(r -> r.map(InstanceExtended::toJson))
+      .thenApply(r -> r.map(this::toJson))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private JsonObject toJson(InstanceExtended instanceExtended) {
+    if (instanceExtended != null)
+      return instanceExtended.toJson();
+    return new JsonObject();
   }
 }

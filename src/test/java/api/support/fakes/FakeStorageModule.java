@@ -631,7 +631,8 @@ public class FakeStorageModule extends AbstractVerticle {
         boolean isValidParameter = queryParameter.contains("query") ||
           queryParameter.contains("offset") ||
           isContainsQueryParameter(queryParameter) ||
-          queryParameter.contains("limit");
+          queryParameter.contains("limit") ||
+          queryParameter.contains("expandAll");
 
         return !isValidParameter;
       })

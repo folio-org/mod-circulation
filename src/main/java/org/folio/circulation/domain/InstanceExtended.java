@@ -25,16 +25,12 @@ public class InstanceExtended {
 
   JsonObject representation;
 
-  @ToString.Include
   String id;
-  @ToString.Include
-  String title;
 
   @NonNull Collection<Item> items;
 
   public static InstanceExtended from(JsonObject representation) {
-    return new InstanceExtended(representation, representation.getString("id"),
-      representation.getString("title"), mapItems(representation));
+    return new InstanceExtended(representation, representation.getString("id"), mapItems(representation));
   }
 
   private static List<Item> mapItems(JsonObject representation) {
@@ -47,7 +43,7 @@ public class InstanceExtended {
       itemsArray.add(new ItemSummaryRepresentation().createItemSummary(item));
     }
     write(representation, "items", itemsArray);
-    return new InstanceExtended(representation, id, title, items);
+    return new InstanceExtended(representation, id, items);
   }
 
   public JsonObject toJson() {

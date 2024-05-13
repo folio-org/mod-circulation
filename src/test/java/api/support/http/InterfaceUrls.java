@@ -334,4 +334,11 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/settings/entries");
   }
 
+  public static URL searchUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/search/instances" + subPath);
+  }
+
+  public static URL itemsByInstanceUrl(String subPath) {
+    return circulationModuleUrl("/circulation/items-by-instance/" + subPath);
+  }
 }
