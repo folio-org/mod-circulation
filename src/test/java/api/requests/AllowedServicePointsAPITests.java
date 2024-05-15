@@ -636,15 +636,11 @@ class AllowedServicePointsAPITests extends APITests {
     Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = Map.of(
       PAGE, Set.of(cd6.getId(), cd4.getId(), cd5.getId()),
       HOLD, Set.of(cd5.getId(), cd6.getId(), cd4.getId()),
-      RECALL, Set.of(cd4.getId(), cd6.getId(), cd5.getId())
-    );
+      RECALL, Set.of(cd4.getId(), cd6.getId(), cd5.getId()));
 
-    policiesActivation.use(new RequestPolicyBuilder(
-      UUID.randomUUID(),
-      List.of(PAGE, HOLD, RECALL),
-      "Test request policy",
-      "Test description",
-      allowedServicePointsInPolicy));
+    policiesActivation.use(PoliciesToActivate.builder().requestPolicy(
+      requestPoliciesFixture.createRequestPolicyWithAllowedServicePoints(
+        allowedServicePointsInPolicy, PAGE, HOLD, RECALL)));
 
     JsonObject response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
 
