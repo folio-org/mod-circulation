@@ -7,17 +7,15 @@ import org.folio.circulation.domain.InstanceExtended;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.support.AsyncCoordinationUtil;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
-
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -35,12 +33,12 @@ public class SearchRepository {
   }
 
   public CompletableFuture<Result<InstanceExtended>> getInstanceWithItems(String instanceId) {
+    log.debug("getInstanceWithItems:: instanceId {}", instanceId);
     return searchClient.getManyWithQueryStringParameters(Map.of("expandAll",
         "true", "query", String.format("id==%s", instanceId)))
       .thenApply(flatMapResult(this::mapResponseToInstances))
       .thenApply(mapResult(MultipleRecords::firstOrNull))
-      .thenCompose(r -> r.map(this::updateItemDetails)
-        .orElse(CompletableFuture.completedFuture(null)));
+      .thenCompose(r -> r.after(this::updateItemDetails));
   }
 
   private Result<MultipleRecords<InstanceExtended>> mapResponseToInstances(Response response) {
@@ -48,22 +46,17 @@ public class SearchRepository {
   }
 
   private CompletableFuture<Result<InstanceExtended>> updateItemDetails(InstanceExtended searchInstance) {
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
-    List<Item> updatedItems = new ArrayList<>();
+    log.debug("updateItemDetails:: searchInstance {}", searchInstance);
+    if (searchInstance == null) {
+      return emptyAsync();
+    }
+    return AsyncCoordinationUtil.allOf(searchInstance.getItems(), this::fetchItemDetails)
+      .thenApply(r -> r.map(searchInstance::changeItems));
+  }
 
-    searchInstance.getItems().forEach(item -> {
-      var tenantId = item.getTenantId();
-      CompletableFuture<Void> updateFuture = itemRepository.fetchById(item.getItemId())
-        .thenCompose(itemRepository::fetchItemRelatedRecords)
-        .thenAccept(updatedItem -> {
-          synchronized (updatedItems) {
-            updatedItems.add(updatedItem.value().changeTenantId(tenantId));
-          }
-        });
-      futures.add(updateFuture);
-    });
-
-    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-      .thenApply(v -> Result.of(() -> searchInstance.changeItems(updatedItems)));
+  private CompletableFuture<Result<Item>> fetchItemDetails(Item searchItem) {
+    return itemRepository.fetchById(searchItem.getItemId())
+      .thenComposeAsync(itemRepository::fetchItemRelatedRecords)
+      .thenApply(r -> r.map(item -> item.changeTenantId(searchItem.getTenantId())));
   }
 }
