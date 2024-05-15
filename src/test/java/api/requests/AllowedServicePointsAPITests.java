@@ -648,11 +648,10 @@ class AllowedServicePointsAPITests extends APITests {
 
     JsonObject response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
 
-    Stream.of(
-      response.getJsonArray(PAGE.getValue()),
-      response.getJsonArray(HOLD.getValue()),
-      response.getJsonArray(RECALL.getValue())
-    ).forEach(servicePoints -> assertServicePointsMatch(servicePoints, List.of(cd4, cd5, cd6)));
+    Stream.of(PAGE, HOLD, RECALL)
+      .map(RequestType::getValue)
+      .map(response::getJsonArray)
+      .forEach(servicePoints -> assertServicePointsMatch(servicePoints, List.of(cd4, cd5, cd6)));
   }
 
   @Test
