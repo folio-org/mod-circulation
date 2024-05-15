@@ -15,7 +15,7 @@ import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
@@ -31,10 +31,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.http.HttpStatus;
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;
@@ -622,6 +622,40 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   @Test
+  void allowedServicePointsAreSortedByName() {
+    String requesterId = usersFixture.steve().getId().toString();
+    List<ItemResource> items = itemsFixture.createMultipleItemForTheSameInstance(2, List.of(
+        ib -> ib.withStatus(ItemBuilder.AVAILABLE),
+        ib -> ib.withStatus(ItemBuilder.CHECKED_OUT)));
+    String instanceId = items.get(0).getInstanceId().toString();
+
+    IndividualResource cd4 = servicePointsFixture.cd4(); // Circ Desk 4
+    IndividualResource cd5 = servicePointsFixture.cd5(); // Circ Desk 5
+    IndividualResource cd6 = servicePointsFixture.cd6(); // Circ Desk 6
+
+    Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = Map.of(
+      PAGE, Set.of(cd6.getId(), cd4.getId(), cd5.getId()),
+      HOLD, Set.of(cd5.getId(), cd6.getId(), cd4.getId()),
+      RECALL, Set.of(cd4.getId(), cd6.getId(), cd5.getId())
+    );
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      UUID.randomUUID(),
+      List.of(PAGE, HOLD, RECALL),
+      "Test request policy",
+      "Test description",
+      allowedServicePointsInPolicy));
+
+    JsonObject response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
+
+    Stream.of(
+      response.getJsonArray(PAGE.getValue()),
+      response.getJsonArray(HOLD.getValue()),
+      response.getJsonArray(RECALL.getValue())
+    ).forEach(servicePoints -> assertServicePointsMatch(servicePoints, List.of(cd4, cd5, cd6)));
+  }
+
+  @Test
   void getReplaceFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
     Response response = get("replace", null, null, null, requestId,
@@ -770,8 +804,9 @@ class AllowedServicePointsAPITests extends APITests {
       .map(allowedSp -> allowedSp.getString("name"))
       .collect(Collectors.toList());
 
-    assertThat(servicePointIds, containsInAnyOrder(expectedIds.toArray(String[]::new)));
-    assertThat(servicePointNames, containsInAnyOrder(expectedServicePoints.stream()
+    // order is important: service points must be sorted by name
+    assertThat(servicePointIds, contains(expectedIds.toArray(String[]::new)));
+    assertThat(servicePointNames, contains(expectedServicePoints.stream()
       .map(sp -> sp.getJson().getString("name")).toArray(String[]::new)));
   }
 

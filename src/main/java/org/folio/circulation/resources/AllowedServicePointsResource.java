@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.Comparator.comparing;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -166,7 +167,10 @@ public class AllowedServicePointsResource extends Resource {
     }
 
     allowedServicePoints.forEach((key, value) -> response.put(key.getValue(),
-      new JsonArray(value.stream().toList())));
+      new JsonArray(value.stream()
+        .sorted(comparing(AllowedServicePoint::getName))
+        .toList())));
+
     log.info("allowedServicePoints:: result={}", response);
 
     return response;
