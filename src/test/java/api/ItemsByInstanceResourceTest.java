@@ -13,12 +13,14 @@ public class ItemsByInstanceResourceTest extends APITests {
   void canGetInstanceById() {
     UUID instanceId = UUID.randomUUID();
     searchFixture.basedUponDunkirk(instanceId);
-    Response response = get(instanceId.toString(), 200);
+    Response response =
+      get(String.format("query=(id==%s)", instanceId), 200);
     assertThat(response.getStatusCode(), is(200));
+    assertThat(response.getJson().getString("id"), is(instanceId.toString()));
   }
 
-  private Response get(String instanceId, int expectedStatusCode) {
-    return restAssuredClient.get(itemsByInstanceUrl(instanceId), expectedStatusCode,
+  private Response get(String query, int expectedStatusCode) {
+    return restAssuredClient.get(itemsByInstanceUrl(query), expectedStatusCode,
       "items-by-instance-request");
   }
 }

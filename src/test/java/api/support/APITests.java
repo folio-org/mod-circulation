@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.fixtures.SearchFixture;
+import api.support.fixtures.SearchInstanceFixture;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -297,7 +297,7 @@ public abstract class APITests {
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
-  protected final SearchFixture searchFixture = new SearchFixture();
+  protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 
   protected APITests() {
     this(true, false);

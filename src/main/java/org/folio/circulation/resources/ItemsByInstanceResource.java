@@ -6,14 +6,13 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.InstanceExtended;
+import org.folio.circulation.domain.SearchInstance;
 import org.folio.circulation.infrastructure.storage.SearchRepository;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
-
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 
 public class ItemsByInstanceResource extends Resource {
 
@@ -24,25 +23,25 @@ public class ItemsByInstanceResource extends Resource {
 
   @Override
   public void register(Router router) {
-    RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/items-by-instance", router);
-
-    routeRegistration.get(this::getInstanceItems);
+    router.get("/circulation/items-by-instance")
+      .handler(this::getInstanceItems);
   }
 
   private void getInstanceItems(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    String instanceId = routingContext.pathParam("id");
-    log.debug("getInstanceItems:: instanceId {}", instanceId);
-    final var searchRepository = new SearchRepository(clients);
-    searchRepository.getInstanceWithItems(instanceId)
-      .thenApply(r -> r.map(this::toJson))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    List<String> queryParams = routingContext.queryParam("query");
+    if (!queryParams.isEmpty()) {
+      final var searchRepository = new SearchRepository(clients);
+      searchRepository.getInstanceWithItems(queryParams.get(0))
+        .thenApply(r -> r.map(this::toJson))
+        .thenApply(r -> r.map(JsonHttpResponse::ok))
+        .thenAccept(context::writeResultToHttpResponse);
+    }
   }
 
-  private JsonObject toJson(InstanceExtended instanceExtended) {
+  private JsonObject toJson(SearchInstance instanceExtended) {
+    log.debug("toJson:: instanceExtended: {}", instanceExtended);
     if (instanceExtended != null)
       return instanceExtended.toJson();
     return new JsonObject();

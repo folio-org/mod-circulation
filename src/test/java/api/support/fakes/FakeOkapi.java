@@ -231,6 +231,12 @@ public class FakeOkapi extends AbstractVerticle {
     FakeCalendarOkapi.registerCalendarSurroundingDates(router);
     registerFakeStorageLoansAnonymize(router);
 
+    new FakeSearchModule().register(router);
+    new FakeStorageModuleBuilder()
+      .withRecordName(FakeSearchModule.recordTypeName)
+      .withRootPath("/search/instances")
+      .create().register(router);
+
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
       .withRootPath("/location-units/institutions")
@@ -416,7 +422,6 @@ public class FakeOkapi extends AbstractVerticle {
 
     new FakeStorageModuleBuilder()
       .withRootPath("/search/instances")
-      .withCollectionPropertyName("instances")
       .withChangeMetadata()
       .withQueryParameters("query", "expandAll")
       .create().register(router);

@@ -19,7 +19,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 @Value
 @ToString(onlyExplicitlyIncluded = true)
-public class InstanceExtended {
+public class SearchInstance {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -29,21 +29,21 @@ public class InstanceExtended {
 
   @NonNull Collection<Item> items;
 
-  public static InstanceExtended from(JsonObject representation) {
-    return new InstanceExtended(representation, representation.getString("id"), mapItems(representation));
+  public static SearchInstance from(JsonObject representation) {
+    return new SearchInstance(representation, representation.getString("id"), mapItems(representation));
   }
 
   private static List<Item> mapItems(JsonObject representation) {
     return mapToList(representation, "items", new ItemMapper()::toDomain);
   }
 
-  public InstanceExtended changeItems(Collection<Item> items) {
+  public SearchInstance changeItems(Collection<Item> items) {
     JsonArray itemsArray = new JsonArray();
     for (Item item : items) {
       itemsArray.add(new ItemSummaryRepresentation().createItemSummary(item));
     }
     write(representation, "items", itemsArray);
-    return new InstanceExtended(representation, id, items);
+    return new SearchInstance(representation, id, items);
   }
 
   public JsonObject toJson() {

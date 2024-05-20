@@ -172,7 +172,7 @@
       "handlers": [
         {
           "methods": ["GET"],
-          "pathPattern": "/circulation/items-by-instance/{id}",
+          "pathPattern": "/circulation/items-by-instance",
           "permissionsRequired": [
           ],
           "modulePermissions": [
