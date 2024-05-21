@@ -22,11 +22,8 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 public class SearchInstance {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   JsonObject representation;
-
   String id;
-
   @NonNull Collection<Item> items;
 
   public static SearchInstance from(JsonObject representation) {
