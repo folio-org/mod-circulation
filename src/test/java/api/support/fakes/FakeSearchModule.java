@@ -1,5 +1,8 @@
 package api.support.fakes;
 
+import static java.lang.String.format;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
@@ -18,8 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import static java.lang.String.format;
-import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
 public class FakeSearchModule {
 

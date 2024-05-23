@@ -15,8 +15,11 @@ public class SearchInstanceFixture {
   }
 
   public void basedUponDunkirk(UUID instanceId) {
-    SearchInstanceBuilder builder = new SearchInstanceBuilder(new InstanceBuilder("Dunkirk",
-      UUID.randomUUID()).withId(instanceId).create()).withItems(List.of(ItemExamples.basedUponDunkirk(UUID.randomUUID(), UUID.randomUUID()).create()));
+    SearchInstanceBuilder builder = new SearchInstanceBuilder(
+      new InstanceBuilder(
+        "Dunkirk", UUID.randomUUID()).withId(instanceId).create())
+      .withItems(List.of(ItemExamples.basedUponDunkirk(UUID.randomUUID(),
+        UUID.randomUUID()).create()));
     searchClient.create(builder);
   }
 }

@@ -1,5 +1,8 @@
 package org.folio.circulation.domain;
 
+import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
@@ -13,9 +16,6 @@ import org.folio.circulation.storage.mappers.ItemMapper;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
-
-import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 @Value
 @ToString(onlyExplicitlyIncluded = true)

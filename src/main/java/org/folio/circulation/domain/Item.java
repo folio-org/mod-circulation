@@ -421,7 +421,7 @@ public class Item {
   }
 
   public Item changeTenantId(String tenantId) {
-    if(tenantId != null && itemRepresentation != null) {
+    if(itemRepresentation != null) {
       write(itemRepresentation, "tenantId", tenantId);
     }
     return this;
