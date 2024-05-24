@@ -8,7 +8,7 @@ import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class ItemsByInstanceResourceTest extends APITests {
+class ItemsByInstanceResourceTest extends APITests {
   @Test
   void canGetInstanceById() {
     UUID instanceId = UUID.randomUUID();
