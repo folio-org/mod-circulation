@@ -17,6 +17,7 @@ import java.util.List;
 public class ItemsByInstanceResource extends Resource {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public ItemsByInstanceResource(HttpClient client) {
     super(client);
   }
@@ -32,8 +33,7 @@ public class ItemsByInstanceResource extends Resource {
     final Clients clients = Clients.create(context, client);
     List<String> queryParams = routingContext.queryParam("query");
     if (!queryParams.isEmpty()) {
-      final var searchRepository = new SearchRepository(clients);
-      searchRepository.getInstanceWithItems(queryParams.get(0))
+      new SearchRepository(clients).getInstanceWithItems(queryParams.get(0))
         .thenApply(r -> r.map(this::toJson))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
         .thenAccept(context::writeResultToHttpResponse);
@@ -41,9 +41,10 @@ public class ItemsByInstanceResource extends Resource {
   }
 
   private JsonObject toJson(SearchInstance instanceExtended) {
-    log.debug("toJson:: instanceExtended: {}", instanceExtended);
-    if (instanceExtended != null)
+    log.debug("toJson:: instanceExtended: {}", () -> instanceExtended);
+    if (instanceExtended != null) {
       return instanceExtended.toJson();
+    }
     return new JsonObject();
   }
 }

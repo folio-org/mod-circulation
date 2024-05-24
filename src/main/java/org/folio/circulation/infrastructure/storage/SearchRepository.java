@@ -48,7 +48,7 @@ public class SearchRepository {
   }
 
   private CompletableFuture<Result<SearchInstance>> updateItemDetails(SearchInstance searchInstance) {
-    log.debug("updateItemDetails:: searchInstance {}", searchInstance);
+    log.debug("updateItemDetails:: searchInstance {}", () -> searchInstance);
     if (searchInstance == null) {
       return emptyAsync();
     }

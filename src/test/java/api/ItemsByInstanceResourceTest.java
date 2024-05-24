@@ -1,12 +1,13 @@
 package api;
 
+import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+
 import api.support.APITests;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 import java.util.UUID;
-import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 class ItemsByInstanceResourceTest extends APITests {
   @Test
