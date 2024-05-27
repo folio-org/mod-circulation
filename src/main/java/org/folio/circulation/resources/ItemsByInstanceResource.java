@@ -1,9 +1,8 @@
 package org.folio.circulation.resources;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import java.lang.invoke.MethodHandles;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.SearchInstance;
@@ -11,8 +10,11 @@ import org.folio.circulation.infrastructure.storage.SearchRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
-import java.lang.invoke.MethodHandles;
-import java.util.List;
+
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class ItemsByInstanceResource extends Resource {
 
@@ -32,12 +34,10 @@ public class ItemsByInstanceResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
     List<String> queryParams = routingContext.queryParam("query");
-    if (!queryParams.isEmpty()) {
       new SearchRepository(clients).getInstanceWithItems(queryParams.get(0))
         .thenApply(r -> r.map(this::toJson))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
         .thenAccept(context::writeResultToHttpResponse);
-    }
   }
 
   private JsonObject toJson(SearchInstance instanceExtended) {

@@ -1,6 +1,7 @@
 package api.support.builders;
 
 import java.util.List;
+
 import io.vertx.core.json.JsonObject;
 
 public class SearchInstanceBuilder extends JsonBuilder implements Builder {

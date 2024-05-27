@@ -3,18 +3,6 @@ package api.support.fakes;
 import static java.lang.String.format;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import lombok.SneakyThrows;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.circulation.support.http.server.ClientErrorResponse;
-import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.support.results.Result;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
@@ -22,18 +10,32 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.http.server.ClientErrorResponse;
+import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import lombok.SneakyThrows;
+
 public class FakeSearchModule {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public static final String recordTypeName = "search-instance";
-  private final String idRegexp = "id\\s*(==|!=|>|>=|<|<=|\\|=|\\|=)\\s*([a-f0-9\\-]+)";
+  private static final String ID_REGEXP = "id\\s*(==|!=|>|>=|<|<=|\\|=|\\|=)\\s*" +
+    "([a-f0-9\\-]+)";
   private final Storage storage;
   private final Pattern idPattern;
-
-  private final String rootPath = "/search/instances";
+  private static final String ROOT_PATH = "/search/instances";
 
   public FakeSearchModule() {
-    this.idPattern = Pattern.compile(idRegexp);
+    this.idPattern = Pattern.compile(ID_REGEXP);
     this.storage = Storage.getStorage();
   }
 
@@ -56,7 +58,7 @@ public class FakeSearchModule {
 
     final String id = idParsingResult.value().toString();
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       final JsonObject resourceRepresentation = resourcesForTenant.get(id);
 
       final JsonObject searchResult = new JsonObject();
@@ -96,6 +98,6 @@ public class FakeSearchModule {
   }
 
   private Map<String, JsonObject> getResourcesForTenant(WebContext context) {
-    return storage.getTenantResources(rootPath, context.getTenantId());
+    return storage.getTenantResources(ROOT_PATH, context.getTenantId());
   }
 }

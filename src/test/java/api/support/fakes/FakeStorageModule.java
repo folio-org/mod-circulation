@@ -329,7 +329,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     final String id = idParsingResult.value().toString();
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       final JsonObject resourceRepresentation = resourcesForTenant.get(id);
 
       log.debug("Found {} resource: {}", recordTypeName,
@@ -444,7 +444,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       resourcesForTenant.remove(id);
 
       noContent().writeTo(routingContext.response());

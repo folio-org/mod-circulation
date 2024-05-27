@@ -1,10 +1,11 @@
 package api.support.fixtures;
 
+import java.util.List;
+import java.util.UUID;
+
 import api.support.builders.InstanceBuilder;
 import api.support.builders.SearchInstanceBuilder;
 import api.support.http.ResourceClient;
-import java.util.List;
-import java.util.UUID;
 
 public class SearchInstanceFixture {
 

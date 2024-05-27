@@ -3,19 +3,20 @@ package org.folio.circulation.domain;
 import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.mapToList;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import lombok.NonNull;
-import lombok.ToString;
-import lombok.Value;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
-import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.List;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.Value;
 
 @Value
 @ToString(onlyExplicitlyIncluded = true)
