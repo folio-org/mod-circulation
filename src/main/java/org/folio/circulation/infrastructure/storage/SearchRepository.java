@@ -65,7 +65,6 @@ public class SearchRepository {
 
   private CompletableFuture<Result<Item>> fetchItemDetails(Item searchItem) {
     return itemRepository.fetchById(searchItem.getItemId())
-      .thenComposeAsync(itemRepository::fetchItemRelatedRecords)
       .thenApply(r -> r.map(item -> item.changeTenantId(searchItem.getTenantId())));
   }
 }
