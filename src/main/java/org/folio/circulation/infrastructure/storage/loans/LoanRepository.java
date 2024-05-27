@@ -304,6 +304,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       log.info("Inside the dcb case");
       write(storageLoan, IS_DCB, true);
     }
+    else {
+      write(storageLoan, IS_DCB, false);
+    }
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
