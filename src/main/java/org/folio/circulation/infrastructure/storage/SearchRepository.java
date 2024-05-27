@@ -6,6 +6,7 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,10 +36,14 @@ public class SearchRepository {
     this(new ItemRepository(clients), clients.searchClient());
   }
 
-  public CompletableFuture<Result<SearchInstance>> getInstanceWithItems(String query) {
-    log.debug("getInstanceWithItems:: query {}", query);
+  public CompletableFuture<Result<SearchInstance>> getInstanceWithItems(List<String> queryParams) {
+    log.debug("getInstanceWithItems:: query {}", queryParams);
+    if (queryParams.isEmpty()) {
+      return CompletableFuture.completedFuture(failed(new BadRequestFailure(
+        "query is empty")));
+    }
     return searchClient.getManyWithQueryStringParameters(Map.of("expandAll",
-        "true", "query", urlEncode(query)))
+        "true", "query", urlEncode(queryParams.get(0))))
       .thenApply(flatMapResult(this::mapResponseToInstances))
       .thenApply(mapResult(MultipleRecords::firstOrNull))
       .thenCompose(r -> r.after(this::updateItemDetails));

@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import java.lang.invoke.MethodHandles;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,8 +32,7 @@ public class ItemsByInstanceResource extends Resource {
   private void getInstanceItems(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    List<String> queryParams = routingContext.queryParam("query");
-      new SearchRepository(clients).getInstanceWithItems(queryParams.get(0))
+      new SearchRepository(clients).getInstanceWithItems(routingContext.queryParam("query"))
         .thenApply(r -> r.map(this::toJson))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
         .thenAccept(context::writeResultToHttpResponse);
