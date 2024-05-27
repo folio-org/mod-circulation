@@ -320,7 +320,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Result<UUID> idParsingResult = getIdParameter(routingContext);
 
-    if(idParsingResult.failed()) {
+    if (idParsingResult.failed()) {
       idParsingResult.cause().writeTo(routingContext.response());
       return;
     }

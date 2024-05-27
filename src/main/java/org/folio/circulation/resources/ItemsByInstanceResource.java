@@ -38,10 +38,10 @@ public class ItemsByInstanceResource extends Resource {
         .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private JsonObject toJson(SearchInstance instanceExtended) {
-    log.debug("toJson:: instanceExtended: {}", () -> instanceExtended);
-    if (instanceExtended != null) {
-      return instanceExtended.toJson();
+  private JsonObject toJson(SearchInstance searchInstance) {
+    log.debug("toJson:: searchInstance: {}", () -> searchInstance);
+    if (searchInstance != null) {
+      return searchInstance.toJson();
     }
     return new JsonObject();
   }
