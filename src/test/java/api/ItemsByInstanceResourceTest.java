@@ -10,16 +10,21 @@ import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.http.ItemResource;
 
 class ItemsByInstanceResourceTest extends APITests {
   @Test
   void canGetInstanceById() {
     UUID instanceId = UUID.randomUUID();
-    searchFixture.basedUponDunkirk(instanceId);
+    ItemResource itemResource = itemsFixture.basedUponDunkirk();
+    searchFixture.basedUponDunkirk(instanceId, itemResource);
     Response response =
       get(String.format("query=(id==%s)", instanceId), 200);
     assertThat(response.getStatusCode(), is(200));
     assertThat(response.getJson().getString("id"), is(instanceId.toString()));
+    assertThat(response.getJson().getJsonArray("items").size(), is(1));
+    assertThat(response.getJson().getJsonArray("items").getJsonObject(0).getString("id"),
+      is(itemResource.getId().toString()));
   }
 
   private Response get(String query, int expectedStatusCode) {

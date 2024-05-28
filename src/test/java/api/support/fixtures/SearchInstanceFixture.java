@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import api.support.builders.InstanceBuilder;
 import api.support.builders.SearchInstanceBuilder;
+import api.support.http.ItemResource;
 import api.support.http.ResourceClient;
 
 public class SearchInstanceFixture {
@@ -15,12 +16,11 @@ public class SearchInstanceFixture {
     this.searchClient = ResourceClient.forSearchClient();
   }
 
-  public void basedUponDunkirk(UUID instanceId) {
+  public void basedUponDunkirk(UUID instanceId, ItemResource itemResource) {
     SearchInstanceBuilder builder = new SearchInstanceBuilder(
       new InstanceBuilder(
         "Dunkirk", UUID.randomUUID()).withId(instanceId).create())
-      .withItems(List.of(ItemExamples.basedUponDunkirk(UUID.randomUUID(),
-        UUID.randomUUID()).create()));
+      .withItems(List.of(itemResource.getJson()));
     searchClient.create(builder);
   }
 }
