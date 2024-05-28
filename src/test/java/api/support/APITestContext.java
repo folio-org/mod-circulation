@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -34,12 +35,15 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.client.producer.KafkaProducer;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
 public class APITestContext {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String TENANT_ID = "test_tenant";
+  @Setter
+  public static String tempTenantId;
   private static String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
   private static final String TOKEN = "eyJhbGciOiJIUzUxMiJ9eyJzdWIiOiJhZG1pbiIsInVzZXJfaWQiOiI3OWZmMmE4Yi1kOWMzLTViMzktYWQ0YS0wYTg0MDI1YWIwODUiLCJ0ZW5hbnQiOiJ0ZXN0X3RlbmFudCJ9BShwfHcNClt5ZXJ8ImQTMQtAM1sQEnhsfWNmXGsYVDpuaDN3RVQ9";
@@ -66,7 +70,11 @@ public class APITestContext {
   }
 
   public static String getTenantId() {
-    return TENANT_ID;
+    return Optional.ofNullable(tempTenantId).orElse(TENANT_ID);
+  }
+
+  public static void clearTempTenantId() {
+    tempTenantId = null;
   }
 
   public static String getUserId() {
