@@ -21,19 +21,24 @@ import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.http.HttpClient;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class SearchRepository {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  private final ItemRepository itemRepository;
+  private final WebContext webContext;
+  private final HttpClient httpClient;
   private final CollectionResourceClient searchClient;
 
-  public SearchRepository(Clients clients) {
-    this(new ItemRepository(clients), clients.searchClient());
+  public SearchRepository(WebContext webContext, HttpClient httpClient) {
+    this.webContext = webContext;
+    this.httpClient = httpClient;
+    this.searchClient = Clients.create(webContext, httpClient).searchClient();
   }
 
   public CompletableFuture<Result<SearchInstance>> getInstanceWithItems(List<String> queryParams) {
@@ -64,7 +69,10 @@ public class SearchRepository {
   }
 
   private CompletableFuture<Result<Item>> fetchItemDetails(Item searchItem) {
-    return itemRepository.fetchById(searchItem.getItemId())
-      .thenApply(r -> r.map(item -> item.changeTenantId(searchItem.getTenantId())));
+    String tenantId = searchItem.getTenantId();
+
+    return new ItemRepository(Clients.create(webContext, httpClient, tenantId))
+      .fetchById(searchItem.getItemId())
+      .thenApply(r -> r.map(item -> item.changeTenantId(tenantId)));
   }
 }
