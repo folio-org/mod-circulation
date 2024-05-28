@@ -35,14 +35,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.client.producer.KafkaProducer;
-import lombok.Setter;
 import lombok.SneakyThrows;
 
 public class APITestContext {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static final String TENANT_ID = "test_tenant";
-  @Setter
   public static String tempTenantId;
   private static String USER_ID = "79ff2a8b-d9c3-5b39-ad4a-0a84025ab085";
 
@@ -73,8 +71,12 @@ public class APITestContext {
     return Optional.ofNullable(tempTenantId).orElse(TENANT_ID);
   }
 
+  public static void setTempTenantId(String tenantId) {
+    tempTenantId = tenantId;
+  }
+
   public static void clearTempTenantId() {
-    tempTenantId = null;
+    setTempTenantId(null);
   }
 
   public static String getUserId() {
