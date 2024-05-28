@@ -187,7 +187,6 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
 
   private HttpRequest<Buffer> withStandardHeaders(HttpRequest<Buffer> request) {
     log.debug("withStandardHeaders:: url={}, tenantId={}", request.uri(), tenantId);
-
     return request
       .putHeader(ACCEPT, "application/json, text/plain")
       .putHeader(OKAPI_URL, okapiUrl.toString())

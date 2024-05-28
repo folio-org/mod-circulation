@@ -70,8 +70,8 @@ class ItemsByInstanceResourceTest extends APITests {
     assertThat(responseJson.getString("id"), UUIDMatcher.is(instanceId));
     assertThat(items, iterableWithSize(2));
     assertThat(items, hasItem(allOf(
-        hasJsonPath("id", UUIDMatcher.is(collegeItem.getId())),
-        hasJsonPath("tenantId", is(TENANT_ID_COLLEGE)))));
+      hasJsonPath("id", UUIDMatcher.is(collegeItem.getId())),
+      hasJsonPath("tenantId", is(TENANT_ID_COLLEGE)))));
     assertThat(items, hasItem(allOf(
       hasJsonPath("id", UUIDMatcher.is(universityItem.getId())),
       hasJsonPath("tenantId", is(TENANT_ID_UNIVERSITY)))));
