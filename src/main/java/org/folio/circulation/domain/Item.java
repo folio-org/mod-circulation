@@ -415,4 +415,15 @@ public class Item {
   public String getDcbItemTitle() {
     return getProperty(itemRepresentation, "instanceTitle");
   }
+
+  public String getTenantId() {
+    return getProperty(itemRepresentation, "tenantId");
+  }
+
+  public Item changeTenantId(String tenantId) {
+    if (itemRepresentation != null) {
+      write(itemRepresentation, "tenantId", tenantId);
+    }
+    return this;
+  }
 }

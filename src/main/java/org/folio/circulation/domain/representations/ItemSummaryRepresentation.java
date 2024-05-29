@@ -44,6 +44,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "copyNumber", item.getCopyNumber());
     write(itemSummary, CALL_NUMBER_COMPONENTS,
       createCallNumberComponents(item.getCallNumberComponents()));
+    write(itemSummary, "tenantId", item.getTenantId());
 
     JsonObject status = new JsonObject()
       .put("name", item.getStatus().getValue());

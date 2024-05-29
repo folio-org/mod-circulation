@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
 import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.support.http.client.Response;

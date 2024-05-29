@@ -272,6 +272,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::actualCostRecordsStorageUrl, "actualCostRecords");
   }
 
+  public static ResourceClient forSearchClient() {
+    return new ResourceClient(InterfaceUrls::searchUrl, "instances");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
