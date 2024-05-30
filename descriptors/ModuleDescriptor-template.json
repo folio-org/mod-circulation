@@ -1537,6 +1537,11 @@
       "description": "To read the configuration from mod settings."
     },
     {
+      "permissionName": "circulation.items-by-instance.get",
+      "displayName": "circulation - get items by instance",
+      "description": "get items by instance"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -1577,7 +1582,8 @@
         "circulation.requests.allowed-service-points.get",
         "circulation.inventory.items-in-transit-report.get",
         "circulation.pick-slips.get",
-        "circulation.search-slips.get"
+        "circulation.search-slips.get",
+        "circulation.items-by-instance.get"
       ]
     },
     {
