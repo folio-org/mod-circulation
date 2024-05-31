@@ -6,9 +6,11 @@ import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,15 +66,28 @@ public class SearchRepository {
       return CompletableFuture.completedFuture(failed(new BadRequestFailure(
         "Search result is empty")));
     }
-    return AsyncCoordinationUtil.allOf(searchInstance.getItems(), this::fetchItemDetails)
+
+    Map<String, List<Item>> itemsByTenant = searchInstance.getItems()
+      .stream()
+      .collect(Collectors.groupingBy(Item::getTenantId));
+
+    log.info("updateItemDetails:: fetching item details from tenants: {}", itemsByTenant::keySet);
+
+    return AsyncCoordinationUtil.allOf(itemsByTenant, this::fetchItemDetails)
+      .thenApply(r -> r.map(lists -> lists.stream().flatMap(Collection::stream).toList()))
       .thenApply(r -> r.map(searchInstance::changeItems));
   }
 
-  private CompletableFuture<Result<Item>> fetchItemDetails(Item searchItem) {
-    String tenantId = searchItem.getTenantId();
+  private CompletableFuture<Result<List<Item>>> fetchItemDetails(String tenantId, List<Item> items) {
+    ItemRepository itemRepository = new ItemRepository(Clients.create(webContext, httpClient, tenantId));
 
-    return new ItemRepository(Clients.create(webContext, httpClient, tenantId))
-      .fetchById(searchItem.getItemId())
-      .thenApply(r -> r.map(item -> item.changeTenantId(tenantId)));
+    return AsyncCoordinationUtil.allOf(items, item -> fetchItemDetails(item, itemRepository));
+  }
+
+  private CompletableFuture<Result<Item>> fetchItemDetails(Item searchItem,
+    ItemRepository itemRepository) {
+
+    return itemRepository.fetchById(searchItem.getItemId())
+      .thenApply(r -> r.map(item -> item.changeTenantId(searchItem.getTenantId())));
   }
 }
