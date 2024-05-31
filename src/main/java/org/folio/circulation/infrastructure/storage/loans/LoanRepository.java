@@ -89,6 +89,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String USER_ID = "userId";
 
   private static final String IS_DCB = "isDcb";
+  private static final String DCB_USER_LASTNAME = "DcbSystem";
 
   public LoanRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository) {
@@ -298,12 +299,12 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
 
   private static void addIsDcbProperty(Loan loan, Item item, JsonObject storageLoan) {
       write(storageLoan, IS_DCB, (nonNull(loan.getUser()) && nonNull(loan.getUser().getLastName())
-              && loan.getUser().getLastName().equalsIgnoreCase("DcbSystem"))
+              && loan.getUser().getLastName().equalsIgnoreCase(DCB_USER_LASTNAME))
               || item.isDcbItem());
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
-    log.info("mapToStorageRepresentation:: parameters loan: {}, item: {}", loan, item);
+    log.debug("mapToStorageRepresentation:: parameters loan: {}, item: {}", loan, item);
     JsonObject storageLoan = loan.asJson();
 
     keepPatronGroupIdAtCheckoutProperties(loan, storageLoan);
