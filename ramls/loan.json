@@ -370,6 +370,10 @@
       "type": "string",
       "format": "date-time"
     },
+    "isDcb": {
+      "description": "Indicates whether or not this loan is associated for DCB use case",
+      "type": "boolean"
+    },
     "metadata": {
       "description": "Metadata about creation and changes to loan, provided by the server (client should not provide)",
       "type": "object",
