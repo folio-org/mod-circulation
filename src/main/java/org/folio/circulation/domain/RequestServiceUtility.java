@@ -7,6 +7,7 @@ import static org.folio.circulation.support.ErrorCode.INSTANCE_ALREADY_REQUESTED
 import static org.folio.circulation.support.ErrorCode.ITEM_ALREADY_REQUESTED;
 import static org.folio.circulation.support.ErrorCode.ITEM_OF_THIS_INSTANCE_ALREADY_REQUESTED;
 import static org.folio.circulation.support.ErrorCode.MOVING_REQUEST_TO_THE_SAME_ITEM;
+import static org.folio.circulation.support.ErrorCode.REQUEST_NOT_ALLOWED_FOR_PATRON_ITEM_COMBINATION;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -116,7 +117,7 @@ public class RequestServiceUtility {
 
     return failedValidation(
       format("%s requests are not allowed for this patron and item combination", requestTypeName),
-      REQUEST_TYPE, requestTypeName);
+      REQUEST_TYPE, requestTypeName, REQUEST_NOT_ALLOWED_FOR_PATRON_ITEM_COMBINATION);
   }
 
   static Result<RequestAndRelatedRecords> refuseWhenInvalidUserAndPatronGroup(
