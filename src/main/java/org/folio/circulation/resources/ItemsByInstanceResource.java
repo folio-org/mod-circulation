@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.SearchInstance;
 import org.folio.circulation.infrastructure.storage.SearchRepository;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
@@ -31,8 +30,7 @@ public class ItemsByInstanceResource extends Resource {
 
   private void getInstanceItems(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-      new SearchRepository(clients).getInstanceWithItems(routingContext.queryParam("query"))
+      new SearchRepository(context, client).getInstanceWithItems(routingContext.queryParam("query"))
         .thenApply(r -> r.map(this::toJson))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
         .thenAccept(context::writeResultToHttpResponse);
