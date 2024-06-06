@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ErrorCode.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.listAsString;
@@ -23,6 +24,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -43,7 +45,7 @@ public class AutomatedPatronBlocksValidator {
 
   public AutomatedPatronBlocksValidator(AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
     this(automatedPatronBlocksRepository, messages -> new ValidationErrorFailure(messages.stream()
-      .map(message -> new ValidationError(message, new HashMap<>()))
+      .map(message -> new ValidationError(message, new HashMap<>(), USER_IS_BLOCKED_AUTOMATICALLY))
       .collect(Collectors.toList())));
   }
 

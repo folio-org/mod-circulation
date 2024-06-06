@@ -530,16 +530,17 @@ public class RequestByInstanceIdResource extends Resource {
 
   private Collection<ValidationError> convertToValidationErrors(HttpFailure failure) {
     Set<ValidationError> validationErrors = new HashSet<>();
-    if (failure instanceof ServerErrorFailure ){
-      validationErrors.add(new ValidationError(((ServerErrorFailure) failure).reason));
-    } else if (failure instanceof ValidationErrorFailure){
+    if (failure instanceof ServerErrorFailure ) {
+      validationErrors.add(new ValidationError(((ServerErrorFailure) failure).getReason()));
+    } else if (failure instanceof ValidationErrorFailure) {
       validationErrors.addAll(((ValidationErrorFailure) failure).getErrors());
-    } else if (failure instanceof BadRequestFailure){
+    } else if (failure instanceof BadRequestFailure) {
       validationErrors.add(new ValidationError(((BadRequestFailure) failure).getReason()));
     } else if (failure instanceof ForwardOnFailure) {
       validationErrors.add(new ValidationError(((ForwardOnFailure) failure)
         .getFailureResponse().getBody()));
     }
+
     return validationErrors;
   }
 }
