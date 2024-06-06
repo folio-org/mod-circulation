@@ -298,9 +298,12 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   private static void addIsDcbProperty(Loan loan, Item item, JsonObject storageLoan) {
-      write(storageLoan, IS_DCB, (nonNull(loan.getUser()) && nonNull(loan.getUser().getLastName())
-              && loan.getUser().getLastName().equalsIgnoreCase(DCB_USER_LASTNAME))
-              || item.isDcbItem());
+    write(storageLoan, IS_DCB, isDcbLoan(loan, item));
+  }
+
+  private static boolean isDcbLoan(Loan loan, Item item) {
+      return item.isDcbItem() || (nonNull(loan.getUser()) && nonNull(loan.getUser().getLastName())
+              && loan.getUser().getLastName().equalsIgnoreCase(DCB_USER_LASTNAME));
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
