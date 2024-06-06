@@ -32,6 +32,13 @@ public class UserExamples {
 
   }
 
+  static UserBuilder basedUponGroot() {
+    return new UserBuilder()
+      .withName("DcbSystem", "dcb")
+      .withBarcode("6430530304")
+      .withActive(true);
+  }
+
   static UserBuilder basedUponCharlotteBroadwell() {
     return new UserBuilder()
       .withName("Broadwell", "Charlotte")

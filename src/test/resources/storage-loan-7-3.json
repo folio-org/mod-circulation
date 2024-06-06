@@ -93,6 +93,10 @@
       "description": "Indicates whether or not this loan had its due date modified by a recall on the loaned item",
       "type": "boolean"
     },
+    "isDcb": {
+      "description": "Indicates whether or not this loan is associated for DCB use case",
+      "type": "boolean"
+    },
     "declaredLostDate" : {
       "description": "Date and time the item was declared lost during this loan",
       "type": "string",
