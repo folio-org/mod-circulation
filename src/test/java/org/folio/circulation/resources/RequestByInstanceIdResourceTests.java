@@ -92,7 +92,7 @@ public class RequestByInstanceIdResourceTests {
   }
 
   @Test
-  public void shouldConvertToValidationErrorForServerErrorFailure() {
+  void shouldConvertToValidationErrorForServerErrorFailure() {
     ServerErrorFailure serverErrorFailure = new ServerErrorFailure("Server failed");
     Collection<ValidationError> errors = RequestByInstanceIdResource.convertToValidationErrors(serverErrorFailure);
 
@@ -101,7 +101,7 @@ public class RequestByInstanceIdResourceTests {
   }
 
   @Test
-  public void shouldConvertToValidationErrorForBadRequestFailure() {
+  void shouldConvertToValidationErrorForBadRequestFailure() {
     BadRequestFailure badRequestFailure = new BadRequestFailure("Bad request");
     Collection<ValidationError> errors = RequestByInstanceIdResource.convertToValidationErrors(badRequestFailure);
 
@@ -110,7 +110,7 @@ public class RequestByInstanceIdResourceTests {
   }
 
   @Test
-  public void shouldConvertToValidationErrorForForwardOnFailure() {
+  void shouldConvertToValidationErrorForForwardOnFailure() {
     Response failureResponse = new Response(422, "test body", "json");
     ForwardOnFailure forwardFailure = new ForwardOnFailure(failureResponse);
     Collection<ValidationError> errors = RequestByInstanceIdResource.convertToValidationErrors(forwardFailure);
