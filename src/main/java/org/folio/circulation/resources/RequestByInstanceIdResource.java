@@ -315,6 +315,9 @@ public class RequestByInstanceIdResource extends Resource {
       startIndex, itemRequests.size());
 
     if (startIndex >= itemRequests.size()) {
+      log.warn("placeRequest:: Failed to place a request for the instance. Reasons: {}",
+        errors);
+
       return completedFuture(failedValidation(errors));
     }
 
