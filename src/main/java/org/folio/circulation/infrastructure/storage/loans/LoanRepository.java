@@ -88,6 +88,9 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String ID = "id";
   private static final String USER_ID = "userId";
 
+  private static final String IS_DCB = "isDcb";
+  private static final String DCB_USER_LASTNAME = "DcbSystem";
+
   public LoanRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository) {
 
@@ -294,6 +297,15 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
 
+  private static void addIsDcbProperty(Loan loan, Item item, JsonObject storageLoan) {
+    write(storageLoan, IS_DCB, isDcbLoan(loan, item));
+  }
+
+  private static boolean isDcbLoan(Loan loan, Item item) {
+      return item.isDcbItem() || (nonNull(loan.getUser()) && nonNull(loan.getUser().getLastName())
+              && loan.getUser().getLastName().equalsIgnoreCase(DCB_USER_LASTNAME));
+  }
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     log.debug("mapToStorageRepresentation:: parameters loan: {}, item: {}", loan, item);
     JsonObject storageLoan = loan.asJson();
@@ -307,7 +319,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     removeProperty(storageLoan, FEESANDFINES);
     removeProperty(storageLoan, OVERDUE_FINE_POLICY);
     removeProperty(storageLoan, LOST_ITEM_POLICY);
-
+    addIsDcbProperty(loan, item, storageLoan);
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
     updatePolicy(storageLoan, loan.getLostItemPolicy(), "lostItemPolicyId");

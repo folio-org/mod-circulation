@@ -199,7 +199,60 @@ class LoanAPITests extends APITests {
     assertThat("has item volume",
       item.getString("volume"), is("testVolume"));
 
+    assertThat("isDcb should be false",
+      loan.getString("isDcb"), is("false"));
+
     loanHasExpectedProperties(loan, user);
+  }
+  @Test
+  void createLoanForDcbItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "virtual Title";
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle);
+
+    loansFixture.createLoan(circulationItem, usersFixture.jessica());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("isDcb should be true",
+      loan.getString("isDcb"), is("true"));
+  }
+
+  @Test
+  void createLoanForDcbUser() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "title";
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItemForDcb(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle, false);
+
+    loansFixture.createLoan(circulationItem, usersFixture.groot());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("isDcb should be true",
+      loan.getString("isDcb"), is("true"));
+  }
+
+  @Test
+  void createLoanForDcbUserAndDcbItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "virtual Title";
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle);
+
+    loansFixture.createLoan(circulationItem, usersFixture.groot());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("isDcb should be true",
+      loan.getString("isDcb"), is("true"));
   }
 
   @Test
