@@ -531,7 +531,7 @@ public class RequestByInstanceIdResource extends Resource {
     return reason;
   }
 
-  private Collection<ValidationError> convertToValidationErrors(HttpFailure failure) {
+  static Collection<ValidationError> convertToValidationErrors(HttpFailure failure) {
     Set<ValidationError> validationErrors = new HashSet<>();
     if (failure instanceof ServerErrorFailure ) {
       validationErrors.add(new ValidationError(((ServerErrorFailure) failure).getReason()));
