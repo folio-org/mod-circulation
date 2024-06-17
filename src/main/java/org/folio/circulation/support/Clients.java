@@ -4,7 +4,9 @@ import java.net.MalformedURLException;
 
 import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.services.PubSubPublishingService;
+import org.folio.circulation.support.http.client.IncludeRoutingServicePoints;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.QueryParameter;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -40,6 +42,7 @@ public class Clients {
   private final CollectionResourceClient circulationRulesStorageClient;
   private final CollectionResourceClient requestPoliciesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
+  private final CollectionResourceClient routingServicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
   private final CollectionResourceClient patronNoticePolicesStorageClient;
@@ -112,6 +115,8 @@ public class Clients {
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
+      routingServicePointsStorageClient = createServicePointsStorageWithCustomParam(client,
+        context, IncludeRoutingServicePoints.enabled());
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
       calendarStorageClient = createCalendarStorageClient(client, context);
       patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
@@ -242,6 +247,10 @@ public class Clients {
 
   public CollectionResourceClient servicePointsStorage() {
     return servicePointsStorageClient;
+  }
+
+  public CollectionResourceClient routingServicePointsStorage() {
+    return routingServicePointsStorageClient;
   }
 
   public CollectionResourceClient patronGroupsStorage() {
@@ -390,6 +399,14 @@ public class Clients {
     throws MalformedURLException {
 
     return new CollectionResourceClient(client, context.getOkapiBasedUrl(path));
+  }
+
+  private static CollectionResourceClient getCollectionResourceClientWithCustomParam(
+    OkapiHttpClient client, WebContext context, String path, QueryParameter customParam)
+    throws MalformedURLException {
+
+    return new CustomParamCollectionResourceClient(client, context.getOkapiBasedUrl(path),
+      customParam);
   }
 
   public CollectionResourceClient noticeTemplatesClient() {
@@ -632,6 +649,14 @@ public class Clients {
       throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/service-points");
+  }
+
+  private CollectionResourceClient createServicePointsStorageWithCustomParam(
+    OkapiHttpClient client, WebContext context, QueryParameter customParam)
+      throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context, "/service-points",
+      customParam);
   }
 
   private CollectionResourceClient createPatronGroupsStorageClient(
