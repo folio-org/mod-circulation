@@ -1,9 +1,11 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.infrastructure.storage.CirculationSettingsRepository.RECORDS_PROPERTY_NAME;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 
 import java.lang.invoke.MethodHandles;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +17,7 @@ import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class CirculationSettingsResource extends CollectionResource {
@@ -31,7 +34,9 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     final var incomingRepresentation = routingContext.body().asJsonObject();
+    setRandomIdIfMissing(incomingRepresentation);
     final var circulationSetting = CirculationSetting.from(incomingRepresentation);
+    log.debug("replace:: Creating circulation setting: {}", circulationSetting);
 
     circulationSettingsRepository.create(circulationSetting)
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
@@ -47,6 +52,7 @@ public class CirculationSettingsResource extends CollectionResource {
 
     final var incomingRepresentation = routingContext.body().asJsonObject();
     final var circulationSetting = CirculationSetting.from(incomingRepresentation);
+    log.debug("replace:: Replacing circulation setting : {}", circulationSetting);
 
     circulationSettingsRepository.update(circulationSetting)
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
@@ -75,8 +81,9 @@ public class CirculationSettingsResource extends CollectionResource {
     final var clients = Clients.create(context, client);
 
     String id = routingContext.request().getParam("id");
+    log.debug("delete:: Deleting circulation setting ID: {}", id);
 
-    clients.loansStorage().delete(id)
+    clients.circulationSettingsStorageClient().delete(id)
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
@@ -105,5 +112,12 @@ public class CirculationSettingsResource extends CollectionResource {
     clients.loansStorage().delete()
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private void setRandomIdIfMissing(JsonObject representation) {
+    final var providedId = getProperty(representation, "id");
+    if (providedId == null) {
+      representation.put("id", UUID.randomUUID().toString());
+    }
   }
 }
