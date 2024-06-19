@@ -1314,6 +1314,10 @@
     {
       "id": "settings",
       "version": "1.0"
+    },
+    {
+      "id": "circulation-settings-storage",
+      "version": "1.0"
     }
   ],
   "optional": [
