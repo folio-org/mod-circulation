@@ -120,27 +120,27 @@ public class CirculationSettingsResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private void setRandomIdIfMissing(JsonObject representation) {
+  private static void setRandomIdIfMissing(JsonObject representation) {
     final var providedId = getProperty(representation, "id");
     if (providedId == null) {
       representation.put("id", UUID.randomUUID().toString());
     }
   }
 
-  private Function<Result<CirculationSetting>, Result<CirculationSetting>>
+  private static Function<Result<CirculationSetting>, Result<CirculationSetting>>
   refuseWhenCirculationSettingIsInvalid() {
 
     return r -> r.failWhen(circulationSetting -> succeeded(circulationSetting == null),
-      circulationSetting -> singleValidationError("Circulation setting JSON is malformed", "", ""));
+      circulationSetting -> singleValidationError("Circulation setting JSON is invalid", "", ""));
   }
 
-  private Function<Result<String>, Result<String>> refuseWhenIdIsInvalid() {
+  private static Function<Result<String>, Result<String>> refuseWhenIdIsInvalid() {
     return r -> r.failWhen(id -> succeeded(!uuidIsValid(id)),
       circulationSetting -> singleValidationError("Circulation setting ID is not a valid UUID",
         "", ""));
   }
 
-  private boolean uuidIsValid(String providedId) {
+  private static boolean uuidIsValid(String providedId) {
     try {
       return providedId != null && providedId.equals(UUID.fromString(providedId).toString());
     } catch(IllegalArgumentException e) {

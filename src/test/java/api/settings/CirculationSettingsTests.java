@@ -13,6 +13,12 @@ import io.vertx.core.json.JsonObject;
 
 class CirculationSettingsTests extends APITests {
 
+  public static final String NAME = "name";
+  public static final String VALUE = "value";
+  public static final String ERRORS = "errors";
+  public static final String MESSAGE = "message";
+  public static final String INVALID_JSON_MESSAGE = "Circulation setting JSON is invalid";
+
   @Test
   void crudOperationsTest() {
     // Testing POST method
@@ -23,8 +29,8 @@ class CirculationSettingsTests extends APITests {
 
     // Testing GET (individual setting) method
     final var settingById = circulationSettingsClient.get(settingId);
-    assertThat(settingById.getJson().getString("name"), is("initial-name"));
-    assertThat(settingById.getJson().getJsonObject("value").getString("initial-key"),
+    assertThat(settingById.getJson().getString(NAME), is("initial-name"));
+    assertThat(settingById.getJson().getJsonObject(VALUE).getString("initial-key"),
       is("initial-value"));
 
     // Testing GET (all) method
@@ -38,8 +44,8 @@ class CirculationSettingsTests extends APITests {
     circulationSettingsClient.delete(anotherSetting.getId());
     final var allSettingsAfterDeletion = circulationSettingsClient.getMany(CqlQuery.noQuery());
     assertThat(allSettingsAfterDeletion.size(), is(1));
-    assertThat(allSettingsAfterDeletion.getFirst().getString("name"), is("initial-name"));
-    assertThat(allSettingsAfterDeletion.getFirst().getJsonObject("value").getString("initial-key"),
+    assertThat(allSettingsAfterDeletion.getFirst().getString(NAME), is("initial-name"));
+    assertThat(allSettingsAfterDeletion.getFirst().getJsonObject(VALUE).getString("initial-key"),
       is("initial-value"));
 
     // Testing PUT method
@@ -50,8 +56,8 @@ class CirculationSettingsTests extends APITests {
 
     final var updatedSetting = circulationSettingsClient.get(settingId);
 
-    assertThat(updatedSetting.getJson().getString("name"), is("new-name"));
-    assertThat(updatedSetting.getJson().getJsonObject("value").getString("new-key"),
+    assertThat(updatedSetting.getJson().getString(NAME), is("new-name"));
+    assertThat(updatedSetting.getJson().getJsonObject(VALUE).getString("new-key"),
       is("new-value"));
   }
 
@@ -68,7 +74,7 @@ class CirculationSettingsTests extends APITests {
     // Testing GET with invalid ID (not a UUID)
     var getErrors = restAssuredClient.get(circulationSettingsUrl("/not-a-uuid"), 422,
       "get-circulation-setting");
-    assertThat(getErrors.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
+    assertThat(getErrors.getJson().getJsonArray(ERRORS).getJsonObject(0).getString(MESSAGE),
       is("Circulation setting ID is not a valid UUID"));
 
     // Testing DELETE with invalid ID
@@ -78,13 +84,23 @@ class CirculationSettingsTests extends APITests {
     // Testing PUT with malformed JSON
     var putErrors = restAssuredClient.put("{\"invalid-field\": \"invalid-value\"}",
       circulationSettingsUrl("/" + randomId()), 422, "put-circulation-setting");
-    assertThat(putErrors.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
-      is("Circulation setting JSON is malformed"));
+    assertThat(putErrors.getJson().getJsonArray(ERRORS).getJsonObject(0).getString(MESSAGE),
+      is(INVALID_JSON_MESSAGE));
+
+    var putErrorsNoValue = restAssuredClient.put("{\"name\": \"test-name\"}",
+      circulationSettingsUrl("/" + randomId()), 422, "put-circulation-setting");
+    assertThat(putErrorsNoValue.getJson().getJsonArray(ERRORS).getJsonObject(0).getString(MESSAGE),
+      is(INVALID_JSON_MESSAGE));
 
     // Testing POST with malformed JSON
     var postErrors = restAssuredClient.post("{\"invalid-field\": \"invalid-value\"}",
       circulationSettingsUrl(""), 422, "put-circulation-setting");
-    assertThat(postErrors.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
-      is("Circulation setting JSON is malformed"));
+    assertThat(postErrors.getJson().getJsonArray(ERRORS).getJsonObject(0).getString(MESSAGE),
+      is(INVALID_JSON_MESSAGE));
+
+    var postErrorsNoValue = restAssuredClient.put("{\"name\": \"test-name\"}",
+      circulationSettingsUrl("/" + randomId()), 422, "put-circulation-setting");
+    assertThat(postErrorsNoValue.getJson().getJsonArray(ERRORS).getJsonObject(0).getString(MESSAGE),
+      is(INVALID_JSON_MESSAGE));
   }
 }

@@ -5,6 +5,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +19,11 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class CirculationSetting {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
+  public static final String ID_FIELD = "id";
+  public static final String NAME_FIELD = "name";
+  public static final String VALUE_FIELD = "value";
+  public static final String METADATA_FIELD = "metadata";
 
   @ToString.Include
   @Getter
@@ -33,14 +39,21 @@ public class CirculationSetting {
   private final JsonObject value;
 
   public static CirculationSetting from(JsonObject representation) {
-    if (getProperty(representation, "name") == null ||
-      getObjectProperty(representation, "value") == null) {
+    if (getProperty(representation, ID_FIELD) == null ||
+      getProperty(representation, NAME_FIELD) == null ||
+      getObjectProperty(representation, VALUE_FIELD) == null ||
+      !containsOnlyKnownFields(representation)) {
 
-      log.info("from:: Circulation setting JSON is malformed: {}", representation);
+      log.info("from:: Circulation setting JSON is invalid: {}", representation);
       return null;
     }
 
-    return new CirculationSetting(representation, getProperty(representation, "id"),
-      getProperty(representation, "name"), getObjectProperty(representation, "value"));
+    return new CirculationSetting(representation, getProperty(representation, ID_FIELD),
+      getProperty(representation, NAME_FIELD), getObjectProperty(representation, VALUE_FIELD));
+  }
+
+  private static boolean containsOnlyKnownFields(JsonObject representation) {
+    return Set.of(ID_FIELD, NAME_FIELD, VALUE_FIELD, METADATA_FIELD)
+      .containsAll(representation.fieldNames());
   }
 }
