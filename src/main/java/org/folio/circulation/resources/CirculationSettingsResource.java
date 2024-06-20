@@ -77,7 +77,6 @@ public class CirculationSettingsResource extends CollectionResource {
 
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
-      .thenApply(r -> r.map(providedId -> UUID.fromString(providedId).toString()))
       .thenCompose(r -> r.after(circulationSettingsRepository::getById))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
@@ -91,7 +90,6 @@ public class CirculationSettingsResource extends CollectionResource {
 
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
-      .thenApply(r -> r.map(providedId -> UUID.fromString(providedId).toString()))
       .thenCompose(r -> r.after(clients.circulationSettingsStorageClient()::delete))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
@@ -146,7 +144,7 @@ public class CirculationSettingsResource extends CollectionResource {
     try {
       return providedId != null && providedId.equals(UUID.fromString(providedId).toString());
     } catch(IllegalArgumentException e) {
-      log.debug("refuseWhenIdIsInvalid:: Invalid UUID");
+      log.debug("uuidIsValid:: Invalid UUID");
       return false;
     }
   }
