@@ -39,7 +39,6 @@ public class CirculationSettingsRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<CirculationSetting>>> findBy(String query) {
-    log.debug("findBy:: parameters query: {}", query);
 
     return circulationSettingsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(response ->

@@ -104,7 +104,6 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     final var query = routingContext.request().query();
-    log.info("get:: Requested circulation settings by query: {}", query);
 
     circulationSettingsRepository.findBy(query)
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(multipleRecords ->
