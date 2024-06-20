@@ -272,6 +272,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::actualCostRecordsStorageUrl, "actualCostRecords");
   }
 
+  public static ResourceClient forCirculationSettings() {
+    return new ResourceClient(InterfaceUrls::circulationSettingsUrl, "circulationSettings");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;

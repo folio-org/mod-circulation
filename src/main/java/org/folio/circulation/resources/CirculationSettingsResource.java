@@ -1,11 +1,15 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.infrastructure.storage.CirculationSettingsRepository.RECORDS_PROPERTY_NAME;
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +19,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -38,7 +43,9 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSetting = CirculationSetting.from(incomingRepresentation);
     log.debug("replace:: Creating circulation setting: {}", circulationSetting);
 
-    circulationSettingsRepository.create(circulationSetting)
+    ofAsync(circulationSetting)
+      .thenApply(refuseWhenCirculationSettingIsInvalid())
+      .thenCompose(r -> r.after(circulationSettingsRepository::create))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse);
@@ -54,10 +61,19 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSetting = CirculationSetting.from(incomingRepresentation);
     log.debug("replace:: Replacing circulation setting : {}", circulationSetting);
 
-    circulationSettingsRepository.update(circulationSetting)
+    ofAsync(circulationSetting)
+      .thenApply(refuseWhenCirculationSettingIsInvalid())
+      .thenCompose(r -> r.after(circulationSettingsRepository::update))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private Function<Result<CirculationSetting>, Result<CirculationSetting>>
+  refuseWhenCirculationSettingIsInvalid() {
+
+    return r -> r.failWhen(circulationSetting -> succeeded(circulationSetting == null),
+      circulationSetting -> singleValidationError("Circulation setting JSON is malformed", "", ""));
   }
 
   @Override
@@ -95,7 +111,7 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     final var query = routingContext.request().query();
-    log.debug("get:: Requested circulation settings by query: {}", query);
+    log.info("get:: Requested circulation settings by query: {}", query);
 
     circulationSettingsRepository.findBy(query)
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(multipleRecords ->
