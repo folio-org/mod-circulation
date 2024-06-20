@@ -11,7 +11,7 @@ import api.support.builders.CirculationSettingBuilder;
 import api.support.http.CqlQuery;
 import io.vertx.core.json.JsonObject;
 
-public class CirculationSettingsTests extends APITests {
+class CirculationSettingsTests extends APITests {
 
   @Test
   void crudOperationsTest() {
@@ -57,7 +57,7 @@ public class CirculationSettingsTests extends APITests {
 
   @Test
   void invalidRequestsTest() {
-    final var setting = circulationSettingsClient.create(new CirculationSettingBuilder()
+    circulationSettingsClient.create(new CirculationSettingBuilder()
       .withName("initial-name")
       .withValue(new JsonObject().put("initial-key", "initial-value")));
 
