@@ -61,9 +61,15 @@ public class CirculationSettingsTests extends APITests {
       .withName("initial-name")
       .withValue(new JsonObject().put("initial-key", "initial-value")));
 
-    // Testing GET with invalid ID
+    // Testing GET with wrong UUID
     restAssuredClient.get(circulationSettingsUrl("/" + randomId()), 404,
       "get-circulation-setting");
+
+    // Testing GET with invalid ID (not a UUID)
+    var getErrors = restAssuredClient.get(circulationSettingsUrl("/not-a-uuid"), 422,
+      "get-circulation-setting");
+    assertThat(getErrors.getJson().getJsonArray("errors").getJsonObject(0).getString("message"),
+      is("Circulation setting ID is not a valid UUID"));
 
     // Testing DELETE with invalid ID
     restAssuredClient.delete(circulationSettingsUrl("/" + randomId()), 204,

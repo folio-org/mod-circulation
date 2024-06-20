@@ -69,23 +69,16 @@ public class CirculationSettingsResource extends CollectionResource {
       .thenAccept(context::writeResultToHttpResponse);
   }
 
-  private Function<Result<CirculationSetting>, Result<CirculationSetting>>
-  refuseWhenCirculationSettingIsInvalid() {
-
-    return r -> r.failWhen(circulationSetting -> succeeded(circulationSetting == null),
-      circulationSetting -> singleValidationError("Circulation setting JSON is malformed", "", ""));
-  }
-
   @Override
   void get(RoutingContext routingContext) {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
-    final var id = routingContext.request().getParam("id");
-    log.debug("get:: Requested circulation setting ID: {}", id);
-
-    circulationSettingsRepository.getById(id)
+    ofAsync(routingContext.request().getParam("id"))
+      .thenApply(refuseWhenIdIsInvalid())
+      .thenApply(r -> r.map(providedId -> UUID.fromString(providedId).toString()))
+      .thenCompose(r -> r.after(circulationSettingsRepository::getById))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
       .thenAccept(context::writeResultToHttpResponse);
@@ -96,10 +89,10 @@ public class CirculationSettingsResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    String id = routingContext.request().getParam("id");
-    log.debug("delete:: Deleting circulation setting ID: {}", id);
-
-    clients.circulationSettingsStorageClient().delete(id)
+    ofAsync(routingContext.request().getParam("id"))
+      .thenApply(refuseWhenIdIsInvalid())
+      .thenApply(r -> r.map(providedId -> UUID.fromString(providedId).toString()))
+      .thenCompose(r -> r.after(clients.circulationSettingsStorageClient()::delete))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
@@ -134,6 +127,28 @@ public class CirculationSettingsResource extends CollectionResource {
     final var providedId = getProperty(representation, "id");
     if (providedId == null) {
       representation.put("id", UUID.randomUUID().toString());
+    }
+  }
+
+  private Function<Result<CirculationSetting>, Result<CirculationSetting>>
+  refuseWhenCirculationSettingIsInvalid() {
+
+    return r -> r.failWhen(circulationSetting -> succeeded(circulationSetting == null),
+      circulationSetting -> singleValidationError("Circulation setting JSON is malformed", "", ""));
+  }
+
+  private Function<Result<String>, Result<String>> refuseWhenIdIsInvalid() {
+    return r -> r.failWhen(id -> succeeded(!uuidIsValid(id)),
+      circulationSetting -> singleValidationError("Circulation setting ID is not a valid UUID",
+        "", ""));
+  }
+
+  private boolean uuidIsValid(String providedId) {
+    try {
+      return providedId != null && providedId.equals(UUID.fromString(providedId).toString());
+    } catch(IllegalArgumentException e) {
+      log.debug("refuseWhenIdIsInvalid:: Invalid UUID");
+      return false;
     }
   }
 }
