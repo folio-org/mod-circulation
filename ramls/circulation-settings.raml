@@ -1,0 +1,105 @@
+#%RAML 1.0
+title: Circulation Settings
+version: v1.0
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Circulation Settings API
+    content: <b>API for circulation settings</b>
+
+traits:
+  language: !include raml-util/traits/language.raml
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  validate: !include raml-util/traits/validation.raml
+
+types:
+  circulation-setting: !include circulation-setting.json
+  circulation-settings: !include circulation-settings.json
+  errors: !include raml-util/schemas/errors.schema
+  parameters: !include raml-util/schemas/parameters.schema
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/circulation/settings:
+  type:
+    collection:
+      exampleCollection: !include examples/circulation-settings.json
+      exampleItem:       !include examples/circulation-setting.json
+      schemaCollection: circulation-settings
+      schemaItem: circulation-setting
+  post:
+    is: [validate]
+    description: Create a new circulation setting
+    body:
+      application/json:
+        type: circulation-setting
+    responses:
+      201:
+        description: "Circulation setting has been created"
+        body:
+          application/json:
+            type: circulation-setting
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
+  get:
+    is: [validate, pageable, searchable: { description: "with valid searchable fields", example: "id=497f6eca-6276-4993-bfeb-98cbbbba8f79" }]
+    description: Get all circulation settings
+    responses:
+      200:
+        description: "Circulation settings successfully retreived"
+        body:
+          application/json:
+            type: circulation-settings
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
+  /{circulationSettingId}:
+    type:
+      collection-item:
+        exampleItem: !include examples/circulation-setting.json
+        schema: circulation-setting
+    get:
+      responses:
+        200:
+          description: "Circulation setting successfully retreived"
+          body:
+            application/json:
+              type: circulation-setting
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
+    put:
+      is: [ validate ]
+      body:
+        application/json:
+          type: circulation-setting
+      responses:
+        204:
+          description: "Circulation settings have been saved"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
+    delete:
+      is: [validate]
+      responses:
+        204:
+          description: "Circulation settings deleted"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
+
