@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
 import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHELF;
@@ -29,11 +30,13 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -159,7 +162,7 @@ public class RequestByInstanceIdResource extends Resource {
     if (unsortedUnavailableItems == null || unsortedUnavailableItems.isEmpty()) {
       log.info("getLoanItems:: unsortedUnavailableItems is null or empty");
 
-      return CompletableFuture.completedFuture(succeeded(null));
+      return completedFuture(succeeded(null));
     }
 
     Map<Item, CompletableFuture<Result<Loan>>> itemLoanFuturesMap = new HashMap<>();
@@ -301,23 +304,21 @@ public class RequestByInstanceIdResource extends Resource {
       new FailFastErrorHandler());
 
     return placeRequest(requestRepresentations, 0, createRequestService,
-      clients, new ArrayList<>(), repositories);
+      clients, new HashSet<>(), repositories);
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequest(
     List<JsonObject> itemRequests, int startIndex, CreateRequestService createRequestService,
-    Clients clients, List<String> errors, RequestRelatedRepositories repositories) {
+    Clients clients, Set<ValidationError> errors, RequestRelatedRepositories repositories) {
 
     log.debug("RequestByInstanceIdResource.placeRequest, startIndex: {}, itemRequestSize: {}",
       startIndex, itemRequests.size());
 
     if (startIndex >= itemRequests.size()) {
-      String aggregateFailures = String.format("%n%s", String.join("%n", errors));
       log.warn("placeRequest:: Failed to place a request for the instance. Reasons: {}",
-        aggregateFailures);
+        errors);
 
-      return CompletableFuture.completedFuture(failedDueToServerError(
-        "Failed to place a request for the instance. Reasons: " + aggregateFailures));
+      return completedFuture(failedValidation(errors));
     }
 
     JsonObject currentItemRequest = itemRequests.get(startIndex);
@@ -336,12 +337,14 @@ public class RequestByInstanceIdResource extends Resource {
           if (r.succeeded()) {
             log.debug("RequestByInstanceIdResource.placeRequest: succeeded creating request for item {}",
                 currentItemRequest.getString(ITEM_ID));
-            return CompletableFuture.completedFuture(r);
+            return completedFuture(r);
           } else {
-            String reason = getErrorMessage(r.cause());
-            errors.add(reason);
+            HttpFailure failure = r.cause();
+            errors.addAll(convertToValidationErrors(failure));
 
-            log.debug("Failed to create request for item {} with reason: {}", currentItemRequest.getString(ITEM_ID), reason);
+            log.debug("Failed to create request for item {} with cause: {}",
+              currentItemRequest.getString(ITEM_ID), failure);
+
             return placeRequest(itemRequests, startIndex +1,
               createRequestService, clients, errors, repositories);
           }
@@ -526,5 +529,20 @@ public class RequestByInstanceIdResource extends Resource {
       reason = ((ForwardOnFailure) failure).getFailureResponse().getBody();
     }
     return reason;
+  }
+
+  static Collection<ValidationError> convertToValidationErrors(HttpFailure failure) {
+    Set<ValidationError> validationErrors = new HashSet<>();
+    if (failure instanceof ServerErrorFailure serverErrorFailure) {
+      validationErrors.add(new ValidationError(serverErrorFailure.getReason()));
+    } else if (failure instanceof ValidationErrorFailure validationErrorFailure) {
+      validationErrors.addAll(validationErrorFailure.getErrors());
+    } else if (failure instanceof BadRequestFailure badRequestFailure) {
+      validationErrors.add(new ValidationError(badRequestFailure.getReason()));
+    } else if (failure instanceof ForwardOnFailure forwardOnFailure) {
+      validationErrors.add(new ValidationError(forwardOnFailure.getFailureResponse().getBody()));
+    }
+
+    return validationErrors;
   }
 }

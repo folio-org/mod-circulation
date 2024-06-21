@@ -70,6 +70,8 @@ import static org.folio.circulation.support.ErrorCode.ITEM_OF_THIS_INSTANCE_ALRE
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
+import static org.folio.circulation.support.ErrorCode.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.support.ErrorCode.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -2694,7 +2696,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron blocked from requesting"),
-      hasParameter("reason", "Display description")))
+      hasParameter("reason", "Display description"),
+      hasCode(USER_IS_BLOCKED_MANUALLY)))
     );
   }
 
@@ -2891,6 +2894,8 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
     assertThat(response.getJson(), hasErrorWith(
       hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
+    assertThat(response.getJson(), hasErrorWith(
+      hasCode(USER_IS_BLOCKED_AUTOMATICALLY)));
   }
 
   @Test

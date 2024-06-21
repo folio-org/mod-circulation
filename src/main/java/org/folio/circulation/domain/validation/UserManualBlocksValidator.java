@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.validation;
 
+import static org.folio.circulation.support.ErrorCode.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -104,7 +105,7 @@ public class UserManualBlocksValidator {
     final String reason = userManualBlocks.getRecords().stream()
       .map(UserManualBlock::getDesc).collect(Collectors.joining(";"));
 
-    return singleValidationError(new ValidationError(message, "reason", reason));
+    return singleValidationError(new ValidationError(message, "reason", reason, USER_IS_BLOCKED_MANUALLY));
   }
 
   private boolean isUserBlockedManually(MultipleRecords<UserManualBlock> userManualBlockMultipleRecords,
