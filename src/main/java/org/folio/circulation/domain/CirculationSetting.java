@@ -39,17 +39,16 @@ public class CirculationSetting {
   private final JsonObject value;
 
   public static CirculationSetting from(JsonObject representation) {
-    if (getProperty(representation, ID_FIELD) == null ||
-      getProperty(representation, NAME_FIELD) == null ||
-      getObjectProperty(representation, VALUE_FIELD) == null ||
-      !containsOnlyKnownFields(representation)) {
+    final var id = getProperty(representation, ID_FIELD);
+    final var name = getProperty(representation, NAME_FIELD);
+    final var value = getObjectProperty(representation, VALUE_FIELD);
 
-      log.info("from:: Circulation setting JSON is invalid: {}", representation);
+    if (id == null || name == null || value == null || !containsOnlyKnownFields(representation)) {
+      log.warn("from:: Circulation setting JSON is invalid: {}", representation);
       return null;
     }
 
-    return new CirculationSetting(representation, getProperty(representation, ID_FIELD),
-      getProperty(representation, NAME_FIELD), getObjectProperty(representation, VALUE_FIELD));
+    return new CirculationSetting(representation, id, name, value);
   }
 
   private static boolean containsOnlyKnownFields(JsonObject representation) {

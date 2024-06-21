@@ -75,6 +75,8 @@ public class CirculationSettingsResource extends CollectionResource {
     final var clients = Clients.create(context, client);
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
+    log.debug("get:: parameters id: {}", routingContext.request().getParam("id"));
+
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
       .thenCompose(r -> r.after(circulationSettingsRepository::getById))
@@ -87,6 +89,8 @@ public class CirculationSettingsResource extends CollectionResource {
   void delete(RoutingContext routingContext) {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
+
+    log.debug("get:: parameters id: {}", routingContext.request().getParam("id"));
 
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
@@ -102,6 +106,7 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     final var query = routingContext.request().query();
+    log.debug("get:: parameters id: {}", query);
 
     circulationSettingsRepository.findBy(query)
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(multipleRecords ->
@@ -144,7 +149,7 @@ public class CirculationSettingsResource extends CollectionResource {
     try {
       return providedId != null && providedId.equals(UUID.fromString(providedId).toString());
     } catch(IllegalArgumentException e) {
-      log.debug("uuidIsValid:: Invalid UUID");
+      log.warn("uuidIsValid:: Invalid UUID");
       return false;
     }
   }
