@@ -1,5 +1,6 @@
 package org.folio.circulation.resources;
 
+import static org.apache.logging.log4j.Level.DEBUG;
 import static org.folio.circulation.infrastructure.storage.CirculationSettingsRepository.RECORDS_PROPERTY_NAME;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -11,6 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CirculationSetting;
@@ -75,10 +77,9 @@ public class CirculationSettingsResource extends CollectionResource {
     final var clients = Clients.create(context, client);
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
-    log.debug("get:: parameters id: {}", routingContext.request().getParam("id"));
-
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
+      .thenApply(r -> r.map(id -> logAndReturn(id, DEBUG, "get:: parameters id: {}", id)))
       .thenCompose(r -> r.after(circulationSettingsRepository::getById))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
@@ -90,10 +91,9 @@ public class CirculationSettingsResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    log.debug("get:: parameters id: {}", routingContext.request().getParam("id"));
-
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
+      .thenApply(r -> r.map(id -> logAndReturn(id, DEBUG, "delete:: parameters id: {}", id)))
       .thenCompose(r -> r.after(clients.circulationSettingsStorageClient()::delete))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
@@ -106,7 +106,7 @@ public class CirculationSettingsResource extends CollectionResource {
     final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     final var query = routingContext.request().query();
-    log.debug("get:: parameters id: {}", query);
+    log.debug("get:: parameters id: {}", () -> query);
 
     circulationSettingsRepository.findBy(query)
       .thenApply(multipleLoanRecordsResult -> multipleLoanRecordsResult.map(multipleRecords ->
@@ -152,5 +152,12 @@ public class CirculationSettingsResource extends CollectionResource {
       log.warn("uuidIsValid:: Invalid UUID");
       return false;
     }
+  }
+
+  private static <T> T logAndReturn(T returnValue, Level level, String message,
+    Object... params) {
+
+    log.log(level, message, params);
+    return returnValue;
   }
 }
