@@ -683,6 +683,61 @@
       ]
     },
     {
+      "id": "circulation-settings",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/settings",
+          "permissionsRequired": [
+            "circulation.settings.collection.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.collection.get"
+          ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/settings/{id}",
+          "permissionsRequired": [
+            "circulation.settings.item.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.get"
+          ]
+        }, {
+          "methods": ["PUT"],
+          "pathPattern": "/circulation/settings/{id}",
+          "permissionsRequired": [
+            "circulation.settings.item.put"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.put"
+          ]
+        }, {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/settings",
+          "permissionsRequired": [
+            "circulation.settings.item.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.post"
+          ]
+        }, {
+          "methods": ["DELETE"],
+          "pathPattern": "/circulation/settings/{id}",
+          "permissionsRequired": [
+            "circulation.settings.item.delete"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.delete"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
@@ -1259,6 +1314,10 @@
     {
       "id": "settings",
       "version": "1.0"
+    },
+    {
+      "id": "circulation-settings-storage",
+      "version": "1.0"
     }
   ],
   "optional": [
@@ -1517,6 +1576,31 @@
       "permissionName": "mod-settings.global.read.mod-circulation",
       "displayName": "circulation settings - Read configuration",
       "description": "To read the configuration from mod settings."
+    },
+    {
+      "permissionName": "circulation.settings.collection.get",
+      "displayName": "circulation - get circulation settings",
+      "description": "get a collection of circulation settings"
+    },
+    {
+      "permissionName": "circulation.settings.item.get",
+      "displayName": "circulation - get an individual circulation setting",
+      "description": "get an individual circulation setting by ID"
+    },
+    {
+      "permissionName": "circulation.settings.item.put",
+      "displayName": "circulation - update circulation setting",
+      "description": "update circulation setting by ID"
+    },
+    {
+      "permissionName": "circulation.settings.item.post",
+      "displayName": "circulation - create circulation setting",
+      "description": "create a new circulation setting"
+    },
+    {
+      "permissionName": "circulation.settings.item.delete",
+      "displayName": "circulation - delete circulation setting",
+      "description": "delete circulation setting by ID"
     },
     {
       "permissionName": "circulation.all",

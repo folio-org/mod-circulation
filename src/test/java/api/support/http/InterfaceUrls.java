@@ -334,4 +334,7 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/settings/entries");
   }
 
+  public static URL circulationSettingsUrl(String subPath) {
+    return circulationModuleUrl("/circulation/settings" + subPath);
+  }
 }
