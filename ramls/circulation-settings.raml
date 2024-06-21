@@ -86,14 +86,14 @@ resourceTypes:
           type: circulation-setting
       responses:
         204:
-          description: "Circulation settings have been saved."
+          description: "Circulation settings have been saved"
         500:
           description: "Internal server error"
           body:
             text/plain:
               example: "Internal server error"
     delete:
-      is: [ validate ]
+      is: [validate]
       responses:
         204:
           description: "Circulation settings deleted"

@@ -41,7 +41,7 @@ public class CirculationSettingsResource extends CollectionResource {
     final var incomingRepresentation = routingContext.body().asJsonObject();
     setRandomIdIfMissing(incomingRepresentation);
     final var circulationSetting = CirculationSetting.from(incomingRepresentation);
-    log.debug("replace:: Creating circulation setting: {}", circulationSetting);
+    log.debug("create:: Creating circulation setting: {}", () -> circulationSetting);
 
     ofAsync(circulationSetting)
       .thenApply(refuseWhenCirculationSettingIsInvalid())
@@ -59,7 +59,7 @@ public class CirculationSettingsResource extends CollectionResource {
 
     final var incomingRepresentation = routingContext.body().asJsonObject();
     final var circulationSetting = CirculationSetting.from(incomingRepresentation);
-    log.debug("replace:: Replacing circulation setting : {}", circulationSetting);
+    log.debug("replace:: Replacing circulation setting : {}", () -> circulationSetting);
 
     ofAsync(circulationSetting)
       .thenApply(refuseWhenCirculationSettingIsInvalid())

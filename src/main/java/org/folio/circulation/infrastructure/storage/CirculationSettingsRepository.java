@@ -39,7 +39,6 @@ public class CirculationSettingsRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<CirculationSetting>>> findBy(String query) {
-
     return circulationSettingsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(response ->
         MultipleRecords.from(response, CirculationSetting::from, RECORDS_PROPERTY_NAME)));
