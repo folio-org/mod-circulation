@@ -420,6 +420,13 @@ public class FakeOkapi extends AbstractVerticle {
       .withChangeMetadata()
       .create().register(router);
 
+    new FakeStorageModuleBuilder()
+      .withRecordName("circulationSettings")
+      .withCollectionPropertyName("circulationSettings")
+      .withRootPath("/circulation-settings-storage/circulation-settings")
+      .withChangeMetadata()
+      .create().register(router);
+
     new FakeFeeFineOperationsModule().register(router);
 
     server.requestHandler(router)

@@ -701,6 +701,61 @@
       ]
     },
     {
+      "id": "circulation-settings",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/settings",
+          "permissionsRequired": [
+            "circulation.settings.collection.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.collection.get"
+          ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/circulation/settings/{id}",
+          "permissionsRequired": [
+            "circulation.settings.item.get"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.get"
+          ]
+        }, {
+          "methods": ["PUT"],
+          "pathPattern": "/circulation/settings/{id}",
+          "permissionsRequired": [
+            "circulation.settings.item.put"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.put"
+          ]
+        }, {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/settings",
+          "permissionsRequired": [
+            "circulation.settings.item.post"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.post"
+          ]
+        }, {
+          "methods": ["DELETE"],
+          "pathPattern": "/circulation/settings/{id}",
+          "permissionsRequired": [
+            "circulation.settings.item.delete"
+          ],
+          "modulePermissions": [
+            "circulation-storage.circulation-settings.item.delete"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
@@ -1148,7 +1203,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "7.1"
+      "version": "7.3"
     },
     {
       "id": "circulation-rules-storage",
@@ -1164,7 +1219,7 @@
     },
     {
       "id": "holdings-storage",
-      "version": "1.3 2.0 3.0 4.0 5.0 6.0"
+      "version": "1.3 2.0 3.0 4.0 5.0 6.0 7.0"
     },
     {
       "id": "request-storage",
@@ -1276,6 +1331,10 @@
     },
     {
       "id": "settings",
+      "version": "1.0"
+    },
+    {
+      "id": "circulation-settings-storage",
       "version": "1.0"
     }
   ],
@@ -1540,6 +1599,31 @@
       "permissionName": "circulation.items-by-instance.get",
       "displayName": "circulation - get items by instance",
       "description": "get items by instance"
+    },
+    {
+      "permissionName": "circulation.settings.collection.get",
+      "displayName": "circulation - get circulation settings",
+      "description": "get a collection of circulation settings"
+    },
+    {
+      "permissionName": "circulation.settings.item.get",
+      "displayName": "circulation - get an individual circulation setting",
+      "description": "get an individual circulation setting by ID"
+    },
+    {
+      "permissionName": "circulation.settings.item.put",
+      "displayName": "circulation - update circulation setting",
+      "description": "update circulation setting by ID"
+    },
+    {
+      "permissionName": "circulation.settings.item.post",
+      "displayName": "circulation - create circulation setting",
+      "description": "create a new circulation setting"
+    },
+    {
+      "permissionName": "circulation.settings.item.delete",
+      "displayName": "circulation - delete circulation setting",
+      "description": "delete circulation setting by ID"
     },
     {
       "permissionName": "circulation.all",

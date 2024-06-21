@@ -194,6 +194,9 @@ public abstract class APITests {
   protected final ResourceClient actualCostRecordsClient =
     ResourceClient.forActualCostRecordsStorage();
 
+  protected final ResourceClient circulationSettingsClient =
+    ResourceClient.forCirculationSettings();
+
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
 

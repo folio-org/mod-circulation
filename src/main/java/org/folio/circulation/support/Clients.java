@@ -70,6 +70,7 @@ public class Clients {
   private final CollectionResourceClient circulationItemClient;
   private final CollectionResourceClient searchClient;
   private final GetManyRecordsClient settingsStorageClient;
+  private final CollectionResourceClient circulationSettingsStorageClient;
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
@@ -142,6 +143,7 @@ public class Clients {
       settingsStorageClient = createSettingsStorageClient(client, context);
       circulationItemClient = createCirculationItemClient(client, context);
       searchClient = createSearchClient(client, context);
+      circulationSettingsStorageClient = createCirculationSettingsStorageClient(client, context);
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -382,6 +384,10 @@ public class Clients {
 
   public CollectionResourceClient searchClient() {
     return searchClient;
+  }
+
+  public CollectionResourceClient circulationSettingsStorageClient() {
+    return circulationSettingsStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -815,6 +821,13 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return  getCollectionResourceClient(client, context, "/search/instances");
+  }
+
+  private CollectionResourceClient createCirculationSettingsStorageClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return  getCollectionResourceClient(client, context,
+      "/circulation-settings-storage/circulation-settings");
   }
 
   private GetManyRecordsClient createSettingsStorageClient(

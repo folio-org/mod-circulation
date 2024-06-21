@@ -10,6 +10,7 @@ import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
+import org.folio.circulation.resources.CirculationSettingsResource;
 import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.DeclareLostResource;
@@ -152,6 +153,7 @@ public class CirculationVerticle extends AbstractVerticle {
     // Handlers
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
     new FeeFineBalanceChangedHandlerResource(client).register(router);
+    new CirculationSettingsResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {

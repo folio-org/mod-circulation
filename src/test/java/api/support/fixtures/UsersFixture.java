@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static api.support.fixtures.UserExamples.basedUponBobbyBibbin;
 import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
+import static api.support.fixtures.UserExamples.basedUponGroot;
 import static api.support.fixtures.UserExamples.basedUponHenryHanks;
 import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
@@ -31,6 +32,11 @@ public class UsersFixture {
 
   public UserResource jessica() {
     return createIfAbsent(basedUponJessicaPontefract()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource groot() {
+    return createIfAbsent(basedUponGroot()
       .inGroupFor(patronGroupsFixture.regular()));
   }
 

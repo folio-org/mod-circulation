@@ -276,6 +276,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::searchUrl, "instances");
   }
 
+  public static ResourceClient forCirculationSettings() {
+    return new ResourceClient(InterfaceUrls::circulationSettingsUrl, "circulationSettings");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
