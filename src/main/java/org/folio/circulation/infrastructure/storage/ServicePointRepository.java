@@ -22,10 +22,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.storage.mappers.ServicePointMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -195,6 +192,59 @@ public class ServicePointRepository {
             return succeeded(new MultipleRecords<>(newRequestList,
               multipleRequests.getTotalRecords()));
           }));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findPrimaryServicePointsForRequests(
+    final MultipleRecords<Request> multipleRequests) {
+
+    log.debug("findServicePointsForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+
+    final Collection<Request> requests = multipleRequests.getRecords();
+
+    final List<String> servicePointsToFetch = requests.stream()
+      .filter(Objects::nonNull)
+      .map(r -> r.getItem() != null ? r.getItem().getLocation().getPrimaryServicePointId() : null)
+      .filter(Objects::nonNull)
+      .map(Object::toString)
+      .distinct()
+      .toList();
+
+    if(servicePointsToFetch.isEmpty()) {
+      log.info("findPrimaryServicePointsForRequests:: No service points to query");
+      return completedFuture(succeeded(multipleRequests));
+    }
+
+    return createServicePointsFetcher().findByIds(servicePointsToFetch)
+      .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
+        multipleServicePoints -> {
+          List<Request> newRequestList = new ArrayList<>();
+          Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
+
+          for(Request request : requests) {
+            Request newRequest = null;
+            boolean foundSP = false;
+
+            for(ServicePoint servicePoint : spCollection) {
+              if(request.getItem() != null && request.getItem().getLocation() != null && request.getItem().getLocation().getPrimaryServicePointId() != null &&
+                request.getItem().getLocation().getPrimaryServicePointId().toString().equals(servicePoint.getId())) {
+                Location location = request.getItem().getLocation().withPrimaryServicePoint(servicePoint);
+                Item item = request.getItem().withLocation(location);
+                newRequest = request.withItem(item);
+                foundSP = true;
+                break;
+              }
+            }
+            if(!foundSP) {
+              log.info("No service point (out of {}) found for request {} (primaryServicePointId {})",
+                spCollection.size(), request.getId(), request.getPickupServicePointId());
+              newRequest = request;
+            }
+            newRequestList.add(newRequest);
+          }
+
+          return succeeded(new MultipleRecords<>(newRequestList,
+            multipleRequests.getTotalRecords()));
+        }));
   }
 
   public CompletableFuture<Result<Collection<ServicePoint>>> findServicePointsByIds(
