@@ -103,4 +103,28 @@ class CirculationSettingsTests extends APITests {
     assertThat(postErrorsNoValue.getJson().getJsonArray(ERRORS).getJsonObject(0).getString(MESSAGE),
       is(INVALID_JSON_MESSAGE));
   }
+
+  @Test
+  void enableRequestPrintDetailsSettingTest() {
+    final var setting = circulationSettingsClient.create(new CirculationSettingBuilder()
+      .withName("EnableRequestPrintDetails")
+      .withValue(new JsonObject().put("EnableRequestPrint", true)));
+    final var settingId = setting.getId();
+
+    final var settingById = circulationSettingsClient.get(settingId);
+    assertThat(settingById.getJson().getString(NAME), is("EnableRequestPrintDetails"));
+    assertThat(settingById.getJson().getJsonObject(VALUE).getString("EnableRequestPrint"),
+      is("true"));
+
+    circulationSettingsClient.replace(settingId, new CirculationSettingBuilder()
+      .withId(settingId)
+      .withName("EnableRequestPrint")
+      .withValue(new JsonObject().put("EnableRequestPrint", true)));
+    final var updatedSetting = circulationSettingsClient.get(settingId);
+    assertThat(updatedSetting.getJson().getString(NAME), is("EnableRequestPrint"));
+
+    circulationSettingsClient.delete(setting.getId());
+    final var allSettingsAfterDeletion = circulationSettingsClient.getMany(CqlQuery.noQuery());
+    assertThat(allSettingsAfterDeletion.size(), is(0));
+  }
 }
