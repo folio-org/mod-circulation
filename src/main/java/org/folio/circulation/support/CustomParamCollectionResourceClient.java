@@ -39,14 +39,14 @@ public class CustomParamCollectionResourceClient extends CollectionResourceClien
 
   @Override
   public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-      PageLimit pageLimit) {
+    PageLimit pageLimit) {
 
     return getMany(cqlQuery, pageLimit, noOffset());
   }
 
   @Override
   public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-      PageLimit pageLimit, Offset offset) {
+    PageLimit pageLimit, Offset offset) {
 
     return client.get(collectionRoot, cqlQuery, pageLimit, offset, customQueryParameter);
   }
