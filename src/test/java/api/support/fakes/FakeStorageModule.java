@@ -378,8 +378,8 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter()
-      .execute(resourcesForTenant.values(), query);
+    List<JsonObject> filteredItems = getFakeCQLToJSONInterpreter()
+      .execute(resourcesForTenant.values(), query, context);
 
     List<JsonObject> pagedItems = filteredItems.stream()
       .skip(offset)
@@ -408,6 +408,10 @@ public class FakeStorageModule extends AbstractVerticle {
     response.end();
   }
 
+  FakeCQLToJSONInterpreter getFakeCQLToJSONInterpreter() {
+    return new FakeCQLToJSONInterpreter();
+  }
+
   private void empty(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
 
@@ -430,7 +434,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    new FakeCQLToJSONInterpreter()
+    getFakeCQLToJSONInterpreter()
       .execute(resourcesForTenant.values(), query)
       .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
