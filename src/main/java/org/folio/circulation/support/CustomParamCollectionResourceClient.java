@@ -1,6 +1,5 @@
 package org.folio.circulation.support;
 
-import static java.lang.String.format;
 import static org.folio.circulation.support.http.client.Offset.noOffset;
 
 import java.net.URL;
@@ -49,9 +48,5 @@ public class CustomParamCollectionResourceClient extends CollectionResourceClien
     PageLimit pageLimit, Offset offset) {
 
     return client.get(collectionRoot, cqlQuery, pageLimit, offset, customQueryParameter);
-  }
-
-  private String individualRecordUrl(String id) {
-    return format("%s/%s", collectionRoot, id);
   }
 }

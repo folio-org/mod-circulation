@@ -109,7 +109,7 @@ public class CollectionResourceClient implements GetManyRecordsClient {
     return client.get(collectionRoot, cqlQuery, pageLimit, offset);
   }
 
-  private String individualRecordUrl(String id) {
+  String individualRecordUrl(String id) {
     return format("%s/%s", collectionRoot, id);
   }
 }
