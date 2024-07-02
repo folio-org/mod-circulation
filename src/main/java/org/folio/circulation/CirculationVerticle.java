@@ -31,6 +31,7 @@ import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.PickSlipsResource;
+import org.folio.circulation.resources.PrintEventsResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -152,6 +153,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
     new FeeFineBalanceChangedHandlerResource(client).register(router);
     new CirculationSettingsResource(client).register(router);
+    new PrintEventsResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {

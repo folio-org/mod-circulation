@@ -197,6 +197,9 @@ public abstract class APITests {
   protected final ResourceClient circulationSettingsClient =
     ResourceClient.forCirculationSettings();
 
+  protected final ResourceClient printEventsClient =
+    ResourceClient.forPrintEvents();
+
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
 
