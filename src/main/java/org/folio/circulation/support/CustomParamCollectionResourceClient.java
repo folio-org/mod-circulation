@@ -24,14 +24,17 @@ public class CustomParamCollectionResourceClient extends CollectionResourceClien
     this.customQueryParameter = customQueryParameter;
   }
 
+  @Override
   public CompletableFuture<Result<Response>> get() {
     return client.get(collectionRoot.toString(), customQueryParameter);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> get(PageLimit pageLimit) {
     return client.get(collectionRoot, pageLimit, customQueryParameter);
   }
 
+  @Override
   public CompletableFuture<Result<Response>> get(String id) {
     return client.get(individualRecordUrl(id), customQueryParameter);
   }
