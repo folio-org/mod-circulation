@@ -75,7 +75,7 @@ public class AllowedServicePointsService {
     userRepository = new UserRepository(clients);
     requestRepository = new RequestRepository(clients);
     requestPolicyRepository = new RequestPolicyRepository(clients);
-    servicePointRepository = new ServicePointRepository(clients);
+    servicePointRepository = new ServicePointRepository(clients, isEcsRequestRouting);
     settingsRepository = new SettingsRepository(clients);
     instanceRepository = new InstanceRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);

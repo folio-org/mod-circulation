@@ -41,7 +41,15 @@ public class ServicePointRepository {
   private final CollectionResourceClient servicePointsStorageClient;
 
   public ServicePointRepository(Clients clients) {
-    servicePointsStorageClient = clients.servicePointsStorage();
+    this(clients, false);
+  }
+
+  public ServicePointRepository(Clients clients, boolean includeRoutingServicePoints) {
+    if (includeRoutingServicePoints) {
+      servicePointsStorageClient = clients.routingServicePointsStorage();
+    } else {
+      servicePointsStorageClient = clients.servicePointsStorage();
+    }
   }
 
   public CompletableFuture<Result<ServicePoint>> getServicePointById(UUID id) {

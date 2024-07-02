@@ -23,11 +23,11 @@ import java.util.Collection;
 import java.util.Objects;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.results.Result;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -282,6 +282,7 @@ public class FakeOkapi extends AbstractVerticle {
       .withRootPath("/service-points")
       .withRequiredProperties("name", "code", "discoveryDisplayName")
       .withUniqueProperties("name")
+      .withQueryParameters("includeRoutingServicePoints")
       .withChangeMetadata()
       .disallowCollectionDelete()
       .create()
