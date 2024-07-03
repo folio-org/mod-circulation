@@ -15,22 +15,22 @@ import api.support.APITestContext;
 import io.vertx.core.json.JsonObject;
 
 public class FakeStorageModuleBuilder {
-  final String rootPath;
-  final String collectionPropertyName;
-  final String tenantId;
-  final Collection<String> requiredProperties;
-  final Collection<String> uniqueProperties;
-  final Collection<String> disallowedProperties;
-  final Boolean hasCollectionDelete;
-  final Boolean hasDeleteByQuery;
-  final String recordName;
-  final Boolean includeChangeMetadata;
-  final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
-  final JsonSchemaValidator recordValidator;
-  final String updateBatchPath;
-  final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
-  final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
-  final Collection<String> queryParameters;
+  private final String rootPath;
+  private final String collectionPropertyName;
+  private final String tenantId;
+  private final Collection<String> requiredProperties;
+  private final Collection<String> uniqueProperties;
+  private final Collection<String> disallowedProperties;
+  private final Boolean hasCollectionDelete;
+  private final Boolean hasDeleteByQuery;
+  private final String recordName;
+  private final Boolean includeChangeMetadata;
+  private final BiFunction<Collection<JsonObject>, JsonObject, Result<Object>> constraint;
+  private final JsonSchemaValidator recordValidator;
+  private final String updateBatchPath;
+  private final Function<JsonObject, JsonObject> batchUpdatePreProcessor;
+  private final List<BiFunction<JsonObject, JsonObject, JsonObject>> recordPreProcessors;
+  private final Collection<String> queryParameters;
 
   FakeStorageModuleBuilder() {
     this(
