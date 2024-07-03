@@ -11,10 +11,14 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import java.lang.invoke.MethodHandles;
+import java.util.function.Function;
 
+import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 public class PrintEventsResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -40,8 +44,18 @@ public class PrintEventsResource extends Resource {
     log.info("create:: Creating print event: {}", () -> printEventRequest);
 
     ofAsync(printEventRequest)
+      .thenApply(refuseWhenPrintEventRequestIsInvalid())
       .thenCompose(r -> r.after(printEventsRepository::create))
-      .thenApply(r -> r.map(response -> JsonHttpResponse.created(null, null)))
+      .thenApply(r -> r.map(response -> {
+        assert printEventRequest != null;
+        return JsonHttpResponse.created(printEventRequest.getRepresentation(), null);
+      }))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private static Function<Result<PrintEventRequest>, Result<PrintEventRequest>>
+  refuseWhenPrintEventRequestIsInvalid() {
+    return r -> r.failWhen(printEventRequest -> succeeded(printEventRequest == null),
+      circulationSetting -> singleValidationError("Print Event Request  JSON is invalid", "", ""));
   }
 }
