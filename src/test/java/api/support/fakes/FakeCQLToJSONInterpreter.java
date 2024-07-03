@@ -34,7 +34,7 @@ public class FakeCQLToJSONInterpreter {
           .filter(json -> json.containsKey("ecsRequestRouting")
             ? json.getBoolean("ecsRequestRouting") 
             : false)
-          .collect(Collectors.toList());
+          .toList();
       }
     }
 
