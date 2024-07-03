@@ -37,11 +37,10 @@ public class PrintEventsResource extends Resource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
     final var printEventsRepository = new PrintEventsRepository(clients);
-
     final var incomingRepresentation = routingContext.body().asJsonObject();
     final var printEventRequest = PrintEventRequest.from(incomingRepresentation);
 
-    log.info("create:: Creating print event: {}", () -> printEventRequest);
+    log.info("create:: Creating print event: {}", printEventRequest);
 
     ofAsync(printEventRequest)
       .thenApply(refuseWhenPrintEventRequestIsInvalid())
