@@ -27,14 +27,13 @@ public class FakeCQLToJSONInterpreter {
     var initiallyFilteredRecords = execute(records, query);
 
     // Routing SP filtering
-    String includeRoutingServicePointsParam =
-      context.getStringParameter("includeRoutingServicePoints");
-    if (includeRoutingServicePointsParam != null) {
-      var includeRoutingServicePoints = Boolean.parseBoolean(includeRoutingServicePointsParam);
-      if (includeRoutingServicePoints) {
+    String includeRoutingServicePointsParam = context.getStringParameter(
+      "includeRoutingServicePoints");
+    if (Boolean.parseBoolean(includeRoutingServicePointsParam)) {
         return records.stream()
           .filter(json -> json.containsKey("ecsRequestRouting")
-            ? json.getBoolean("ecsRequestRouting") : false)
+            ? json.getBoolean("ecsRequestRouting") 
+            : false)
           .collect(Collectors.toList());
       }
     }
