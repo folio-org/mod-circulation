@@ -1,7 +1,5 @@
 package org.folio.circulation.support;
 
-import static org.folio.circulation.support.http.client.Offset.noOffset;
-
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,13 +35,6 @@ public class CustomParamCollectionResourceClient extends CollectionResourceClien
   @Override
   public CompletableFuture<Result<Response>> get(String id) {
     return client.get(individualRecordUrl(id), customQueryParameter);
-  }
-
-  @Override
-  public CompletableFuture<Result<Response>> getMany(CqlQuery cqlQuery,
-    PageLimit pageLimit) {
-
-    return getMany(cqlQuery, pageLimit, noOffset());
   }
 
   @Override

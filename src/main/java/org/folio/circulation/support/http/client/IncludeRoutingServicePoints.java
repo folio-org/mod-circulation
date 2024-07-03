@@ -1,7 +1,10 @@
 package org.folio.circulation.support.http.client;
 
+import static java.lang.String.format;
+
 public class IncludeRoutingServicePoints implements QueryParameter {
 
+  private static final String PARAM_NAME = "includeRoutingServicePoints";
   private final Boolean value;
 
   public static IncludeRoutingServicePoints enabled() {
@@ -15,16 +18,16 @@ public class IncludeRoutingServicePoints implements QueryParameter {
   @Override
   public void consume(QueryStringParameterConsumer consumer) {
     if (value != null) {
-      consumer.consume("includeRoutingServicePoints", value.toString());
+      consumer.consume(PARAM_NAME, value.toString());
     }
   }
 
   @Override
   public String toString() {
     if (value == null) {
-      return "No includeRoutingServicePoints";
+      return format("No %s", PARAM_NAME);
     }
 
-    return String.format("includeRoutingServicePoints = \"%s\"", value);
+    return format("%s = \"%s\"", PARAM_NAME, value);
   }
 }
