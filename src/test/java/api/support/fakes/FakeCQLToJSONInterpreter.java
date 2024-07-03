@@ -35,7 +35,6 @@ public class FakeCQLToJSONInterpreter {
             ? json.getBoolean("ecsRequestRouting") 
             : false)
           .toList();
-      }
     }
 
     return initiallyFilteredRecords;
