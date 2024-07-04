@@ -76,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.ServicePointBuilder;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -84,6 +85,7 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -1660,6 +1662,51 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
     JsonObject itemRepresentation = itemAfter.getJson();
     assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+  }
+
+  @Test
+  void checkInItemWhenServiceHasChangedToNoPickupLocation(){
+    int intervalDuration = 0;
+    String intervalId = null;
+    reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
+    configurationsFixture.enableTlrFeature();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
+    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelffulfillmentPreference(instanceId));
+
+    String servicePointCode = servicePointsFixture.cd1().getJson().getString("code");
+    ServicePointBuilder changedServicePoint = ServicePointBuilder.from(servicePointsFixture.cd1())
+            .withPickupLocation(Boolean.FALSE)
+            .withHoldShelfExpriyPeriod(intervalDuration, intervalId)
+            .withName("custom service point");
+
+//    Update existing service point
+    servicePointsFixture.update(servicePointCode, changedServicePoint);
+
+    checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
+
+    //validating request before fulfilled
+    IndividualResource holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
+    JsonObject representationBefore = holdRequestBeforeFulfilled.getJson();
+    assertThat(representationBefore.getString("itemId"), nullValue());
+    validateTLRequestByFields(representationBefore,
+            HOLD_SHELF, instanceId, OPEN_NOT_YET_FILLED);
+
+    //validating request after fulfilled
+    JsonObject representation = holdRequestAfterFulfilled.getJson();
+    assertThat(representation.getString("itemId"), is(checkedOutItem.getId().toString()));
+    assertThat(representation.getString("holdingsRecordId"), is(defaultWithHoldings.getId()));
+
+    validateTLRequestByFields(representation, HOLD_SHELF, instanceId, OPEN_AWAITING_PICKUP);
+
+    IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
+    JsonObject itemRepresentation = itemAfter.getJson();
+    assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+
+    JsonObject servicePointRepresentation = representation.getJsonObject("pickupServicePoint");
+    Assertions.assertFalse(Boolean.parseBoolean(servicePointRepresentation.getString("pickupLocation")));
+    assertThat(servicePointRepresentation.getString("shelvingLagTime"), nullValue());
   }
 
   @Test

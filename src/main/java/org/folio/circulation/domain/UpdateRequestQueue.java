@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
@@ -184,8 +185,12 @@ public class UpdateRequestQueue {
 
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
       .getHoldShelfClosedLibraryDateManagement();
-    String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-      .getIntervalId().toUpperCase();
+
+    String intervalId = "0";
+    if (StringUtils.isNotBlank(calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId())) {
+      intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId().toUpperCase();
+    }
+
     log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
       calculatedRequest.getHoldShelfExpirationDate());
     // Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
