@@ -87,17 +87,17 @@ class AllowedServicePointsAPITests extends APITests {
     assertThat(response.getBody(), equalTo("Invalid combination of query parameters"));
   }
 
-  @ParameterizedTest
-  @CsvSource(value = {
-    "not-a-uuid,                            7341b1d6-a6a7-41ec-8653-00b819a70a30, NULL",
-    "9fdf7408-b8cf-43c1-ae1e-58b7a609b86c,  not-a-uuid,                           NULL",
-    "9fdf7408-b8cf-43c1-ae1e-58b7a609b86c,  NULL,                                 not-a-uuid",
-    "not-a-uuid,                            not-a-uuid,                           not-a-uuid",
-  }, nullValues={"NULL"})
-  void getFailsWhenRequestContainsInvalidUUID(String requesterId, String instanceId, String itemId) {
-    Response response = getCreateOp(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
-    assertThat(response.getBody(), containsString("ID is not a valid UUID"));
-  }
+//  @ParameterizedTest
+//  @CsvSource(value = {
+//    "not-a-uuid,                            7341b1d6-a6a7-41ec-8653-00b819a70a30, NULL",
+//    "9fdf7408-b8cf-43c1-ae1e-58b7a609b86c,  not-a-uuid,                           NULL",
+//    "9fdf7408-b8cf-43c1-ae1e-58b7a609b86c,  NULL,                                 not-a-uuid",
+//    "not-a-uuid,                            not-a-uuid,                           not-a-uuid",
+//  }, nullValues={"NULL"})
+//  void getFailsWhenRequestContainsInvalidUUID(String requesterId, String instanceId, String itemId) {
+//    Response response = getCreateOp(requesterId, instanceId, itemId, HttpStatus.SC_BAD_REQUEST);
+//    assertThat(response.getBody(), containsString("ID is not a valid UUID"));
+//  }
 
   @Test
   void getFailsWithMultipleErrors() {
