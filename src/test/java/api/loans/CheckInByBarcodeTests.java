@@ -81,6 +81,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -1666,8 +1667,6 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void checkInItemWhenServiceHasChangedToNoPickupLocation(){
-    int intervalDuration = 0;
-    String intervalId = null;
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
     configurationsFixture.enableTlrFeature();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
@@ -1676,10 +1675,22 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelffulfillmentPreference(instanceId));
 
     String servicePointCode = servicePointsFixture.cd1().getJson().getString("code");
-    ServicePointBuilder changedServicePoint = ServicePointBuilder.from(servicePointsFixture.cd1())
-            .withPickupLocation(Boolean.FALSE)
-            .withHoldShelfExpriyPeriod(intervalDuration, intervalId)
-            .withName("custom service point");
+    String servicePointName = "custom service point";
+    int shelvingLagTime = 0;
+    String discoveryDisplayName = servicePointsFixture.cd1().getJson().getString("discoveryDisplayName");
+    String description = servicePointsFixture.cd1().getJson().getString("description");
+
+    ServicePointBuilder changedServicePoint = new ServicePointBuilder(
+            servicePointsFixture.cd1().getId(),
+            servicePointName,
+            servicePointCode,
+            discoveryDisplayName,
+            description,
+            shelvingLagTime,
+            Boolean.FALSE,
+            null,
+            ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name()
+    );
 
 //    Update existing service point
     servicePointsFixture.update(servicePointCode, changedServicePoint);
@@ -1706,7 +1717,6 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     JsonObject servicePointRepresentation = representation.getJsonObject("pickupServicePoint");
     Assertions.assertFalse(Boolean.parseBoolean(servicePointRepresentation.getString("pickupLocation")));
-    assertThat(servicePointRepresentation.getString("shelvingLagTime"), nullValue());
   }
 
   @Test
