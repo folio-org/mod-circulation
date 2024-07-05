@@ -2,9 +2,10 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
@@ -187,8 +187,11 @@ public class UpdateRequestQueue {
       .getHoldShelfClosedLibraryDateManagement();
 
     String intervalId = "0";
-    if (StringUtils.isNotBlank(calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId())) {
-      intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod().getIntervalId().toUpperCase();
+    TimePeriod holdShelfExpiryPeriod = calculatedRequest.getPickupServicePoint()
+      .getHoldShelfExpiryPeriod();
+    if (holdShelfExpiryPeriod != null && isNotBlank(holdShelfExpiryPeriod.getIntervalId())) {
+      intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
+        .getIntervalId().toUpperCase();
     }
 
     log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
