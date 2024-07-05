@@ -75,6 +75,7 @@ public class AllowedServicePointsResource extends Resource {
     String requestId = queryParams.get("requestId");
     String useStubItem = queryParams.get("useStubItem");
     String ecsRequestRouting = queryParams.get("ecsRequestRouting");
+    String patronGroupId = queryParams.get("patronGroupId");
 
     List<String> errors = new ArrayList<>();
 
@@ -82,11 +83,15 @@ public class AllowedServicePointsResource extends Resource {
 
     if (requesterId != null && !isUuid(requesterId)) {
       log.warn("Requester ID is not a valid UUID: {}", requesterId);
-      errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
+      if (patronGroupId != null && !isUuid(patronGroupId)) {
+        log.warn("Patron Group ID is not a valid UUID: {}", patronGroupId);
+        errors.add(String.format("Not valid UUID for Requester ID : %s and " +
+          "Patron Group ID: %s.", requesterId, patronGroupId));
+      }
     }
 
     if (instanceId != null && !isUuid(instanceId)) {
-      log.warn("Instance ID is not a valid UUID: {}", requesterId);
+      log.warn("Instance ID is not a valid UUID: {}", instanceId);
       errors.add(String.format("Instance ID is not a valid UUID: %s.", instanceId));
     }
 
@@ -144,8 +149,9 @@ public class AllowedServicePointsResource extends Resource {
       return failed(new BadRequestFailure(errorMessage));
     }
 
-    return succeeded(new AllowedServicePointsRequest(operation, requesterId, instanceId, itemId,
-      requestId, Boolean.parseBoolean(useStubItem), Boolean.parseBoolean(ecsRequestRouting)));
+    return succeeded(new AllowedServicePointsRequest(operation, requesterId,
+      patronGroupId, instanceId, itemId, requestId, Boolean.parseBoolean(useStubItem),
+      Boolean.parseBoolean(ecsRequestRouting)));
   }
 
   private static void validateBoolean(String parameter, String parameterName, List<String> errors) {
