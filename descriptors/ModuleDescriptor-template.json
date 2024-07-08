@@ -743,7 +743,7 @@
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/circulation/print-events",
+          "pathPattern": "/circulation/print-events/create-batch",
           "permissionsRequired": [
             "circulation.print-events.post"
           ],

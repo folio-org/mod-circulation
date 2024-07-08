@@ -29,7 +29,7 @@ public class PrintEventsResource extends Resource {
 
   @Override
   public void register(Router router) {
-    new RouteRegistration("/circulation/print-events", router)
+    new RouteRegistration("/circulation/print-events/create-batch", router)
       .create(this::create);
   }
 
