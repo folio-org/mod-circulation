@@ -44,7 +44,7 @@ class PrintEventsTests extends APITests {
   }
 
   @Test
-  void postPrintEventsWithInvalidField_NullFeild() {
+  void postPrintEventsWithInvalidField_NullField() {
     JsonObject printRequest = getPrintEvent();
     printRequest.put(REQUESTER_ID_FIELD, null);
     Response response = printEventsClient.attemptCreate(printRequest);

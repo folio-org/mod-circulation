@@ -826,7 +826,7 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return  getCollectionResourceClient(client, context,
-      "/print-events-storage");
+      "/print-events-storage/print-events");
   }
 
   private GetManyRecordsClient createSettingsStorageClient(
