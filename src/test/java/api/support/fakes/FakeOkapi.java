@@ -423,7 +423,7 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
-      .withRootPath("/print-events-storage/print-events")
+      .withRootPath("/print-events-storage/print-events/create-batch")
       .withChangeMetadata()
       .create().register(router);
 
