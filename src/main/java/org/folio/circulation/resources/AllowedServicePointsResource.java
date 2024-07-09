@@ -85,8 +85,10 @@ public class AllowedServicePointsResource extends Resource {
       log.warn("Requester ID is not a valid UUID: {}", requesterId);
       if (patronGroupId != null && !isUuid(patronGroupId)) {
         log.warn("Patron Group ID is not a valid UUID: {}", patronGroupId);
-        errors.add(String.format("Not valid UUID for Requester ID : %s and " +
+        errors.add(String.format("ID is not a valid UUID for Requester ID : %s and " +
           "Patron Group ID: %s.", requesterId, patronGroupId));
+      } else {
+        errors.add(String.format("ID is not a valid UUID for Requester ID: %s.", requesterId));
       }
     }
 
