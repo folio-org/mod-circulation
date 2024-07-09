@@ -45,6 +45,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
+import static org.folio.circulation.domain.policy.ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -1681,16 +1682,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     String description = servicePointsFixture.cd1().getJson().getString("description");
 
     ServicePointBuilder changedServicePoint = new ServicePointBuilder(
-            servicePointsFixture.cd1().getId(),
-            servicePointName,
-            servicePointCode,
-            discoveryDisplayName,
-            description,
-            shelvingLagTime,
-            Boolean.FALSE,
-            null,
-            ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name()
-    );
+            servicePointsFixture.cd1().getId(), servicePointName, servicePointCode, discoveryDisplayName, description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name());
 
 //    Update existing service point
     servicePointsFixture.update(servicePointCode, changedServicePoint);
