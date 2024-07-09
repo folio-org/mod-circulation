@@ -138,6 +138,7 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> allowedSpInResponse) {
 
     var requesterId = usersFixture.steve().getId().toString();
+    var patronGroupId = patronGroupsFixture.regular().getId().toString();
     var items = itemsFixture.createMultipleItemForTheSameInstance(1,
       List.of(ib -> ib.withStatus(itemStatus.getValue())));
     var item = items.get(0);
@@ -155,8 +156,16 @@ class AllowedServicePointsAPITests extends APITests {
       .collect(Collectors.toSet()));
 
     var response = requestLevel == TITLE
-      ? get("create", requesterId, instanceId, null, null, null, null, HttpStatus.SC_OK).getJson()
-      : get("create", requesterId, null, itemId, null, null, null, HttpStatus.SC_OK).getJson();
+      ? get("create", requesterId,null, instanceId, null, null, null, null, HttpStatus.SC_OK).getJson()
+      : get("create", requesterId,null, null, itemId, null, null, null, HttpStatus.SC_OK).getJson();
+
+    assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
+
+    response = requestLevel == TITLE
+      ? get("create", null, patronGroupId, instanceId, null, null, null, null,
+      HttpStatus.SC_OK).getJson()
+      : get("create", null, patronGroupId, null, itemId, null, null, null,
+      HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
   }
@@ -224,7 +233,8 @@ class AllowedServicePointsAPITests extends APITests {
     var requestId = request == null ? null : request.getId().toString();
 
     var response =
-      get("replace", null, null, null, requestId, null, null, HttpStatus.SC_OK).getJson();
+      get("replace", null,null, null, null, requestId, null, null,
+        HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
   }
@@ -654,7 +664,7 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void getReplaceFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
-    Response response = get("replace", null, null, null, requestId, null,
+    Response response = get("replace", null,null, null, null, requestId, null,
       null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
@@ -664,7 +674,7 @@ class AllowedServicePointsAPITests extends APITests {
   void getMoveFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
     String itemId = itemsFixture.basedUponNod().getId().toString();
-    Response response = get("move", null, null, itemId, requestId, null,
+    Response response = get("move", null,null, null, itemId, requestId, null,
       null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
@@ -726,57 +736,57 @@ class AllowedServicePointsAPITests extends APITests {
 
     // Valid "move" request
     var moveResponse =
-      get("move", null, null, itemToMoveToId, requestId, null, null, HttpStatus.SC_OK).getJson();
+      get("move", null,null, null, itemToMoveToId, requestId, null, null, HttpStatus.SC_OK).getJson();
     assertThat(moveResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
 
     // Invalid "move" requests
-    var invalidMoveResponse1 = get("move", null, null, null, requestId,
+    var invalidMoveResponse1 = get("move", null,null, null, null, requestId,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse1.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse2 = get("move", null, null, itemToMoveToId, null,
+    var invalidMoveResponse2 = get("move", null,null, null, itemToMoveToId, null,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse2.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse3 = get("move", null, null, null, null,
+    var invalidMoveResponse3 = get("move", null,null, null, null, null,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse3.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse4 = get("move", requesterId, null, itemToMoveToId, requestId,
+    var invalidMoveResponse4 = get("move", requesterId,null, null, itemToMoveToId, requestId,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse4.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse5 = get("move", null, instanceId, itemToMoveToId, requestId,
+    var invalidMoveResponse5 = get("move", null,null, instanceId, itemToMoveToId, requestId,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse5.getBody(), equalTo("Invalid combination of query parameters"));
 
     // Valid "replace" request
     var replaceResponse =
-      get("replace", null, null, null, requestId, null, null, HttpStatus.SC_OK).getJson();
+      get("replace", null, null,null, null, requestId, null, null, HttpStatus.SC_OK).getJson();
     assertThat(replaceResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
 
     // Invalid "replace" requests
-    var invalidReplaceResponse1 = get("replace", null, null, null, null,
+    var invalidReplaceResponse1 = get("replace", null,null, null, null, null,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse1.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse2 = get("replace", requesterId, null, null, requestId,
+    var invalidReplaceResponse2 = get("replace", requesterId,null, null, null, requestId,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse2.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse3 = get("replace", null, instanceId, null, requestId,
+    var invalidReplaceResponse3 = get("replace", null,null, instanceId, null, requestId,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse3.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse4 = get("replace", null, null, requestedItemId, requestId,
+    var invalidReplaceResponse4 = get("replace", null,null, null, requestedItemId, requestId,
       null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse4.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse5 = get("replace", requesterId, instanceId,
+    var invalidReplaceResponse5 = get("replace", requesterId, null, instanceId,
       requestedItemId, requestId, null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse5.getBody(),
       equalTo("Invalid combination of query parameters"));
@@ -899,27 +909,35 @@ class AllowedServicePointsAPITests extends APITests {
   private Response getCreateOp(String requesterId, String instanceId, String itemId,
     String useStubItem, String ecsRequestRouting, int expectedStatusCode) {
 
-    return get("create", requesterId, instanceId, itemId, null, useStubItem,
+    return get("create", requesterId,null, instanceId, itemId, null, useStubItem,
       ecsRequestRouting, expectedStatusCode);
   }
 
   private Response getCreateOp(String requesterId, String instanceId, String itemId,
     int expectedStatusCode) {
 
-    return get("create", requesterId, instanceId, itemId, null, null, null, expectedStatusCode);
+    return get("create", requesterId, null, instanceId, itemId, null, null, null,
+      expectedStatusCode);
   }
 
   private Response getReplaceOp(String requestId, int expectedStatusCode) {
-    return get("replace", null, null, null, requestId, null, null, expectedStatusCode);
+    return get("replace", null, null, null, null, requestId, null, null,
+      expectedStatusCode);
   }
 
-  private Response get(String operation, String requesterId, String instanceId, String itemId,
+  private Response get(String operation, String requesterId,
+                       String patronGroupId,
+                       String instanceId,
+                       String itemId,
     String requestId, String useStubItem, String ecsRequestRouting, int expectedStatusCode) {
 
     List<QueryStringParameter> queryParams = new ArrayList<>();
     queryParams.add(namedParameter("operation", operation));
     if (requesterId != null) {
       queryParams.add(namedParameter("requesterId", requesterId));
+    }
+    if (patronGroupId != null) {
+      queryParams.add(namedParameter("patronGroupId", patronGroupId));
     }
     if (instanceId != null) {
       queryParams.add(namedParameter("instanceId", instanceId));

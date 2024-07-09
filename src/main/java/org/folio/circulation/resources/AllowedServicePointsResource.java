@@ -112,14 +112,14 @@ public class AllowedServicePointsResource extends Resource {
 
     boolean allowedCombinationOfParametersDetected = false;
 
-    if (operation == Request.Operation.CREATE && requesterId != null && instanceId != null &&
+    if (operation == Request.Operation.CREATE && (requesterId != null || patronGroupId != null) && instanceId != null &&
       itemId == null && requestId == null) {
 
       log.info("validateAllowedServicePointsRequest:: TLR request creation case");
       allowedCombinationOfParametersDetected = true;
     }
 
-    if (operation == Request.Operation.CREATE && requesterId != null && instanceId == null &&
+    if (operation == Request.Operation.CREATE && (requesterId != null || patronGroupId != null) && instanceId == null &&
       itemId != null && requestId == null) {
 
       log.info("validateAllowedServicePointsRequest:: ILR request creation case");
