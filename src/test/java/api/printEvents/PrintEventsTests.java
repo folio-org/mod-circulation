@@ -18,7 +18,7 @@ class PrintEventsTests extends APITests {
   @Test
   void postPrintEventsTest() {
     JsonObject printRequest = getPrintEvent();
-    Response response = restAssuredClient.post(printRequest, printEventsUrl("/create-batch"), "post-print-event");
+    Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
     assertThat(response, hasStatus(HTTP_CREATED));
   }
 
@@ -26,7 +26,7 @@ class PrintEventsTests extends APITests {
   void postPrintEventsWithInvalidField() {
     JsonObject printRequest = getPrintEvent();
     printRequest.put("invalidField", "invalid");
-    Response response = restAssuredClient.post(printRequest, printEventsUrl("/create-batch"), "post-print-event");
+    Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
@@ -35,7 +35,7 @@ class PrintEventsTests extends APITests {
     JsonObject printRequest = getPrintEvent();
     List<String> requestIds = List.of();
     printRequest.put("requestIds", requestIds);
-    Response response = restAssuredClient.post(printRequest, printEventsUrl("/create-batch"), "post-print-event");
+    Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
@@ -43,7 +43,7 @@ class PrintEventsTests extends APITests {
   void postPrintEventsWithInvalidField_NullField() {
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requesterId", null);
-    Response response = restAssuredClient.post(printRequest, printEventsUrl("/create-batch"), "post-print-event");
+    Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 

@@ -339,6 +339,6 @@ public class InterfaceUrls {
   }
 
   public static URL printEventsUrl(String subPath) {
-    return circulationModuleUrl("/circulation/print-events" + subPath);
+    return circulationModuleUrl("/circulation" + subPath);
   }
 }
