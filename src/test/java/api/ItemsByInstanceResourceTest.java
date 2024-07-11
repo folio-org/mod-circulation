@@ -1,19 +1,32 @@
 package api;
 
+import io.vertx.core.http.HttpClient;
+import org.apache.http.HttpStatus;
+import org.folio.circulation.infrastructure.storage.SearchRepository;
+import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.http.client.Response;
+import org.folio.circulation.support.http.server.WebContext;
+import org.junit.jupiter.api.Assertions;
+
 import static api.support.APITestContext.clearTempTenantId;
 import static api.support.APITestContext.setTempTenantId;
 import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static org.folio.circulation.support.StringUtil.urlEncode;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
-import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -75,6 +88,26 @@ class ItemsByInstanceResourceTest extends APITests {
     assertThat(items, hasItem(allOf(
       hasJsonPath("id", UUIDMatcher.is(universityItem.getId())),
       hasJsonPath("tenantId", is(TENANT_ID_UNIVERSITY)))));
+  }
+
+  @Test
+  void shouldPassAndReturnEmptyResultIfThereIsNoResult() throws ExecutionException, InterruptedException {
+    WebContext webContext = mock(WebContext.class);
+    HttpClient httpClient = mock(HttpClient.class);
+    CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
+    SearchRepository searchRepository = new SearchRepository(webContext, httpClient, collectionResourceClient);
+
+    var queryParams = List.of(String.format("(id==%s)", UUID.randomUUID()));
+
+    when(collectionResourceClient.getManyWithQueryStringParameters(
+      Map.of("expandAll", "true", "query", urlEncode(queryParams.get(0)))))
+      .thenReturn(ofAsync(new Response(HttpStatus.SC_OK, null, "application/json")));
+
+    var response = searchRepository.getInstanceWithItems(queryParams);
+    var result = response.get();
+
+    Assertions.assertTrue(result.succeeded());
+    Assertions.assertNull(result.value());
   }
 
   private Response get(String query, int expectedStatusCode) {
