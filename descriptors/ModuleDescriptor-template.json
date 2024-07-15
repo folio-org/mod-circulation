@@ -745,10 +745,10 @@
           "methods": ["POST"],
           "pathPattern": "/circulation/print-events-entry",
           "permissionsRequired": [
-            "circulation.print-events.post"
+            "circulation.print-events-entry.item.post"
           ],
           "modulePermissions": [
-            "circulation-storage.print-events.post"
+            "print-events-storage.print-events-entry.item.post"
           ]
         }
       ]
@@ -1348,7 +1348,7 @@
   ],
   "permissionSets": [
     {
-      "permissionName": "circulation.print-events.post",
+      "permissionName": "circulation.print-events-entry.item.post",
       "displayName": "circulation - create print events",
       "description": "create print event logs"
     },
