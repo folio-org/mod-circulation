@@ -1,33 +1,21 @@
 package api;
 
-import io.vertx.core.http.HttpClient;
-import org.apache.http.HttpStatus;
-import org.folio.circulation.infrastructure.storage.SearchRepository;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.http.server.WebContext;
-import org.junit.jupiter.api.Assertions;
-
 import static api.support.APITestContext.clearTempTenantId;
 import static api.support.APITestContext.setTempTenantId;
 import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static org.folio.circulation.support.StringUtil.urlEncode;
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
+import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 import api.support.APITests;
 import api.support.builders.SearchInstanceBuilder;
@@ -91,23 +79,35 @@ class ItemsByInstanceResourceTest extends APITests {
   }
 
   @Test
-  void shouldPassAndReturnEmptyResultIfThereIsNoResult() throws ExecutionException, InterruptedException {
-    WebContext webContext = mock(WebContext.class);
-    HttpClient httpClient = mock(HttpClient.class);
-    CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
-    SearchRepository searchRepository = new SearchRepository(webContext, httpClient, collectionResourceClient);
+  void canGetEmptyResult() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    UUID instanceId = instance.getId();
 
-    var queryParams = List.of(String.format("(id==%s)", UUID.randomUUID()));
+    // create item in tenant "college"
+    setTempTenantId(TENANT_ID_COLLEGE);
+    IndividualResource collegeLocation = locationsFixture.mainFloor();
+    IndividualResource collegeHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource collegeItem = itemsFixture.createItemWithHoldingsAndLocation(
+      collegeHoldings.getId(), collegeLocation.getId());
+    clearTempTenantId();
 
-    when(collectionResourceClient.getManyWithQueryStringParameters(
-      Map.of("expandAll", "true", "query", urlEncode(queryParams.get(0)))))
-      .thenReturn(ofAsync(new Response(HttpStatus.SC_OK, null, "application/json")));
+    // create item in tenant "university"
+    setTempTenantId(TENANT_ID_UNIVERSITY);
+    IndividualResource universityLocation = locationsFixture.thirdFloor();
+    IndividualResource universityHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    IndividualResource universityItem = itemsFixture.createItemWithHoldingsAndLocation(
+      universityHoldings.getId(), universityLocation.getId());
+    clearTempTenantId();
 
-    var response = searchRepository.getInstanceWithItems(queryParams);
-    var result = response.get();
+    // make sure neither item exists in current tenant
+    assertThat(itemsFixture.getById(collegeItem.getId()).getResponse().getStatusCode(), is(404));
+    assertThat(itemsFixture.getById(universityItem.getId()).getResponse().getStatusCode(), is(404));
 
-    Assertions.assertTrue(result.succeeded());
-    Assertions.assertNull(result.value());
+    ResourceClient.forSearchClient().replace(instanceId, new JsonObject());
+    Response response = get(String.format("query=(id==%s)", instanceId), 200);
+    JsonObject responseJson = response.getJson();
+
+    Assertions.assertTrue(responseJson.isEmpty());
   }
 
   private Response get(String query, int expectedStatusCode) {

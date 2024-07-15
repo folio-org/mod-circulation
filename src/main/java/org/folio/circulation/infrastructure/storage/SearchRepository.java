@@ -63,7 +63,7 @@ public class SearchRepository {
 
   private CompletableFuture<Result<SearchInstance>> updateItemDetails(SearchInstance searchInstance) {
     log.debug("updateItemDetails:: searchInstance {}", () -> searchInstance);
-    if (searchInstance == null) {
+    if (searchInstance == null || searchInstance.getId() == null) {
       log.info("updateItemDetails:: searchInstance is empty");
       return emptyAsync();
     }
