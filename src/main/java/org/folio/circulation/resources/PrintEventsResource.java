@@ -90,7 +90,11 @@ public class PrintEventsResource extends Resource {
   private static Function<PrintEventRequest, CompletableFuture<Result<PrintEventRequest>>> validatePrintEventFeatureFlag(
     CirculationSettingsRepository circulationSettingsRepository) {
     return printEventRequest -> circulationSettingsRepository.findBy(formatString(PRINT_EVENT_FLAG_QUERY))
-      .thenApply(result -> handleCirculationSettingResult(result.map(MultipleRecords::getRecords), printEventRequest));
+      .thenApply(result -> {
+        log.info("validatePrintEventFeatureFlag:: result value {}", result.value());
+        log.info("validatePrintEventFeatureFlag:: result value {}", result.value().getRecords());
+        return handleCirculationSettingResult(result.map(MultipleRecords::getRecords), printEventRequest);
+      });
   }
 
   private static Result<PrintEventRequest> handleCirculationSettingResult(Result<Collection<CirculationSetting>> result,

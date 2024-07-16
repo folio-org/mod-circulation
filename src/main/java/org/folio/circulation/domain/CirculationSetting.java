@@ -39,6 +39,7 @@ public class CirculationSetting {
   private final JsonObject value;
 
   public static CirculationSetting from(JsonObject representation) {
+    log.info("from {}", representation);
     final var id = getProperty(representation, ID_FIELD);
     final var name = getProperty(representation, NAME_FIELD);
     final var value = getObjectProperty(representation, VALUE_FIELD);
