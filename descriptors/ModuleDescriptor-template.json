@@ -748,7 +748,8 @@
             "circulation.print-events-entry.item.post"
           ],
           "modulePermissions": [
-            "print-events-storage.print-events-entry.item.post"
+            "print-events-storage.print-events-entry.item.post",
+            "circulation-storage.circulation-settings.collection.get"
           ]
         }
       ]

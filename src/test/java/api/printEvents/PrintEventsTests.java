@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static api.support.http.InterfaceUrls.printEventsUrl;
@@ -74,9 +73,9 @@ class PrintEventsTests extends APITests {
       .withName("Enable print event log")
       .withValue(new JsonObject().put("Enable Print Event", true)));
     JsonObject printRequest = getPrintEvent();
-    List<UUID> RequestIds = createOneHundredRequests();
-    RequestIds.add(UUID.randomUUID());
-    printRequest.put("requestIds", RequestIds);
+    List<UUID> requestIds = createOneHundredRequests();
+    requestIds.add(UUID.randomUUID());
+    printRequest.put("requestIds", requestIds);
     Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
@@ -124,7 +123,6 @@ class PrintEventsTests extends APITests {
           .forItem(itemsFixture.basedUponSmallAngryPlanet())
           .by(usersFixture.charlotte())
           .fulfillToHoldShelf()
-          .withPickupServicePointId(pickupServicePointId)).getId())
-      .collect(Collectors.toList());
+          .withPickupServicePointId(pickupServicePointId)).getId()).toList();
   }
 }
