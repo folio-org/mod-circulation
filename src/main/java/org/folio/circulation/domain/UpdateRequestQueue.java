@@ -39,6 +39,7 @@ public class UpdateRequestQueue {
   private final ConfigurationRepository configurationRepository;
   private final RequestQueueService requestQueueService;
   private final CalendarRepository calendarRepository;
+  private static final String NOT_DEFINED_INTERVAL = "";
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
@@ -186,12 +187,13 @@ public class UpdateRequestQueue {
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
       .getHoldShelfClosedLibraryDateManagement();
 
-    String intervalId = "0";
+    String intervalId;
     TimePeriod holdShelfExpiryPeriod = calculatedRequest.getPickupServicePoint()
       .getHoldShelfExpiryPeriod();
     if (holdShelfExpiryPeriod != null && isNotBlank(holdShelfExpiryPeriod.getIntervalId())) {
-      intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-        .getIntervalId().toUpperCase();
+      intervalId = holdShelfExpiryPeriod.getIntervalId().toUpperCase();
+    } else {
+      intervalId = NOT_DEFINED_INTERVAL;
     }
 
     log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
