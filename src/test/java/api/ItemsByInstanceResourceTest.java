@@ -4,6 +4,8 @@ import static api.support.APITestContext.clearTempTenantId;
 import static api.support.APITestContext.setTempTenantId;
 import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static org.folio.HttpStatus.HTTP_NOT_FOUND;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
@@ -15,7 +17,6 @@ import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
 
 import api.support.APITests;
 import api.support.builders.SearchInstanceBuilder;
@@ -80,8 +81,7 @@ class ItemsByInstanceResourceTest extends APITests {
 
   @Test
   void canGetEmptyResult() {
-    IndividualResource instance = instancesFixture.basedUponDunkirk();
-    UUID instanceId = instance.getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
 
     // create item in tenant "college"
     setTempTenantId(TENANT_ID_COLLEGE);
@@ -100,14 +100,16 @@ class ItemsByInstanceResourceTest extends APITests {
     clearTempTenantId();
 
     // make sure neither item exists in current tenant
-    assertThat(itemsFixture.getById(collegeItem.getId()).getResponse().getStatusCode(), is(404));
-    assertThat(itemsFixture.getById(universityItem.getId()).getResponse().getStatusCode(), is(404));
+    assertThat(itemsFixture.getById(collegeItem.getId()).getResponse().getStatusCode(),
+      is(HTTP_NOT_FOUND.toInt()));
+    assertThat(itemsFixture.getById(universityItem.getId()).getResponse().getStatusCode(),
+      is(HTTP_NOT_FOUND.toInt()));
 
     ResourceClient.forSearchClient().replace(instanceId, new JsonObject());
-    Response response = get(String.format("query=(id==%s)", instanceId), 200);
+    Response response = get(String.format("query=(id==%s)", instanceId), HTTP_OK.toInt());
     JsonObject responseJson = response.getJson();
 
-    Assertions.assertTrue(responseJson.isEmpty());
+    assertThat(responseJson.isEmpty(), is(true));
   }
 
   private Response get(String query, int expectedStatusCode) {
