@@ -193,6 +193,7 @@ public class UpdateRequestQueue {
     if (holdShelfExpiryPeriod != null && isNotBlank(holdShelfExpiryPeriod.getIntervalId())) {
       intervalId = holdShelfExpiryPeriod.getIntervalId().toUpperCase();
     } else {
+      log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: hold shelf expiry period interval is empty");
       intervalId = NOT_DEFINED_INTERVAL;
     }
 
