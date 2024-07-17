@@ -4,8 +4,8 @@ import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
-import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
@@ -191,9 +191,11 @@ public class UpdateRequestQueue {
     TimePeriod holdShelfExpiryPeriod = calculatedRequest.getPickupServicePoint()
       .getHoldShelfExpiryPeriod();
     if (holdShelfExpiryPeriod != null && isNotBlank(holdShelfExpiryPeriod.getIntervalId())) {
+      log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval is {}",
+        holdShelfExpiryPeriod.getIntervalId());
       intervalId = holdShelfExpiryPeriod.getIntervalId().toUpperCase();
     } else {
-      log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: hold shelf expiry period interval is empty");
+      log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval is empty");
       intervalId = NOT_DEFINED_INTERVAL;
     }
 

@@ -86,7 +86,6 @@ import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -1669,19 +1668,23 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   void checkInItemWhenServiceHasChangedToNoPickupLocation(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
     configurationsFixture.enableTlrFeature();
-    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
-    IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
-    IndividualResource holdRequestBeforeFulfilled = requestsClient.create(buildHoldTLRWithHoldShelffulfillmentPreference(instanceId));
+    var instanceId = instancesFixture.basedUponDunkirk().getId();
+    var defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    var checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(
+      defaultWithHoldings.getId()));
+    var holdRequestBeforeFulfilled = requestsClient.create(
+      buildHoldTLRWithHoldShelffulfillmentPreference(instanceId));
 
     String servicePointCode = servicePointsFixture.cd1().getJson().getString("code");
     String servicePointName = "custom service point";
     int shelvingLagTime = 0;
-    String discoveryDisplayName = servicePointsFixture.cd1().getJson().getString("discoveryDisplayName");
+    String discoveryDisplayName = servicePointsFixture.cd1().getJson()
+      .getString("discoveryDisplayName");
     String description = servicePointsFixture.cd1().getJson().getString("description");
 
     ServicePointBuilder changedServicePoint = new ServicePointBuilder(
-            servicePointsFixture.cd1().getId(), servicePointName, servicePointCode, discoveryDisplayName, description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name());
+      servicePointsFixture.cd1().getId(), servicePointName, servicePointCode, discoveryDisplayName,
+      description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name());
 
 //    Update existing service point
     servicePointsFixture.update(servicePointCode, changedServicePoint);
@@ -1689,11 +1692,10 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
 
     //validating request before fulfilled
-    IndividualResource holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
+    var holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
     JsonObject representationBefore = holdRequestBeforeFulfilled.getJson();
     assertThat(representationBefore.getString("itemId"), nullValue());
-    validateTLRequestByFields(representationBefore,
-            HOLD_SHELF, instanceId, OPEN_NOT_YET_FILLED);
+    validateTLRequestByFields(representationBefore, HOLD_SHELF, instanceId, OPEN_NOT_YET_FILLED);
 
     //validating request after fulfilled
     JsonObject representation = holdRequestAfterFulfilled.getJson();
@@ -1704,10 +1706,11 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
     JsonObject itemRepresentation = itemAfter.getJson();
-    assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+    assertThat(itemRepresentation.getJsonObject("status").getString("name"),
+      is("Awaiting pickup"));
 
     JsonObject servicePointRepresentation = representation.getJsonObject("pickupServicePoint");
-    Assertions.assertFalse(Boolean.parseBoolean(servicePointRepresentation.getString("pickupLocation")));
+    assertThat(servicePointRepresentation.getBoolean("pickupLocation"), is(false));
   }
 
   @Test
