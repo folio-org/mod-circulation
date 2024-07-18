@@ -18,8 +18,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import java.lang.invoke.MethodHandles;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -31,11 +29,11 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 public class PrintEventsResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=Enable print event log";
+  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
   private static final String PRINT_EVENT_FEATURE_DISABLED_ERROR = "print event feature is disabled for this tenant";
   private static final String NO_CONFIG_FOUND_ERROR = "No configuration found for print event feature";
   private static final String MULTIPLE_CONFIGS_ERROR = "Multiple configurations found for print event feature";
-  private static final String PRINT_EVENT_FLAG_PROPERTY_NAME = "Enable Print Event";
+  private static final String PRINT_EVENT_FLAG_PROPERTY_NAME = "enablePrintLog";
 
   public PrintEventsResource(HttpClient client) {
     super(client);
@@ -63,10 +61,7 @@ public class PrintEventsResource extends Resource {
       .thenCompose(r -> r.after(validatePrintEventFeatureFlag(circulationSettingsRepository)))
       .thenCompose(r -> r.after(validateRequests(requestRepository)))
       .thenCompose(r -> r.after(printEventsRepository::create))
-      .thenApply(r -> r.map(response -> {
-        assert printEventRequest != null;
-        return JsonHttpResponse.created(printEventRequest.getRepresentation(), null);
-      }))
+      .thenApply(r -> r.map(response -> JsonHttpResponse.created(null, null)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
@@ -89,9 +84,8 @@ public class PrintEventsResource extends Resource {
 
   private static Function<PrintEventRequest, CompletableFuture<Result<PrintEventRequest>>> validatePrintEventFeatureFlag(
     CirculationSettingsRepository circulationSettingsRepository) {
-    return printEventRequest -> circulationSettingsRepository.findBy(formatString(PRINT_EVENT_FLAG_QUERY))
+    return printEventRequest -> circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
       .thenApply(result -> {
-        log.info("validatePrintEventFeatureFlag:: result value {}", result.value());
         log.info("validatePrintEventFeatureFlag:: result value {}", result.value().getRecords());
         return handleCirculationSettingResult(result.map(MultipleRecords::getRecords), printEventRequest);
       });
@@ -113,16 +107,6 @@ public class PrintEventsResource extends Resource {
       return Result.failed(singleValidationError(PRINT_EVENT_FEATURE_DISABLED_ERROR, "", ""));
     }
     return succeeded(printEventRequest);
-  }
-
-  public static String formatString(String input) {
-    String[] parts = input.split("=", 2);
-    if (parts.length != 2) {
-      return input;
-    }
-    String encodedKey = URLEncoder.encode(parts[0], StandardCharsets.UTF_8);
-    String encodedValue = URLEncoder.encode(parts[1], StandardCharsets.UTF_8);
-    return encodedKey + "=" + encodedValue.replace("+", "%20");
   }
 
 }

@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -23,8 +24,8 @@ class PrintEventsTests extends APITests {
   @Test
   void postPrintEventsTest() {
     circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("Enable print event log")
-      .withValue(new JsonObject().put("Enable Print Event", true)));
+      .withName("printEventLogFeature")
+      .withValue(new JsonObject().put("enablePrintLog", true)));
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requestIds", createOneHundredRequests());
     System.out.println(printRequest.getString("requestIds"));
@@ -43,10 +44,10 @@ class PrintEventsTests extends APITests {
   @Test
   void postPrintEventsWhenDuplicateCirculationSettingFound() {
     circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("Enable print event log")
-      .withValue(new JsonObject().put("Enable Print Event", true)));
+      .withName("printEventLogFeature")
+      .withValue(new JsonObject().put("enablePrintLog", true)));
     circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("Enable print event log")
+      .withName("printEventLogFeature")
       .withValue(new JsonObject().put("Enable-Print-Event", false)));
 
     JsonObject printRequest = getPrintEvent();
@@ -58,8 +59,8 @@ class PrintEventsTests extends APITests {
   @Test
   void postPrintEventsWhenPrintEventSettingIsDisable() {
     circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("Enable print event log")
-      .withValue(new JsonObject().put("Enable Print Event", false)));
+      .withName("printEventLogFeature")
+      .withValue(new JsonObject().put("enablePrintLog", false)));
 
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requestIds", List.of(UUID.randomUUID()));
@@ -70,10 +71,10 @@ class PrintEventsTests extends APITests {
   @Test
   void postPrintEventsWithInvalidRequestId() {
     circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("Enable print event log")
-      .withValue(new JsonObject().put("Enable Print Event", true)));
+      .withName("printEventLogFeature")
+      .withValue(new JsonObject().put("enablePrintLog", true)));
     JsonObject printRequest = getPrintEvent();
-    List<UUID> requestIds = createOneHundredRequests();
+    List<UUID> requestIds = new ArrayList<>(createOneHundredRequests());
     requestIds.add(UUID.randomUUID());
     printRequest.put("requestIds", requestIds);
     Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
@@ -117,12 +118,12 @@ class PrintEventsTests extends APITests {
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
 
     return IntStream.range(0, 100).mapToObj(notUsed -> requestsFixture.place(
-        new RequestBuilder()
-          .open()
-          .page()
-          .forItem(itemsFixture.basedUponSmallAngryPlanet())
-          .by(usersFixture.charlotte())
-          .fulfillToHoldShelf()
-          .withPickupServicePointId(pickupServicePointId)).getId()).toList();
+      new RequestBuilder()
+        .open()
+        .page()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .by(usersFixture.charlotte())
+        .fulfillToHoldShelf()
+        .withPickupServicePointId(pickupServicePointId)).getId()).toList();
   }
 }
