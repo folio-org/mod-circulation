@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.StringUtil.urlEncode;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -62,9 +63,9 @@ public class SearchRepository {
 
   private CompletableFuture<Result<SearchInstance>> updateItemDetails(SearchInstance searchInstance) {
     log.debug("updateItemDetails:: searchInstance {}", () -> searchInstance);
-    if (searchInstance == null) {
-      return CompletableFuture.completedFuture(failed(new BadRequestFailure(
-        "Search result is empty")));
+    if (searchInstance == null || searchInstance.getId() == null) {
+      log.info("updateItemDetails:: searchInstance is empty");
+      return emptyAsync();
     }
 
     Map<String, List<Item>> itemsByTenant = searchInstance.getItems()

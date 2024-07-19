@@ -4,6 +4,7 @@ import static api.support.APITestContext.clearTempTenantId;
 import static api.support.APITestContext.setTempTenantId;
 import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
@@ -75,6 +76,17 @@ class ItemsByInstanceResourceTest extends APITests {
     assertThat(items, hasItem(allOf(
       hasJsonPath("id", UUIDMatcher.is(universityItem.getId())),
       hasJsonPath("tenantId", is(TENANT_ID_UNIVERSITY)))));
+  }
+
+  @Test
+  void canGetEmptyResult() {
+    UUID instanceId = UUID.randomUUID();
+
+    ResourceClient.forSearchClient().replace(instanceId, new JsonObject());
+    Response response = get(String.format("query=(id==%s)", instanceId), HTTP_OK.toInt());
+    JsonObject responseJson = response.getJson();
+
+    assertThat(responseJson.isEmpty(), is(true));
   }
 
   private Response get(String query, int expectedStatusCode) {
