@@ -2,7 +2,6 @@ package org.folio.circulation.domain;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -13,6 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -187,17 +187,14 @@ public class UpdateRequestQueue {
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
       .getHoldShelfClosedLibraryDateManagement();
 
-    String intervalId;
-    TimePeriod holdShelfExpiryPeriod = calculatedRequest.getPickupServicePoint()
-      .getHoldShelfExpiryPeriod();
-    if (holdShelfExpiryPeriod != null && isNotBlank(holdShelfExpiryPeriod.getIntervalId())) {
-      log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval is {}",
-        holdShelfExpiryPeriod.getIntervalId());
-      intervalId = holdShelfExpiryPeriod.getIntervalId().toUpperCase();
-    } else {
-      log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval is empty");
-      intervalId = NOT_DEFINED_INTERVAL;
-    }
+    String intervalId = Optional.of(calculatedRequest)
+      .map(Request::getPickupServicePoint)
+      .map(ServicePoint::getHoldShelfExpiryPeriod)
+      .map(TimePeriod::getIntervalId)
+      .map(String::toUpperCase)
+      .orElse(NOT_DEFINED_INTERVAL);
+
+    log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval: {}", intervalId);
 
     log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
       calculatedRequest.getHoldShelfExpirationDate());

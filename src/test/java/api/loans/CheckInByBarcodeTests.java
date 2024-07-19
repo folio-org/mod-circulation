@@ -1665,8 +1665,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  void checkInItemWhenServiceHasChangedToNoPickupLocation(){
-    reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
+  void checkInItemWhenServicePointHasChangedToNoPickupLocation() {
     configurationsFixture.enableTlrFeature();
     var instanceId = instancesFixture.basedUponDunkirk().getId();
     var defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
