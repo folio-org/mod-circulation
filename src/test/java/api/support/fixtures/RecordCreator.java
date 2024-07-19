@@ -49,6 +49,10 @@ public class RecordCreator {
     return createIfAbsent(identityMapKey.apply(record), record);
   }
 
+  void update(String key, JsonObject updateRecord) {
+    identityMap.put(key, client.create(updateRecord));
+  }
+
   private IndividualResource createIfAbsent(String key, JsonObject record) {
     return needsCreating(key) ? create(record) : getExistingRecord(key);
   }

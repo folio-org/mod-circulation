@@ -12,6 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ public class UpdateRequestQueue {
   private final ConfigurationRepository configurationRepository;
   private final RequestQueueService requestQueueService;
   private final CalendarRepository calendarRepository;
+  private static final String NOT_DEFINED_INTERVAL = "";
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
@@ -184,8 +186,16 @@ public class UpdateRequestQueue {
 
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
       .getHoldShelfClosedLibraryDateManagement();
-    String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-      .getIntervalId().toUpperCase();
+
+    String intervalId = Optional.of(calculatedRequest)
+      .map(Request::getPickupServicePoint)
+      .map(ServicePoint::getHoldShelfExpiryPeriod)
+      .map(TimePeriod::getIntervalId)
+      .map(String::toUpperCase)
+      .orElse(NOT_DEFINED_INTERVAL);
+
+    log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval: {}", intervalId);
+
     log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
       calculatedRequest.getHoldShelfExpirationDate());
     // Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
