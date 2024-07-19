@@ -155,7 +155,7 @@ public class AllowedServicePointsService {
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
   getAllowedServicePoints(AllowedServicePointsRequest request, String patronGroupId,
-                          Collection<Item> items) {
+    Collection<Item> items) {
 
     if (items.isEmpty() && request.isForTitleLevelRequest()) {
       log.info("getAllowedServicePoints:: requested instance has no items");
