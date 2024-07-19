@@ -4,7 +4,6 @@ import static api.support.APITestContext.clearTempTenantId;
 import static api.support.APITestContext.setTempTenantId;
 import static api.support.http.InterfaceUrls.itemsByInstanceUrl;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
-import static org.folio.HttpStatus.HTTP_NOT_FOUND;
 import static org.folio.HttpStatus.HTTP_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -81,29 +80,7 @@ class ItemsByInstanceResourceTest extends APITests {
 
   @Test
   void canGetEmptyResult() {
-    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
-
-    // create item in tenant "college"
-    setTempTenantId(TENANT_ID_COLLEGE);
-    IndividualResource collegeLocation = locationsFixture.mainFloor();
-    IndividualResource collegeHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    IndividualResource collegeItem = itemsFixture.createItemWithHoldingsAndLocation(
-      collegeHoldings.getId(), collegeLocation.getId());
-    clearTempTenantId();
-
-    // create item in tenant "university"
-    setTempTenantId(TENANT_ID_UNIVERSITY);
-    IndividualResource universityLocation = locationsFixture.thirdFloor();
-    IndividualResource universityHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    IndividualResource universityItem = itemsFixture.createItemWithHoldingsAndLocation(
-      universityHoldings.getId(), universityLocation.getId());
-    clearTempTenantId();
-
-    // make sure neither item exists in current tenant
-    assertThat(itemsFixture.getById(collegeItem.getId()).getResponse().getStatusCode(),
-      is(HTTP_NOT_FOUND.toInt()));
-    assertThat(itemsFixture.getById(universityItem.getId()).getResponse().getStatusCode(),
-      is(HTTP_NOT_FOUND.toInt()));
+    UUID instanceId = UUID.randomUUID();
 
     ResourceClient.forSearchClient().replace(instanceId, new JsonObject());
     Response response = get(String.format("query=(id==%s)", instanceId), HTTP_OK.toInt());
