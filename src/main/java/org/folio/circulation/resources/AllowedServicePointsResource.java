@@ -75,28 +75,36 @@ public class AllowedServicePointsResource extends Resource {
     String requestId = queryParams.get("requestId");
     String useStubItem = queryParams.get("useStubItem");
     String ecsRequestRouting = queryParams.get("ecsRequestRouting");
+    String patronGroupId = queryParams.get("patronGroupId");
 
     List<String> errors = new ArrayList<>();
 
     // Checking UUID validity
 
     if (requesterId != null && !isUuid(requesterId)) {
-      log.warn("Requester ID is not a valid UUID: {}", requesterId);
+      log.warn("buildRequest:: Requester ID is not a valid UUID: {}",
+        requesterId);
       errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
     }
 
+    if (patronGroupId != null && !isUuid(patronGroupId)) {
+      log.warn("buildRequest:: Patron Group ID is not a valid UUID: {}", patronGroupId);
+      errors.add(String.format("Patron Group ID is not a valid UUID: %s.",
+        patronGroupId));
+    }
+
     if (instanceId != null && !isUuid(instanceId)) {
-      log.warn("Instance ID is not a valid UUID: {}", requesterId);
+      log.warn("buildRequest:: Instance ID is not a valid UUID: {}", instanceId);
       errors.add(String.format("Instance ID is not a valid UUID: %s.", instanceId));
     }
 
     if (itemId != null && !isUuid(itemId)) {
-      log.warn("Item ID is not a valid UUID: {}", itemId);
+      log.warn("buildRequest:: Item ID is not a valid UUID: {}", itemId);
       errors.add(String.format("Item ID is not a valid UUID: %s.", itemId));
     }
 
     if (requestId != null && !isUuid(requestId)) {
-      log.warn("Request ID is not a valid UUID: {}", requestId);
+      log.warn("buildRequest:: Request ID is not a valid UUID: {}", requestId);
       errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
     }
     validateBoolean(useStubItem, "useStubItem", errors);
@@ -105,14 +113,14 @@ public class AllowedServicePointsResource extends Resource {
 
     boolean allowedCombinationOfParametersDetected = false;
 
-    if (operation == Request.Operation.CREATE && requesterId != null && instanceId != null &&
+    if (operation == Request.Operation.CREATE && (requesterId != null || patronGroupId != null) && instanceId != null &&
       itemId == null && requestId == null) {
 
       log.info("validateAllowedServicePointsRequest:: TLR request creation case");
       allowedCombinationOfParametersDetected = true;
     }
 
-    if (operation == Request.Operation.CREATE && requesterId != null && instanceId == null &&
+    if (operation == Request.Operation.CREATE && (requesterId != null || patronGroupId != null) && instanceId == null &&
       itemId != null && requestId == null) {
 
       log.info("validateAllowedServicePointsRequest:: ILR request creation case");
@@ -144,8 +152,9 @@ public class AllowedServicePointsResource extends Resource {
       return failed(new BadRequestFailure(errorMessage));
     }
 
-    return succeeded(new AllowedServicePointsRequest(operation, requesterId, instanceId, itemId,
-      requestId, Boolean.parseBoolean(useStubItem), Boolean.parseBoolean(ecsRequestRouting)));
+    return succeeded(new AllowedServicePointsRequest(operation, requesterId,
+      patronGroupId, instanceId, itemId, requestId, Boolean.parseBoolean(useStubItem),
+      Boolean.parseBoolean(ecsRequestRouting)));
   }
 
   private static void validateBoolean(String parameter, String parameterName, List<String> errors) {

@@ -90,8 +90,9 @@ public class AllowedServicePointsService {
     return ofAsync(request)
       .thenCompose(r -> r.after(this::fetchInstance))
       .thenCompose(r -> r.after(this::fetchRequest))
-      .thenCompose(r -> r.after(this::fetchUser))
-      .thenCompose(r -> r.after(user -> getAllowedServicePoints(request, user)));
+      .thenCompose(r -> r.after(this::getPatronGroupId))
+      .thenCompose(r -> r.after(patronGroupId -> getAllowedServicePoints(request,
+        patronGroupId)));
   }
 
   private CompletableFuture<Result<AllowedServicePointsRequest>> fetchInstance(
@@ -128,26 +129,33 @@ public class AllowedServicePointsService {
       .thenApply(r -> r.map(allowedServicePointsRequest::updateWithRequestInformation));
   }
 
-  private CompletableFuture<Result<User>> fetchUser(AllowedServicePointsRequest request) {
+  private CompletableFuture<Result<String>> getPatronGroupId(AllowedServicePointsRequest request) {
+
+    if (request.getPatronGroupId() != null) {
+      return ofAsync(request.getPatronGroupId());
+    }
+
     final String userId = request.getRequesterId();
 
     return userRepository.getUser(userId)
       .thenApply(r -> r.failWhen(
         user -> succeeded(user == null),
-        user -> notFoundValidationFailure(userId, User.class)));
+        user -> notFoundValidationFailure(userId, User.class)))
+      .thenApply(result -> result.map(User::getPatronGroupId));
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePoints(AllowedServicePointsRequest request, User user) {
+  getAllowedServicePoints(AllowedServicePointsRequest request, String patronGroupId) {
 
-    log.debug("getAllowedServicePoints:: parameters request: {}, user: {}", request, user);
+    log.debug("getAllowedServicePoints:: parameters request: {}, patronGroupId: {}", request, patronGroupId);
 
     return fetchItems(request)
-      .thenCompose(r -> r.after(items -> getAllowedServicePoints(request, user, items)));
+      .thenCompose(r -> r.after(items -> getAllowedServicePoints(request, patronGroupId, items)));
   }
 
   private CompletableFuture<Result<Map<RequestType, Set<AllowedServicePoint>>>>
-  getAllowedServicePoints(AllowedServicePointsRequest request, User user, Collection<Item> items) {
+  getAllowedServicePoints(AllowedServicePointsRequest request, String patronGroupId,
+    Collection<Item> items) {
 
     if (items.isEmpty() && request.isForTitleLevelRequest()) {
       log.info("getAllowedServicePoints:: requested instance has no items");
@@ -160,12 +168,12 @@ public class AllowedServicePointsService {
       : this::extractAllowedServicePointsConsideringItemStatus;
 
     if (request.isUseStubItem()) {
-      return requestPolicyRepository.lookupRequestPolicy(user)
+      return requestPolicyRepository.lookupRequestPolicy(patronGroupId)
         .thenCompose(r -> r.after(policy -> extractAllowedServicePointsIgnoringItemStatus(
           policy, new HashSet<>())));
     }
 
-    return requestPolicyRepository.lookupRequestPolicies(items, user)
+    return requestPolicyRepository.lookupRequestPolicies(items, patronGroupId)
       .thenCompose(r -> r.after(policies -> allOf(policies, mappingFunction)))
       .thenApply(r -> r.map(this::combineAllowedServicePoints));
     // TODO: remove irrelevant request types for REPLACE

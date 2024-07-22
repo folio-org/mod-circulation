@@ -17,6 +17,7 @@ public class AllowedServicePointsRequest {
 
   private Request.Operation operation;
   private String requesterId;
+  private String patronGroupId;
   private String instanceId;
   private String itemId;
   private String requestId;
