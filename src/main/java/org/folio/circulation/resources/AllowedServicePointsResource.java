@@ -82,28 +82,29 @@ public class AllowedServicePointsResource extends Resource {
     // Checking UUID validity
 
     if (requesterId != null && !isUuid(requesterId)) {
-      log.warn("Requester ID is not a valid UUID: {}", requesterId);
+      log.warn("buildRequest:: Requester ID is not a valid UUID: {}",
+        requesterId);
       errors.add(String.format("Requester ID is not a valid UUID: %s.", requesterId));
     }
 
     if (patronGroupId != null && !isUuid(patronGroupId)) {
-      log.warn("Patron Group ID is not a valid UUID: {}", patronGroupId);
+      log.warn("buildRequest:: Patron Group ID is not a valid UUID: {}", patronGroupId);
       errors.add(String.format("Patron Group ID is not a valid UUID: %s.",
         patronGroupId));
     }
 
     if (instanceId != null && !isUuid(instanceId)) {
-      log.warn("Instance ID is not a valid UUID: {}", instanceId);
+      log.warn("buildRequest:: Instance ID is not a valid UUID: {}", instanceId);
       errors.add(String.format("Instance ID is not a valid UUID: %s.", instanceId));
     }
 
     if (itemId != null && !isUuid(itemId)) {
-      log.warn("Item ID is not a valid UUID: {}", itemId);
+      log.warn("buildRequest:: Item ID is not a valid UUID: {}", itemId);
       errors.add(String.format("Item ID is not a valid UUID: %s.", itemId));
     }
 
     if (requestId != null && !isUuid(requestId)) {
-      log.warn("Request ID is not a valid UUID: {}", requestId);
+      log.warn("buildRequest:: Request ID is not a valid UUID: {}", requestId);
       errors.add(String.format("Request ID is not a valid UUID: %s.", requestId));
     }
     validateBoolean(useStubItem, "useStubItem", errors);
