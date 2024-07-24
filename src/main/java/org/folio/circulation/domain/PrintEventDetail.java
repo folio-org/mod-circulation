@@ -22,12 +22,11 @@ public class PrintEventDetail {
   private final User printeduser;
 
   public static PrintEventDetail from(JsonObject representation) {
-    log.info("printEventDetail representation {}", representation);
     return new PrintEventDetail(representation, null);
   }
 
   public String getUserId() {
-    return getProperty(representation, "userId");
+    return getProperty(representation, "requesterId");
   }
 
   public String getRequestId() {
