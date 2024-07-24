@@ -36,7 +36,7 @@ public class RequestRepresentation {
     addPrintEventProperties(requestRepresentation, request.getPrintEventDetail());
 
     removeSearchIndexFields(requestRepresentation);
-
+    log.info("extendedRepresentation :: {}", requestRepresentation);
     return requestRepresentation;
   }
 
