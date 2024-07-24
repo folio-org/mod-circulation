@@ -59,13 +59,9 @@ public class PrintEventsRepository {
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchAndMapPrintEventDetails(
     MultipleRecords<Request> multipleRequests) {
     var requestIds = multipleRequests.toKeys(Request::getId);
-    log.info("fetchAndMapPrintEventDetails:: requestIds {}", requestIds);
     return fetchPrintDetailsByRequestIds(requestIds)
-      .thenApply(printEventRecordsResult -> {
-        log.info("printEventRecordsResult {}", printEventRecordsResult);
-        return printEventRecordsResult
-          .next(printEventRecords -> mapPrintEventDetailsToRequest(printEventRecords, multipleRequests));
-      });
+      .thenApply(printEventRecordsResult -> printEventRecordsResult
+        .next(printEventRecords -> mapPrintEventDetailsToRequest(printEventRecords, multipleRequests)));
   }
 
   private CompletableFuture<Boolean> validatePrintEventFeatureFlag() {
@@ -79,7 +75,7 @@ public class PrintEventsRepository {
 
   private CompletableFuture<Result<MultipleRecords<PrintEventDetail>>> fetchPrintDetailsByRequestIds
     (Collection<String> requestIds) {
-    log.info("fetchPrintDetailsByRequestIds:: fetching print event details for requestIds {}", requestIds);
+    log.debug("fetchPrintDetailsByRequestIds:: fetching print event details for requestIds {}", requestIds);
     return printEventsStorageStatusClient.post(new JsonObject().put("requestIds", requestIds))
       .thenApply(flatMapResult(response ->
         MultipleRecords.from(response, PrintEventDetail::from, "printEventsStatusResponses")));
@@ -88,12 +84,9 @@ public class PrintEventsRepository {
   private Result<MultipleRecords<Request>> mapPrintEventDetailsToRequest(
     MultipleRecords<PrintEventDetail> printEventDetails, MultipleRecords<Request> requests) {
     log.info("mapPrintEventDetailsToRequest:: Mapping print event details {} with requests {}",
-      printEventDetails::getRecords, () -> multipleRecordsAsString(requests));
+      () -> multipleRecordsAsString(printEventDetails), () -> multipleRecordsAsString(requests));
     Map<String, PrintEventDetail> printEventDetailMap = printEventDetails.toMap(PrintEventDetail::getRequestId);
-    return of(() -> requests.mapRecords(request -> {
-        log.info("printEventDetailMap {}", printEventDetailMap.getOrDefault(request.getId(), null));
-        return request.withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null));
-    }));
+    return of(() -> requests.mapRecords(request -> request.withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null))));
   }
 
 }

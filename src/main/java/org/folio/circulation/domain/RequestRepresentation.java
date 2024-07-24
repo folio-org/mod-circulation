@@ -265,18 +265,21 @@ public class RequestRepresentation {
       log.info("addPrintEventProperties:: printEvent property is null for requestId {}", request.getString("id"));
       return;
     }
+
     var printEvent = new JsonObject();
     printEvent.put("count", printEventDetail.getCount());
     printEvent.put("lastPrintedDate", printEventDetail.getPrintEventDate());
 
-    var userSummary = new JsonObject();
     var user = printEventDetail.getUser();
+    if (user != null) {
+      var userSummary = new JsonObject();
+      write(userSummary, "lastName", user.getLastName());
+      write(userSummary, "firstName", user.getFirstName());
+      write(userSummary, "middleName", user.getMiddleName());
+      printEvent.put("lastPrintRequester", userSummary);
+    }
 
-    write(userSummary, "lastName", user.getLastName());
-    write(userSummary, "firstName", user.getFirstName());
-    write(userSummary, "middleName", user.getMiddleName());
-
-    printEvent.put("lastPrintRequester", userSummary);
+    request.put("printDetails", printEvent);
   }
 
 }

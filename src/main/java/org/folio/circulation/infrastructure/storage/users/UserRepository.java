@@ -292,12 +292,7 @@ public class UserRepository {
   }
 
   private PrintEventDetail mapUserToPrintEventDetails(Request request, Map<String, User> userMap) {
-    log.info("mapUserToPrintEventDetails :: request {} , userMap {}", request, userMap);
-    log.info("mapUserToPrintEventDetails :: printEvent {}", request.getPrintEventDetail());
     var printEventDetail = request.getPrintEventDetail();
-    if (printEventDetail != null)
-      log.info(userMap.getOrDefault(printEventDetail.getUserId(),null));
-
     return printEventDetail != null ?
       printEventDetail.withPrinteduser(userMap.getOrDefault(printEventDetail.getUserId(), null)) : null;
   }
