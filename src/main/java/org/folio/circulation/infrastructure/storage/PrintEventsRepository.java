@@ -62,7 +62,7 @@ public class PrintEventsRepository {
     log.info("fetchAndMapPrintEventDetails:: requestIds {}", requestIds);
     return fetchPrintDetailsByRequestIds(requestIds)
       .thenApply(printEventRecordsResult -> {
-        log.info("printEventRecordsResult");
+        log.info("printEventRecordsResult {}", printEventRecordsResult);
         return printEventRecordsResult
           .next(printEventRecords -> mapPrintEventDetailsToRequest(printEventRecords, multipleRequests));
       });
@@ -88,10 +88,12 @@ public class PrintEventsRepository {
   private Result<MultipleRecords<Request>> mapPrintEventDetailsToRequest(
     MultipleRecords<PrintEventDetail> printEventDetails, MultipleRecords<Request> requests) {
     log.info("mapPrintEventDetailsToRequest:: Mapping print event details {} with requests {}",
-      () -> multipleRecordsAsString(printEventDetails), () -> multipleRecordsAsString(requests));
+      printEventDetails::getRecords, () -> multipleRecordsAsString(requests));
     Map<String, PrintEventDetail> printEventDetailMap = printEventDetails.toMap(PrintEventDetail::getRequestId);
-    return of(() -> requests.mapRecords(request ->
-      request.withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null))));
+    return of(() -> requests.mapRecords(request -> {
+        log.info("printEventDetailMap {}", printEventDetailMap.getOrDefault(request.getId(), null));
+        return request.withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null));
+    }));
   }
 
 }

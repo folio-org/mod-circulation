@@ -2,7 +2,9 @@ package org.folio.circulation.domain;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 import lombok.With;
+import lombok.extern.log4j.Log4j2;
 
 import java.time.ZonedDateTime;
 
@@ -12,13 +14,15 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 
 
 @AllArgsConstructor
+@Log4j2
 public class PrintEventDetail {
-
+  @ToString.Include
   private final JsonObject representation;
   @With
   private final User printeduser;
 
   public static PrintEventDetail from(JsonObject representation) {
+    log.info("printEventDetail representation {}", representation);
     return new PrintEventDetail(representation, null);
   }
 
