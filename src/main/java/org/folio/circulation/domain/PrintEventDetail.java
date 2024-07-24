@@ -6,9 +6,6 @@ import lombok.ToString;
 import lombok.With;
 import lombok.extern.log4j.Log4j2;
 
-import java.time.ZonedDateTime;
-
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
@@ -37,8 +34,8 @@ public class PrintEventDetail {
     return getIntegerProperty(representation, "count", 0);
   }
 
-  public ZonedDateTime getPrintEventDate() {
-    return getDateTimeProperty(representation, "printEventDate");
+  public String getPrintEventDate() {
+    return getProperty(representation, "printEventDate");
   }
 
   public User getUser() {

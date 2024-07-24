@@ -1,6 +1,5 @@
 package org.folio.circulation.domain;
 
-import static java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -268,7 +267,7 @@ public class RequestRepresentation {
 
     var printEvent = new JsonObject();
     write(printEvent, "count", printEventDetail.getCount());
-    write(printEvent, "lastPrintedDate", ISO_ZONED_DATE_TIME.format(printEventDetail.getPrintEventDate()));
+    write(printEvent, "lastPrintedDate", printEventDetail.getPrintEventDate());
 
     var user = printEventDetail.getUser();
     if (user != null) {
