@@ -267,7 +267,9 @@ public class RequestRepresentation {
     }
 
     var printEvent = new JsonObject();
+    log.info("count {}", printEventDetail.getCount());
     printEvent.put("count", printEventDetail.getCount());
+    log.info("lastPrintedDate {}", printEventDetail.getPrintEventDate());
     printEvent.put("lastPrintedDate", printEventDetail.getPrintEventDate());
 
     var user = printEventDetail.getUser();
