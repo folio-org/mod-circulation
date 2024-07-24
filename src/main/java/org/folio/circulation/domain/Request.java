@@ -102,13 +102,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedPosition;
   private Integer previousPosition;
   private boolean changedStatus;
+  @With
+  private PrintEventDetail printEventDetail;
 
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
     return new Request(null, null, representation, null, null, new ArrayList<>(), new HashMap<>(),
     null, null, null, null, null, null, false, null,
-      false);
+      false, null);
   }
 
   public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration, Operation operation,
@@ -116,7 +118,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
       new ArrayList<>(), new HashMap<>(), null, null, null, null, null, null, false,
-      null, false);
+      null, false, null);
   }
 
   public JsonObject asJson() {
@@ -223,7 +225,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       cancellationReasonRepresentation, instance, instanceItems, instanceItemsRequestPolicies,
       newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
-      previousPosition, changedStatus);
+      previousPosition, changedStatus, printEventDetail);
   }
 
   @Override

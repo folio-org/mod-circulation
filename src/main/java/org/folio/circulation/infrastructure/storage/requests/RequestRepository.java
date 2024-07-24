@@ -30,6 +30,7 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.StoredRequestRepresentation;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.infrastructure.storage.PrintEventsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -66,6 +67,7 @@ public class RequestRepository {
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
   private final InstanceRepository instanceRepository;
+  private final PrintEventsRepository printEventsRepository;
 
   /**
    * Public constructor to avoid creating repositories twice
@@ -76,7 +78,8 @@ public class RequestRepository {
 
     this(new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
         clients.cancellationReasonStorage()), itemRepository, userRepository,
-      loanRepository, servicePointRepository, patronGroupRepository, new InstanceRepository(clients));
+      loanRepository, servicePointRepository, patronGroupRepository, new InstanceRepository(clients),
+      new PrintEventsRepository(clients));
   }
 
   /**
@@ -87,9 +90,10 @@ public class RequestRepository {
   }
 
   private RequestRepository(Clients clients, ItemRepository itemRepository,
-    UserRepository userRepository, LoanRepository loanRepository,
-    ServicePointRepository servicePointRepository,
-    PatronGroupRepository patronGroupRepository, InstanceRepository instanceRepository) {
+                            UserRepository userRepository, LoanRepository loanRepository,
+                            ServicePointRepository servicePointRepository,
+                            PatronGroupRepository patronGroupRepository, InstanceRepository instanceRepository,
+                            PrintEventsRepository printEventsRepository) {
 
     this.requestsStorageClient = clients.getRequestsStorageClient();
     this.requestsBatchStorageClient = clients.getRequestsBatchStorageClient();
@@ -100,6 +104,7 @@ public class RequestRepository {
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
     this.instanceRepository = instanceRepository;
+    this.printEventsRepository = printEventsRepository;
   }
 
   public static RequestRepository using(
@@ -113,7 +118,8 @@ public class RequestRepository {
       itemRepository, userRepository, loanRepository,
       new ServicePointRepository(clients),
       new PatronGroupRepository(clients),
-      new InstanceRepository(clients));
+      new InstanceRepository(clients),
+      new PrintEventsRepository(clients));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
@@ -135,6 +141,7 @@ public class RequestRepository {
 
     return ofAsync(() -> requestRecords)
       .thenComposeAsync(requests -> itemRepository.fetchItemsFor(requests, Request::withItem))
+      .thenComposeAsync(result -> result.after(printEventsRepository::findPrintEventDetails))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))

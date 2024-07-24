@@ -2065,7 +2065,8 @@
         "users.collection.get",
         "addresstypes.collection.get",
         "usergroups.collection.get",
-        "usergroups.item.get"
+        "usergroups.item.get",
+        "print-events-storage.print-events-status.item.post"
       ],
       "visible": false
     },
