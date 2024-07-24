@@ -7,9 +7,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.log4j.Log4j2;
 
-@Log4j2
 public class JsonHttpResponse implements HttpResponse {
   private final int statusCode;
   private final JsonObject body;
@@ -43,8 +41,6 @@ public class JsonHttpResponse implements HttpResponse {
 
   @Override
   public void writeTo(HttpServerResponse response) {
-    log.info("writeTo:: {}", response);
-    log.info("writeTo:: {}", Json.encodePrettily(body));
     String json = Json.encodePrettily(body);
     Buffer buffer = buffer(json, "UTF-8");
 

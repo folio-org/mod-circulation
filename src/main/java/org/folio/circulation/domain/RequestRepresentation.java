@@ -36,7 +36,6 @@ public class RequestRepresentation {
     addPrintEventProperties(requestRepresentation, request.getPrintEventDetail());
 
     removeSearchIndexFields(requestRepresentation);
-    log.info("extendedRepresentation :: {}", requestRepresentation);
     return requestRepresentation;
   }
 
@@ -267,10 +266,8 @@ public class RequestRepresentation {
     }
 
     var printEvent = new JsonObject();
-    log.info("count {}", printEventDetail.getCount());
-    printEvent.put("count", printEventDetail.getCount());
-    log.info("lastPrintedDate {}", printEventDetail.getPrintEventDate());
-    printEvent.put("lastPrintedDate", printEventDetail.getPrintEventDate());
+    write(printEvent, "count", printEventDetail.getCount());
+    write(printEvent, "lastPrintedDate", printEventDetail.getPrintEventDate());
 
     var user = printEventDetail.getUser();
     if (user != null) {
@@ -278,10 +275,9 @@ public class RequestRepresentation {
       write(userSummary, "lastName", user.getLastName());
       write(userSummary, "firstName", user.getFirstName());
       write(userSummary, "middleName", user.getMiddleName());
-      printEvent.put("lastPrintRequester", userSummary);
+      write(printEvent, "lastPrintRequester", userSummary);
     }
-
-    request.put("printDetails", printEvent);
+    write(request, "printDetails", printEvent);
   }
 
 }

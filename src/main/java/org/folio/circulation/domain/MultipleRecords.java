@@ -158,9 +158,7 @@ public class MultipleRecords<T> {
     final List<JsonObject> mappedRecords = getRecords().stream()
       .map(mapper)
       .collect(Collectors.toList());
-    log.info("asJson:: jsonObject {}", new JsonObject()
-      .put(recordsPropertyName, new JsonArray(mappedRecords))
-      .put(TOTAL_RECORDS_PROPERTY_NAME, totalRecords));
+
     return new JsonObject()
       .put(recordsPropertyName, new JsonArray(mappedRecords))
       .put(TOTAL_RECORDS_PROPERTY_NAME, totalRecords);
