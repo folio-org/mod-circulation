@@ -15,6 +15,7 @@ import org.folio.circulation.support.results.Result;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -59,6 +60,9 @@ public class PrintEventsRepository {
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchAndMapPrintEventDetails(
     MultipleRecords<Request> multipleRequests) {
     var requestIds = multipleRequests.toKeys(Request::getId);
+    if (requestIds.isEmpty()) {
+      return completedFuture(succeeded(multipleRequests));
+    }
     return fetchPrintDetailsByRequestIds(requestIds)
       .thenApply(printEventRecordsResult -> printEventRecordsResult
         .next(printEventRecords -> mapPrintEventDetailsToRequest(printEventRecords, multipleRequests)));
@@ -66,10 +70,11 @@ public class PrintEventsRepository {
 
   private CompletableFuture<Boolean> validatePrintEventFeatureFlag() {
     return circulationSettingsRepository.findBy("query=name=printEventLogFeature")
-      .thenApply(res -> res.value().getRecords()
-        .stream()
-        .map(setting -> Boolean.valueOf(getProperty(setting.getValue(), "enablePrintLog")))
-        .findFirst()
+      .thenApply(res -> Optional.ofNullable(res.value())
+        .map(records -> records.getRecords().stream()
+          .map(setting -> Boolean.valueOf(getProperty(setting.getValue(), "enablePrintLog")))
+          .findFirst()
+          .orElse(false))
         .orElse(false));
   }
 
