@@ -239,6 +239,18 @@ public class UserRepository {
             matchUsersToRequests(request, multipleUsers)))));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Request>>> findUsersForPrintEvents(
+    MultipleRecords<Request> multipleRequests) {
+
+    log.debug("findUsersForRequests:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
+    return findUsersForPrintEvents(multipleRequests.getRecords())
+      .thenApply(multipleUsersResult -> multipleUsersResult.next(
+        multipleUsers -> of(() ->
+          multipleRequests.mapRecords(request ->
+            matchUsersToPrintEvents(request, multipleUsers)))));
+  }
+
   public CompletableFuture<Result<MultipleRecords<User>>> findUsersByRequests(
     Collection<Request> requests) {
 
@@ -249,6 +261,22 @@ public class UserRepository {
       .distinct()
       .collect(Collectors.toList());
 
+    return fetchUsers(usersToFetch);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<User>>> findUsersForPrintEvents(
+    Collection<Request> requests) {
+    log.debug("findUsersForPrintEvents:: parameters requests: {}", () -> collectionAsString(requests));
+    final List<String> usersToFetch = requests.stream()
+      .filter(request -> request.getPrintEventDetail() != null && request.getPrintEventDetail().getUserId() != null)
+      .map(request -> request.getPrintEventDetail().getUserId())
+      .distinct()
+      .collect(Collectors.toList());
+
+    return fetchUsers(usersToFetch);
+  }
+
+  private CompletableFuture<Result<MultipleRecords<User>>> fetchUsers(List<String> usersToFetch) {
     if (usersToFetch.isEmpty()) {
       log.info("findUsersByRequests:: no users to fetch");
       return completedFuture(succeeded(MultipleRecords.empty()));
@@ -272,10 +300,6 @@ public class UserRepository {
       usersToFetch.add(request.getProxyUserId());
     }
 
-    if (request.getPrintEventDetail() != null && request.getPrintEventDetail().getUserId() != null) {
-      usersToFetch.add(request.getPrintEventDetail().getUserId());
-    }
-
     return usersToFetch;
   }
 
@@ -287,7 +311,16 @@ public class UserRepository {
 
     return request
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
-      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null))
+      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
+  }
+
+  private Request matchUsersToPrintEvents(
+    Request request,
+    MultipleRecords<User> users) {
+
+    final Map<String, User> userMap = users.toMap(User::getId);
+
+    return request
       .withPrintEventDetail(mapUserToPrintEventDetails(request, userMap));
   }
 

@@ -125,7 +125,8 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(this::mapResponseToRequests))
-      .thenCompose(r -> r.after(this::fetchAdditionalFields));
+      .thenCompose(r -> r.after(this::fetchAdditionalFields))
+      .thenCompose(r -> r.after(this::fetchPrintEventDetails));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query, PageLimit pageLimit) {
@@ -141,12 +142,18 @@ public class RequestRepository {
 
     return ofAsync(() -> requestRecords)
       .thenComposeAsync(requests -> itemRepository.fetchItemsFor(requests, Request::withItem))
-      .thenComposeAsync(result -> result.after(printEventsRepository::findPrintEventDetails))
       .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchPrintEventDetails(
+    MultipleRecords<Request> requestRecords) {
+    return ofAsync(() -> requestRecords)
+      .thenComposeAsync(result -> result.after(printEventsRepository::findPrintEventDetails))
+      .thenComposeAsync(result -> result.after(userRepository::findUsersForPrintEvents));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(

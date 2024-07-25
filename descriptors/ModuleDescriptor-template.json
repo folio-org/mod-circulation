@@ -2066,7 +2066,8 @@
         "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
-        "print-events-storage.print-events-status.item.post"
+        "print-events-storage.print-events-status.item.post",
+        "circulation-storage.circulation-settings.collection.get"
       ],
       "visible": false
     },
