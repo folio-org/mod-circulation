@@ -125,8 +125,8 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(this::mapResponseToRequests))
-      .thenCompose(r -> r.after(this::fetchAdditionalFields))
-      .thenCompose(r -> r.after(this::fetchPrintEventDetails));
+      .thenCompose(r -> r.after(this::fetchPrintEventDetails))
+      .thenCompose(r -> r.after(this::fetchAdditionalFields));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query, PageLimit pageLimit) {
@@ -151,9 +151,10 @@ public class RequestRepository {
 
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchPrintEventDetails(
     MultipleRecords<Request> requestRecords) {
+    log.debug("fetchPrintEventDetails:: Fetching print event details for requestRecords: {}",
+      ()-> multipleRecordsAsString(requestRecords));
     return ofAsync(() -> requestRecords)
-      .thenComposeAsync(result -> result.after(printEventsRepository::findPrintEventDetails))
-      .thenComposeAsync(result -> result.after(userRepository::findUsersForPrintEvents));
+      .thenComposeAsync(result -> result.after(printEventsRepository::findPrintEventDetails));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(

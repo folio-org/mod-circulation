@@ -59,6 +59,8 @@ public class PrintEventsRepository {
 
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchAndMapPrintEventDetails(
     MultipleRecords<Request> multipleRequests) {
+    log.debug("fetchAndMapPrintEventDetails:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
     var requestIds = multipleRequests.toKeys(Request::getId);
     if (requestIds.isEmpty()) {
       return completedFuture(succeeded(multipleRequests));
@@ -88,10 +90,12 @@ public class PrintEventsRepository {
 
   private Result<MultipleRecords<Request>> mapPrintEventDetailsToRequest(
     MultipleRecords<PrintEventDetail> printEventDetails, MultipleRecords<Request> requests) {
-    log.info("mapPrintEventDetailsToRequest:: Mapping print event details {} with requests {}",
+    log.debug("mapPrintEventDetailsToRequest:: Mapping print event details {} with requests {}",
       () -> multipleRecordsAsString(printEventDetails), () -> multipleRecordsAsString(requests));
     Map<String, PrintEventDetail> printEventDetailMap = printEventDetails.toMap(PrintEventDetail::getRequestId);
-    return of(() -> requests.mapRecords(request -> request.withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null))));
+    return of(() ->
+      requests.mapRecords(request -> request
+        .withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null))));
   }
 
 }
