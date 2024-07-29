@@ -358,6 +358,46 @@
         }
       }
     },
+    "printDetails": {
+      "description": "The print details of the request",
+      "type": "object",
+      "readonly": true,
+      "properties": {
+        "count": {
+          "description": "Total no of times the request is printed",
+          "type": "integer",
+          "readOnly": true
+        },
+        "lastPrintedDate": {
+          "description": "Recent printed time of the request",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "lastPrintRequester": {
+          "description": "Details of the User who printed the request recently",
+          "readonly": true,
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "description": "first name of the user",
+              "type": "string",
+              "readonly": true
+            },
+            "lastName": {
+              "description": "last name of the user",
+              "type": "string",
+              "readonly": true
+            },
+            "middleName": {
+              "description": "middle name of the user",
+              "type": "string",
+              "readonly": true
+            }
+          }
+        }
+      }
+    },
     "tags": {
       "type": "object",
       "description": "Tags",
