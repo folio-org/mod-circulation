@@ -738,6 +738,23 @@
       ]
     },
     {
+      "id": "print-events",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/circulation/print-events-entry",
+          "permissionsRequired": [
+            "circulation.print-events-entry.item.post"
+          ],
+          "modulePermissions": [
+            "print-events-storage.print-events-entry.item.post",
+            "circulation-storage.circulation-settings.collection.get"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_timer",
       "version": "1.0",
       "interfaceType": "system",
@@ -1318,6 +1335,10 @@
     {
       "id": "circulation-settings-storage",
       "version": "1.0"
+    },
+    {
+      "id": "print-events-storage",
+      "version": "1.0"
     }
   ],
   "optional": [
@@ -1327,6 +1348,11 @@
     }
   ],
   "permissionSets": [
+    {
+      "permissionName": "circulation.print-events-entry.item.post",
+      "displayName": "circulation - create print events",
+      "description": "create print event logs"
+    },
     {
       "permissionName": "circulation.requests.queue.reorder.collection.post",
       "displayName": "circulation - reorder queue for an item",
