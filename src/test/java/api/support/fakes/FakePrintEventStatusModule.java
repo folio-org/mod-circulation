@@ -29,7 +29,6 @@ public class FakePrintEventStatusModule {
   }
 
   private void handlePrintEventStatusRequest(RoutingContext routingContext) {
-    System.out.println("handlePrintEventStatusRequest **************");
     var request = routingContext.body().asJsonObject();
     var requestIds = request.getJsonArray("requestIds");
     if (requestIds.isEmpty()) {
@@ -58,7 +57,6 @@ public class FakePrintEventStatusModule {
         throw new RuntimeException(e);
       }
     });
-
     Map<String, List<JsonObject>> groupByRequestIdMap = new LinkedHashMap<>();
     requestIds.forEach(requestId -> {
       var requestList = jsonObjectList.stream().filter(jsonObject ->
@@ -66,13 +64,12 @@ public class FakePrintEventStatusModule {
         .toList();
       groupByRequestIdMap.put((String) requestId, requestList);
     });
-
     var jsonObjectResponse = new JsonObject();
     var printEventStatusResponses = new ArrayList<>();
     jsonObjectResponse.put("printEventsStatusResponses", printEventStatusResponses);
     requestIds.forEach(id -> {
       var requestDetail = groupByRequestIdMap.get(id);
-      if (requestDetail !=null && !requestDetail.isEmpty()) {
+      if (requestDetail != null && !requestDetail.isEmpty()) {
         var object = new JsonObject()
           .put("requestId", id)
           .put("count", requestDetail.size())
