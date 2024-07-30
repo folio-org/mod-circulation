@@ -53,7 +53,8 @@ public class PrintEventsRepository {
     log.debug("findPrintEventDetails:: parameters multipleRequests: {}",
       () -> multipleRecordsAsString(multipleRequests));
     return validatePrintEventFeatureFlag()
-      .thenCompose(isEnabled -> isEnabled ? fetchAndMapPrintEventDetails(multipleRequests)
+      .thenCompose(isEnabled -> Boolean.TRUE.equals(isEnabled) ?
+        fetchAndMapPrintEventDetails(multipleRequests)
         : completedFuture(succeeded(multipleRequests)));
   }
 
@@ -71,6 +72,7 @@ public class PrintEventsRepository {
   }
 
   private CompletableFuture<Boolean> validatePrintEventFeatureFlag() {
+    log.debug("validatePrintEventFeatureFlag:: Fetching and validating enablePrintLog flag from settings");
     return circulationSettingsRepository.findBy("query=name=printEventLogFeature")
       .thenApply(res -> Optional.ofNullable(res.value())
         .map(records -> records.getRecords().stream()

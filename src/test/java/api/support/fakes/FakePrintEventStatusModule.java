@@ -25,7 +25,6 @@ public class FakePrintEventStatusModule {
   public void register(Router router) {
     router.post("/print-events-storage/print-events-status")
       .handler(this::handlePrintEventStatusRequest);
-
   }
 
   private void handlePrintEventStatusRequest(RoutingContext routingContext) {
@@ -33,51 +32,52 @@ public class FakePrintEventStatusModule {
     var requestIds = request.getJsonArray("requestIds");
     if (requestIds.isEmpty()) {
       Buffer buffer = Buffer.buffer(
-        "Size must be 1", "UTF-8");
+        "size must be between 1 and 2147483647", "UTF-8");
       routingContext.response()
         .setStatusCode(HTTP_UNPROCESSABLE_ENTITY.toInt())
         .putHeader("content-type", "text/plain; charset=utf-8")
         .putHeader("content-length", Integer.toString(buffer.length()))
         .write(buffer);
       routingContext.response().end();
+    } else {
+      var jsonObjectList = new ArrayList<>(getStorage()
+        .getTenantResources("/print-events-storage/print-events-entry", getTenantId())
+        .values()
+        .stream()
+        .toList());
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+      // Sorting jsonObjectList based on PrintEventDate so that it will always return latest printEventDetail
+      jsonObjectList.sort((obj1, obj2) -> {
+        try {
+          Date date1 = dateFormat.parse(obj1.getString("printEventDate"));
+          Date date2 = dateFormat.parse(obj2.getString("printEventDate"));
+          return date2.compareTo(date1);
+        } catch (ParseException e) {
+          throw new RuntimeException(e);
+        }
+      });
+      Map<String, List<JsonObject>> groupByRequestIdMap = new LinkedHashMap<>();
+      requestIds.forEach(requestId -> {
+        var requestList = jsonObjectList.stream().filter(jsonObject ->
+            jsonObject.getJsonArray("requestIds").contains(requestId))
+          .toList();
+        groupByRequestIdMap.put((String) requestId, requestList);
+      });
+      var jsonObjectResponse = new JsonObject();
+      var printEventStatusResponses = new ArrayList<>();
+      jsonObjectResponse.put("printEventsStatusResponses", printEventStatusResponses);
+      requestIds.forEach(id -> {
+        var requestDetail = groupByRequestIdMap.get(id);
+        if (requestDetail != null && !requestDetail.isEmpty()) {
+          var object = new JsonObject()
+            .put("requestId", id)
+            .put("count", requestDetail.size())
+            .put("requesterId", requestDetail.get(0).getString("requesterId"))
+            .put("printEventDate", requestDetail.get(0).getString("printEventDate"));
+          printEventStatusResponses.add(object);
+        }
+      });
+      ok(jsonObjectResponse).writeTo(routingContext.response());
     }
-    var jsonObjectList = new ArrayList<>(getStorage()
-      .getTenantResources("/print-events-storage/print-events-entry", getTenantId())
-      .values()
-      .stream()
-      .toList());
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-    // Sorting jsonObjectList based on PrintEventDate so that it will always return latest printEventDetail
-    jsonObjectList.sort((obj1, obj2) -> {
-      try {
-        Date date1 = dateFormat.parse(obj1.getString("printEventDate"));
-        Date date2 = dateFormat.parse(obj2.getString("printEventDate"));
-        return date2.compareTo(date1);
-      } catch (ParseException e) {
-        throw new RuntimeException(e);
-      }
-    });
-    Map<String, List<JsonObject>> groupByRequestIdMap = new LinkedHashMap<>();
-    requestIds.forEach(requestId -> {
-      var requestList = jsonObjectList.stream().filter(jsonObject ->
-          jsonObject.getJsonArray("requestIds").contains(requestId))
-        .toList();
-      groupByRequestIdMap.put((String) requestId, requestList);
-    });
-    var jsonObjectResponse = new JsonObject();
-    var printEventStatusResponses = new ArrayList<>();
-    jsonObjectResponse.put("printEventsStatusResponses", printEventStatusResponses);
-    requestIds.forEach(id -> {
-      var requestDetail = groupByRequestIdMap.get(id);
-      if (requestDetail != null && !requestDetail.isEmpty()) {
-        var object = new JsonObject()
-          .put("requestId", id)
-          .put("count", requestDetail.size())
-          .put("requesterId", requestDetail.get(0).getString("requesterId"))
-          .put("printEventDate", requestDetail.get(0).getString("printEventDate"));
-        printEventStatusResponses.add(object);
-      }
-    });
-    ok(jsonObjectResponse).writeTo(routingContext.response());
   }
 }
