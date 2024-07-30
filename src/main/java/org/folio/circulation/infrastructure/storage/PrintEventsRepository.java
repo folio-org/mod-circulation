@@ -53,9 +53,15 @@ public class PrintEventsRepository {
     log.debug("findPrintEventDetails:: parameters multipleRequests: {}",
       () -> multipleRecordsAsString(multipleRequests));
     return validatePrintEventFeatureFlag()
-      .thenCompose(isEnabled -> Boolean.TRUE.equals(isEnabled) ?
-        fetchAndMapPrintEventDetails(multipleRequests)
-        : completedFuture(succeeded(multipleRequests)));
+      .thenCompose(isEnabled -> {
+        if (Boolean.TRUE.equals(isEnabled)) {
+          log.info("findPrintEventDetails:: printEvent feature is enabled for the tenant");
+          return fetchAndMapPrintEventDetails(multipleRequests);
+        } else {
+          log.info("findPrintEventDetails:: printEvent feature is disabled for the tenant");
+          return completedFuture(succeeded(multipleRequests));
+        }
+      });
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> fetchAndMapPrintEventDetails(
@@ -64,6 +70,7 @@ public class PrintEventsRepository {
       () -> multipleRecordsAsString(multipleRequests));
     var requestIds = multipleRequests.toKeys(Request::getId);
     if (requestIds.isEmpty()) {
+      log.info("fetchAndMapPrintEventDetails:: No request id found");
       return completedFuture(succeeded(multipleRequests));
     }
     return fetchPrintDetailsByRequestIds(requestIds)
