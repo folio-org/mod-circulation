@@ -261,7 +261,7 @@ public class RequestRepresentation {
 
   private static void addPrintEventProperties(JsonObject request, PrintEventDetail printEventDetail) {
     if (printEventDetail == null) {
-      if(log.isInfoEnabled()) {
+      if (log.isInfoEnabled()) {
         log.info("addPrintEventProperties:: printEvent property is null for requestId {}", request.getString("id"));
       }
       return;
