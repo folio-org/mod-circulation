@@ -16,9 +16,12 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.resources.PrintEventsResource.PRINT_EVENT_FLAG_PROPERTY_NAME;
+import static org.folio.circulation.resources.PrintEventsResource.PRINT_EVENT_FLAG_QUERY;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.of;
@@ -28,7 +31,8 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 
 public class PrintEventsRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
+  private static final String RECORDS_PROPERTY_NAME = "printEventsStatusResponses";
+  private static final String REQUEST_IDS = "requestIds";
   private final CollectionResourceClient printEventsStorageClient;
   private final CollectionResourceClient printEventsStorageStatusClient;
   private final CirculationSettingsRepository circulationSettingsRepository;
@@ -52,27 +56,21 @@ public class PrintEventsRepository {
     MultipleRecords<Request> multipleRequests) {
     log.debug("findPrintEventDetails:: parameters multipleRequests: {}",
       () -> multipleRecordsAsString(multipleRequests));
-    return validatePrintEventFeatureFlag()
-      .thenCompose(isEnabled -> {
-        if (Boolean.TRUE.equals(isEnabled)) {
-          log.info("findPrintEventDetails:: printEvent feature is enabled for the tenant");
-          return fetchAndMapPrintEventDetails(multipleRequests);
-        } else {
-          log.info("findPrintEventDetails:: printEvent feature is disabled for the tenant");
-          return completedFuture(succeeded(multipleRequests));
-        }
-      });
-  }
-
-  private CompletableFuture<Result<MultipleRecords<Request>>> fetchAndMapPrintEventDetails(
-    MultipleRecords<Request> multipleRequests) {
-    log.debug("fetchAndMapPrintEventDetails:: parameters multipleRequests: {}",
-      () -> multipleRecordsAsString(multipleRequests));
     var requestIds = multipleRequests.toKeys(Request::getId);
     if (requestIds.isEmpty()) {
       log.info("fetchAndMapPrintEventDetails:: No request id found");
       return completedFuture(succeeded(multipleRequests));
     }
+    return validatePrintEventFeatureFlag()
+      .thenCompose(isEnabled -> Boolean.TRUE.equals(isEnabled)
+        ? fetchAndMapPrintEventDetails(multipleRequests, requestIds)
+        : completedFuture(succeeded(multipleRequests)));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchAndMapPrintEventDetails(
+    MultipleRecords<Request> multipleRequests, Set<String> requestIds) {
+    log.debug("fetchAndMapPrintEventDetails:: parameters multipleRequests: {}, requestIds {}",
+      () -> multipleRecordsAsString(multipleRequests), () -> requestIds);
     return fetchPrintDetailsByRequestIds(requestIds)
       .thenApply(printEventRecordsResult -> printEventRecordsResult
         .next(printEventRecords -> mapPrintEventDetailsToRequest(printEventRecords, multipleRequests)));
@@ -80,21 +78,19 @@ public class PrintEventsRepository {
 
   private CompletableFuture<Boolean> validatePrintEventFeatureFlag() {
     log.debug("validatePrintEventFeatureFlag:: Fetching and validating enablePrintLog flag from settings");
-    return circulationSettingsRepository.findBy("query=name=printEventLogFeature")
+    return circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
       .thenApply(res -> Optional.ofNullable(res.value())
-        .map(records -> records.getRecords().stream()
-          .map(setting -> Boolean.valueOf(getProperty(setting.getValue(), "enablePrintLog")))
-          .findFirst()
-          .orElse(false))
+        .flatMap(records -> records.getRecords().stream().findFirst())
+        .map(setting -> Boolean.valueOf(getProperty(setting.getValue(), PRINT_EVENT_FLAG_PROPERTY_NAME)))
         .orElse(false));
   }
 
   private CompletableFuture<Result<MultipleRecords<PrintEventDetail>>> fetchPrintDetailsByRequestIds
     (Collection<String> requestIds) {
     log.debug("fetchPrintDetailsByRequestIds:: fetching print event details for requestIds {}", requestIds);
-    return printEventsStorageStatusClient.post(new JsonObject().put("requestIds", requestIds))
+    return printEventsStorageStatusClient.post(new JsonObject().put(REQUEST_IDS, requestIds))
       .thenApply(flatMapResult(response ->
-        MultipleRecords.from(response, PrintEventDetail::from, "printEventsStatusResponses")));
+        MultipleRecords.from(response, PrintEventDetail::from, RECORDS_PROPERTY_NAME)));
   }
 
   private Result<MultipleRecords<Request>> mapPrintEventDetailsToRequest(
@@ -106,5 +102,4 @@ public class PrintEventsRepository {
       requests.mapRecords(request -> request
         .withPrintEventDetail(printEventDetailMap.getOrDefault(request.getId(), null))));
   }
-
 }
