@@ -13,7 +13,7 @@ import org.folio.circulation.infrastructure.storage.PrintEventsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -61,7 +62,7 @@ public class PrintEventsResource extends Resource {
       .thenCompose(r -> r.after(validatePrintEventFeatureFlag(circulationSettingsRepository)))
       .thenCompose(r -> r.after(validateRequests(requestRepository)))
       .thenCompose(r -> r.after(printEventsRepository::create))
-      .thenApply(r -> r.map(response -> JsonHttpResponse.created(null, null)))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
