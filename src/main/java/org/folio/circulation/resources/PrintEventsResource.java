@@ -13,7 +13,7 @@ import org.folio.circulation.infrastructure.storage.PrintEventsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.JsonHttpResponse;
+import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
@@ -24,16 +24,17 @@ import java.util.function.Function;
 
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class PrintEventsResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
+  public static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
   private static final String PRINT_EVENT_FEATURE_DISABLED_ERROR = "print event feature is disabled for this tenant";
   private static final String NO_CONFIG_FOUND_ERROR = "No configuration found for print event feature";
   private static final String MULTIPLE_CONFIGS_ERROR = "Multiple configurations found for print event feature";
-  private static final String PRINT_EVENT_FLAG_PROPERTY_NAME = "enablePrintLog";
+  public static final String PRINT_EVENT_FLAG_PROPERTY_NAME = "enablePrintLog";
 
   public PrintEventsResource(HttpClient client) {
     super(client);
@@ -61,7 +62,7 @@ public class PrintEventsResource extends Resource {
       .thenCompose(r -> r.after(validatePrintEventFeatureFlag(circulationSettingsRepository)))
       .thenCompose(r -> r.after(validateRequests(requestRepository)))
       .thenCompose(r -> r.after(printEventsRepository::create))
-      .thenApply(r -> r.map(response -> JsonHttpResponse.created(null, null)))
+      .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 

@@ -427,6 +427,8 @@ public class FakeOkapi extends AbstractVerticle {
       .withChangeMetadata()
       .create().register(router);
 
+    new FakePrintEventStatusModule().register(router);
+
     new FakeFeeFineOperationsModule().register(router);
 
     server.requestHandler(router)

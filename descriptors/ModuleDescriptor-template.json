@@ -185,7 +185,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.3",
+      "version": "14.4",
       "handlers": [
         {
           "methods": [
@@ -2065,7 +2065,9 @@
         "users.collection.get",
         "addresstypes.collection.get",
         "usergroups.collection.get",
-        "usergroups.item.get"
+        "usergroups.item.get",
+        "print-events-storage.print-events-status.item.post",
+        "circulation-storage.circulation-settings.collection.get"
       ],
       "visible": false
     },

@@ -45,5 +45,14 @@
       "callNumber": "F16.H37 A2 9001"
     },
     "pickupServicePointName": "Circ Desk 1"
+  },
+  "printDetails": {
+    "count": 4,
+    "lastPrintedDate": "2024-07-29T11:54:07.000Z",
+    "lastPrintRequester": {
+      "lastName": "lastName",
+      "firstName": "firstName",
+      "middleName": "middleName"
+    }
   }
 }

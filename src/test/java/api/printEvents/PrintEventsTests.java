@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 import static api.support.http.InterfaceUrls.printEventsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static org.folio.HttpStatus.HTTP_CREATED;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -28,9 +28,8 @@ class PrintEventsTests extends APITests {
       .withValue(new JsonObject().put("enablePrintLog", true)));
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requestIds", createOneHundredRequests());
-    System.out.println(printRequest.getString("requestIds"));
     Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
-    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response, hasStatus(HTTP_NO_CONTENT));
   }
 
   @Test
