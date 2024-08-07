@@ -96,8 +96,6 @@ public class RequestQueueRepository {
   private CompletableFuture<Result<RequestQueue>> get(String itemId, String instanceId,
     EnumSet<RequestLevel> requestLevels) {
 
-    log.debug("get:: itemId={}, instanceId={}, requestLevels={}", itemId, instanceId, requestLevels);
-
     Map<String, String> filters = new HashMap<>();
     if (itemId != null) {
       filters.put("itemId", itemId);

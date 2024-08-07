@@ -72,7 +72,6 @@ public class CqlQuery implements QueryParameter {
   }
 
   public static Result<CqlQuery> exactMatchAny(Map<String, String> indicesToValues) {
-    log.debug("exactMatchAny:: indicesToValues={}", indicesToValues);
     String rawQuery = indicesToValues.entrySet()
       .stream()
       .filter(entry -> entry.getValue() != null)
