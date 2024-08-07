@@ -98,10 +98,7 @@ public class RequestQueueResource extends Resource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    CompletableFuture<Result<RequestQueue>> requestQueue = getRequestQueueByType(routingContext,
-      requestQueueType, requestQueueRepository);
-
-    requestQueue
+    getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository)
       .thenApply(r -> r.map(queue -> new MultipleRecords<>(queue.getRequests(), queue.size())))
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
@@ -132,8 +129,6 @@ public class RequestQueueResource extends Resource {
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
       configurationRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
-
-    getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
 
     validateTlrFeatureStatus(settingsRepository, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->
