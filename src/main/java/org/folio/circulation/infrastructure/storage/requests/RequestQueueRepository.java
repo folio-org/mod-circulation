@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
@@ -7,6 +8,7 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
@@ -94,7 +96,7 @@ public class RequestQueueRepository {
   private CompletableFuture<Result<RequestQueue>> get(String itemId, String instanceId,
     EnumSet<RequestLevel> requestLevels) {
 
-    log.info("get:: itemId={}, instanceId={}, requestLevels={}", itemId, instanceId, requestLevels);
+    log.debug("get:: itemId={}, instanceId={}, requestLevels={}", itemId, instanceId, requestLevels);
 
     Map<String, String> filters = new HashMap<>();
     if (itemId != null) {
@@ -102,6 +104,10 @@ public class RequestQueueRepository {
     }
     if (instanceId != null) {
       filters.put("instanceId", instanceId);
+    }
+    if (filters.isEmpty()) {
+      log.info("get:: itemId and instanceId are null, returning an empty queue");
+      return ofAsync(new RequestQueue(emptyList()));
     }
 
     List<String> requestLevelStrings = requestLevels.stream()
