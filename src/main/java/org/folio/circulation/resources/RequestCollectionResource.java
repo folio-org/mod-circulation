@@ -8,6 +8,9 @@ import static org.folio.circulation.support.results.AsynchronousResult.fromFutur
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
@@ -55,7 +58,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 public class RequestCollectionResource extends CollectionResource {
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID = "effectiveLocationPrimaryServicePointId";
   public RequestCollectionResource(HttpClient client) {
     super(client, "/circulation/requests");
   }
@@ -228,19 +239,53 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
+    final var servicePointRepository = new ServicePointRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-
-    fromFutureResult(requestRepository.findBy(routingContext.request().query()))
-      .map(this::mapToJson)
+    final var encodedQuery = routingContext.request().getParam(EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID);
+    final var effectiveLocationIds = parseEffectiveLocationIds(dec(encodedQuery));
+    fromFutureResult(requestRepository.findBy(routingContext.request().query())
+      .thenComposeAsync(result -> result.after(servicePointRepository::findPrimaryServicePointsForRequests)))
+      .map(requests -> mapToJson(requests, effectiveLocationIds))
       .map(JsonHttpResponse::ok)
       .onComplete(context::write, context::write);
   }
 
-  private JsonObject mapToJson(MultipleRecords<Request> requests) {
-    final var requestRepresentation = new RequestRepresentation();
+  List<String> parseEffectiveLocationIds(String itemQueryDecoded) {
+    itemQueryDecoded = StringUtils.substringBefore(itemQueryDecoded, "sortby").trim();
+    itemQueryDecoded = itemQueryDecoded.replace(EFFECTIVE_LOCATION_PRIMARY_SERVICE_POINT_ID + "==", StringUtils.EMPTY);
+    itemQueryDecoded = itemQueryDecoded.replace("(", StringUtils.EMPTY);
+    itemQueryDecoded = itemQueryDecoded.replace(")", StringUtils.EMPTY);
 
+    final List<String> results = new ArrayList<>(Arrays.stream(itemQueryDecoded.split(" or ")).toList());
+    results.removeAll(Arrays.asList("", null));
+    final List<String> parsedLocationIds = new ArrayList<>();
+    for(String result : results) {
+      parsedLocationIds.add(result. replace("\"", StringUtils.EMPTY));
+    }
+    return parsedLocationIds;
+  }
+
+  String dec(String encodedQuery) {
+    try {
+      return URLDecoder.decode(encodedQuery, StandardCharsets.UTF_8);
+    } catch (Exception ex) {
+      log.error("Failed to decode effectiveLocationPrimaryServicePointId query", ex);
+      return StringUtils.EMPTY;
+    }
+  }
+
+  JsonObject mapToJson(MultipleRecords<Request> requests, final List<String> effectiveLocationIds) {
+    final var requestRepresentation = new RequestRepresentation();
+    if(!effectiveLocationIds.isEmpty()) {
+      requests = requests.filter(request -> {
+        if(request.getItem() != null && request.getItem().getLocation().getPrimaryServicePointId() != null) {
+          return effectiveLocationIds.contains(request.getItem().getLocation().getPrimaryServicePointId().toString());
+        }
+        return false;
+      });
+    }
     return requests.asJson(requestRepresentation::extendedRepresentation, "requests");
   }
 
