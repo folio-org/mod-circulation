@@ -231,6 +231,11 @@ public class CreateRequestService {
       return completedFuture(checkPolicyForTitleLevelHold(records));
     }
 
+    if (request.isFulfillable() && request.getfulfillmentPreferenceName().equals("Delivery")){
+      log.info("checkPolicy:: fulfillment preference is Delivery");
+      return completedFuture(succeeded(records));
+    }
+
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
       .thenApply(r -> r.next(RequestServiceUtility::refuseWhenRequestCannotBeFulfilled)
         .mapFailure(err -> errorHandler.handleValidationError(err, REQUESTING_DISALLOWED_BY_POLICY, r)));
