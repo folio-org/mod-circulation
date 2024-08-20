@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.RequestFulfillmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -231,9 +232,9 @@ public class CreateRequestService {
       return completedFuture(checkPolicyForTitleLevelHold(records));
     }
 
-    if (request.isFulfillable() && request.getfulfillmentPreferenceName().equals("Delivery")){
+    if (DELIVERY == request.getfulfillmentPreference()) {
       log.info("checkPolicy:: fulfillment preference is Delivery");
-      return completedFuture(succeeded(records));
+      return ofAsync(records);
     }
 
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
