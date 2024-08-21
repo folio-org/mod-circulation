@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.lang.String.format;
+import static org.folio.circulation.domain.RequestFulfillmentPreference.DELIVERY;
 import static org.folio.circulation.domain.representations.RequestProperties.PICKUP_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.support.ErrorCode.INSTANCE_ALREADY_REQUESTED;
@@ -78,6 +79,11 @@ public class RequestServiceUtility {
       log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow " +
         "the requestType {}", requestType);
       return failureDisallowedForRequestType(requestType);
+    }
+
+    if (DELIVERY == request.getfulfillmentPreference()) {
+      log.info("checkPolicy:: fulfillment preference is Delivery");
+      return succeeded(requestAndRelatedRecords);
     }
 
     if (!requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {

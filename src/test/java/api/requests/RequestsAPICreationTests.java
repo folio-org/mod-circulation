@@ -4982,6 +4982,16 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void itemLevelRequestCreationShouldFailDueToPickUpServicePointNotAllowed() {
+    final UUID requestPolicyId = UUID.randomUUID();
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      requestPolicyId,
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      Map.of(PAGE, Set.of(servicePointsFixture.cd2().getId()))
+    ));
+
     final IndividualResource work = addressTypesFixture.work();
 
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();

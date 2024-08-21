@@ -1,7 +1,6 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.folio.circulation.domain.RequestFulfillmentPreference.DELIVERY;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -230,11 +229,6 @@ public class CreateRequestService {
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
       log.info("checkPolicy:: checking policy for title-level hold");
       return completedFuture(checkPolicyForTitleLevelHold(records));
-    }
-
-    if (DELIVERY == request.getfulfillmentPreference()) {
-      log.info("checkPolicy:: fulfillment preference is Delivery");
-      return ofAsync(records);
     }
 
     return repositories.getRequestPolicyRepository().lookupRequestPolicy(records)
