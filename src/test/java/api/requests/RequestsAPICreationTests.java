@@ -4981,7 +4981,7 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void itemLevelRequestCreationShouldFailDueToPickUpServicePointNotAllowed() {
+  void itemLevelRequestShouldBeCreatedWithDeliveryFulfillmentPreference() {
     final UUID requestPolicyId = UUID.randomUUID();
 
     policiesActivation.use(new RequestPolicyBuilder(
@@ -5013,7 +5013,6 @@ public class RequestsAPICreationTests extends APITests {
       .withInstanceId(item.getInstanceId())
       .withHoldingsRecordId(item.getHoldingsRecordId())
       .withItemId(item.getId())
-      .withRequesterId(usersFixture.charlotte().getId())
       .by(charlotte)
       .withDeliveryAddressType(work.getId()));
 
