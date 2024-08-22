@@ -81,8 +81,9 @@ public class RequestServiceUtility {
       return failureDisallowedForRequestType(requestType);
     }
 
-    if (HOLD_SHELF == request.getfulfillmentPreference() &&
-      !requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {
+    if (HOLD_SHELF == request.getfulfillmentPreference() && !requestPolicy.allowsServicePoint(
+      requestType, request.getPickupServicePointId())) {
+
       log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
         request.getPickupServicePointId());
       return failedValidation("One or more Pickup locations are no longer available",
