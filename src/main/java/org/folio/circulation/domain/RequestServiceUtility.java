@@ -81,8 +81,8 @@ public class RequestServiceUtility {
       return failureDisallowedForRequestType(requestType);
     }
 
-    if (HOLD_SHELF == request.getfulfillmentPreference()) {
-      if (!requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {
+    if (HOLD_SHELF == request.getfulfillmentPreference() && !requestPolicy.allowsServicePoint(
+      requestType, request.getPickupServicePointId())) {
 
         log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
           request.getPickupServicePointId());
@@ -92,7 +92,6 @@ public class RequestServiceUtility {
             "requestPolicyId", requestPolicy.getId()),
           ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED);
       }
-    }
 
     return succeeded(requestAndRelatedRecords);
 
