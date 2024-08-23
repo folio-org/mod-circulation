@@ -4983,7 +4983,6 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void itemLevelRequestShouldBeCreatedWithDeliveryFulfillmentPreference() {
     final UUID requestPolicyId = UUID.randomUUID();
-
     policiesActivation.use(new RequestPolicyBuilder(
       requestPolicyId,
       List.of(PAGE),
@@ -4993,9 +4992,7 @@ public class RequestsAPICreationTests extends APITests {
     ));
 
     final IndividualResource work = addressTypesFixture.work();
-
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
         new Address(work.getId(),

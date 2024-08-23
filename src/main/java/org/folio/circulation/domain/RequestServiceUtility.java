@@ -81,16 +81,17 @@ public class RequestServiceUtility {
       return failureDisallowedForRequestType(requestType);
     }
 
-    if (HOLD_SHELF == request.getfulfillmentPreference() && !requestPolicy.allowsServicePoint(
-      requestType, request.getPickupServicePointId())) {
+    if (HOLD_SHELF == request.getfulfillmentPreference()) {
+      if (!requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {
 
-      log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
-        request.getPickupServicePointId());
-      return failedValidation("One or more Pickup locations are no longer available",
-        Map.of(PICKUP_SERVICE_POINT_ID, request.getPickupServicePointId(),
-          REQUEST_TYPE, requestType.toString(),
-          "requestPolicyId", requestPolicy.getId()),
-        ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED);
+        log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
+          request.getPickupServicePointId());
+        return failedValidation("One or more Pickup locations are no longer available",
+          Map.of(PICKUP_SERVICE_POINT_ID, request.getPickupServicePointId(),
+            REQUEST_TYPE, requestType.toString(),
+            "requestPolicyId", requestPolicy.getId()),
+          ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED);
+      }
     }
 
     return succeeded(requestAndRelatedRecords);
