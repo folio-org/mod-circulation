@@ -115,6 +115,8 @@ jobs:
           source okclient/ok.sh
           echo "Do login ..."
           OK -S ${{ env.OK_SESSION }} \
+            -v \
+            -o '-v' \
             -h ${{ env.OKAPI_URL }} \
             -t "supertenant" \
             -u ${{ env.OKAPI_SECRET_USER }} \
