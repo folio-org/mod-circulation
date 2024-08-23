@@ -4988,8 +4988,7 @@ public class RequestsAPICreationTests extends APITests {
       List.of(PAGE),
       "Test request policy",
       "Test description",
-      Map.of(PAGE, Set.of(servicePointsFixture.cd2().getId()))
-    ));
+      Map.of(PAGE, Set.of(servicePointsFixture.cd2().getId()))));
 
     final IndividualResource work = addressTypesFixture.work();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
