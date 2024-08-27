@@ -241,6 +241,22 @@ class AllowedServicePointsAPITests extends APITests {
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
   }
 
+  @Test
+  void shouldReturnListOfAllowedServicePointsForHoldRequestReplacementWhenInstanceHasNoItems() {
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
+    var requester = usersFixture.steve();
+    var instanceId = instancesFixture.basedUponDunkirk().getId();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    setRequestPolicyWithAllowedServicePoints(HOLD, Set.of(servicePointId));
+    IndividualResource request = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, requester, ZonedDateTime.now(), servicePointId);
+
+    var response = get("replace", null, null, null, null, request.getId().toString(), "true", null,
+        HttpStatus.SC_OK).getJson();
+    var expectedServicePoint = new AllowedServicePoint(servicePointId.toString(), "Circ Desk 1");
+    assertThat(response, allowedServicePointMatcher(Map.of(HOLD, List.of(expectedServicePoint))));
+  }
+
   public static Object[] shouldReturnOnlyExistingAllowedServicePointForRequestParameters() {
     String sp1Id = randomId();
     String sp2Id = randomId();

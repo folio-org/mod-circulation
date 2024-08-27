@@ -157,11 +157,6 @@ public class AllowedServicePointsService {
   getAllowedServicePoints(AllowedServicePointsRequest request, String patronGroupId,
     Collection<Item> items) {
 
-    if (items.isEmpty() && request.isForTitleLevelRequest()) {
-      log.info("getAllowedServicePoints:: requested instance has no items");
-      return getAllowedServicePointsForTitleWithNoItems(request);
-    }
-
     BiFunction<RequestPolicy, Set<Item>, CompletableFuture<Result<Map<RequestType,
       Set<AllowedServicePoint>>>>> mappingFunction = request.isImplyingItemStatusIgnore()
       ? this::extractAllowedServicePointsIgnoringItemStatus
@@ -171,6 +166,11 @@ public class AllowedServicePointsService {
       return requestPolicyRepository.lookupRequestPolicy(patronGroupId)
         .thenCompose(r -> r.after(policy -> extractAllowedServicePointsIgnoringItemStatus(
           policy, new HashSet<>())));
+    }
+
+    if (items.isEmpty() && request.isForTitleLevelRequest()) {
+      log.info("getAllowedServicePoints:: requested instance has no items");
+      return getAllowedServicePointsForTitleWithNoItems(request);
     }
 
     return requestPolicyRepository.lookupRequestPolicies(items, patronGroupId)
