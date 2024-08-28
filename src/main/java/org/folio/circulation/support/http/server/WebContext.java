@@ -18,7 +18,9 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class WebContext {
   private final RoutingContext routingContext;
 
@@ -100,6 +102,7 @@ public class WebContext {
 
   public Map<String, String> getHeaders() {
     return routingContext.request().headers().entries().stream()
+      .peek(entry -> log.info(String.format("%s %s", entry.getKey(), entry.getValue())))
       .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
   }
 }
