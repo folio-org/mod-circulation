@@ -4979,6 +4979,46 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("printDetails should be null for request2 because the print event feature is disabled",
       requestRepresentation2.getJsonObject("printDetails"), Matchers.nullValue());
   }
+
+  @Test
+  void itemLevelRequestShouldBeCreatedWithDeliveryFulfillmentPreference() {
+    final UUID requestPolicyId = UUID.randomUUID();
+    policiesActivation.use(new RequestPolicyBuilder(
+      requestPolicyId,
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      Map.of(PAGE, Set.of(servicePointsFixture.cd2().getId()))));
+
+    final IndividualResource work = addressTypesFixture.work();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(work.getId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .itemRequestLevel()
+      .withFulfillmentPreference("Delivery")
+      .withRequestType(PAGE.getValue())
+      .withInstanceId(item.getInstanceId())
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withItemId(item.getId())
+      .by(charlotte)
+      .withDeliveryAddressType(work.getId()));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.ITEM.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(PAGE.getValue()));
+    assertThat(response.getJson().getString("fulfillmentPreference"), is("Delivery"));
+    assertThat(response.getJson().getString("deliveryAddressTypeId"), is(work.getId()));
+  }
+
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
     boolean isNoticeEnabledInNoticePolicy) {
 

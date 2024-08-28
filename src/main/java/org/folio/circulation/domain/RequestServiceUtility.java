@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.lang.String.format;
+import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.representations.RequestProperties.PICKUP_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.support.ErrorCode.INSTANCE_ALREADY_REQUESTED;
@@ -80,15 +81,17 @@ public class RequestServiceUtility {
       return failureDisallowedForRequestType(requestType);
     }
 
-    if (!requestPolicy.allowsServicePoint(requestType, request.getPickupServicePointId())) {
-      log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
-        request.getPickupServicePointId());
-      return failedValidation("One or more Pickup locations are no longer available",
-        Map.of(PICKUP_SERVICE_POINT_ID, request.getPickupServicePointId(),
-          REQUEST_TYPE, requestType.toString(),
-          "requestPolicyId", requestPolicy.getId()),
-        ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED);
-    }
+    if (HOLD_SHELF == request.getfulfillmentPreference() && !requestPolicy.allowsServicePoint(
+      requestType, request.getPickupServicePointId())) {
+
+        log.warn("refuseWhenRequestCannotBeFulfilled:: requestPolicy does not allow servicePoint {}",
+          request.getPickupServicePointId());
+        return failedValidation("One or more Pickup locations are no longer available",
+          Map.of(PICKUP_SERVICE_POINT_ID, request.getPickupServicePointId(),
+            REQUEST_TYPE, requestType.toString(),
+            "requestPolicyId", requestPolicy.getId()),
+          ErrorCode.REQUEST_PICKUP_SERVICE_POINT_IS_NOT_ALLOWED);
+      }
 
     return succeeded(requestAndRelatedRecords);
 
