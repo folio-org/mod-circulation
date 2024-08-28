@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.OverdueFineService;
@@ -27,6 +28,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
@@ -57,6 +59,7 @@ class CheckInProcessAdapter {
   private final UpdateRequestQueue requestQueueUpdate;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
+  private final LocationRepository locationRepository;
   private final UserRepository userRepository;
   private final AddressTypeRepository addressTypeRepository;
   private final LogCheckInService logCheckInService;
@@ -75,6 +78,7 @@ class CheckInProcessAdapter {
     RequestQueueRepository requestQueueRepository,
     UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
+    LocationRepository locationRepository,
     UserRepository userRepository,
     AddressTypeRepository addressTypeRepository,
     LogCheckInService logCheckInService,
@@ -93,6 +97,7 @@ class CheckInProcessAdapter {
     this.requestQueueUpdate = requestQueueUpdate;
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
+    this.locationRepository = locationRepository;
     this.userRepository = userRepository;
     this.addressTypeRepository = addressTypeRepository;
     this.logCheckInService = logCheckInService;
@@ -134,6 +139,7 @@ class CheckInProcessAdapter {
         requestQueueRepository),
       loanRepository,
       new ServicePointRepository(clients),
+      LocationRepository.using(clients),
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
@@ -296,4 +302,17 @@ class CheckInProcessAdapter {
     return requestQueueService.findRequestFulfillableByItem(context.getItem(), context.getRequestQueue())
       .thenApply(r -> r.map(context::withHighestPriorityFulfillableRequest));
   }
+
+  CompletableFuture<Result<Item>> findFloatingDestination(CheckInContext context) {
+    Item item = context.getItem();
+    if (item.getLocation().isFloatingCollection()) {
+      return locationRepository.fetchLocationsForServicePoint(context.getCheckInServicePointId().toString())
+        .thenApply(rLocations -> rLocations.map(locations -> locations.stream()
+          .filter(Location::isFloatingCollection).findFirst()
+          .map(item::withFloatDestinationLocation).orElse(item)));
+    } else {
+      return Result.ofAsync(item);
+    }
+  }
+
 }

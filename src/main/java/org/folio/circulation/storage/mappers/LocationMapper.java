@@ -2,6 +2,8 @@ package org.folio.circulation.storage.mappers;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
+
 
 import java.util.Collection;
 import java.util.Optional;
@@ -24,6 +26,7 @@ public class LocationMapper {
       getProperty(representation, "discoveryDisplayName"),
       getServicePointIds(representation),
       getPrimaryServicePointId(representation),
+      getBooleanProperty(representation, "isFloatingCollection"),
       Institution.unknown(getProperty(representation, "institutionId")),
       Campus.unknown(getProperty(representation, "campusId")),
       Library.unknown(getProperty(representation, "libraryId")),
