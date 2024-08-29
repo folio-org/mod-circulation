@@ -103,6 +103,7 @@ public class WebContext {
   public Map<String, String> getHeaders() {
     return routingContext.request().headers().entries().stream()
       .peek(entry -> log.info(String.format("%s %s", entry.getKey(), entry.getValue())))
-      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue,
+        (val1, val2) -> val1));
   }
 }
