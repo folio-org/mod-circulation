@@ -9,9 +9,10 @@ public class Institution {
   }
 
   public static Institution unknown(String id) {
-    return new Institution(id, null);
+    return new Institution(id, null, null);
   }
 
   String id;
   String name;
+  String code;
 }
