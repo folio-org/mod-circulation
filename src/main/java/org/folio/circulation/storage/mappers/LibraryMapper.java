@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonObject;
 public class LibraryMapper {
   public Library toDomain(JsonObject representation) {
     return new Library(getProperty(representation, "id"),
-      getProperty(representation, "name"));
+      getProperty(representation, "name"),
+      getProperty(representation, "code"));
   }
 }

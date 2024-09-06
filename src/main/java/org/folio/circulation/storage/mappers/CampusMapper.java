@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonObject;
 public class CampusMapper {
   public Campus toDomain(JsonObject representation) {
     return new Campus(getProperty(representation, "id"),
-      getProperty(representation, "name"));
+      getProperty(representation, "name"),
+      getProperty(representation, "code"));
   }
 }

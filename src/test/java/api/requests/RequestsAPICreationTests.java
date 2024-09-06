@@ -631,6 +631,64 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
   }
 
+  @ParameterizedTest
+  @CsvSource(value = {
+    "NU/JC/DL/3F",
+    "DLRC",
+    "JC",
+    "NU"
+  })
+  void createTitleLevelRequestWhenTlrEnabledSetLocation(String locationCode) {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId)
+      .withItemLocationCode(locationCode));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void createTitleLevelRequestWhenTlrEnabledSetLocationNoItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    Response response = requestsClient.attemptCreate(
+        new RequestBuilder()
+          .page()
+          .withNoHoldingsRecordId()
+          .withNoItemId()
+          .titleRequestLevel()
+          .withInstanceId(instanceId)
+          .withPickupServicePointId(pickupServicePointId)
+          .withRequesterId(patronId)
+          .withItemLocationCode("DoesNotExist")
+          .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Cannot create page TLR for this instance ID - no pageable " +
+        "available items found in forced location")));
+  }
+
   @Test
   void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
     UUID patronId = usersFixture.charlotte().getId();
