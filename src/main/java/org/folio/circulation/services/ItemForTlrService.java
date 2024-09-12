@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +42,11 @@ public class ItemForTlrService {
   }
 
   public List<Item> findAvailablePageableItems(Request request) {
+    log.info("findAvailablePageableItems:: instance items: {}",
+      request.getInstanceItems().stream()
+        .map(Item::getItemId)
+        .collect(Collectors.joining(", "))
+    );
 
     return request.getInstanceItems()
       .stream()
