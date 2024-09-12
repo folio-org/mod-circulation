@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -252,7 +253,11 @@ class RequestFromRepresentationService {
     Request request = records.getRequest();
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
-    if (request.isTitleLevel() && request.isPage()) {
+    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
+      log.info("fetchItemAndLoan:: Primary ECS request detected, using default item fetcher");
+      itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
+    }
+    else if (request.isTitleLevel() && request.isPage()) {
       itemAndLoanFetchingFunction = this::fetchItemAndLoanForPageTlr;
     }
     else if (request.isTitleLevel() && request.isRecall()) {
@@ -537,6 +542,11 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
+    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
+      log.info("validateAbsenceOfItemLinkInTlr:: Primary ECS request detected, skipping");
+      return of(() -> request);
+    }
+
     String itemId = request.getItemId();
     String holdingsRecordId = request.getHoldingsRecordId();
 
