@@ -183,7 +183,6 @@ public class LoanRepresentation {
     loanRepresentation.put(BORROWER, borrowerSummary);
     log.info("borrower representation");
     log.info(borrowerSummary);
-    log.info("currentPatronGroup" + borrower.getPatronGroup().getGroup());
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
 
