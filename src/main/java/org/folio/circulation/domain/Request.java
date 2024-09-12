@@ -289,6 +289,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return requestRepresentation.getJsonObject("requester");
   }
 
+  public JsonObject getPrintDetails() {
+    return requestRepresentation.getJsonObject("printDetails");
+  }
+
   public String getRequesterBarcode() {
     return getRequesterFromRepresentation().getString("barcode", EMPTY);
   }

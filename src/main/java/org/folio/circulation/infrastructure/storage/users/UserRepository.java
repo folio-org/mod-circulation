@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -41,6 +43,7 @@ import org.folio.circulation.support.results.Result;
 public class UserRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String USERS_RECORD_PROPERTY = "users";
+  private static final String REQUESTER_ID = "requesterId";
 
   private final CollectionResourceClient usersStorageClient;
 
@@ -271,6 +274,12 @@ public class UserRepository {
       usersToFetch.add(request.getProxyUserId());
     }
 
+    JsonObject printDetails = request.getPrintDetails();
+    if (printDetails != null &&
+      StringUtils.isNotBlank(printDetails.getString(REQUESTER_ID))) {
+      usersToFetch.add(printDetails.getString(REQUESTER_ID));
+    }
+
     return usersToFetch;
   }
 
@@ -280,9 +289,25 @@ public class UserRepository {
 
     final Map<String, User> userMap = users.toMap(User::getId);
 
+    mapPrintDetailsUser(request.getPrintDetails(), userMap);
+
     return request
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
       .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
+  }
+
+  private void mapPrintDetailsUser(JsonObject printDetails,
+                                   Map<String, User> userMap) {
+    String printDetailsUserId = printDetails.getString(REQUESTER_ID);
+    User printDetailsUser = userMap.getOrDefault(printDetailsUserId, null);
+
+    if (printDetailsUser != null) {
+      JsonObject lastPrintRequester = new JsonObject();
+      lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
+      lastPrintRequester.put("lastName", printDetailsUser.getLastName());
+      lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
+      printDetails.put("lastPrintRequester", lastPrintRequester);
+    }
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
