@@ -76,7 +76,8 @@ public class LoanRepresentation {
     additionalAccountProperties(extendedRepresentation, loan);
 
     extendedRepresentation.remove(PATRON_GROUP_ID_AT_CHECKOUT);
-
+    log.info("extendedLoan");
+    log.info(extendedRepresentation);
     return extendedRepresentation;
   }
 
@@ -177,9 +178,12 @@ public class LoanRepresentation {
     borrowerSummary.put("lastName", borrower.getLastName());
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
-
+    borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
+    borrowerSummary.put("PatronGroup",borrower.getPatronGroup());
     loanRepresentation.put(BORROWER, borrowerSummary);
-
+    log.info("borrower representation");
+    log.info(borrowerSummary);
+    log.info("currentPatronGroup" + borrower.getPatronGroup().getGroup());
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
 
