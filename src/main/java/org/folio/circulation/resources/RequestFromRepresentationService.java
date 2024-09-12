@@ -253,6 +253,7 @@ class RequestFromRepresentationService {
     Request request = records.getRequest();
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
+    log.info("fetchItemAndLoan:: Request phase is {}", request.getEcsRequestPhase().value);
     if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
       log.info("fetchItemAndLoan:: Primary ECS request detected, using default item fetcher");
       itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
