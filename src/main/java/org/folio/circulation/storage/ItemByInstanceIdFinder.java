@@ -7,23 +7,29 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.json.JsonKeys.byId;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 
 public class ItemByInstanceIdFinder {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final GetManyRecordsClient holdingsStorageClient;
   private final ItemRepository itemRepository;
@@ -41,7 +47,8 @@ public class ItemByInstanceIdFinder {
     final FindWithCqlQuery<JsonObject> fetcher = findWithCqlQuery(
       holdingsStorageClient, "holdingsRecords", identity());
 
-    return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId.toString()))
+    return fetcher.findByQuery(CqlQuery.exactMatch("instanceId", instanceId.toString()),
+        PageLimit.oneThousand())
       .thenCompose(r -> getItems(r, failWhenNoHoldingsRecordsFound));
   }
 
@@ -50,6 +57,10 @@ public class ItemByInstanceIdFinder {
     boolean failWhenNoHoldingsRecordsFound) {
 
     return holdingsRecordsResult.after(holdingsRecords -> {
+      log.info("getItems:: holdings records: {}", holdingsRecords.getRecords().stream()
+        .map(h -> h.getString("id"))
+        .collect(Collectors.joining(", ")));
+
       if (holdingsRecords == null || holdingsRecords.isEmpty()) {
         if (failWhenNoHoldingsRecordsFound) {
           return completedFuture(failedValidation(
