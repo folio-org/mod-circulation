@@ -33,9 +33,9 @@ public class RequestRepresentation {
     addAdditionalProxyProperties(requestRepresentation, request.getProxy());
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addDeliveryAddress(requestRepresentation, request, request.getRequester());
-    addPrintEventProperties(requestRepresentation, request.getPrintEventDetail());
 
     removeSearchIndexFields(requestRepresentation);
+
     return requestRepresentation;
   }
 
@@ -258,29 +258,5 @@ public class RequestRepresentation {
   private static void removeSearchIndexFields(JsonObject request) {
     request.remove("searchIndex");
   }
-
-  private static void addPrintEventProperties(JsonObject request, PrintEventDetail printEventDetail) {
-    if (printEventDetail == null) {
-      if (log.isInfoEnabled()) {
-        log.info("addPrintEventProperties:: printEvent property is null for requestId {}", request.getString("id"));
-      }
-      return;
-    }
-
-    var printEvent = new JsonObject();
-    write(printEvent, "count", printEventDetail.getCount());
-    write(printEvent, "lastPrintedDate", printEventDetail.getPrintEventDate());
-
-    var user = printEventDetail.getUser();
-    if (user != null) {
-      var userSummary = new JsonObject();
-      write(userSummary, "lastName", user.getLastName());
-      write(userSummary, "firstName", user.getFirstName());
-      write(userSummary, "middleName", user.getMiddleName());
-      write(printEvent, "lastPrintRequester", userSummary);
-    }
-    write(request, "printDetails", printEvent);
-  }
-
 }
 

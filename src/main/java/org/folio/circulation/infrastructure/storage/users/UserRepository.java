@@ -23,7 +23,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.PrintEventDetail;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRelatedRecord;
@@ -272,10 +271,6 @@ public class UserRepository {
       usersToFetch.add(request.getProxyUserId());
     }
 
-    if (request.getPrintEventDetail() != null && request.getPrintEventDetail().getUserId() != null) {
-      usersToFetch.add(request.getPrintEventDetail().getUserId());
-    }
-
     return usersToFetch;
   }
 
@@ -287,14 +282,7 @@ public class UserRepository {
 
     return request
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
-      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null))
-      .withPrintEventDetail(mapUserToPrintEventDetails(request, userMap));
-  }
-
-  private PrintEventDetail mapUserToPrintEventDetails(Request request, Map<String, User> userMap) {
-    var printEventDetail = request.getPrintEventDetail();
-    return printEventDetail != null ?
-      printEventDetail.withPrinteduser(userMap.getOrDefault(printEventDetail.getUserId(), null)) : null;
+      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
