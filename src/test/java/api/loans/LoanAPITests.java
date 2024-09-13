@@ -264,7 +264,7 @@ class LoanAPITests extends APITests {
       loan.getJsonObject("borrower").containsKey("preferredFirstName"), is(true));
 
     assertThat("Borrower has current patronGroup",
-      loan.getJsonObject("borrower").containsKey("PatronGroup"), is(true));
+      loan.getJsonObject("borrower").containsKey("patronGroup"), is(true));
 
     assertThat("Item has primaryContributor",
       loan.getJsonObject("item").containsKey("primaryContributorName"), is(true));

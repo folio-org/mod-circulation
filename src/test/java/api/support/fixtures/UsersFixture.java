@@ -43,7 +43,7 @@ public class UsersFixture {
 
   public UserResource KimJames() {
     return createIfAbsent(basedUponJames()
-      .inGroupFor(patronGroupsFixture.regular()));
+      .inGroupFor(patronGroupsFixture.staff()));
   }
 
   public UserResource james() {
