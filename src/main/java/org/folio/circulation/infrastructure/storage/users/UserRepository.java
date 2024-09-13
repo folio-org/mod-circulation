@@ -289,24 +289,27 @@ public class UserRepository {
 
     final Map<String, User> userMap = users.toMap(User::getId);
 
-    mapPrintDetailsUser(request.getPrintDetails(), userMap);
+    mapPrintDetailsUser(request, userMap);
 
     return request
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
       .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
   }
 
-  private void mapPrintDetailsUser(JsonObject printDetails,
+  private void mapPrintDetailsUser(Request request,
                                    Map<String, User> userMap) {
-    String printDetailsUserId = printDetails.getString(REQUESTER_ID);
-    User printDetailsUser = userMap.getOrDefault(printDetailsUserId, null);
+    JsonObject printDetails = request.getPrintDetails();
+    if (printDetails != null) {
+      String printDetailsUserId = printDetails.getString(REQUESTER_ID);
+      User printDetailsUser = userMap.getOrDefault(printDetailsUserId, null);
 
-    if (printDetailsUser != null) {
-      JsonObject lastPrintRequester = new JsonObject();
-      lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
-      lastPrintRequester.put("lastName", printDetailsUser.getLastName());
-      lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
-      printDetails.put("lastPrintRequester", lastPrintRequester);
+      if (printDetailsUser != null) {
+        JsonObject lastPrintRequester = new JsonObject();
+        lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
+        lastPrintRequester.put("lastName", printDetailsUser.getLastName());
+        lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
+        printDetails.put("lastPrintRequester", lastPrintRequester);
+      }
     }
   }
 
