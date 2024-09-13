@@ -578,6 +578,12 @@ class RequestFromRepresentationService {
     representation.remove("pickupServicePoint");
     representation.remove("deliveryAddress");
 
+    JsonObject printDetails = representation.getJsonObject("printDetails");
+    if (printDetails != null && printDetails.containsKey("lastPrintRequester")) {
+      printDetails.remove("lastPrintRequester");
+    }
+
+
     return request;
   }
 
