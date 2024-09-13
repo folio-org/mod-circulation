@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -289,28 +290,12 @@ public class UserRepository {
 
     final Map<String, User> userMap = users.toMap(User::getId);
 
-    mapPrintDetailsUser(request, userMap);
-
     return request
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
-      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null));
-  }
-
-  private void mapPrintDetailsUser(Request request,
-                                   Map<String, User> userMap) {
-    JsonObject printDetails = request.getPrintDetails();
-    if (printDetails != null) {
-      String printDetailsUserId = printDetails.getString(REQUESTER_ID);
-      User printDetailsUser = userMap.getOrDefault(printDetailsUserId, null);
-
-      if (printDetailsUser != null) {
-        JsonObject lastPrintRequester = new JsonObject();
-        lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
-        lastPrintRequester.put("lastName", printDetailsUser.getLastName());
-        lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
-        printDetails.put("lastPrintRequester", lastPrintRequester);
-      }
-    }
+      .withProxy(userMap.getOrDefault(request.getProxyUserId(), null))
+      .withPrintDetailsRequester(userMap
+        .getOrDefault(Optional.ofNullable(request.getPrintDetails())
+          .map(pd -> pd.getString(REQUESTER_ID)).orElse(null), null));
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
