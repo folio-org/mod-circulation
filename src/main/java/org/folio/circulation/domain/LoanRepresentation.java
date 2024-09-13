@@ -199,7 +199,8 @@ public class LoanRepresentation {
       : new JsonObject();
     write(patronGroupAtCheckoutSummary, "id", patronGroupAtCheckout.getId());
     write(patronGroupAtCheckoutSummary, "name", patronGroupAtCheckout.getGroup());
-
+    log.info("additionalPatronGroupProperties");
+    log.info(patronGroupAtCheckoutSummary);
     loanRepresentation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, patronGroupAtCheckoutSummary);
   }
 }
