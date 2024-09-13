@@ -42,16 +42,21 @@ public class RequestRepresentation {
 
   private void addPrintDetailsProperties(Request request, JsonObject requestRepresentation) {
     JsonObject printDetails = requestRepresentation.getJsonObject("printDetails");
-    if (printDetails != null) {
-      User printDetailsUser = request.getPrintDetailsRequester();
-
-      if (printDetailsUser != null) {
-        JsonObject lastPrintRequester = new JsonObject();
-        lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
-        lastPrintRequester.put("lastName", printDetailsUser.getLastName());
-        lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
-        printDetails.put("lastPrintRequester", lastPrintRequester);
+    if (printDetails == null) {
+      if (log.isInfoEnabled()) {
+        log.info("addPrintEventProperties:: printDetails property is null for" +
+          " requestId {}", requestRepresentation.getString("id"));
       }
+      return;
+    }
+
+    User printDetailsUser = request.getPrintDetailsRequester();
+    if (printDetailsUser != null) {
+      JsonObject lastPrintRequester = new JsonObject();
+      lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
+      lastPrintRequester.put("lastName", printDetailsUser.getLastName());
+      lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
+      printDetails.put("lastPrintRequester", lastPrintRequester);
     }
   }
 
