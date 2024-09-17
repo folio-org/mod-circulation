@@ -259,6 +259,7 @@ public class LoanCollectionResource extends CollectionResource {
 
   @Override
   void getMany(RoutingContext routingContext) {
+   log.info("LoanCollectionResource :: getMany");
     WebContext context = new WebContext(routingContext);
     Clients clients = Clients.create(context, client);
 

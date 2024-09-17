@@ -524,7 +524,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   @Override
   public CompletableFuture<Result<MultipleRecords<Loan>>> getMany(CqlQuery cqlQuery,
     PageLimit pageLimit, Offset offset) {
-
+    log.info("LoanRepository :: getMany ");
     log.debug("getMany:: parameters cqlQuery: {}, pageLimit: {}, offset: {}", cqlQuery, pageLimit, offset);
 
     return loansStorageClient.getMany(cqlQuery, pageLimit, offset)

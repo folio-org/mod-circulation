@@ -185,7 +185,16 @@ public class LoanRepresentation {
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
     borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
-    borrowerSummary.put("patronGroup",borrower.getPatronGroupId());
+
+    final PatronGroup patronGroup = borrower.getPatronGroup();
+    if (patronGroup != null) {
+      JsonObject patronGroupSummary = new JsonObject();
+      write(patronGroupSummary, "id", patronGroup.getId());
+      write(patronGroupSummary, "group", patronGroup.getGroup());
+      borrowerSummary.put("patronGroup", patronGroupSummary);
+    }
+    System.out.println("sreeja");
+    System.out.println(loanRepresentation);
     loanRepresentation.put(BORROWER, borrowerSummary);
     log.info("borrower representation");
     log.info(borrowerSummary);
