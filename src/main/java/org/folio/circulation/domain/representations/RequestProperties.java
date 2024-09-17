@@ -21,4 +21,5 @@ public class RequestProperties {
   public static final String REQUESTER_ID = "requesterId";
   public static final String FULFILLMENT_PREFERENCE = "fulfillmentPreference";
   public static final String PICKUP_SERVICE_POINT_ID = "pickupServicePointId";
+  public static final String ITEM_LOCATION_CODE = "itemLocationCode";
 }

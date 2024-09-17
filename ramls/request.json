@@ -423,6 +423,10 @@
       "description": "Request fields used for search",
       "type": "object",
       "$ref": "request-search-index.json"
+    },
+    "itemLocationCode": {
+      "description": "Allow specifying item location when creating title-level requests",
+      "type": "string"
     }
   },
   "additionalProperties": false,
