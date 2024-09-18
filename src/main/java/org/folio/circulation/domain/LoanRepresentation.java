@@ -29,8 +29,6 @@ public class LoanRepresentation {
       log.warn("extendedLoan:: loan is null");
       return null;
     }
-    System.out.println("initial representation");
-    System.out.println(loan);
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
 
     if(loan.isDueDateChangedByNearExpireUser()) {
@@ -55,8 +53,6 @@ public class LoanRepresentation {
 
     if (loan.getUser() != null) {
       log.info("extendedLoan:: user is not null");
-      System.out.println(loan.getUser().getPatronGroup());
-      System.out.println(loan.getUser());
       additionalBorrowerProperties(extendedRepresentation, loan.getUser());
     } else {
       //When there is no user, it means that the loan has been anonymized
@@ -177,28 +173,13 @@ public class LoanRepresentation {
     JsonObject borrowerSummary = loanRepresentation.containsKey(BORROWER)
         ? loanRepresentation.getJsonObject(BORROWER)
         : new JsonObject();
-    System.out.println(borrower);
-    System.out.println(borrower.getPatronGroup());
-    System.out.println(borrower.getPatronGroupId());
     borrowerSummary.put("firstName", borrower.getFirstName());
     borrowerSummary.put("lastName", borrower.getLastName());
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
     borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
-
-    final PatronGroup patronGroup = borrower.getPatronGroup();
-    if (patronGroup != null) {
-      JsonObject patronGroupSummary = new JsonObject();
-      write(patronGroupSummary, "id", patronGroup.getId());
-      write(patronGroupSummary, "group", patronGroup.getGroup());
-      borrowerSummary.put("patronGroup", patronGroupSummary);
-    }
-    System.out.println("sreeja");
-    System.out.println(loanRepresentation);
+    borrowerSummary.put("currentPatronGroup",borrower.getPatronGroupId());
     loanRepresentation.put(BORROWER, borrowerSummary);
-    log.info("borrower representation");
-    log.info(borrowerSummary);
-    log.info(borrower.getPatronGroup());
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
 
@@ -215,8 +196,6 @@ public class LoanRepresentation {
       : new JsonObject();
     write(patronGroupAtCheckoutSummary, "id", patronGroupAtCheckout.getId());
     write(patronGroupAtCheckoutSummary, "name", patronGroupAtCheckout.getGroup());
-    log.info("additionalPatronGroupProperties");
-    log.info(patronGroupAtCheckoutSummary);
     loanRepresentation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, patronGroupAtCheckoutSummary);
   }
 }
