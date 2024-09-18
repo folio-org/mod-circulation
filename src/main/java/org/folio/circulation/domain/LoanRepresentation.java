@@ -29,6 +29,7 @@ public class LoanRepresentation {
       log.warn("extendedLoan:: loan is null");
       return null;
     }
+
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
 
     if(loan.isDueDateChangedByNearExpireUser()) {
@@ -75,8 +76,7 @@ public class LoanRepresentation {
     additionalAccountProperties(extendedRepresentation, loan);
 
     extendedRepresentation.remove(PATRON_GROUP_ID_AT_CHECKOUT);
-    log.info("extendedLoan");
-    log.info(extendedRepresentation);
+
     return extendedRepresentation;
   }
 
@@ -178,7 +178,7 @@ public class LoanRepresentation {
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
     borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
-    borrowerSummary.put("currentPatronGroup",borrower.getPatronGroupId());
+    borrowerSummary.put("patronGroup",borrower.getPatronGroupId());
     loanRepresentation.put(BORROWER, borrowerSummary);
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
@@ -196,6 +196,7 @@ public class LoanRepresentation {
       : new JsonObject();
     write(patronGroupAtCheckoutSummary, "id", patronGroupAtCheckout.getId());
     write(patronGroupAtCheckoutSummary, "name", patronGroupAtCheckout.getGroup());
+
     loanRepresentation.put(LoanProperties.PATRON_GROUP_AT_CHECKOUT, patronGroupAtCheckoutSummary);
   }
 }

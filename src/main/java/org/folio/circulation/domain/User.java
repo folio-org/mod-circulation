@@ -142,6 +142,7 @@ public class User {
   public PatronGroup getPatronGroup() {
     return patronGroup;
   }
+
   public String getPersonalName() {
     if (isNotBlank(getFirstName()) && isNotBlank(getLastName())) {
       return String.format("%s, %s", getLastName(),

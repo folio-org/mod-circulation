@@ -256,18 +256,18 @@ class LoanAPITests extends APITests {
   }
 
   @Test
-  void createLoanWithRequiredTokensOfDueDateSlip() {
+  void canGetLoansWithAdditionalFieldsRequiredForDueDateSlip() {
     loansFixture.createLoan(itemsFixture.basedUponSmallAngryPlanet(), usersFixture.KimJames());
     JsonObject loan = loansFixture.getLoans().getFirst();
 
     assertThat("Borrower has preferredFirstName",
       loan.getJsonObject("borrower").containsKey("preferredFirstName"), is(true));
 
-//    assertThat("Borrower has current patronGroup",
-//      loan.getJsonObject("borrower").containsKey("patronGroup"), is(true));
+    assertThat("Borrower has patronGroup",
+      loan.getJsonObject("borrower").containsKey("patronGroup"), is(true));
 
     assertThat("Item has primaryContributor",
-      loan.getJsonObject("item").containsKey("primaryContributorName"), is(true));
+      loan.getJsonObject("item").containsKey("primaryContributor"), is(true));
   }
 
   @Test
