@@ -229,7 +229,10 @@ public class RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important")))
-      .withPatronComments("I need this book"));
+      .withPatronComments("I need this book")
+      .withPrintDetails(new RequestBuilder.PrintDetails(49,
+        requester.getId().toString(), true, "2024-09-16T11:58:22" +
+        ".295+00:00")));
 
     JsonObject representation = request.getJson();
 

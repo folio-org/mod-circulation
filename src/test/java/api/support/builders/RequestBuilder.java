@@ -67,7 +67,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
-      "Holdkapil",
+      "Hold",
       "Item",
       ZonedDateTime.of(2017, 7, 15, 9, 35, 27, 0, UTC),
       UUID.randomUUID(),
@@ -91,8 +91,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       null,
       null,
       null,
-      new PrintDetails(49, UUID.randomUUID().toString(), true, "2024-09-16T11:58:22" +
-        ".295+00:00"));
+      null);
   }
 
   public static RequestBuilder from(IndividualResource response) {
