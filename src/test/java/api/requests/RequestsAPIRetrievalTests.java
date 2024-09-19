@@ -869,4 +869,41 @@ class RequestsAPIRetrievalTests extends APITests {
       hasJsonPath("patronComments", "Comment 5")
     ));
   }
+
+
+  @Test
+  void printDetailsTest() {
+    UUID printDetailsRequester = usersFixture.charlotte().getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+
+    final IndividualResource workAddressType = addressTypesFixture.work();
+
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(workAddressType.getId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressType.getId())
+      .by(charlotte)
+      .withPrintDetails(new RequestBuilder.PrintDetails(49, printDetailsRequester.toString(), true, "2024-09-16T11:58:22" +
+        ".295+00:00")));
+
+    final MultipleJsonRecords requests = requestsFixture.getRequests(
+      queryFromTemplate("requestType==%s", "Page"),
+      noLimit(), noOffset());
+
+    assertThat(requests.size(), is(1));
+    assertThat(requests.totalRecords(), is(1));
+
+    requests.forEach(this::requestHasExpectedProperties);
+  }
 }
