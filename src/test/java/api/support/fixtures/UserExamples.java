@@ -42,7 +42,7 @@ public class UserExamples {
   static UserBuilder basedUponJames() {
     return new UserBuilder()
       .withBarcode("6430530304")
-      .withPreferredFirstName("kim","james","kimJ")
+      .withPreferredFirstName("kim", "james", "kimJ")
       .withActive(true);
   }
 
