@@ -113,7 +113,7 @@ public class ItemRepository {
     if (item.isInStatus(IN_TRANSIT)) {
       write(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
         item.getInTransitDestinationServicePointId());
-    } else if (item.canFloatThroughCheckInServicePoint()) {
+    } else if (item.isInStatus(AVAILABLE) && item.canFloatThroughCheckInServicePoint()) {
       remove(updatedItemRepresentation, TEMPORARY_LOCATION_ID);
       write(updatedItemRepresentation, TEMPORARY_LOCATION_ID,
         item.getFloatDestinationLocationId());

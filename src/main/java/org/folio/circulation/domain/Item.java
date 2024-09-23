@@ -357,8 +357,9 @@ public class Item {
   }
 
   public boolean canFloatThroughCheckInServicePoint() {
-    return getLocation() != null &&
-      getLocation().isFloatingCollection()
+    return getLocation() != null
+      && getLocation().isFloatingCollection()
+      && getFloatDestinationLocation() != null
       && getFloatDestinationLocation().getId()  != null;
   }
 
