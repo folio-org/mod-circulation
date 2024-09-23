@@ -19,7 +19,8 @@
       {
         "name": "Steve Jones"
       }
-    ]
+    ],
+    "primaryContributor" : "Steve Jones"
   },
   "loanPolicyId" : "e9af4ba4-6801-4722-be45-d7a49d13564d",
   "loanPolicy": {
@@ -37,7 +38,9 @@
     "firstName" : "FirstName",
     "lastName" : "LastName",
     "middleName" : "MiddleName",
-    "barcode" : "102322966933815"
+    "barcode" : "102322966933815",
+    "preferredFirstName" : "preferredFirstName",
+    "patronGroup" : "3684a786-6671-4268-8ed0-9db82ebca60b"
   },
   "loanDate": "2017-03-01T23:11:00.000Z",
   "dueDate": "2017-04-01T23:11:00.000Z",

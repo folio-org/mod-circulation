@@ -38,6 +38,16 @@
           "description": "barcode used to identify the borrower (read only, defined by the server)",
           "type": "string",
           "readonly": true
+        },
+        "preferredFirstName": {
+          "description": "preferred first name of the borrower (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
+        },
+        "patronGroup": {
+          "description": "current patron group of the borrower (read only, defined by the server)",
+          "type": "string",
+          "readonly": true
         }
        },
       "additionalProperties": false
@@ -157,6 +167,11 @@
             },
             "additionalProperties": false
           }
+        },
+        "primaryContributor": {
+          "description": "primary contributor of the item",
+          "type": "string",
+          "readonly": true
         },
         "holdingsRecordId": {
           "description": "The ID of the holdings for the item",

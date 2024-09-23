@@ -177,9 +177,9 @@ public class LoanRepresentation {
     borrowerSummary.put("lastName", borrower.getLastName());
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
-
+    borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
+    borrowerSummary.put("patronGroup",borrower.getPatronGroupId());
     loanRepresentation.put(BORROWER, borrowerSummary);
-
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
 
