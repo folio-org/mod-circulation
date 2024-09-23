@@ -582,8 +582,6 @@ class RequestFromRepresentationService {
     if (printDetails != null && printDetails.containsKey("lastPrintRequester")) {
       printDetails.remove("lastPrintRequester");
     }
-
-
     return request;
   }
 

@@ -875,9 +875,7 @@ class RequestsAPIRetrievalTests extends APITests {
     UserResource printDetailsRequester = usersFixture.charlotte();
     UUID printDetailsRequesterId = printDetailsRequester.getId();
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-
     final IndividualResource workAddressType = addressTypesFixture.work();
-
     final IndividualResource charlotte = usersFixture.charlotte(
       builder -> builder.withAddress(
         new Address(workAddressType.getId(),
@@ -888,15 +886,14 @@ class RequestsAPIRetrievalTests extends APITests {
           "Fake postal code",
           "Fake country code")));
 
-
     requestsFixture.place(new RequestBuilder()
       .page()
       .forItem(smallAngryPlanet)
       .deliverToAddress(workAddressType.getId())
       .by(charlotte)
-      .withPrintDetails(new RequestBuilder.PrintDetails(49, printDetailsRequesterId.toString(), true, "2024-09-16T11:58:22" +
-        ".295+00:00")));
-
+      .withPrintDetails(new RequestBuilder
+        .PrintDetails(49, printDetailsRequesterId.toString(),
+        true, "2024-09-16T11:58:22.295+00:00")));
 
     final MultipleJsonRecords requests = requestsFixture.getRequests(
       queryFromTemplate("printDetails.isPrinted==%s", "true"),

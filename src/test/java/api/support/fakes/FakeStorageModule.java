@@ -390,7 +390,9 @@ public class FakeStorageModule extends AbstractVerticle {
 
     result.put(collectionPropertyName, new JsonArray(pagedItems));
     result.put("totalRecords", filteredItems.size());
-
+    if(collectionPropertyName.equalsIgnoreCase("requests")) {
+      System.out.println();
+    }
     log.debug("Found {} resources: {}", recordTypeName, result.encodePrettily());
 
     HttpServerResponse response = routingContext.response();
