@@ -686,7 +686,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getStatusCode(), is(422));
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Cannot create page TLR for this instance ID - no pageable " +
-        "available items found in forced location")));
+        "available items found in requested location")));
   }
 
   @Test

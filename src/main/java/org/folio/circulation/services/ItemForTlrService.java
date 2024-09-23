@@ -70,27 +70,21 @@ public class ItemForTlrService {
       return failedValidation(message, INSTANCE_ID, request.getInstanceId());
     }
 
-    List<Item> finalAvailablePageableItems;
-    if (request.geItemLocationCode() != null) {
-      finalAvailablePageableItems = availablePageableItems.stream()
-        .filter(item -> request.geItemLocationCode().equals(item.getLocation().getCode()) ||
-            request.geItemLocationCode().equals(item.getLocation().getLibrary().getCode()) ||
-            request.geItemLocationCode().equals(item.getLocation().getCampus().getCode()) ||
-            request.geItemLocationCode().equals(item.getLocation().getInstitution().getCode())
-          )
+    if (request.geItemLocationCode() == null) {
+      return of(() -> availablePageableItems);
+    } else {
+      List<Item> finalAvailablePageableItems = availablePageableItems.stream()
+        .filter(item -> item.isAtLocation(request.geItemLocationCode()))
         .toList();
       if (finalAvailablePageableItems.isEmpty()) {
         String message = "Cannot create page TLR for this instance ID - no pageable available " +
-          "items found in forced location";
-        log.info("{}. Instance ID: {}, Forced location code {}",
+          "items found in requested location";
+        log.info("{}. Instance ID: {}, Requested location code {}",
           message, request.getInstanceId(), request.geItemLocationCode());
         return failedValidation(message, ITEM_LOCATION_CODE, request.geItemLocationCode());
       }
-    } else {
-      finalAvailablePageableItems = availablePageableItems;
+      return of(() -> finalAvailablePageableItems);
     }
-
-    return of(() -> finalAvailablePageableItems);
   }
 
   private static Item pickClosestItem(Collection<Location> requestedLocations, List<Item> availableItems) {
