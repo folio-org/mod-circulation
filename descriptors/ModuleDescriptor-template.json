@@ -185,7 +185,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.4",
+      "version": "14.5",
       "handlers": [
         {
           "methods": [
@@ -1222,7 +1222,7 @@
     },
     {
       "id": "request-storage",
-      "version": "6.0"
+      "version": "6.1"
     },
     {
       "id": "request-storage-batch",
