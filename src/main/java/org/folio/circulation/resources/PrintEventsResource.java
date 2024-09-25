@@ -30,11 +30,11 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 public class PrintEventsResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  public static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
+  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
   private static final String PRINT_EVENT_FEATURE_DISABLED_ERROR = "print event feature is disabled for this tenant";
   private static final String NO_CONFIG_FOUND_ERROR = "No configuration found for print event feature";
   private static final String MULTIPLE_CONFIGS_ERROR = "Multiple configurations found for print event feature";
-  public static final String PRINT_EVENT_FLAG_PROPERTY_NAME = "enablePrintLog";
+  private static final String PRINT_EVENT_FLAG_PROPERTY_NAME = "enablePrintLog";
 
   public PrintEventsResource(HttpClient client) {
     super(client);

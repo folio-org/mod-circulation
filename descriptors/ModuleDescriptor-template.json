@@ -1222,7 +1222,7 @@
     },
     {
       "id": "request-storage",
-      "version": "6.0"
+      "version": "6.1"
     },
     {
       "id": "request-storage-batch",
@@ -2065,9 +2065,7 @@
         "users.collection.get",
         "addresstypes.collection.get",
         "usergroups.collection.get",
-        "usergroups.item.get",
-        "print-events-storage.print-events-status.item.post",
-        "circulation-storage.circulation-settings.collection.get"
+        "usergroups.item.get"
       ],
       "visible": false
     },
