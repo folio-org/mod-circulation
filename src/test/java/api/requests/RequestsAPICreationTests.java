@@ -3866,16 +3866,23 @@ public class RequestsAPICreationTests extends APITests {
     UUID expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
       holdingsId, anotherLibraryLocationId).getId();
 
-    IndividualResource request = requestsFixture.place(new RequestBuilder()
+    var requestBuilder = new RequestBuilder()
       .page()
       .fulfillToHoldShelf()
       .titleRequestLevel()
       .withInstanceId(instanceId)
       .withItemId(expectedItemId)
-      .withNoHoldingsRecordId()
+      .withHoldingsRecordId(holdingsId)
       .withRequestDate(ZonedDateTime.now())
       .withRequesterId(usersFixture.steve().getId())
-      .withPickupServicePointId(pickupServicePointId));
+      .withPickupServicePointId(pickupServicePointId);
+
+    // request without ECS phase should fail
+    requestsFixture.attemptPlace(requestBuilder);
+
+    // the same request with Primary ECS phase should succeed because validation is skipped
+    IndividualResource request = requestsFixture.place(
+      requestBuilder.withEcsRequestPhase("Primary"));
 
     assertThat(request.getResponse().getStatusCode(), is(HttpStatus.SC_CREATED));
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
