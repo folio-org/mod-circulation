@@ -3816,8 +3816,16 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void titleLevelPageRequestIsCreatedForItemClosestToPickupServicePoint() {
-    settingsFixture.enableTlrFeature();
+  void primaryTlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr() {
+    settingsFixture.configureTlrFeature(true, true, null, null, null);
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      UUID.randomUUID(),
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      null
+    ));
 
     UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
         "Pickup service point", "PICKUP", "Display name")
@@ -3877,15 +3885,40 @@ public class RequestsAPICreationTests extends APITests {
       .withRequesterId(usersFixture.steve().getId())
       .withPickupServicePointId(pickupServicePointId);
 
-    // request without ECS phase should fail
+    // Request without ECS phase should fail
     requestsFixture.attemptPlace(requestBuilder);
 
-    // the same request with Primary ECS phase should succeed because validation is skipped
+    // The same request with Primary ECS phase should succeed because validation is skipped
     IndividualResource request = requestsFixture.place(
       requestBuilder.withEcsRequestPhase("Primary"));
 
     assertThat(request.getResponse().getStatusCode(), is(HttpStatus.SC_CREATED));
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
+
+    // To make sure there are no Available items left
+    requestsFixture.place(
+      requestBuilder
+        .withRequesterId(usersFixture.jessica().getId())
+        .withItemId(closestItemId)
+        .withEcsRequestPhase("Primary"));
+
+    // Placing TLR Hold request
+    var requestBuilderTlrHold = new RequestBuilder()
+      .hold()
+      .fulfillToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(pickupServicePointId);
+
+    // Request without ECS phase should fail
+    requestsFixture.attemptPlace(requestBuilderTlrHold);
+
+    // The same request with Primary ECS phase should succeed because policy check is skipped
+    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase("Primary"));
   }
 
   @Test
