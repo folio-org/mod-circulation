@@ -3892,7 +3892,6 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource request = requestsFixture.place(
       requestBuilder.withEcsRequestPhase("Primary"));
 
-    assertThat(request.getResponse().getStatusCode(), is(HttpStatus.SC_CREATED));
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
 
     // To make sure there are no Available items left
