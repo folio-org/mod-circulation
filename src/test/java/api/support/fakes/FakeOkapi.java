@@ -233,7 +233,7 @@ public class FakeOkapi extends AbstractVerticle {
 
     new FakeSearchModule().register(router);
     new FakeStorageModuleBuilder()
-      .withRecordName(FakeSearchModule.recordTypeName)
+      .withRecordName(FakeSearchModule.RECORD_TYPE_NAME)
       .withRootPath("/search/instances")
       .create().register(router);
 

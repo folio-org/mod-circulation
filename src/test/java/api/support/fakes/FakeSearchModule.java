@@ -27,7 +27,7 @@ import lombok.SneakyThrows;
 public class FakeSearchModule {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  public static final String recordTypeName = "search-instance";
+  public static final String RECORD_TYPE_NAME = "search-instance";
   private static final String ID_REGEXP = "id\\s*(==|!=|>|>=|<|<=|\\|=|\\|=)\\s*" +
     "([a-f0-9\\-]+)";
   private final Storage storage;
@@ -66,7 +66,7 @@ public class FakeSearchModule {
       searchResult.put("totalRecords", 1);
       searchResult.put("instances", List.of(resourceRepresentation));
 
-      log.debug("Found {} resource: {}", recordTypeName,
+      log.debug("Found {} resource: {}", RECORD_TYPE_NAME,
         searchResult.encodePrettily());
 
       HttpServerResponse response = routingContext.response();
@@ -80,7 +80,7 @@ public class FakeSearchModule {
       response.end();
     }
     else {
-      log.debug("Failed to find {} resource: {}", recordTypeName,
+      log.debug("Failed to find {} resource: {}", RECORD_TYPE_NAME,
         idParsingResult);
 
       ClientErrorResponse.notFound(routingContext.response());

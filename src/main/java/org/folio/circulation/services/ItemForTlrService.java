@@ -44,7 +44,7 @@ public class ItemForTlrService {
 
   public List<Item> findAvailablePageableItems(Request request) {
     log.info("findAvailablePageableItems:: instance items: {}",
-      request.getInstanceItems().stream()
+      () -> request.getInstanceItems().stream()
         .map(item -> format("(%s, %s, %s)", item.getItemId(), item.getBarcode(), item.getStatus().getValue()))
         .collect(Collectors.joining(", "))
     );

@@ -3841,7 +3841,6 @@ public class RequestsAPICreationTests extends APITests {
     UUID campusIdA = locationsFixture.createCampus("Campus A", institutionId).getId();
     UUID campusIdB = locationsFixture.createCampus("Campus B", institutionId).getId();
     UUID libraryIdA1 = locationsFixture.createLibrary("Library A1", campusIdA).getId();
-    UUID libraryIdA2 = locationsFixture.createLibrary("Library A2", campusIdA).getId();
     UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
 
     UUID sameLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
