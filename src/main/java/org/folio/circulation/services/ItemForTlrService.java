@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +43,11 @@ public class ItemForTlrService {
   }
 
   public List<Item> findAvailablePageableItems(Request request) {
+    log.info("findAvailablePageableItems:: instance items: {}",
+      () -> request.getInstanceItems().stream()
+        .map(item -> format("(%s, %s, %s)", item.getItemId(), item.getBarcode(), item.getStatus().getValue()))
+        .collect(Collectors.joining(", "))
+    );
 
     return request.getInstanceItems()
       .stream()

@@ -227,6 +227,11 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
+      if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
+        log.warn("checkPolicy:: ECS TLR primary Hold detected, skipping policy check");
+        return ofAsync(() -> records);
+      }
+
       log.info("checkPolicy:: checking policy for title-level hold");
       return completedFuture(checkPolicyForTitleLevelHold(records));
     }

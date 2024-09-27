@@ -17,6 +17,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.RequestProperties.ECS_REQUEST_PHASE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -259,6 +260,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public RequestType getRequestType() {
     return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
+  }
+
+  public EcsRequestPhase getEcsRequestPhase() {
+    return EcsRequestPhase.from(getProperty(requestRepresentation, ECS_REQUEST_PHASE));
   }
 
   boolean allowedForItem() {

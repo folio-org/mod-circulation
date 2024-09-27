@@ -3816,6 +3816,110 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void primaryTlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr() {
+    settingsFixture.configureTlrFeature(true, true, null, null, null);
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      UUID.randomUUID(),
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      null
+    ));
+
+    UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
+        "Pickup service point", "PICKUP", "Display name")
+        .withPickupLocation(Boolean.TRUE))
+      .getId();
+
+    UUID anotherServicePointId = servicePointsFixture.create(new ServicePointBuilder(
+        "Another service point", "OTHER", "Display name")
+        .withPickupLocation(Boolean.TRUE))
+      .getId();
+
+    UUID institutionId = locationsFixture.createInstitution("Institution").getId();
+    UUID campusIdA = locationsFixture.createCampus("Campus A", institutionId).getId();
+    UUID campusIdB = locationsFixture.createCampus("Campus B", institutionId).getId();
+    UUID libraryIdA1 = locationsFixture.createLibrary("Library A1", campusIdA).getId();
+    UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
+
+    UUID sameLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
+        .withName("Location in same library")
+        .withCode("3")
+        .forInstitution(institutionId)
+        .forCampus(campusIdA)
+        .forLibrary(libraryIdA1)
+        .withPrimaryServicePoint(anotherServicePointId)
+        .servedBy(anotherServicePointId))
+      .getId();
+
+    UUID anotherLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
+        .withName("Location in another library")
+        .withCode("3")
+        .forInstitution(institutionId)
+        .forCampus(campusIdB)
+        .forLibrary(libraryIdB1)
+        .withPrimaryServicePoint(anotherServicePointId)
+        .servedBy(anotherServicePointId))
+      .getId();
+
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID holdingsId = holdingsFixture.defaultWithHoldings(instanceId).getId();
+
+    // Closest item
+    UUID closestItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdingsId, sameLibraryLocationId).getId();
+
+    UUID expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdingsId, anotherLibraryLocationId).getId();
+
+    var requestBuilder = new RequestBuilder()
+      .page()
+      .fulfillToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withItemId(expectedItemId)
+      .withHoldingsRecordId(holdingsId)
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(pickupServicePointId);
+
+    // Request without ECS phase should fail
+    requestsFixture.attemptPlace(requestBuilder);
+
+    // The same request with Primary ECS phase should succeed because validation is skipped
+    IndividualResource request = requestsFixture.place(
+      requestBuilder.withEcsRequestPhase("Primary"));
+
+    assertThat(request.getJson().getString("itemId"), is(expectedItemId));
+
+    // To make sure there are no Available items left
+    requestsFixture.place(
+      requestBuilder
+        .withRequesterId(usersFixture.jessica().getId())
+        .withItemId(closestItemId)
+        .withEcsRequestPhase("Primary"));
+
+    // Placing TLR Hold request
+    var requestBuilderTlrHold = new RequestBuilder()
+      .hold()
+      .fulfillToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(pickupServicePointId);
+
+    // Request without ECS phase should fail
+    requestsFixture.attemptPlace(requestBuilderTlrHold);
+
+    // The same request with Primary ECS phase should succeed because policy check is skipped
+    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase("Primary"));
+  }
+
+  @Test
   void pageTlrSucceedsWhenClosestAvailableItemIsNotPageable() {
     // Page TLR should succeed when multiple available items exist, but the closest item to the
     // pickup service point is not requestable. At the same time, other available and requestable

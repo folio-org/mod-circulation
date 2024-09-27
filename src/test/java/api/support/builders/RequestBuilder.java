@@ -63,6 +63,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final Tags tags;
   private final String patronComments;
   private final BlockOverrides blockOverrides;
+  private final String ecsRequestPhase;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -74,6 +75,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
       null,
       null,
       null,
@@ -120,7 +122,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       getUUIDProperty(representation, "pickupServicePointId"),
       new Tags((toStream(representation.getJsonObject("tags"), "tagList").collect(toList()))),
       getProperty(representation, "patronComments"),
-      null
+      null,
+      getProperty(representation, "ecsRequestPhase")
     );
   }
 
@@ -189,6 +192,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
         JsonObject processingParameters = new JsonObject().put("overrideBlocks", overrideBlocks);
         put(request, "requestProcessingParameters", processingParameters);
       }
+    }
+
+    if (ecsRequestPhase != null) {
+      put(request, "ecsRequestPhase", ecsRequestPhase);
     }
 
     return request;
