@@ -17,7 +17,7 @@
     "requestLevel": {
       "description": "Level of the request - Item or Title",
       "type": "string",
-      "enum": ["Item"]
+      "enum": ["Item", "Title"]
     },
     "requestDate": {
       "description": "Date the request was made",
@@ -433,6 +433,10 @@
       "description": "Request fields used for search",
       "type": "object",
       "$ref": "request-search-index.json"
+    },
+    "itemLocationCode": {
+      "description": "Allow specifying item location when creating title-level requests",
+      "type": "string"
     }
   },
   "additionalProperties": false,
