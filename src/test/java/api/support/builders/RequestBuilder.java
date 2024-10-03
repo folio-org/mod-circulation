@@ -333,4 +333,35 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   public static class Tags {
     private final List<String> tagList;
   }
+
+  @AllArgsConstructor
+  @Getter
+  public static class PrintDetails {
+    private final Integer printCount;
+    private final String requesterId;
+    private final Boolean isPrinted;
+    private final String printEventDate;
+
+    public static PrintDetails fromRepresentation(JsonObject representation) {
+      JsonObject printDetails = representation.getJsonObject("printDetails");
+      if (printDetails != null) {
+        final Integer printCount = printDetails.getInteger("printCount");
+        final String requesterId = printDetails.getString("requesterId");
+        final Boolean isPrinted = printDetails.getBoolean("isPrinted");
+        final String printEventDate = printDetails.getString("printEventDate");
+        return new PrintDetails(printCount, requesterId, isPrinted,
+          printEventDate);
+      }
+      return null;
+    }
+
+    public JsonObject toJsonObject() {
+      JsonObject printDetails = new JsonObject();
+      printDetails.put("printCount", printCount);
+      printDetails.put("requesterId", requesterId);
+      printDetails.put("isPrinted", isPrinted);
+      printDetails.put("printEventDate", printEventDate);
+      return  printDetails;
+    }
+  }
 }
