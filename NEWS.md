@@ -1,3 +1,7 @@
+## 24.3.0
+
+* [CIRC-2156](https://folio-org.atlassian.net/browse/CIRC-2156) Upgrade "instance-storage version to 11.0 and "holdings-storage" to 8.0
+
 ## 24.2.0 2024-03-21
 
 * Update `feesfines` interface version to 19.0 (CIRC-1914)
