@@ -551,7 +551,7 @@ class StaffSlipsTests extends APITests {
     var steve = usersFixture.steve();
     var instance = instancesFixture.basedUponDunkirk();
     var location = locationsFixture.mainFloor();
-    ItemResource item = buildItem(instance.getId(), location);
+    var item = buildItem(instance.getId(), location);
     checkOutFixture.checkOutByBarcode(item);
     var holdRequestBuilder = new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())

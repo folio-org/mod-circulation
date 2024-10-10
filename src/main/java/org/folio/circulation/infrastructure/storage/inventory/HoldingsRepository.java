@@ -53,7 +53,6 @@ public class HoldingsRepository {
     Collection<String> instanceIds) {
 
     final var mapper = new HoldingsMapper();
-
     final var holdingsRecordFetcher = findWithCqlQuery(
       holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
