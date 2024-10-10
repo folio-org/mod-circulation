@@ -20,7 +20,7 @@ class ItemPermanentLocationTest {
     val itemJson = new ItemBuilder().withPermanentLocation(itemLocation).create();
 
     val item = Item.from(itemJson)
-      .withHoldings(new Holdings(null, null, null, holdingsLocation));
+      .withHoldings(new Holdings(null, null, null, holdingsLocation, null));
 
     assertThat(item.getPermanentLocationId(), is(itemLocation.toString()));
   }
@@ -32,7 +32,7 @@ class ItemPermanentLocationTest {
     val itemJson = new ItemBuilder().withPermanentLocation((UUID) null).create();
 
     val item = Item.from(itemJson)
-      .withHoldings(new Holdings(null, null, null, holdingsLocation));
+      .withHoldings(new Holdings(null, null, null, holdingsLocation, null));
 
     assertThat(item.getPermanentLocationId(), is(holdingsLocation.toString()));
   }

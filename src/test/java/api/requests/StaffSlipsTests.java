@@ -11,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -543,6 +544,34 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, slipsType, item, pageRequest, james);
   }
 
+  @Test
+  void responseContainsSearchSlipsForTLR() {
+    configurationsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var steve = usersFixture.steve();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    var item = buildItem(instance.getId(), location);
+    checkOutFixture.checkOutByBarcode(item);
+    var holdRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(steve);
+
+    var holdRequest = requestsClient.create(holdRequestBuilder);
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
@@ -577,6 +606,28 @@ class StaffSlipsTests extends APITests {
     }
   }
 
+  private void assertResponseContains(Response response, SlipsType slipsType,
+    IndividualResource request, UserResource requester) {
+
+    long count = getSlipsStream(response, slipsType)
+      .filter(ps ->
+        request.getId().toString().equals(
+          getNestedStringProperty(ps, REQUEST_KEY, "requestID"))
+          && requester.getBarcode().equals(
+            getNestedStringProperty(ps, REQUESTER_KEY, "barcode")))
+      .count();
+
+    if (count == 0) {
+      fail("Response does not contain a pick slip with expected combination" +
+        " of item, request and requester");
+    }
+
+    if (count > 1) {
+      fail("Response contains multiple pick slips with expected combination" +
+        " of item, request and requester: " + count);
+    }
+  }
+
   private Stream<JsonObject> getSlipsStream(Response response, SlipsType slipsType) {
     return JsonObjectArrayPropertyFetcher.toStream(response.getJson(), slipsType.getCollectionName());
   }
@@ -588,6 +639,19 @@ class StaffSlipsTests extends APITests {
 
   private String getName(JsonObject jsonObject) {
     return jsonObject.getString("name");
+  }
+
+  private ItemResource buildItem(UUID instanceId, IndividualResource location) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId)
+        .withEffectiveLocationId(location.getId()),
+      instanceBuilder -> instanceBuilder
+        .addIdentifier(isbnIdentifierId, "9780866989732")
+        .withId(instanceId),
+      itemBuilder -> itemBuilder.withBarcode("test")
+        .withMaterialType(materialTypesFixture.book().getId()));
   }
 
   @AllArgsConstructor

@@ -11,6 +11,7 @@ public class HoldingsMapper {
     return new Holdings(getProperty(holdingsRepresentation, "id"),
       getProperty(holdingsRepresentation, "instanceId"),
       getProperty(holdingsRepresentation, "copyNumber"),
-      getProperty(holdingsRepresentation, "permanentLocationId"));
+      getProperty(holdingsRepresentation, "permanentLocationId"),
+      getProperty(holdingsRepresentation, "effectiveLocationId"));
   }
 }
