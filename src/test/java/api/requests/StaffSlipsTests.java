@@ -545,7 +545,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
-  void responseContainsSearchSlipsForTLRRequestsOfTypeHoldOnly() {
+  void responseContainsSearchSlipsForTLR() {
     configurationsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();

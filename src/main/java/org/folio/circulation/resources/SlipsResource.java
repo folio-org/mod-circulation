@@ -195,8 +195,9 @@ public abstract class SlipsResource extends Resource {
       return succeeded(context);
     }
 
-    for (Request request : requestToInstanceIdMap.keySet()) {
-      String instanceId = requestToInstanceIdMap.get(request);
+    for (Map.Entry<Request, String> entry : requestToInstanceIdMap.entrySet()) {
+      Request request = entry.getKey();
+      String instanceId = entry.getValue();
       if (instanceId != null && instanceIdToHoldingsMap.containsKey(instanceId)) {
         requestToHoldingsMap.put(request, instanceIdToHoldingsMap.get(instanceId));
       }
