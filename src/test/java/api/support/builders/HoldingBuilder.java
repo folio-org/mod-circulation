@@ -11,19 +11,21 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
   private final UUID instanceId;
   private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
+  private final UUID effectiveLocationId;
   private final String callNumber;
   private final String callNumberPrefix;
   private final String callNumberSuffix;
   private final String copyNumber;
 
   public HoldingBuilder() {
-    this(null, null, null, null, null, null, null);
+    this(null, null, null, null, null, null, null, null);
   }
 
   private HoldingBuilder(
     UUID instanceId,
     UUID permanentLocationId,
     UUID temporaryLocationId,
+    UUID effectiveLocationId,
     String callNumber,
     String callNumberPrefix,
     String callNumberSuffix,
@@ -32,6 +34,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     this.instanceId = instanceId;
     this.permanentLocationId = permanentLocationId;
     this.temporaryLocationId = temporaryLocationId;
+    this.effectiveLocationId = effectiveLocationId;
     this.callNumber = callNumber;
     this.callNumberPrefix = callNumberPrefix;
     this.callNumberSuffix = callNumberSuffix;
@@ -46,6 +49,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     put(holdings, "_version", 5);
     put(holdings, "permanentLocationId", permanentLocationId);
     put(holdings, "temporaryLocationId", temporaryLocationId);
+    put(holdings, "effectiveLocationId", effectiveLocationId);
     put(holdings, "callNumber", callNumber);
     put(holdings, "callNumberPrefix", callNumberPrefix);
     put(holdings, "callNumberSuffix", callNumberSuffix);
@@ -59,6 +63,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
+      this.effectiveLocationId,
       this.callNumber,
       this.callNumberPrefix,
       this.callNumberSuffix,
@@ -75,6 +80,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       locationId,
       this.temporaryLocationId,
+      this.effectiveLocationId,
       this.callNumber,
       this.callNumberPrefix,
       this.callNumberSuffix,
@@ -95,6 +101,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       locationId,
+      this.effectiveLocationId,
       this.callNumber,
       this.callNumberPrefix,
       this.callNumberSuffix,
@@ -106,11 +113,25 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     return withTemporaryLocation((UUID)null);
   }
 
+  public HoldingBuilder withEffectiveLocationId(UUID effectiveLocationId) {
+    return new HoldingBuilder(
+      this.instanceId,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      effectiveLocationId,
+      this.callNumber,
+      this.callNumberPrefix,
+      this.callNumberSuffix,
+      this.copyNumber
+    );
+  }
+
   public HoldingBuilder withCallNumber(String callNumber) {
     return new HoldingBuilder(
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
+      this.effectiveLocationId,
       callNumber,
       this.callNumberPrefix,
       this.callNumberSuffix,
@@ -123,6 +144,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
+      this.effectiveLocationId,
       this.callNumber,
       callNumberPrefix,
       this.callNumberSuffix,
@@ -135,6 +157,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
+      this.effectiveLocationId,
       this.callNumber,
       this.callNumberPrefix,
       callNumberSuffix,
@@ -147,6 +170,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
+      this.effectiveLocationId,
       this.callNumber,
       this.callNumberPrefix,
       this.callNumberSuffix,
