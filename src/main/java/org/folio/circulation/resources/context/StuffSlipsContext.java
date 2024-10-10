@@ -19,7 +19,7 @@ import lombok.With;
 @AllArgsConstructor
 @Getter
 @With
-public class SearchSlipsContext {
+public class StuffSlipsContext {
   private MultipleRecords<Location> locations;
   private MultipleRecords<Request> requests;
   private MultipleRecords<Request> tlrRequests;

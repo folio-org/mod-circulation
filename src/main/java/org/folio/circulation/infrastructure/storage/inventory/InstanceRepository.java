@@ -50,12 +50,12 @@ public class InstanceRepository {
   }
 
   public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByRequests(
-    MultipleRecords<Request> multipleRequests) {
+    MultipleRecords<Request> requests) {
 
     log.debug("fetchByRequests:: parameters multipleRequests: {}",
-      () -> multipleRecordsAsString(multipleRequests));
+      () -> multipleRecordsAsString(requests));
 
-    return fetchByIds(multipleRequests.getRecords().stream()
+    return fetchByIds(requests.getRecords().stream()
       .map(Request::getInstanceId)
       .toList());
   }
