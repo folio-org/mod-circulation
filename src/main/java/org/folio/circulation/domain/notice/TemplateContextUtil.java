@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -139,6 +140,7 @@ public class TemplateContextUtil {
       .stream()
       .map(JsonObject.class::cast)
       .map(pickSlip -> pickSlip.getJsonObject(ITEM))
+      .filter(Objects::nonNull)
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
     log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}, " +
