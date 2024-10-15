@@ -1322,7 +1322,7 @@
     },
     {
       "id": "notes",
-      "version": "1.0 2.0 3.0"
+      "version": "4.0"
     },
     {
       "id": "actual-cost-record-storage",
@@ -2292,7 +2292,6 @@
         "pubsub.publish.post",
         "note.types.collection.get",
         "notes.item.post",
-        "notes.domain.all",
         "actual-cost-record-storage.actual-cost-records.item.post",
         "actual-cost-record-storage.actual-cost-records.collection.get",
         "actual-cost-record-storage.actual-cost-records.item.get",
@@ -2368,7 +2367,6 @@
         "addresstypes.collection.get",
         "notes.item.post",
         "note.types.collection.get",
-        "notes.domain.all",
         "pubsub.publish.post"
       ],
       "visible": false
@@ -2445,6 +2443,10 @@
         "circulation.internal.fetch-items",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
+        "inventory-storage.holdings.item.get",
+        "inventory-storage.holdings.collection.get",
+        "inventory-storage.instances.item.get",
+        "inventory-storage.instances.collection.get",
         "users.item.get",
         "users.collection.get",
         "addresstypes.item.get",
