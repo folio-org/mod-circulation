@@ -40,6 +40,7 @@ import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 public class LocationRepository {
@@ -315,7 +316,7 @@ public class LocationRepository {
     log.debug("fetchLocationsForServicePoint:: parameters servicePointId: {}", servicePointId);
 
     return new CqlQueryFinder<>(locationsStorageClient, "locations", new LocationMapper()::toDomain)
-      .findByQuery(CqlQuery.match("servicePointIds", servicePointId))
+      .findByQuery(CqlQuery.match("servicePointIds", servicePointId), PageLimit.maximumLimit())
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
