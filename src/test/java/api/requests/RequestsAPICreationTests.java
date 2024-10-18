@@ -645,7 +645,7 @@ public class RequestsAPICreationTests extends APITests {
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     UUID instanceId = items.get(0).getInstanceId();
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .page()
@@ -669,7 +669,7 @@ public class RequestsAPICreationTests extends APITests {
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     UUID instanceId = items.get(0).getInstanceId();
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     Response response = requestsClient.attemptCreate(
         new RequestBuilder()

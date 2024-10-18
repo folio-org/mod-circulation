@@ -1666,7 +1666,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void checkInItemWhenServicePointHasChangedToNoPickupLocation() {
-    configurationsFixture.enableTlrFeature();
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
     var instanceId = instancesFixture.basedUponDunkirk().getId();
     var defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     var checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(
@@ -1683,7 +1683,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     ServicePointBuilder changedServicePoint = new ServicePointBuilder(
       servicePointsFixture.cd1().getId(), servicePointName, servicePointCode, discoveryDisplayName,
-      description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name());
+      description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name(), false);
 
 //    Update existing service point
     servicePointsFixture.update(servicePointCode, changedServicePoint);
