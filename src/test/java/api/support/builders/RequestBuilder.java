@@ -3,6 +3,7 @@ package api.support.builders;
 import static api.support.utl.DateTimeUtils.getLocalDatePropertyForDateWithTime;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toList;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getLocalDateProperty;
@@ -64,6 +65,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final String patronComments;
   private final BlockOverrides blockOverrides;
   private final String ecsRequestPhase;
+  private final String itemLocationCode;
+  private final PrintDetails printDetails;
 
   public RequestBuilder() {
     this(UUID.randomUUID(),
@@ -75,6 +78,8 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
+      null,
       null,
       null,
       null,
@@ -123,7 +128,9 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       new Tags((toStream(representation.getJsonObject("tags"), "tagList").collect(toList()))),
       getProperty(representation, "patronComments"),
       null,
-      getProperty(representation, "ecsRequestPhase")
+      getProperty(representation, "ecsRequestPhase"),
+      getProperty(representation, ITEM_LOCATION_CODE),
+      PrintDetails.fromRepresentation(representation)
     );
   }
 
@@ -152,6 +159,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
     put(request, "cancelledDate", formatDateTimeOptional(cancelledDate));
     put(request, "pickupServicePointId", this.pickupServicePointId);
     put(request, "patronComments", this.patronComments);
+    put(request, ITEM_LOCATION_CODE, this.itemLocationCode);
 
     if (itemSummary != null) {
       final JsonObject itemRepresentation = new JsonObject();
@@ -196,6 +204,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
     if (ecsRequestPhase != null) {
       put(request, "ecsRequestPhase", ecsRequestPhase);
+    }
+
+    if (printDetails != null) {
+      put(request, "printDetails", printDetails.toJsonObject());
     }
 
     return request;
@@ -327,5 +339,36 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   @AllArgsConstructor
   public static class Tags {
     private final List<String> tagList;
+  }
+
+  @AllArgsConstructor
+  @Getter
+  public static class PrintDetails {
+    private final Integer printCount;
+    private final String requesterId;
+    private final Boolean isPrinted;
+    private final String printEventDate;
+
+    public static PrintDetails fromRepresentation(JsonObject representation) {
+      JsonObject printDetails = representation.getJsonObject("printDetails");
+      if (printDetails != null) {
+        final Integer printCount = printDetails.getInteger("printCount");
+        final String requesterId = printDetails.getString("requesterId");
+        final Boolean isPrinted = printDetails.getBoolean("isPrinted");
+        final String printEventDate = printDetails.getString("printEventDate");
+        return new PrintDetails(printCount, requesterId, isPrinted,
+          printEventDate);
+      }
+      return null;
+    }
+
+    public JsonObject toJsonObject() {
+      JsonObject printDetails = new JsonObject();
+      printDetails.put("printCount", printCount);
+      printDetails.put("requesterId", requesterId);
+      printDetails.put("isPrinted", isPrinted);
+      printDetails.put("printEventDate", printEventDate);
+      return  printDetails;
+    }
   }
 }

@@ -344,4 +344,8 @@ public class InterfaceUrls {
   public static URL circulationSettingsUrl(String subPath) {
     return circulationModuleUrl("/circulation/settings" + subPath);
   }
+
+  public static URL printEventsUrl(String subPath) {
+    return circulationModuleUrl("/circulation" + subPath);
+  }
 }

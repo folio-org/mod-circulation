@@ -426,4 +426,12 @@ public class Item {
     }
     return this;
   }
+
+  public boolean isAtLocation(String locationCode) {
+    return locationCode != null && getLocation() != null && (
+      locationCode.equals(getLocation().getCode()) ||
+      locationCode.equals(getLocation().getLibrary().getCode()) ||
+      locationCode.equals(getLocation().getCampus().getCode()) ||
+      locationCode.equals(getLocation().getInstitution().getCode()));
+  }
 }

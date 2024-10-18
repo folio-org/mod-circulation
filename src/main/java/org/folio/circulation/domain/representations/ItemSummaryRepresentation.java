@@ -36,6 +36,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "title", item.isDcbItem() ? item.getDcbItemTitle() : item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors", mapContributorNamesToJson(item));
+    write(itemSummary, "primaryContributor",item.getPrimaryContributorName());
     write(itemSummary, "callNumber", item.getCallNumber());
     write(itemSummary, "enumeration", item.getEnumeration());
     write(itemSummary, "chronology", item.getChronology());

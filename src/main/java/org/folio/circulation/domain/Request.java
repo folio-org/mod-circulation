@@ -17,6 +17,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
 import static org.folio.circulation.domain.representations.RequestProperties.ECS_REQUEST_PHASE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
@@ -104,12 +105,15 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private Integer previousPosition;
   private boolean changedStatus;
 
+  @With
+  private final User printDetailsRequester;
+
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
     //  this constructor
     return new Request(null, null, representation, null, null, new ArrayList<>(), new HashMap<>(),
     null, null, null, null, null, null, false, null,
-      false);
+      false, null);
   }
 
   public static Request from(TlrSettingsConfiguration tlrSettingsConfiguration, Operation operation,
@@ -117,7 +121,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
     return new Request(tlrSettingsConfiguration, operation, representation, null, null,
       new ArrayList<>(), new HashMap<>(), null, null, null, null, null, null, false,
-      null, false);
+      null, false, null);
   }
 
   public JsonObject asJson() {
@@ -224,7 +228,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       cancellationReasonRepresentation, instance, instanceItems, instanceItemsRequestPolicies,
       newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
-      previousPosition, changedStatus);
+      previousPosition, changedStatus, null);
   }
 
   @Override
@@ -240,6 +244,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @Override
   public User getUser() {
     return getRequester();
+  }
+
+  public User getPrintDetailsRequester() {
+    return printDetailsRequester;
   }
 
   public String getfulfillmentPreferenceName() {
@@ -292,6 +300,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public JsonObject getRequesterFromRepresentation() {
     return requestRepresentation.getJsonObject("requester");
+  }
+
+  public JsonObject getPrintDetails() {
+    return requestRepresentation.getJsonObject("printDetails");
   }
 
   public String getRequesterBarcode() {
@@ -380,6 +392,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getPatronComments() {
     return getProperty(requestRepresentation, "patronComments");
+  }
+
+  public String geItemLocationCode() {
+    return getProperty(requestRepresentation, ITEM_LOCATION_CODE);
   }
 
   public Request truncateRequestExpirationDateToTheEndOfTheDay(ZoneId zone) {

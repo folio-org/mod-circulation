@@ -17,7 +17,7 @@
     "requestLevel": {
       "description": "Level of the request - Item or Title",
       "type": "string",
-      "enum": ["Item"]
+      "enum": ["Item", "Title"]
     },
     "requestDate": {
       "description": "Date the request was made",
@@ -358,6 +358,56 @@
         }
       }
     },
+    "printDetails": {
+      "description": "The print details of the request",
+      "type": "object",
+      "readonly": true,
+      "properties": {
+        "printCount": {
+          "description": "Total no of times the request is printed",
+          "type": "integer",
+          "readOnly": true
+        },
+        "requesterId": {
+          "description": "User uuid of last print requester",
+          "type": "string",
+          "readOnly": true
+        },
+        "isPrinted": {
+          "description": "Whether the request is ever printed",
+          "type": "boolean",
+          "readOnly": true
+        },
+        "printEventDate": {
+          "description": "Recent printed time of the request",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "lastPrintRequester": {
+          "description": "Details of the User who printed the request recently",
+          "readonly": true,
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "description": "first name of the user",
+              "type": "string",
+              "readonly": true
+            },
+            "lastName": {
+              "description": "last name of the user",
+              "type": "string",
+              "readonly": true
+            },
+            "middleName": {
+              "description": "middle name of the user",
+              "type": "string",
+              "readonly": true
+            }
+          }
+        }
+      }
+    },
     "tags": {
       "type": "object",
       "description": "Tags",
@@ -383,6 +433,10 @@
       "description": "Request fields used for search",
       "type": "object",
       "$ref": "request-search-index.json"
+    },
+    "itemLocationCode": {
+      "description": "Allow specifying item location when creating title-level requests",
+      "type": "string"
     }
   },
   "additionalProperties": false,

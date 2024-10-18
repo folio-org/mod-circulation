@@ -39,6 +39,13 @@ public class UserExamples {
       .withActive(true);
   }
 
+  static UserBuilder basedUponJames() {
+    return new UserBuilder()
+      .withBarcode("6430530304")
+      .withPreferredFirstName("kim", "james", "kimJ")
+      .withActive(true);
+  }
+
   static UserBuilder basedUponCharlotteBroadwell() {
     return new UserBuilder()
       .withName("Broadwell", "Charlotte")

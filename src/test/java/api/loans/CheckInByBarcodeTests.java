@@ -45,6 +45,7 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
+import static org.folio.circulation.domain.policy.ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
@@ -76,6 +77,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import api.support.builders.ServicePointBuilder;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -1660,6 +1662,54 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
     JsonObject itemRepresentation = itemAfter.getJson();
     assertThat(itemRepresentation.getJsonObject("status").getString("name"), is("Awaiting pickup"));
+  }
+
+  @Test
+  void checkInItemWhenServicePointHasChangedToNoPickupLocation() {
+    configurationsFixture.enableTlrFeature();
+    var instanceId = instancesFixture.basedUponDunkirk().getId();
+    var defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
+    var checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(
+      defaultWithHoldings.getId()));
+    var holdRequestBeforeFulfilled = requestsClient.create(
+      buildHoldTLRWithHoldShelffulfillmentPreference(instanceId));
+
+    String servicePointCode = servicePointsFixture.cd1().getJson().getString("code");
+    String servicePointName = "custom service point";
+    int shelvingLagTime = 0;
+    String discoveryDisplayName = servicePointsFixture.cd1().getJson()
+      .getString("discoveryDisplayName");
+    String description = servicePointsFixture.cd1().getJson().getString("description");
+
+    ServicePointBuilder changedServicePoint = new ServicePointBuilder(
+      servicePointsFixture.cd1().getId(), servicePointName, servicePointCode, discoveryDisplayName,
+      description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name());
+
+//    Update existing service point
+    servicePointsFixture.update(servicePointCode, changedServicePoint);
+
+    checkInFixture.checkInByBarcode(checkedOutItem, servicePointsFixture.cd1().getId());
+
+    //validating request before fulfilled
+    var holdRequestAfterFulfilled  = requestsClient.get(holdRequestBeforeFulfilled.getId());
+    JsonObject representationBefore = holdRequestBeforeFulfilled.getJson();
+    assertThat(representationBefore.getString("itemId"), nullValue());
+    validateTLRequestByFields(representationBefore, HOLD_SHELF, instanceId, OPEN_NOT_YET_FILLED);
+
+    //validating request after fulfilled
+    JsonObject representation = holdRequestAfterFulfilled.getJson();
+    assertThat(representation.getString("itemId"), is(checkedOutItem.getId().toString()));
+    assertThat(representation.getString("holdingsRecordId"), is(defaultWithHoldings.getId()));
+
+    validateTLRequestByFields(representation, HOLD_SHELF, instanceId, OPEN_AWAITING_PICKUP);
+
+    IndividualResource itemAfter = itemsClient.get(checkedOutItem.getId());
+    JsonObject itemRepresentation = itemAfter.getJson();
+    assertThat(itemRepresentation.getJsonObject("status").getString("name"),
+      is("Awaiting pickup"));
+
+    JsonObject servicePointRepresentation = representation.getJsonObject("pickupServicePoint");
+    assertThat(servicePointRepresentation.getBoolean("pickupLocation"), is(false));
   }
 
   @Test

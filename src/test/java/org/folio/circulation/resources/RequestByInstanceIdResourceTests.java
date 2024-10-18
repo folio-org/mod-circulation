@@ -91,6 +91,34 @@ public class RequestByInstanceIdResourceTests {
     assertEquals("fakeResponseFailure", errorMessage);
   }
 
+  @Test
+  void shouldConvertToValidationErrorForServerErrorFailure() {
+    ServerErrorFailure serverErrorFailure = new ServerErrorFailure("Server failed");
+    Collection<ValidationError> errors = RequestByInstanceIdResource.convertToValidationErrors(serverErrorFailure);
+
+    assertEquals(1, errors.size());
+    assertTrue(errors.contains(new ValidationError("Server failed")));
+  }
+
+  @Test
+  void shouldConvertToValidationErrorForBadRequestFailure() {
+    BadRequestFailure badRequestFailure = new BadRequestFailure("Bad request");
+    Collection<ValidationError> errors = RequestByInstanceIdResource.convertToValidationErrors(badRequestFailure);
+
+    assertEquals(1, errors.size());
+    assertTrue(errors.contains(new ValidationError("Bad request")));
+  }
+
+  @Test
+  void shouldConvertToValidationErrorForForwardOnFailure() {
+    Response failureResponse = new Response(422, "test body", "json");
+    ForwardOnFailure forwardFailure = new ForwardOnFailure(failureResponse);
+    Collection<ValidationError> errors = RequestByInstanceIdResource.convertToValidationErrors(forwardFailure);
+
+    assertEquals(1, errors.size());
+    assertEquals("test body", errors.stream().toList().get(0).getMessage());
+  }
+
   public static JsonObject getJsonInstanceRequest(UUID pickupServicePointId) {
     ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
     ZonedDateTime requestExpirationDate = requestDate.plusDays(30);

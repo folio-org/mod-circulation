@@ -280,6 +280,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::circulationSettingsUrl, "circulationSettings");
   }
 
+  public static ResourceClient forPrintEvents() {
+    return new ResourceClient(InterfaceUrls::printEventsUrl, " ");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;

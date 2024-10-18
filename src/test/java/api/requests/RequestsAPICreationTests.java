@@ -70,6 +70,8 @@ import static org.folio.circulation.support.ErrorCode.ITEM_OF_THIS_INSTANCE_ALRE
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_LOAN_FOR_ONE_OF_INSTANCES_ITEMS;
 import static org.folio.circulation.support.ErrorCode.REQUESTER_ALREADY_HAS_THIS_ITEM_ON_LOAN;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
+import static org.folio.circulation.support.ErrorCode.USER_IS_BLOCKED_AUTOMATICALLY;
+import static org.folio.circulation.support.ErrorCode.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -227,7 +229,10 @@ public class RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important")))
-      .withPatronComments("I need this book"));
+      .withPatronComments("I need this book")
+      .withPrintDetails(new RequestBuilder.PrintDetails(49,
+        requester.getId().toString(), true, "2024-09-16T11:58:22" +
+        ".295+00:00")));
 
     JsonObject representation = request.getJson();
 
@@ -624,6 +629,64 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(1));
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "NU/JC/DL/3F",
+    "DLRC",
+    "JC",
+    "NU"
+  })
+  void createTitleLevelRequestWhenTlrEnabledSetLocation(String locationCode) {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId)
+      .withItemLocationCode(locationCode));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void createTitleLevelRequestWhenTlrEnabledSetLocationNoItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    Response response = requestsClient.attemptCreate(
+        new RequestBuilder()
+          .page()
+          .withNoHoldingsRecordId()
+          .withNoItemId()
+          .titleRequestLevel()
+          .withInstanceId(instanceId)
+          .withPickupServicePointId(pickupServicePointId)
+          .withRequesterId(patronId)
+          .withItemLocationCode("DoesNotExist")
+          .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Cannot create page TLR for this instance ID - no pageable " +
+        "available items found in requested location")));
   }
 
   @Test
@@ -2694,7 +2757,8 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(postResponse.getJson(), hasErrors(1));
     assertThat(postResponse.getJson(), hasErrorWith(allOf(
       hasMessage("Patron blocked from requesting"),
-      hasParameter("reason", "Display description")))
+      hasParameter("reason", "Display description"),
+      hasCode(USER_IS_BLOCKED_MANUALLY)))
     );
   }
 
@@ -2891,6 +2955,8 @@ public class RequestsAPICreationTests extends APITests {
       hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
     assertThat(response.getJson(), hasErrorWith(
       hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
+    assertThat(response.getJson(), hasErrorWith(
+      hasCode(USER_IS_BLOCKED_AUTOMATICALLY)));
   }
 
   @Test
@@ -4956,6 +5022,45 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("instance").getString("title"), is(instanceTitle));
 
+  }
+
+  @Test
+  void itemLevelRequestShouldBeCreatedWithDeliveryFulfillmentPreference() {
+    final UUID requestPolicyId = UUID.randomUUID();
+    policiesActivation.use(new RequestPolicyBuilder(
+      requestPolicyId,
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      Map.of(PAGE, Set.of(servicePointsFixture.cd2().getId()))));
+
+    final IndividualResource work = addressTypesFixture.work();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(work.getId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .itemRequestLevel()
+      .withFulfillmentPreference("Delivery")
+      .withRequestType(PAGE.getValue())
+      .withInstanceId(item.getInstanceId())
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withItemId(item.getId())
+      .by(charlotte)
+      .withDeliveryAddressType(work.getId()));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.ITEM.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(PAGE.getValue()));
+    assertThat(response.getJson().getString("fulfillmentPreference"), is("Delivery"));
+    assertThat(response.getJson().getString("deliveryAddressTypeId"), is(work.getId()));
   }
 
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,

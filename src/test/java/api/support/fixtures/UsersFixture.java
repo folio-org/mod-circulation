@@ -4,6 +4,7 @@ import static api.support.fixtures.UserExamples.basedUponBobbyBibbin;
 import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
 import static api.support.fixtures.UserExamples.basedUponGroot;
 import static api.support.fixtures.UserExamples.basedUponHenryHanks;
+import static api.support.fixtures.UserExamples.basedUponJames;
 import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
@@ -38,6 +39,11 @@ public class UsersFixture {
   public UserResource groot() {
     return createIfAbsent(basedUponGroot()
       .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource KimJames() {
+    return createIfAbsent(basedUponJames()
+      .inGroupFor(patronGroupsFixture.staff()));
   }
 
   public UserResource james() {

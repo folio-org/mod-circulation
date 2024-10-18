@@ -95,4 +95,8 @@ public class ServicePointsFixture {
   public Collection<IndividualResource> getAllServicePoints() {
     return servicePointRecordCreator.getIdentityMap().values();
   }
+
+  public void update(String servicePointCode, ServicePointBuilder builder) {
+    servicePointRecordCreator.update(servicePointCode, builder.create());
+  }
 }
