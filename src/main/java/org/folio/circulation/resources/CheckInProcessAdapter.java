@@ -309,7 +309,9 @@ class CheckInProcessAdapter {
       return locationRepository.fetchLocationsForServicePoint(context.getCheckInServicePointId().toString())
         .thenApply(rLocations -> rLocations.map(locations -> locations.stream()
           .filter(Location::isFloatingCollection).findFirst()
-          .map(item::withFloatDestinationLocation).orElse(item)));
+          .map(item::withFloatDestinationLocation).orElse(item)))
+        .thenCompose(it -> locationRepository.getFloatDestinationLocation(it.value()))
+        .thenApply(location -> Result.succeeded(item.withFloatDestinationLocation(location.value())));
     } else {
       return Result.ofAsync(item);
     }

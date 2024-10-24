@@ -78,7 +78,10 @@ public class ItemSummaryRepresentation {
 
     final Location location = item.getLocation();
 
-    if (location != null) {
+    if (item.canFloatThroughCheckInServicePoint()) {
+      itemSummary.put("location", new JsonObject()
+        .put("name", item.getFloatDestinationLocation().getName()));
+    } else if (location != null) {
       log.info("createItemSummary:: location is not null");
       itemSummary.put("location", new JsonObject()
         .put("name", location.getName()));

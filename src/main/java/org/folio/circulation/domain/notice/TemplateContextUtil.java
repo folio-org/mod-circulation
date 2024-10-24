@@ -211,7 +211,8 @@ public class TemplateContextUtil {
       .put("displaySummary", item.getDisplaySummary())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 
-    Location location = item.getLocation();
+    Location location = item.canFloatThroughCheckInServicePoint() ?
+      item.getFloatDestinationLocation() : item.getLocation();
 
     if (location != null) {
       log.info("createItemContext:: location is not null");
