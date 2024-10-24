@@ -88,6 +88,11 @@ public class LocationRepository {
     return getLocation(item, Item::getPermanentLocationId);
   }
 
+  public CompletableFuture<Result<Location>> getFloatDestinationLocation(Item item) {
+    log.debug("getFloatDestinationLocation:: parameters item: {}", item);
+    return getLocation(item, Item::getFloatDestinationLocationId);
+  }
+
   private CompletableFuture<Result<Location>> getLocation(Item item,
     Function<Item, String> locationIdGetter) {
     log.debug("getLocation:: parameters item: {}", item);
