@@ -18,7 +18,6 @@ types:
   errors: !include extended-errors.json
 
 traits:
-  language: !include raml-util/traits/language.raml
   pageable: !include raml-util/traits/pageable.raml
   searchable: !include raml-util/traits/searchable.raml
   validate: !include raml-util/traits/validation.raml
@@ -34,7 +33,6 @@ resourceTypes:
     post:
       description: Creates a loan by checking out an item to a loanee
       is: [
-        language,
         validate
       ]
       body:
@@ -58,7 +56,6 @@ resourceTypes:
     post:
       description: Updates the due date of an existing loan
       is: [
-        language,
         validate
       ]
       body:
@@ -86,7 +83,6 @@ resourceTypes:
     post:
       description: Updates the due date of an existing loan
       is: [
-        language,
         validate
       ]
       body:
@@ -114,7 +110,6 @@ resourceTypes:
     post:
       description: Updates the status of an existing loan
       is: [
-        language,
         validate
       ]
       body:
@@ -296,7 +291,6 @@ resourceTypes:
       post:
         description: Creates a request for any item from the given instance ID
         is: [
-          language,
           validate
         ]
         body:

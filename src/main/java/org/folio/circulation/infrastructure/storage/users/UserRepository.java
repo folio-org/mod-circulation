@@ -2,9 +2,9 @@ package org.folio.circulation.infrastructure.storage.users;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -19,17 +19,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.PrintEventDetail;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.User;
-import org.folio.circulation.domain.UserRelatedRecord;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -39,9 +40,12 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.json.JsonObject;
+
 public class UserRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String USERS_RECORD_PROPERTY = "users";
+  private static final String REQUESTER_ID = "requesterId";
 
   private final CollectionResourceClient usersStorageClient;
 
@@ -272,8 +276,10 @@ public class UserRepository {
       usersToFetch.add(request.getProxyUserId());
     }
 
-    if (request.getPrintEventDetail() != null && request.getPrintEventDetail().getUserId() != null) {
-      usersToFetch.add(request.getPrintEventDetail().getUserId());
+    JsonObject printDetails = request.getPrintDetails();
+    if (printDetails != null &&
+      StringUtils.isNotBlank(printDetails.getString(REQUESTER_ID))) {
+      usersToFetch.add(printDetails.getString(REQUESTER_ID));
     }
 
     return usersToFetch;
@@ -288,13 +294,9 @@ public class UserRepository {
     return request
       .withRequester(userMap.getOrDefault(request.getUserId(), null))
       .withProxy(userMap.getOrDefault(request.getProxyUserId(), null))
-      .withPrintEventDetail(mapUserToPrintEventDetails(request, userMap));
-  }
-
-  private PrintEventDetail mapUserToPrintEventDetails(Request request, Map<String, User> userMap) {
-    var printEventDetail = request.getPrintEventDetail();
-    return printEventDetail != null ?
-      printEventDetail.withPrinteduser(userMap.getOrDefault(printEventDetail.getUserId(), null)) : null;
+      .withPrintDetailsRequester(userMap
+        .getOrDefault(Optional.ofNullable(request.getPrintDetails())
+          .map(pd -> pd.getString(REQUESTER_ID)).orElse(null), null));
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {

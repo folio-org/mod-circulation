@@ -16,7 +16,6 @@ import static api.support.fixtures.TemplateContextMatchers.getRequestContextMatc
 import static api.support.fixtures.TemplateContextMatchers.getUserContextMatchers;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.notEqual;
-import static api.support.http.InterfaceUrls.printEventsUrl;
 import static api.support.http.Limit.limit;
 import static api.support.http.Offset.noOffset;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
@@ -108,7 +107,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.builders.CirculationSettingBuilder;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -196,7 +194,6 @@ public class RequestsAPICreationTests extends APITests {
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
     configurationsFixture.deleteTlrFeatureConfig();
-    circulationSettingsClient.deleteAll();
   }
 
   @Test
@@ -232,7 +229,10 @@ public class RequestsAPICreationTests extends APITests {
       .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
       .withPickupServicePointId(pickupServicePointId)
       .withTags(new RequestBuilder.Tags(asList("new", "important")))
-      .withPatronComments("I need this book"));
+      .withPatronComments("I need this book")
+      .withPrintDetails(new RequestBuilder.PrintDetails(49,
+        requester.getId().toString(), true, "2024-09-16T11:58:22" +
+        ".295+00:00")));
 
     JsonObject representation = request.getJson();
 
@@ -629,6 +629,64 @@ public class RequestsAPICreationTests extends APITests {
       .atMost(1, TimeUnit.SECONDS)
       .until(FakePubSub::getPublishedEvents, hasSize(1));
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "NU/JC/DL/3F",
+    "DLRC",
+    "JC",
+    "NU"
+  })
+  void createTitleLevelRequestWhenTlrEnabledSetLocation(String locationCode) {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId)
+      .withItemLocationCode(locationCode));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void createTitleLevelRequestWhenTlrEnabledSetLocationNoItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    Response response = requestsClient.attemptCreate(
+        new RequestBuilder()
+          .page()
+          .withNoHoldingsRecordId()
+          .withNoItemId()
+          .titleRequestLevel()
+          .withInstanceId(instanceId)
+          .withPickupServicePointId(pickupServicePointId)
+          .withRequesterId(patronId)
+          .withItemLocationCode("DoesNotExist")
+          .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Cannot create page TLR for this instance ID - no pageable " +
+        "available items found in requested location")));
   }
 
   @Test
@@ -4863,124 +4921,6 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
-  void fetchRequestWithOutPrintEventFeature() {
-    assertThat("Circulation settings enabled", circulationSettingsClient.getAll().isEmpty());
-    var barcode1 = "barcode1";
-    var barcode2 = "barcode2";
-    // creating 2 different requests and assert request details without enabling printEvent feature
-    var userResource = usersFixture.charlotte();
-    var servicePointId = servicePointsFixture.cd1().getId();
-    var requestId1 = createRequest(userResource, barcode1, servicePointId).getId();
-    var requestId2 = createRequest(userResource, barcode2, servicePointId).getId();
-
-    JsonObject requestRepresentation1 = requestsClient.getMany(exactMatch("id", requestId1.toString())).getFirst();
-    JsonObject requestRepresentation2 = requestsClient.getMany(exactMatch("id", requestId2.toString())).getFirst();
-    assertRequestDetails(requestRepresentation1, requestId1, barcode1, servicePointId);
-    assertRequestDetails(requestRepresentation2, requestId2, barcode2, servicePointId);
-    assertThat("printDetails should be null for request1 because the print event feature is not enabled",
-      requestRepresentation1.getJsonObject("printDetails"), Matchers.nullValue());
-    assertThat("printDetails should be null for request2 because the print event feature is not enabled",
-      requestRepresentation2.getJsonObject("printDetails"), Matchers.nullValue());
-  }
-
-  @Test
-  void printAndFetchDetailWithPrintEventFeatureEnabled() {
-    assertThat("Circulation settings enabled", circulationSettingsClient.getAll().isEmpty());
-    var barcode1 = "barcode1";
-    var barcode2 = "barcode2";
-    // creating 2 different requests and print those 2 requests
-    // assert request details with enabling printEvent feature
-    circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("enablePrintLog", true)));
-    var userResource1 = usersFixture.charlotte();
-    var userResource2 = usersFixture.jessica();
-    var servicePointId = servicePointsFixture.cd1().getId();
-    var requestId1 = createRequest(userResource1, barcode1, servicePointId).getId();
-    var requestId2 = createRequest(userResource2, barcode2, servicePointId).getId();
-    // Printing request1 using user1 and assertRequest details
-    var printRequest = getPrintEvent();
-    printRequest.put("requestIds", List.of(requestId1));
-    printRequest.put("requesterId", userResource1.getId());
-
-    restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
-
-    // Printing request2 using user2 and assertRequest details
-    printRequest = getPrintEvent();
-    printRequest.put("requestIds", List.of(requestId2));
-    printRequest.put("requesterId", userResource2.getId());
-
-    restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
-    JsonObject requestRepresentation1 = requestsClient.getMany(exactMatch("id", requestId1.toString())).getFirst();
-    JsonObject requestRepresentation2 = requestsClient.getMany(exactMatch("id", requestId2.toString())).getFirst();
-    assertRequestDetails(requestRepresentation1, requestId1, barcode1, servicePointId);
-    assertRequestDetails(requestRepresentation2, requestId2, barcode2, servicePointId);
-    assertThat("printDetails should not be null for request1 as the feature is enabled and the request is printed",
-      requestRepresentation1.getJsonObject("printDetails"), Matchers.notNullValue());
-    assertThat("printDetails should not be null for request2 as the feature is enabled and the request is printed",
-      requestRepresentation2.getJsonObject("printDetails"), Matchers.notNullValue());
-    assertPrintDetails(requestRepresentation1, 1, "2024-06-25T11:54:07.000Z", userResource1);
-    assertPrintDetails(requestRepresentation2, 1, "2024-06-25T11:54:07.000Z", userResource2);
-
-    // printing both request for second time using user2 and assert requestDetails
-    printRequest.put("printEventDate", "2024-06-25T12:54:07.000Z");
-    printRequest.put("requestIds", List.of(requestId1, requestId2));
-    printRequest.put("requesterId", userResource2.getId());
-
-    restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
-
-    requestRepresentation1 = requestsClient.getMany(exactMatch("id", requestId1.toString())).getFirst();
-    requestRepresentation2 = requestsClient.getMany(exactMatch("id", requestId2.toString())).getFirst();
-    assertRequestDetails(requestRepresentation1, requestId1, barcode1, servicePointId);
-    assertRequestDetails(requestRepresentation2, requestId2, barcode2, servicePointId);
-    assertPrintDetails(requestRepresentation1, 2, "2024-06-25T12:54:07.000Z", userResource2);
-    assertPrintDetails(requestRepresentation2, 2, "2024-06-25T12:54:07.000Z", userResource2);
-
-    // printing request1 for third time using user1 and assert requestDetails
-    printRequest.put("printEventDate", "2024-06-25T12:58:07.000Z");
-    printRequest.put("requestIds", List.of(requestId1));
-    printRequest.put("requesterId", userResource1.getId());
-
-    restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
-
-    requestRepresentation1 = requestsClient.getMany(exactMatch("id", requestId1.toString())).getFirst();
-    requestRepresentation2 = requestsClient.getMany(exactMatch("id", requestId2.toString())).getFirst();
-    assertRequestDetails(requestRepresentation1, requestId1, barcode1, servicePointId);
-    assertRequestDetails(requestRepresentation2, requestId2, barcode2, servicePointId);
-    assertPrintDetails(requestRepresentation1, 3, "2024-06-25T12:58:07.000Z", userResource1);
-    assertPrintDetails(requestRepresentation2, 2, "2024-06-25T12:54:07.000Z", userResource2);
-  }
-
-  @Test
-  void printAndFetchRequestWithPrintEventFeatureDisabled() {
-    assertThat("Circulation settings enabled", circulationSettingsClient.getAll().isEmpty());
-    var barcode1 = "barcode1";
-    var barcode2 = "barcode2";
-    // creating 2 different requests and print it
-    // assert request details without enabling printEvent feature
-    circulationSettingsClient.create(new CirculationSettingBuilder()
-      .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("enablePrintLog", false)));
-    var userResource = usersFixture.charlotte();
-    var servicePointId = servicePointsFixture.cd1().getId();
-    var requestId1 = createRequest(userResource, barcode1, servicePointId).getId();
-    var requestId2 = createRequest(userResource, barcode2, servicePointId).getId();
-    var printRequest = getPrintEvent();
-    printRequest.put("requestIds", List.of(requestId1, requestId2));
-
-    restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
-
-    JsonObject requestRepresentation1 = requestsClient.getMany(exactMatch("id", requestId1.toString())).getFirst();
-    JsonObject requestRepresentation2 = requestsClient.getMany(exactMatch("id", requestId2.toString())).getFirst();
-    assertRequestDetails(requestRepresentation1, requestId1, barcode1, servicePointId);
-    assertRequestDetails(requestRepresentation2, requestId2, barcode2, servicePointId);
-    assertThat("printDetails should be null for request1 because the print event feature is disabled",
-      requestRepresentation1.getJsonObject("printDetails"), Matchers.nullValue());
-    assertThat("printDetails should be null for request2 because the print event feature is disabled",
-      requestRepresentation2.getJsonObject("printDetails"), Matchers.nullValue());
-  }
-
-  @Test
   void itemLevelRequestShouldBeCreatedWithDeliveryFulfillmentPreference() {
     final UUID requestPolicyId = UUID.randomUUID();
     policiesActivation.use(new RequestPolicyBuilder(
@@ -5349,53 +5289,5 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
     assertThat(firstPublication.getString("place"), is("New York"));
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
-  }
-
-  private IndividualResource createRequest(UserResource userResource, String itemBarcode,
-                                              UUID pickupServicePointId) {
-    return requestsFixture.place(
-      new RequestBuilder()
-        .open()
-        .page()
-        .forItem(itemsFixture.basedUponSmallAngryPlanet(itemBarcode))
-        .by(userResource)
-        .fulfillToHoldShelf()
-        .withRequestExpiration(LocalDate.of(2024, 7, 30))
-        .withHoldShelfExpiration(LocalDate.of(2024, 8, 15))
-        .withPickupServicePointId(pickupServicePointId));
-  }
-
-  private void assertRequestDetails(JsonObject representation, UUID id, String barcodeName, UUID servicePointId) {
-    assertThat(representation.getString("id"), is(id.toString()));
-    assertThat(representation.getString("requestType"), is("Page"));
-    assertThat(representation.getString("requestLevel"), is("Item"));
-    assertThat(representation.getString("requestDate"), is("2017-07-15T09:35:27.000Z"));
-    assertThat(representation.getJsonObject("item").getString("barcode"), is(barcodeName));
-    assertThat(representation.getString("fulfillmentPreference"), is("Hold Shelf"));
-    assertThat(representation.getString("requestExpirationDate"), is("2024-07-30T23:59:59.000Z"));
-    assertThat(representation.getString("holdShelfExpirationDate"), is("2024-08-15"));
-    assertThat(representation.getString("status"), is("Open - Not yet filled"));
-    assertThat(representation.getString("pickupServicePointId"), is(servicePointId.toString()));
-  }
-
-  private JsonObject getPrintEvent() {
-    return new JsonObject()
-      .put("requesterId", "5f5751b4-e352-4121-adca-204b0c2aec43")
-      .put("requesterName", "requester")
-      .put("printEventDate", "2024-06-25T11:54:07.000Z");
-  }
-
-  private void assertPrintDetails(JsonObject representation, int count, String printEventDate,
-                                  UserResource userResource) {
-    var printDetailObject = representation.getJsonObject("printDetails");
-    var lastPrintRequesterObject = printDetailObject.getJsonObject("lastPrintRequester");
-    assertThat(printDetailObject.getInteger("count"), is(count));
-    assertThat(printDetailObject.getString("lastPrintedDate"), is(printEventDate));
-    assertThat(lastPrintRequesterObject.getString("middleName"),
-      is(userResource.getJson().getJsonObject("personal").getString("middleName")));
-    assertThat(lastPrintRequesterObject.getString("lastName"),
-      is(userResource.getJson().getJsonObject("personal").getString("lastName")));
-    assertThat(lastPrintRequesterObject.getString("firstName"),
-      is(userResource.getJson().getJsonObject("personal").getString("firstName")));
   }
 }

@@ -49,6 +49,17 @@ public class InstanceRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByRequests(
+    MultipleRecords<Request> requests) {
+
+    log.debug("fetchByRequests:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(requests));
+
+    return fetchByIds(requests.getRecords().stream()
+      .map(Request::getInstanceId)
+      .toList());
+  }
+
   public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
     Collection<String> instanceIds) {
 
@@ -61,8 +72,11 @@ public class InstanceRepository {
   }
 
 
-  public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
-    log.debug("findInstancesForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+  public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(
+    MultipleRecords<Request> multipleRequests) {
+
+    log.debug("findInstancesForRequests:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
 
     Collection<Request> requests = multipleRequests.getRecords();
     final List<String> instanceIdsToFetch = requests.stream()

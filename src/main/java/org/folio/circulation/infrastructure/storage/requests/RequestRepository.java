@@ -30,7 +30,6 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.StoredRequestRepresentation;
 import org.folio.circulation.domain.User;
-import org.folio.circulation.infrastructure.storage.PrintEventsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -67,7 +66,6 @@ public class RequestRepository {
   private final ServicePointRepository servicePointRepository;
   private final PatronGroupRepository patronGroupRepository;
   private final InstanceRepository instanceRepository;
-  private final PrintEventsRepository printEventsRepository;
 
   /**
    * Public constructor to avoid creating repositories twice
@@ -78,8 +76,7 @@ public class RequestRepository {
 
     this(new Clients(clients.requestsStorage(), clients.requestsBatchStorage(),
         clients.cancellationReasonStorage()), itemRepository, userRepository,
-      loanRepository, servicePointRepository, patronGroupRepository, new InstanceRepository(clients),
-      new PrintEventsRepository(clients));
+      loanRepository, servicePointRepository, patronGroupRepository, new InstanceRepository(clients));
   }
 
   /**
@@ -90,10 +87,9 @@ public class RequestRepository {
   }
 
   private RequestRepository(Clients clients, ItemRepository itemRepository,
-                            UserRepository userRepository, LoanRepository loanRepository,
-                            ServicePointRepository servicePointRepository,
-                            PatronGroupRepository patronGroupRepository, InstanceRepository instanceRepository,
-                            PrintEventsRepository printEventsRepository) {
+    UserRepository userRepository, LoanRepository loanRepository,
+    ServicePointRepository servicePointRepository,
+    PatronGroupRepository patronGroupRepository, InstanceRepository instanceRepository) {
 
     this.requestsStorageClient = clients.getRequestsStorageClient();
     this.requestsBatchStorageClient = clients.getRequestsBatchStorageClient();
@@ -104,7 +100,6 @@ public class RequestRepository {
     this.servicePointRepository = servicePointRepository;
     this.patronGroupRepository = patronGroupRepository;
     this.instanceRepository = instanceRepository;
-    this.printEventsRepository = printEventsRepository;
   }
 
   public static RequestRepository using(
@@ -118,14 +113,12 @@ public class RequestRepository {
       itemRepository, userRepository, loanRepository,
       new ServicePointRepository(clients),
       new PatronGroupRepository(clients),
-      new InstanceRepository(clients),
-      new PrintEventsRepository(clients));
+      new InstanceRepository(clients));
   }
 
   public CompletableFuture<Result<MultipleRecords<Request>>> findBy(String query) {
     return requestsStorageClient.getManyWithRawQueryStringParameters(query)
       .thenApply(flatMapResult(this::mapResponseToRequests))
-      .thenCompose(r -> r.after(this::fetchPrintEventDetails))
       .thenCompose(r -> r.after(this::fetchAdditionalFields));
   }
 
@@ -147,14 +140,6 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));
-  }
-
-  private CompletableFuture<Result<MultipleRecords<Request>>> fetchPrintEventDetails(
-    MultipleRecords<Request> requestRecords) {
-    log.debug("fetchPrintEventDetails:: Fetching print event details for requestRecords: {}",
-      ()-> multipleRecordsAsString(requestRecords));
-    return ofAsync(() -> requestRecords)
-      .thenComposeAsync(result -> result.after(printEventsRepository::findPrintEventDetails));
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(

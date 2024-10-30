@@ -1,5 +1,24 @@
 package api.requests;
 
+import api.support.APITests;
+import api.support.MultipleJsonRecords;
+import api.support.builders.Address;
+import api.support.builders.ItemBuilder;
+import api.support.builders.RequestBuilder;
+import api.support.http.IndividualResource;
+import api.support.http.ItemResource;
+import api.support.http.UserResource;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.CoreMatchers;
+import org.junit.jupiter.api.Test;
+
+import java.net.HttpURLConnection;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.fixtures.ConfigurationExample.newYorkTimezoneConfiguration;
 import static api.support.http.CqlQuery.noQuery;
@@ -25,26 +44,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.net.HttpURLConnection;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
-import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.CoreMatchers;
-import org.junit.jupiter.api.Test;
-
-import api.support.APITests;
-import api.support.MultipleJsonRecords;
-import api.support.TlrFeatureStatus;
-import api.support.builders.Address;
-import api.support.builders.ItemBuilder;
-import api.support.builders.RequestBuilder;
-import api.support.http.IndividualResource;
-import api.support.http.ItemResource;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 class RequestsAPIRetrievalTests extends APITests {
   private static final String NEW_TAG = "new";
@@ -868,5 +867,55 @@ class RequestsAPIRetrievalTests extends APITests {
       hasJsonPath("patronComments", "Comment 4"),
       hasJsonPath("patronComments", "Comment 5")
     ));
+  }
+
+
+  @Test
+  void printDetailsTest() {
+    UserResource printDetailsRequester = usersFixture.charlotte();
+    UUID printDetailsRequesterId = printDetailsRequester.getId();
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource workAddressType = addressTypesFixture.work();
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(workAddressType.getId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .deliverToAddress(workAddressType.getId())
+      .by(charlotte)
+      .withPrintDetails(new RequestBuilder
+        .PrintDetails(49, printDetailsRequesterId.toString(),
+        true, "2024-09-16T11:58:22.295+00:00")));
+
+    final MultipleJsonRecords requests = requestsFixture.getRequests(
+      queryFromTemplate("printDetails.isPrinted==%s", "true"),
+      noLimit(), noOffset());
+
+    assertThat(requests.size(), is(1));
+    assertThat(requests.totalRecords(), is(1));
+
+    JsonObject printDetails = requests.getFirst().getJsonObject("printDetails");
+    assertThat(printDetails.getInteger("printCount"), is(49));
+    assertThat(printDetails.getString("requesterId"),
+      is(printDetailsRequesterId.toString()));
+    assertTrue(printDetails.getBoolean("isPrinted"));
+
+    JsonObject lastPrintRequester = printDetails.getJsonObject(
+      "lastPrintRequester");
+    JsonObject expectedLastPrintRequester = printDetailsRequester.getJson()
+      .getJsonObject("personal");
+
+    assertThat(lastPrintRequester.getString("firstName"),
+      is(expectedLastPrintRequester.getString("firstName")));
+    assertThat(lastPrintRequester.getString("lastName"),
+      is(expectedLastPrintRequester.getString("lastName")));
   }
 }
