@@ -33,10 +33,31 @@ public class RequestRepresentation {
     addAdditionalProxyProperties(requestRepresentation, request.getProxy());
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addDeliveryAddress(requestRepresentation, request, request.getRequester());
-    addPrintEventProperties(requestRepresentation, request.getPrintEventDetail());
+    addPrintDetailsProperties(request, requestRepresentation);
 
     removeSearchIndexFields(requestRepresentation);
+
     return requestRepresentation;
+  }
+
+  private void addPrintDetailsProperties(Request request, JsonObject requestRepresentation) {
+    JsonObject printDetails = requestRepresentation.getJsonObject("printDetails");
+    if (printDetails == null) {
+      if (log.isInfoEnabled()) {
+        log.info("addPrintEventProperties:: printDetails property is null for" +
+          " requestId {}", requestRepresentation.getString("id"));
+      }
+      return;
+    }
+
+    User printDetailsUser = request.getPrintDetailsRequester();
+    if (printDetailsUser != null) {
+      JsonObject lastPrintRequester = new JsonObject();
+      lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
+      lastPrintRequester.put("lastName", printDetailsUser.getLastName());
+      lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
+      printDetails.put("lastPrintRequester", lastPrintRequester);
+    }
   }
 
   private static void addAdditionalRequesterProperties(JsonObject request, User requester) {
@@ -258,29 +279,5 @@ public class RequestRepresentation {
   private static void removeSearchIndexFields(JsonObject request) {
     request.remove("searchIndex");
   }
-
-  private static void addPrintEventProperties(JsonObject request, PrintEventDetail printEventDetail) {
-    if (printEventDetail == null) {
-      if (log.isInfoEnabled()) {
-        log.info("addPrintEventProperties:: printEvent property is null for requestId {}", request.getString("id"));
-      }
-      return;
-    }
-
-    var printEvent = new JsonObject();
-    write(printEvent, "count", printEventDetail.getCount());
-    write(printEvent, "lastPrintedDate", printEventDetail.getPrintEventDate());
-
-    var user = printEventDetail.getUser();
-    if (user != null) {
-      var userSummary = new JsonObject();
-      write(userSummary, "lastName", user.getLastName());
-      write(userSummary, "firstName", user.getFirstName());
-      write(userSummary, "middleName", user.getMiddleName());
-      write(printEvent, "lastPrintRequester", userSummary);
-    }
-    write(request, "printDetails", printEvent);
-  }
-
 }
 

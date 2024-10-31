@@ -446,4 +446,12 @@ public class Item {
   public String getDcbItemTitle() {
     return getProperty(itemRepresentation, "instanceTitle");
   }
+
+  public boolean isAtLocation(String locationCode) {
+    return locationCode != null && getLocation() != null && (
+      locationCode.equals(getLocation().getCode()) ||
+      locationCode.equals(getLocation().getLibrary().getCode()) ||
+      locationCode.equals(getLocation().getCampus().getCode()) ||
+      locationCode.equals(getLocation().getInstitution().getCode()));
+  }
 }

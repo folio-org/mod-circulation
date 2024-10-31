@@ -17,6 +17,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -102,8 +103,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedPosition;
   private Integer previousPosition;
   private boolean changedStatus;
+
   @With
-  private PrintEventDetail printEventDetail;
+  private final User printDetailsRequester;
 
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
@@ -225,7 +227,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       cancellationReasonRepresentation, instance, instanceItems, instanceItemsRequestPolicies,
       newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
-      previousPosition, changedStatus, printEventDetail);
+      previousPosition, changedStatus, null);
   }
 
   @Override
@@ -241,6 +243,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @Override
   public User getUser() {
     return getRequester();
+  }
+
+  public User getPrintDetailsRequester() {
+    return printDetailsRequester;
   }
 
   public String getfulfillmentPreferenceName() {
@@ -289,6 +295,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public JsonObject getRequesterFromRepresentation() {
     return requestRepresentation.getJsonObject("requester");
+  }
+
+  public JsonObject getPrintDetails() {
+    return requestRepresentation.getJsonObject("printDetails");
   }
 
   public String getRequesterBarcode() {
@@ -377,6 +387,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getPatronComments() {
     return getProperty(requestRepresentation, "patronComments");
+  }
+
+  public String geItemLocationCode() {
+    return getProperty(requestRepresentation, ITEM_LOCATION_CODE);
   }
 
   public Request truncateRequestExpirationDateToTheEndOfTheDay(ZoneId zone) {

@@ -47,11 +47,13 @@
     "pickupServicePointName": "Circ Desk 1"
   },
   "printDetails": {
-    "count": 4,
-    "lastPrintedDate": "2024-07-29T11:54:07.000Z",
+    "printCount": 32,
+    "requesterId": "21457ab5-4635-4e56-906a-908f05e9233b",
+    "isPrinted": true,
+    "printEventDate": "2024-09-13T06:34:16.035+00:00",
     "lastPrintRequester": {
-      "lastName": "lastName",
       "firstName": "firstName",
+      "lastName": "lastName",
       "middleName": "middleName"
     }
   }

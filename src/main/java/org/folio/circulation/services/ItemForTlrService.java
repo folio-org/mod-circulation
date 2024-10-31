@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.RequestType.PAGE;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.of;
@@ -69,7 +70,21 @@ public class ItemForTlrService {
       return failedValidation(message, INSTANCE_ID, request.getInstanceId());
     }
 
-    return of(() -> availablePageableItems);
+    if (request.geItemLocationCode() == null) {
+      return of(() -> availablePageableItems);
+    } else {
+      List<Item> finalAvailablePageableItems = availablePageableItems.stream()
+        .filter(item -> item.isAtLocation(request.geItemLocationCode()))
+        .toList();
+      if (finalAvailablePageableItems.isEmpty()) {
+        String message = "Cannot create page TLR for this instance ID - no pageable available " +
+          "items found in requested location";
+        log.info("{}. Instance ID: {}, Requested location code {}",
+          message, request.getInstanceId(), request.geItemLocationCode());
+        return failedValidation(message, ITEM_LOCATION_CODE, request.geItemLocationCode());
+      }
+      return of(() -> finalAvailablePageableItems);
+    }
   }
 
   private static Item pickClosestItem(Collection<Location> requestedLocations, List<Item> availableItems) {

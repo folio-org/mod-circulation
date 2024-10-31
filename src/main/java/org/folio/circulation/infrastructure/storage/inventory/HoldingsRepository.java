@@ -4,6 +4,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
@@ -46,6 +47,17 @@ public class HoldingsRepository {
       holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
     return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByInstances(
+    Collection<String> instanceIds) {
+
+    final var mapper = new HoldingsMapper();
+    final var holdingsRecordFetcher = findWithCqlQuery(
+      holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
+
+    return holdingsRecordFetcher.findByQuery(exactMatchAny("instanceId",
+      instanceIds));
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(
