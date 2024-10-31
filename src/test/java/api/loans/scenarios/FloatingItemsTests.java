@@ -72,6 +72,15 @@ public class FloatingItemsTests extends APITests {
       itemRepresentation.containsKey("inTransitDestinationServicePointId"),
       CoreMatchers.is(false));
 
+    assertThat( "The check-in response should display the item's new location.",
+      itemRepresentation.getJsonObject("location").getString("name"), CoreMatchers.is("Floating collection 2"));
+
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+
+    assertThat( "The staff slip context should display the item's new location.",
+      staffSlipContext.getJsonObject("item").getString("effectiveLocationSpecific"), CoreMatchers.is("Floating collection 2"));
+
+
     JsonObject loanRepresentation = checkInResponse.getLoan();
 
     assertThat("closed loan should be present in response",
@@ -266,6 +275,14 @@ public class FloatingItemsTests extends APITests {
       itemRepresentation.containsKey("inTransitDestinationServicePointId"),
       CoreMatchers.is(true));
 
+    assertThat( "The check-in response should display the item's original location.",
+      itemRepresentation.getJsonObject("location").getString("name"), CoreMatchers.is("Floating collection"));
+
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+
+    assertThat( "The staff slip context should display the item's original location.",
+      staffSlipContext.getJsonObject("item").getString("effectiveLocationSpecific"), CoreMatchers.is("Floating collection"));
+
     JsonObject loanRepresentation = checkInResponse.getLoan();
 
     assertThat("closed loan should be present in response",
@@ -299,6 +316,7 @@ public class FloatingItemsTests extends APITests {
 
     assertThat("Checkin Service Point Id should be stored",
       storedLoan.getString("checkinServicePointId"), is(servicePointTwo.getId()));
+
 
   }
 

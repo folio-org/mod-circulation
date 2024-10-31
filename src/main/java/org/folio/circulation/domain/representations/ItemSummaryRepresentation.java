@@ -12,6 +12,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
 
@@ -78,7 +79,7 @@ public class ItemSummaryRepresentation {
 
     final Location location = item.getLocation();
 
-    if (item.canFloatThroughCheckInServicePoint()) {
+    if (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) {
       itemSummary.put("location", new JsonObject()
         .put("name", item.getFloatDestinationLocation().getName()));
     } else if (location != null) {
