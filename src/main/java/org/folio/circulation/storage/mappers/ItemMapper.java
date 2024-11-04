@@ -20,6 +20,7 @@ import org.folio.circulation.domain.ServicePoint;
 import io.vertx.core.json.JsonObject;
 
 public class ItemMapper {
+
   public Item toDomain(JsonObject representation) {
     return new Item(getProperty(representation, "id"), representation,
       Location.unknown(getProperty(representation, "effectiveLocationId")),
@@ -27,6 +28,7 @@ public class ItemMapper {
       CallNumberComponents.fromItemJson(representation),
       getProperty(representation, "effectiveShelvingOrder"),
       Location.unknown(getProperty(representation, "permanentLocationId")),
+      Location.unknown(),
       getInTransitServicePoint(representation), false,
       Holdings.unknown(getProperty(representation, "holdingsRecordId")),
       Instance.unknown(),

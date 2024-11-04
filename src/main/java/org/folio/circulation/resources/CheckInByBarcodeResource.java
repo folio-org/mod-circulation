@@ -105,6 +105,9 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
         .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
+      .thenComposeAsync(checkInContextResult ->
+        checkInContextResult.combineAfter(processAdapter::findFloatingDestination,
+          CheckInContext::withItemAndUpdatedLoan))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInContext::withItemAndUpdatedLoan))
       .thenApply(handleItemStatus -> handleItemStatus.next(

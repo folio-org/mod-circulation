@@ -1,6 +1,34 @@
-## 24.3.0
+## 24.3.0 2024-10-31
 
-* [CIRC-2156](https://folio-org.atlassian.net/browse/CIRC-2156) Upgrade "holdings-storage" to 8.0
+* Support floating collections (CIRC-2136)
+* Correct permissions change in MODCAL-136 (MODCAL-136)
+* Upgrade to RMB v35.3.0 (CIRC-2163)
+* Add TLR Hold requests handling to the print slips logic (CIRC-2134)
+* Add support for interface instance-storage 11.0 (CIRC-2153)
+* Upgrade the API version in the ModuleDescriptor-template.json (CIRC-2156)
+* Delete obsolete notes permission (CIRC-2154)
+* Extend the loan representation with additional fields required for Due date receipt (CIRC-2144)
+* Revert CIRC-2100 PR and rework for PrintEventDetail pagination, searching, and sorting (CIRC-2148)
+* Allow specifying item location when creating title-level requests (CIRC-2141)
+* Bypass pickup SP check for Delivery requests (CIRC-2122)
+* Fetch print details while fetching request details based on CQL query (CIRC-2100)
+* Error message - after service point changes from `yes` to `no` as Pickup location (CIRC-1980)
+* Implement POST API (CIRC-2099)
+* Add test case on enableRequestPrintDetailsSetting (CIRC-2096)
+* Create API wrapping settings CRUD (CIRC-2111)
+* Update error response status and schema for request creation (CIRC-2104)
+* Update interface holdings-storage to version 7.0 (CIRC-2095)
+* Add isDcb flag value in the loan event for Check-out (CIRC-2084)
+* Sort allowed service points by name (CIRC-2094)
+* Fix Kafka configuration (CIRC-2037)
+* Fix empty template token, `chargeDate`, in reminder notices (CIRC-2077)
+* Support override of renewal block due to reminders (CIRC-2019)
+* Keep due date when it is within recall return interval (CIRC-2043)
+* Ignore `Loan related fee/fine closed` events when loan is already closed (CIRC-2066)
+* Apply alternate loan period when multiple requests are in fulfillment in progress (CIRC-2026)
+* Add missing permissions (CIRC-2070)
+* Set returnDate for lost loans (CIRC-2044)
+* Fix item details not fully populated when response contains more than 50 loans (CIRC-2059)
 
 ## 24.2.0 2024-03-21
 

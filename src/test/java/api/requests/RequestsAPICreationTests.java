@@ -687,7 +687,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(response.getJson(), hasErrorWith(
       hasMessage("Cannot create page TLR for this instance ID - no pageable " +
         "available items found in requested location")));
-  }
+ }
 
   @Test
   void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
