@@ -110,6 +110,11 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
+    if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD) {
+      log.info("getMany:: searchSlips has been temporarily disabled to prevent Out Of Memory issues");
+      return;
+    }
+
     fetchLocationsForServicePoint(servicePointId, clients)
       .thenComposeAsync(r -> r.after(locations -> fetchItemsForLocations(locations,
         itemRepository, LocationRepository.using(clients, servicePointRepository))))

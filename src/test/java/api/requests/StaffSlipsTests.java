@@ -40,6 +40,7 @@ import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -68,7 +69,7 @@ class StaffSlipsTests extends APITests {
   private static final String REQUESTER_KEY = "requester";
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
@@ -86,7 +87,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
@@ -106,7 +107,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
@@ -116,7 +117,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
@@ -138,6 +139,7 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 0, slipsType);
   }
 
+  @Disabled
   @ParameterizedTest
   @MethodSource(value = "getAllowedStatusesForHoldRequest")
   void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
@@ -167,17 +169,17 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @CsvSource({
     "US, false, PICK_SLIPS",
-    "US, false, SEARCH_SLIPS",
+//    "US, false, SEARCH_SLIPS",
     ", false, PICK_SLIPS",
-    ", false, SEARCH_SLIPS",
+//    ", false, SEARCH_SLIPS",
     "XX, false, PICK_SLIPS",
-    "XX, false, SEARCH_SLIPS",
+//    "XX, false, SEARCH_SLIPS",
     "US, true, PICK_SLIPS",
-    "US, true, SEARCH_SLIPS",
+//    "US, true, SEARCH_SLIPS",
     ", true, PICK_SLIPS",
-    ", true, SEARCH_SLIPS",
+//    ", true, SEARCH_SLIPS",
     "XX, true, PICK_SLIPS",
-    "XX, true, SEARCH_SLIPS"
+//    "XX, true, SEARCH_SLIPS"
   })
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
@@ -351,6 +353,7 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
   }
 
+  @Disabled
   @Test
   void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -382,7 +385,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
@@ -437,7 +440,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
@@ -500,7 +503,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SlipsType.class)
+  @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
