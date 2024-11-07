@@ -124,21 +124,21 @@ public abstract class SlipsResource extends Resource {
       return;
     }
 
-      fetchLocationsForServicePoint(servicePointId, clients)
-        .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
-          itemRepository, LocationRepository.using(clients, servicePointRepository))))
-        .thenComposeAsync(r -> r.after(ctx -> fetchRequests(ctx, clients)))
-        .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
-          ctx.getRequests())))
-        .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
-        .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
-        .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
-        .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
-        .thenApply(flatMapResult(this::mapResultToJson))
-        .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-          this::addPrimaryServicePointNameToStaffSlipContext))
-        .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResultToHttpResponse);
+    fetchLocationsForServicePoint(servicePointId, clients)
+      .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
+        itemRepository, LocationRepository.using(clients, servicePointRepository))))
+      .thenComposeAsync(r -> r.after(ctx -> fetchRequests(ctx, clients)))
+      .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
+        ctx.getRequests())))
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
+      .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
+      .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
+      .thenApply(flatMapResult(this::mapResultToJson))
+      .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
+        this::addPrimaryServicePointNameToStaffSlipContext))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
