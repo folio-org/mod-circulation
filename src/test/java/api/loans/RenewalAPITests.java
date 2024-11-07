@@ -124,7 +124,7 @@ public abstract class RenewalAPITests extends APITests {
   private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
     "circulation.override-item-limit-block";
-  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block";
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block.post";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
   private static final String ITEM_IS_DECLARED_LOST = "item is Declared lost";
