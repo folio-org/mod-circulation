@@ -41,6 +41,9 @@ public class Item {
   @Getter
   private final String shelvingOrder;
   @NonNull private final Location permanentLocation;
+
+  @Getter
+  private final Location floatDestinationLocation;
   private final ServicePoint inTransitDestinationServicePoint;
 
   private boolean changed;
@@ -57,7 +60,7 @@ public class Item {
   }
   public Item(String id, JsonObject itemRepresentation, Location effectiveLocation,
     LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
-    String shelvingOrder, Location permanentLocation,
+    String shelvingOrder, Location permanentLocation, Location floatDestinationLocation,
     ServicePoint inTransitDestinationServicePoint, boolean changed,
     Holdings holdings, Instance instance, MaterialType materialType,
     LoanType loanType, ItemDescription description) {
@@ -69,6 +72,7 @@ public class Item {
     this.callNumberComponents = callNumberComponents;
     this.shelvingOrder = shelvingOrder;
     this.permanentLocation = permanentLocation;
+    this.floatDestinationLocation = floatDestinationLocation;
     this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
     this.changed = changed;
     this.holdings = holdings;
@@ -348,59 +352,86 @@ public class Item {
     return firstNonBlank(permanentLocation.getId(), holdings.getPermanentLocationId());
   }
 
+  public String getFloatDestinationLocationId() {
+    return floatDestinationLocation != null ? floatDestinationLocation.getId() : null;
+  }
+
+  public boolean canFloatThroughCheckInServicePoint() {
+    return getLocation() != null
+      && getLocation().isFloatingCollection()
+      && getFloatDestinationLocation() != null
+      && getFloatDestinationLocation().getId()  != null;
+  }
+
   public Item withLocation(Location newLocation) {
     return new Item(this.id, this.itemRepresentation, newLocation,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, this.loanType, description);
   }
 
   public Item withMaterialType(@NonNull MaterialType materialType) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, materialType, this.loanType, this.description);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInstance(@NonNull Instance instance) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withLoanType(@NonNull LoanType loanType) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, loanType, this.description);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
     return new Item(this.id, this.itemRepresentation, this.location,
       lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, this.materialType, this.loanType, this.description);
+  }
+
+  public Item withFloatDestinationLocation(Location floatDestinationLocation) {
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, servicePoint, this.changed, this.holdings,
+      this.permanentLocation, this.floatDestinationLocation,
+      servicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.description);
   }
 

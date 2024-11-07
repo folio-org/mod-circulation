@@ -132,7 +132,8 @@
           "methods": ["POST"],
           "pathPattern": "/circulation/loans/{id}/change-due-date",
           "permissionsRequired": [
-            "circulation.loans.change-due-date.post"
+            "circulation.loans.change-due-date.post",
+            "configuration.entries.collection.get"
           ],
           "modulePermissions": [
             "modperms.circulation.loans.change-due-date.post"
@@ -1151,7 +1152,8 @@
             "accounts.item.post",
             "feefineactions.item.post",
             "circulation-storage.loans-history.collection.get",
-            "calendar.endpoint.dates.get"
+            "calendar.endpoint.calendars.surroundingOpenings.get",
+            "calendar.endpoint.calendars.allOpenings.get"
           ],
           "schedule": {
             "cron": "1 0 * * *",
@@ -1797,6 +1799,8 @@
         "proxiesfor.collection.get",
         "patron-notice.post",
         "configuration.entries.collection.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -1811,7 +1815,8 @@
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "calendar.endpoint.dates.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "circulation-storage.loans.item.post",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
@@ -1909,7 +1914,8 @@
         "accounts.refund.post",
         "accounts.cancel.post",
         "configuration.entries.collection.get",
-        "calendar.endpoint.dates.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "actual-cost-record-storage.actual-cost-records.collection.get",
         "actual-cost-record-storage.actual-cost-records.item.get",
         "actual-cost-fee-fine-cancel.post",
@@ -1948,7 +1954,8 @@
         "users.collection.get",
         "addresstypes.collection.get",
         "proxiesfor.collection.get",
-        "calendar.endpoint.dates.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
@@ -2133,7 +2140,8 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "calendar.endpoint.dates.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "configuration.entries.collection.get",
@@ -2192,7 +2200,8 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "calendar.endpoint.dates.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
@@ -2302,7 +2311,8 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "calendar.endpoint.dates.get",
+        "calendar.endpoint.calendars.surroundingOpenings.get",
+        "calendar.endpoint.calendars.allOpenings.get",
         "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",

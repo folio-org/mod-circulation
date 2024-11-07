@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
+import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
 import static org.folio.circulation.domain.representations.ItemProperties.LAST_CHECK_IN;
 import static org.folio.circulation.domain.representations.ItemProperties.STATUS_PROPERTY;
@@ -91,6 +92,7 @@ public class ItemRepository {
     log.debug("updateItem:: parameters item: {}", item);
 
     final String IN_TRANSIT_DESTINATION_SERVICE_POINT_ID = "inTransitDestinationServicePointId";
+    final String TEMPORARY_LOCATION_ID = "temporaryLocationId";
 
     if (item == null) {
       log.info("updateItem:: item is null");
@@ -108,8 +110,14 @@ public class ItemRepository {
       new JsonObject().put("name", item.getStatus().getValue()));
 
     remove(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID);
-    write(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
-      item.getInTransitDestinationServicePointId());
+    if (item.isInStatus(IN_TRANSIT)) {
+      write(updatedItemRepresentation, IN_TRANSIT_DESTINATION_SERVICE_POINT_ID,
+        item.getInTransitDestinationServicePointId());
+    } else if (item.isInStatus(AVAILABLE) && item.canFloatThroughCheckInServicePoint()) {
+      remove(updatedItemRepresentation, TEMPORARY_LOCATION_ID);
+      write(updatedItemRepresentation, TEMPORARY_LOCATION_ID,
+        item.getFloatDestinationLocationId());
+    }
 
     final var lastCheckIn = item.getLastCheckIn();
 
@@ -176,7 +184,8 @@ public class ItemRepository {
     return result.combineAfter(this::fetchLocations,
       (items, locations) -> items
         .combineRecords(locations, Item::getPermanentLocationId, Item::withPermanentLocation, null)
-        .combineRecords(locations, Item::getEffectiveLocationId, Item::withLocation, null));
+        .combineRecords(locations, Item::getEffectiveLocationId, Item::withLocation, null)
+        .combineRecords(locations, Item::getFloatDestinationLocationId, Item::withFloatDestinationLocation, null));
   }
 
   private CompletableFuture<Result<Map<String, Location>>> fetchLocations(
