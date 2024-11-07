@@ -109,4 +109,17 @@ public class LocationExamples {
       .withPrimaryServicePoint(primaryServicePointId)
       .servedBy(otherServicePointIds);
   }
+
+  public LocationBuilder floatingCollection() {
+    return new LocationBuilder()
+      .withName("Floating collection")
+      .withCode("NU/JC/DL/FC")
+      .withDiscoveryDisplayName("Floating collection")
+      .forInstitution(institutionId)
+      .forCampus(jubileeCampusId)
+      .forLibrary(djanoglyLibraryId)
+      .withPrimaryServicePoint(primaryServicePointId)
+      .isFloatingCollection(true);
+  }
+
 }

@@ -124,7 +124,7 @@ class FeeFineFacadeTest {
   private CreateAccountCommand.CreateAccountCommandBuilder createCommandBuilder() {
     final Item item = Item.from(new JsonObject())
       .withLocation(new Location(null, "Main library", null, null, emptyList(),
-        null, Institution.unknown(), Campus.unknown(),
+        null, false, Institution.unknown(), Campus.unknown(),
         Library.unknown(), ServicePoint.unknown()));
 
     return CreateAccountCommand.builder()

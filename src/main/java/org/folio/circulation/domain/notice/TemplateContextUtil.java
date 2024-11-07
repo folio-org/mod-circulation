@@ -25,6 +25,7 @@ import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
@@ -213,7 +214,8 @@ public class TemplateContextUtil {
       .put("displaySummary", item.getDisplaySummary())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 
-    Location location = item.getLocation();
+    Location location = (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) ?
+      item.getFloatDestinationLocation() : item.getLocation();
 
     if (location != null) {
       log.info("createItemContext:: location is not null");
