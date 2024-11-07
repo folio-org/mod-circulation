@@ -181,7 +181,7 @@ public class RequestsAPICreationTests extends APITests {
   private static final UUID CANCELLATION_TEMPLATE_ID_FROM_TLR_SETTINGS = UUID.randomUUID();
 
   public static final String CREATE_REQUEST_PERMISSION = "circulation.requests.item.post";
-  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block.post";
   public static final OkapiHeaders HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS =
     buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION, OVERRIDE_PATRON_BLOCK_PERMISSION);
   public static final OkapiHeaders HEADERS_WITHOUT_OVERRIDE_PERMISSIONS =

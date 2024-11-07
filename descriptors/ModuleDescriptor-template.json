@@ -1597,7 +1597,7 @@
       "permissionName": "circulation.override-item-not-loanable-block.post",
       "displayName": "circulation - override item not loanable block",
       "description": "item not loanable block override",
-      "replaces": ["circulation.override-item-not-loanable-block"]
+      "replaces": ["circulation.override-item-not-loanable-block.post"]
     },
     {
       "permissionName": "circulation.override-patron-block.post",

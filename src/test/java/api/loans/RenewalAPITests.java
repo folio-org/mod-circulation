@@ -121,9 +121,9 @@ import lombok.val;
 public abstract class RenewalAPITests extends APITests {
   public static final String PATRON_BLOCK_NAME = "patronBlock";
   private static final String TEST_COMMENT = "Some comment";
-  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block.post";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
-    "circulation.override-item-limit-block";
+    "circulation.override-item-limit-block.post";
   private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block.post";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
