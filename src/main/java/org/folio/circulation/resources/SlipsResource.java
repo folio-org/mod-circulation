@@ -10,6 +10,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
@@ -112,6 +113,8 @@ public abstract class SlipsResource extends Resource {
 
     if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("getMany:: searchSlips has been temporarily disabled to prevent Out Of Memory issues");
+      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
+
       return;
     }
 
