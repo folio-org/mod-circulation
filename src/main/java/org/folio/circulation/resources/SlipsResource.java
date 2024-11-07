@@ -119,6 +119,8 @@ public abstract class SlipsResource extends Resource {
 
     if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("getMany:: searchSlips has been temporarily disabled to prevent Out Of Memory issues");
+      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
+
       return;
     }
 
