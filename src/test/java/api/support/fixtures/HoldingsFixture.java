@@ -24,4 +24,8 @@ public class HoldingsFixture {
 
     return holdingsClient.create(holdingsBuilder);
   }
+
+  public IndividualResource createHoldingsRecord(HoldingBuilder holdingsBuilder) {
+    return holdingsClient.create(holdingsBuilder);
+  }
 }

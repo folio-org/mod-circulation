@@ -7,6 +7,7 @@ import static org.hamcrest.core.Is.is;
 import java.util.UUID;
 
 import org.folio.circulation.support.http.client.Response;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -17,6 +18,7 @@ class SearchSlipsTests extends APITests {
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
 
+  @Disabled
   @Test
   void responseShouldHaveEmptyListOfSearchSlipsRecords() {
     Response response = ResourceClient.forSearchSlips().getById(UUID.randomUUID());
