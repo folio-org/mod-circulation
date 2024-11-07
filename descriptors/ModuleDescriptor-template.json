@@ -135,7 +135,7 @@
             "circulation.loans.change-due-date.post"
           ],
           "modulePermissions": [
-            "perms.circulation.loans.change-due-date.post",
+            "modperms.circulation.loans.change-due-date.post",
             "configuration.entries.collection.get"
           ]
         }
@@ -2341,7 +2341,7 @@
       "visible": false
     },
     {
-      "permissionName": "perms.circulation.loans.change-due-date.post",
+      "permissionName": "modperms.circulation.loans.change-due-date.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
@@ -2361,8 +2361,7 @@
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get"
       ],
-      "visible": false,
-      "replaces": ["modperms.circulation.loans.change-due-date.post"]
+      "visible": false
     },
     {
       "permissionName": "modperms.circulation.loans.add-info.post",
@@ -2468,7 +2467,7 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "circulation.internal.fetch-items.collection.get.collection.get",
+        "circulation.internal.fetch-items.collection.get",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
         "users.item.get",
@@ -2483,7 +2482,7 @@
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
-        "circulation.internal.fetch-items.collection.get.collection.get",
+        "circulation.internal.fetch-items.collection.get",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
         "inventory-storage.holdings.item.get",
