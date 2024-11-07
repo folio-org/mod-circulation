@@ -58,7 +58,7 @@ class ReminderFeeTests extends APITests {
 
   private UUID remindersTwoDaysBetweenNotOnClosedDaysPolicyId;
 
-  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block.post";
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block";
 
   @BeforeEach
   void beforeEach() {
