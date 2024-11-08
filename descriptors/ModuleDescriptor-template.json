@@ -665,7 +665,7 @@
     },
     {
       "id": "allowed-service-points",
-      "version": "1.2",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [
