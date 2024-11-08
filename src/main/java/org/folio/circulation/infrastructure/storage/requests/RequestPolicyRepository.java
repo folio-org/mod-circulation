@@ -15,6 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
@@ -74,18 +75,18 @@ public class RequestPolicyRepository {
   public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
     log.debug("lookupRequestPolicy:: parameters item: {}, user: {}", item, user);
     return lookupRequestPolicyId(item, user)
-      .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
+      .thenComposeAsync(r -> r.after(this::lookupRequestPolicyById))
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
   public CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> lookupRequestPolicies(
-    Collection<Item> items, User user) {
+    Collection<Item> items, String patronGroupId) {
 
-    log.debug("lookupRequestPolicies:: parameters items: {}, user: {}",
-      items::size, () -> asJson(user));
+    log.debug("lookupRequestPolicies:: parameters items: {}, patronGroupId: {}",
+      items::size, () -> asJson(patronGroupId));
 
     Map<CirculationRuleCriteria, Set<Item>> criteriaMap = items.stream()
-      .map(item -> new CirculationRuleCriteria(item, user))
+      .map(item -> new CirculationRuleCriteria(item, patronGroupId))
       .collect(toMap(identity(), criteria -> Set.of(criteria.getItem()), itemsMergeOperator()));
 
     return allOf(criteriaMap.entrySet(), entry -> lookupRequestPolicyId(entry.getKey())
@@ -95,12 +96,21 @@ public class RequestPolicyRepository {
       .thenCompose(r -> r.after(this::lookupRequestPolicies));
   }
 
+  public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(String patronGroupId) {
+    // Circulation rules need to be executed with the patron group parameter only.
+    // All the item-related parameters should be random UUIDs.
+    return lookupRequestPolicyId(UUID.randomUUID().toString(), patronGroupId,
+      UUID.randomUUID().toString(), UUID.randomUUID().toString())
+      .thenCompose(r -> r.after(this::lookupRequestPolicyById))
+      .thenApply(result -> result.map(RequestPolicy::from));
+  }
+
   private BinaryOperator<Set<Item>> itemsMergeOperator() {
     return (items1, items2) -> Stream.concat(items1.stream(), items2.stream())
       .collect(Collectors.toSet());
   }
 
-  private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
+  private CompletableFuture<Result<JsonObject>> lookupRequestPolicyById(
     String requestPolicyId) {
 
     log.debug("lookupRequestPolicy:: parameters requestPolicyId: {}", requestPolicyId);

@@ -74,7 +74,8 @@ public class RequestQueueService {
   protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
-    if (!StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
+    if (!StringUtils.equals(request.getItemId(), item.getItemId()) &&
+      !StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
       return ofAsync(false);
     }
 

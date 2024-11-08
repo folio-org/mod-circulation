@@ -272,6 +272,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::actualCostRecordsStorageUrl, "actualCostRecords");
   }
 
+  public static ResourceClient forSearchClient() {
+    return new ResourceClient(InterfaceUrls::searchUrl, "instances");
+  }
+
   public static ResourceClient forCirculationSettings() {
     return new ResourceClient(InterfaceUrls::circulationSettingsUrl, "circulationSettings");
   }

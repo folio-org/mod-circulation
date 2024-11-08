@@ -45,7 +45,7 @@ class RequestsAPILoanHistoryTests extends APITests {
 
   @Test
   void checkOutShouldNotTruncateLoanIfRecallRequestExistsForAnotherItemOfTheSameInstanceIfTlrIsEnabled() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     var steve = usersFixture.steve();
     var charlotte = usersFixture.charlotte();
