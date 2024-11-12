@@ -2277,6 +2277,7 @@
         "usergroups.item.get",
         "pubsub.publish.post",
         "configuration.entries.collection.get",
+        "configuration.entries.item.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation"
@@ -2377,6 +2378,7 @@
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "configuration.entries.collection.get",
+        "configuration.entries.item.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation"
