@@ -21,14 +21,17 @@ import java.util.concurrent.CompletableFuture;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class SettingsRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
+  private final ConfigurationRepository configurationRepository;
 
   public SettingsRepository(Clients clients) {
     settingsClient = clients.settingsStorageClient();
+    configurationRepository = new ConfigurationRepository(clients);
   }
 
   public CompletableFuture<Result<CheckoutLockConfiguration>> lookUpCheckOutLockSettings() {
@@ -52,9 +55,10 @@ public class SettingsRepository {
   }
 
   public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
+    log.info("lookupTlrSettings:: fetching TLR settings");
     return fetchSettings("circulation", List.of("generalTlr", "regularTlr"))
       .thenApply(r -> r.map(SettingsRepository::extractAndMergeValues))
-      .thenApply(r -> r.map(TlrSettingsConfiguration::from));
+      .thenCompose(r -> r.after(this::buildTlrSettings));
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String key) {
@@ -75,5 +79,14 @@ public class SettingsRepository {
       .stream()
       .map(rec -> rec.getJsonObject("value"))
       .reduce(new JsonObject(), JsonObject::mergeIn);
+  }
+
+  private CompletableFuture<Result<TlrSettingsConfiguration>> buildTlrSettings(JsonObject tlrSettings) {
+    if (tlrSettings.isEmpty()) {
+      log.info("getTlrSettings:: failed to find TLR settings, falling back to legacy configuration");
+      return configurationRepository.lookupTlrSettings();
+    }
+
+    return ofAsync(TlrSettingsConfiguration.from(tlrSettings));
   }
 }
