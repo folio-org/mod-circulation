@@ -546,8 +546,11 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
-    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
-      log.info("validateAbsenceOfItemLinkInTlr:: Primary ECS request detected, skipping");
+    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY ||
+      request.getEcsRequestPhase() == EcsRequestPhase.INTERMEDIATE) {
+
+      log.info("validateAbsenceOfItemLinkInTlr:: ECS request phase {} detected, skipping",
+        request.getEcsRequestPhase());
       return of(() -> request);
     }
 

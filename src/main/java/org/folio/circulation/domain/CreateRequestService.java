@@ -227,8 +227,11 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
-      if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
-        log.warn("checkPolicy:: ECS TLR primary Hold detected, skipping policy check");
+      if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY ||
+        request.getEcsRequestPhase() == EcsRequestPhase.INTERMEDIATE) {
+
+        log.warn("checkPolicy:: ECS TLR {} Hold detected, skipping policy check",
+          request.getEcsRequestPhase());
         return ofAsync(() -> records);
       }
 
