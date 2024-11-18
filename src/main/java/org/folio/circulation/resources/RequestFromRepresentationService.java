@@ -254,8 +254,11 @@ class RequestFromRepresentationService {
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
     log.info("fetchItemAndLoan:: Request phase is {}", request.getEcsRequestPhase().value);
-    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
-      log.info("fetchItemAndLoan:: Primary ECS request detected, using default item fetcher");
+    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY ||
+      request.getEcsRequestPhase() == EcsRequestPhase.INTERMEDIATE) {
+
+      log.info("fetchItemAndLoan:: ECS request phase {} detected, using default item fetcher",
+        request.getEcsRequestPhase());
       itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
     }
     else if (request.isTitleLevel() && request.isPage()) {
