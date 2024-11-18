@@ -317,7 +317,7 @@ public class RequestNoticeSender {
     Loan loan = request.getLoan();
 
     if (!request.isRecall() || loan == null || loan.getUser() == null
-      || loan.getItem() == null || recallRequestCount > 1) {
+      || loan.getItem() == null || !loan.hasDueDateChanged()) {
       return ofAsync(null);
     }
 
