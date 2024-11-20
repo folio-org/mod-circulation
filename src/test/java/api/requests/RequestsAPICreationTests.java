@@ -3825,7 +3825,7 @@ public class RequestsAPICreationTests extends APITests {
 
     // Verify the notices are triggered as expected
     // There should be 7 notices triggered: 4 recall request notices and 3 item recall notices
-    List<JsonObject> noticeLogContextItemLogs = Awaitility.waitAtMost(1, TimeUnit.SECONDS)
+    Awaitility.waitAtMost(1, TimeUnit.SECONDS)
       .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(7));
 
     // Verify the number of notices sent and events published.
