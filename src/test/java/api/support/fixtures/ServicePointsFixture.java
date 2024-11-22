@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk1;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk10;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk11;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk2;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk4;
@@ -79,6 +80,11 @@ public class ServicePointsFixture {
   public IndividualResource cd10() {
 
     return create(basedUponCircDesk10());
+  }
+
+  public IndividualResource cd11() {
+
+    return create(basedUponCircDesk11());
   }
 
   public IndividualResource create(ServicePointBuilder builder) {

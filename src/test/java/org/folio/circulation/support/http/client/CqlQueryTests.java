@@ -2,6 +2,7 @@ package org.folio.circulation.support.http.client;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
@@ -12,15 +13,20 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.CqlSortClause;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class CqlQueryTests {
   @Test
@@ -152,5 +158,33 @@ class CqlQueryTests {
     final CqlQuery secondQuery = exactMatch("barcode", "12345").value();
 
     assertThat(firstQuery.equals(secondQuery), is(true));
+  }
+
+  @ParameterizedTest
+  @CsvSource(nullValues={"null"}, value = {
+    "index1, value1, index2, value2, (index1==\"value1\" or index2==\"value2\")",
+    "null, null, index2, value2, (index2==\"value2\")",
+    "index1, value1, null, null, (index1==\"value1\")",
+  })
+  void canMatchByAnyIndex(String index1, String value1, String index2, String value2,
+    String expectedResult) {
+
+    Map<String, String> filters = new HashMap<>();
+    filters.put(index1, value1);
+    filters.put(index2, value2);
+
+    String actualResult = exactMatchAny(filters)
+      .value()
+      .asText();
+    assertThat(actualResult, equalTo(expectedResult));
+  }
+
+  @Test
+  void exactMatchAnyFailsWhenListOfIndicesIsEmpty() {
+    Result<CqlQuery> result = exactMatchAny(emptyMap());
+    assertThat("Failed result expected", result.failed());
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(((ServerErrorFailure) result.cause()).getReason(),
+      equalTo("Cannot generate empty CQL query"));
   }
 }

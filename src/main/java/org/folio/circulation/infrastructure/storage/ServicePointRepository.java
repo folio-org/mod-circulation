@@ -41,7 +41,15 @@ public class ServicePointRepository {
   private final CollectionResourceClient servicePointsStorageClient;
 
   public ServicePointRepository(Clients clients) {
-    servicePointsStorageClient = clients.servicePointsStorage();
+    this(clients, false);
+  }
+
+  public ServicePointRepository(Clients clients, boolean includeRoutingServicePoints) {
+    if (includeRoutingServicePoints) {
+      servicePointsStorageClient = clients.routingServicePointsStorage();
+    } else {
+      servicePointsStorageClient = clients.servicePointsStorage();
+    }
   }
 
   public CompletableFuture<Result<ServicePoint>> getServicePointById(UUID id) {
@@ -206,22 +214,24 @@ public class ServicePointRepository {
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<Collection<ServicePoint>>> fetchPickupLocationServicePoints() {
+  public CompletableFuture<Result<Collection<ServicePoint>>> fetchServicePointsByIndexName(
+    String indexName) {
+
     return createServicePointsFetcher().find(MultipleCqlIndexValuesCriteria.builder()
-        .indexName("pickupLocation")
+        .indexName(indexName)
         .indexOperator(CqlQuery::matchAny)
         .value("true")
         .build())
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 
-  public CompletableFuture<Result<Collection<ServicePoint>>> fetchPickupLocationServicePointsByIds(
-    Set<String> ids) {
+  public CompletableFuture<Result<Collection<ServicePoint>>>
+  fetchPickupLocationServicePointsByIdsAndIndexName(Set<String> ids, String indexName) {
 
-    log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}",
-      () -> collectionAsString(ids));
+    log.debug("filterIdsByServicePointsAndPickupLocationExistence:: parameters ids: {}, " +
+        "indexName: {}", () -> collectionAsString(ids), () -> indexName);
 
-    Result<CqlQuery> pickupLocationQuery = exactMatch("pickupLocation", "true");
+    Result<CqlQuery> pickupLocationQuery = exactMatch(indexName, "true");
 
     return createServicePointsFetcher().findByIdIndexAndQuery(ids, "id", pickupLocationQuery)
       .thenApply(r -> r.map(MultipleRecords::getRecords));

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckOutLock;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
@@ -154,9 +155,10 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l, requestQueueRepository),
+          LoanAndRelatedRecords::withRequestQueue))
       .thenCompose(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
@@ -389,5 +391,15 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanPolicy.calculateInitialDueDate(loan, requestQueue)
       .map(loan::changeDueDate)
       .map(loanAndRelatedRecords::withLoan);
+  }
+
+  private CompletableFuture<Result<RequestQueue>> getRequestQueue(
+    LoanAndRelatedRecords loanAndRelatedRecords, RequestQueueRepository requestQueueRepository) {
+
+    Item item = loanAndRelatedRecords.getItem();
+
+    return loanAndRelatedRecords.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
+      ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
+      : requestQueueRepository.getByItemId(item.getItemId());
   }
 }

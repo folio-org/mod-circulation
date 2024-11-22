@@ -107,6 +107,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import lombok.val;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -193,7 +194,7 @@ public class RequestsAPICreationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
-    configurationsFixture.deleteTlrFeatureConfig();
+    settingsFixture.deleteTlrFeatureSettings();
   }
 
   @Test
@@ -475,7 +476,7 @@ public class RequestsAPICreationTests extends APITests {
   @ParameterizedTest
   @CsvSource({"Page", "Hold", "Recall"})
   void cannotCreateTitleLevelRequestForUnknownInstance(String requestType) {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
@@ -523,7 +524,7 @@ public class RequestsAPICreationTests extends APITests {
   })
   void cannotCreateRequestForUnknownItem(String tlrFeatureEnabledString, String requestType) {
     if (Boolean.parseBoolean(tlrFeatureEnabledString)) {
-      configurationsFixture.enableTlrFeature();
+      settingsFixture.enableTlrFeature();
     }
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -611,7 +612,7 @@ public class RequestsAPICreationTests extends APITests {
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     UUID instanceId = items.get(0).getInstanceId();
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .page()
@@ -645,7 +646,7 @@ public class RequestsAPICreationTests extends APITests {
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     UUID instanceId = items.get(0).getInstanceId();
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource requestResource = requestsClient.create(new RequestBuilder()
       .page()
@@ -669,7 +670,7 @@ public class RequestsAPICreationTests extends APITests {
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     UUID instanceId = items.get(0).getInstanceId();
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     Response response = requestsClient.attemptCreate(
         new RequestBuilder()
@@ -696,7 +697,7 @@ public class RequestsAPICreationTests extends APITests {
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     UUID instanceId = item.getInstanceId();
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     Response postResponse = requestsClient.attemptCreate(new RequestBuilder()
       .recall()
@@ -803,7 +804,7 @@ public class RequestsAPICreationTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = RequestType.class, names = {"HOLD", "RECALL"})
   void cannotCreateHoldTlrWhenAvailableItemForInstance(RequestType requestType) {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource item = items.get(0);
@@ -1437,7 +1438,7 @@ public class RequestsAPICreationTests extends APITests {
   void cannotCreateTitleLevelPagedRequestIfThereAreNoAvailableItems() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
@@ -1469,7 +1470,7 @@ public class RequestsAPICreationTests extends APITests {
       overdueFinePoliciesFixture.facultyStandard().getId(),
       lostItemFeePoliciesFixture.facultyStandard().getId());
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     var instanceId = items.get(0).getInstanceId();
@@ -1491,7 +1492,7 @@ public class RequestsAPICreationTests extends APITests {
   void canCreateTitleLevelPagedRequest() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
     UUID instanceId = uponDunkirkInstance.getId();
@@ -1523,7 +1524,7 @@ public class RequestsAPICreationTests extends APITests {
   void canHaveUserBarcodeInCheckInPublishedEventAfterTitleLevelRequest() {
     UUID patronId = usersFixture.charlotte().getId();
     final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource uponDunkirkInstance = instancesFixture.basedUponDunkirk();
     UUID instanceId = uponDunkirkInstance.getId();
@@ -1556,7 +1557,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID patronId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     buildItem(instanceId, "111");
     requestsClient.create(buildPageTitleLevelRequest(patronId, pickupServicePointId, instanceId));
@@ -1578,7 +1579,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID patronId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     buildItem(instanceId, "111");
     ItemResource secondItem = buildItem(instanceId, "222");
@@ -1600,7 +1601,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID patronId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId= UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     buildItem(instanceId, "111");
     requestsClient.create(buildPageTitleLevelRequest(patronId, pickupServicePointId,
@@ -1620,7 +1621,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID userId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     buildItem(instanceId, "111");
     buildItem(instanceId, "222");
@@ -1642,7 +1643,7 @@ public class RequestsAPICreationTests extends APITests {
     UUID userId = usersFixture.charlotte().getId();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     ItemResource item = buildItem(instanceId, "111");
     requestsClient.create(buildItemLevelRequest(userId, pickupServicePointId,
@@ -1760,7 +1761,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void tlrRecallShouldPickItemWithLoanWithNextClosestDueDateIfAnotherRecallRequestExists() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     var londonZoneId = ZoneId.of("Europe/London");
     var items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     var firstItem = items.get(0);
@@ -1786,7 +1787,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void tlrRecallShouldPickRecalledLoanWithClosestDueDateIfThereAreNoNotRecalledLoansAndSameAmountOfRecalls() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     var londonZoneId = ZoneId.of("Europe/London");
     var items = itemsFixture.createMultipleItemsForTheSameInstance(4);
     var firstItem = items.get(0);
@@ -1832,7 +1833,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource inTransitPickupServicePoint = servicePointsFixture.cd2();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     if (itemStatus.equals("Paged")) {
       itemsClient.create(new ItemBuilder()
         .forHolding(defaultWithHoldings.getId())
@@ -1876,7 +1877,7 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource requestPickupServicePoint = servicePointsFixture.cd1();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     itemsFixture.basedUponDunkirk(holdingBuilder -> holdingBuilder,
       instanceBuilder -> instanceBuilder.withId(instanceId),
       itemBuilder -> itemBuilder
@@ -2137,7 +2138,7 @@ public class RequestsAPICreationTests extends APITests {
     "Lost and paid", "Paged", "In process (non-requestable)", "Intellectual item", "Unavailable",
     "Restricted", "Unknown", "Awaiting delivery", "Order closed"})
   void canCreateTlrHoldRequestWhenInstanceHasItemsWithStatusAllowedForHold(String itemStatus) {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     final ItemResource item = itemsFixture.basedUponSmallAngryPlanet(
       builder -> builder.withStatus(itemStatus));
     IndividualResource response = requestsFixture.placeTitleLevelHoldShelfRequest(item.getInstanceId(),
@@ -3306,7 +3307,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void cannotCreateTitleLevelRequestWithoutInstanceId() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
 
@@ -3363,7 +3364,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrRequestShouldBeAppliedToLoanWithClosestDueDate() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
@@ -3438,7 +3439,7 @@ public class RequestsAPICreationTests extends APITests {
   void statusOfTlrRequestShouldBeChangedIfAssociatedItemCheckedIn() {
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     ItemResource firstItem = buildItem(instanceId, "111");
     ItemResource secondItem = buildItem(instanceId, "222");
 
@@ -3466,7 +3467,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemCreatedAfterHoldTlr() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with available notice")
@@ -3498,7 +3499,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void awaitingPickupNoticeShouldBeSentDuringCheckInWhenItemIsReturnedAndTlrHoldExists() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with available notice")
@@ -3528,7 +3529,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void awaitingPickupNoticesShouldBeSentToMultiplePatronsDuringPagedItemsCheckIn() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
       .withName("Policy with available notice")
       .withLoanNotices(Collections.singletonList(new NoticeConfigurationBuilder()
@@ -3644,7 +3645,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void itemCheckOutShouldNotAffectRequestAssociatedWithAnotherItemOfInstance() {
     UUID instanceId = UUID.randomUUID();
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     ItemResource firstItem = buildItem(instanceId, "111");
     ItemResource secondItem = buildItem(instanceId, "222");
     ZonedDateTime requestDate = ZonedDateTime.of(2021, 7, 22, 10, 22, 54, 0, UTC);
@@ -3679,7 +3680,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void itemCheckOutRecallRequestCreationShouldProduceNotice() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
@@ -3722,7 +3723,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void itemCheckOutRecallCancelAgainRecallRequestCreationShouldProduceNotice() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
       .withTemplateId(UUID.randomUUID())
       .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
@@ -3763,6 +3764,84 @@ public class RequestsAPICreationTests extends APITests {
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
 
+  @Test
+  void shouldTriggerNoticesForTitleLevelRecall() {
+    // Enable the Title Level Request feature
+    settingsFixture.enableTlrFeature();
+
+    // Configure recall notice for the loan owner (borrower)
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
+      .create();
+
+    // Configure recall request notice for the requester
+    JsonObject recallRequestToRequesterConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.RECALL_REQUEST.getRepresentation())
+      .create();
+
+    // Create a notice policy with the above configurations
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(List.of(recallToLoaneeConfiguration, recallRequestToRequesterConfiguration));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    // Create 3 items belonging to the same instance.
+    // The notice issue occurs only when the request queue has more than 1 item.
+    // So we need to create items under same instance to test that issue
+    val items = itemsFixture.createMultipleItemForTheSameInstance(3,
+      List.of(itemsFixture.addCallNumberStringComponents("1"),
+        itemsFixture.addCallNumberStringComponents("2"), itemsFixture.addCallNumberStringComponents("3")));
+
+    // Create borrowers who will loan the items
+    IndividualResource borrower1 = usersFixture.steve();
+    IndividualResource borrower2 = usersFixture.jessica();
+    IndividualResource borrower3 = usersFixture.james();
+
+    // Create requesters who will place title-level recall requests
+    IndividualResource requester1 = usersFixture.charlotte();
+    IndividualResource requester2 = usersFixture.rebecca();
+    IndividualResource requester3 = usersFixture.bobby();
+    IndividualResource requester4 = usersFixture.henry();
+
+    // Check out items for the borrowers
+    checkOutFixture.checkOutByBarcode(items.get(0), borrower1);
+    checkOutFixture.checkOutByBarcode(items.get(1), borrower2);
+    checkOutFixture.checkOutByBarcode(items.get(2), borrower3);
+
+    // Place title-level recall requests on the same instance
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester1);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester2);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester3);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester4);
+
+
+    // Verify the notices are triggered as expected
+    // There should be 7 notices triggered: 4 recall request notices and 3 item recall notices
+    Awaitility.waitAtMost(1, TimeUnit.SECONDS)
+      .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(7));
+
+    // Verify the number of notices sent and events published.
+    // Requester will receive the recall request notice and borrower will receive the item recalled notice
+    verifyNumberOfSentNotices(7);
+    verifyNumberOfNoticeEventsForUser(requester1.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester2.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester3.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester4.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower1.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower2.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower3.getId(), 1);
+    verifyNumberOfPublishedEvents(NOTICE, 7);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private void verifyNumberOfNoticeEventsForUser(UUID userId, int expectedNoticeEventsCount) {
     int noticeEventsCount = (int) getPublishedEventsAsList(byLogEventType(NOTICE))
       .stream()
@@ -3779,7 +3858,7 @@ public class RequestsAPICreationTests extends APITests {
   @ParameterizedTest
   @ValueSource(ints = {1, 2, 3, 4, 5})
   void titleLevelPageRequestIsCreatedForItemClosestToPickupServicePoint(int testCase) {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
         "Pickup service point", "PICKUP", "Display name")
@@ -3882,12 +3961,116 @@ public class RequestsAPICreationTests extends APITests {
   }
 
   @Test
+  void primaryTlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr() {
+    settingsFixture.configureTlrFeature(true, true, null, null, null);
+
+    policiesActivation.use(new RequestPolicyBuilder(
+      UUID.randomUUID(),
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      null
+    ));
+
+    UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
+        "Pickup service point", "PICKUP", "Display name")
+        .withPickupLocation(Boolean.TRUE))
+      .getId();
+
+    UUID anotherServicePointId = servicePointsFixture.create(new ServicePointBuilder(
+        "Another service point", "OTHER", "Display name")
+        .withPickupLocation(Boolean.TRUE))
+      .getId();
+
+    UUID institutionId = locationsFixture.createInstitution("Institution").getId();
+    UUID campusIdA = locationsFixture.createCampus("Campus A", institutionId).getId();
+    UUID campusIdB = locationsFixture.createCampus("Campus B", institutionId).getId();
+    UUID libraryIdA1 = locationsFixture.createLibrary("Library A1", campusIdA).getId();
+    UUID libraryIdB1 = locationsFixture.createLibrary("Library B1", campusIdB).getId();
+
+    UUID sameLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
+        .withName("Location in same library")
+        .withCode("3")
+        .forInstitution(institutionId)
+        .forCampus(campusIdA)
+        .forLibrary(libraryIdA1)
+        .withPrimaryServicePoint(anotherServicePointId)
+        .servedBy(anotherServicePointId))
+      .getId();
+
+    UUID anotherLibraryLocationId = locationsFixture.createLocation(new LocationBuilder()
+        .withName("Location in another library")
+        .withCode("3")
+        .forInstitution(institutionId)
+        .forCampus(campusIdB)
+        .forLibrary(libraryIdB1)
+        .withPrimaryServicePoint(anotherServicePointId)
+        .servedBy(anotherServicePointId))
+      .getId();
+
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID holdingsId = holdingsFixture.defaultWithHoldings(instanceId).getId();
+
+    // Closest item
+    UUID closestItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdingsId, sameLibraryLocationId).getId();
+
+    UUID expectedItemId = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(
+      holdingsId, anotherLibraryLocationId).getId();
+
+    var requestBuilder = new RequestBuilder()
+      .page()
+      .fulfillToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withItemId(expectedItemId)
+      .withHoldingsRecordId(holdingsId)
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(pickupServicePointId);
+
+    // Request without ECS phase should fail
+    requestsFixture.attemptPlace(requestBuilder);
+
+    // The same request with Primary ECS phase should succeed because validation is skipped
+    IndividualResource request = requestsFixture.place(
+      requestBuilder.withEcsRequestPhase("Primary"));
+
+    assertThat(request.getJson().getString("itemId"), is(expectedItemId));
+
+    // To make sure there are no Available items left
+    requestsFixture.place(
+      requestBuilder
+        .withRequesterId(usersFixture.jessica().getId())
+        .withItemId(closestItemId)
+        .withEcsRequestPhase("Primary"));
+
+    // Placing TLR Hold request
+    var requestBuilderTlrHold = new RequestBuilder()
+      .hold()
+      .fulfillToHoldShelf()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.steve().getId())
+      .withPickupServicePointId(pickupServicePointId);
+
+    // Request without ECS phase should fail
+    requestsFixture.attemptPlace(requestBuilderTlrHold);
+
+    // The same request with Primary ECS phase should succeed because policy check is skipped
+    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase("Primary"));
+  }
+
+  @Test
   void pageTlrSucceedsWhenClosestAvailableItemIsNotPageable() {
     // Page TLR should succeed when multiple available items exist, but the closest item to the
     // pickup service point is not requestable. At the same time, other available and requestable
     // items exist.
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
     UUID pickupServicePointId = servicePointsFixture.create(new ServicePointBuilder(
@@ -3986,7 +4169,7 @@ public class RequestsAPICreationTests extends APITests {
     // Hold TLR should be created when available items of the same instance exist, but all of them
     // are not pageable due to the request policy
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -4031,7 +4214,7 @@ public class RequestsAPICreationTests extends APITests {
     // Hold TLR should fail when available items of the same instance exist and some of those
     // items are pageable (request policy allows page requests)
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -4084,7 +4267,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldNotBeCreatedForInstanceWithOnlyAgedToLostItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
 
@@ -4100,7 +4283,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldBeCreatedForOnOrderItemIfInstanceHasOnOrderAndDeclaredLostItems() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();
     UUID instanceId = UUID.randomUUID();
@@ -4139,7 +4322,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldNotBeCreatedForInstanceWithOnlyDeclaredLostItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
     UUID instanceId = UUID.randomUUID();
 
@@ -4160,7 +4343,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldNotBeCreatedForInstanceWithOnlyClaimedReturnedItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     useLostItemPolicy(lostItemFeePoliciesFixture.chargeFee().getId());
     UUID instanceId = UUID.randomUUID();
 
@@ -4181,7 +4364,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldFailWhenNotAllowedByPolicy() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -4222,7 +4405,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void holdTlrShouldSucceedEvenWhenPolicyDoesNotAllowHolds() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     circulationRulesFixture.updateCirculationRules(differentRequestPoliciesBasedOnMaterialType());
 
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -4264,7 +4447,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void titleLevelHoldFailsWhenItShouldFollowCirculationRulesAndNoneOfInstanceItemsAreAllowedForHold() {
     // enable TLR feature and make Hold requests respect circulation rules
-    configurationsFixture.configureTlrFeature(true, true, null, null, null);
+    settingsFixture.configureTlrFeature(true, true, null, null, null);
 
     IndividualResource book = materialTypesFixture.book();
     IndividualResource video = materialTypesFixture.videoRecording();
@@ -4292,7 +4475,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void titleLevelHoldIsPlacedWhenItShouldFollowCirculationRulesAndOneOfInstanceItemsIsAllowedForHold() {
     // enable TLR feature and make Hold requests respect circulation rules
-    configurationsFixture.configureTlrFeature(true, true, null, null, null);
+    settingsFixture.configureTlrFeature(true, true, null, null, null);
 
     IndividualResource book = materialTypesFixture.book();
     IndividualResource video = materialTypesFixture.videoRecording();
@@ -4316,7 +4499,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void titleLevelHoldIsPlacedWhenItCanIgnoreCirculationRulesAndNoneOfInstanceItemsAreAllowedForHold() {
     // enable TLR feature and make Hold requests ignore circulation rules
-    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
 
     IndividualResource book = materialTypesFixture.book();
     IndividualResource video = materialTypesFixture.videoRecording();
@@ -4377,7 +4560,7 @@ public class RequestsAPICreationTests extends APITests {
   void titleLevelRequestIsNotPlacedWhenRequestPolicyDisallowsRequestedPickupServicePoint(
     RequestType requestType) {
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     final UUID requestPolicyId = UUID.randomUUID();
 
     policiesActivation.use(new RequestPolicyBuilder(
@@ -4673,7 +4856,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldSucceedWhenItNeedsToPickLeastRecalledLoanAndRequestsWithNoLoansAreInTheQueueScenario1() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     final var patron1 = usersFixture.charlotte();
     final var patron2 = usersFixture.jessica();
@@ -4772,7 +4955,7 @@ public class RequestsAPICreationTests extends APITests {
 
   @Test
   void recallTlrShouldSucceedWhenItNeedsToPickLeastRecalledLoanAndRequestsWithNoLoansAreInTheQueueScenario2() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     final var patron1 = usersFixture.charlotte();
     final var patron2 = usersFixture.jessica();

@@ -20,7 +20,9 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class ConfigurationRepository {
   private static final String CONFIGS_KEY = "configs";
   private static final String MODULE_NAME_KEY = "module";
@@ -50,6 +52,7 @@ public class ConfigurationRepository {
   }
 
   public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
+    log.info("lookupTlrSettings:: fetching TLR configuration");
     Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
       "SETTINGS", "TLR");
 
