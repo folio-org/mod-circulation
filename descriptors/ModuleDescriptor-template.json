@@ -135,7 +135,7 @@
             "circulation.loans.change-due-date.post"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.change-due-date.post",
+            "perms.circulation.loans.change-due-date.post",
             "configuration.entries.collection.get"
           ]
         }
@@ -2344,7 +2344,7 @@
       "visible": false
     },
     {
-      "permissionName": "modperms.circulation.loans.change-due-date.post",
+      "permissionName": "perms.circulation.loans.change-due-date.post",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
