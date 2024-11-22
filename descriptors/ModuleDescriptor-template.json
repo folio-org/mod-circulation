@@ -1725,7 +1725,7 @@
         "circulation.pick-slips.get",
         "circulation.search-slips.get",
         "circulation.handlers.loan-related-fee-fine-closed.post",
-        "circulation.handlers.fee-fine-balance-changed.post"
+        "circulation.handlers.fee-fine-balance-changed.post",
         "circulation.items-by-instance.get"
       ]
     },
