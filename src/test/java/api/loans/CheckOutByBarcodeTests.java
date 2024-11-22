@@ -142,11 +142,11 @@ class CheckOutByBarcodeTests extends APITests {
   private static final ZonedDateTime TEST_DUE_DATE =
     ZonedDateTime.of(2019, 4, 20, 11, 30, 0, 0, UTC);
   public static final String OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION =
-    "circulation.override-item-not-loanable-block";
+    "circulation.override-item-not-loanable-block.post";
   public static final String OVERRIDE_PATRON_BLOCK_PERMISSION =
-    "circulation.override-patron-block";
+    "circulation.override-patron-block.post";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
-    "circulation.override-item-limit-block";
+    "circulation.override-item-limit-block.post";
   public static final String INSUFFICIENT_OVERRIDE_PERMISSIONS =
     "Insufficient override permissions";
   private static final String TEST_COMMENT = "Some comment";

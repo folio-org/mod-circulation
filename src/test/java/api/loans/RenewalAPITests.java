@@ -91,7 +91,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
-import api.support.TlrFeatureStatus;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.FeeFineBuilder;
@@ -114,7 +113,6 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.ResourceClient;
-import api.support.http.UserResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -123,10 +121,10 @@ import lombok.val;
 public abstract class RenewalAPITests extends APITests {
   public static final String PATRON_BLOCK_NAME = "patronBlock";
   private static final String TEST_COMMENT = "Some comment";
-  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  private static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block.post";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
-    "circulation.override-item-limit-block";
-  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block";
+    "circulation.override-item-limit-block.post";
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block.post";
   private static final String RENEWED_THROUGH_OVERRIDE = "renewedThroughOverride";
   private static final String PATRON_WAS_BLOCKED_MESSAGE = "Patron blocked from renewing";
   private static final String ITEM_IS_DECLARED_LOST = "item is Declared lost";
