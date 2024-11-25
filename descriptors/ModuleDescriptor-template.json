@@ -1994,7 +1994,7 @@
         "feesfines.accounts.cancel.item.post",
         "feesfines.accounts-bulk.cancel.item.post",
         "pubsub.publish.post",
-        "automated-patron-blocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.item.get",
@@ -2174,7 +2174,7 @@
         "mod-settings.global.read.circulation",
         "manualblocks.collection.get",
         "pubsub.publish.post",
-        "automated-patron-blocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get",
         "circulation-storage.loans-history.collection.get",
         "overdue-fines-policies.item.get",
         "overdue-fines-policies.collection.get"
@@ -2260,7 +2260,7 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
         "manualblocks.collection.get",
-        "automated-patron-blocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get",
         "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
@@ -2346,7 +2346,7 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
-        "automated-patron-blocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get",
         "pubsub.publish.post",
         "circulation-storage.fixed-due-date-schedules.collection.get",
         "circulation-storage.loans-history.collection.get"
