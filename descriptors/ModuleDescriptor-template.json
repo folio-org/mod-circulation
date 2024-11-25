@@ -1630,18 +1630,6 @@
       "description": "get allowed pickup service points for request"
     },
     {
-      "permissionName": "settings.global.write.circulation.execute",
-      "displayName": "circulation settings - Create configuration",
-      "description": "To create new configuration in mod settings",
-      "replaces": ["mod-settings.global.write.mod-circulation"]
-    },
-    {
-      "permissionName": "settings.global.read.circulation.execute",
-      "displayName": "circulation settings - Read configuration",
-      "description": "To read the configuration from mod settings.",
-      "replaces": ["mod-settings.global.read.mod-circulation"]
-    },
-    {
       "permissionName": "circulation.items-by-instance.get",
       "displayName": "circulation - get items by instance",
       "description": "get items by instance"
