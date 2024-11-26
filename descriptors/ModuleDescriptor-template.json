@@ -1670,6 +1670,26 @@
       "description": "loan related fee/fine closed"
     },
     {
+      "permissionName": "mod-settings.global.read.mod-circulation",
+      "displayName": "mod-circulation settings - read",
+      "description": "To read mod-circulation settings from mod-settings"
+    },
+    {
+      "permissionName": "mod-settings.global.write.mod-circulation",
+      "displayName": "mod-circulation settings - write",
+      "description": "To create and edit mod-circulation settings in mod-settings"
+    },
+    {
+      "permissionName": "mod-settings.global.read.circulation",
+      "displayName": "circulation functionality settings - read",
+      "description": "To read circulation functionality settings from mod-settings"
+    },
+    {
+      "permissionName": "mod-settings.global.write.circulation",
+      "displayName": "circulation functionality settings - write",
+      "description": "To create and edit circulation functionality settings in mod-settings"
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
