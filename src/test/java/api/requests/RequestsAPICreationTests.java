@@ -3767,7 +3767,7 @@ public class RequestsAPICreationTests extends APITests {
   @Test
   void shouldTriggerNoticesForTitleLevelRecall() {
     // Enable the Title Level Request feature
-    settingsFixture.enableTlrFeature();
+    configurationsFixture.enableTlrFeature();
 
     // Configure recall notice for the loan owner (borrower)
     JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
