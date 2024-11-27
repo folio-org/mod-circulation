@@ -107,6 +107,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import lombok.val;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -3761,6 +3762,84 @@ public class RequestsAPICreationTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(0), item);
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
+  }
+
+  @Test
+  void shouldTriggerNoticesForTitleLevelRecall() {
+    // Enable the Title Level Request feature
+    configurationsFixture.enableTlrFeature();
+
+    // Configure recall notice for the loan owner (borrower)
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
+      .create();
+
+    // Configure recall request notice for the requester
+    JsonObject recallRequestToRequesterConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.RECALL_REQUEST.getRepresentation())
+      .create();
+
+    // Create a notice policy with the above configurations
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(List.of(recallToLoaneeConfiguration, recallRequestToRequesterConfiguration));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    // Create 3 items belonging to the same instance.
+    // The notice issue occurs only when the request queue has more than 1 item.
+    // So we need to create items under same instance to test that issue
+    val items = itemsFixture.createMultipleItemForTheSameInstance(3,
+      List.of(itemsFixture.addCallNumberStringComponents("1"),
+        itemsFixture.addCallNumberStringComponents("2"), itemsFixture.addCallNumberStringComponents("3")));
+
+    // Create borrowers who will loan the items
+    IndividualResource borrower1 = usersFixture.steve();
+    IndividualResource borrower2 = usersFixture.jessica();
+    IndividualResource borrower3 = usersFixture.james();
+
+    // Create requesters who will place title-level recall requests
+    IndividualResource requester1 = usersFixture.charlotte();
+    IndividualResource requester2 = usersFixture.rebecca();
+    IndividualResource requester3 = usersFixture.bobby();
+    IndividualResource requester4 = usersFixture.henry();
+
+    // Check out items for the borrowers
+    checkOutFixture.checkOutByBarcode(items.get(0), borrower1);
+    checkOutFixture.checkOutByBarcode(items.get(1), borrower2);
+    checkOutFixture.checkOutByBarcode(items.get(2), borrower3);
+
+    // Place title-level recall requests on the same instance
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester1);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester2);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester3);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester4);
+
+
+    // Verify the notices are triggered as expected
+    // There should be 7 notices triggered: 4 recall request notices and 3 item recall notices
+    Awaitility.waitAtMost(1, TimeUnit.SECONDS)
+      .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(7));
+
+    // Verify the number of notices sent and events published.
+    // Requester will receive the recall request notice and borrower will receive the item recalled notice
+    verifyNumberOfSentNotices(7);
+    verifyNumberOfNoticeEventsForUser(requester1.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester2.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester3.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester4.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower1.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower2.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower3.getId(), 1);
+    verifyNumberOfPublishedEvents(NOTICE, 7);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
   }
 
   private void verifyNumberOfNoticeEventsForUser(UUID userId, int expectedNoticeEventsCount) {
