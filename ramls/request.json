@@ -437,6 +437,10 @@
     "itemLocationCode": {
       "description": "Allow specifying item location when creating title-level requests",
       "type": "string"
+    },
+    "isSuppressNotification": {
+      "description": "Flag to suppress sending cancellation notifications. If true, no notification will be sent when cancelling the request",
+      "type": "boolean"
     }
   },
   "additionalProperties": false,
