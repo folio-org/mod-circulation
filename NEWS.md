@@ -1,3 +1,7 @@
+## 24.3.1 2024-11-27
+
+* Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
+
 ## 24.3.0 2024-10-31
 
 * Support floating collections (CIRC-2136)
