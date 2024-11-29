@@ -93,8 +93,6 @@ public class RequestRepresentation {
 
     if (location != null) {
       write(itemSummary, "location", locationSummary(location));
-
-      effectiveLocationAndPrimaryServicePointSummary(itemSummary, location);
     }
 
     String enumeration = item.getEnumeration();
@@ -115,23 +113,28 @@ public class RequestRepresentation {
     write(itemSummary, CALL_NUMBER_COMPONENTS,
       createCallNumberComponents(item.getCallNumberComponents()));
     write(itemSummary, "copyNumber", item.getCopyNumber());
+
+    effectiveLocationAndPrimaryServicePointSummary(itemSummary, request);
+
     write(request, "item", itemSummary);
   }
 
-  private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, Location location) {
-    log.info("RequestRepresentation::effectiveLocationAndPrimaryServicePointSummary");
-    write(itemSummary, "itemEffectiveLocationId", location.getId());
-    write(itemSummary, "itemEffectiveLocationName", location.getId());
-    ServicePoint primaryServicePoint = location.getPrimaryServicePoint();
-    if (primaryServicePoint != null) {
-      log.info("effectiveLocationAndPrimaryServicePointSummary" +
-          ":: primaryServicePoint {}, {}", primaryServicePoint.getId(),
-        primaryServicePoint.getName());
-      write(itemSummary, "retrievalServicePointId",
-        primaryServicePoint.getId());
-      write(itemSummary, "retrievalServicePointName",
-        primaryServicePoint.getName());
-    }
+  private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, JsonObject request) {
+    String itemEffectiveLocationId = request.getJsonObject("item").getString(
+      "itemEffectiveLocationId");
+    String itemEffectiveLocationName = request.getJsonObject("item").getString(
+      "itemEffectiveLocationName");
+    String retrievalServicePointId = request.getJsonObject("item").getString(
+      "retrievalServicePointId");
+    String retrievalServicePointName = request.getJsonObject("item").getString(
+      "retrievalServicePointName");
+
+    write(itemSummary, "itemEffectiveLocationId", itemEffectiveLocationId);
+    write(itemSummary, "itemEffectiveLocationName", itemEffectiveLocationName);
+    write(itemSummary, "retrievalServicePointId",
+      retrievalServicePointId);
+    write(itemSummary, "retrievalServicePointName",
+      retrievalServicePointName);
   }
 
   private static void addInstanceProperties(JsonObject request, Instance instance, Item item) {
