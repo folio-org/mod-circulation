@@ -43,6 +43,13 @@ public class StoredRequestRepresentation {
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
 
+    write(itemSummary, "itemEffectiveLocationId", item.getLocation().getId());
+    write(itemSummary, "itemEffectiveLocationName", item.getLocation().getName());
+    write(itemSummary, "retrievalServicePointId",
+      item.getLocation().getPrimaryServicePoint().getId());
+    write(itemSummary, "retrievalServicePointName",
+      item.getLocation().getPrimaryServicePoint().getName());
+
     request.put("item", itemSummary);
   }
 
