@@ -119,10 +119,14 @@ public class RequestRepresentation {
   }
 
   private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, Location location) {
+    log.info("RequestRepresentation::effectiveLocationAndPrimaryServicePointSummary");
     write(itemSummary, "itemEffectiveLocationId", location.getId());
     write(itemSummary, "itemEffectiveLocationName", location.getId());
     ServicePoint primaryServicePoint = location.getPrimaryServicePoint();
     if (primaryServicePoint != null) {
+      log.info("effectiveLocationAndPrimaryServicePointSummary" +
+          ":: primaryServicePoint {}, {}", primaryServicePoint.getId(),
+        primaryServicePoint.getName());
       write(itemSummary, "retrievalServicePointId",
         primaryServicePoint.getId());
       write(itemSummary, "retrievalServicePointName",
