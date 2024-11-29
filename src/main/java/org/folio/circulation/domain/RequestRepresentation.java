@@ -93,6 +93,8 @@ public class RequestRepresentation {
 
     if (location != null) {
       write(itemSummary, "location", locationSummary(location));
+
+      effectiveLocationAndPrimaryServicePointSummary(itemSummary, location);
     }
 
     String enumeration = item.getEnumeration();
@@ -114,6 +116,18 @@ public class RequestRepresentation {
       createCallNumberComponents(item.getCallNumberComponents()));
     write(itemSummary, "copyNumber", item.getCopyNumber());
     write(request, "item", itemSummary);
+  }
+
+  private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, Location location) {
+    write(itemSummary, "itemEffectiveLocationId", location.getId());
+    write(itemSummary, "itemEffectiveLocationName", location.getId());
+    ServicePoint primaryServicePoint = location.getPrimaryServicePoint();
+    if (primaryServicePoint != null) {
+      write(itemSummary, "retrievalServicePointId",
+        primaryServicePoint.getId());
+      write(itemSummary, "retrievalServicePointName",
+        primaryServicePoint.getName());
+    }
   }
 
   private static void addInstanceProperties(JsonObject request, Instance instance, Item item) {
