@@ -8,6 +8,10 @@ import static org.folio.circulation.support.results.AsynchronousResult.fromFutur
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.MappingFunctions.when;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CreateRequestService;
 import org.folio.circulation.domain.MoveRequestProcessAdapter;
 import org.folio.circulation.domain.MoveRequestService;
@@ -30,6 +34,7 @@ import org.folio.circulation.domain.validation.ServicePointPickupLocationValidat
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -56,6 +61,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestCollectionResource extends CollectionResource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public RequestCollectionResource(HttpClient client) {
     super(client, "/circulation/requests");
   }
@@ -72,6 +79,8 @@ public class RequestCollectionResource extends CollectionResource {
     final var clients = Clients.create(context, client);
 
     final var representation = routingContext.getBodyAsJson();
+
+    log.debug("create:: {}", representation);
 
     final var eventPublisher = new EventPublisher(routingContext);
 
@@ -272,6 +281,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestPolicyRepository = new RequestPolicyRepository(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
+    final var settingsRepository = new SettingsRepository(clients);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(requestPolicyRepository, loanPolicyRepository)),
@@ -287,7 +297,7 @@ public class RequestCollectionResource extends CollectionResource {
       requestRepository, requestPolicyRepository,
       updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       RequestNoticeSender.using(clients), configurationRepository, eventPublisher,
-      requestQueueRepository);
+      requestQueueRepository, settingsRepository);
 
     fromFutureResult(requestRepository.getById(id))
       .map(request -> request.withOperation(Request.Operation.MOVE))

@@ -11,12 +11,14 @@ import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
 @ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode
 public class TlrSettingsConfiguration {
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 

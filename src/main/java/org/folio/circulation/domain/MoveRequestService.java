@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -27,13 +28,14 @@ public class MoveRequestService {
   private final ConfigurationRepository configurationRepository;
   private final EventPublisher eventPublisher;
   private final RequestQueueRepository requestQueueRepository;
+  private final SettingsRepository settingsRepository;
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
     UpdateUponRequest updateUponRequest, MoveRequestProcessAdapter moveRequestHelper,
     RequestLoanValidator requestLoanValidator, RequestNoticeSender requestNoticeSender,
     ConfigurationRepository configurationRepository, EventPublisher eventPublisher,
-    RequestQueueRepository requestQueueRepository) {
+    RequestQueueRepository requestQueueRepository, SettingsRepository settingsRepository) {
 
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
@@ -44,11 +46,12 @@ public class MoveRequestService {
     this.configurationRepository = configurationRepository;
     this.eventPublisher = eventPublisher;
     this.requestQueueRepository = requestQueueRepository;
+    this.settingsRepository = settingsRepository;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {
-    return configurationRepository.lookupTlrSettings()
+    return settingsRepository.lookupTlrSettings()
       .thenApply(r -> r.map(requestAndRelatedRecords::withTlrSettings))
       .thenApply(r -> r.next(RequestServiceUtility::refuseTlrProcessingWhenFeatureIsDisabled))
       .thenApply(r -> r.next(records -> RequestServiceUtility.refuseMovingToOrFromHoldTlr(records,

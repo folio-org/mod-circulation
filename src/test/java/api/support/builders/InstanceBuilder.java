@@ -27,7 +27,7 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     this(UUID.randomUUID(), title, instanceTypeId);
   }
 
-  private InstanceBuilder(UUID id, String title, UUID instanceTypeId) {
+  public InstanceBuilder(UUID id, String title, UUID instanceTypeId) {
     this(id, title, new JsonArray(), instanceTypeId, Collections.emptyList(), new JsonArray(), new JsonArray());
   }
 

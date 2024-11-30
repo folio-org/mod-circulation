@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.core.Is.is;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -137,6 +138,7 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> allowedSpInResponse) {
 
     var requesterId = usersFixture.steve().getId().toString();
+    var patronGroupId = patronGroupsFixture.regular().getId().toString();
     var items = itemsFixture.createMultipleItemForTheSameInstance(1,
       List.of(ib -> ib.withStatus(itemStatus.getValue())));
     var item = items.get(0);
@@ -154,8 +156,18 @@ class AllowedServicePointsAPITests extends APITests {
       .collect(Collectors.toSet()));
 
     var response = requestLevel == TITLE
-      ? get("create", requesterId, instanceId, null, null, HttpStatus.SC_OK).getJson()
-      : get("create", requesterId, null, itemId, null, HttpStatus.SC_OK).getJson();
+      ? get("create", requesterId, null, instanceId, null, null, null, null,
+      HttpStatus.SC_OK).getJson()
+      : get("create", requesterId, null, null, itemId, null, null, null,
+      HttpStatus.SC_OK).getJson();
+
+    assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
+
+    response = requestLevel == TITLE
+      ? get("create", null, patronGroupId, instanceId, null, null, null, null,
+      HttpStatus.SC_OK).getJson()
+      : get("create", null, patronGroupId, null, itemId, null, null, null,
+      HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
   }
@@ -202,7 +214,7 @@ class AllowedServicePointsAPITests extends APITests {
       .map(UUID::fromString)
       .collect(Collectors.toSet()));
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     var pickupLocationId = allowedSpByPolicy.stream()
       .findFirst()
       .map(AllowedServicePoint::getId)
@@ -223,9 +235,26 @@ class AllowedServicePointsAPITests extends APITests {
     var requestId = request == null ? null : request.getId().toString();
 
     var response =
-      get("replace", null, null, null, requestId, HttpStatus.SC_OK).getJson();
+      get("replace", null, null, null, null, requestId, null, null,
+        HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
+  }
+
+  @Test
+  void shouldReturnListOfAllowedServicePointsForHoldRequestReplacementWhenInstanceHasNoItems() {
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
+    var requester = usersFixture.steve();
+    var instanceId = instancesFixture.basedUponDunkirk().getId();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    setRequestPolicyWithAllowedServicePoints(HOLD, Set.of(servicePointId));
+    IndividualResource request = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, requester, ZonedDateTime.now(), servicePointId);
+
+    var response = get("replace", null, null, null, null, request.getId().toString(), "true", null,
+        HttpStatus.SC_OK).getJson();
+    var expectedServicePoint = new AllowedServicePoint(servicePointId.toString(), "Circ Desk 1");
+    assertThat(response, allowedServicePointMatcher(Map.of(HOLD, List.of(expectedServicePoint))));
   }
 
   public static Object[] shouldReturnOnlyExistingAllowedServicePointForRequestParameters() {
@@ -494,7 +523,7 @@ class AllowedServicePointsAPITests extends APITests {
     boolean instanceHasHoldings) {
 
     // allow TLR-holds for instances with no holdings/items
-    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
 
     IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
     IndividualResource sp2 = servicePointsFixture.cd2(); // pickup location
@@ -515,7 +544,7 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void noAllowedServicePointsAreReturnedForTitleLevelHoldWhenItIsDisabledAndInstanceHasItems() {
     // allow TLR-holds for instances with no holdings/items
-    configurationsFixture.configureTlrFeature(true, false, null, null, null);
+    settingsFixture.configureTlrFeature(true, false, null, null, null);
 
     IndividualResource sp1 = servicePointsFixture.cd1(); // pickup location
     servicePointsFixture.cd2(); // pickup location
@@ -653,8 +682,8 @@ class AllowedServicePointsAPITests extends APITests {
   @Test
   void getReplaceFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
-    Response response = get("replace", null, null, null, requestId,
-      HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    Response response = get("replace", null, null, null, null, requestId, null,
+      null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
   }
@@ -663,8 +692,8 @@ class AllowedServicePointsAPITests extends APITests {
   void getMoveFailsWhenRequestDoesNotExist() {
     String requestId = randomId();
     String itemId = itemsFixture.basedUponNod().getId().toString();
-    Response response = get("move", null, null, itemId, requestId,
-      HttpStatus.SC_UNPROCESSABLE_ENTITY);
+    Response response = get("move", null, null, null, itemId, requestId, null,
+      null, HttpStatus.SC_UNPROCESSABLE_ENTITY);
     assertThat(response.getJson(), hasErrorWith(hasMessage(
       String.format("Request with ID %s was not found", requestId))));
   }
@@ -703,7 +732,7 @@ class AllowedServicePointsAPITests extends APITests {
 
     setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(sp1Uuid));
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .withRequestType(PAGE.toString())
@@ -725,60 +754,156 @@ class AllowedServicePointsAPITests extends APITests {
 
     // Valid "move" request
     var moveResponse =
-      get("move", null, null, itemToMoveToId, requestId, HttpStatus.SC_OK).getJson();
+      get("move", null, null, null, itemToMoveToId, requestId, null, null,
+        HttpStatus.SC_OK).getJson();
     assertThat(moveResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
 
     // Invalid "move" requests
-    var invalidMoveResponse1 = get("move", null, null, null, requestId,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidMoveResponse1 = get("move", null, null, null, null, requestId,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse1.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse2 = get("move", null, null, itemToMoveToId, null,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidMoveResponse2 = get("move", null, null, null, itemToMoveToId,
+      null,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse2.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse3 = get("move", null, null, null, null,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidMoveResponse3 = get("move", null, null, null, null, null,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse3.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse4 = get("move", requesterId, null, itemToMoveToId, requestId,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidMoveResponse4 = get("move", requesterId,null, null, itemToMoveToId, requestId,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse4.getBody(), equalTo("Invalid combination of query parameters"));
 
-    var invalidMoveResponse5 = get("move", null, instanceId, itemToMoveToId, requestId,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidMoveResponse5 = get("move", null, null, instanceId,
+      itemToMoveToId, requestId,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidMoveResponse5.getBody(), equalTo("Invalid combination of query parameters"));
 
     // Valid "replace" request
     var replaceResponse =
-      get("replace", null, null, null, requestId, HttpStatus.SC_OK).getJson();
+      get("replace", null, null, null, null, requestId, null, null,
+        HttpStatus.SC_OK).getJson();
     assertThat(replaceResponse, allowedServicePointMatcher(Map.of(HOLD, List.of(sp2))));
 
     // Invalid "replace" requests
-    var invalidReplaceResponse1 = get("replace", null, null, null, null,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidReplaceResponse1 = get("replace", null, null, null, null, null,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse1.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse2 = get("replace", requesterId, null, null, requestId,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidReplaceResponse2 = get("replace", requesterId,null, null, null, requestId,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse2.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse3 = get("replace", null, instanceId, null, requestId,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidReplaceResponse3 = get("replace", null, null, instanceId, null
+      , requestId,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse3.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse4 = get("replace", null, null, requestedItemId, requestId,
-      HttpStatus.SC_BAD_REQUEST);
+    var invalidReplaceResponse4 = get("replace", null, null, null,
+      requestedItemId, requestId,
+      null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse4.getBody(),
       equalTo("Invalid combination of query parameters"));
 
-    var invalidReplaceResponse5 = get("replace", requesterId, instanceId,
-      requestedItemId, requestId, HttpStatus.SC_BAD_REQUEST);
+    var invalidReplaceResponse5 = get("replace", requesterId, null, instanceId,
+      requestedItemId, requestId, null, null, HttpStatus.SC_BAD_REQUEST);
     assertThat(invalidReplaceResponse5.getBody(),
       equalTo("Invalid combination of query parameters"));
+  }
+
+  @Test
+  void shouldUseStubItemParameterInCirculationRuleMatchingWhenPresent() {
+    var requesterId = usersFixture.steve().getId().toString();
+    var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
+      .getInstanceId().toString();
+    var cd1 = servicePointsFixture.cd1();
+    var cd2 = servicePointsFixture.cd2();
+    var cd4 = servicePointsFixture.cd4();
+    var cd5 = servicePointsFixture.cd5();
+    final UUID book = materialTypesFixture.book().getId();
+    final UUID patronGroup = patronGroupsFixture.regular().getId();
+    circulationRulesFixture.updateCirculationRules(createRules("m " + book +
+      "+ g " + patronGroup, "g " + patronGroup));
+
+    var response = getCreateOp(requesterId, instanceId, null, "true", null, HttpStatus.SC_OK)
+      .getJson();
+    assertThat(response, hasNoJsonPath(PAGE.getValue()));
+    JsonArray allowedServicePoints = response.getJsonArray(HOLD.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
+    allowedServicePoints = response.getJsonArray(RECALL.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
+
+    response = getCreateOp(requesterId, instanceId, null, "false", null, HttpStatus.SC_OK)
+      .getJson();
+    assertThat(response, hasNoJsonPath(HOLD.getValue()));
+    assertThat(response, hasNoJsonPath(RECALL.getValue()));
+    allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
+
+    response = getCreateOp(requesterId, instanceId, null, HttpStatus.SC_OK).getJson();
+    assertThat(response, hasNoJsonPath(HOLD.getValue()));
+    assertThat(response, hasNoJsonPath(RECALL.getValue()));
+    allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2, cd4, cd5));
+  }
+
+  @Test
+  void shouldReturnErrorIfUseStubItemIsInvalid() {
+    Response errorResponse = getCreateOp(UUID.randomUUID().toString(),
+      UUID.randomUUID().toString(), null, "invalid", null,
+      HttpStatus.SC_BAD_REQUEST);
+    assertThat(errorResponse.getBody(), is("useStubItem is not a valid boolean: invalid."));
+  }
+
+  @Test
+  void shouldConsiderEcsRequestRoutingParameterForAllowedServicePoints() {
+    var requesterId = usersFixture.steve().getId().toString();
+    var instanceId = itemsFixture.createMultipleItemsForTheSameInstance(2).get(0)
+      .getInstanceId().toString();
+    var cd1 = servicePointsFixture.cd1();
+    var cd2 = servicePointsFixture.cd2();
+    var cd4 = servicePointsFixture.cd4();
+    var cd11 = servicePointsFixture.cd11();
+
+    final Map<RequestType, Set<UUID>> allowedServicePointsInPolicy = new HashMap<>();
+    allowedServicePointsInPolicy.put(PAGE, Set.of(cd1.getId(), cd2.getId(), cd11.getId()));
+    allowedServicePointsInPolicy.put(HOLD, Set.of(cd4.getId(), cd2.getId(), cd11.getId()));
+    var requestPolicy = requestPoliciesFixture.createRequestPolicyWithAllowedServicePoints(
+      allowedServicePointsInPolicy, PAGE, HOLD);
+    policiesActivation.use(PoliciesToActivate.builder().requestPolicy(requestPolicy));
+
+    var response = getCreateOp(requesterId, instanceId, null, "false", "true",
+      HttpStatus.SC_OK).getJson();
+    JsonArray allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd11));
+    assertThat(response, hasNoJsonPath(HOLD.getValue()));
+    assertThat(response, hasNoJsonPath(RECALL.getValue()));
+
+    response = getCreateOp(requesterId, instanceId, null, "false", "false",
+      HttpStatus.SC_OK).getJson();
+    allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2));
+    assertThat(response, hasNoJsonPath(HOLD.getValue()));
+    assertThat(response, hasNoJsonPath(RECALL.getValue()));
+
+    response = getCreateOp(requesterId, instanceId, null, "false", null,
+      HttpStatus.SC_OK).getJson();
+    allowedServicePoints = response.getJsonArray(PAGE.getValue());
+    assertServicePointsMatch(allowedServicePoints, List.of(cd1, cd2));
+    assertThat(response, hasNoJsonPath(HOLD.getValue()));
+    assertThat(response, hasNoJsonPath(RECALL.getValue()));
+  }
+
+  @Test
+  void shouldReturnErrorIfEcsRequestRoutingIsInvalid() {
+    Response errorResponse = getCreateOp(UUID.randomUUID().toString(),
+      UUID.randomUUID().toString(), null, null, "invalid", HttpStatus.SC_BAD_REQUEST);
+    assertThat(errorResponse.getBody(), is("ecsRequestRouting is not a valid boolean: invalid."));
   }
 
   private void assertServicePointsMatch(JsonArray response,
@@ -806,22 +931,36 @@ class AllowedServicePointsAPITests extends APITests {
   }
 
   private Response getCreateOp(String requesterId, String instanceId, String itemId,
+    String useStubItem, String ecsRequestRouting, int expectedStatusCode) {
+
+    return get("create", requesterId,null, instanceId, itemId, null, useStubItem,
+      ecsRequestRouting, expectedStatusCode);
+  }
+
+  private Response getCreateOp(String requesterId, String instanceId, String itemId,
     int expectedStatusCode) {
 
-    return get("create", requesterId, instanceId, itemId, null, expectedStatusCode);
+    return get("create", requesterId, null, instanceId, itemId, null, null, null,
+      expectedStatusCode);
   }
 
   private Response getReplaceOp(String requestId, int expectedStatusCode) {
-    return get("replace", null, null, null, requestId, expectedStatusCode);
+    return get("replace", null, null, null, null, requestId, null, null,
+      expectedStatusCode);
   }
 
-  private Response get(String operation, String requesterId, String instanceId, String itemId,
-    String requestId, int expectedStatusCode) {
+  private Response get(String operation, String requesterId,
+    String patronGroupId, String instanceId, String itemId,
+    String requestId, String useStubItem, String ecsRequestRouting,
+    int expectedStatusCode) {
 
     List<QueryStringParameter> queryParams = new ArrayList<>();
     queryParams.add(namedParameter("operation", operation));
     if (requesterId != null) {
       queryParams.add(namedParameter("requesterId", requesterId));
+    }
+    if (patronGroupId != null) {
+      queryParams.add(namedParameter("patronGroupId", patronGroupId));
     }
     if (instanceId != null) {
       queryParams.add(namedParameter("instanceId", instanceId));
@@ -831,6 +970,12 @@ class AllowedServicePointsAPITests extends APITests {
     }
     if (requestId != null) {
       queryParams.add(namedParameter("requestId", requestId));
+    }
+    if (useStubItem != null) {
+      queryParams.add(namedParameter("useStubItem", useStubItem));
+    }
+    if (ecsRequestRouting != null) {
+      queryParams.add(namedParameter("ecsRequestRouting", ecsRequestRouting));
     }
 
     return restAssuredClient.get(allowedServicePointsUrl(), queryParams, expectedStatusCode,
@@ -853,5 +998,22 @@ class AllowedServicePointsAPITests extends APITests {
     return new ServicePointBuilder("SP name", "sp-code-" + randomId(), "SP description")
       .withPickupLocation(TRUE)
       .withHoldShelfExpriyPeriod(30, "Days");
+  }
+
+  private String createRules(String firstRuleCondition, String secondRuleCondition) {
+    final var loanPolicy = loanPoliciesFixture.canCirculateRolling().getId().toString();
+    final var allowAllRequestPolicy = requestPoliciesFixture.allowAllRequestPolicy()
+      .getId().toString();
+    final var holdAndRecallRequestPolicy = requestPoliciesFixture.allowHoldAndRecallRequestPolicy()
+      .getId().toString();
+    final var noticePolicy = noticePoliciesFixture.activeNotice().getId().toString();
+    final var overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard().getId().toString();
+    final var lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard().getId().toString();
+
+    return String.join("\n",
+      "priority: t, s, c, b, a, m, g",
+      "fallback-policy: l " + loanPolicy + " r " + allowAllRequestPolicy + " n " + noticePolicy + " o " + overdueFinePolicy + " i " + lostItemFeePolicy,
+      firstRuleCondition + " : l " + loanPolicy + " r " + allowAllRequestPolicy + " n " + noticePolicy  + " o " + overdueFinePolicy + " i " + lostItemFeePolicy,
+      secondRuleCondition + " : l " + loanPolicy + " r " + holdAndRecallRequestPolicy + " n " + noticePolicy  + " o " + overdueFinePolicy + " i " + lostItemFeePolicy);
   }
 }

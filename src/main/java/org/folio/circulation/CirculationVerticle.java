@@ -21,6 +21,7 @@ import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.HealthResource;
+import org.folio.circulation.resources.ItemsByInstanceResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -94,6 +95,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
     new RequestByInstanceIdResource(client).register(router);
+    new ItemsByInstanceResource(client).register(router);
 
     new RequestHoldShelfClearanceResource(
       "/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
