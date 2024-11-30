@@ -79,4 +79,12 @@ public class ServicePointExamples {
       .withholdShelfClosedLibraryDateManagement(ExpirationDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY.name())
       .withHoldShelfExpriyPeriod(6, "Months");
   }
+
+  static ServicePointBuilder basedUponCircDesk11() {
+    return new ServicePointBuilder("Circ Desk 11", "cd11",
+      "Circulation Desk -- Back Entrance")
+      .withPickupLocation(FALSE)
+      .withEcsRequestRouting(TRUE)
+      .withHoldShelfExpriyPeriod(6, "Months");
+  }
 }

@@ -303,7 +303,7 @@ class RequestQueueResourceTest extends APITests {
 
   @Test
   void shouldGetRequestQueueForInstanceSuccessfully() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";

@@ -436,7 +436,7 @@ class ChangeDueDateAPITests extends APITests {
 
     assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     requestsClient.create(new RequestBuilder()
       .recall()
       .titleRequestLevel()
@@ -496,7 +496,7 @@ class ChangeDueDateAPITests extends APITests {
 
     assertThat(recalledLoan.getJson().getBoolean("dueDateChangedByRecall"), equalTo(true));
 
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     requestsClient.create(new RequestBuilder()
       .recall()

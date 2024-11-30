@@ -33,6 +33,9 @@
     <lombok.version>1.18.28</lombok.version>
     <spring.version>6.1.5</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
+
+    <!--Folio dependencies properties-->
+    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
   </properties>
 
   <dependencyManagement>
@@ -300,7 +303,7 @@
     <url>https://github.com/folio-org/mod-inventory</url>
     <connection>scm:git:git://github.com:folio-org/mod-inventory.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-inventory.git</developerConnection>
-    <tag>v24.3.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <build>
@@ -518,6 +521,21 @@
           <generateBackupPoms>false</generateBackupPoms>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.folio</groupId>
+        <artifactId>folio-module-descriptor-validator</artifactId>
+        <version>${folio-module-descriptor-validator.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <failOnInvalidDescriptor>false</failOnInvalidDescriptor>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <reporting>
@@ -529,4 +547,14 @@
       </plugin>
     </plugins>
   </reporting>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </pluginRepository>
+  </pluginRepositories>
+
 </project>
+

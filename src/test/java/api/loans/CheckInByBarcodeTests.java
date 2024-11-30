@@ -1639,7 +1639,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   void linkItemToHoldTLRWithHoldShelfWhenCheckedInItemThenFulfilledWithSuccess(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
@@ -1666,7 +1666,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void checkInItemWhenServicePointHasChangedToNoPickupLocation() {
-    configurationsFixture.enableTlrFeature();
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED);
     var instanceId = instancesFixture.basedUponDunkirk().getId();
     var defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     var checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(
@@ -1683,7 +1683,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     ServicePointBuilder changedServicePoint = new ServicePointBuilder(
       servicePointsFixture.cd1().getId(), servicePointName, servicePointCode, discoveryDisplayName,
-      description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name());
+      description, shelvingLagTime, Boolean.FALSE, null, KEEP_THE_CURRENT_DUE_DATE.name(), false);
 
 //    Update existing service point
     servicePointsFixture.update(servicePointCode, changedServicePoint);
@@ -1715,7 +1715,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   void linkItemToHoldTLRWithDeliveryWhenCheckedInThenFulfilledWithSuccess(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
@@ -1741,7 +1741,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void requestsShouldChangePositionWhenTheyGoInFulfillmentOnCheckIn() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource firstItem = items.get(0);
@@ -1792,7 +1792,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void canCheckinItemWhenRequestForAnotherItemOfSameInstanceExists() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource firstItem = items.get(0);
@@ -1813,7 +1813,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void canFulFillRecallRequestWhenCheckInAnotherItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource firstItem = items.get(0);
     ItemResource secondItem = items.get(1);
@@ -1839,7 +1839,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void canFulFillRecallRequestWhenCheckInAnotherItemOfSameInstanceWithMultipleRecallRequests() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource firstItem = items.get(0);
     ItemResource secondItem = items.get(1);
@@ -1880,7 +1880,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelHoldRequestToAnItemUponCheckInWhenItemIsNonRequestable() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     ItemResource item = itemsFixture.basedUponNod();
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
     IndividualResource request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(),
@@ -1910,7 +1910,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelHoldRequestToAnItemUponCheckInWhenItemIsNonLoanable() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     ItemResource item = itemsFixture.basedUponNod();
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
     IndividualResource request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(),
@@ -1926,7 +1926,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelRecallRequestToNewItemUponCheckInWhenItemIsNonRequestable() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID canCirculateLoanTypeId = loanTypesFixture.canCirculate().getId();
     UUID readingRoomLoanTypeId = loanTypesFixture.readingRoom().getId();
@@ -1972,7 +1972,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelRecallRequestToNewItemUponCheckInWhenItemIsNonLoanable() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     UUID canCirculateLoanTypeId = loanTypesFixture.canCirculate().getId();
     UUID readingRoomLoanTypeId = loanTypesFixture.readingRoom().getId();

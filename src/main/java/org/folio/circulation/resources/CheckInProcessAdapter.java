@@ -179,7 +179,8 @@ class CheckInProcessAdapter {
       return requestQueueRepository.getByItemId(context.getItem().getItemId());
     }
     else {
-      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId());
+      return requestQueueRepository.getByInstanceIdAndItemId(context.getItem().getInstanceId(),
+        context.getItem().getItemId());
     }
   }
 

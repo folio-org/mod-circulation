@@ -27,7 +27,7 @@ public class RestAssuredConfiguration {
     final HashMap<String, String> headers = new HashMap<>();
 
     headers.put(OKAPI_URL, okapiHeaders.getUrl().toString());
-    headers.put(TENANT, okapiHeaders.getTenantId());
+    headers.put(TENANT, APITestContext.getTenantId());
     headers.put(TOKEN, okapiHeaders.getToken());
     headers.put(REQUEST_ID, okapiHeaders.getRequestId());
     headers.put(OKAPI_PERMISSIONS, okapiHeaders.getOkapiPermissions());
