@@ -1,3 +1,22 @@
+## 24.3.2 2024-11-30
+* Add mod-settings permission blocks (CIRC-2185)
+* Fix automated patron blocks permission issue (CIRC-2185)
+* Remove new mod-settings permissions (CIRC-2183)
+* Fetch TLR settings from mod-config as fallback (CIRC-2171)
+* Update API versions (CIRC-2153)
+* Change ECS Primary request validation (CIRC-2151)
+* Allow operation replace for instance with no items (CIRC-2137)
+* Search title-level requests by both `itemId` and `instanceId` during check-in and check-out (CIRC-2125)
+* Allowed SP endpoint should support `patronGroupId` parameter (CIRC-2116)
+* Return empty result when search doesn't find anything (CIRC-2117)
+* Pass additional `includeRoutingServicePoints` parameter when needed (CIRC-2109)
+* Fetch item details across tenants (CIRC-2101)
+* Create a facade for instance search (CIRC-2072)
+* Fetch TLR settings from mod-settings (CIRC-2081)
+* Add `ecsRequestRouting` parameter to allowed-service-points (CIRC-2051)
+* Fix snapshot version (CIRC-2161)
+* Review and cleanup Module Descriptors for mod-circulation (CIRC-2139)
+
 ## 24.3.1 2024-11-27
 
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
