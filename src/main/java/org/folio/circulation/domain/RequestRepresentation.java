@@ -120,21 +120,27 @@ public class RequestRepresentation {
   }
 
   private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, JsonObject request) {
-    String itemEffectiveLocationId = request.getJsonObject("item").getString(
-      "itemEffectiveLocationId");
-    String itemEffectiveLocationName = request.getJsonObject("item").getString(
-      "itemEffectiveLocationName");
-    String retrievalServicePointId = request.getJsonObject("item").getString(
-      "retrievalServicePointId");
-    String retrievalServicePointName = request.getJsonObject("item").getString(
-      "retrievalServicePointName");
+    JsonObject requestItem = request.getJsonObject("item");
+    if (requestItem != null) {
+      String itemEffectiveLocationId = request.getJsonObject("item").getString(
+        "itemEffectiveLocationId");
+      String itemEffectiveLocationName =
+        request.getJsonObject("item").getString(
+        "itemEffectiveLocationName");
+      String retrievalServicePointId = request.getJsonObject("item").getString(
+        "retrievalServicePointId");
+      String retrievalServicePointName =
+        request.getJsonObject("item").getString(
+        "retrievalServicePointName");
 
-    write(itemSummary, "itemEffectiveLocationId", itemEffectiveLocationId);
-    write(itemSummary, "itemEffectiveLocationName", itemEffectiveLocationName);
-    write(itemSummary, "retrievalServicePointId",
-      retrievalServicePointId);
-    write(itemSummary, "retrievalServicePointName",
-      retrievalServicePointName);
+      write(itemSummary, "itemEffectiveLocationId", itemEffectiveLocationId);
+      write(itemSummary, "itemEffectiveLocationName",
+        itemEffectiveLocationName);
+      write(itemSummary, "retrievalServicePointId",
+        retrievalServicePointId);
+      write(itemSummary, "retrievalServicePointName",
+        retrievalServicePointName);
+    }
   }
 
   private static void addInstanceProperties(JsonObject request, Instance instance, Item item) {
