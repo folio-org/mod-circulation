@@ -5473,4 +5473,100 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstPublication.getString("place"), is("New York"));
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
   }
+
+  @Test
+  void testItemLocationAndSPExistAndPopulatedByCreateAndReplaceAPI() {
+    UUID id = UUID.randomUUID();
+    IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    UUID pickupServicePointId = pickupServicePoint.getId();
+    IndividualResource mainFloorLocation = locationsFixture.mainFloor();
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    UUID instanceId = item.getInstanceId();
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .page()
+      .forItem(item)
+      .itemRequestLevel()
+      .withInstanceId(instanceId)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfillToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId));
+
+    // Validate if Location and SP is populated by create request API
+    JsonObject representation = request.getJson();
+    JsonObject itemResponse = representation.getJsonObject("item");
+    assertThat(itemResponse.getString("itemEffectiveLocationId"),
+      is(mainFloorLocation.getId()));
+    assertThat(itemResponse.getString("itemEffectiveLocationName"),
+      is(mainFloorLocation.getJson().getString("name")));
+
+    assertThat(itemResponse.getString("retrievalServicePointId"),
+      is(pickupServicePoint.getId()));
+    assertThat(itemResponse.getString("retrievalServicePointName"),
+      is(pickupServicePoint.getJson().getString("name")));
+
+    // Update the invalid item location and SP
+    IndividualResource pickupServicePoint2 = servicePointsFixture.cd5();
+    IndividualResource thirdFloorLocation =
+      locationsFixture.basedUponExampleLocation(r->r.withPrimaryServicePoint(pickupServicePoint2.getId()));
+    System.out.println("thirdFloorLocation>> "+ thirdFloorLocation.getJson().encode());
+    System.out.println("pickupServicePoint2>> "+ pickupServicePoint2.getJson().encode());
+    final IndividualResource charlotte = usersFixture.charlotte();
+    requestsStorageClient.replace(request.getId(),
+      RequestBuilder.from(request)
+        .hold()
+        .by(charlotte)
+        .withItemSummary(new RequestBuilder.ItemSummary(item.getBarcode(),
+          thirdFloorLocation.getId().toString(),
+          thirdFloorLocation.getJson().getString("name"),
+          pickupServicePoint2.getId().toString(),
+          pickupServicePoint2.getJson().getString("name")))
+        .withTags(new RequestBuilder.Tags(Arrays.asList("MOCK-1", "MOCK-2")))
+    );
+
+    // Validate invalid item location and SP are updated correctly
+    Response request1 = requestsFixture.getById(request.getId());
+    JsonObject representation1 = request1.getJson();
+    itemResponse = representation1.getJsonObject("item");
+    assertThat(itemResponse.getString("itemEffectiveLocationId"),
+      is(thirdFloorLocation.getId()));
+    assertThat(itemResponse.getString("itemEffectiveLocationName"),
+      is(thirdFloorLocation.getJson().getString("name")));
+
+    assertThat(itemResponse.getString("retrievalServicePointId"),
+      is(pickupServicePoint2.getId()));
+    assertThat(itemResponse.getString("retrievalServicePointName"),
+      is(pickupServicePoint2.getJson().getString("name")));
+
+
+    // Re-calling update request with same payload and checking if item
+    // location and SP is updated correctly based on itemId in the request
+    requestsFixture.replaceRequest(request.getId(),
+      RequestBuilder.from(request)
+        .hold()
+        .by(charlotte)
+    );
+
+    Response request2 = requestsFixture.getById(request.getId());
+    JsonObject representation2 = request2.getJson();
+
+    itemResponse = representation2.getJsonObject("item");
+    assertThat(itemResponse.getString("itemEffectiveLocationId"),
+      is(mainFloorLocation.getId()));
+    assertThat(itemResponse.getString("itemEffectiveLocationName"),
+      is(mainFloorLocation.getJson().getString("name")));
+
+    assertThat(itemResponse.getString("retrievalServicePointId"),
+      is(pickupServicePoint.getId()));
+    assertThat(itemResponse.getString("retrievalServicePointName"),
+      is(pickupServicePoint.getJson().getString("name")));
+  }
 }
