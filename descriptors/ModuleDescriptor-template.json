@@ -1900,7 +1900,8 @@
         "mod-settings.global.read.mod-circulation",
         "mod-settings.global.read.circulation",
         "manualblocks.item.get",
-        "manualblocks.collection.get"
+        "manualblocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get"
       ],
       "visible": false
     },
