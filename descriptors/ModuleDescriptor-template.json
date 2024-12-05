@@ -1923,6 +1923,7 @@
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
         "circulation-storage.patron-notice-policies.item.get",
+        "circulation-storage.request-batch.item.post",
         "circulation.rules.notice-policy.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
