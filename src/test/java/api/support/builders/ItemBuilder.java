@@ -28,6 +28,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
   private final String barcode;
   private final String status;
   private final UUID materialTypeId;
+  private final UUID effectiveLocationId;
   private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
   private final UUID permanentLoanTypeId;
@@ -46,7 +47,8 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public ItemBuilder() {
     this(UUID.randomUUID(), null, "565578437802", AVAILABLE,
-      null, null, null, null, null, null, null, null, null, null, null, Collections.emptyList(),
+      null, null, null, null, null, null, null, null, null, null, null, null,
+      Collections.emptyList(),
       null, null, null, null);
   }
 
@@ -55,6 +57,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     UUID holdingId,
     String barcode,
     String status,
+    UUID effectiveLocationId,
     UUID permanentLocationId,
     UUID temporaryLocationId,
     UUID materialTypeId,
@@ -76,6 +79,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     this.holdingId = holdingId;
     this.barcode = barcode;
     this.status = status;
+    this.effectiveLocationId = effectiveLocationId;
     this.temporaryLocationId = temporaryLocationId;
     this.materialTypeId = materialTypeId;
     this.permanentLocationId = permanentLocationId;
@@ -102,6 +106,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
     put(itemRequest, "barcode", barcode);
     put(itemRequest, "holdingsRecordId", holdingId);
     put(itemRequest, "materialTypeId", materialTypeId);
+    put(itemRequest, "effectiveLocationId", effectiveLocationId);
     put(itemRequest, "permanentLoanTypeId", permanentLoanTypeId);
     put(itemRequest, "temporaryLoanTypeId", temporaryLoanTypeId);
     put(itemRequest, "permanentLocationId", permanentLocationId);
@@ -172,6 +177,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -196,6 +202,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -228,6 +235,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       locationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -260,6 +268,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       locationId,
       this.materialTypeId,
@@ -288,6 +297,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -312,6 +322,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       materialTypeId,
@@ -336,6 +347,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -360,6 +372,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -384,6 +397,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -408,6 +422,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -432,6 +447,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -460,6 +476,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -484,6 +501,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -508,6 +526,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
         this.holdingId,
         this.barcode,
         this.status,
+        this.effectiveLocationId,
         this.permanentLocationId,
         this.temporaryLocationId,
         this.materialTypeId,
@@ -532,6 +551,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -556,6 +576,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -580,6 +601,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -604,6 +626,7 @@ public class ItemBuilder extends JsonBuilder implements Builder {
       this.holdingId,
       this.barcode,
       this.status,
+      this.effectiveLocationId,
       this.permanentLocationId,
       this.temporaryLocationId,
       this.materialTypeId,
@@ -628,5 +651,29 @@ public class ItemBuilder extends JsonBuilder implements Builder {
 
   public String generateRandomBarcode() {
     return String.valueOf(new Random().nextLong());
+  }
+  public ItemBuilder withEffectiveLocation(UUID effectiveLocationId) {
+    return new ItemBuilder(
+      this.id,
+      this.holdingId,
+      this.barcode,
+      this.status,
+      effectiveLocationId,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.materialTypeId,
+      this.permanentLoanTypeId,
+      this.temporaryLoanTypeId,
+      this.enumeration,
+      this.copyNumber,
+      this.itemLevelCallNumber,
+      this.itemLevelCallNumberPrefix,
+      this.itemLevelCallNumberSuffix,
+      this.volume,
+      this.yearCaption,
+      this.chronology,
+      this.displaySummary,
+      this.numberOfPieces,
+      this.descriptionOfPieces);
   }
 }
