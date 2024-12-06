@@ -279,7 +279,11 @@ class RequestQueueResourceTest extends APITests {
 
     assertThat(request.containsKey("item"), is(true));
     JsonObject item = request.getJsonObject("item");
-    assertThat(item.fieldNames(), contains("barcode", "location", "enumeration", "volume", "chronology", "status", "callNumber", "callNumberComponents", "copyNumber"));
+    assertThat(item.fieldNames(), contains("barcode", "location",
+      "enumeration", "volume", "chronology", "status", "callNumber",
+      "callNumberComponents", "copyNumber", "itemEffectiveLocationId",
+      "itemEffectiveLocationName", "retrievalServicePointId",
+      "retrievalServicePointName"));
 
     assertThat(request.containsKey("loan"), is(true));
     JsonObject loan = request.getJsonObject("loan");
