@@ -256,9 +256,10 @@ class RequestFromRepresentationService {
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
     EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
-    log.info("fetchItemAndLoan:: request phase is {}", ecsRequestPhase.getValue());
+    log.info("fetchItemAndLoan:: ECS request phase is {}", ecsRequestPhase);
     if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
-      log.info("fetchItemAndLoan:: Primary or Intermediate ECS request detected, using default item fetcher");
+      log.info("fetchItemAndLoan:: ECS request phase {} detected, using default item fetcher",
+        ecsRequestPhase);
       itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
     }
     else if (request.isTitleLevel() && request.isPage()) {
@@ -546,8 +547,9 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
-    if (request.getEcsRequestPhase() == PRIMARY || request.getEcsRequestPhase() == INTERMEDIATE) {
-      log.info("validateAbsenceOfItemLinkInTlr:: Primary or Intermediate ECS request detected, skipping");
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("validateAbsenceOfItemLinkInTlr:: ECS request phase {} detected, skipping", ecsRequestPhase);
       return of(() -> request);
     }
 
