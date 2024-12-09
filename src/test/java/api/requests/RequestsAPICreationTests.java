@@ -3960,8 +3960,11 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
   }
 
-  @Test
-  void primaryTlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr() {
+  @ParameterizedTest
+  @ValueSource(strings = {"Primary", "Intermediate"})
+  void tlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr(
+    String ecsRequestPhase) {
+
     settingsFixture.configureTlrFeature(true, true, null, null, null);
 
     policiesActivation.use(new RequestPolicyBuilder(
@@ -4032,9 +4035,9 @@ public class RequestsAPICreationTests extends APITests {
     // Request without ECS phase should fail
     requestsFixture.attemptPlace(requestBuilder);
 
-    // The same request with Primary ECS phase should succeed because validation is skipped
+    // The same request with Primary/Intermediate ECS phase should succeed because validation is skipped
     IndividualResource request = requestsFixture.place(
-      requestBuilder.withEcsRequestPhase("Primary"));
+      requestBuilder.withEcsRequestPhase(ecsRequestPhase));
 
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
 
@@ -4043,7 +4046,7 @@ public class RequestsAPICreationTests extends APITests {
       requestBuilder
         .withRequesterId(usersFixture.jessica().getId())
         .withItemId(closestItemId)
-        .withEcsRequestPhase("Primary"));
+        .withEcsRequestPhase(ecsRequestPhase));
 
     // Placing TLR Hold request
     var requestBuilderTlrHold = new RequestBuilder()
@@ -4060,8 +4063,8 @@ public class RequestsAPICreationTests extends APITests {
     // Request without ECS phase should fail
     requestsFixture.attemptPlace(requestBuilderTlrHold);
 
-    // The same request with Primary ECS phase should succeed because policy check is skipped
-    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase("Primary"));
+    // The same request with Primary/Intermediate ECS phase should succeed because policy check is skipped
+    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase(ecsRequestPhase));
   }
 
   @Test
