@@ -439,7 +439,7 @@
       "type": "string"
     },
     "isDcbReRequestCancellation": {
-      "description": "Flag to suppress sending cancellation notifications. If true, no notification will be sent when cancelling the request",
+      "description": "Indicates whether the request was cancelled during a DCB transaction update",
       "type": "boolean"
     }
   },
