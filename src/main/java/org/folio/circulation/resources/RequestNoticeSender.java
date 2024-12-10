@@ -120,10 +120,13 @@ public class RequestNoticeSender {
     log.debug("sendNoticeOnRequestCancelled:: parameters records: {}", () -> records);
     Request request = records.getRequest();
 
-    if (request.hasItemId()) {
-      sendCancellationNoticeForRequestWithItemId(request);
-    } else {
-      sendCancellationNoticeForRequestWithoutItemId(request);
+    // Send the cancellation notice only if the suppressNotification flag is false
+    if (!request.getDcbReRequestCancellationValue()) {
+      if (request.hasItemId()) {
+        sendCancellationNoticeForRequestWithItemId(request);
+      } else {
+        sendCancellationNoticeForRequestWithoutItemId(request);
+      }
     }
 
     return succeeded(records);
