@@ -28,7 +28,6 @@ public class StoredRequestRepresentation {
     addSearchIndexProperties(representation, request);
 
     removeDeliveryAddress(representation);
-    removeSuppressNotificationFlag(representation);
 
     return representation;
   }
@@ -152,14 +151,6 @@ public class StoredRequestRepresentation {
       return;
     }
     requestRepresentation.remove("deliveryAddress");
-  }
-
-  private static void removeSuppressNotificationFlag(JsonObject requestRepresentation) {
-    if (requestRepresentation == null) {
-      log.info("Unable to remove removeSuppressNotificationFlag, request representation is null");
-      return;
-    }
-    requestRepresentation.remove("isSuppressNotification");
   }
 }
 

@@ -120,7 +120,7 @@ public class RequestNoticeSender {
     Request request = records.getRequest();
 
     // Send the cancellation notice only if the suppressNotification flag is false
-    if (!request.getSuppressNotificationFlag()) {
+    if (!request.getDcbReRequestCancellationValue()) {
       if (request.hasItemId()) {
         sendCancellationNoticeForRequestWithItemId(request);
       } else {

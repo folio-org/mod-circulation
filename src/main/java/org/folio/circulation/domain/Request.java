@@ -428,8 +428,8 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return loan != null;
   }
 
-  public boolean getSuppressNotificationFlag() {
-    return getBooleanProperty(requestRepresentation, "isSuppressNotification");
+  public boolean getDcbReRequestCancellationValue() {
+    return getBooleanProperty(requestRepresentation, "isDcbReRequestCancellation");
   }
 
   public enum Operation {
