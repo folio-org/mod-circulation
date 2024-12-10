@@ -5,6 +5,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.EcsRequestPhase.INTERMEDIATE;
+import static org.folio.circulation.domain.EcsRequestPhase.PRIMARY;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestType.RECALL;
@@ -253,9 +255,11 @@ class RequestFromRepresentationService {
     Request request = records.getRequest();
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
-    log.info("fetchItemAndLoan:: Request phase is {}", request.getEcsRequestPhase().value);
-    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
-      log.info("fetchItemAndLoan:: Primary ECS request detected, using default item fetcher");
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    log.info("fetchItemAndLoan:: ECS request phase is {}", ecsRequestPhase);
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("fetchItemAndLoan:: ECS request phase {} detected, using default item fetcher",
+        ecsRequestPhase);
       itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
     }
     else if (request.isTitleLevel() && request.isPage()) {
@@ -543,8 +547,9 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
-    if (request.getEcsRequestPhase() == EcsRequestPhase.PRIMARY) {
-      log.info("validateAbsenceOfItemLinkInTlr:: Primary ECS request detected, skipping");
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("validateAbsenceOfItemLinkInTlr:: ECS request phase {} detected, skipping", ecsRequestPhase);
       return of(() -> request);
     }
 

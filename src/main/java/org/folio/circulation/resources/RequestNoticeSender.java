@@ -101,7 +101,8 @@ public class RequestNoticeSender {
     Request request = records.getRequest();
     recallRequestCount = records.getRequestQueue().getRequests()
       .stream()
-      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled())
+      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled()
+        && r.getItemId().equals(request.getItemId()))
       .count();
 
     if (request.hasItemId()) {

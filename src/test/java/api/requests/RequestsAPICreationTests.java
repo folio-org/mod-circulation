@@ -107,6 +107,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import lombok.val;
 import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.ItemStatus;
@@ -181,7 +182,7 @@ public class RequestsAPICreationTests extends APITests {
   private static final UUID CANCELLATION_TEMPLATE_ID_FROM_TLR_SETTINGS = UUID.randomUUID();
 
   public static final String CREATE_REQUEST_PERMISSION = "circulation.requests.item.post";
-  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block.post";
   public static final OkapiHeaders HEADERS_WITH_ALL_OVERRIDE_PERMISSIONS =
     buildOkapiHeadersWithPermissions(CREATE_REQUEST_PERMISSION, OVERRIDE_PATRON_BLOCK_PERMISSION);
   public static final OkapiHeaders HEADERS_WITHOUT_OVERRIDE_PERMISSIONS =
@@ -3763,6 +3764,84 @@ public class RequestsAPICreationTests extends APITests {
     validateNoticeLogContextItem(noticeLogContextItemLogs.get(1), item);
   }
 
+  @Test
+  void shouldTriggerNoticesForTitleLevelRecall() {
+    // Enable the Title Level Request feature
+    settingsFixture.enableTlrFeature();
+
+    // Configure recall notice for the loan owner (borrower)
+    JsonObject recallToLoaneeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.ITEM_RECALLED.getRepresentation())
+      .create();
+
+    // Configure recall request notice for the requester
+    JsonObject recallRequestToRequesterConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(UUID.randomUUID())
+      .withEventType(NoticeEventType.RECALL_REQUEST.getRepresentation())
+      .create();
+
+    // Create a notice policy with the above configurations
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with recall notice")
+      .withLoanNotices(List.of(recallToLoaneeConfiguration, recallRequestToRequesterConfiguration));
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    // Create 3 items belonging to the same instance.
+    // The notice issue occurs only when the request queue has more than 1 item.
+    // So we need to create items under same instance to test that issue
+    val items = itemsFixture.createMultipleItemForTheSameInstance(3,
+      List.of(itemsFixture.addCallNumberStringComponents("1"),
+        itemsFixture.addCallNumberStringComponents("2"), itemsFixture.addCallNumberStringComponents("3")));
+
+    // Create borrowers who will loan the items
+    IndividualResource borrower1 = usersFixture.steve();
+    IndividualResource borrower2 = usersFixture.jessica();
+    IndividualResource borrower3 = usersFixture.james();
+
+    // Create requesters who will place title-level recall requests
+    IndividualResource requester1 = usersFixture.charlotte();
+    IndividualResource requester2 = usersFixture.rebecca();
+    IndividualResource requester3 = usersFixture.bobby();
+    IndividualResource requester4 = usersFixture.henry();
+
+    // Check out items for the borrowers
+    checkOutFixture.checkOutByBarcode(items.get(0), borrower1);
+    checkOutFixture.checkOutByBarcode(items.get(1), borrower2);
+    checkOutFixture.checkOutByBarcode(items.get(2), borrower3);
+
+    // Place title-level recall requests on the same instance
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester1);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester2);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester3);
+    requestsFixture.placeTitleLevelRecallRequest(items.get(0).getInstanceId(), requester4);
+
+
+    // Verify the notices are triggered as expected
+    // There should be 7 notices triggered: 4 recall request notices and 3 item recall notices
+    Awaitility.waitAtMost(1, TimeUnit.SECONDS)
+      .until(() -> getPublishedEventsAsList(byLogEventType(NOTICE)), hasSize(7));
+
+    // Verify the number of notices sent and events published.
+    // Requester will receive the recall request notice and borrower will receive the item recalled notice
+    verifyNumberOfSentNotices(7);
+    verifyNumberOfNoticeEventsForUser(requester1.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester2.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester3.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(requester4.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower1.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower2.getId(), 1);
+    verifyNumberOfNoticeEventsForUser(borrower3.getId(), 1);
+    verifyNumberOfPublishedEvents(NOTICE, 7);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
   private void verifyNumberOfNoticeEventsForUser(UUID userId, int expectedNoticeEventsCount) {
     int noticeEventsCount = (int) getPublishedEventsAsList(byLogEventType(NOTICE))
       .stream()
@@ -3881,8 +3960,11 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
   }
 
-  @Test
-  void primaryTlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr() {
+  @ParameterizedTest
+  @ValueSource(strings = {"Primary", "Intermediate"})
+  void tlrCreationSkipsClosestServicePointLogicAndPoliciesIgnoredForHoldTlr(
+    String ecsRequestPhase) {
+
     settingsFixture.configureTlrFeature(true, true, null, null, null);
 
     policiesActivation.use(new RequestPolicyBuilder(
@@ -3953,9 +4035,9 @@ public class RequestsAPICreationTests extends APITests {
     // Request without ECS phase should fail
     requestsFixture.attemptPlace(requestBuilder);
 
-    // The same request with Primary ECS phase should succeed because validation is skipped
+    // The same request with Primary/Intermediate ECS phase should succeed because validation is skipped
     IndividualResource request = requestsFixture.place(
-      requestBuilder.withEcsRequestPhase("Primary"));
+      requestBuilder.withEcsRequestPhase(ecsRequestPhase));
 
     assertThat(request.getJson().getString("itemId"), is(expectedItemId));
 
@@ -3964,7 +4046,7 @@ public class RequestsAPICreationTests extends APITests {
       requestBuilder
         .withRequesterId(usersFixture.jessica().getId())
         .withItemId(closestItemId)
-        .withEcsRequestPhase("Primary"));
+        .withEcsRequestPhase(ecsRequestPhase));
 
     // Placing TLR Hold request
     var requestBuilderTlrHold = new RequestBuilder()
@@ -3981,8 +4063,8 @@ public class RequestsAPICreationTests extends APITests {
     // Request without ECS phase should fail
     requestsFixture.attemptPlace(requestBuilderTlrHold);
 
-    // The same request with Primary ECS phase should succeed because policy check is skipped
-    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase("Primary"));
+    // The same request with Primary/Intermediate ECS phase should succeed because policy check is skipped
+    requestsFixture.place(requestBuilderTlrHold.withEcsRequestPhase(ecsRequestPhase));
   }
 
   @Test
@@ -5393,5 +5475,101 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(firstPublication.getString("publisher"), is("Alfred A. Knopf"));
     assertThat(firstPublication.getString("place"), is("New York"));
     assertThat(firstPublication.getString("dateOfPublication"), is("2016"));
+  }
+
+  @Test
+  void testItemLocationAndSPExistAndPopulatedByCreateAndReplaceAPI() {
+    UUID id = UUID.randomUUID();
+    IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    UUID pickupServicePointId = pickupServicePoint.getId();
+    IndividualResource mainFloorLocation = locationsFixture.mainFloor();
+
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+
+    ZonedDateTime requestDate = ZonedDateTime.of(2017, 7, 22, 10, 22, 54, 0, UTC);
+    UUID instanceId = item.getInstanceId();
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .withId(id)
+      .open()
+      .page()
+      .forItem(item)
+      .itemRequestLevel()
+      .withInstanceId(instanceId)
+      .by(requester)
+      .withRequestDate(requestDate)
+      .fulfillToHoldShelf()
+      .withRequestExpiration(LocalDate.of(2017, 7, 30))
+      .withHoldShelfExpiration(LocalDate.of(2017, 8, 31))
+      .withPickupServicePointId(pickupServicePointId));
+
+    // Validate if Location and SP is populated by create request API
+    JsonObject representation = request.getJson();
+    JsonObject itemResponse = representation.getJsonObject("item");
+    assertThat(itemResponse.getString("itemEffectiveLocationId"),
+      is(mainFloorLocation.getId()));
+    assertThat(itemResponse.getString("itemEffectiveLocationName"),
+      is(mainFloorLocation.getJson().getString("name")));
+
+    assertThat(itemResponse.getString("retrievalServicePointId"),
+      is(pickupServicePoint.getId()));
+    assertThat(itemResponse.getString("retrievalServicePointName"),
+      is(pickupServicePoint.getJson().getString("name")));
+
+    // Update the invalid item location and SP
+    IndividualResource pickupServicePoint2 = servicePointsFixture.cd5();
+    IndividualResource thirdFloorLocation =
+      locationsFixture.basedUponExampleLocation(r->r.withPrimaryServicePoint(pickupServicePoint2.getId()));
+    System.out.println("thirdFloorLocation>> "+ thirdFloorLocation.getJson().encode());
+    System.out.println("pickupServicePoint2>> "+ pickupServicePoint2.getJson().encode());
+    final IndividualResource charlotte = usersFixture.charlotte();
+    requestsStorageClient.replace(request.getId(),
+      RequestBuilder.from(request)
+        .hold()
+        .by(charlotte)
+        .withItemSummary(new RequestBuilder.ItemSummary(item.getBarcode(),
+          thirdFloorLocation.getId().toString(),
+          thirdFloorLocation.getJson().getString("name"),
+          pickupServicePoint2.getId().toString(),
+          pickupServicePoint2.getJson().getString("name")))
+        .withTags(new RequestBuilder.Tags(Arrays.asList("MOCK-1", "MOCK-2")))
+    );
+
+    // Validate invalid item location and SP are updated correctly
+    Response request1 = requestsFixture.getById(request.getId());
+    JsonObject representation1 = request1.getJson();
+    itemResponse = representation1.getJsonObject("item");
+    assertThat(itemResponse.getString("itemEffectiveLocationId"),
+      is(thirdFloorLocation.getId()));
+    assertThat(itemResponse.getString("itemEffectiveLocationName"),
+      is(thirdFloorLocation.getJson().getString("name")));
+
+    assertThat(itemResponse.getString("retrievalServicePointId"),
+      is(pickupServicePoint2.getId()));
+    assertThat(itemResponse.getString("retrievalServicePointName"),
+      is(pickupServicePoint2.getJson().getString("name")));
+
+
+    // Re-calling update request with same payload and checking if item
+    // location and SP is updated correctly based on itemId in the request
+    requestsFixture.replaceRequest(request.getId(),
+      RequestBuilder.from(request)
+        .hold()
+        .by(charlotte)
+    );
+
+    Response request2 = requestsFixture.getById(request.getId());
+    JsonObject representation2 = request2.getJson();
+
+    itemResponse = representation2.getJsonObject("item");
+    assertThat(itemResponse.getString("itemEffectiveLocationId"),
+      is(mainFloorLocation.getId()));
+    assertThat(itemResponse.getString("itemEffectiveLocationName"),
+      is(mainFloorLocation.getJson().getString("name")));
+
+    assertThat(itemResponse.getString("retrievalServicePointId"),
+      is(pickupServicePoint.getId()));
+    assertThat(itemResponse.getString("retrievalServicePointName"),
+      is(pickupServicePoint.getJson().getString("name")));
   }
 }
