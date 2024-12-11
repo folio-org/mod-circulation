@@ -4,7 +4,6 @@ import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static org.folio.circulation.rules.RulesExecutionParameters.forRequest;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -34,6 +33,7 @@ import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.rules.CirculationRuleCriteria;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
@@ -169,8 +169,8 @@ public class RequestPolicyRepository {
     log.debug("lookupRequestPolicyId:: parameters materialTypeId: {}, patronGroupId: {}," +
       "loanTypeId: {}, locationId: {}", materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    return circulationRulesProcessor
-      .getRequestPolicyAndMatch(forRequest(patronGroupId, materialTypeId, loanTypeId, locationId))
+    var params = new RulesExecutionParameters(loanTypeId, locationId, materialTypeId, patronGroupId, null);
+    return circulationRulesProcessor.getRequestPolicyAndMatch(params)
       .thenCompose(this::processRulesResponse);
   }
 
