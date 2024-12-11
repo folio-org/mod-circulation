@@ -16,6 +16,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.MultiMap;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -23,7 +24,7 @@ import lombok.With;
 
 @Getter
 @ToString
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RulesExecutionParameters {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final String loanTypeId;
@@ -49,8 +50,12 @@ public final class RulesExecutionParameters {
 
   public static RulesExecutionParameters forRequest(WebContext context) {
     log.debug("forRequest:: parameters requestId {}", context.getRequestId());
-    return new RulesExecutionParameters(context.getStringParameter(LOAN_TYPE_ID_NAME),
+    return forRequest(context.getStringParameter(LOAN_TYPE_ID_NAME),
       context.getStringParameter(LOCATION_ID_NAME), context.getStringParameter(ITEM_TYPE_ID_NAME),
-      context.getStringParameter(PATRON_TYPE_ID_NAME), null);
+      context.getStringParameter(PATRON_TYPE_ID_NAME));
+  }
+
+  public static RulesExecutionParameters forRequest(String loanTypeId, String locationId, String materialTypeId, String patronGroupId) {
+    return new RulesExecutionParameters(loanTypeId, locationId, materialTypeId, patronGroupId, null);
   }
 }
