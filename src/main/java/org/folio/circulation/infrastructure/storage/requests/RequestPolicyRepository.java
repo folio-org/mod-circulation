@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.folio.circulation.rules.ExecutableRules.MATCH_FAIL_MSG_REGEX;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -182,7 +183,7 @@ public class RequestPolicyRepository {
       log.info("processRulesResponse:: successfully applied request rules");
       future.complete(succeeded(response.value().getPolicyId()));
     } else {
-      if (response.cause() instanceof ServerErrorFailure) {
+      if (response.cause() instanceof ServerErrorFailure e && e.getReason().matches(MATCH_FAIL_MSG_REGEX)) {
         log.info("processRulesResponse:: no matching request rules found");
         future.complete(failedDueToServerError("Unable to find matching request rules"));
       } else {
