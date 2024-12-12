@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -42,6 +43,8 @@ import io.vertx.core.json.JsonObject;
 @ExtendWith(MockitoExtension.class)
 public class RequestPolicyRepositoryTest {
 
+  public static final String SAMPLE_POLICY_ID = UUID.randomUUID().toString();
+
   @Mock
   private CirculationRulesProcessor circulationRulesProcessor;
   @Mock
@@ -51,49 +54,50 @@ public class RequestPolicyRepositoryTest {
 
   private RequestPolicyRepository requestPolicyRepository;
 
+  private Item item;
+  private User user;
+  private Request request;
+  private RequestAndRelatedRecords requestAndRelatedRecords;
+
   @BeforeEach
   void setUp() {
     doReturn(requestPoliciesStorageClient).when(clients).requestPoliciesStorage();
     doReturn(circulationRulesProcessor).when(clients).circulationRulesProcessor();
     requestPolicyRepository = new RequestPolicyRepository(clients);
-  }
-
-  @Test
-  void testLookupRequestPolicy() throws ExecutionException, InterruptedException {
-    var item = Item.from(JsonObject.of(
+    item = Item.from(JsonObject.of(
       "materialType", asJson(MaterialType.unknown()),
       "loadType", asJson(LoanType.unknown()),
       "location", asJson(Location.unknown()),
       "holdings", asJson(Holdings.unknown()))
     );
-    var user = new User(JsonObject.of("patronGroup", "sample-group"));
+    user = new User(JsonObject.of("patronGroup", "sample-group"));
+    request = Request.from(JsonObject.of()).withItem(item).withRequester(user);
+    requestAndRelatedRecords = new RequestAndRelatedRecords(request);
+  }
 
-    var request = Request.from(JsonObject.of()).withItem(item).withRequester(user);
-    var requestAndRelatedRecords = new RequestAndRelatedRecords(request);
-
-    var policyId = "policyId";
-    var ruleMatch = new CirculationRuleMatch(policyId, mock(AppliedRuleConditions.class));
+  @Test
+  void testLookupRequestPolicy() throws ExecutionException, InterruptedException {
+    var ruleMatch = new CirculationRuleMatch(SAMPLE_POLICY_ID, mock(AppliedRuleConditions.class));
     when(circulationRulesProcessor.getRequestPolicyAndMatch(any(RulesExecutionParameters.class)))
       .thenReturn(CompletableFuture.completedFuture(Result.succeeded(ruleMatch)));
 
-    var policy = RequestPolicy.from(JsonObject.of("id", policyId));
-    when(requestPoliciesStorageClient.get(policyId))
+    var policy = RequestPolicy.from(JsonObject.of("id", SAMPLE_POLICY_ID));
+    when(requestPoliciesStorageClient.get(SAMPLE_POLICY_ID))
       .thenReturn(CompletableFuture.completedFuture(Result.succeeded(asResponse(policy))));
 
     var result = requestPolicyRepository.lookupRequestPolicy(requestAndRelatedRecords).get().value();
 
-    assertEquals(policyId, result.getRequestPolicy().getId());
+    assertEquals(SAMPLE_POLICY_ID, result.getRequestPolicy().getId());
     assertEquals(item, result.getRequest().getItem());
     assertEquals(user, result.getRequest().getUser());
     verify(circulationRulesProcessor).getRequestPolicyAndMatch(any(RulesExecutionParameters.class));
-    verify(requestPoliciesStorageClient).get(policyId);
+    verify(requestPoliciesStorageClient).get(SAMPLE_POLICY_ID);
   }
 
   @Test
   void testLookupRequestPolicyWhenItemIsNull() throws ExecutionException, InterruptedException {
-    var request = Request.from(JsonObject.of()).withItem(Item.from(null));
-
-    var result = requestPolicyRepository.lookupRequestPolicy(new RequestAndRelatedRecords(request)).get();
+    var result = requestPolicyRepository.lookupRequestPolicy(
+      new RequestAndRelatedRecords(request.withItem(Item.from(null)))).get();
 
     assertTrue(result.failed());
     assertEquals(ServerErrorFailure.class, result.cause().getClass());
@@ -105,17 +109,6 @@ public class RequestPolicyRepositoryTest {
 
   @Test
   void testLookupRequestPolicyWhenRequestPolicyIdNotFound() throws ExecutionException, InterruptedException {
-    var item = Item.from(JsonObject.of(
-      "materialType", asJson(MaterialType.unknown()),
-      "loadType", asJson(LoanType.unknown()),
-      "location", asJson(Location.unknown()),
-      "holdings", asJson(Holdings.unknown()))
-    );
-    var user = new User(JsonObject.of("patronGroup", "sample-group"));
-
-    var request = Request.from(JsonObject.of()).withItem(item).withRequester(user);
-    var requestAndRelatedRecords = new RequestAndRelatedRecords(request);
-
     when(circulationRulesProcessor.getRequestPolicyAndMatch(any(RulesExecutionParameters.class)))
       .thenReturn(CompletableFuture.completedFuture(Result.failed(
         new ServerErrorFailure(MATCH_FAIL_MSG.formatted("rules", "params", "request policy")))));
@@ -131,25 +124,9 @@ public class RequestPolicyRepositoryTest {
   }
 
   @Test
-  void testLookupRequestPolicyWhenRequestPolicyNotFound() throws ExecutionException, InterruptedException {
-    var item = Item.from(JsonObject.of(
-      "materialType", asJson(MaterialType.unknown()),
-      "loadType", asJson(LoanType.unknown()),
-      "location", asJson(Location.unknown()),
-      "holdings", asJson(Holdings.unknown()))
-    );
-    var user = new User(JsonObject.of("patronGroup", "sample-group"));
-
-    var request = Request.from(JsonObject.of()).withItem(item).withRequester(user);
-    var requestAndRelatedRecords = new RequestAndRelatedRecords(request);
-
-    var policyId = "policyId";
-    var ruleMatch = new CirculationRuleMatch(policyId, mock(AppliedRuleConditions.class));
+  void testLookupRequestPolicyWhenExceptionThrownDuringFetchingRequestPolicyId() throws ExecutionException, InterruptedException {
+    var cause = new ServerErrorFailure("Internal Server Error");
     when(circulationRulesProcessor.getRequestPolicyAndMatch(any(RulesExecutionParameters.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(ruleMatch)));
-
-    var cause = new ServerErrorFailure("Not Found");
-    when(requestPoliciesStorageClient.get(policyId))
       .thenReturn(CompletableFuture.completedFuture(Result.failed(cause)));
 
     var result = requestPolicyRepository.lookupRequestPolicy(requestAndRelatedRecords).get();
@@ -157,7 +134,25 @@ public class RequestPolicyRepositoryTest {
     assertTrue(result.failed());
     assertEquals(cause, result.cause());
     verify(circulationRulesProcessor).getRequestPolicyAndMatch(any(RulesExecutionParameters.class));
-    verify(requestPoliciesStorageClient).get(policyId);
+    verifyNoInteractions(requestPoliciesStorageClient);
+  }
+
+  @Test
+  void testLookupRequestPolicyWhenRequestPolicyNotFound() throws ExecutionException, InterruptedException {
+    var ruleMatch = new CirculationRuleMatch(SAMPLE_POLICY_ID, mock(AppliedRuleConditions.class));
+    when(circulationRulesProcessor.getRequestPolicyAndMatch(any(RulesExecutionParameters.class)))
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(ruleMatch)));
+
+    var cause = new ServerErrorFailure("Not Found");
+    when(requestPoliciesStorageClient.get(SAMPLE_POLICY_ID))
+      .thenReturn(CompletableFuture.completedFuture(Result.failed(cause)));
+
+    var result = requestPolicyRepository.lookupRequestPolicy(requestAndRelatedRecords).get();
+
+    assertTrue(result.failed());
+    assertEquals(cause, result.cause());
+    verify(circulationRulesProcessor).getRequestPolicyAndMatch(any(RulesExecutionParameters.class));
+    verify(requestPoliciesStorageClient).get(SAMPLE_POLICY_ID);
   }
 
   private static <T> JsonObject asJson(T entity) {
