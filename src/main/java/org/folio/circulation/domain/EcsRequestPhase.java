@@ -7,7 +7,8 @@ import java.util.Arrays;
 public enum EcsRequestPhase {
   NONE(""),
   PRIMARY("Primary"),
-  SECONDARY("Secondary");
+  SECONDARY("Secondary"),
+  INTERMEDIATE("Intermediate");
 
   public final String value;
 
