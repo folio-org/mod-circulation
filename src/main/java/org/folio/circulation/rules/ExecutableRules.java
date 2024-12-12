@@ -21,6 +21,11 @@ import lombok.Getter;
 public class ExecutableRules {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
+  public static final String MATCH_FAIL_MSG =
+    "Executing circulation rules: `%s` with parameters: `%s` to determine %s did not find a match";
+  public static final String MATCH_FAIL_MSG_REGEX
+    = "Executing circulation rules: `.*` with parameters: `.*` to determine .* did not find a match";
+
   @Getter()
   private final String text;
   private final Drools drools;
@@ -75,9 +80,7 @@ public class ExecutableRules {
   private Function<CirculationRuleMatch, HttpFailure> fail(
     RulesExecutionParameters parameters, String policyType) {
 
-    return match -> new ServerErrorFailure(format(
-      "Executing circulation rules: `%s` with parameters: `%s` to determine %s did not find a match",
-      text, parameters, policyType));
+    return match -> new ServerErrorFailure(format(MATCH_FAIL_MSG, text, parameters, policyType));
   }
 
   private Result<Boolean> noMatch(CirculationRuleMatch match) {
