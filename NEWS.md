@@ -1,3 +1,7 @@
+## 24.3.3 2024-12-12
+* Avoid self-invocation for request rules while moving requests (CIRC-2199)
+* Intermediate request support (CIRC-2182)
+
 ## 24.3.2 2024-11-30
 * Add mod-settings permission blocks (CIRC-2185)
 * Fix automated patron blocks permission issue (CIRC-2185)
