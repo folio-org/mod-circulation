@@ -17,7 +17,7 @@ import api.support.builders.RequestBuilder;
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
-public class RequestNoticeSenderTest {
+class RequestNoticeSenderTest {
 
   @Mock
   private ImmediatePatronNoticeService immediatePatronNoticeService;
