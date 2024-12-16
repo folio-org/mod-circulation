@@ -28,6 +28,7 @@ class RequestNoticeSenderTest {
   void shouldNotSendNotificationWhenIsDcbCancellationTrue() {
     JsonObject representation = new RequestBuilder().create();
     representation.put("isDcbReRequestCancellation", true);
+    // try to send notification
     requestNoticeSender.sendNoticeOnRequestCancelled(
       new RequestAndRelatedRecords(Request.from(representation)));
       Mockito.verify(immediatePatronNoticeService, times(0)).acceptNoticeEvent(any());
