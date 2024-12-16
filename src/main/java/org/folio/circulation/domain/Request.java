@@ -27,6 +27,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -404,6 +405,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasLoan() {
     return loan != null;
+  }
+
+  public boolean getDcbReRequestCancellationValue() {
+    return getBooleanProperty(requestRepresentation, "isDcbReRequestCancellation");
   }
 
   public enum Operation {
