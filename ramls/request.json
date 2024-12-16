@@ -437,6 +437,10 @@
     "itemLocationCode": {
       "description": "Allow specifying item location when creating title-level requests",
       "type": "string"
+    },
+    "isDcbReRequestCancellation": {
+      "description": "Indicates whether the request was cancelled during a DCB transaction update",
+      "type": "boolean"
     }
   },
   "additionalProperties": false,
