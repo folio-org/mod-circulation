@@ -383,6 +383,10 @@
       "description": "Request fields used for search",
       "type": "object",
       "$ref": "request-search-index.json"
+    },
+    "isDcbReRequestCancellation": {
+      "description": "Indicates whether the request was cancelled during a DCB transaction update",
+      "type": "boolean"
     }
   },
   "additionalProperties": false,
