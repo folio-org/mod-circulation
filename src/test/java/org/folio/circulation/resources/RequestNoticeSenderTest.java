@@ -30,7 +30,7 @@ class RequestNoticeSenderTest {
     representation.put("isDcbReRequestCancellation", true);
     requestNoticeSender.sendNoticeOnRequestCancelled(
       new RequestAndRelatedRecords(Request.from(representation)));
-      Mockito.verify(immediatePatronNoticeService, times(0)).acceptNoticeEvent(any());
-      Mockito.verify(immediatePatronNoticeService, times(0)).sendNotice(any(), any());
+    Mockito.verify(immediatePatronNoticeService, times(0)).acceptNoticeEvent(any());
+    Mockito.verify(immediatePatronNoticeService, times(0)).sendNotice(any(), any());
   }
 }
