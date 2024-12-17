@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
@@ -357,7 +358,7 @@ public class Item {
   }
 
   public boolean canFloatThroughCheckInServicePoint() {
-    return getLocation() != null
+    return CheckInByBarcodeResource.isFloatingEnabled() && getLocation() != null
       && getLocation().isFloatingCollection()
       && getFloatDestinationLocation() != null
       && getFloatDestinationLocation().getId()  != null;

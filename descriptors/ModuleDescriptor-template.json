@@ -1660,16 +1660,6 @@
       "description": "delete circulation setting by ID"
     },
     {
-      "permissionName": "circulation.handlers.fee-fine-balance-changed.post",
-      "displayName": "circulation - fee/fine balance changed",
-      "description": "fee/fine balance changed"
-    },
-    {
-      "permissionName": "circulation.handlers.loan-related-fee-fine-closed.post",
-      "displayName": "circulation - loan related fee/fine closed",
-      "description": "loan related fee/fine closed"
-    },
-    {
       "permissionName": "mod-settings.global.read.mod-circulation",
       "displayName": "mod-circulation settings - read",
       "description": "To read mod-circulation settings from mod-settings"
