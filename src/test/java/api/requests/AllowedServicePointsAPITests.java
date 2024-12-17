@@ -115,6 +115,7 @@ class AllowedServicePointsAPITests extends APITests {
     List<AllowedServicePoint> oneAndTwo = List.of(sp1, sp2);
 
     return new Object[][]{
+      //{HOLD, ITEM, RESTRICTED, oneAndTwo, oneAndTwo}, // This causes 500
       {PAGE, ITEM, AVAILABLE, oneAndTwo, oneAndTwo},
       {HOLD, ITEM, AVAILABLE, oneAndTwo, none},
       {RECALL, ITEM, AVAILABLE, oneAndTwo, none},
@@ -136,11 +137,16 @@ class AllowedServicePointsAPITests extends APITests {
     RequestLevel requestLevel, ItemStatus itemStatus, List<AllowedServicePoint> allowedSpByPolicy,
     List<AllowedServicePoint> allowedSpInResponse) {
 
+    // This causes 422 and a meaningful error.
+    //var requesterId = UUID.randomUUID().toString();
     var requesterId = usersFixture.steve().getId().toString();
+
     var items = itemsFixture.createMultipleItemForTheSameInstance(1,
       List.of(ib -> ib.withStatus(itemStatus.getValue())));
     var item = items.get(0);
     var itemId = item.getId().toString();
+    // This causes a 422 and a meaningful error.
+    //var itemId = UUID.randomUUID().toString();
     var instanceId = item.getInstanceId().toString();
 
     allowedSpByPolicy.forEach(sp -> servicePointsFixture.create(servicePointBuilder()
