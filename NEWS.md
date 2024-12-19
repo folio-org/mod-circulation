@@ -1,3 +1,6 @@
+## 24.3.4 2024-12-19
+* Remove permission definition for Circulation Events Handlers (CIRC-2205)
+
 ## 24.3.3 2024-12-12
 * Avoid self-invocation for request rules while moving requests (CIRC-2199)
 * Intermediate request support (CIRC-2182)
