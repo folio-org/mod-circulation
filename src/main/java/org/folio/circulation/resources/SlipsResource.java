@@ -59,7 +59,6 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -162,13 +161,13 @@ public abstract class SlipsResource extends Resource {
       .map(Instance::getId)
       .collect(Collectors.toSet());
     log.info("mapRequestsToInstances:: fetchedInstanceIds: {}",
-      collectionAsString(fetchedInstanceIds));
+      () -> collectionAsString(fetchedInstanceIds));
 
     Map<Request, String> requestToInstanceIdMap = context.getTlrRequests().getRecords().stream()
       .filter(request -> fetchedInstanceIds.contains(request.getInstanceId()))
       .collect(Collectors.toMap(identity(), Request::getInstanceId));
     log.info("mapRequestsToInstances:: requestToInstanceIdMap: {}",
-      mapAsString(requestToInstanceIdMap));
+      () -> mapAsString(requestToInstanceIdMap));
 
     return succeeded(context.withRequestToInstanceIdMap(requestToInstanceIdMap));
   }
@@ -196,7 +195,7 @@ public abstract class SlipsResource extends Resource {
       .collect(Collectors.toMap(Map.Entry::getKey,
         entry -> findHoldingsByInstanceId(holdings, entry.getValue())));
     log.info("mapRequestsToHoldings:: requestToHoldingsMap: {}",
-      mapAsString(requestToHoldingsMap));
+      () -> mapAsString(requestToHoldingsMap));
 
     return succeeded(context.withRequestToHoldingMap(requestToHoldingsMap));
   }
