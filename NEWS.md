@@ -1,3 +1,6 @@
+## 24.3.5 2025-01-09
+* Fix search slips for requests queue (CIRC-2197)
+
 ## 24.3.4 2024-12-19
 * Remove permission definition for Circulation Events Handlers (CIRC-2205)
 
