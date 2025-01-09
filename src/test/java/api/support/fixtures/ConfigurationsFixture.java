@@ -7,6 +7,7 @@ import api.support.http.ResourceClient;
 public class ConfigurationsFixture {
   private final ResourceClient client;
   private UUID tlrConfigurationEntryId = null;
+  private UUID printHoldRequestConfigurationEntryId = null;
 
   public ConfigurationsFixture(ResourceClient client) {
     this.client = client;
@@ -15,6 +16,16 @@ public class ConfigurationsFixture {
   public void enableTlrFeature() {
     deleteTlrFeatureConfig();
     tlrConfigurationEntryId = client.create(ConfigurationExample.tlrFeatureEnabled()).getId();
+  }
+
+  public void enablePrintHoldRequests() {
+    deletePrintHoldRequestConfig();
+    printHoldRequestConfigurationEntryId = client.create(ConfigurationExample.setPrintHoldRequestsEnabled(true)).getId();
+  }
+
+  public void disablePrintHoldRequests() {
+    deletePrintHoldRequestConfig();
+    printHoldRequestConfigurationEntryId = client.create(ConfigurationExample.setPrintHoldRequestsEnabled(false)).getId();
   }
 
   public void disableTlrFeature() {
@@ -26,6 +37,13 @@ public class ConfigurationsFixture {
     if (tlrConfigurationEntryId != null) {
       client.delete(tlrConfigurationEntryId);
       tlrConfigurationEntryId = null;
+    }
+  }
+
+  public void deletePrintHoldRequestConfig() {
+    if (printHoldRequestConfigurationEntryId != null) {
+      client.delete(printHoldRequestConfigurationEntryId);
+      printHoldRequestConfigurationEntryId = null;
     }
   }
 

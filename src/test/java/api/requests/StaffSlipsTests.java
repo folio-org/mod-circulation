@@ -73,7 +73,7 @@ class StaffSlipsTests extends APITests {
   void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
-
+    configurationsFixture.enablePrintHoldRequests();
     requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
       .page()
@@ -91,6 +91,7 @@ class StaffSlipsTests extends APITests {
   void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    configurationsFixture.enablePrintHoldRequests();
 
     requestsFixture.place(new RequestBuilder()
       .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
@@ -109,6 +110,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
+    configurationsFixture.enablePrintHoldRequests();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
 
@@ -121,6 +123,7 @@ class StaffSlipsTests extends APITests {
   void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    configurationsFixture.enablePrintHoldRequests();
 
     if (slipsType == SlipsType.SEARCH_SLIPS) {
       checkOutFixture.checkOutByBarcode(item);
@@ -145,6 +148,7 @@ class StaffSlipsTests extends APITests {
   void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponNod(b -> b.withStatus(itemStatus.getValue()));
+    configurationsFixture.enablePrintHoldRequests();
 
     requestsFixture.place(new RequestBuilder()
       .hold()
@@ -183,6 +187,7 @@ class StaffSlipsTests extends APITests {
   })
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
+    configurationsFixture.enablePrintHoldRequests();
     SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
@@ -325,6 +330,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsPickSlipsForRequestsOfTypePageOnly() {
+    configurationsFixture.enablePrintHoldRequests();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
@@ -351,6 +357,28 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
     assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
+  }
+
+  @Test
+  void responseReturnsNoPickSlipsWhenPrintHoldIsDisabled() {
+    configurationsFixture.disablePrintHoldRequests();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    val item = itemsFixture.basedUponSmallAngryPlanet();
+    val james = usersFixture.james();
+
+    RequestBuilder requestBuilder = new RequestBuilder()
+            .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+            .page()
+            .withPickupServicePointId(servicePointId)
+            .forItem(item)
+            .by(james);
+
+    requestsClient.create(requestBuilder);
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertEquals("{}", response.getJson().encode());
   }
 
   @Disabled
@@ -387,6 +415,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
+    configurationsFixture.enablePrintHoldRequests();
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -442,6 +471,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
+    configurationsFixture.enablePrintHoldRequests();
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -505,6 +535,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
+    configurationsFixture.enablePrintHoldRequests();
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 
