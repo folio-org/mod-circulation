@@ -572,6 +572,60 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
   }
 
+  @Test
+  void responseContainsSearchSlipsForQueueTLRs() {
+    settingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var steve = usersFixture.steve();
+    var james = usersFixture.james();
+    var rebecca = usersFixture.rebecca();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    var item = buildItem(instance.getId(), location);
+    checkOutFixture.checkOutByBarcode(item);
+    var firstHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(steve);
+    var firstHoldRequest = requestsClient.create(firstHoldRequestBuilder);
+
+    var secondHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(james);
+    var secondHoldRequest = requestsClient.create(secondHoldRequestBuilder);
+
+    var thirdHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(rebecca);
+    var thirdHoldRequest = requestsClient.create(thirdHoldRequestBuilder);
+
+    assertThat(requestsClient.getAll(), hasSize(3));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 3, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, firstHoldRequest, steve);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, secondHoldRequest, james);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, thirdHoldRequest, rebecca);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
