@@ -110,9 +110,9 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class, mode = EnumSource.Mode.EXCLUDE, names = {"SEARCH_SLIPS"})
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
+    configurationsFixture.enablePrintHoldRequests();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
-    configurationsFixture.enablePrintHoldRequests();
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 0, slipsType);
@@ -357,6 +357,28 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
     assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
+  }
+
+  @Test
+  void responseReturnsNoPickSlipsWhenPrintHoldIsDisabled() {
+    configurationsFixture.disablePrintHoldRequests();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    val item = itemsFixture.basedUponSmallAngryPlanet();
+    val james = usersFixture.james();
+
+    RequestBuilder requestBuilder = new RequestBuilder()
+            .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+            .page()
+            .withPickupServicePointId(servicePointId)
+            .forItem(item)
+            .by(james);
+
+    requestsClient.create(requestBuilder);
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertEquals("{}", response.getJson().encode());
   }
 
   @Disabled

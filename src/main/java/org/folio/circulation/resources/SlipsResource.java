@@ -132,6 +132,7 @@ public abstract class SlipsResource extends Resource {
         log.info("getMany:: Failed to retrieve print hold requests configuration");
         log.error("getMany:: Failed to retrieve print hold requests configuration: {}",
           throwable.getMessage());
+        context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
         return null;
     });
 

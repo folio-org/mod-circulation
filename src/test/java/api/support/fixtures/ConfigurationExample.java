@@ -41,10 +41,10 @@ public class ConfigurationExample {
       DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME, limit);
   }
 
-  public static ConfigRecordBuilder enablePrintHoldRequestsEnabled() {
+  public static ConfigRecordBuilder setPrintHoldRequestsEnabled(boolean enabled) {
     return new ConfigRecordBuilder("SETTINGS", "PRINT_HOLD_REQUESTS",
             new PrintHoldRequestConfigurationBuilder()
-                    .withPrintHoldRequestsEnabled(true)
+                    .withPrintHoldRequestsEnabled(enabled)
                     .create()
                     .encodePrettily());
   }

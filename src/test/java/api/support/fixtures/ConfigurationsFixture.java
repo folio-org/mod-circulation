@@ -20,7 +20,12 @@ public class ConfigurationsFixture {
 
   public void enablePrintHoldRequests() {
     deletePrintHoldRequestConfig();
-    printHoldRequestConfigurationEntryId = client.create(ConfigurationExample.enablePrintHoldRequestsEnabled()).getId();
+    printHoldRequestConfigurationEntryId = client.create(ConfigurationExample.setPrintHoldRequestsEnabled(true)).getId();
+  }
+
+  public void disablePrintHoldRequests() {
+    deletePrintHoldRequestConfig();
+    printHoldRequestConfigurationEntryId = client.create(ConfigurationExample.setPrintHoldRequestsEnabled(false)).getId();
   }
 
   public void disableTlrFeature() {
