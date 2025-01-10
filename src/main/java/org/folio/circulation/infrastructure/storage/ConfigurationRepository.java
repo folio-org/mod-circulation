@@ -12,6 +12,7 @@ import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.ConfigurationService;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
+import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
@@ -57,6 +58,13 @@ public class ConfigurationRepository {
       "SETTINGS", "TLR");
 
     return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
+  }
+
+  public CompletableFuture<Result<PrintHoldRequestsConfiguration>> lookupPrintHoldRequestsEnabled() {
+    Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
+            "SETTINGS", "PRINT_HOLD_REQUESTS");
+
+    return findAndMapFirstConfiguration(queryResult, PrintHoldRequestsConfiguration::from);
   }
 
   /**
