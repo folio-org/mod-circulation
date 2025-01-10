@@ -1,3 +1,6 @@
+## 24.3.6 2025-01-10
+* Rename incorrect mod-feesfines permissions (CIRC-2219)
+
 ## 24.3.5 2025-01-09
 * Fix search slips for requests queue (CIRC-2197)
 
@@ -624,9 +627,7 @@
 * Requires `loan-storage 5.3 or 6.0` (CIRC-380)
 * Requires `instance-storage 4.0, 5.0, 6.0 or 7.0` (CIRC-396)
 
-## 16.3.0 2019-06-17
-
-* Use sets for module permissions to reduce size when included in headers (CIRC-352)
+## 16.3.0 2019-06-17* Use sets for module permissions to reduce size when included in headers (CIRC-352)
 * Only fetch single record by ID when ID is not null (CIRC-359)
 * Only update request queue when loan is closed (CIRC-351)
 * Uses correct request type for instance level requests (CIRC-344)
