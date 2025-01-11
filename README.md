@@ -104,7 +104,7 @@ If a variable is not present, its default values is used as a fallback. If this 
 invalid, the module will start, but Kafka integration will not work.
 
 Module supports so-called floating collections but the feature is disabled by default. Floating
-collections support can be switched on by setting environment variable ENABLE_FLOATING_COLLECTIONS.
+collections support can be switched on by setting the environment variable ENABLE_FLOATING_COLLECTIONS to TRUE.
 
 | Variable name               | Default value     |
 |-----------------------------|-------------------|
