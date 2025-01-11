@@ -13,6 +13,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
+import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
@@ -35,6 +36,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
@@ -72,6 +74,7 @@ public abstract class SlipsResource extends Resource {
   private static final String ITEM_ID_KEY = "itemId";
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String REQUEST_TYPE_KEY = "requestType";
+  private static final String REQUEST_LEVEL_KEY = "requestLevel";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
@@ -157,10 +160,14 @@ public abstract class SlipsResource extends Resource {
     Set<String> fetchedInstanceIds = context.getInstances().getRecords().stream()
       .map(Instance::getId)
       .collect(Collectors.toSet());
+    log.info("mapRequestsToInstances:: fetchedInstanceIds: {}",
+      () -> collectionAsString(fetchedInstanceIds));
 
     Map<Request, String> requestToInstanceIdMap = context.getTlrRequests().getRecords().stream()
       .filter(request -> fetchedInstanceIds.contains(request.getInstanceId()))
       .collect(Collectors.toMap(identity(), Request::getInstanceId));
+    log.info("mapRequestsToInstances:: requestToInstanceIdMap: {}",
+      () -> mapAsString(requestToInstanceIdMap));
 
     return succeeded(context.withRequestToInstanceIdMap(requestToInstanceIdMap));
   }
@@ -173,9 +180,8 @@ public abstract class SlipsResource extends Resource {
       return succeeded(context);
     }
 
-    Map<String, Holdings> instanceIdToHoldingsMap = holdings.getRecords().stream()
-      .collect(Collectors.toMap(Holdings::getInstanceId, identity(),
-        (existing, replacement) -> existing));
+    Map<Holdings, String> holdingsToInstanceIdMap = holdings.getRecords().stream()
+      .collect(Collectors.toMap(identity(), Holdings::getInstanceId));
 
     Map<Request, String> requestToInstanceIdMap = context.getRequestToInstanceIdMap();
     if (requestToInstanceIdMap == null || requestToInstanceIdMap.isEmpty()) {
@@ -184,12 +190,23 @@ public abstract class SlipsResource extends Resource {
     }
 
     Map<Request, Holdings> requestToHoldingsMap = requestToInstanceIdMap.entrySet().stream()
-      .filter(entry -> entry.getValue() != null && instanceIdToHoldingsMap.containsKey(
+      .filter(entry -> entry.getValue() != null && holdingsToInstanceIdMap.containsValue(
         entry.getValue()))
-      .collect(Collectors.toMap(Map.Entry::getKey, entry -> instanceIdToHoldingsMap.get(
-        entry.getValue())));
+      .collect(Collectors.toMap(Map.Entry::getKey,
+        entry -> findHoldingsByInstanceId(holdings, entry.getValue())));
+    log.info("mapRequestsToHoldings:: requestToHoldingsMap: {}",
+      () -> mapAsString(requestToHoldingsMap));
 
     return succeeded(context.withRequestToHoldingMap(requestToHoldingsMap));
+  }
+
+  private Holdings findHoldingsByInstanceId(MultipleRecords<Holdings> holdings,
+    String instanceId) {
+
+    return holdings.getRecords().stream()
+      .filter(holding -> holding.getInstanceId().equals(instanceId))
+      .findFirst()
+      .orElse(null);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchByInstancesByRequests(
@@ -323,23 +340,15 @@ public abstract class SlipsResource extends Resource {
   private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
     Clients clients, StaffSlipsContext context) {
 
-    final Result<CqlQuery> typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
-    final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    final Result<CqlQuery> statusAndTypeQuery = typeQuery.combine(statusQuery, CqlQuery::and);
+    var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
+    var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue());
+    var statusTypeAndLevelQuery = typeQuery.combine(statusQuery, CqlQuery::and)
+      .combine(requestLevelQuery, CqlQuery::and);
 
-    return findWithCqlQuery(
-      clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .findByQuery(statusAndTypeQuery)
-      .thenApply(r -> r.next(this::filterRequests))
+    return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
+      .findByQuery(statusTypeAndLevelQuery)
       .thenApply(r -> r.map(context::withTlrRequests));
-  }
-
-  private Result<MultipleRecords<Request>> filterRequests(MultipleRecords<Request> requests) {
-    var filteredRequests = requests.getRecords().stream()
-      .filter(request -> request.getItemId() == null)
-      .toList();
-
-    return succeeded(new MultipleRecords<>(filteredRequests, filteredRequests.size()));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchLocationDetailsForItems(
