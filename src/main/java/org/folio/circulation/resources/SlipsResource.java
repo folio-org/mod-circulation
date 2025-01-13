@@ -122,20 +122,22 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    configurationRepository.lookupPrintHoldRequestsEnabled()
-      .thenAccept(result -> result.next(printHoldRequestsConfiguration -> {
-        if (printHoldRequestsConfiguration == null ||
-          !printHoldRequestsConfiguration.isPrintHoldRequestsEnabled()) {
-          log.info("getMany:: Print hold requests configuration is disabled");
+    if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD){
+      configurationRepository.lookupPrintHoldRequestsEnabled()
+        .thenAccept(result -> result.next(printHoldRequestsConfiguration -> {
+          if (printHoldRequestsConfiguration == null ||
+            !printHoldRequestsConfiguration.isPrintHoldRequestsEnabled()) {
+            log.info("getMany:: Print hold requests configuration is disabled");
+            context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
+          }
+          return null;
+        })).exceptionally(throwable -> {
+          log.info("getMany:: Failed to retrieve print hold requests configuration");
+          log.error("getMany:: Failed to retrieve print hold requests configuration: {}", throwable.getMessage());
           context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
-        }
-        return null;
-      })).exceptionally(throwable -> {
-        log.info("getMany:: Failed to retrieve print hold requests configuration");
-        log.error("getMany:: Failed to retrieve print hold requests configuration: {}", throwable.getMessage());
-        context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
-        return null;
-    });
+          return null;
+      });
+    }
 
       fetchLocationsForServicePoint(servicePointId, clients)
         .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
