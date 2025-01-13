@@ -3,6 +3,7 @@ package api.requests;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.UUID;
 
@@ -23,6 +24,14 @@ class SearchSlipsTests extends APITests {
     Response response = ResourceClient.forSearchSlips().getById(UUID.randomUUID());
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 0);
+  }
+
+  @Test
+  void responseShouldHaveNoSearchSlipsRecords() {
+    configurationsFixture.configurePrintHoldRequests(false);
+    Response response = ResourceClient.forSearchSlips().getById(UUID.randomUUID());
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertEquals("{}", response.getJson().encode());
   }
 
   private void assertResponseHasItems(Response response, int itemsCount) {
