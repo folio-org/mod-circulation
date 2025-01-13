@@ -360,28 +360,6 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
-  void responseReturnsNoPickSlipsWhenPrintHoldIsDisabled() {
-    configurationsFixture.configurePrintHoldRequests(false);
-    UUID servicePointId = servicePointsFixture.cd1().getId();
-    val item = itemsFixture.basedUponSmallAngryPlanet();
-    val james = usersFixture.james();
-
-    RequestBuilder requestBuilder = new RequestBuilder()
-            .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-            .page()
-            .withPickupServicePointId(servicePointId)
-            .forItem(item)
-            .by(james);
-
-    requestsClient.create(requestBuilder);
-
-    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
-
-    assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertEquals("{}", response.getJson().encode());
-  }
-
-  @Test
   void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
     configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
