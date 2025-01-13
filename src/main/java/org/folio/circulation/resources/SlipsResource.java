@@ -1,46 +1,13 @@
 package org.folio.circulation.resources;
 
-import static java.util.Collections.emptyList;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
-import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
-import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
-import static org.folio.circulation.support.utils.LogUtil.mapAsString;
-import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
-
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Holdings;
-import org.folio.circulation.domain.Instance;
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.ItemStatus;
-import org.folio.circulation.domain.Location;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestLevel;
-import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.RequestType;
-import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -62,10 +29,24 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import java.lang.invoke.MethodHandles;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
+import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.utils.LogUtil.*;
 
 public abstract class SlipsResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -123,20 +104,19 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    configurationRepository.lookupPrintHoldRequestsEnabled().thenAccept(result -> {
-      if (result.succeeded()) {
-        PrintHoldRequestsConfiguration printHoldRequestsConfiguration = result.value();
+    configurationRepository.lookupPrintHoldRequestsEnabled()
+      .thenAccept(result -> result.next(printHoldRequestsConfiguration -> {
         if (printHoldRequestsConfiguration == null ||
-                !printHoldRequestsConfiguration.isPrintHoldRequestsEnabled()) {
+          !printHoldRequestsConfiguration.isPrintHoldRequestsEnabled()) {
+          log.info("getMany:: Print hold requests configuration is disabled");
           context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
         }
-      }
-    }).exceptionally(throwable -> {
-      log.info("getMany:: Failed to retrieve print hold requests configuration");
-      log.error("getMany:: Failed to retrieve print hold requests configuration: {}",
-              throwable.getMessage());
-      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
-      return null;
+        return null;
+      })).exceptionally(throwable -> {
+        log.info("getMany:: Failed to retrieve print hold requests configuration");
+        log.error("getMany:: Failed to retrieve print hold requests configuration: {}", throwable.getMessage());
+        context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
+        return null;
     });
 
       fetchLocationsForServicePoint(servicePointId, clients)
