@@ -113,7 +113,34 @@ public class RequestRepresentation {
     write(itemSummary, CALL_NUMBER_COMPONENTS,
       createCallNumberComponents(item.getCallNumberComponents()));
     write(itemSummary, "copyNumber", item.getCopyNumber());
+
+    effectiveLocationAndPrimaryServicePointSummary(itemSummary, request);
+
     write(request, "item", itemSummary);
+  }
+
+  private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, JsonObject request) {
+    JsonObject requestItem = request.getJsonObject("item");
+    if (requestItem != null) {
+      String itemEffectiveLocationId = request.getJsonObject("item").getString(
+        "itemEffectiveLocationId");
+      String itemEffectiveLocationName =
+        request.getJsonObject("item").getString(
+        "itemEffectiveLocationName");
+      String retrievalServicePointId = request.getJsonObject("item").getString(
+        "retrievalServicePointId");
+      String retrievalServicePointName =
+        request.getJsonObject("item").getString(
+        "retrievalServicePointName");
+
+      write(itemSummary, "itemEffectiveLocationId", itemEffectiveLocationId);
+      write(itemSummary, "itemEffectiveLocationName",
+        itemEffectiveLocationName);
+      write(itemSummary, "retrievalServicePointId",
+        retrievalServicePointId);
+      write(itemSummary, "retrievalServicePointName",
+        retrievalServicePointName);
+    }
   }
 
   private static void addInstanceProperties(JsonObject request, Instance instance, Item item) {

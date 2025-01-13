@@ -1,3 +1,6 @@
+## 24.3.7 2025-01-13
+* Filter request by Retrieval Service Point (CIRC-2177)
+
 ## 24.3.6 2025-01-10
 * Rename incorrect mod-feesfines permissions (CIRC-2219)
 
