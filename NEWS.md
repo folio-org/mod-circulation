@@ -1,3 +1,42 @@
+## 24.3.7 2025-01-13
+* Filter request by Retrieval Service Point (CIRC-2177)
+
+## 24.3.6 2025-01-10
+* Rename incorrect mod-feesfines permissions (CIRC-2219)
+
+## 24.3.5 2025-01-09
+* Fix search slips for requests queue (CIRC-2197)
+
+## 24.3.4 2024-12-19
+* Remove permission definition for Circulation Events Handlers (CIRC-2205)
+
+## 24.3.3 2024-12-12
+* Avoid self-invocation for request rules while moving requests (CIRC-2199)
+* Intermediate request support (CIRC-2182)
+
+## 24.3.2 2024-11-30
+* Add mod-settings permission blocks (CIRC-2185)
+* Fix automated patron blocks permission issue (CIRC-2185)
+* Remove new mod-settings permissions (CIRC-2183)
+* Fetch TLR settings from mod-config as fallback (CIRC-2171)
+* Update API versions (CIRC-2153)
+* Change ECS Primary request validation (CIRC-2151)
+* Allow operation replace for instance with no items (CIRC-2137)
+* Search title-level requests by both `itemId` and `instanceId` during check-in and check-out (CIRC-2125)
+* Allowed SP endpoint should support `patronGroupId` parameter (CIRC-2116)
+* Return empty result when search doesn't find anything (CIRC-2117)
+* Pass additional `includeRoutingServicePoints` parameter when needed (CIRC-2109)
+* Fetch item details across tenants (CIRC-2101)
+* Create a facade for instance search (CIRC-2072)
+* Fetch TLR settings from mod-settings (CIRC-2081)
+* Add `ecsRequestRouting` parameter to allowed-service-points (CIRC-2051)
+* Fix snapshot version (CIRC-2161)
+* Review and cleanup Module Descriptors for mod-circulation (CIRC-2139)
+
+## 24.3.1 2024-11-27
+
+* Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
+
 ## 24.3.0 2024-10-31
 
 * Support floating collections (CIRC-2136)
@@ -591,9 +630,7 @@
 * Requires `loan-storage 5.3 or 6.0` (CIRC-380)
 * Requires `instance-storage 4.0, 5.0, 6.0 or 7.0` (CIRC-396)
 
-## 16.3.0 2019-06-17
-
-* Use sets for module permissions to reduce size when included in headers (CIRC-352)
+## 16.3.0 2019-06-17* Use sets for module permissions to reduce size when included in headers (CIRC-352)
 * Only fetch single record by ID when ID is not null (CIRC-359)
 * Only update request queue when loan is closed (CIRC-351)
 * Uses correct request type for instance level requests (CIRC-344)
