@@ -22,14 +22,8 @@ public class PrintHoldRequestsConfiguration {
   private final boolean printHoldRequestsEnabled;
 
   public static PrintHoldRequestsConfiguration from(JsonObject jsonObject) {
-    try {
-      return new PrintHoldRequestsConfiguration(
-        getBooleanProperty(jsonObject, "printHoldRequestsEnabled")
-      );
-    }
-    catch (IllegalArgumentException e) {
-      log.error("Failed to parse PrintHoldRequests configuration");
-      return null;
-    }
+    return new PrintHoldRequestsConfiguration(
+       getBooleanProperty(jsonObject, "printHoldRequestsEnabled")
+    );
   }
 }
