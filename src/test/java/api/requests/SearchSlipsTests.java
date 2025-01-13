@@ -19,6 +19,7 @@ class SearchSlipsTests extends APITests {
 
   @Test
   void responseShouldHaveEmptyListOfSearchSlipsRecords() {
+    configurationsFixture.configurePrintHoldRequests(true);
     Response response = ResourceClient.forSearchSlips().getById(UUID.randomUUID());
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 0);
