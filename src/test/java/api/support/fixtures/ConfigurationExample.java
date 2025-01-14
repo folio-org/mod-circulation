@@ -40,10 +40,10 @@ public class ConfigurationExample {
 
   public static ConfigRecordBuilder setPrintHoldRequestsEnabled(boolean enabled) {
     return new ConfigRecordBuilder("SETTINGS", "PRINT_HOLD_REQUESTS",
-            new PrintHoldRequestConfigurationBuilder()
-                    .withPrintHoldRequestsEnabled(enabled)
-                    .create()
-                    .encodePrettily());
+      new PrintHoldRequestConfigurationBuilder()
+        .withPrintHoldRequestsEnabled(enabled)
+        .create()
+        .encodePrettily());
   }
 
   private static JsonObject combinedTimeZoneConfig(String timezone) {

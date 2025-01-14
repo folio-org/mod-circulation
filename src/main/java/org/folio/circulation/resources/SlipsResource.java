@@ -122,7 +122,7 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD){
+    if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD) {
       configurationRepository.lookupPrintHoldRequestsEnabled()
         .thenAccept(result -> result.next(printHoldRequestsConfiguration -> {
           if (printHoldRequestsConfiguration == null ||

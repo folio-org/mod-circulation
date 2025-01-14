@@ -14,8 +14,8 @@ public class ConfigurationsFixture {
 
   public void configurePrintHoldRequests(boolean printHoldRequestsEnabled) {
     deletePrintHoldRequestConfig();
-    printHoldRequestConfigurationEntryId =
-            client.create(ConfigurationExample.setPrintHoldRequestsEnabled(printHoldRequestsEnabled)).getId();
+    printHoldRequestConfigurationEntryId = client.create(
+      ConfigurationExample.setPrintHoldRequestsEnabled(printHoldRequestsEnabled)).getId();
   }
 
   public void deletePrintHoldRequestConfig() {

@@ -61,10 +61,10 @@ public class ConfigurationRepository {
   }
 
   public CompletableFuture<Result<PrintHoldRequestsConfiguration>> lookupPrintHoldRequestsEnabled() {
-    Result<CqlQuery> queryResult = defineModuleNameAndConfigNameFilter(
-            "SETTINGS", "PRINT_HOLD_REQUESTS");
+    log.info("lookupPrintHoldRequestsEnabled:: fetching PrintHoldRequest configuration");
 
-    return findAndMapFirstConfiguration(queryResult, PrintHoldRequestsConfiguration::from);
+    return findAndMapFirstConfiguration(defineModuleNameAndConfigNameFilter(
+      "SETTINGS", "PRINT_HOLD_REQUESTS"), PrintHoldRequestsConfiguration::from);
   }
 
   /**
