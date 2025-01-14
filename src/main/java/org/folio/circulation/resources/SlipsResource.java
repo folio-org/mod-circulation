@@ -9,6 +9,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -144,7 +145,7 @@ public abstract class SlipsResource extends Resource {
     final var holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
 
     return fetchTitleLevelRequests(clients, staffSlipsContext)
-      .thenComposeAsync(r -> r.after(ctx -> fetchByInstancesByRequests(ctx, instanceRepository)))
+      .thenComposeAsync(r -> r.after(ctx -> fetchInstancesByRequests(ctx, instanceRepository)))
       .thenApply(r -> r.next(this::mapRequestsToInstances))
       .thenComposeAsync(r -> r.after(ctx -> fetchHoldingsByInstances(ctx, holdingsRepository)))
       .thenApply(r -> r.next(this::mapRequestsToHoldings));
@@ -209,12 +210,12 @@ public abstract class SlipsResource extends Resource {
       .orElse(null);
   }
 
-  private CompletableFuture<Result<StaffSlipsContext>> fetchByInstancesByRequests(
+  private CompletableFuture<Result<StaffSlipsContext>> fetchInstancesByRequests(
     StaffSlipsContext ctx, InstanceRepository instanceRepository) {
 
     var tlrRequests = ctx.getTlrRequests();
     if (tlrRequests == null || tlrRequests.isEmpty()) {
-      log.info("fetchByInstancesByRequests:: no TLR requests found");
+      log.info("fetchInstancesByRequests:: no TLR requests found");
 
       return ofAsync(ctx);
     }
@@ -347,7 +348,7 @@ public abstract class SlipsResource extends Resource {
       .combine(requestLevelQuery, CqlQuery::and);
 
     return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .findByQuery(statusTypeAndLevelQuery)
+      .findByQuery(statusTypeAndLevelQuery, maximumLimit())
       .thenApply(r -> r.map(context::withTlrRequests));
   }
 
