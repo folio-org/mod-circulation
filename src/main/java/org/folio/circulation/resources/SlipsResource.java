@@ -9,6 +9,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -372,7 +373,7 @@ public abstract class SlipsResource extends Resource {
       .combine(requestLevelQuery, CqlQuery::and);
 
     return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .findByQuery(statusTypeAndLevelQuery)
+      .findByQuery(statusTypeAndLevelQuery, maximumLimit())
       .thenApply(r -> r.map(context::withTlrRequests));
   }
 
