@@ -159,7 +159,7 @@ public abstract class SlipsResource extends Resource {
           .put(TOTAL_RECORDS_KEY, 0)
       )));
     }
-    return Result.succeeded(null);
+    return succeeded(null);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
