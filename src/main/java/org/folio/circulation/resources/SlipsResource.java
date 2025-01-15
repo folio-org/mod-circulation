@@ -128,7 +128,11 @@ public abstract class SlipsResource extends Resource {
           if (printHoldRequestsConfiguration == null ||
             !printHoldRequestsConfiguration.isPrintHoldRequestsEnabled()) {
             log.info("getMany:: Print hold requests configuration is disabled");
-            context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(new JsonObject())));
+            context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
+               new io.vertx.core.json.JsonObject()
+                  .put("searchSlips", new io.vertx.core.json.JsonArray())
+                  .put("totalRecords", 0)
+            )));
           }
           return null;
         }));
