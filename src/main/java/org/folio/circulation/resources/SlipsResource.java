@@ -126,7 +126,7 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD) {
+    if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       configurationRepository.lookupPrintHoldRequestsEnabled()
         .thenAccept(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
     }
