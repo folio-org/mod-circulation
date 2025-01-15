@@ -150,8 +150,8 @@ public abstract class SlipsResource extends Resource {
 
   private Result<Object> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
     WebContext context) {
-    if (config == null ||
-      !config.isPrintHoldRequestsEnabled()) {
+
+    if (config == null || !config.isPrintHoldRequestsEnabled()) {
       log.info("getMany:: Print hold requests configuration is disabled");
       context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
         new io.vertx.core.json.JsonObject()
