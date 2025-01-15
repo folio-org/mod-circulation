@@ -40,6 +40,7 @@ import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.notice.TemplateContextUtil;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -63,6 +64,7 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
@@ -77,6 +79,7 @@ public abstract class SlipsResource extends Resource {
   private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String REQUEST_LEVEL_KEY = "requestLevel";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
+  private static final String SEARCH_SLIPS_KEY = "searchSlips";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
@@ -124,18 +127,8 @@ public abstract class SlipsResource extends Resource {
 
     if ("searchSlips".equals(collectionName) && requestType == RequestType.HOLD) {
       configurationRepository.lookupPrintHoldRequestsEnabled()
-        .thenAccept(result -> result.next(printHoldRequestsConfiguration -> {
-          if (printHoldRequestsConfiguration == null ||
-            !printHoldRequestsConfiguration.isPrintHoldRequestsEnabled()) {
-            log.info("getMany:: Print hold requests configuration is disabled");
-            context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
-               new io.vertx.core.json.JsonObject()
-                  .put("searchSlips", new io.vertx.core.json.JsonArray())
-                  .put("totalRecords", 0)
-            )));
-          }
-          return null;
-        }));
+        .thenAccept(result -> result.next(config ->
+          returnNoRecordsIfSearchSlipsDisabled(config, context)));
     }
 
       fetchLocationsForServicePoint(servicePointId, clients)
@@ -153,6 +146,20 @@ public abstract class SlipsResource extends Resource {
           this::addPrimaryServicePointNameToStaffSlipContext))
         .thenApply(r -> r.map(JsonHttpResponse::ok))
         .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private Result<Object> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
+    WebContext context) {
+    if (config == null ||
+      !config.isPrintHoldRequestsEnabled()) {
+      log.info("getMany:: Print hold requests configuration is disabled");
+      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
+        new io.vertx.core.json.JsonObject()
+          .put(SEARCH_SLIPS_KEY, new JsonArray())
+          .put(TOTAL_RECORDS_KEY, 0)
+      )));
+    }
+    return Result.succeeded(null);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
