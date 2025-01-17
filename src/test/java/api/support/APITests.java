@@ -47,6 +47,7 @@ import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
+import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.DepartmentFixture;
 import api.support.fixtures.EndPatronSessionClient;
@@ -303,6 +304,7 @@ public abstract class APITests {
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
+  protected final ConfigurationsFixture configurationsFixture = new ConfigurationsFixture(configClient);
   protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 
   protected APITests() {
