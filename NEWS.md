@@ -1,3 +1,6 @@
+## 24.3.10 2025-01-18
+* Address search slips high memory consumption (CIRC-2167)
+
 ## 24.3.9 2025-01-17
 * Support DCB re-request (CIRC-2198)
 
