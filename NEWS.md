@@ -1,3 +1,6 @@
+## 24.3.11 2025-01-21
+* Add missing required interfaces (CIRC-2225)
+
 ## 24.3.10 2025-01-18
 * Address search slips high memory consumption (CIRC-2167)
 
