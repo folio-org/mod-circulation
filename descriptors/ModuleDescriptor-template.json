@@ -1362,6 +1362,22 @@
     {
       "id": "print-events-storage",
       "version": "1.0"
+    },
+    {
+      "id": "actual-cost-fee-fine",
+      "version": "0.3"
+    },
+    {
+      "id": "anonymize-storage-loans",
+      "version": "0.1"
+    },
+    {
+      "id": "identifier-types",
+      "version": "1.2"
+    },
+    {
+      "id": "template-engine",
+      "version": "2.2"
     }
   ],
   "optional": [
