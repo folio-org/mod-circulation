@@ -8,6 +8,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -149,4 +150,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
   }
+  public static boolean isFloatingEnabled() {
+    return Environment.getEnableFloatingCollections();
+  }
+
 }

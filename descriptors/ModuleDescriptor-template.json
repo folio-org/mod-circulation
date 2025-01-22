@@ -2645,6 +2645,10 @@
         "value": "50000"
       },
       {
+        "name": "ENABLE_FLOATING_COLLECTIONS",
+        "value": "true"
+      },
+      {
         "name": "KAFKA_HOST",
         "value": "kafka"
       },

@@ -306,7 +306,7 @@ class CheckInProcessAdapter {
 
   CompletableFuture<Result<Item>> findFloatingDestination(CheckInContext context) {
     Item item = context.getItem();
-    if (item.getLocation().isFloatingCollection()) {
+    if (CheckInByBarcodeResource.isFloatingEnabled() && item.getLocation().isFloatingCollection()) {
       return locationRepository.fetchLocationsForServicePoint(context.getCheckInServicePointId().toString())
         .thenApply(rLocations -> rLocations.map(locations -> locations.stream()
           .filter(Location::isFloatingCollection).findFirst()
