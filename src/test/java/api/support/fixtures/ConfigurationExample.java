@@ -3,6 +3,7 @@ package api.support.fixtures;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import api.support.builders.ConfigRecordBuilder;
+import api.support.builders.PrintHoldRequestConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationExample {
@@ -35,6 +36,14 @@ public class ConfigurationExample {
   public static ConfigRecordBuilder schedulerNoticesLimitConfiguration(String limit){
     return new ConfigRecordBuilder(DEFAULT_NOTIFICATION_SCHEDULER_MODULE_NAME,
       DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME, limit);
+  }
+
+  public static ConfigRecordBuilder setPrintHoldRequestsEnabled(boolean enabled) {
+    return new ConfigRecordBuilder("SETTINGS", "PRINT_HOLD_REQUESTS",
+      new PrintHoldRequestConfigurationBuilder()
+        .withPrintHoldRequestsEnabled(enabled)
+        .create()
+        .encodePrettily());
   }
 
   private static JsonObject combinedTimeZoneConfig(String timezone) {
