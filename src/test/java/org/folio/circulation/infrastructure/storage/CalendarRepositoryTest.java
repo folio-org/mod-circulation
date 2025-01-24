@@ -1,6 +1,5 @@
 package org.folio.circulation.infrastructure.storage;
 
-import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 
 class CalendarRepositoryTest {
 
+  private static final ZoneId UTC = ZoneId.of("UTC");
   private static final String EXPECTED_PATH =
     "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=2147483647";
 
@@ -35,7 +36,7 @@ class CalendarRepositoryTest {
     ZonedDateTime endDate = ZonedDateTime.of(2020, 10, 22, 15, 30, 0, 0, UTC);
 
     CalendarRepository calendarRepository = new CalendarRepository(clients);
-    calendarRepository.fetchOpeningDaysBetweenDates(servicePointId, startDate, endDate);
+    calendarRepository.fetchOpeningDaysBetweenDates(servicePointId, startDate, endDate, UTC);
 
     ArgumentCaptor<String> paramsArgumentCaptor = ArgumentCaptor.forClass(String.class);
     verify(collectionResourceClient).get(paramsArgumentCaptor.capture());
