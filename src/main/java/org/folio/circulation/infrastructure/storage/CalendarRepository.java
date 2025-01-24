@@ -68,8 +68,8 @@ public class CalendarRepository {
     String path = String.format(
       ALL_DATES_PATH,
       servicePointId,
-      startDate.withZoneSameInstant(startDate.getZone()),
-      endDate.withZoneSameInstant(endDate.getZone()),
+      startDate.withZoneSameInstant(startDate.getZone()).toLocalDate(),
+      endDate.withZoneSameInstant(endDate.getZone()).toLocalDate(),
       Integer.MAX_VALUE
     );
 
