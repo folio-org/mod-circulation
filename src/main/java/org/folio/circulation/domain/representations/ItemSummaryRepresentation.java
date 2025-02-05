@@ -12,6 +12,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.ServicePoint;
 
@@ -45,6 +46,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "copyNumber", item.getCopyNumber());
     write(itemSummary, CALL_NUMBER_COMPONENTS,
       createCallNumberComponents(item.getCallNumberComponents()));
+    write(itemSummary, "tenantId", item.getTenantId());
 
     JsonObject status = new JsonObject()
       .put("name", item.getStatus().getValue());
@@ -78,7 +80,10 @@ public class ItemSummaryRepresentation {
 
     final Location location = item.getLocation();
 
-    if (location != null) {
+    if (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) {
+      itemSummary.put("location", new JsonObject()
+        .put("name", item.getFloatDestinationLocation().getName()));
+    } else if (location != null) {
       log.info("createItemSummary:: location is not null");
       itemSummary.put("location", new JsonObject()
         .put("name", location.getName()));

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>mod-circulation</artifactId>
   <groupId>org.folio</groupId>
-  <version>24.3.0-SNAPSHOT</version>
+  <version>24.3.10-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -25,7 +25,7 @@
   <properties>
     <antlr4.version>4.11.1</antlr4.version>
     <drools.version>7.74.1.Final</drools.version>
-    <rmb.version>35.2.0</rmb.version>
+    <rmb.version>35.3.0</rmb.version>
     <vertx.version>4.5.5</vertx.version>
     <log4j2.version>2.23.1</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,6 +33,9 @@
     <lombok.version>1.18.28</lombok.version>
     <spring.version>6.1.5</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
+
+    <!--Folio dependencies properties-->
+    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
   </properties>
 
   <dependencyManagement>
@@ -106,7 +109,12 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.12.0</version>
+      <version>3.17.0</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.17.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -513,6 +521,21 @@
           <generateBackupPoms>false</generateBackupPoms>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.folio</groupId>
+        <artifactId>folio-module-descriptor-validator</artifactId>
+        <version>${folio-module-descriptor-validator.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <failOnInvalidDescriptor>false</failOnInvalidDescriptor>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <reporting>
@@ -524,4 +547,14 @@
       </plugin>
     </plugins>
   </reporting>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </pluginRepository>
+  </pluginRepositories>
+
 </project>
+

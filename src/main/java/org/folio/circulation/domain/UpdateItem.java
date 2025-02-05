@@ -57,11 +57,12 @@ public class UpdateItem {
       return changeItemWithOutstandingRequest(item, request, checkInServicePointId);
     } else {
       if(Optional.ofNullable(item.getLocation())
-        .map(location -> location.homeLocationIsServedBy(checkInServicePointId))
+        .map(location ->
+          location.homeLocationIsServedBy(checkInServicePointId)
+            || (item.canFloatThroughCheckInServicePoint()))
         .orElse(false)) {
         return succeeded(item.available());
-      }
-      else {
+      } else {
         return succeeded(item.inTransitToHome());
       }
     }

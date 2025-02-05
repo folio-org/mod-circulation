@@ -101,7 +101,8 @@ public class RequestNoticeSender {
     Request request = records.getRequest();
     recallRequestCount = records.getRequestQueue().getRequests()
       .stream()
-      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled())
+      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled()
+        && r.getItemId().equals(request.getItemId()))
       .count();
 
     if (request.hasItemId()) {
@@ -119,10 +120,12 @@ public class RequestNoticeSender {
     log.debug("sendNoticeOnRequestCancelled:: parameters records: {}", () -> records);
     Request request = records.getRequest();
 
-    if (request.hasItemId()) {
-      sendCancellationNoticeForRequestWithItemId(request);
-    } else {
-      sendCancellationNoticeForRequestWithoutItemId(request);
+    if (!request.getDcbReRequestCancellationValue()) {
+      if (request.hasItemId()) {
+        sendCancellationNoticeForRequestWithItemId(request);
+      } else {
+        sendCancellationNoticeForRequestWithoutItemId(request);
+      }
     }
 
     return succeeded(records);

@@ -18,6 +18,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
+import static org.folio.circulation.domain.representations.RequestProperties.ECS_REQUEST_PHASE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -28,6 +29,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -269,6 +271,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
   }
 
+  public EcsRequestPhase getEcsRequestPhase() {
+    return EcsRequestPhase.from(getProperty(requestRepresentation, ECS_REQUEST_PHASE));
+  }
+
   boolean allowedForItem() {
     return RequestTypeItemStatusWhiteList.canCreateRequestForItem(getItem().getStatus(), getRequestType());
   }
@@ -420,6 +426,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasLoan() {
     return loan != null;
+  }
+
+  public boolean getDcbReRequestCancellationValue() {
+    return getBooleanProperty(requestRepresentation, "isDcbReRequestCancellation");
   }
 
   public enum Operation {

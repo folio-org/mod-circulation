@@ -58,7 +58,7 @@ class ReminderFeeTests extends APITests {
 
   private UUID remindersTwoDaysBetweenNotOnClosedDaysPolicyId;
 
-  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block";
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block.post";
 
   @BeforeEach
   void beforeEach() {
@@ -823,7 +823,6 @@ class ReminderFeeTests extends APITests {
     JsonObject loanAfterReminder = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
       hasJsonPath("reminders.lastFeeBilled.number", is(1)));
-    System.out.println(loanAfterReminder.encodePrettily());
 
     ChangeDueDateRequestBuilder changeDueDate =
       new ChangeDueDateRequestBuilder()
@@ -833,7 +832,6 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
     JsonObject rescheduledNotice = scheduledNoticesClient.getAll().get(0);
     JsonObject loanAfterDueDateChange = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
-    System.out.println("loan after due date change: " + loanAfterDueDateChange.encodePrettily());
     assertThat("Loan should have no reminders after due date change",
       !loanAfterDueDateChange.containsKey("reminders"));
     assertThat("rescheduled reminder should have different runtime than previous, second reminder",

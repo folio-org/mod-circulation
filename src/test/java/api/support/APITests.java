@@ -24,6 +24,17 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.SearchInstanceFixture;
+import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
+
+import api.support.fakes.FakeModNotify;
+import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.AddInfoFixture;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.AgeToLostFixture;
@@ -70,16 +81,6 @@ import api.support.fixtures.TemplateFixture;
 import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
-import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
-
-import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
-import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
@@ -238,9 +239,6 @@ public abstract class APITests {
   protected final AddressTypesFixture addressTypesFixture
     = new AddressTypesFixture(ResourceClient.forAddressTypes());
 
-  protected final ConfigurationsFixture configurationsFixture =
-    new ConfigurationsFixture(configClient);
-
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
 
@@ -306,6 +304,8 @@ public abstract class APITests {
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
+  protected final ConfigurationsFixture configurationsFixture = new ConfigurationsFixture(configClient);
+  protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 
   protected APITests() {
     this(true, false);
@@ -452,13 +452,13 @@ public abstract class APITests {
 
   protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      configurationsFixture.enableTlrFeature();
+      settingsFixture.enableTlrFeature();
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      configurationsFixture.disableTlrFeature();
+      settingsFixture.disableTlrFeature();
     }
     else {
-      configurationsFixture.deleteTlrFeatureConfig();
+      settingsFixture.deleteTlrFeatureSettings();
     }
   }
 
@@ -474,15 +474,15 @@ public abstract class APITests {
     UUID cancellationTemplateId, UUID expirationTemplateId) {
 
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      configurationsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
+      settingsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      configurationsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
+      settingsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else {
-      configurationsFixture.deleteTlrFeatureConfig();
+      settingsFixture.deleteTlrFeatureSettings();
     }
   }
 

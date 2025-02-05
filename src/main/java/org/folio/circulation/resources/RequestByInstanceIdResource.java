@@ -63,7 +63,7 @@ import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
@@ -121,7 +121,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final var requestBody = routingContext.getBodyAsJson();
 
-    new ConfigurationRepository(clients).lookupTlrSettings()
+    new SettingsRepository(clients).lookupTlrSettings()
       .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher,
         repositories, itemFinder, config, requestBody)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))

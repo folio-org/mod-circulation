@@ -1,3 +1,80 @@
+## 24.3.9 2025-01-17
+* Support DCB re-request (CIRC-2198)
+
+## 24.3.8 2025-01-14
+* Fix TLR fetching issue for search slips (CIRC-2197)
+
+## 24.3.7 2025-01-13
+* Filter request by Retrieval Service Point (CIRC-2177)
+
+## 24.3.6 2025-01-10
+* Rename incorrect mod-feesfines permissions (CIRC-2219)
+
+## 24.3.5 2025-01-09
+* Fix search slips for requests queue (CIRC-2197)
+
+## 24.3.4 2024-12-19
+* Remove permission definition for Circulation Events Handlers (CIRC-2205)
+
+## 24.3.3 2024-12-12
+* Avoid self-invocation for request rules while moving requests (CIRC-2199)
+* Intermediate request support (CIRC-2182)
+
+## 24.3.2 2024-11-30
+* Add mod-settings permission blocks (CIRC-2185)
+* Fix automated patron blocks permission issue (CIRC-2185)
+* Remove new mod-settings permissions (CIRC-2183)
+* Fetch TLR settings from mod-config as fallback (CIRC-2171)
+* Update API versions (CIRC-2153)
+* Change ECS Primary request validation (CIRC-2151)
+* Allow operation replace for instance with no items (CIRC-2137)
+* Search title-level requests by both `itemId` and `instanceId` during check-in and check-out (CIRC-2125)
+* Allowed SP endpoint should support `patronGroupId` parameter (CIRC-2116)
+* Return empty result when search doesn't find anything (CIRC-2117)
+* Pass additional `includeRoutingServicePoints` parameter when needed (CIRC-2109)
+* Fetch item details across tenants (CIRC-2101)
+* Create a facade for instance search (CIRC-2072)
+* Fetch TLR settings from mod-settings (CIRC-2081)
+* Add `ecsRequestRouting` parameter to allowed-service-points (CIRC-2051)
+* Fix snapshot version (CIRC-2161)
+* Review and cleanup Module Descriptors for mod-circulation (CIRC-2139)
+
+## 24.3.1 2024-11-27
+
+* Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
+
+## 24.3.0 2024-10-31
+
+* Support floating collections (CIRC-2136)
+* Correct permissions change in MODCAL-136 (MODCAL-136)
+* Upgrade to RMB v35.3.0 (CIRC-2163)
+* Add TLR Hold requests handling to the print slips logic (CIRC-2134)
+* Add support for interface instance-storage 11.0 (CIRC-2153)
+* Upgrade the API version in the ModuleDescriptor-template.json (CIRC-2156)
+* Delete obsolete notes permission (CIRC-2154)
+* Extend the loan representation with additional fields required for Due date receipt (CIRC-2144)
+* Revert CIRC-2100 PR and rework for PrintEventDetail pagination, searching, and sorting (CIRC-2148)
+* Allow specifying item location when creating title-level requests (CIRC-2141)
+* Bypass pickup SP check for Delivery requests (CIRC-2122)
+* Fetch print details while fetching request details based on CQL query (CIRC-2100)
+* Error message - after service point changes from `yes` to `no` as Pickup location (CIRC-1980)
+* Implement POST API (CIRC-2099)
+* Add test case on enableRequestPrintDetailsSetting (CIRC-2096)
+* Create API wrapping settings CRUD (CIRC-2111)
+* Update error response status and schema for request creation (CIRC-2104)
+* Update interface holdings-storage to version 7.0 (CIRC-2095)
+* Add isDcb flag value in the loan event for Check-out (CIRC-2084)
+* Sort allowed service points by name (CIRC-2094)
+* Fix Kafka configuration (CIRC-2037)
+* Fix empty template token, `chargeDate`, in reminder notices (CIRC-2077)
+* Support override of renewal block due to reminders (CIRC-2019)
+* Keep due date when it is within recall return interval (CIRC-2043)
+* Ignore `Loan related fee/fine closed` events when loan is already closed (CIRC-2066)
+* Apply alternate loan period when multiple requests are in fulfillment in progress (CIRC-2026)
+* Add missing permissions (CIRC-2070)
+* Set returnDate for lost loans (CIRC-2044)
+* Fix item details not fully populated when response contains more than 50 loans (CIRC-2059)
+
 ## 24.2.0 2024-03-21
 
 * Update `feesfines` interface version to 19.0 (CIRC-1914)
@@ -559,9 +636,7 @@
 * Requires `loan-storage 5.3 or 6.0` (CIRC-380)
 * Requires `instance-storage 4.0, 5.0, 6.0 or 7.0` (CIRC-396)
 
-## 16.3.0 2019-06-17
-
-* Use sets for module permissions to reduce size when included in headers (CIRC-352)
+## 16.3.0 2019-06-17* Use sets for module permissions to reduce size when included in headers (CIRC-352)
 * Only fetch single record by ID when ID is not null (CIRC-359)
 * Only update request queue when loan is closed (CIRC-351)
 * Uses correct request type for instance level requests (CIRC-344)

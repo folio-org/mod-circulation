@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.EcsRequestPhase.INTERMEDIATE;
+import static org.folio.circulation.domain.EcsRequestPhase.PRIMARY;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -227,6 +229,12 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
+      EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+      if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+        log.warn("checkPolicy:: ECS TLR Hold with phase {} detected, skipping policy check", ecsRequestPhase);
+        return ofAsync(() -> records);
+      }
+
       log.info("checkPolicy:: checking policy for title-level hold");
       return completedFuture(checkPolicyForTitleLevelHold(records));
     }

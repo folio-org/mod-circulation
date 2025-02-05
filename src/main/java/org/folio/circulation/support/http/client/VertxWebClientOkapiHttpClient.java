@@ -27,7 +27,9 @@ import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.core.http.HttpMethod;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   private static final Duration DEFAULT_TIMEOUT = Duration.of(20, SECONDS);
   private static final String ACCEPT = HttpHeaderNames.ACCEPT.toString();
@@ -184,6 +186,7 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   }
 
   private HttpRequest<Buffer> withStandardHeaders(HttpRequest<Buffer> request) {
+    log.debug("withStandardHeaders:: url={}, tenantId={}", request.uri(), tenantId);
     return request
       .putHeader(ACCEPT, "application/json, text/plain")
       .putHeader(OKAPI_URL, okapiUrl.toString())

@@ -184,7 +184,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void itemShouldRemainPagedIfHoldCreatedAfterRequestHasBeenMovedToAnotherItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -208,7 +208,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMovePageTlrToAvailableItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
     val pageIlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
@@ -227,7 +227,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMovePageTlrToRecall() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
     val pageTlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
       usersFixture.james());
@@ -249,7 +249,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveRecallTlrToAnotherItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -269,7 +269,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveRecallTlrToPage() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -289,7 +289,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -308,7 +308,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(3);
 
@@ -369,7 +369,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveRequestToAnItemFromDifferentInstance() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val nod = itemsFixture.basedUponNod();
     val uprooted = itemsFixture.basedUponUprooted();
@@ -387,7 +387,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveToOrFromHoldTlr() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -416,7 +416,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveTlrToTheSameItem() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val item = itemsFixture.basedUponNod();
     val jessica = usersFixture.jessica();
@@ -435,7 +435,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveTlrWhenFeatureIsDisabled() {
-    configurationsFixture.enableTlrFeature();
+    settingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -446,7 +446,7 @@ class MoveRequestTests extends APITests {
     val firstItemHoldTlr = requestsFixture.placeTitleLevelHoldShelfRequest(firstItem.getInstanceId(),
       usersFixture.james());
 
-    configurationsFixture.disableTlrFeature();
+    settingsFixture.disableTlrFeature();
 
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
       secondItem.getId()));

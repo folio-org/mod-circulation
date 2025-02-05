@@ -18,8 +18,8 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class CollectionResourceClient implements GetManyRecordsClient {
-  private final OkapiHttpClient client;
-  private final URL collectionRoot;
+  final OkapiHttpClient client;
+  final URL collectionRoot;
 
   public CollectionResourceClient(OkapiHttpClient client, URL collectionRoot) {
     this.collectionRoot = collectionRoot;
@@ -109,7 +109,7 @@ public class CollectionResourceClient implements GetManyRecordsClient {
     return client.get(collectionRoot, cqlQuery, pageLimit, offset);
   }
 
-  private String individualRecordUrl(String id) {
+  String individualRecordUrl(String id) {
     return format("%s/%s", collectionRoot, id);
   }
 }

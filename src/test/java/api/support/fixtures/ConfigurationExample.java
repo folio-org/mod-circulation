@@ -2,10 +2,8 @@ package api.support.fixtures;
 
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
-import java.util.UUID;
-
 import api.support.builders.ConfigRecordBuilder;
-import api.support.builders.TlrSettingsConfigurationBuilder;
+import api.support.builders.PrintHoldRequestConfigurationBuilder;
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationExample {
@@ -40,33 +38,10 @@ public class ConfigurationExample {
       DEFAULT_NOTIFICATION_SCHEDULER_CONFIG_NAME, limit);
   }
 
-  public static ConfigRecordBuilder tlrFeatureEnabled() {
-    return new ConfigRecordBuilder("SETTINGS", "TLR",
-      new TlrSettingsConfigurationBuilder()
-        .withTitleLevelRequestsFeatureEnabled(true)
-        .create()
-        .encodePrettily());
-  }
-
-  public static ConfigRecordBuilder tlrFeatureDisabled() {
-    return new ConfigRecordBuilder("SETTINGS", "TLR",
-      new TlrSettingsConfigurationBuilder()
-        .withTitleLevelRequestsFeatureEnabled(false)
-        .create()
-        .encodePrettily());
-  }
-
-  public static ConfigRecordBuilder tlrFeatureConfiguration(boolean isTlrEnabled,
-    boolean holdShouldFollowCirculationRules, UUID confirmationTemplateId,
-    UUID cancellationTemplateId, UUID expirationTemplateId) {
-
-    return new ConfigRecordBuilder("SETTINGS", "TLR",
-      new TlrSettingsConfigurationBuilder()
-        .withTitleLevelRequestsFeatureEnabled(isTlrEnabled)
-        .withTlrHoldShouldFollowCirculationRules(holdShouldFollowCirculationRules)
-        .withConfirmationPatronNoticeTemplateId(confirmationTemplateId)
-        .withCancellationPatronNoticeTemplateId(cancellationTemplateId)
-        .withExpirationPatronNoticeTemplateId(expirationTemplateId)
+  public static ConfigRecordBuilder setPrintHoldRequestsEnabled(boolean enabled) {
+    return new ConfigRecordBuilder("SETTINGS", "PRINT_HOLD_REQUESTS",
+      new PrintHoldRequestConfigurationBuilder()
+        .withPrintHoldRequestsEnabled(enabled)
         .create()
         .encodePrettily());
   }

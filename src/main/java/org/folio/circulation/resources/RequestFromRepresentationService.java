@@ -5,6 +5,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.EcsRequestPhase.INTERMEDIATE;
+import static org.folio.circulation.domain.EcsRequestPhase.PRIMARY;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestType.RECALL;
@@ -51,6 +53,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -66,6 +69,7 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -95,6 +99,7 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
@@ -118,6 +123,7 @@ class RequestFromRepresentationService {
     this.loanRepository = repositories.getLoanRepository();
     this.servicePointRepository = repositories.getServicePointRepository();
     this.configurationRepository = repositories.getConfigurationRepository();
+    this.settingsRepository = repositories.getSettingsRepository();
     this.requestPolicyRepository = repositories.getRequestPolicyRepository();
 
     this.proxyRelationshipValidator = proxyRelationshipValidator;
@@ -129,7 +135,7 @@ class RequestFromRepresentationService {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
 
-    return configurationRepository.lookupTlrSettings()
+    return settingsRepository.lookupTlrSettings()
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
@@ -249,7 +255,14 @@ class RequestFromRepresentationService {
     Request request = records.getRequest();
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
-    if (request.isTitleLevel() && request.isPage()) {
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    log.info("fetchItemAndLoan:: ECS request phase is {}", ecsRequestPhase);
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("fetchItemAndLoan:: ECS request phase {} detected, using default item fetcher",
+        ecsRequestPhase);
+      itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
+    }
+    else if (request.isTitleLevel() && request.isPage()) {
       itemAndLoanFetchingFunction = this::fetchItemAndLoanForPageTlr;
     }
     else if (request.isTitleLevel() && request.isRecall()) {
@@ -534,6 +547,12 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("validateAbsenceOfItemLinkInTlr:: ECS request phase {} detected, skipping", ecsRequestPhase);
+      return of(() -> request);
+    }
+
     String itemId = request.getItemId();
     String holdingsRecordId = request.getHoldingsRecordId();
 

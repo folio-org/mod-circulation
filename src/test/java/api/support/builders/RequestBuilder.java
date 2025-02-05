@@ -64,6 +64,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   private final Tags tags;
   private final String patronComments;
   private final BlockOverrides blockOverrides;
+  private final String ecsRequestPhase;
   private final String itemLocationCode;
   private final PrintDetails printDetails;
 
@@ -77,6 +78,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       UUID.randomUUID(),
       UUID.randomUUID(),
       "Hold Shelf",
+      null,
       null,
       null,
       null,
@@ -126,6 +128,7 @@ public class RequestBuilder extends JsonBuilder implements Builder {
       new Tags((toStream(representation.getJsonObject("tags"), "tagList").collect(toList()))),
       getProperty(representation, "patronComments"),
       null,
+      getProperty(representation, "ecsRequestPhase"),
       getProperty(representation, ITEM_LOCATION_CODE),
       PrintDetails.fromRepresentation(representation)
     );
@@ -163,6 +166,11 @@ public class RequestBuilder extends JsonBuilder implements Builder {
 
       put(itemRepresentation, "barcode", itemSummary.barcode);
 
+      put(itemRepresentation, "itemEffectiveLocationId", itemSummary.itemEffectiveLocationId);
+      put(itemRepresentation, "itemEffectiveLocationName", itemSummary.itemEffectiveLocationName);
+      put(itemRepresentation, "retrievalServicePointId", itemSummary.retrievalServicePointId);
+      put(itemRepresentation, "retrievalServicePointName", itemSummary.retrievalServicePointName);
+
       put(request, "item", itemRepresentation);
     }
 
@@ -197,6 +205,10 @@ public class RequestBuilder extends JsonBuilder implements Builder {
         JsonObject processingParameters = new JsonObject().put("overrideBlocks", overrideBlocks);
         put(request, "requestProcessingParameters", processingParameters);
       }
+    }
+
+    if (ecsRequestPhase != null) {
+      put(request, "ecsRequestPhase", ecsRequestPhase);
     }
 
     if (printDetails != null) {
@@ -307,16 +319,30 @@ public class RequestBuilder extends JsonBuilder implements Builder {
   }
 
   @AllArgsConstructor
-  private static class ItemSummary {
+  public static class ItemSummary {
     private final String barcode;
+    private final String itemEffectiveLocationId;
+    private final String itemEffectiveLocationName;
+    private final String retrievalServicePointId;
+    private final String retrievalServicePointName;
 
     public static ItemSummary fromRepresentation(JsonObject representation) {
       JsonObject item = representation.getJsonObject("item");
       String barcode = null;
+      String itemEffectiveLocationId = null;
+      String itemEffectiveLocationName = null;
+      String retrievalServicePointId = null;
+      String retrievalServicePointName = null;
       if (item != null) {
         barcode = item.getString("barcode");
+        itemEffectiveLocationId = item.getString("itemEffectiveLocationId");
+        itemEffectiveLocationName = item.getString("itemEffectiveLocationName");
+        retrievalServicePointId = item.getString("retrievalServicePointId");
+        retrievalServicePointName = item.getString("retrievalServicePointName");
       }
-      return new ItemSummary(barcode);
+      return new ItemSummary(barcode, itemEffectiveLocationId,
+        itemEffectiveLocationName, retrievalServicePointId,
+        retrievalServicePointName);
     }
   }
 

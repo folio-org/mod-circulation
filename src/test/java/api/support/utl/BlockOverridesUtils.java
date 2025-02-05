@@ -13,8 +13,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public final class BlockOverridesUtils {
-  public static final String OVERRIDE_RENEWAL_PERMISSION = "circulation.override-renewal-block";
-  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block";
+  public static final String OVERRIDE_RENEWAL_PERMISSION = "circulation.override-renewal-block.post";
+  public static final String OVERRIDE_PATRON_BLOCK_PERMISSION = "circulation.override-patron-block.post";
   private static final String OVERRIDABLE_BLOCK = "overridableBlock";
 
   public static List<String> getMissingPermissions(Response response) {
