@@ -1,3 +1,11 @@
+## 24.2.7 2025-02-05
+
+* Hidden/Invisible Permission "overdue-fines-policies.item.get" is missing after Quesnelia upgrade, due to this customer not able to change due date of loans (CIRC-2160)
+
+## 24.2.6 2025-01-28
+
+* Support DCB re-resolution (CIRC-2198)
+
 ## 24.2.5 2024-04-30
 
 * Fix Kafka configuration (CIRC-2037)
