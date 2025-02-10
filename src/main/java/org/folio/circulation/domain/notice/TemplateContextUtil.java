@@ -267,7 +267,7 @@ public class TemplateContextUtil {
         .put("instanceHrid", instance.getHrid())
         .put("primaryContributor", instance.getPrimaryContributorName())
         .put("allContributors", instance.getContributorNames().collect(joining("; ")))
-        .put("yearsOfPublication", instance.getPublication().stream().
+        .put("datesOfPublication", instance.getPublication().stream().
           map(Publication::getDateOfPublication).collect(joining("; ")))
         .put("editions", String.join("; ", instance.getEditions()))
         .put("physicalDescriptions", String.join("; ", instance.getPhysicalDescriptions()));
