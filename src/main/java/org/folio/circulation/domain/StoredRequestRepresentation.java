@@ -19,7 +19,7 @@ public class StoredRequestRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject storedRequest(Request request) {
-    log.debug("storedRequest:: parameters request: {}", () -> request);
+    log.info("storedRequest:: parameters request: {}", () -> request);
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
@@ -34,7 +34,7 @@ public class StoredRequestRepresentation {
   }
 
   private static void addStoredItemProperties(JsonObject request, Item item) {
-    log.debug("addStoredItemProperties:: parameters request: {}, item: {}",
+    log.info("addStoredItemProperties:: parameters request: {}, item: {}",
       () -> request, () -> item);
     if (item == null || item.isNotFound()) {
       logUnableAddItemToTheRequest(request, item);

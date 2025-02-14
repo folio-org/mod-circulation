@@ -221,7 +221,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
-    log.debug("update:: parameters request: {}", request);
+    log.info("update:: parameters request: {}", request);
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
@@ -246,7 +246,7 @@ public class RequestRepository {
   public CompletableFuture<Result<RequestAndRelatedRecords>> create(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("create:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
+    log.info("create:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
 
     final Request request = requestAndRelatedRecords.getRequest();
 
