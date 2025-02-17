@@ -137,7 +137,7 @@ public class RequestPolicyRepository {
   private CompletableFuture<Result<String>> lookupRequestPolicyId(
     Item item, User user) {
 
-    log.debug("lookupRequestPolicyId:: parameters item: {}, user: {}", item, user);
+    log.info("lookupRequestPolicyId:: parameters item: {}, user: {}", item, user);
     if (item.isNotFound()) {
       log.info("lookupRequestPolicyId:: item is not found");
       return completedFuture(failedDueToServerError(

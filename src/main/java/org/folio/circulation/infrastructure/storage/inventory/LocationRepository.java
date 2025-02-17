@@ -109,7 +109,12 @@ public class LocationRepository {
         Location::withPrimaryServicePoint))
       .thenCompose(r -> r.after(this::loadLibrary))
       .thenCompose(r -> r.after(this::loadCampus))
-      .thenCompose(r -> r.after(this::loadInstitution));
+      .thenCompose(r -> r.after(this::loadInstitution))
+      .thenApply(result -> {
+        log.info("Item details finally: {}", item);
+        return result;
+      });
+
   }
 
   public CompletableFuture<Result<Location>> fetchLocationById(String id) {

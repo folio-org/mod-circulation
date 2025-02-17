@@ -30,6 +30,7 @@ public class StoredRequestRepresentation {
 
     removeDeliveryAddress(representation);
 
+    log.info("The final representation is {}", representation);
     return representation;
   }
 
@@ -44,8 +45,8 @@ public class StoredRequestRepresentation {
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
 
-    if (Objects.nonNull(item.getLocation())) {
-      log.info("It went inside");
+    if (Objects.nonNull(item.getLocation()) && request.getString("ecsRequestPhase") != "Primary") {
+      log.info("It went inside {}", item.getLocation());
       write(itemSummary, "itemEffectiveLocationId", item.getLocation().getId());
       write(itemSummary, "itemEffectiveLocationName",
         item.getLocation().getName());
@@ -79,6 +80,7 @@ public class StoredRequestRepresentation {
   }
 
   private static void addStoredInstanceProperties(JsonObject request, Instance instance) {
+    log.info("After item details {}", request);
     if (instance == null || instance.isNotFound()) {
       log.info("Unable to add instance properties to request {}, instance is {}",
         request.getString("id"), request.getString("instanceId"));
