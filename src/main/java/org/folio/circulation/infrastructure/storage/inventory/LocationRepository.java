@@ -79,7 +79,7 @@ public class LocationRepository {
   }
 
   public CompletableFuture<Result<Location>> getEffectiveLocation(Item item) {
-    log.debug("getEffectiveLocation:: parameters item: {}", item);
+    log.info("getEffectiveLocation:: parameters item: {}", item);
     return getLocation(item, Item::getEffectiveLocationId);
   }
 

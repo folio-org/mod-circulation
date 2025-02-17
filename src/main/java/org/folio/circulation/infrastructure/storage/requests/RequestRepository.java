@@ -187,7 +187,7 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> fetchRelatedRecords(Request request) {
-    log.debug("fetchRelatedRecords:: parameters request: {}", request);
+    log.info("fetchRelatedRecords:: parameters request: {}", request);
     return ofAsync(request)
       .thenComposeAsync(this::fetchRequester)
       .thenComposeAsync(this::fetchProxy)

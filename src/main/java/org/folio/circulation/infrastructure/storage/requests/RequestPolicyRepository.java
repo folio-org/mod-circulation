@@ -58,7 +58,7 @@ public class RequestPolicyRepository {
   public CompletableFuture<Result<RequestAndRelatedRecords>> lookupRequestPolicy(
     RequestAndRelatedRecords relatedRecords) {
 
-    log.debug("lookupRequestPolicy:: parameters relatedRecords: {}", relatedRecords);
+    log.info("lookupRequestPolicy:: parameters relatedRecords: {}", relatedRecords);
 
     Request request = relatedRecords.getRequest();
 
