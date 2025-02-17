@@ -45,7 +45,7 @@ public class StoredRequestRepresentation {
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
 
-    if (Objects.nonNull(item.getLocation()) && request.getString("ecsRequestPhase") != "Primary") {
+    if (Objects.nonNull(item.getLocation()) && item.getLocation().getId()!=null) {
       log.info("It went inside {}", item.getLocation());
       write(itemSummary, "itemEffectiveLocationId", item.getLocation().getId());
       write(itemSummary, "itemEffectiveLocationName",
