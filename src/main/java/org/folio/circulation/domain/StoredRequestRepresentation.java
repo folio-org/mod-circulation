@@ -45,6 +45,7 @@ public class StoredRequestRepresentation {
     write(itemSummary, "barcode", item.getBarcode());
 
     if (Objects.nonNull(item.getLocation())) {
+      log.info("It went inside");
       write(itemSummary, "itemEffectiveLocationId", item.getLocation().getId());
       write(itemSummary, "itemEffectiveLocationName",
         item.getLocation().getName());
@@ -55,6 +56,24 @@ public class StoredRequestRepresentation {
         write(itemSummary, "retrievalServicePointName",
           item.getLocation().getPrimaryServicePoint().getName());
       }
+    }
+    else {
+      log.info("Yes here");
+      JsonObject itemJson = request.getJsonObject("item");
+      if(itemJson!=null) {
+        log.info("Inside the itemJson {}", itemJson);
+        write(itemSummary, "itemEffectiveLocationId", itemJson.getString("itemEffectiveLocationId"));
+        write(itemSummary, "itemEffectiveLocationName",
+          itemJson.getString("itemEffectiveLocationName"));
+
+        if (Objects.nonNull(item.getLocation().getPrimaryServicePoint())) {
+          write(itemSummary, "retrievalServicePointId",
+            itemJson.getString("retrievalServicePointId"));
+          write(itemSummary, "retrievalServicePointName",
+            itemJson.getString("retrievalServicePointName"));
+        }
+      }
+
     }
     request.put("item", itemSummary);
   }
