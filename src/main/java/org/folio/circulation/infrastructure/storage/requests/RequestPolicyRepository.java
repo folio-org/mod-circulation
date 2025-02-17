@@ -147,7 +147,8 @@ public class RequestPolicyRepository {
     String materialTypeId = item.getMaterialTypeId();
     String patronGroupId = user.getPatronGroupId();
     String loanTypeId = item.getLoanTypeId();
-    String locationId = item.getEffectiveLocationId();
+    String locationId = item.getEffectiveLocationId() != null ? item.getEffectiveLocationId() : "9d1b77e8-f02e-4b7f-b296-3f2042ddac54";
+    // Add Primary ECSRequestPhase check in the above line
 
     log.info(
       "Applying request rules for material type: {}, patron group: {}, loan type: {}, location: {}",

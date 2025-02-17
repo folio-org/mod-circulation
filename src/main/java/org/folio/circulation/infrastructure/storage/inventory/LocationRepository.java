@@ -99,10 +99,12 @@ public class LocationRepository {
 
     if (item == null || locationIdGetter.apply(item) == null) {
       log.info("getLocation:: item or locationId is null");
+      // Maybe here fetch the location from data tenant.
       return ofAsync(() -> Location.unknown(null));
     }
 
-    return fetchLocationById(locationIdGetter.apply(item))
+    return fetchLocationById(locationIdGetter.apply(item)) // Here check if location is not present then its data tenant (search API)
+      // then use DCB location as default. But, make sure to still persist the item's effective location id and name in the request.
       .thenCompose(combineAfter(this::fetchPrimaryServicePoint,
         Location::withPrimaryServicePoint))
       .thenCompose(r -> r.after(this::loadLibrary))
