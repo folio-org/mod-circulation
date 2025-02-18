@@ -40,11 +40,16 @@ public class UpdateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("replaceRequest:: parameters requestAndRelatedRecords: {}",
+    log.info("replaceRequest:: parameters requestAndRelatedRecords: {}",
       () -> requestAndRelatedRecords);
     Request updated = requestAndRelatedRecords.getRequest();
 
-    return requestRepository.getById(updated.getId())
+
+      return requestRepository.getById(updated.getId())
+        .thenApply(originalRequest -> {
+          log.info("replaceRequest:: retrieved originalRequest: {}", originalRequest);
+          return originalRequest;
+        })
       .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))

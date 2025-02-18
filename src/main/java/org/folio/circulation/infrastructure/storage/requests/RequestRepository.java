@@ -178,8 +178,16 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> getById(String id) {
-    return fetchRequest(id)
-      .thenCompose(r -> r.after(this::fetchRelatedRecords));
+   return fetchRequest(id)
+      .thenApply(result -> {
+        log.info("getById:: fetched original request: {}", result);
+        return result;
+      })
+      .thenCompose(r -> r.after(this::fetchRelatedRecords)
+        .thenApply(result -> {
+          log.info("getById:: fetched related original reqqq records: {}", result);
+          return result;
+        }));
   }
 
   public CompletableFuture<Result<Request>> getByIdWithoutRelatedRecords(String id) {
@@ -237,7 +245,7 @@ public class RequestRepository {
   public CompletableFuture<Result<RequestAndRelatedRecords>> update(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("update:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
+    log.info("update:: parameters requestAndRelatedRecords: {}", requestAndRelatedRecords);
 
     return update(requestAndRelatedRecords.getRequest())
       .thenApply(r -> r.map(requestAndRelatedRecords::withRequest));

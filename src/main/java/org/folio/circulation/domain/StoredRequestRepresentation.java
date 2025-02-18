@@ -66,13 +66,10 @@ public class StoredRequestRepresentation {
         write(itemSummary, "itemEffectiveLocationId", itemJson.getString("itemEffectiveLocationId"));
         write(itemSummary, "itemEffectiveLocationName",
           itemJson.getString("itemEffectiveLocationName"));
-
-        if (Objects.nonNull(item.getLocation().getPrimaryServicePoint())) {
           write(itemSummary, "retrievalServicePointId",
             itemJson.getString("retrievalServicePointId"));
           write(itemSummary, "retrievalServicePointName",
             itemJson.getString("retrievalServicePointName"));
-        }
       }
 
     }
