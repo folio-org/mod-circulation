@@ -320,7 +320,8 @@
             "circulation.loans.item.put"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.item.put"
+            "modperms.circulation.loans.item.put",
+            "overdue-fines-policies.item.get"
           ]
         },
         {
