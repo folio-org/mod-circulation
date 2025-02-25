@@ -1,6 +1,5 @@
 package api.requests;
 
-import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
@@ -26,12 +25,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import api.support.fakes.FakePubSub;
-import org.awaitility.Awaitility;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
