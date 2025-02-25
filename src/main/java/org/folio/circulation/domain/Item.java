@@ -264,6 +264,14 @@ public class Item {
     return description.getYearCaption();
   }
 
+  public String getAccessionNumber() {
+    return description.getAccessionNumber();
+  }
+
+  public Collection<String> getAdministrativeNotes() {
+    return description.getAdministrativeNotes();
+  }
+
   private ServicePoint getPrimaryServicePoint() {
     return location.getPrimaryServicePoint();
   }
