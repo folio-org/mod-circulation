@@ -31,6 +31,7 @@ import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.Publication;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -199,6 +200,7 @@ public class TemplateContextUtil {
     log.debug("createItemContext:: parameters item: {}", item);
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
+    String administrativeNotes = String.join("; ", item.getAdministrativeNotes());
 
     JsonObject itemContext = createInstanceContext(item.getInstance(), item)
       .put("barcode", item.getBarcode())
@@ -212,7 +214,9 @@ public class TemplateContextUtil {
       .put("copy", copyNumber)
       .put("numberOfPieces", item.getNumberOfPieces())
       .put("displaySummary", item.getDisplaySummary())
-      .put("descriptionOfPieces", item.getDescriptionOfPieces());
+      .put("descriptionOfPieces", item.getDescriptionOfPieces())
+      .put("accessionNumber", item.getAccessionNumber())
+      .put("administrativeNotes", administrativeNotes);
 
     Location location = (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) ?
       item.getFloatDestinationLocation() : item.getLocation();
@@ -260,8 +264,13 @@ public class TemplateContextUtil {
       instanceContext
         .put("title", item != null && item.isDcbItem() ?
           item.getDcbItemTitle() : instance.getTitle())
+        .put("instanceHrid", instance.getHrid())
         .put("primaryContributor", instance.getPrimaryContributorName())
-        .put("allContributors", instance.getContributorNames().collect(joining("; ")));
+        .put("allContributors", instance.getContributorNames().collect(joining("; ")))
+        .put("datesOfPublication", instance.getPublication().stream().
+          map(Publication::getDateOfPublication).collect(joining("; ")))
+        .put("editions", String.join("; ", instance.getEditions()))
+        .put("physicalDescriptions", String.join("; ", instance.getPhysicalDescriptions()));
     }
 
     return instanceContext;

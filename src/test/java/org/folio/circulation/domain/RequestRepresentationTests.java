@@ -127,11 +127,12 @@ class RequestRepresentationTests {
       = new ServicePoint(SERVICE_POINT_ID.toString(), SERVICE_POINT_NAME_VALUE, "cd1", true,
       "Circulation Desk", null, null, null, null);
 
-    Instance instance = new Instance(UUID.randomUUID().toString(), null,
+    Instance instance = new Instance(UUID.randomUUID().toString(), "1234", null,
       List.of(new Identifier(IDENTIFIER_ID.toString(), IDENTIFIER_VALUE)),
       emptyList(),
       List.of(new Publication("fake publisher", "fake place", "2016", null)),
-      List.of("First American Edition"));
+      List.of("First American Edition"),
+      List.of("Hardback"));
 
     JsonObject itemJson = new JsonObject()
       .put("effectiveCallNumberComponents", new JsonObject()

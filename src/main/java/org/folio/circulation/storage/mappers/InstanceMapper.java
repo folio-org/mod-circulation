@@ -17,9 +17,11 @@ import io.vertx.core.json.JsonObject;
 public class InstanceMapper {
   public Instance toDomain(JsonObject representation) {
     return new Instance(getProperty(representation, "id"),
+      getProperty(representation, "hrid"),
       getProperty(representation, "title"),
       mapIdentifiers(representation), mapContributors(representation),
-      mapPublication(representation), mapEditions(representation));
+      mapPublication(representation), mapEditions(representation),
+      mapPhysicalDescriptions(representation));
   }
 
   private List<Contributor> mapContributors(JsonObject representation) {
@@ -36,4 +38,12 @@ public class InstanceMapper {
       .map(String.class::cast)
       .collect(Collectors.toList());
   }
+
+  private List<String> mapPhysicalDescriptions(JsonObject representation) {
+    return getArrayProperty(representation, "physicalDescriptions")
+      .stream()
+      .map(String.class::cast)
+      .collect(Collectors.toList());
+  }
+
 }

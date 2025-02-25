@@ -10,21 +10,21 @@ import org.junit.jupiter.api.Test;
 class InstanceTests {
   @Test
   void cannotHaveANullCollectionOfIdentifiers() {
-    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "Title", null, emptyList(), emptyList(), emptyList()));
+    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "1234", "Title", null, emptyList(), emptyList(), emptyList(), emptyList()));
   }
 
   @Test
   void cannotHaveANullCollectionOfContributors() {
-    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "Title", emptyList(), null, emptyList(), emptyList()));
+    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "1234", "Title", emptyList(), null, emptyList(), emptyList(), emptyList()));
   }
 
   @Test
   void cannotHaveANullCollectionOfPublication() {
-    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "Title", emptyList(), emptyList(), null, emptyList()));
+    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "1234", "Title", emptyList(), emptyList(), null, emptyList(), emptyList()));
   }
 
   @Test
   void cannotHaveANullCollectionOfEditions() {
-    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "Title", emptyList(), emptyList(), emptyList(), null));
+    assertThrows(NullPointerException.class, () -> new Instance(UUID.randomUUID().toString(), "1234", "Title", emptyList(), emptyList(), emptyList(), null, emptyList()));
   }
 }
