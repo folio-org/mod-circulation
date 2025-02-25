@@ -76,7 +76,7 @@ public class InventoryMapper {
         .put("callNumberSuffix", callNumberComponents.getSuffix());
     }
 
-    log.info("createItemContext:: result {}", itemContext);
+    log.debug("createItemContext:: result {}", itemContext);
     return itemContext;
   }
 

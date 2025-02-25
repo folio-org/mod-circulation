@@ -72,13 +72,14 @@ public class StaffSlipMapper {
       "entries: {}, primaryServicePoint: {}, slipsCollectionName: {}",
       entries, primaryServicePoint, slipsCollectionName);
     if (primaryServicePoint == null) {
-      log.info("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePoint object is null");
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePoint is null");
       return entries;
     }
+    log.info("addPrimaryServicePointNameToStaffSlipContext:: primaryServicePointName: {}",
+      primaryServicePoint::getName);
 
     if (entries == null) {
-      log.info("addPrimaryServicePointNameToStaffSlipContext:: entries JsonObject is null, " +
-        "primaryServicePointName: {}", primaryServicePoint.getName());
+      log.info("addPrimaryServicePointNameToStaffSlipContext:: entries is null");
       return new JsonObject();
     }
 
@@ -89,9 +90,7 @@ public class StaffSlipMapper {
       .filter(Objects::nonNull)
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
-    log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}, " +
-      "primaryServicePointName: {}", () -> entries, primaryServicePoint::getName);
-
+    log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}", entries);
     return entries;
   }
 }
