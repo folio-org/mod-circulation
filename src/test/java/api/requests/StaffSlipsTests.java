@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
@@ -25,9 +26,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import api.support.fakes.FakePubSub;
+import org.awaitility.Awaitility;
 import org.folio.circulation.domain.CallNumberComponents;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
@@ -639,6 +643,35 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, thirdHoldRequest, rebecca);
   }
 
+  @Test
+  void excludeILRPickSlipCountWhenCreatingTLRPageRequest() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    settingsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId)
+      .by(usersFixture.charlotte()));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+
+    Response response = SlipsType.PICK_SLIPS.get(pickupServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
@@ -737,4 +770,6 @@ class StaffSlipsTests extends APITests {
     }
 
   }
+
+
 }
