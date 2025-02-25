@@ -91,7 +91,7 @@ public class UserMapper {
 
   private static String getCountryNameByCode(String code) {
     if (StringUtils.isEmpty(code) || !Stream.of(Locale.getISOCountries()).toList().contains(code)) {
-      log.info("getCountryNameByCodeIgnoreCase:: Invalid country code {}", code);
+      log.info("getCountryNameByCode:: Invalid country code {}", code);
       return null;
     }
     return new Locale("",code).getDisplayName();
