@@ -30,6 +30,7 @@ public class CheckOutByBarcodeRequest {
   public static final String SERVICE_POINT_ID = "servicePointId";
   public static final String LOAN_DATE = "loanDate";
   public static final String OVERRIDE_BLOCKS = "overrideBlocks";
+  public static final String FORCE_LOAN_POLICY_ID = "forceLoanPolicyId";
 
   private final String loanDate;
   private final String itemBarcode;
@@ -37,6 +38,7 @@ public class CheckOutByBarcodeRequest {
   private final String proxyUserBarcode;
   private final String checkoutServicePointId;
   private final BlockOverrides blockOverrides;
+  private final String forceLoanPolicyId;
 
   public static CheckOutByBarcodeRequest fromJson(JsonObject request) {
     log.debug("fromJson:: parameters request: {}", request);
@@ -48,9 +50,10 @@ public class CheckOutByBarcodeRequest {
     final String checkoutServicePointId = getProperty(request, SERVICE_POINT_ID);
     final BlockOverrides blockOverrides = BlockOverrides.from(
       getObjectProperty(request, OVERRIDE_BLOCKS));
+    final String forceLoanPolicyId = getProperty(request, FORCE_LOAN_POLICY_ID);
 
     return new CheckOutByBarcodeRequest(defaultLoanDate(loanDate), itemBarcode, userBarcode,
-      proxyUserBarcode, checkoutServicePointId, blockOverrides);
+      proxyUserBarcode, checkoutServicePointId, blockOverrides, forceLoanPolicyId);
   }
 
   private static String defaultLoanDate(String loanDate) {
