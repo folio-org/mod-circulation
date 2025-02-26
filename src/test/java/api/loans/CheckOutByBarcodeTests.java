@@ -357,7 +357,7 @@ class CheckOutByBarcodeTests extends APITests {
   @Test
   void canCheckOutUsingForcedLoanPolicyId() {
 
-    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
     IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
     IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
 
