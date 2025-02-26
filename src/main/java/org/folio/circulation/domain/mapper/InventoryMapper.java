@@ -8,7 +8,6 @@ import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Publication;
-import org.folio.circulation.domain.Request;
 
 import static java.util.stream.Collectors.joining;
 
@@ -17,12 +16,6 @@ public class InventoryMapper {
   private static final Logger log = LogManager.getLogger(InventoryMapper.class);
 
   private InventoryMapper() {
-  }
-
-  public static JsonObject createItemContext(Request request) {
-    return request.hasItem()
-      ? createItemContext(request.getItem())
-      : createInstanceContext(request.getInstance(), request.getItem());
   }
 
   public static JsonObject createItemContext(Item item) {
