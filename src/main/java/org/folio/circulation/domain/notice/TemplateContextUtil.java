@@ -76,12 +76,18 @@ public class TemplateContextUtil {
     JsonObject requestNoticeContext = new JsonObject()
       .put(USER, UserMapper.createUserContext(request.getRequester()))
       .put(REQUEST, RequestMapper.createRequestContext(request))
-      .put(ITEM, InventoryMapper.createItemContext(request));
+      .put(ITEM, createItemContext(request));
 
     if (request.hasLoan()) {
       requestNoticeContext.put(LOAN, createLoanContext(request.getLoan()));
     }
     return requestNoticeContext;
+  }
+
+  private static JsonObject createItemContext(Request request) {
+    return request.hasItem()
+      ? InventoryMapper.createItemContext(request.getItem())
+      : InventoryMapper.createInstanceContext(request.getInstance(), request.getItem());
   }
 
   public static JsonObject createCheckInContext(CheckInContext context) {

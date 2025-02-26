@@ -34,22 +34,22 @@ public class StaffSlipMapper {
 
   public static JsonObject createStaffSlipContext(Request request, Item item) {
     JsonObject staffSlipContext = new JsonObject();
-    writeItem(staffSlipContext, item);
+    staffSlipContext.put(ITEM, createRequestItemContext(request, item));
     writeRequest(staffSlipContext, request);
     write(staffSlipContext, CURRENT_DATE_TIME, ClockUtil.getZonedDateTime());
     return staffSlipContext;
   }
 
-  private static void writeItem(JsonObject staffSlipContext, Item item) {
+  private static JsonObject createRequestItemContext(Request request, Item item) {
     if (item == null) {
-      log.info("writeItem:: item is null");
-      return;
+      log.info("createItemContext:: item is null");
+      return InventoryMapper.createInstanceContext(request.getInstance(), null);
     }
     JsonObject itemContext = InventoryMapper.createItemContext(item);
     if (item.getLastCheckIn() != null) {
       write(itemContext, "lastCheckedInDateTime", item.getLastCheckIn().getDateTime());
     }
-    staffSlipContext.put(ITEM, itemContext);
+    return itemContext;
   }
 
   private static void writeRequest(JsonObject staffSlipContext, Request request) {
