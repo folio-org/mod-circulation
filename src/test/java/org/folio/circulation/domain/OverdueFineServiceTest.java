@@ -73,6 +73,7 @@ class OverdueFineServiceTest {
   private static final String FEE_FINE_TYPE = "Overdue fine";
   private static final String ITEM_MATERIAL_TYPE_NAME = "book";
   private static final String TITLE = "title";
+  private static final String INSTANCE_HRID = "1234";
   private static final String BARCODE = "barcode";
   private static final String CALL_NUMBER = "call-number";
   private static final User LOGGED_IN_USER =
@@ -613,7 +614,7 @@ class OverdueFineServiceTest {
       .withLocation(new Location(null, LOCATION_NAME, null, null, emptyList(),
         SERVICE_POINT_ID, false, Institution.unknown(), Campus.unknown(), Library.unknown(),
         ServicePoint.unknown()))
-      .withInstance(new Instance(UUID.randomUUID().toString(), TITLE, emptyList(), contributors, emptyList(), emptyList()))
+      .withInstance(new Instance(UUID.randomUUID().toString(), INSTANCE_HRID, TITLE, emptyList(), contributors, emptyList(), emptyList(), emptyList()))
       .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_ID.toString(), ITEM_MATERIAL_TYPE_NAME, null));
   }
 
