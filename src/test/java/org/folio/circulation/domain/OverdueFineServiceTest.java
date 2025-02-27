@@ -167,7 +167,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -253,7 +253,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(0)));
 
     if (renewal) {
@@ -286,7 +286,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(null)));
@@ -326,7 +326,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(5)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -364,7 +364,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -529,7 +529,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
