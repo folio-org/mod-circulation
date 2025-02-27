@@ -147,6 +147,10 @@ public class Item {
     return instance.getIdentifiers().stream();
   }
 
+  public String getInstanceHrid() {
+    return instance.getHrid();
+  }
+
   public String getBarcode() {
     return description.getBarcode();
   }
@@ -165,6 +169,10 @@ public class Item {
 
   public Stream<Publication> getPublication() {
     return instance.getPublication().stream();
+  }
+
+  public Collection<String> getDatesOfPublication() {
+    return getPublication().map(Publication::getDateOfPublication).toList();
   }
 
   public String getCallNumber() {
@@ -266,6 +274,14 @@ public class Item {
 
   public String getAccessionNumber() {
     return description.getAccessionNumber();
+  }
+
+  public Collection<String> getEditions() {
+    return instance.getEditions();
+  }
+
+  public Collection<String> getPhysicalDescriptions() {
+    return instance.getPhysicalDescriptions();
   }
 
   public Collection<String> getAdministrativeNotes() {
