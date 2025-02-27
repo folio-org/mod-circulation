@@ -3,11 +3,13 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeDryRunRequest;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.support.RouteRegistration;
@@ -41,14 +43,15 @@ public class CheckOutByBarcodeDryRunResource extends Resource {
   }
 
   private void dryRunCheckOut(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
+    var context = new WebContext(routingContext);
     var request = CheckOutByBarcodeDryRunRequest.fromJson(
       routingContext.body().asJsonObject());
     log.info("dryRunCheckOut:: request: {}", () -> request);
     var checkOutByBarcodeRequest = new CheckOutByBarcodeRequest(null,
-      request.getItemBarcode(), request.getUserBarcode(), request.getProxyUserBarcode(), null, null);
+      request.getItemBarcode(), request.getUserBarcode(), request.getProxyUserBarcode(),
+      UUID.randomUUID().toString(), BlockOverrides.noOverrides());
 
-    checkOutByBarcodeResource.checkOut(checkOutByBarcodeRequest, routingContext, true)
+    checkOutByBarcodeResource.checkOut(checkOutByBarcodeRequest, routingContext, context, true)
       .thenApply(r -> r.next(this::mapToResponse))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse);

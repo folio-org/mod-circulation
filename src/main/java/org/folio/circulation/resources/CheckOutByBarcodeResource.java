@@ -84,7 +84,6 @@ public class CheckOutByBarcodeResource extends Resource {
   private OverridingErrorHandler errorHandler;
   private CheckOutValidators validators;
   private Clients clients;
-  private WebContext context;
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -100,11 +99,11 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private void checkOut(RoutingContext routingContext) {
-    context = new WebContext(routingContext);
+    var context = new WebContext(routingContext);
     var request = CheckOutByBarcodeRequest.fromJson(routingContext.body().asJsonObject());
     var loanRepresentation = new LoanRepresentation();
 
-    checkOut(request, routingContext, false)
+    checkOut(request, routingContext, context, false)
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(this::createdLoanFrom)
@@ -112,7 +111,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(CheckOutByBarcodeRequest request,
-    RoutingContext routingContext, boolean isDryRun) {
+    RoutingContext routingContext, WebContext context, boolean isDryRun) {
 
     clients = Clients.create(context, client);
     userRepository = new UserRepository(clients);
@@ -158,11 +157,13 @@ public class CheckOutByBarcodeResource extends Resource {
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
-      .thenCompose(r -> r.after(records -> proceedIfNotDryRunCheckOut(records, routingContext, isDryRun)));
+      .thenCompose(r -> r.after(records -> proceedIfNotDryRunCheckOut(records, routingContext,
+        context, isDryRun)));
 }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> proceedIfNotDryRunCheckOut(
-    LoanAndRelatedRecords loanAndRelatedRecords, RoutingContext routingContext, boolean isDryRun) {
+    LoanAndRelatedRecords loanAndRelatedRecords, RoutingContext routingContext,
+    WebContext context, boolean isDryRun) {
 
     if (isDryRun) {
        return ofAsync(loanAndRelatedRecords);
