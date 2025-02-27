@@ -121,16 +121,15 @@ public class CheckOutByBarcodeResource extends Resource {
     requestRepository = RequestRepository.using(clients, itemRepository,
       userRepository, loanRepository);
     requestQueueRepository = new RequestQueueRepository(requestRepository);
-    final var loanPolicyRepository = new LoanPolicyRepository(clients);
-    final var overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
-    final var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    final var configurationRepository = new ConfigurationRepository(clients);
-
+    settingsRepository = new SettingsRepository(clients);
     var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     errorHandler = new OverridingErrorHandler(permissions);
     validators = new CheckOutValidators(request, clients, errorHandler,
       permissions, loanRepository);
-    settingsRepository = new SettingsRepository(clients);
+    var loanPolicyRepository = new LoanPolicyRepository(clients);
+    var overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    var configurationRepository = new ConfigurationRepository(clients);
 
     return ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
@@ -169,23 +168,20 @@ public class CheckOutByBarcodeResource extends Resource {
        return ofAsync(loanAndRelatedRecords);
     }
     AtomicReference<String> checkOutLockId = new AtomicReference<>();
-    LoanService loanService = new LoanService(clients);
-    PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
-    PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    final var requestQueueUpdate = UpdateRequestQueue.using(clients, requestRepository,
+    var loanService = new LoanService(clients);
+    var patronGroupRepository = new PatronGroupRepository(clients);
+    var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
+    var requestQueueUpdate = UpdateRequestQueue.using(clients, requestRepository,
       requestQueueRepository);
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-    final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients, PatronActionSessionRepository.using(
-        clients, loanRepository, userRepository));
-    final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
-    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(
-      clients, routingContext);
-    LoanScheduledNoticeService scheduledNoticeService = new LoanScheduledNoticeService(
-      scheduledNoticesRepository, patronNoticePolicyRepository);
-    ReminderFeeScheduledNoticeService reminderFeeScheduledNoticesService =
-      new ReminderFeeScheduledNoticeService(clients);
+    var eventPublisher = new EventPublisher(routingContext);
+    var patronActionSessionService = PatronActionSessionService.using(clients,
+      PatronActionSessionRepository.using(clients, loanRepository, userRepository));
+    var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
+    var checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
+    var scheduledNoticeService = new LoanScheduledNoticeService(scheduledNoticesRepository,
+      patronNoticePolicyRepository);
+    var reminderFeeScheduledNoticesService = new ReminderFeeScheduledNoticeService(clients);
 
     return ofAsync(loanAndRelatedRecords)
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
