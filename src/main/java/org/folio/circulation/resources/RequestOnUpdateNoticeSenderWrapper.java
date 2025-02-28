@@ -26,8 +26,8 @@ public class RequestOnUpdateNoticeSenderWrapper {
     if(true) {
       requestNoticeSender.sendNoticeOnRequestCreated(requestAndRelatedRecords);
     }
-    requestNoticeSender.sendNoticeOnRequestUpdated(requestAndRelatedRecords);
-    return succeeded(requestAndRelatedRecords);
+    return requestNoticeSender.sendNoticeOnRequestUpdated(requestAndRelatedRecords);
+//    return succeeded(requestAndRelatedRecords);
 
   }
 }
