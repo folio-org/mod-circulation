@@ -174,7 +174,6 @@ public class CheckOutByBarcodeResource extends Resource {
     AtomicReference<String> checkOutLockId = new AtomicReference<>();
     var loanService = new LoanService(clients);
     var patronGroupRepository = new PatronGroupRepository(clients);
-//    var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     var requestQueueUpdate = UpdateRequestQueue.using(clients, requestRepository,
       requestQueueRepository);
