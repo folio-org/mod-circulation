@@ -39,7 +39,8 @@ public class UpdateRequestService {
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> replaceRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
-
+    log.info("ANTON:: parameters requestAndRelatedRecords: {}",
+      () -> requestAndRelatedRecords);
     log.debug("replaceRequest:: parameters requestAndRelatedRecords: {}",
       () -> requestAndRelatedRecords);
     Request updated = requestAndRelatedRecords.getRequest();

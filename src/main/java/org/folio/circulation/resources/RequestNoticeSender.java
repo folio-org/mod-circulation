@@ -107,7 +107,7 @@ public class RequestNoticeSender {
 
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords records) {
-
+    log.info("ANTON:: sendNoticeOnRequestCreated:: parameters records: {}", records);
     log.debug("sendNoticeOnRequestCreated:: parameters records: {}", () -> records);
     Request request = records.getRequest();
     recallRequestCount = records.getRequestQueue().getRequests()
