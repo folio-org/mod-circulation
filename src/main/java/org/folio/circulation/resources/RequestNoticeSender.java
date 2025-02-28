@@ -97,8 +97,8 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnMediatedRequestUpdate(RequestAndRelatedRecords requestAndRelatedRecords) {
     Request request = requestAndRelatedRecords.getRequest();
     Request originalRequest = requestAndRelatedRecords.getOriginalRequest();
-    log.info("ANTON:: replaceRequest:: parameters requestAndRelatedRecords: {}",
-      requestAndRelatedRecords);
+    log.info("ANTON:: REQUEST::  {}", request);
+    log.info("ANTON:: ORIGINAL REQUEST::{}",originalRequest);
     if(true) {
       return sendNoticeOnRequestCreated(requestAndRelatedRecords);
     }
