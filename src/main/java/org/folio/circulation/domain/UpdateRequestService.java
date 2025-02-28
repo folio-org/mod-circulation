@@ -55,7 +55,7 @@ public class UpdateRequestService {
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p ->
           eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnMediatedRequestUpdate))))
+        .thenApplyAsync(r -> r.next(requestNoticeSender::sendNoticeOnMediatedRequestUpdate))))
         .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
   }
 
