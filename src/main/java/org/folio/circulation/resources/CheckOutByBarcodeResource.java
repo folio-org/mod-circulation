@@ -81,6 +81,7 @@ public class CheckOutByBarcodeResource extends Resource {
   private UserRepository userRepository;
   private ItemRepository itemRepository;
   private SettingsRepository settingsRepository;
+  private PatronNoticePolicyRepository patronNoticePolicyRepository;
   private OverridingErrorHandler errorHandler;
   private CheckOutValidators validators;
   private Clients clients;
@@ -121,6 +122,7 @@ public class CheckOutByBarcodeResource extends Resource {
       userRepository, loanRepository);
     requestQueueRepository = new RequestQueueRepository(requestRepository);
     settingsRepository = new SettingsRepository(clients);
+    patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     errorHandler = new OverridingErrorHandler(permissions);
     validators = new CheckOutValidators(request, clients, errorHandler,
@@ -157,6 +159,7 @@ public class CheckOutByBarcodeResource extends Resource {
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
+      .thenComposeAsync(r -> r.after(this::lookupNoticePolicyId))
       .thenCompose(r -> r.after(records -> proceedIfNotDryRunCheckOut(records, routingContext,
         context, isDryRun)));
 }
@@ -171,7 +174,7 @@ public class CheckOutByBarcodeResource extends Resource {
     AtomicReference<String> checkOutLockId = new AtomicReference<>();
     var loanService = new LoanService(clients);
     var patronGroupRepository = new PatronGroupRepository(clients);
-    var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+//    var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     var requestQueueUpdate = UpdateRequestQueue.using(clients, requestRepository,
       requestQueueRepository);
@@ -204,6 +207,15 @@ public class CheckOutByBarcodeResource extends Resource {
         userRepository, errorHandler)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.next(reminderFeeScheduledNoticesService::scheduleFirstReminder));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupNoticePolicyId(
+    LoanAndRelatedRecords records) {
+
+    return patronNoticePolicyRepository.lookupPolicyId(records.getItem(), records.getUser())
+      .thenApply(r -> r.map(circRuleMatch -> records.getLoan().withPatronNoticePolicyId(
+        circRuleMatch.getPolicyId())))
+      .thenApply(r -> r.map(records::withLoan));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLockIfNeededOrFail(

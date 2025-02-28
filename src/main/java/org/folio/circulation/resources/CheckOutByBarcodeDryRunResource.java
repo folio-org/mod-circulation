@@ -63,6 +63,7 @@ public class CheckOutByBarcodeDryRunResource extends Resource {
     jsonResponse.put("loanPolicyId", loan.getLoanPolicyId());
     jsonResponse.put("overdueFinePolicyId", loan.getOverdueFinePolicyId());
     jsonResponse.put("lostItemPolicyId", loan.getLostItemPolicyId());
+    jsonResponse.put("patronNoticePolicyId", loan.getPatronNoticePolicyId());
     log.info("mapToResponse:: result: {}", () -> jsonResponse);
 
     return succeeded(jsonResponse);

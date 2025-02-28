@@ -69,6 +69,12 @@ public class CheckOutFixture {
       checkOutByBarcodeDryRunUrl(), 201, "check-out-by-barcode-dry-run-request"));
   }
 
+  public CheckOutResource attemptCheckOutByBarcodeDryRun(CheckOutByBarcodeDryRunRequest request) {
+
+    return new CheckOutResource(restAssuredClient.post(request,
+      checkOutByBarcodeDryRunUrl(), 422, "check-out-by-barcode-dry-run-request"));
+  }
+
   public Response attemptCheckOutByBarcode(IndividualResource item, IndividualResource to) {
     return attemptCheckOutByBarcode(new CheckOutByBarcodeRequestBuilder()
       .forItem(item)
