@@ -59,9 +59,9 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     }
     return Result.of(relatedRecords::getLoan)
       .combineAfter(loan -> {
-        if (relatedRecords.getForceLoanPolicyId() != null) {
-          log.info("lookupLoanPolicy:: forceLoanPolicyId is set, getting Loan Policy by ID");
-          return getLoanPolicyById(relatedRecords.getForceLoanPolicyId());
+        if (relatedRecords.getForcedLoanPolicyId() != null) {
+          log.info("lookupLoanPolicy:: forcedLoanPolicyId is set, getting Loan Policy by ID: {}", relatedRecords.getForcedLoanPolicyId());
+          return getLoanPolicyById(relatedRecords.getForcedLoanPolicyId());
         } else {
           return lookupPolicy(loan);
         }

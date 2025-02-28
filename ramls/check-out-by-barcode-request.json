@@ -29,6 +29,10 @@
       "description": "Blocks to override",
       "type": "object",
       "$ref": "override-blocks.json"
+    },
+    "forcedLoanPolicyId": {
+      "description": "Forced loan policy",
+      "type": "string"
     }
   },
   "required": [

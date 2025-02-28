@@ -141,7 +141,7 @@ public class CheckOutByBarcodeResource extends Resource {
 
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
 
-    ofAsync(() -> new LoanAndRelatedRecords(request.toLoan(), request.getForceLoanPolicyId()))
+    ofAsync(() -> new LoanAndRelatedRecords(request.toLoan(), request.getForcedLoanPolicyId()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedManuallyForPatron)

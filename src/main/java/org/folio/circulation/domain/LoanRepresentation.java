@@ -31,7 +31,6 @@ public class LoanRepresentation {
     }
 
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
-
     if(loan.isDueDateChangedByNearExpireUser()) {
       log.info("extendedLoan:: due date changed by near expire user");
       extendedRepresentation.put("dueDateChangedByNearExpireUser", loan.isDueDateChangedByNearExpireUser());
