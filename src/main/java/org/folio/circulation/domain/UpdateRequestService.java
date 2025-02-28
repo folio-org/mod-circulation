@@ -55,8 +55,8 @@ public class UpdateRequestService {
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p ->
           eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
-        .thenApplyAsync(r -> r.next(requestNoticeSender::sendNoticeOnMediatedRequestUpdate))))
-        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
+        .thenApplyAsync(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated)))
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnMediatedRequestUpdate)));
   }
 
   private Result<Request> refuseWhenPatronCommentChanged(
