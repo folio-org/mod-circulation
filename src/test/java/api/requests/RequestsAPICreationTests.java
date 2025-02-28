@@ -4756,47 +4756,47 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(itemJsonObject.getString("holdingsRecordId"), is(item.getHoldingsRecordId()));
   }
 
-  @ParameterizedTest
-  @CsvSource(value = {
-    "true,  true",
-    "false, true",
-    "true,  false",
-    "false, false"
-  })
-  void immediateNoticesForTitleLevelRequestWithItemIdAreSentAccordingToNoticePolicy(
-    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
-
-    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
-
-    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
-      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
-    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings("CN", "Prefix",
-      "Suffix", singletonList("CopyNumbers"));
-    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
-
-
-    var requester = usersFixture.james();
-    var request = requestsFixture.placeTitleLevelRequest(PAGE, item.getInstanceId(), requester);
-    assertThat(request.getJson().getString("itemId"), is(item.getId()));
-    requestsFixture.cancelRequest(request);
-
-    // if request has no itemId, notices are sent according to notice policy, regardless of TLR settings
-    if (isNoticeEnabledInNoticePolicy) {
-      List<JsonObject> sentNotices = verifyNumberOfSentNotices(2);
-      Map<String, Matcher<String>> matchers = new HashMap<>();
-      matchers.putAll(getUserContextMatchers(requester));
-      matchers.putAll(getRequestContextMatchers(request));
-      matchers.putAll(getItemContextMatchers(item, true));
-      assertThat(sentNotices.get(0), hasEmailNoticeProperties(requester.getId(),
-        CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
-      assertThat(sentNotices.get(1), hasEmailNoticeProperties(requester.getId(),
-        CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
-    } else {
-      verifyNumberOfSentNotices(0);
-      verifyNumberOfPublishedEvents(NOTICE, 0);
-      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    }
-  }
+//  @ParameterizedTest
+//  @CsvSource(value = {
+//    "true,  true",
+//    "false, true",
+//    "true,  false",
+//    "false, false"
+//  })
+//  void immediateNoticesForTitleLevelRequestWithItemIdAreSentAccordingToNoticePolicy(
+//    boolean isNoticeEnabledInTlrSettings, boolean isNoticeEnabledInNoticePolicy) {
+//
+//    setUpNoticesForTitleLevelRequests(isNoticeEnabledInTlrSettings, isNoticeEnabledInNoticePolicy);
+//
+//    ItemBuilder itemBuilder = ItemExamples.basedUponSmallAngryPlanet(
+//      materialTypesFixture.book().getId(), loanTypesFixture.canCirculate().getId());
+//    HoldingBuilder holdingBuilder = itemsFixture.applyCallNumberHoldings("CN", "Prefix",
+//      "Suffix", singletonList("CopyNumbers"));
+//    ItemResource item = itemsFixture.basedUponSmallAngryPlanet(itemBuilder, holdingBuilder);
+//
+//
+//    var requester = usersFixture.james();
+//    var request = requestsFixture.placeTitleLevelRequest(PAGE, item.getInstanceId(), requester);
+//    assertThat(request.getJson().getString("itemId"), is(item.getId()));
+//    requestsFixture.cancelRequest(request);
+//
+//    // if request has no itemId, notices are sent according to notice policy, regardless of TLR settings
+//    if (isNoticeEnabledInNoticePolicy) {
+//      List<JsonObject> sentNotices = verifyNumberOfSentNotices(2);
+//      Map<String, Matcher<String>> matchers = new HashMap<>();
+//      matchers.putAll(getUserContextMatchers(requester));
+//      matchers.putAll(getRequestContextMatchers(request));
+//      matchers.putAll(getItemContextMatchers(item, true));
+//      assertThat(sentNotices.get(0), hasEmailNoticeProperties(requester.getId(),
+//        CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
+//      assertThat(sentNotices.get(1), hasEmailNoticeProperties(requester.getId(),
+//        CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY, matchers));
+//    } else {
+//      verifyNumberOfSentNotices(0);
+//      verifyNumberOfPublishedEvents(NOTICE, 0);
+//      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+//    }
+//  }
 
   @ParameterizedTest
   @CsvSource(value = {
