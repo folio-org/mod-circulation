@@ -159,7 +159,7 @@ public class CheckOutByBarcodeResource extends Resource {
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
-      .thenComposeAsync(r -> r.after(this::lookupNoticePolicyId))
+      .thenCompose(r -> r.after(this::lookupNoticePolicyId))
       .thenCompose(r -> r.after(records -> proceedIfNotDryRunCheckOut(records, routingContext,
         context, isDryRun)));
 }
