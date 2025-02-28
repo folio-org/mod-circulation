@@ -122,13 +122,13 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
 
   public CheckOutByBarcodeRequestBuilder with(String forcedLoanPolicyId) {
     return new CheckOutByBarcodeRequestBuilder(
-            this.itemBarcode,
-            this.userBarcode,
-            this.proxyBarcode,
-            this.loanDate,
-            this.servicePointId,
-            this.overrideBlocks,
-            forcedLoanPolicyId);
+      this.itemBarcode,
+      this.userBarcode,
+      this.proxyBarcode,
+      this.loanDate,
+      this.servicePointId,
+      this.overrideBlocks,
+      forcedLoanPolicyId);
   }
 
 
