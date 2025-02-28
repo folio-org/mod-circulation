@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
-import org.folio.circulation.resources.RequestOnUpdateNoticeSenderWrapper;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
@@ -45,6 +44,7 @@ public class UpdateRequestService {
       () -> requestAndRelatedRecords);
     Request updated = requestAndRelatedRecords.getRequest();
 
+
     return requestRepository.getById(updated.getId())
       .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(o ->
@@ -55,9 +55,8 @@ public class UpdateRequestService {
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p ->
           eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
-//        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))));
-        .thenApply(r -> r.next(
-          new RequestOnUpdateNoticeSenderWrapper(requestNoticeSender)::sendOnUpd))));
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnMediatedRequestUpdate))))
+        .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated));
   }
 
   private Result<Request> refuseWhenPatronCommentChanged(

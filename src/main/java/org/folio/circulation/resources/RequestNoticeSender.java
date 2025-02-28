@@ -94,6 +94,17 @@ public class RequestNoticeSender {
 
   private long recallRequestCount = 0l;
 
+  public Result<RequestAndRelatedRecords> sendNoticeOnMediatedRequestUpdate(RequestAndRelatedRecords requestAndRelatedRecords) {
+    Request request = requestAndRelatedRecords.getRequest();
+    Request originalRequest = requestAndRelatedRecords.getOriginalRequest();
+    log.info("ANTON:: replaceRequest:: parameters requestAndRelatedRecords: {}",
+      requestAndRelatedRecords);
+    if(true) {
+      return sendNoticeOnRequestCreated(requestAndRelatedRecords);
+    }
+    return succeeded(requestAndRelatedRecords);
+  }
+
   public Result<RequestAndRelatedRecords> sendNoticeOnRequestCreated(
     RequestAndRelatedRecords records) {
 
