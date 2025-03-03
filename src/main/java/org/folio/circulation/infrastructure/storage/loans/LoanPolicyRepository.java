@@ -57,9 +57,10 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       log.info("lookupLoanPolicy:: loan or user is null");
       return ofAsync(() -> relatedRecords);
     }
-    return Result.of(relatedRecords::getLoan)
-      .combineAfter(loan -> getLoanPolicy(relatedRecords), Loan::withLoanPolicy)
-      .thenApply(mapResult(relatedRecords::withLoan));
+    return getLoanPolicy(relatedRecords)
+      .thenApply(result -> result.map(loanPolicy ->
+        relatedRecords.withLoan(relatedRecords.getLoan().withLoanPolicy(loanPolicy))
+      ));
   }
 
   public CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
