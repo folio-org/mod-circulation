@@ -30,8 +30,8 @@
       "type": "object",
       "$ref": "override-blocks.json"
     },
-    "forcedLoanPolicyId": {
-      "description": "Forced loan policy",
+    "forceLoanPolicyId": {
+      "description": "Force loan policy",
       "type": "string"
     }
   },

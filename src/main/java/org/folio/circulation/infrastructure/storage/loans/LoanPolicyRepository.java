@@ -86,10 +86,10 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicy(LoanAndRelatedRecords relatedRecords, Loan loan) {
-    if (relatedRecords.getForcedLoanPolicyId() != null) {
-      log.info("getLoanPolicy:: forcedLoanPolicyId is set, getting Loan Policy by ID: {}",
-        relatedRecords.getForcedLoanPolicyId());
-      return getLoanPolicyById(relatedRecords.getForcedLoanPolicyId());
+    if (relatedRecords.getForceLoanPolicyId() != null) {
+      log.info("getLoanPolicy:: forceLoanPolicyId is set, getting Loan Policy by ID: {}",
+        relatedRecords.getForceLoanPolicyId());
+      return getLoanPolicyById(relatedRecords.getForceLoanPolicyId());
     } else {
       return lookupPolicy(loan);
     }

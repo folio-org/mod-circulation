@@ -355,11 +355,11 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void canCheckOutUsingForcedLoanPolicyId() {
-    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateRolling();
+  void canCheckOutUsingForceLoanPolicyId() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
     IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
     IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
-
     useFallbackPolicies(loanPolicy.getId(),
       requestPoliciesFixture.allowAllRequestPolicy().getId(),
       noticePoliciesFixture.activeNotice().getId(),
@@ -375,11 +375,10 @@ class CheckOutByBarcodeTests extends APITests {
         .to(steve)
         .on(getZonedDateTime())
         .at(UUID.randomUUID())
-        .with(loanPolicy.getId().toString()));
+        .with(forceLoanPolicy.getId().toString()));
 
     final JsonObject loan = response.getJson();
-
-    loanHasLoanPolicyProperties(loan, loanPolicy);
+    loanHasLoanPolicyProperties(loan, forceLoanPolicy);
   }
 
   @Test
