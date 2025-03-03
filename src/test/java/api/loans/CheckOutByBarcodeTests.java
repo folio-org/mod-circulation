@@ -366,13 +366,10 @@ class CheckOutByBarcodeTests extends APITests {
       overdueFinePolicy.getId(),
       lostItemFeePolicy.getId());
 
-    IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
-
     final IndividualResource response = checkOutFixture.checkOutByBarcode(
       new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
         .on(getZonedDateTime())
         .at(UUID.randomUUID())
         .with(forceLoanPolicy.getId().toString()));
