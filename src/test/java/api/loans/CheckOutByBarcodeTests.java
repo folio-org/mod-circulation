@@ -374,8 +374,7 @@ class CheckOutByBarcodeTests extends APITests {
         .at(UUID.randomUUID())
         .with(forceLoanPolicy.getId().toString()));
 
-    final JsonObject loan = response.getJson();
-    loanHasLoanPolicyProperties(loan, forceLoanPolicy);
+    loanHasLoanPolicyProperties(response.getJson(), forceLoanPolicy);
   }
 
   @Test
