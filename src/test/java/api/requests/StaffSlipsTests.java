@@ -639,6 +639,35 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, thirdHoldRequest, rebecca);
   }
 
+  @Test
+  void excludeILRPickSlipCountWhenCreatingTLRPageRequest() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    settingsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId)
+      .by(usersFixture.charlotte()));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+
+    Response response = SlipsType.PICK_SLIPS.get(pickupServicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
@@ -737,4 +766,6 @@ class StaffSlipsTests extends APITests {
     }
 
   }
+
+
 }
