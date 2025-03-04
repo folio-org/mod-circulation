@@ -379,7 +379,8 @@ public class ItemRepository {
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
       .thenComposeAsync(combineAfter(locationRepository::getEffectiveLocation, Item::withLocation))
       .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
-      .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType));
+      .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType))
+      .thenCompose(CompletableFuture::completedFuture);
   }
 
   private CompletableFuture<Result<Holdings>> fetchHoldingsRecord(Item item) {

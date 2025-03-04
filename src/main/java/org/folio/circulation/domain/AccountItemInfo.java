@@ -7,14 +7,16 @@ public class AccountItemInfo {
   private final String callNumber;
   private final String location;
   private final String materialTypeId;
+  private final String materialType;
 
-  public AccountItemInfo(String itemId, String title, String barcode, String callNumber, String location, String materialTypeId) {
+  public AccountItemInfo(String itemId, String title, String barcode, String callNumber, String location, String materialTypeId, String materialType) {
     this.itemId = itemId;
     this.title = title;
     this.barcode = barcode;
     this.callNumber = callNumber;
     this.location = location;
     this.materialTypeId = materialTypeId;
+    this.materialType = materialType;
   }
 
   public String getItemId() {
@@ -39,5 +41,9 @@ public class AccountItemInfo {
 
   public String getMaterialTypeId() {
     return materialTypeId;
+  }
+
+  public String getMaterialType() {
+    return materialType;
   }
 }
