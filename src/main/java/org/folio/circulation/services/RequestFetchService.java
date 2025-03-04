@@ -79,9 +79,13 @@ public class RequestFetchService {
       return ofAsync(context.withRequests(MultipleRecords.empty()));
     }
 
-    Result<CqlQuery> typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
-    Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    Result<CqlQuery> statusAndTypeQuery = typeQuery.combine(statusQuery, CqlQuery::and);
+    var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
+    var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
+    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.ITEM.getValue());
+    var statusAndTypeQuery = requestType.equals(RequestType.PAGE)
+      ? typeQuery.combine(statusQuery, CqlQuery::and)
+      .combine(requestLevelQuery, CqlQuery::and)
+      : typeQuery.combine(statusQuery, CqlQuery::and);
 
     return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
       .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(statusAndTypeQuery))
