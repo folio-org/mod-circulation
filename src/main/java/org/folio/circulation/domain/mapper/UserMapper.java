@@ -39,6 +39,14 @@ public class UserMapper {
   private static final String POSTAL_CODE = "postalCode";
   private static final String COUNTRY_ID = "countryId";
 
+  private static final String PROP_ADDRESS_LINE_1 = "addressLine1";
+  private static final String PROP_ADDRESS_LINE_2 = "addressLine2";
+  private static final String PROP_CITY = "city";
+  private static final String PROP_REGION = "region";
+  private static final String PROP_POSTAL_CODE = "postalCode";
+  private static final String PROP_COUNTRY_ID = "countryId";
+  private static final String PROP_ADDRESS_TYPE_NAME = "addressTypeName";
+
   private UserMapper() {
   }
 
@@ -47,13 +55,13 @@ public class UserMapper {
     var address = user.getAddressByType(deliveryAddressTypeId);
     if (address != null) {
       userContext = userContext
-        .put(ADDRESS_LINE_1, address.getString("addressLine1", null))
-        .put(ADDRESS_LINE_2, address.getString("addressLine2", null))
-        .put(CITY, address.getString("city", null))
-        .put(REGION, address.getString("region", null))
-        .put(POSTAL_CODE, address.getString("postalCode", null))
-        .put(COUNTRY_ID, address.getString(COUNTRY_ID, null))
-        .put(ADDRESS_TYPE_NAME, address.getString("addressTypeName", null));
+        .put(ADDRESS_LINE_1, address.getString(PROP_ADDRESS_LINE_1, null))
+        .put(ADDRESS_LINE_2, address.getString(PROP_ADDRESS_LINE_2, null))
+        .put(CITY, address.getString(PROP_CITY, null))
+        .put(REGION, address.getString(PROP_REGION, null))
+        .put(POSTAL_CODE, address.getString(PROP_POSTAL_CODE, null))
+        .put(COUNTRY_ID, address.getString(PROP_COUNTRY_ID, null))
+        .put(ADDRESS_TYPE_NAME, address.getString(PROP_ADDRESS_TYPE_NAME, null));
     }
     return userContext;
   }
@@ -72,13 +80,13 @@ public class UserMapper {
     var primaryAddress = user.getPrimaryAddress();
     if (primaryAddress != null) {
       userContext = userContext
-        .put(PRIMARY_ADDRESS_ADDRESS_LINE_1, primaryAddress.getString("addressLine1", null))
-        .put(PRIMARY_ADDRESS_ADDRESS_LINE_2, primaryAddress.getString("addressLine2", null))
-        .put(PRIMARY_ADDRESS_CITY, primaryAddress.getString("city", null))
-        .put(PRIMARY_ADDRESS_REGION, primaryAddress.getString("region", null))
-        .put(PRIMARY_ADDRESS_POSTAL_CODE, primaryAddress.getString("postalCode", null))
-        .put(PRIMARY_ADDRESS_COUNTRY_ID, getCountryNameByCode(primaryAddress.getString(COUNTRY_ID, null)))
-        .put(PRIMARY_ADDRESS_ADDRESS_TYPE_NAME, primaryAddress.getString("addressTypeName", null));
+        .put(PRIMARY_ADDRESS_ADDRESS_LINE_1, primaryAddress.getString(PROP_ADDRESS_LINE_1, null))
+        .put(PRIMARY_ADDRESS_ADDRESS_LINE_2, primaryAddress.getString(PROP_ADDRESS_LINE_2, null))
+        .put(PRIMARY_ADDRESS_CITY, primaryAddress.getString(PROP_CITY, null))
+        .put(PRIMARY_ADDRESS_REGION, primaryAddress.getString(PROP_REGION, null))
+        .put(PRIMARY_ADDRESS_POSTAL_CODE, primaryAddress.getString(PROP_POSTAL_CODE, null))
+        .put(PRIMARY_ADDRESS_COUNTRY_ID, getCountryNameByCode(primaryAddress.getString(PROP_COUNTRY_ID, null)))
+        .put(PRIMARY_ADDRESS_ADDRESS_TYPE_NAME, primaryAddress.getString(PROP_ADDRESS_TYPE_NAME, null));
     }
     return userContext;
   }
