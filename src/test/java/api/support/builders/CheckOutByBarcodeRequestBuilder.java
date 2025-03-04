@@ -120,7 +120,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.forceLoanPolicyId);
   }
 
-  public CheckOutByBarcodeRequestBuilder with(String forceLoanPolicyId) {
+  public CheckOutByBarcodeRequestBuilder forceLoanPolicy(String forceLoanPolicyId) {
     return new CheckOutByBarcodeRequestBuilder(
       this.itemBarcode,
       this.userBarcode,

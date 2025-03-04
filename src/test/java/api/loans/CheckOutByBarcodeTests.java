@@ -372,7 +372,7 @@ class CheckOutByBarcodeTests extends APITests {
         .to(usersFixture.steve())
         .on(getZonedDateTime())
         .at(UUID.randomUUID())
-        .with(forceLoanPolicy.getId().toString()));
+        .forceLoanPolicy(forceLoanPolicy.getId().toString()));
 
     loanHasLoanPolicyProperties(response.getJson(), forceLoanPolicy);
   }
