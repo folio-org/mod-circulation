@@ -75,16 +75,6 @@ public class CheckOutByBarcodeResource extends Resource {
     FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_PUBLISH_CHECKOUT_EVENT};
   private final String rootPath;
   private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  private RequestRepository requestRepository;
-  private RequestQueueRepository requestQueueRepository;
-  private LoanRepository loanRepository;
-  private UserRepository userRepository;
-  private ItemRepository itemRepository;
-  private SettingsRepository settingsRepository;
-  private PatronNoticePolicyRepository patronNoticePolicyRepository;
-  private OverridingErrorHandler errorHandler;
-  private CheckOutValidators validators;
-  private Clients clients;
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -103,29 +93,30 @@ public class CheckOutByBarcodeResource extends Resource {
     var context = new WebContext(routingContext);
     var request = CheckOutByBarcodeRequest.fromJson(routingContext.body().asJsonObject());
     var loanRepresentation = new LoanRepresentation();
+    var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
+    var errorHandler = new OverridingErrorHandler(permissions);
 
-    checkOut(request, routingContext, context, false)
+    checkOut(request, routingContext, context, errorHandler, permissions, false)
       .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
-      .thenApply(this::createdLoanFrom)
+      .thenApply(r -> createdLoanFrom(r, errorHandler))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
   CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(CheckOutByBarcodeRequest request,
-    RoutingContext routingContext, WebContext context, boolean isDryRun) {
+    RoutingContext routingContext, WebContext context, CirculationErrorHandler errorHandler,
+    OkapiPermissions permissions, boolean isDryRun) {
 
-    clients = Clients.create(context, client);
-    userRepository = new UserRepository(clients);
-    itemRepository = new ItemRepository(clients);
-    loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    requestRepository = RequestRepository.using(clients, itemRepository,
+    var clients = Clients.create(context, client);
+    var userRepository = new UserRepository(clients);
+    var itemRepository = new ItemRepository(clients);
+    var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    var requestRepository = RequestRepository.using(clients, itemRepository,
       userRepository, loanRepository);
-    requestQueueRepository = new RequestQueueRepository(requestRepository);
-    settingsRepository = new SettingsRepository(clients);
-    patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
-    errorHandler = new OverridingErrorHandler(permissions);
-    validators = new CheckOutValidators(request, clients, errorHandler,
+    var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    var settingsRepository = new SettingsRepository(clients);
+    var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    var validators = new CheckOutValidators(request, clients, errorHandler,
       permissions, loanRepository);
     var loanPolicyRepository = new LoanPolicyRepository(clients);
     var overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
@@ -134,14 +125,14 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
-      .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), r))
+      .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), r, userRepository, errorHandler))
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedManuallyForPatron)
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron)
-      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), r))
+      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), r, userRepository, errorHandler))
       .thenApply(validators::refuseWhenUserIsInactive)
       .thenApply(validators::refuseWhenProxyUserIsInactive)
       .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
-      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), r))
+      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), r, itemRepository))
       .thenApply(validators::refuseWhenItemNotFound)
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
@@ -149,9 +140,9 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l, requestQueueRepository),
-          LoanAndRelatedRecords::withRequestQueue))
+        LoanAndRelatedRecords::withRequestQueue))
       .thenCompose(validators::refuseWhenRequestedByAnotherPatron)
-      .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository)))
+      .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenCompose(validators::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -159,14 +150,20 @@ public class CheckOutByBarcodeResource extends Resource {
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
-      .thenCompose(r -> r.after(this::lookupNoticePolicyId))
+      .thenCompose(r -> r.after(records -> lookupNoticePolicyId(records, patronNoticePolicyRepository)))
       .thenCompose(r -> r.after(records -> proceedIfNotDryRunCheckOut(records, routingContext,
-        context, isDryRun)));
+        context, clients, requestRepository, requestQueueRepository, loanRepository,
+        userRepository, patronNoticePolicyRepository, itemRepository, settingsRepository,
+        errorHandler, validators, isDryRun)));
 }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> proceedIfNotDryRunCheckOut(
     LoanAndRelatedRecords loanAndRelatedRecords, RoutingContext routingContext,
-    WebContext context, boolean isDryRun) {
+    WebContext context, Clients clients, RequestRepository requestRepository,
+    RequestQueueRepository requestQueueRepository, LoanRepository loanRepository,
+    UserRepository userRepository, PatronNoticePolicyRepository patronNoticePolicyRepository,
+    ItemRepository itemRepository, SettingsRepository settingsRepository,
+    CirculationErrorHandler errorHandler, CheckOutValidators validators, boolean isDryRun) {
 
     if (isDryRun) {
        return ofAsync(loanAndRelatedRecords);
@@ -188,10 +185,10 @@ public class CheckOutByBarcodeResource extends Resource {
 
     return ofAsync(loanAndRelatedRecords)
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
-      .thenComposeAsync(r -> r.after(this::checkOut))
+      .thenComposeAsync(r -> r.after(records -> checkOut(records, clients)))
       .thenApply(r -> r.map(this::checkOutItem))
-      .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(checkOutLockRepository, l,
-        checkOutLockId)))
+      .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(checkOutLockRepository,
+        settingsRepository, l, validators, errorHandler, checkOutLockId)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
@@ -209,7 +206,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupNoticePolicyId(
-    LoanAndRelatedRecords records) {
+    LoanAndRelatedRecords records, PatronNoticePolicyRepository patronNoticePolicyRepository) {
 
     return patronNoticePolicyRepository.lookupPolicyId(records.getItem(), records.getUser())
       .thenApply(r -> r.map(circRuleMatch -> records.getLoan().withPatronNoticePolicyId(
@@ -218,8 +215,9 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLockIfNeededOrFail(
-    CheckOutLockRepository checkOutLockRepository, LoanAndRelatedRecords loanAndRelatedRecords,
-    AtomicReference<String> checkOutLockId) {
+    CheckOutLockRepository checkOutLockRepository, SettingsRepository settingsRepository,
+    LoanAndRelatedRecords loanAndRelatedRecords, CheckOutValidators validators,
+    CirculationErrorHandler errorHandler, AtomicReference<String> checkOutLockId) {
 
     log.debug("acquireLockIfNeededOrFail:: parameters loanAndRelatedRecords: {}",
       () -> loanAndRelatedRecords);
@@ -300,7 +298,8 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupLoanPolicy(
-    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository) {
+    LoanAndRelatedRecords loanAndRelatedRecords, LoanPolicyRepository loanPolicyRepository,
+    CirculationErrorHandler errorHandler) {
 
     log.debug("lookupLoanPolicy:: parameters loanAndRelatedRecords: {}", () -> loanAndRelatedRecords);
 
@@ -324,7 +323,8 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 
-  private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result) {
+  private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,
+    CirculationErrorHandler errorHandler) {
 
     return result.map(json -> {
       String url = urlForLoan(json.getString("id"));
@@ -340,7 +340,8 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupUser(String barcode,
-    Result<LoanAndRelatedRecords> loanResult) {
+    Result<LoanAndRelatedRecords> loanResult, UserRepository userRepository,
+    CirculationErrorHandler errorHandler) {
 
     log.debug("lookupUser:: parameters barcode: {}", barcode);
 
@@ -350,7 +351,8 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupProxyUser(String barcode,
-    Result<LoanAndRelatedRecords> loanResult) {
+    Result<LoanAndRelatedRecords> loanResult, UserRepository userRepository,
+    CirculationErrorHandler errorHandler) {
 
     log.debug("lookupProxyUser:: parameters barcode: {}", barcode);
 
@@ -360,7 +362,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupItem(
-    String barcode, Result<LoanAndRelatedRecords> loanResult) {
+    String barcode, Result<LoanAndRelatedRecords> loanResult, ItemRepository itemRepository) {
 
     log.debug("lookupItem:: parameters barcode: {}", barcode);
 
@@ -377,7 +379,7 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(
-    LoanAndRelatedRecords relatedRecords) {
+    LoanAndRelatedRecords relatedRecords, Clients clients) {
 
     log.debug("checkOut:: parameters relatedRecords: {}", () -> relatedRecords);
 

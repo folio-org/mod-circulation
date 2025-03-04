@@ -12,7 +12,9 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeDryRunRequest;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.support.RouteRegistration;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
@@ -50,11 +52,14 @@ public class CheckOutByBarcodeDryRunResource extends Resource {
     var checkOutByBarcodeRequest = new CheckOutByBarcodeRequest(null,
       request.getItemBarcode(), request.getUserBarcode(), request.getProxyUserBarcode(),
       UUID.randomUUID().toString(), BlockOverrides.noOverrides());
+    var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
+    var errorHandler = new OverridingErrorHandler(permissions);
 
-    checkOutByBarcodeResource.checkOut(checkOutByBarcodeRequest, routingContext, context, true)
-      .thenApply(r -> r.next(this::mapToResponse))
-      .thenApply(r -> r.map(JsonHttpResponse::created))
-      .thenAccept(context::writeResultToHttpResponse);
+    checkOutByBarcodeResource.checkOut(checkOutByBarcodeRequest, routingContext, context,
+      errorHandler, permissions, true)
+        .thenApply(r -> r.next(this::mapToResponse))
+        .thenApply(r -> r.map(JsonHttpResponse::created))
+        .thenAccept(context::writeResultToHttpResponse);
   }
 
   private Result<JsonObject> mapToResponse(LoanAndRelatedRecords records) {
