@@ -113,7 +113,27 @@ public class CheckOutByBarcodeResource extends Resource {
     var validators = new CheckOutValidators(request, clients, errorHandler,
       permissions, repositories.getLoanRepository());
 
-    return ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
+    final var requestQueueUpdate = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository);
+
+    final LoanRepresentation loanRepresentation = new LoanRepresentation();
+
+    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+
+    final PatronActionSessionService patronActionSessionService =
+      PatronActionSessionService.using(clients,
+        PatronActionSessionRepository.using(clients, loanRepository,
+          userRepository));
+
+    final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
+
+    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
+
+    AtomicReference<String> checkOutLockId = new AtomicReference<>();
+
+    final SettingsRepository settingsRepository = new SettingsRepository(clients);
+
+    return ofAsync(() -> new LoanAndRelatedRecords(request.toLoan(), request.getForceLoanPolicyId()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), r,
         repositories.getUserRepository(), errorHandler))
