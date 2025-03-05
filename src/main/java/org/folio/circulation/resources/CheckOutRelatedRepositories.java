@@ -32,19 +32,20 @@ class CheckOutRelatedRepositories {
   private final LostItemPolicyRepository lostItemPolicyRepository;
   private final ConfigurationRepository configurationRepository;
 
-  public CheckOutRelatedRepositories(Clients clients) {
+  CheckOutRelatedRepositories(Clients clients) {
     this.clients = clients;
-    this.requestRepository = new RequestRepository(clients);
-    this.requestQueueRepository = new RequestQueueRepository(requestRepository);
-    this.itemRepository = new ItemRepository(clients);
     this.userRepository = new UserRepository(clients);
+    this.itemRepository = new ItemRepository(clients);
     this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    this.patronGroupRepository = new PatronGroupRepository(clients);
+    this.requestRepository = RequestRepository.using(clients, itemRepository,
+      userRepository, loanRepository);
+    this.requestQueueRepository = new RequestQueueRepository(requestRepository);
     this.settingsRepository = new SettingsRepository(clients);
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
     this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.configurationRepository = new ConfigurationRepository(clients);
+    this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    this.patronGroupRepository = new PatronGroupRepository(clients);
   }
 }
