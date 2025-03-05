@@ -38,17 +38,12 @@ import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
-import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -68,7 +63,6 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import lombok.Getter;
 
 public class CheckOutByBarcodeResource extends Resource {
 
@@ -163,7 +157,6 @@ public class CheckOutByBarcodeResource extends Resource {
     AtomicReference<String> checkOutLockId = new AtomicReference<>();
     var clients = repositories.getClients();
     var loanService = new LoanService(clients);
-    var patronGroupRepository = new PatronGroupRepository(clients);
     var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     var requestQueueUpdate = UpdateRequestQueue.using(clients, repositories.getRequestRepository(),
       repositories.getRequestQueueRepository());
@@ -186,7 +179,8 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
-      .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
+      .thenComposeAsync(r -> r.after(records -> repositories.getPatronGroupRepository()
+        .findPatronGroupForLoanAndRelatedRecords(records)))
       .thenComposeAsync(r -> r.after(l -> updateItem(l, repositories.getItemRepository())))
       .thenComposeAsync(r -> r.after(records -> repositories.getLoanRepository().createLoan(records)))
       .thenComposeAsync(r -> r.after(l -> saveCheckOutSessionRecord(l, patronActionSessionService,
@@ -416,36 +410,5 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanAndRelatedRecords.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
       ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
       : requestQueueRepository.getByItemId(item.getItemId());
-  }
-
-  @Getter
-  private static class CheckOutRelatedRepositories {
-    private final Clients clients;
-    private final RequestRepository requestRepository;
-    private final RequestQueueRepository requestQueueRepository;
-    private final ItemRepository itemRepository;
-    private final UserRepository userRepository;
-    private final LoanRepository loanRepository;
-    private final PatronNoticePolicyRepository patronNoticePolicyRepository;
-    private final SettingsRepository settingsRepository;
-    private final LoanPolicyRepository loanPolicyRepository;
-    private final OverdueFinePolicyRepository overdueFinePolicyRepository;
-    private final LostItemPolicyRepository lostItemPolicyRepository;
-    private final ConfigurationRepository configurationRepository;
-
-    public CheckOutRelatedRepositories(Clients clients) {
-      this.requestRepository = new RequestRepository(clients);
-      this.requestQueueRepository = new RequestQueueRepository(requestRepository);
-      this.itemRepository = new ItemRepository(clients);
-      this.userRepository = new UserRepository(clients);
-      this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-      this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-      this.settingsRepository = new SettingsRepository(clients);
-      this.loanPolicyRepository = new LoanPolicyRepository(clients);
-      this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
-      this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-      this.configurationRepository = new ConfigurationRepository(clients);
-      this.clients = clients;
-    }
   }
 }
