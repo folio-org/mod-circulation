@@ -204,7 +204,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.5",
+      "version": "14.6",
       "handlers": [
         {
           "methods": [
@@ -221,6 +221,18 @@
             "circulation.override-patron-block.post",
             "circulation.override-item-limit-block.post",
             "circulation.override-item-not-loanable-block.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/check-out-by-barcode-dry-run",
+          "permissionsRequired": [
+            "circulation.check-out-by-barcode-dry-run.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.check-out-by-barcode-dry-run.post"
           ]
         },
         {
@@ -1410,6 +1422,11 @@
       "description": "check out an item using barcodes for item and loanee"
     },
     {
+      "permissionName": "circulation.check-out-by-barcode-dry-run.post",
+      "displayName": "circulation - check out item by barcode dry run",
+      "description": "dry run of check out an item using barcodes for item and user"
+    },
+    {
       "permissionName": "circulation.check-in-by-barcode.post",
       "displayName": "circulation - checkin loan by barcode",
       "description": "checkin a loan using barcodes for item and loanee"
@@ -1905,6 +1922,52 @@
         "pubsub.publish.post",
         "checkout-lock-storage.checkout-locks.item.post",
         "checkout-lock-storage.checkout-locks.item.delete",
+        "mod-settings.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.global.read.mod-circulation",
+        "mod-settings.global.read.circulation",
+        "manualblocks.item.get",
+        "manualblocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-out-by-barcode-dry-run.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.post",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.circulation-rules.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "circulation-storage.request-batch.item.post",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.request-policies.collection.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation.rules.overdue-fine-policy.get",
+        "circulation.rules.lost-item-policy.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "inventory-storage.items.item.put",
+        "circulation-item.item.put",
+        "circulation.internal.fetch-items.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "addresstypes.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "overdue-fines-policies.item.get",
+        "overdue-fines-policies.collection.get",
+        "lost-item-fees-policies.item.get",
+        "lost-item-fees-policies.collection.get",
         "mod-settings.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.global.read.mod-circulation",
