@@ -51,7 +51,7 @@ public class CheckOutByBarcodeDryRunResource extends Resource {
     log.info("dryRunCheckOut:: request: {}", () -> request);
     var checkOutByBarcodeRequest = new CheckOutByBarcodeRequest(null,
       request.getItemBarcode(), request.getUserBarcode(), request.getProxyUserBarcode(),
-      UUID.randomUUID().toString(), BlockOverrides.noOverrides());
+      UUID.randomUUID().toString(), BlockOverrides.noOverrides(), null);
     var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     var errorHandler = new OverridingErrorHandler(permissions);
 
