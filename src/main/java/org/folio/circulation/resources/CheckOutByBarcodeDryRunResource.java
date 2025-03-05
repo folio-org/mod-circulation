@@ -4,6 +4,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,7 +13,9 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeDryRunRequest;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
@@ -48,18 +51,32 @@ public class CheckOutByBarcodeDryRunResource extends Resource {
     var context = new WebContext(routingContext);
     var request = CheckOutByBarcodeDryRunRequest.fromJson(
       routingContext.body().asJsonObject());
-    log.info("dryRunCheckOut:: request: {}", () -> request);
     var checkOutByBarcodeRequest = new CheckOutByBarcodeRequest(null,
       request.getItemBarcode(), request.getUserBarcode(), request.getProxyUserBarcode(),
       UUID.randomUUID().toString(), BlockOverrides.noOverrides(), null);
     var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     var errorHandler = new OverridingErrorHandler(permissions);
+    var clients = Clients.create(context, client);
+    final var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
 
     checkOutByBarcodeResource.checkOut(checkOutByBarcodeRequest, routingContext, context,
-      errorHandler, permissions, true)
+      errorHandler, permissions, clients, true)
+        .thenCompose(r -> r.after(records -> lookupNoticePolicyId(records,
+          patronNoticePolicyRepository)))
         .thenApply(r -> r.next(this::mapToResponse))
         .thenApply(r -> r.map(JsonHttpResponse::created))
         .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupNoticePolicyId(
+    LoanAndRelatedRecords records, PatronNoticePolicyRepository patronNoticePolicyRepository) {
+
+    log.info("lookupNoticePolicyId:: lookup notice policy for item: {}", records.getItem().getItemId());
+
+    return patronNoticePolicyRepository.lookupPolicyId(records.getItem(), records.getUser())
+      .thenApply(r -> r.map(circRuleMatch -> records.getLoan().withPatronNoticePolicyId(
+        circRuleMatch.getPolicyId())))
+      .thenApply(r -> r.map(records::withLoan));
   }
 
   private Result<JsonObject> mapToResponse(LoanAndRelatedRecords records) {

@@ -1,19 +1,15 @@
 package org.folio.circulation.domain.representations;
 
-import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
 import java.lang.invoke.MethodHandles;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Loan;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.With;
 
 @AllArgsConstructor
 @Getter
