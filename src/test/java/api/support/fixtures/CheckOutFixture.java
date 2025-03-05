@@ -1,11 +1,13 @@
 package api.support.fixtures;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.http.InterfaceUrls.checkOutByBarcodeDryRunUrl;
 import static api.support.http.InterfaceUrls.checkOutByBarcodeUrl;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import org.folio.circulation.domain.representations.CheckOutByBarcodeDryRunRequest;
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
@@ -59,6 +61,16 @@ public class CheckOutFixture {
 
     return new CheckOutResource(restAssuredClient.post(builder.create(),
       checkOutByBarcodeUrl(), 201, headers));
+  }
+
+  public CheckOutResource checkOutByBarcodeDryRun(CheckOutByBarcodeDryRunRequest request) {
+    return new CheckOutResource(restAssuredClient.post(request,
+      checkOutByBarcodeDryRunUrl(), 201, "check-out-by-barcode-dry-run-request"));
+  }
+
+  public CheckOutResource attemptCheckOutByBarcodeDryRun(CheckOutByBarcodeDryRunRequest request) {
+    return new CheckOutResource(restAssuredClient.post(request,
+      checkOutByBarcodeDryRunUrl(), 422, "check-out-by-barcode-dry-run-request"));
   }
 
   public Response attemptCheckOutByBarcode(IndividualResource item, IndividualResource to) {
