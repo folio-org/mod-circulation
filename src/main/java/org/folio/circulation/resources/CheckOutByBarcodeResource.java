@@ -68,6 +68,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import lombok.Getter;
 
 public class CheckOutByBarcodeResource extends Resource {
 
@@ -108,79 +109,72 @@ public class CheckOutByBarcodeResource extends Resource {
     OkapiPermissions permissions, boolean isDryRun) {
 
     var clients = Clients.create(context, client);
-    var userRepository = new UserRepository(clients);
-    var itemRepository = new ItemRepository(clients);
-    var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    var requestRepository = RequestRepository.using(clients, itemRepository,
-      userRepository, loanRepository);
-    var requestQueueRepository = new RequestQueueRepository(requestRepository);
-    var settingsRepository = new SettingsRepository(clients);
-    var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    var repositories = new CheckOutRelatedRepositories(clients);
     var validators = new CheckOutValidators(request, clients, errorHandler,
-      permissions, loanRepository);
-    var loanPolicyRepository = new LoanPolicyRepository(clients);
-    var overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
-    var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    var configurationRepository = new ConfigurationRepository(clients);
+      permissions, repositories.getLoanRepository());
 
     return ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
-      .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), r, userRepository, errorHandler))
+      .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), r,
+        repositories.getUserRepository(), errorHandler))
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedManuallyForPatron)
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron)
-      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), r, userRepository, errorHandler))
+      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), r,
+        repositories.getUserRepository(), errorHandler))
       .thenApply(validators::refuseWhenUserIsInactive)
       .thenApply(validators::refuseWhenProxyUserIsInactive)
       .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
-      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), r, itemRepository))
+      .thenComposeAsync(r -> lookupItem(request.getItemBarcode(), r,
+        repositories.getItemRepository()))
       .thenApply(validators::refuseWhenItemNotFound)
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
-      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
-        LoanAndRelatedRecords::withTlrSettings))
-      .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l, requestQueueRepository),
-        LoanAndRelatedRecords::withRequestQueue))
+      .thenComposeAsync(r -> r.combineAfter(records -> repositories
+        .getSettingsRepository().lookupTlrSettings(), LoanAndRelatedRecords::withTlrSettings))
+      .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l,
+        repositories.getRequestQueueRepository()), LoanAndRelatedRecords::withRequestQueue))
       .thenCompose(validators::refuseWhenRequestedByAnotherPatron)
-      .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
+      .thenComposeAsync(r -> r.after(records -> lookupLoanPolicy(records,
+        repositories.getLoanPolicyRepository(), errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenCompose(validators::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
-        LoanAndRelatedRecords::withTimeZone))
-      .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
-      .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
-      .thenCompose(r -> r.after(records -> lookupNoticePolicyId(records, patronNoticePolicyRepository)))
+      .thenCompose(r -> r.combineAfter(records -> repositories.getConfigurationRepository()
+        .findTimeZoneConfiguration(), LoanAndRelatedRecords::withTimeZone))
+      .thenComposeAsync(r -> r.after(records -> repositories.getOverdueFinePolicyRepository()
+        .lookupOverdueFinePolicy(records)))
+      .thenComposeAsync(r -> r.after(records -> repositories.getLostItemPolicyRepository()
+        .lookupLostItemPolicy(records)))
+      .thenCompose(r -> r.after(records -> lookupNoticePolicyId(records,
+        repositories.getPatronNoticePolicyRepository())))
       .thenCompose(r -> r.after(records -> proceedIfNotDryRunCheckOut(records, routingContext,
-        context, clients, requestRepository, requestQueueRepository, loanRepository,
-        userRepository, patronNoticePolicyRepository, itemRepository, settingsRepository,
-        errorHandler, validators, isDryRun)));
+        context, repositories, errorHandler, validators, isDryRun)));
 }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> proceedIfNotDryRunCheckOut(
     LoanAndRelatedRecords loanAndRelatedRecords, RoutingContext routingContext,
-    WebContext context, Clients clients, RequestRepository requestRepository,
-    RequestQueueRepository requestQueueRepository, LoanRepository loanRepository,
-    UserRepository userRepository, PatronNoticePolicyRepository patronNoticePolicyRepository,
-    ItemRepository itemRepository, SettingsRepository settingsRepository,
+    WebContext context, CheckOutRelatedRepositories repositories,
     CirculationErrorHandler errorHandler, CheckOutValidators validators, boolean isDryRun) {
 
     if (isDryRun) {
        return ofAsync(loanAndRelatedRecords);
     }
     AtomicReference<String> checkOutLockId = new AtomicReference<>();
+    var clients = repositories.getClients();
     var loanService = new LoanService(clients);
     var patronGroupRepository = new PatronGroupRepository(clients);
     var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    var requestQueueUpdate = UpdateRequestQueue.using(clients, requestRepository,
-      requestQueueRepository);
+    var requestQueueUpdate = UpdateRequestQueue.using(clients, repositories.getRequestRepository(),
+      repositories.getRequestQueueRepository());
     var eventPublisher = new EventPublisher(routingContext);
     var patronActionSessionService = PatronActionSessionService.using(clients,
-      PatronActionSessionRepository.using(clients, loanRepository, userRepository));
+      PatronActionSessionRepository.using(clients, repositories.getLoanRepository(),
+        repositories.getUserRepository()));
     var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
     var checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
     var scheduledNoticeService = new LoanScheduledNoticeService(scheduledNoticesRepository,
-      patronNoticePolicyRepository);
+      repositories.getPatronNoticePolicyRepository());
     var reminderFeeScheduledNoticesService = new ReminderFeeScheduledNoticeService(clients);
 
     return ofAsync(loanAndRelatedRecords)
@@ -188,19 +182,19 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(records -> checkOut(records, clients)))
       .thenApply(r -> r.map(this::checkOutItem))
       .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(checkOutLockRepository,
-        settingsRepository, l, validators, errorHandler, checkOutLockId)))
+        repositories.getSettingsRepository(), l, validators, errorHandler, checkOutLockId)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
       .thenComposeAsync(r -> r.after(requestScheduledNoticeService::rescheduleRequestNotices))
       .thenComposeAsync(r -> r.after(loanService::truncateLoanWhenItemRecalled))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupForLoanAndRelatedRecords))
-      .thenComposeAsync(r -> r.after(l -> updateItem(l, itemRepository)))
-      .thenComposeAsync(r -> r.after(loanRepository::createLoan))
+      .thenComposeAsync(r -> r.after(l -> updateItem(l, repositories.getItemRepository())))
+      .thenComposeAsync(r -> r.after(records -> repositories.getLoanRepository().createLoan(records)))
       .thenComposeAsync(r -> r.after(l -> saveCheckOutSessionRecord(l, patronActionSessionService,
         errorHandler)))
       .thenApply(r -> deleteCheckOutLock(r, checkOutLockRepository, checkOutLockId.get()))
       .thenApplyAsync(r -> r.map(records -> records.withLoggedInUserId(context.getUserId())))
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
-        userRepository, errorHandler)))
+        repositories.getUserRepository(), errorHandler)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
       .thenApply(r -> r.next(reminderFeeScheduledNoticesService::scheduleFirstReminder));
   }
@@ -422,5 +416,36 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanAndRelatedRecords.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
       ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
       : requestQueueRepository.getByItemId(item.getItemId());
+  }
+
+  @Getter
+  private static class CheckOutRelatedRepositories {
+    private final Clients clients;
+    private final RequestRepository requestRepository;
+    private final RequestQueueRepository requestQueueRepository;
+    private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
+    private final LoanRepository loanRepository;
+    private final PatronNoticePolicyRepository patronNoticePolicyRepository;
+    private final SettingsRepository settingsRepository;
+    private final LoanPolicyRepository loanPolicyRepository;
+    private final OverdueFinePolicyRepository overdueFinePolicyRepository;
+    private final LostItemPolicyRepository lostItemPolicyRepository;
+    private final ConfigurationRepository configurationRepository;
+
+    public CheckOutRelatedRepositories(Clients clients) {
+      this.requestRepository = new RequestRepository(clients);
+      this.requestQueueRepository = new RequestQueueRepository(requestRepository);
+      this.itemRepository = new ItemRepository(clients);
+      this.userRepository = new UserRepository(clients);
+      this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+      this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+      this.settingsRepository = new SettingsRepository(clients);
+      this.loanPolicyRepository = new LoanPolicyRepository(clients);
+      this.overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+      this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+      this.configurationRepository = new ConfigurationRepository(clients);
+      this.clients = clients;
+    }
   }
 }
