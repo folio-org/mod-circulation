@@ -4,9 +4,11 @@ import java.util.Objects;
 
 import org.folio.circulation.domain.User;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@UtilityClass
 public class RequestValidator {
 
   private static final String FAKE_PATRON_FIRST_NAME = "Secure";
