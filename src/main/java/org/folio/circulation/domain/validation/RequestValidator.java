@@ -14,6 +14,7 @@ public class RequestValidator {
   private static final String FAKE_PATRON_BARCODE = "securepatron";
 
   public static boolean isMediatedRequest(User requester) {
+  log.debug("isMediatedRequest:: Requester: {}", requester);
 
     if(Objects.isNull(requester)) {
       log.error("isMediatedRequest:: Requester is null");

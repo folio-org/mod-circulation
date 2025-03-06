@@ -98,10 +98,8 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnMediatedRequestCreated(
     Request originalRequest, RequestAndRelatedRecords records) {
 
-    log.info("ANTON:: sendNoticeOnMediatedRequestCreatedDuringUpdate:: ORIGINAL: {}",
-      originalRequest);
-    log.info("ANTON:: sendNoticeOnMediatedRequestCreatedDuringUpdate:: RECORDS: {}",
-      records);
+    log.debug("sendNoticeOnMediatedRequestCreated:: originalRequest: {}", originalRequest);
+    log.debug("sendNoticeOnMediatedRequestCreated:: records: {}", records);
 
     if(isMediatedRequest(originalRequest.getRequester())) {
       return sendNoticeOnRequestCreated(records);
