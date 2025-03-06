@@ -57,7 +57,7 @@ class RequestNoticeSenderTest {
       Arguments.of(buildUser("Secure", "Patron"), 1),
       Arguments.of(buildUser("Secure", "Tramp"), 0),
       Arguments.of(buildUser("Donald", "Patron"), 0),
-      Arguments.of(buildUser("Donald", "Tramp"), 0),
+      Arguments.of(buildUser("Donald", "Trump"), 0),
       Arguments.of(buildUser(null, null), 0),
       Arguments.of(null, 0)
     );

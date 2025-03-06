@@ -11,19 +11,19 @@ import lombok.extern.slf4j.Slf4j;
 @UtilityClass
 public class RequestValidator {
 
-  private static final String FAKE_PATRON_FIRST_NAME = "Secure";
-  private static final String FAKE_PATRON_LAST_NAME = "Patron";
+  private static final String SECURE_PATRON_FIRST_NAME = "Secure";
+  private static final String SECURE_PATRON_LAST_NAME = "Patron";
 
-  public static boolean isMediatedRequest(User requester) {
+  public static boolean isSecurePatron(User requester) {
   log.debug("isMediatedRequest:: Requester: {}", requester);
 
     if(Objects.isNull(requester)) {
-      log.error("isMediatedRequest:: Requester is null");
+      log.warn("isMediatedRequest:: Requester is null");
       return false;
     }
 
-    return FAKE_PATRON_FIRST_NAME.equals(requester.getFirstName())
-      && FAKE_PATRON_LAST_NAME.equals(requester.getLastName());
+    return SECURE_PATRON_FIRST_NAME.equals(requester.getFirstName())
+      && SECURE_PATRON_LAST_NAME.equals(requester.getLastName());
   }
 
 }

@@ -6,7 +6,7 @@ import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCEL
 import static org.folio.circulation.domain.notice.PatronNotice.buildEmail;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
-import static org.folio.circulation.domain.validation.RequestValidator.isMediatedRequest;
+import static org.folio.circulation.domain.validation.RequestValidator.isSecurePatron;
 import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -98,10 +98,10 @@ public class RequestNoticeSender {
   public Result<RequestAndRelatedRecords> sendNoticeOnMediatedRequestCreated(
     Request originalRequest, RequestAndRelatedRecords records) {
 
-    log.debug("sendNoticeOnMediatedRequestCreated:: originalRequest: {}", originalRequest);
-    log.debug("sendNoticeOnMediatedRequestCreated:: records: {}", records);
+    log.debug("sendNoticeOnMediatedRequestCreated:: originalRequest={}, records={}",
+      originalRequest, records);
 
-    if(isMediatedRequest(originalRequest.getRequester())) {
+    if (isSecurePatron(originalRequest.getRequester())) {
       return sendNoticeOnRequestCreated(records);
     }
 
