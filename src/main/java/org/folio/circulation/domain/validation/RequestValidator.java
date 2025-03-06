@@ -17,7 +17,7 @@ public class RequestValidator {
   public static boolean isSecurePatron(User requester) {
   log.debug("isMediatedRequest:: Requester: {}", requester);
 
-    if(Objects.isNull(requester)) {
+    if (Objects.isNull(requester)) {
       log.warn("isMediatedRequest:: Requester is null");
       return false;
     }
