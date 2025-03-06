@@ -49,6 +49,8 @@ public class UpdateRequestService {
       .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
         .thenComposeAsync(r -> r.after(requestRepository::update))
+        .thenApplyAsync(r -> r.next(p ->
+          requestNoticeSender.sendNoticeOnMediatedRequestCreated(o, p)))
         .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
