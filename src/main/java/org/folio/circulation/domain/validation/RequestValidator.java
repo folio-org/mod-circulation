@@ -11,7 +11,6 @@ public class RequestValidator {
 
   private static final String FAKE_PATRON_FIRST_NAME = "Secure";
   private static final String FAKE_PATRON_LAST_NAME = "Patron";
-  private static final String FAKE_PATRON_BARCODE = "securepatron";
 
   public static boolean isMediatedRequest(User requester) {
   log.debug("isMediatedRequest:: Requester: {}", requester);
@@ -21,9 +20,8 @@ public class RequestValidator {
       return false;
     }
 
-    return requester.getFirstName().equals(FAKE_PATRON_FIRST_NAME)
-      && requester.getLastName().equals(FAKE_PATRON_LAST_NAME)
-      && requester.getBarcode().startsWith(FAKE_PATRON_BARCODE);
+    return FAKE_PATRON_FIRST_NAME.equals(requester.getFirstName())
+      && FAKE_PATRON_LAST_NAME.equals(requester.getLastName());
   }
 
 }
