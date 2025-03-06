@@ -8,12 +8,12 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.utils.LogUtil.asJson;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.drools.core.event.DefaultAgendaEventListener;
 import org.folio.circulation.domain.Location;
 import org.kie.api.KieServices;
@@ -21,6 +21,7 @@ import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.Message.Level;
 import org.kie.api.builder.ReleaseId;
+import org.kie.api.definition.rule.Rule;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
@@ -368,16 +369,24 @@ public class Drools {
 
     @Override
     public void afterMatchFired(AfterMatchFiredEvent event) {
-      RuleImpl rule = (RuleImpl) event.getMatch().getRule();
+      Rule rule = event.getMatch().getRule(); // Use Rule instead of RuleImpl
 
-      if (rule.getLhs() != null && rule.getLhs().getChildren() != null) {
-        log.info("afterMatchFired:: getting rule conditions");
-        ruleConditionElements = rule.getLhs().getChildren().stream()
-          .map(Object::toString)
+      log.info("afterMatchFired:: Rule fired: {}", rule.getName());
+
+      // Rule metadata can be retrieved if needed
+      Map<String, Object> metadata = rule.getMetaData();
+
+      if (!metadata.isEmpty()) {
+        log.info("afterMatchFired:: Rule metadata: {}", metadata);
+
+        // Example: Extracting conditions if stored in metadata (Modify based on your needs)
+        ruleConditionElements = metadata.entrySet().stream()
+          .map(entry -> entry.getKey() + "=" + entry.getValue())
           .map(this::getRuleConditionFromStringRuleRepresentation)
           .collect(Collectors.toSet());
       }
     }
+
 
     public Set<String> getRuleConditions() {
       return Collections.unmodifiableSet(ruleConditionElements);

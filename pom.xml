@@ -24,13 +24,13 @@
 
   <properties>
     <antlr4.version>4.11.1</antlr4.version>
-    <drools.version>7.74.1.Final</drools.version>
-    <rmb.version>35.3.0</rmb.version>
-    <vertx.version>4.5.5</vertx.version>
+    <drools.version>8.44.0.Final</drools.version>
+    <rmb.version>35.4.0</rmb.version>
+    <vertx.version>4.5.13</vertx.version>
     <log4j2.version>2.23.1</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <lombok.version>1.18.28</lombok.version>
+    <lombok.version>1.18.36</lombok.version>
     <spring.version>6.1.5</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
 
@@ -369,9 +369,9 @@
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.14.0</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
