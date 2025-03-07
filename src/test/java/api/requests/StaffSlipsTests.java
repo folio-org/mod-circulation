@@ -6,7 +6,6 @@ import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -252,7 +251,7 @@ class StaffSlipsTests extends APITests {
 
     JsonObject slip = getPickSlipsList(response, slipsType).get(0);
     JsonObject itemContext = slip.getJsonObject(ITEM_KEY);
-    assertNotNull(slip.getString(CURRENT_DATE_TIME));
+    assertNotNull(slip.getString("currentDateTime"));
 
     ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
 
