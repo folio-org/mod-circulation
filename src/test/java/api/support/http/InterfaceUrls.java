@@ -145,6 +145,11 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/check-out-by-barcode");
   }
 
+  public static URL checkOutByBarcodeDryRunUrl() {
+    return circulationModuleUrl("/circulation/check-out-by-barcode-dry-run");
+  }
+
+
   public static URL checkInByBarcodeUrl() {
     return circulationModuleUrl("/circulation/check-in-by-barcode");
   }
