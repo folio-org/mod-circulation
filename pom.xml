@@ -31,7 +31,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <lombok.version>1.18.36</lombok.version>
-    <spring.version>6.1.5</spring.version>
+    <spring.version>6.2.3</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
 
     <!--Folio dependencies properties-->
