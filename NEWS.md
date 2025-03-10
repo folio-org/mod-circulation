@@ -1,6 +1,7 @@
 ## 24.3.9 2025-01-17
 * Support DCB re-request (CIRC-2198)
 
+
 ## 24.3.8 2025-01-14
 * Fix TLR fetching issue for search slips (CIRC-2197)
 
