@@ -12,6 +12,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import java.util.Optional;
@@ -63,7 +64,7 @@ public class OverdueFineService {
       return completedFuture(succeeded(context));
     }
 
-    return createOverdueFineIfNecessary(loanBeforeRenewal, RENEWAL, loggedInUserId)
+    return createOverdueFineIfNecessary(loanBeforeRenewal, RENEWAL, loggedInUserId, context.getTimeZone())
       .thenApply(mapResult(context::withOverdueFeeFineAction));
   }
 
@@ -90,7 +91,7 @@ public class OverdueFineService {
       return completedFuture(succeeded(null));
     }
 
-    return createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId);
+    return createOverdueFineIfNecessary(context.getLoan(), CHECKIN, userId, context.getTimeZone());
   }
 
   private boolean shouldChargeOverdueFineOnCheckIn(CheckInContext context) {
@@ -126,47 +127,47 @@ public class OverdueFineService {
   }
 
   private CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(Loan loan,
-    Scenario scenario, String loggedInUserId) {
+    Scenario scenario, String loggedInUserId, ZoneId zoneId) {
 
     log.debug("createOverdueFineIfNecessary:: parameters loan: {}, scenario: {}, " +
       "loggedInUserId: {}", () -> loan, () -> scenario, () -> loggedInUserId);
     if (loan.getOverdueFinePolicy().isUnknown()) {
       return overdueFinePolicyRepository.findOverdueFinePolicyForLoan(succeeded(loan))
         .thenCompose(r -> r.after(l -> createOverdueFineIfNecessary(l, scenario, loggedInUserId,
-          l.getOverdueFinePolicy())));
+          l.getOverdueFinePolicy(), zoneId)));
     } else {
-      return createOverdueFineIfNecessary(loan, scenario, loggedInUserId, loan.getOverdueFinePolicy());
+      return createOverdueFineIfNecessary(loan, scenario, loggedInUserId, loan.getOverdueFinePolicy(), zoneId);
     }
   }
 
   private CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(Loan loan,
-    Scenario scenario, String loggedInUserId, OverdueFinePolicy overdueFinePolicy) {
+    Scenario scenario, String loggedInUserId, OverdueFinePolicy overdueFinePolicy, ZoneId zoneId) {
 
     log.debug("createOverdueFineIfNecessary:: parameters loan: {}, scenario: {}, " +
       "loggedInUserId: {}, overdueFinePolicy: {}", () -> loan, () -> scenario, () -> loggedInUserId,
       () -> overdueFinePolicy);
 
     return scenario.shouldCreateFine(overdueFinePolicy)
-      ? createOverdueFine(loan, loggedInUserId)
+      ? createOverdueFine(loan, loggedInUserId, zoneId)
       : completedFuture(succeeded(null));
   }
 
-  private CompletableFuture<Result<FeeFineAction>> createOverdueFine(Loan loan, String loggedInUserId) {
+  private CompletableFuture<Result<FeeFineAction>> createOverdueFine(Loan loan, String loggedInUserId, ZoneId zoneId) {
     log.debug("createOverdueFine:: parameters loan: {}, loggedInUserId: {}",
       () -> loan, () -> loggedInUserId);
 
-    return getOverdueMinutes(loan)
+    return getOverdueMinutes(loan, zoneId)
       .thenCompose(r -> r.after(minutes -> calculateOverdueFine(loan, minutes)))
       .thenCompose(r -> r.after(fineAmount -> createFeeFineRecord(loan, fineAmount, loggedInUserId)));
   }
 
-  private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan) {
+  private CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, ZoneId zoneId) {
     ZonedDateTime systemTime = loan.getReturnDate();
     if (systemTime == null) {
       log.info("getOverdueMinutes:: returnDate for loan {} is null", loan.getId());
       systemTime = ClockUtil.getZonedDateTime();
     }
-    return overduePeriodCalculatorService.getMinutes(loan, systemTime);
+    return overduePeriodCalculatorService.getMinutes(loan, systemTime, zoneId);
   }
 
   private CompletableFuture<Result<BigDecimal>> calculateOverdueFine(Loan loan, Integer overdueMinutes) {
