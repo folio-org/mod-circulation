@@ -63,6 +63,7 @@ class OverdueFineServiceTest {
   private static final ZonedDateTime RETURNED_DATE = ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, UTC);
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ITEM_MATERIAL_TYPE_ID = UUID.randomUUID();
+  private static final String ITEM_MATERIAL_TYPE = "material";
   private static final UUID FEE_FINE_OWNER_ID = UUID.randomUUID();
   private static final String FEE_FINE_OWNER = "fee-fine-owner";
   private static final String LOCATION_NAME = "location-name";
@@ -678,9 +679,9 @@ class OverdueFineServiceTest {
       new AccountRelatedRecordsInfo(
         new AccountFeeFineOwnerInfo(FEE_FINE_OWNER_ID.toString(), FEE_FINE_OWNER),
         new AccountFeeFineTypeInfo(FEE_FINE_ID.toString(), FEE_FINE_TYPE),
-        new AccountLoanInfo(LOAN_ID.toString(), LOAN_USER_ID.toString()),
+        new AccountLoanInfo(LOAN_ID.toString(), LOAN_USER_ID.toString(), DUE_DATE),
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
-          LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
+          LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString(), ITEM_MATERIAL_TYPE)
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
       emptyList(), ClockUtil.getZonedDateTime(), null);
