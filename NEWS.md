@@ -1,3 +1,8 @@
+## 24.3.12 2025-03-10
+* Handle duplicate header keys (CIRC-2282)
+* Implement `check-out-by-barcode-dry-run` endpoint (CIRC-2266)
+* Force loan policy during check out (CIRC-2267)
+
 ## 24.3.11 2025-01-21
 * Add missing required interfaces (CIRC-2225)
 
