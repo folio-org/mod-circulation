@@ -107,26 +107,6 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.17.0</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.17.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-text</artifactId>
-      <version>1.10.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
-    </dependency>
-    <dependency>
       <groupId>org.drools</groupId>
       <artifactId>drools-engine-classic</artifactId>
       <version>${drools.version}</version>
@@ -142,9 +122,9 @@
       <version>2.11.2</version>
     </dependency>
     <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>util</artifactId>
-      <version>${rmb.version}</version>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+      <version>1.10.0</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -243,11 +223,6 @@
       <artifactId>spring-test</artifactId>
       <version>${spring.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>cql2pgjson</artifactId>
-      <version>${rmb.version}</version>
     </dependency>
     <dependency>
       <groupId>org.folio.okapi</groupId>
