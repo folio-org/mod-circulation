@@ -57,9 +57,10 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       log.info("lookupLoanPolicy:: loan or user is null");
       return ofAsync(() -> relatedRecords);
     }
-    return Result.of(relatedRecords::getLoan)
-      .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
-      .thenApply(mapResult(relatedRecords::withLoan));
+    return getLoanPolicy(relatedRecords)
+      .thenApply(result -> result.map(loanPolicy ->
+        relatedRecords.withLoan(relatedRecords.getLoan().withLoanPolicy(loanPolicy))
+      ));
   }
 
   public CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
@@ -83,6 +84,15 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     log.debug("findPolicyForLoan:: parameters loan: {}", loan);
     return getLoanPolicyById(loan.getLoanPolicyId())
         .thenApply(result -> result.map(loan::withLoanPolicy));
+  }
+
+  private CompletableFuture<Result<LoanPolicy>> getLoanPolicy(LoanAndRelatedRecords relatedRecords) {
+    if (relatedRecords.getForceLoanPolicyId() != null) {
+      log.info("getLoanPolicy:: forceLoanPolicyId is set, getting Loan Policy by ID: {}",
+              relatedRecords.getForceLoanPolicyId());
+      return getLoanPolicyById(relatedRecords.getForceLoanPolicyId());
+    }
+    return lookupPolicy(relatedRecords.getLoan());
   }
 
   private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
