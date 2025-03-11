@@ -21,8 +21,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.Account;
@@ -72,7 +70,6 @@ public class TemplateContextMatchers {
     return tokenMatchers;
   }
 
-  @NotNull
   public static Matcher<String> isPreferredName(JsonObject personal) {
     return personal.getString("preferredFirstName") == null ?
       is(personal.getString("firstName")) : is(personal.getString("preferredFirstName"));
