@@ -1,3 +1,6 @@
+## 24.3.13 2025-03-11
+* Fix for duplicate request IDs for pickslips (CIRC-2265)
+
 ## 24.3.12 2025-03-10
 * Handle duplicate header keys (CIRC-2282)
 * Implement `check-out-by-barcode-dry-run` endpoint (CIRC-2266)
