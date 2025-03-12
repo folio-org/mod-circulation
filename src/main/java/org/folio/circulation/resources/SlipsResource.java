@@ -354,7 +354,11 @@ public abstract class SlipsResource extends Resource {
 
     final Result<CqlQuery> typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
     final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    final Result<CqlQuery> statusAndTypeQuery = typeQuery.combine(statusQuery, CqlQuery::and);
+    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.ITEM.getValue());
+    final Result<CqlQuery> statusAndTypeQuery = requestType.equals(RequestType.PAGE)
+      ? typeQuery.combine(statusQuery, CqlQuery::and)
+      .combine(requestLevelQuery, CqlQuery::and)
+      :  typeQuery.combine(statusQuery, CqlQuery::and);
 
     return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
       .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(statusAndTypeQuery))

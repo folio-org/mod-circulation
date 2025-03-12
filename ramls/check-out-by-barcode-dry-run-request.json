@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to dry run check out an item to a loanee using barcodes",
+  "properties": {
+    "itemBarcode": {
+      "description": "Barcode of the item to be lent to the patron",
+      "type": "string"
+    },
+    "userBarcode": {
+      "description": "Barcode of the user (representing the patron) the item is to be lent to",
+      "type": "string"
+    },
+    "proxyUserBarcode": {
+      "description": "Barcode of the user representing a proxy for the patron",
+      "type": "string"
+    }
+  },
+  "required": [
+    "itemBarcode",
+    "userBarcode"
+  ]
+}

@@ -46,12 +46,15 @@ public class UpdateRequestService {
 
     return requestRepository.getById(updated.getId())
       .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
-      .thenCompose(original -> original.after(o -> closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
+      .thenCompose(original -> original.after(request ->
+        closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
         .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
         .thenComposeAsync(r -> r.after(requestRepository::update))
+        .thenApplyAsync(r -> r.next(records ->
+          requestNoticeSender.sendNoticeOnMediatedRequestCreated(request, records)))
         .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
-        .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, o, REQUEST_UPDATED)))
+        .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, request, REQUEST_UPDATED)))
         .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))));
   }
 

@@ -190,6 +190,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Loan>> getById(String id) {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
+      .thenCompose(CompletableFuture::completedFuture)
       .thenComposeAsync(this::fetchUser)
       .exceptionally(CommonFailures::failedDueToServerError);
   }

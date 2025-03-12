@@ -9,7 +9,7 @@ import lombok.Value;
 @Value
 public class ItemDescription {
   public static ItemDescription unknown() {
-    return new ItemDescription(null, null, null, null, null, null, null, null, List.of());
+    return new ItemDescription(null, null, null, null, null, null, null, null, List.of(), null, List.of());
   }
 
   String barcode;
@@ -21,4 +21,6 @@ public class ItemDescription {
   String descriptionOfPieces;
   String displaySummary;
   @NonNull Collection<String> yearCaption;
+  String accessionNumber;
+  @NonNull Collection<String> administrativeNotes;
 }

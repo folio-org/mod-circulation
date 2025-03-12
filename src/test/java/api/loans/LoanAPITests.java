@@ -268,6 +268,12 @@ class LoanAPITests extends APITests {
 
     assertThat("Item has primaryContributor",
       loan.getJsonObject("item").containsKey("primaryContributor"), is(true));
+
+    assertThat("Item has editions",
+      loan.getJsonObject("item").containsKey("editions"), is(true));
+
+    assertThat("Item has publication years",
+      loan.getJsonObject("item").containsKey("datesOfPublication"), is(true));
   }
 
   @Test
