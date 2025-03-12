@@ -1,27 +1,5 @@
-## 24.3.9 2025-01-17
-* Support DCB re-request (CIRC-2198)
-
-## 24.3.8 2025-01-14
-* Fix TLR fetching issue for search slips (CIRC-2197)
-
-## 24.3.7 2025-01-13
-* Filter request by Retrieval Service Point (CIRC-2177)
-
-## 24.3.6 2025-01-10
-* Rename incorrect mod-feesfines permissions (CIRC-2219)
-
-## 24.3.5 2025-01-09
-* Fix search slips for requests queue (CIRC-2197)
-
-## 24.3.4 2024-12-19
-* Remove permission definition for Circulation Events Handlers (CIRC-2205)
-
-## 24.3.3 2024-12-12
-* Avoid self-invocation for request rules while moving requests (CIRC-2199)
-* Intermediate request support (CIRC-2182)
-
-## 24.3.2 2024-11-30
-* Add mod-settings permission blocks (CIRC-2185)
+## 24.4.0 2025-03-12
+* Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
 * Fix automated patron blocks permission issue (CIRC-2185)
 * Remove new mod-settings permissions (CIRC-2183)
 * Fetch TLR settings from mod-config as fallback (CIRC-2171)
@@ -38,10 +16,24 @@
 * Add `ecsRequestRouting` parameter to allowed-service-points (CIRC-2051)
 * Fix snapshot version (CIRC-2161)
 * Review and cleanup Module Descriptors for mod-circulation (CIRC-2139)
-
-## 24.3.1 2024-11-27
-
-* Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
+* Filter request by Retrieval Service Point (CIRC-2177)
+* Intermediate request support (CIRC-2182)
+* Avoid self-invocation for request rules while moving requests (CIRC-2199)
+* Support DCB re-request (CIRC-2198)
+* Remove permission definition for Circulation Events Handlers (CIRC-2205)
+* Remove useless excessive INFO logging of rules in ExecutableRules (CIRC-2210)
+* Fix TLR fetching issue for search slips (CIRC-2197)
+* Rename incorrect mod-feesfines permissions (CIRC-2219)
+* Add missing required interfaces (CIRC-2225)
+* Add new tokens in Item context for use in patron notices and slips (CIRC-2209)
+* Fix for duplicate request IDs for pick slips (CIRC-2265)
+* Extend loan representation with 7 new tokens required for Due date receipt (CIRC-2273)
+* Force loan policy during check out (CIRC-2267)
+* Fix missing account properties (CIRC-2275)
+* Implement check-out-by-barcode-dry-run endpoint (CIRC-2266)
+* Upgrade to Java 21 and RMB 35.4.0 (CIRC-2293)
+* Handle duplicate header keys (CIRC-2282)
+* Update mod-pubsub client to the latest release version (CIRC-2287)
 
 ## 24.3.0 2024-10-31
 
