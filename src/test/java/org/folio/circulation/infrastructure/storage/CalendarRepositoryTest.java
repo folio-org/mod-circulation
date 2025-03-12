@@ -46,4 +46,34 @@ class CalendarRepositoryTest {
       String.format(EXPECTED_PATH, servicePointId, startDate.toLocalDate(), endDate.toLocalDate());
     assertThat(actualPath, is(expectedPath));
   }
+
+  //Covers case CIRC-2152
+  @Test
+  void shouldUseCorrectLocalDatesWhenTimeZoneAffectsDateConversion() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
+    when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);
+    when(collectionResourceClient.get(any(String.class)))
+            .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
+
+    ZoneId zone = ZoneId.of("America/Toronto");
+
+    String servicePointId = UUID.randomUUID().toString();
+
+    ZonedDateTime dueDate = ZonedDateTime.of(2024, 7, 24, 1, 29, 3, 0, ZoneId.of("UTC"));
+    ZonedDateTime returnDate = ZonedDateTime.of(2024, 7, 24, 17, 56, 37, 0, ZoneId.of("UTC"));
+
+    CalendarRepository calendarRepository = new CalendarRepository(clients);
+    calendarRepository.fetchOpeningDaysBetweenDates(servicePointId, dueDate, returnDate, zone);
+
+    ArgumentCaptor<String> paramsArgumentCaptor = ArgumentCaptor.forClass(String.class);
+    verify(collectionResourceClient).get(paramsArgumentCaptor.capture());
+
+    String actualPath = paramsArgumentCaptor.getValue();
+
+    String expectedPath = String.format(EXPECTED_PATH, servicePointId, "2024-07-23", "2024-07-24");
+
+    assertThat(actualPath, is(expectedPath));
+  }
+
 }
