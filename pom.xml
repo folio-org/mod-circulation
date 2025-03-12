@@ -435,6 +435,7 @@
             </goals>
             <configuration>
               <filters>
+                <!-- Fixing "Invalid signature file digest" errors after Java 21 upgrade  -->
                 <filter>
                   <artifact>*:*</artifact>
                   <excludes>
