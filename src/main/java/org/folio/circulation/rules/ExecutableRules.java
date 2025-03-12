@@ -62,16 +62,11 @@ public class ExecutableRules {
   public Result<CirculationRuleMatch> determineOverduePolicy(RulesExecutionParameters parameters) {
     log.debug("determineOverduePolicy:: parameters parameters: {}", parameters);
 
-    return determinePolicy(parameters, drools::overduePolicy, "overdude policy");
+    return determinePolicy(parameters, drools::overduePolicy, "overdue policy");
   }
 
   private Result<CirculationRuleMatch> determinePolicy(RulesExecutionParameters parameters,
     BiFunction<MultiMap, Location, CirculationRuleMatch> droolsExecutor, String policyType) {
-
-    if (log.isInfoEnabled()) {
-      log.info("Executing circulation rules: `{}` with parameters: `{}` to determine {}",
-        text, parameters, policyType);
-    }
 
     return of(() -> droolsExecutor.apply(parameters.toMap(), parameters.getLocation()))
       .failWhen(this::noMatch, fail(parameters, policyType));
