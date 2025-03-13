@@ -135,6 +135,7 @@ class RequestFromRepresentationService {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
 
+    log.info("The representation coming in is {}", representation);
     return settingsRepository.lookupTlrSettings()
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
@@ -590,7 +591,9 @@ class RequestFromRepresentationService {
   private Request removeRelatedRecordInformation(Request request) {
     JsonObject representation = request.getRequestRepresentation();
 
-    representation.remove("item");
+    if(request.getEcsRequestPhase() != PRIMARY) {
+      representation.remove("item");
+    }
     representation.remove("requester");
     representation.remove("proxy");
     representation.remove("loan");

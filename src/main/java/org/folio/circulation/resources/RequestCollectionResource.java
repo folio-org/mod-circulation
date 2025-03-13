@@ -80,7 +80,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var representation = routingContext.getBodyAsJson();
 
-    log.debug("create:: {}", representation);
+    log.info("create:: RRqq here {}", representation);
 
     final var eventPublisher = new EventPublisher(routingContext);
 
