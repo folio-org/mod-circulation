@@ -8,6 +8,7 @@ import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
+import org.folio.circulation.resources.CheckOutByBarcodeDryRunResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.CirculationSettingsResource;
@@ -83,8 +84,12 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new HealthResource().register(router);
     new TenantActivationResource(client).register(router);
-
-    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
+    var checkOutByBarcodeResource = new CheckOutByBarcodeResource(
+      "/circulation/check-out-by-barcode", client);
+    checkOutByBarcodeResource.register(router);
+    new CheckOutByBarcodeDryRunResource(
+      "/circulation/check-out-by-barcode-dry-run", client, checkOutByBarcodeResource)
+      .register(router);
     new CheckInByBarcodeResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);

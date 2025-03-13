@@ -8,9 +8,11 @@ import api.support.fixtures.ItemExamples;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
+import org.folio.Environment;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.core.IsNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -20,8 +22,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FloatingItemsTests extends APITests {
 
+  private static final String ENV_VAR_ENABLE_FLOATING_COLLECTIONS = "ENABLE_FLOATING_COLLECTIONS";
+
+  // Floating logic only applies when explicitly enabled through system env var.
+  @BeforeEach
+  void resetEnvVar() {
+    Environment.MOCK_ENV.remove(ENV_VAR_ENABLE_FLOATING_COLLECTIONS);
+  }
+
   @Test
   void willSetFloatingItemsTemporaryLocationToFloatingCollectionAtServicePoint() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FLOATING_COLLECTIONS,"TRUE");
 
     // Floating collection served by service point 'cd1'.
     final IndividualResource floatingCollection = locationsFixture.floatingCollection();
@@ -115,7 +126,103 @@ public class FloatingItemsTests extends APITests {
   }
 
   @Test
+  void willNotApplyFloatingIfFloatingNotExplicitlyEnabled() {
+    Environment.MOCK_ENV.remove(ENV_VAR_ENABLE_FLOATING_COLLECTIONS);
+
+    // Floating collection served by service point 'cd1'.
+    final IndividualResource floatingCollection = locationsFixture.floatingCollection();
+
+    // Another floating collection serviced by another service point
+    final IndividualResource servicePointTwo = servicePointsFixture.cd2();
+    locationsFixture.createLocation(
+      new LocationBuilder()
+        .withName("Floating collection 2")
+        .forInstitution(UUID.randomUUID())
+        .forCampus(UUID.randomUUID())
+        .forLibrary(UUID.randomUUID())
+        .withCode("FLOAT2")
+        .isFloatingCollection(true)
+        .withPrimaryServicePoint(servicePointTwo.getId()));
+
+    final IndividualResource james = usersFixture.james();
+
+    final IndividualResource holdingsInFloatingLocation =
+      holdingsFixture.createHoldingsRecord(UUID.randomUUID(), floatingCollection.getId());
+
+    IndividualResource nod = itemsClient.create(ItemExamples.basedUponNod(
+        materialTypesFixture.book().getId(),
+        loanTypesFixture.canCirculate().getId())
+      .withBarcode("565578437802")
+      .forHolding(holdingsInFloatingLocation.getId()));
+
+    final IndividualResource loan = checkOutFixture.checkOutByBarcode(nod, james);
+
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder().forItem(nod).at(servicePointTwo.getId()));
+
+    JsonObject itemRepresentation = checkInResponse.getItem();
+
+    assertThat("item should be present in response",
+      itemRepresentation, IsNull.notNullValue());
+
+    assertThat("ID should be included for item",
+      itemRepresentation.getString("id"), is(nod.getId()));
+
+    assertThat("barcode should be included for item",
+      itemRepresentation.getString("barcode"), CoreMatchers.is("565578437802"));
+
+    assertThat("item status should be 'In transit'",
+      itemRepresentation.getJsonObject("status").getString("name"), CoreMatchers.is("In transit"));
+
+    assertThat("item should have a destination",
+      itemRepresentation.containsKey("inTransitDestinationServicePointId"),
+      CoreMatchers.is(true));
+
+    assertThat( "The check-in response should display the item's original location.",
+      itemRepresentation.getJsonObject("location").getString("name"), CoreMatchers.is("Floating collection"));
+
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+
+    assertThat( "The staff slip context should display the item's original location.",
+      staffSlipContext.getJsonObject("item").getString("effectiveLocationSpecific"), CoreMatchers.is("Floating collection"));
+
+    JsonObject loanRepresentation = checkInResponse.getLoan();
+
+    assertThat("closed loan should be present in response",
+      loanRepresentation, IsNull.notNullValue());
+
+    assertThat("item (in loan) should have a destination",
+      loanRepresentation.getJsonObject("item")
+        .containsKey("inTransitDestinationServicePointId"), CoreMatchers.is(true));
+
+    JsonObject updatedNod = itemsClient.getById(nod.getId()).getJson();
+
+    assertThat("stored item status should be 'In transit'",
+      updatedNod.getJsonObject("status").getString("name"), CoreMatchers.is("In transit"));
+
+    assertThat("item in storage should have a destination",
+      updatedNod.containsKey("inTransitDestinationServicePointId"), CoreMatchers.is(true));
+
+    assertThat("item's temporary location is not set",
+      updatedNod.getString("temporaryLocationId"), CoreMatchers.nullValue(String.class));
+
+    final JsonObject storedLoan = loansStorageClient.getById(loan.getId()).getJson();
+
+    assertThat("stored loan status should be 'Closed'",
+      storedLoan.getJsonObject("status").getString("name"), CoreMatchers.is("Closed"));
+
+    assertThat("item status snapshot in storage should be 'In transit'",
+      storedLoan.getString("itemStatus"), CoreMatchers.is("In transit"));
+
+    assertThat("Checkin Service Point Id should be stored",
+      storedLoan.getString("checkinServicePointId"), is(servicePointTwo.getId()));
+
+  }
+
+  @Test
   void willPutFloatingItemInTransitWhenCheckInServicePointServesNoFloatingCollection() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FLOATING_COLLECTIONS,"TRUE");
+
     final IndividualResource floatingCollection = locationsFixture.floatingCollection();
 
     final IndividualResource servicePointTwo = servicePointsFixture.cd2();
@@ -150,8 +257,6 @@ public class FloatingItemsTests extends APITests {
         .at(servicePointTwo.getId()));
 
     JsonObject itemRepresentation = checkInResponse.getItem();
-
-    System.out.println(itemsClient.get(nod).getJson().encodePrettily());
 
     assertThat("item should be present in response",
       itemRepresentation, IsNull.notNullValue());
@@ -201,6 +306,8 @@ public class FloatingItemsTests extends APITests {
 
   @Test
   void willPutFloatingItemInTransitWhenHoldRequestWasIssuedAtDifferentServicePoint() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FLOATING_COLLECTIONS,"TRUE");
+
     final IndividualResource floatingCollection = locationsFixture.floatingCollection();
 
     final IndividualResource servicePointTwo = servicePointsFixture.cd3();
@@ -256,8 +363,6 @@ public class FloatingItemsTests extends APITests {
         .at(servicePointTwo.getId()));
 
     JsonObject itemRepresentation = checkInResponse.getItem();
-
-    System.out.println(itemsClient.get(nod).getJson().encodePrettily());
 
     assertThat("item should be present in response",
       itemRepresentation, IsNull.notNullValue());
@@ -323,6 +428,8 @@ public class FloatingItemsTests extends APITests {
 
   @Test
   void willPutItemInTransitIfFloatingLocationWasOverriddenByNonFloatingLocation() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FLOATING_COLLECTIONS,"TRUE");
+
     // floating collection served by service point cd1.
     final IndividualResource floatingCollection = locationsFixture.floatingCollection();
 
@@ -372,9 +479,7 @@ public class FloatingItemsTests extends APITests {
 
     JsonObject itemRepresentation = checkInResponse.getItem();
 
-    System.out.println(itemsClient.get(nod).getJson().encodePrettily());
-
-    assertThat("item should be present in response",
+    assertThat("item should be psetresent in response",
       itemRepresentation, IsNull.notNullValue());
 
     assertThat("ID should be included for item",
