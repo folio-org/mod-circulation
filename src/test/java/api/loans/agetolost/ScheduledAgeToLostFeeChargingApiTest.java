@@ -299,6 +299,28 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
   }
 
   @Test
+  void cannotChargeActualCostWithoutOwner() {
+    feeFineOwnerFixture.cleanUp();  // remove owner
+
+    var policy = lostItemFeePoliciesFixture
+        .ageToLostAfterOneMinutePolicy()
+        .withActualCost(19.99)
+        .withLostItemProcessingFee(9.99);
+    useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
+    val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
+    val loanBefore = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
+
+    ageToLostFixture.ageToLostAndChargeFees();
+
+    IndividualResource loanAfter = loansFixture.getLoanById(loanBefore.getId());
+    assertThat(loanAfter, hasNoLostItemFee());
+    assertThat(loanAfter, hasNoLostItemProcessingFee());
+    assertThat(accountsClient.getAll(), hasSize(0));
+    assertThat(scheduledNoticesClient.getAll(), hasSize(0));
+    assertThatPublishedLoanLogRecordEventsAreValid(loanAfter.getJson());
+  }
+
+  @Test
   void shouldNotChargeFeesWhenDelayedBillingPeriodHasNotPassed() {
     val lostItemFeePolicy = lostItemFeePoliciesFixture
       .ageToLostAfterOneMinutePolicy()
