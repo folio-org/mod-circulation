@@ -137,19 +137,21 @@ public class RequestFetchService {
       return succeeded(context);
     }
 
-    Set<String> fetchedInstanceIds = context.getInstances().getRecords().stream()
-      .map(Instance::getId)
-      .collect(Collectors.toSet());
+    var fetchedInstancesByIdMap = context.getInstances().getRecords().stream()
+      .collect(Collectors.toMap(Instance::getId, identity()));
     log.info("mapRequestsToInstances:: fetchedInstanceIds: {}",
-      () -> collectionAsString(fetchedInstanceIds));
+      () -> collectionAsString(fetchedInstancesByIdMap.keySet()));
 
-    Map<Request, String> requestToInstanceIdMap = context.getTlrRequests().getRecords().stream()
-      .filter(request -> fetchedInstanceIds.contains(request.getInstanceId()))
-      .collect(Collectors.toMap(identity(), Request::getInstanceId));
+    var requestToInstanceMap = context.getTlrRequests().getRecords().stream()
+      .filter(request -> fetchedInstancesByIdMap.containsKey(request.getInstanceId()))
+      .collect(Collectors.toMap(
+        r -> r.withInstance(fetchedInstancesByIdMap.get(r.getInstanceId())),
+        r -> fetchedInstancesByIdMap.get(r.getInstanceId()))
+      );
     log.info("mapRequestsToInstances:: requestToInstanceIdMap: {}",
-      () -> mapAsString(requestToInstanceIdMap));
+      () -> mapAsString(requestToInstanceMap));
 
-    return succeeded(context.withRequestToInstanceIdMap(requestToInstanceIdMap));
+    return succeeded(context.withRequestToInstanceMap(requestToInstanceMap));
   }
 
   private Result<StaffSlipsContext> mapRequestsToHoldings(StaffSlipsContext context) {
@@ -160,20 +162,20 @@ public class RequestFetchService {
       return succeeded(context);
     }
 
-    Map<Holdings, String> holdingsToInstanceIdMap = holdings.getRecords().stream()
+    var holdingsToInstanceIdMap = holdings.getRecords().stream()
       .collect(Collectors.toMap(identity(), Holdings::getInstanceId));
 
-    Map<Request, String> requestToInstanceIdMap = context.getRequestToInstanceIdMap();
-    if (requestToInstanceIdMap == null || requestToInstanceIdMap.isEmpty()) {
+    var requestToInstanceMap = context.getRequestToInstanceMap();
+    if (requestToInstanceMap == null || requestToInstanceMap.isEmpty()) {
       log.info("mapRequestsToHoldings:: no requests matched to holdings");
       return succeeded(context);
     }
 
-    Map<Request, Holdings> requestToHoldingsMap = requestToInstanceIdMap.entrySet().stream()
+    var requestToHoldingsMap = requestToInstanceMap.entrySet().stream()
       .filter(entry -> entry.getValue() != null && holdingsToInstanceIdMap.containsValue(
-        entry.getValue()))
+        entry.getValue().getId()))
       .collect(Collectors.toMap(Map.Entry::getKey,
-        entry -> findHoldingsByInstanceId(holdings, entry.getValue())));
+        entry -> findHoldingsByInstanceId(holdings, entry.getValue().getId())));
     log.info("mapRequestsToHoldings:: requestToHoldingsMap: {}",
       () -> mapAsString(requestToHoldingsMap));
 
@@ -206,13 +208,16 @@ public class RequestFetchService {
   private CompletableFuture<Result<StaffSlipsContext>> fetchHoldingsByInstances(
     StaffSlipsContext ctx, HoldingsRepository holdingsRepository) {
 
-    if (ctx.getRequestToInstanceIdMap() == null || ctx.getRequestToInstanceIdMap().isEmpty()) {
+    if (ctx.getRequestToInstanceMap() == null || ctx.getRequestToInstanceMap().isEmpty()) {
       log.info("fetchHoldingsByInstances:: instances no requests matched to instances found");
 
       return ofAsync(ctx);
     }
 
-    return holdingsRepository.fetchByInstances(ctx.getRequestToInstanceIdMap().values())
+    var instanceIds = ctx.getRequestToInstanceMap().values().stream()
+      .map(Instance::getId)
+      .toList();
+    return holdingsRepository.fetchByInstances(instanceIds)
       .thenApply(r -> r.map(ctx::withHoldings));
   }
 

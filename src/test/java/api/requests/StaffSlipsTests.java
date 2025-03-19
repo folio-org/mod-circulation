@@ -1,5 +1,6 @@
 package api.requests;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
@@ -555,7 +556,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
-  void responseContainsSearchSlipsForTLR() {
+  void responseContainsSearchSlipsForTLR() {//3
     configurationsFixture.configurePrintHoldRequests(true);
     settingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
@@ -581,6 +582,8 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
+    assertThat(response.getJson(),
+      hasJsonPath("searchSlips[0].item.title", "The Long Way to a Small, Angry Planet"));
   }
 
   @Test
