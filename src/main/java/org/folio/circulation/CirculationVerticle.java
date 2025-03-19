@@ -86,7 +86,7 @@ public class CirculationVerticle extends AbstractVerticle {
       log.info("start:: maxPoolSize is {}", maxPoolSize);
     } catch (NumberFormatException e) {
       maxPoolSize = HTTP_MAXPOOLSIZE_DEFAULT_INT;
-      log.warn("Invalid HTTP_MAXPOOLSIZE value '{}', falling back to default value of {}",
+      log.warn("start:: invalid HTTP_MAXPOOLSIZE value '{}', falling back to default value of {}",
         maxPoolSizeEnv, HTTP_MAXPOOLSIZE_DEFAULT_INT, e);
     }
     final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
