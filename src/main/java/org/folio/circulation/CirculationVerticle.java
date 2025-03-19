@@ -63,6 +63,8 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 
 public class CirculationVerticle extends AbstractVerticle {
+  private static final String HTTP_MAXPOOLSIZE_DEFAULT_STRING = "100";
+  private static final int HTTP_MAXPOOLSIZE_DEFAULT_INT = 100;
   private HttpServer server;
 
   @Override
@@ -76,10 +78,19 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    String maxPoolSize = getenv().getOrDefault("HTTP_MAXPOOLSIZE", "100");
-    log.info("start:: maxPoolSize is {}", maxPoolSize);
+    String maxPoolSizeEnv = getenv().getOrDefault("HTTP_MAXPOOLSIZE", HTTP_MAXPOOLSIZE_DEFAULT_STRING);
+    int maxPoolSize;
+
+    try {
+      maxPoolSize = Integer.parseInt(maxPoolSizeEnv);
+      log.info("start:: maxPoolSize is {}", maxPoolSize);
+    } catch (NumberFormatException e) {
+      maxPoolSize = HTTP_MAXPOOLSIZE_DEFAULT_INT;
+      log.warn("Invalid HTTP_MAXPOOLSIZE value '{}', falling back to default value of {}",
+        maxPoolSizeEnv, HTTP_MAXPOOLSIZE_DEFAULT_INT, e);
+    }
     final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
-      Integer.parseInt(maxPoolSize)));
+      maxPoolSize));
 
     this.server = vertx.createHttpServer();
 
