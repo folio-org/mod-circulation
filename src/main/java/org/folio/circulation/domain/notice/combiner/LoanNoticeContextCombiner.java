@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.notice.combiner;
 
+import static java.util.stream.Collectors.collectingAndThen;
+
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -17,7 +19,7 @@ public class LoanNoticeContextCombiner implements NoticeContextCombiner {
     return events.stream()
       .map(PatronNoticeEvent::getNoticeContext)
       .filter(Objects::nonNull)
-      .collect(Collectors.collectingAndThen(
+      .collect(collectingAndThen(
         Collectors.toList(),
         contexts -> new JsonObject()
           .put("user", UserMapper.createUserContext(events.iterator().next().getUser()))
@@ -33,7 +35,7 @@ public class LoanNoticeContextCombiner implements NoticeContextCombiner {
       .map(NoticeLogContext::getItems)
       .flatMap(Collection::stream)
       .filter(Objects::nonNull)
-      .collect(Collectors.collectingAndThen(
+      .collect(collectingAndThen(
         Collectors.toList(),
         items -> new NoticeLogContext()
           .withUser(events.iterator().next().getUser())

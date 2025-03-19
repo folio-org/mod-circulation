@@ -74,8 +74,9 @@ public class UserMapper {
       .put(MIDDLE_NAME, user.getMiddleName())
       .put(BARCODE, user.getBarcode())
       .put(PATRON_GROUP, user.getPatronGroup() != null ? user.getPatronGroup().getGroup() : "")
-      .put(DEPARTMENTS, user.getDepartments() != null && !user.getDepartments().isEmpty() ?
-        user.getDepartments().stream().map(Department::getName).collect(joining("; ")) : "");
+      .put(DEPARTMENTS, user.getDepartments() != null && !user.getDepartments().isEmpty() 
+        ? user.getDepartments().stream().map(Department::getName).collect(joining("; ")) 
+        : "");
 
     var primaryAddress = user.getPrimaryAddress();
     if (primaryAddress != null) {
