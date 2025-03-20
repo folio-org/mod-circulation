@@ -45,7 +45,8 @@ public class Environment {
       return parsedIntVariable;
     }
     catch(Exception e) {
-      log.warn("Invalid value for '{}': '{}' ", key, variable);
+      log.warn("Invalid value for '{}': '{}', using default value: '{}'",
+        key, variable, defaultValue);
 
       return defaultValue;
     }
