@@ -25,6 +25,10 @@ public class Environment {
     return getVariable("ENABLE_FLOATING_COLLECTIONS", false);
   }
 
+  public static int getHttpMaxPoolSize() {
+    return getVariable("HTTP_MAXPOOLSIZE", 100);
+  }
+
   private static int getVariable(String key, int defaultValue) {
     final var variable = getVar(key);
 

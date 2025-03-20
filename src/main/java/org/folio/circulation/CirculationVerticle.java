@@ -1,7 +1,6 @@
 package org.folio.circulation;
 
-import static java.lang.System.getenv;
-import static java.util.Optional.ofNullable;
+import static org.folio.Environment.getHttpMaxPoolSize;
 
 import java.lang.invoke.MethodHandles;
 
@@ -55,7 +54,6 @@ import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
-import org.folio.circulation.support.utils.CommonUtils;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -65,7 +63,6 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 
 public class CirculationVerticle extends AbstractVerticle {
-  private static final int HTTP_MAX_POOL_SIZE_DEFAULT = 100;
   private HttpServer server;
 
   @Override
@@ -77,10 +74,7 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    int maxPoolSize = ofNullable(getenv().get("HTTP_MAXPOOLSIZE"))
-      .map(CommonUtils::tryParseInt)
-      .orElse(HTTP_MAX_POOL_SIZE_DEFAULT);
-
+    int maxPoolSize = getHttpMaxPoolSize();
     log.info("start:: maxPoolSize is {}", maxPoolSize);
     final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
       maxPoolSize));
