@@ -103,6 +103,6 @@ public class UserMapper {
       log.info("getCountryNameByCode:: Invalid country code {}", code);
       return null;
     }
-    return new Locale("",code).getDisplayName();
+    return Locale.of("",code).getDisplayName();
   }
 }

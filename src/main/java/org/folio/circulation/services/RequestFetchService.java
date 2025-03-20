@@ -84,7 +84,7 @@ public class RequestFetchService {
     var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.ITEM.getValue());
     var statusAndTypeQuery = requestType.equals(RequestType.PAGE)
       ? typeQuery.combine(statusQuery, CqlQuery::and)
-      .combine(requestLevelQuery, CqlQuery::and)
+        .combine(requestLevelQuery, CqlQuery::and)
       : typeQuery.combine(statusQuery, CqlQuery::and);
 
     return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
