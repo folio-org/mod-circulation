@@ -1,6 +1,7 @@
 package org.folio.circulation;
 
 import static java.lang.System.getenv;
+import static java.util.Optional.ofNullable;
 
 import java.lang.invoke.MethodHandles;
 
@@ -54,6 +55,7 @@ import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
+import org.folio.circulation.support.utils.CommonUtils;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -63,31 +65,23 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 
 public class CirculationVerticle extends AbstractVerticle {
-  private static final int HTTP_MAXPOOLSIZE_DEFAULT = 100;
+  private static final int HTTP_MAX_POOL_SIZE_DEFAULT = 100;
   private HttpServer server;
 
   @Override
   public void start(Promise<Void> startFuture) {
     Logging.initialiseFormat();
-
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
     log.info("Starting circulation module");
 
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    String maxPoolSizeEnv = getenv().getOrDefault("HTTP_MAXPOOLSIZE", String.valueOf(
-      HTTP_MAXPOOLSIZE_DEFAULT));
-    int maxPoolSize = HTTP_MAXPOOLSIZE_DEFAULT;
+    int maxPoolSize = ofNullable(getenv().get("HTTP_MAXPOOLSIZE"))
+      .map(CommonUtils::tryParseInt)
+      .orElse(HTTP_MAX_POOL_SIZE_DEFAULT);
 
-    try {
-      maxPoolSize = Integer.parseInt(maxPoolSizeEnv);
-      log.info("start:: maxPoolSize is {}", maxPoolSize);
-    } catch (NumberFormatException e) {
-      log.warn("start:: invalid HTTP_MAXPOOLSIZE value '{}', falling back to default value of {}",
-        maxPoolSizeEnv, HTTP_MAXPOOLSIZE_DEFAULT, e);
-    }
+    log.info("start:: maxPoolSize is {}", maxPoolSize);
     final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
       maxPoolSize));
 
@@ -191,7 +185,6 @@ public class CirculationVerticle extends AbstractVerticle {
   @Override
   public void stop(Promise<Void> stopFuture) {
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
     log.info("Stopping circulation module");
 
     if(server != null) {
