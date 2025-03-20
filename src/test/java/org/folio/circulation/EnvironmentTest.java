@@ -7,7 +7,7 @@ import org.folio.Environment;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-public class EnvironmentTest {
+class EnvironmentTest {
 
   private static final String HTTP_MAXPOOLSIZE_ENV_VARIABLE = "HTTP_MAXPOOLSIZE";
   private static final int HTTP_MAXPOOLSIZE_DEFAULT = 100;

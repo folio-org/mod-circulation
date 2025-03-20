@@ -68,7 +68,9 @@ public class CirculationVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startFuture) {
     Logging.initialiseFormat();
+
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
     log.info("Starting circulation module");
 
     Router router = Router.router(vertx);
