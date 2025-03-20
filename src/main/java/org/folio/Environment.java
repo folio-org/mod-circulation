@@ -33,11 +33,15 @@ public class Environment {
     final var variable = getVar(key);
 
     if (isBlank(variable)) {
+      log.info("getVariable:: environment variable '{}' is not set, using default value: '{}'",
+        key, defaultValue);
       return defaultValue;
     }
 
     try {
-      return parseInt(variable);
+      int parsedIntVariable = parseInt(variable);
+      log.info("getVariable:: result: '{}'", parsedIntVariable);
+      return parsedIntVariable;
     }
     catch(Exception e) {
       log.warn("Invalid value for '{}': '{}' ", key, variable);

@@ -74,10 +74,8 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    int maxPoolSize = getHttpMaxPoolSize();
-    log.info("start:: maxPoolSize is {}", maxPoolSize);
     final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
-      maxPoolSize));
+      getHttpMaxPoolSize()));
 
     this.server = vertx.createHttpServer();
 
