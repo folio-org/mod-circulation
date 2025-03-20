@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.storage;
 
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,13 +54,10 @@ class CalendarRepositoryTest {
     Clients clients = mock(Clients.class);
     CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
     when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);
-    when(collectionResourceClient.get(any(String.class)))
-            .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
+    when(collectionResourceClient.get(any(String.class))).thenReturn(ofAsync(null));
 
     ZoneId zone = ZoneId.of("America/Toronto");
-
     String servicePointId = UUID.randomUUID().toString();
-
     ZonedDateTime dueDate = ZonedDateTime.of(2024, 7, 24, 1, 29, 3, 0, ZoneId.of("UTC"));
     ZonedDateTime returnDate = ZonedDateTime.of(2024, 7, 24, 17, 56, 37, 0, ZoneId.of("UTC"));
 
@@ -68,11 +66,8 @@ class CalendarRepositoryTest {
 
     ArgumentCaptor<String> paramsArgumentCaptor = ArgumentCaptor.forClass(String.class);
     verify(collectionResourceClient).get(paramsArgumentCaptor.capture());
-
     String actualPath = paramsArgumentCaptor.getValue();
-
     String expectedPath = String.format(EXPECTED_PATH, servicePointId, "2024-07-23", "2024-07-24");
-
     assertThat(actualPath, is(expectedPath));
   }
 
