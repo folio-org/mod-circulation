@@ -26,7 +26,7 @@ public class StaffSlipsContext {
   private MultipleRecords<Instance> instances;
   private MultipleRecords<Holdings> holdings;
   private Collection<Item> items;
-  private Map<Request, String> requestToInstanceIdMap;
+  private Map<Request, Instance> requestToInstanceMap;
   private Map<Request, Holdings> requestToHoldingMap;
 
 }
