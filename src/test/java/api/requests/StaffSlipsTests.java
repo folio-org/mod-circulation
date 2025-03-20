@@ -556,7 +556,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
-  void responseContainsSearchSlipsForTLR() {//3
+  void responseContainsSearchSlipsForTLR() {
     configurationsFixture.configurePrintHoldRequests(true);
     settingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
@@ -582,8 +582,8 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
-    assertThat(response.getJson(),
-      hasJsonPath("searchSlips[0].item.title", "The Long Way to a Small, Angry Planet"));
+    assertThat(response.getJson(), hasJsonPath("searchSlips[0].item.title", 
+      "The Long Way to a Small, Angry Planet"));
   }
 
   @Test

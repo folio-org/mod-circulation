@@ -1,12 +1,12 @@
 package org.folio.circulation.domain.mapper;
 
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.ServicePoint;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.util.Optional;
 
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.ServicePoint;
 
 public class RequestMapper {
 

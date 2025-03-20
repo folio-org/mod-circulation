@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.mapper;
 
+import static org.folio.circulation.domain.mapper.UserMapper.createUserContext;
+import static org.folio.circulation.support.json.JsonPropertyWriter.write;
+
+import java.util.Objects;
+
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,11 +13,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.support.utils.ClockUtil;
-
-import java.util.Objects;
-
-import static org.folio.circulation.domain.mapper.UserMapper.createUserContext;
-import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 public class StaffSlipMapper {
   private static final Logger log = LogManager.getLogger(StaffSlipMapper.class);

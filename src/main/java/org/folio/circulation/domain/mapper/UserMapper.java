@@ -1,16 +1,16 @@
 package org.folio.circulation.domain.mapper;
 
+import static java.util.stream.Collectors.joining;
+
+import java.util.Locale;
+import java.util.stream.Stream;
+
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.User;
-
-import java.util.Locale;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.joining;
 
 public class UserMapper {
   private static final Logger log = LogManager.getLogger(UserMapper.class);
@@ -74,8 +74,8 @@ public class UserMapper {
       .put(MIDDLE_NAME, user.getMiddleName())
       .put(BARCODE, user.getBarcode())
       .put(PATRON_GROUP, user.getPatronGroup() != null ? user.getPatronGroup().getGroup() : "")
-      .put(DEPARTMENTS, user.getDepartments() != null && !user.getDepartments().isEmpty() 
-        ? user.getDepartments().stream().map(Department::getName).collect(joining("; ")) 
+      .put(DEPARTMENTS, user.getDepartments() != null && !user.getDepartments().isEmpty()
+        ? user.getDepartments().stream().map(Department::getName).collect(joining("; "))
         : "");
 
     var primaryAddress = user.getPrimaryAddress();

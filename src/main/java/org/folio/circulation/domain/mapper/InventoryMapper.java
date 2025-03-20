@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.mapper;
 
+import static java.util.stream.Collectors.joining;
+
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,8 +10,6 @@ import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Publication;
-
-import static java.util.stream.Collectors.joining;
 
 public class InventoryMapper {
 
