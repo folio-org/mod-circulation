@@ -40,7 +40,8 @@ public class Environment {
 
     try {
       int parsedIntVariable = parseInt(variable);
-      log.info("getVariable:: result: '{}'", parsedIntVariable);
+      log.info("getVariable:: environment variable: '{}' parsed value: '{}'",
+        key, parsedIntVariable);
       return parsedIntVariable;
     }
     catch(Exception e) {
