@@ -1,3 +1,6 @@
+## 24.3.14 2025-03-24
+* Allow HTTP connection pool to be configurable (CIRC-2279)
+
 ## 24.3.13 2025-03-11
 * Fix for duplicate request IDs for pickslips (CIRC-2265)
 
