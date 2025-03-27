@@ -1,3 +1,7 @@
+## 24.3.15 2025-03-27
+* Fix incorrect overdue fine amount (CIRC-2152)
+* Send request create notification when the patron is resolved (CIRC-2269)
+
 ## 24.3.14 2025-03-24
 * Allow HTTP connection pool to be configurable (CIRC-2279)
 
