@@ -226,7 +226,7 @@ public abstract class SlipsResource extends Resource {
   }
 
   private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
-    log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
+    log.info("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
       .map(StaffSlipMapper::createStaffSlipContext)
       .toList();
