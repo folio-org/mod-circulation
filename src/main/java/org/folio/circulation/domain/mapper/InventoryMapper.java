@@ -19,7 +19,7 @@ public class InventoryMapper {
   }
 
   public static JsonObject createItemContext(Item item) {
-    log.debug("createItemContext:: parameters item: {}", item);
+    log.info("createItemContext:: parameters item: {}", item);
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
     String administrativeNotes = String.join("; ", item.getAdministrativeNotes());
@@ -39,6 +39,8 @@ public class InventoryMapper {
       .put("descriptionOfPieces", item.getDescriptionOfPieces())
       .put("accessionNumber", item.getAccessionNumber())
       .put("administrativeNotes", administrativeNotes);
+
+    log.info("createItemContext:: itemContext: {}", itemContext);
 
     var location = (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) ?
       item.getFloatDestinationLocation() : item.getLocation();
