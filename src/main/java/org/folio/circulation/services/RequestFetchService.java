@@ -7,7 +7,6 @@ import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCrite
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.matchAny;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -82,7 +81,7 @@ public class RequestFetchService {
 
     var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
     var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    var requestLevelQuery = matchAny(REQUEST_LEVEL_KEY, List.of(RequestLevel.ITEM.getValue(), RequestLevel.TITLE.getValue()));
+    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.ITEM.getValue());
     var statusAndTypeQuery = requestType.equals(RequestType.PAGE)
       ? typeQuery.combine(statusQuery, CqlQuery::and)
         .combine(requestLevelQuery, CqlQuery::and)
@@ -125,7 +124,7 @@ public class RequestFetchService {
     var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue());
     var statusTypeAndLevelQuery = typeQuery.combine(statusQuery, CqlQuery::and)
       .combine(requestLevelQuery, CqlQuery::and);
-
+    log.info("fetchTitleLevelRequests: query {}", statusTypeAndLevelQuery);
     return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
       .findByQuery(statusTypeAndLevelQuery, maximumLimit())
       .thenApply(r -> r.map(context::withTlrRequests));
