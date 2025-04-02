@@ -121,7 +121,7 @@ public class RequestFetchService {
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
     Clients clients, StaffSlipsContext context, RequestType requestType) {
-
+    Collection<Item> items = context.getItems();
     var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
     var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
     var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue());
@@ -130,6 +130,7 @@ public class RequestFetchService {
     log.info("fetchTitleLevelRequests: query {}", statusTypeAndLevelQuery.value().toString());
     return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
       .findByQuery(statusTypeAndLevelQuery, maximumLimit())
+            .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, items)))
       .thenApply(r -> r.map(context::withTlrRequests));
   }
 
