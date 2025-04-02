@@ -124,7 +124,7 @@ public class RequestFetchService {
     var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue());
     var statusTypeAndLevelQuery = typeQuery.combine(statusQuery, CqlQuery::and)
       .combine(requestLevelQuery, CqlQuery::and);
-    log.info("fetchTitleLevelRequests: query {}", statusTypeAndLevelQuery);
+    log.info("fetchTitleLevelRequests: query {}", statusTypeAndLevelQuery.value().toString());
     return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
       .findByQuery(statusTypeAndLevelQuery, maximumLimit())
       .thenApply(r -> r.map(context::withTlrRequests));
