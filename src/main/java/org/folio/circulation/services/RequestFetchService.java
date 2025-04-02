@@ -235,12 +235,19 @@ public class RequestFetchService {
     Set<String> locationIds = ctx.getLocations().getRecords().stream()
       .map(Location::getId)
       .collect(Collectors.toSet());
+    log.info("combineRequests:: locationIds from ctx");
+    locationIds.forEach(log::info);
 
+    log.info("combineRequests:: locationIds from requestToHoldingMap");
     List<Request> requestsToAdd = requestToHoldingMap.entrySet().stream()
-      .filter(entry -> locationIds.contains(entry.getValue().getEffectiveLocationId()))
+      .filter(entry -> {
+        log.info(entry.getValue().getEffectiveLocationId());
+        return locationIds.contains(entry.getValue().getEffectiveLocationId());
+      })
       .map(Map.Entry::getKey)
       .toList();
 
+    log.info("combineRequests:: requestsToAdd {}", requestsToAdd.size());
     List<Request> updatedRequests = new ArrayList<>(ctx.getRequests().getRecords());
     updatedRequests.addAll(requestsToAdd);
 
