@@ -251,6 +251,7 @@ public class RequestFetchService {
     List<Request> updatedRequests = new ArrayList<>(ctx.getRequests().getRecords());
     updatedRequests.addAll(requestsToAdd);
 
+    updatedRequests.forEach(r -> log.info("request added: {},  items in: {}", r.asJson(), r.getItem()));
     return succeeded(ctx.withRequests(new MultipleRecords<>(updatedRequests,
       updatedRequests.size())));
   }
