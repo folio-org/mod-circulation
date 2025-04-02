@@ -110,7 +110,10 @@ public class RequestFetchService {
     var holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
 
     return fetchTitleLevelRequests(clients, staffSlipsContext, requestType)
-      .thenComposeAsync(r -> r.after(ctx -> fetchByInstancesByRequests(ctx, instanceRepository)))
+      .thenComposeAsync(r -> r.after(ctx -> {
+        log.info("fetchTitleLevelRequests:: tlrRequests size {}", ctx.getTlrRequests().size());
+        return fetchByInstancesByRequests(ctx, instanceRepository);
+      }))
       .thenApply(r -> r.next(this::mapRequestsToInstances))
       .thenComposeAsync(r -> r.after(ctx -> fetchHoldingsByInstances(ctx, holdingsRepository)))
       .thenApply(r -> r.next(this::mapRequestsToHoldings));
