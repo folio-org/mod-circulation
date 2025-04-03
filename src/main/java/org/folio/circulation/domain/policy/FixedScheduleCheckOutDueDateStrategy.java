@@ -52,7 +52,8 @@ class FixedScheduleCheckOutDueDateStrategy extends DueDateStrategy {
           errorForPolicy(NO_APPLICABLE_DUE_DATE_SCHEDULE_MESSAGE)));
     }
     catch(Exception e) {
-      log.error("calculateDueDate:: Error occurred during fixed schedule check out due date calculation", e);
+      log.error("calculateDueDate:: Error occurred during fixed schedule"
+          + " check out due date calculation:: {}", e.getMessage());
       return failedDueToServerError(e);
     }
   }
