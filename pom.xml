@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>mod-circulation</artifactId>
   <groupId>org.folio</groupId>
-  <version>24.4.0-SNAPSHOT</version>
+  <version>24.5.0-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -24,14 +24,14 @@
 
   <properties>
     <antlr4.version>4.11.1</antlr4.version>
-    <drools.version>7.74.1.Final</drools.version>
-    <rmb.version>35.3.0</rmb.version>
-    <vertx.version>4.5.5</vertx.version>
-    <log4j2.version>2.23.1</log4j2.version>
+    <drools.version>10.0.0</drools.version>
+    <rmb.version>35.4.0</rmb.version>
+    <vertx.version>4.5.13</vertx.version>
+    <log4j2.version>2.24.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <lombok.version>1.18.28</lombok.version>
-    <spring.version>6.1.5</spring.version>
+    <lombok.version>1.18.36</lombok.version>
+    <spring.version>6.2.3</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
 
     <!--Folio dependencies properties-->
@@ -107,28 +107,13 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.17.0</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.17.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-text</artifactId>
-      <version>1.10.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-engine-classic</artifactId>
+      <version>${drools.version}</version>
     </dependency>
     <dependency>
       <groupId>org.drools</groupId>
-      <artifactId>drools-engine-classic</artifactId>
+      <artifactId>drools-core</artifactId>
       <version>${drools.version}</version>
     </dependency>
     <dependency>
@@ -139,12 +124,12 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-client</artifactId>
-      <version>2.11.2</version>
+      <version>2.16.0</version>
     </dependency>
     <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>util</artifactId>
-      <version>${rmb.version}</version>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+      <version>1.10.0</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -243,11 +228,6 @@
       <artifactId>spring-test</artifactId>
       <version>${spring.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>cql2pgjson</artifactId>
-      <version>${rmb.version}</version>
     </dependency>
     <dependency>
       <groupId>org.folio.okapi</groupId>
@@ -371,7 +351,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -459,6 +439,17 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <filters>
+                <!-- Fixing "Invalid signature file digest" errors after Java 21 upgrade  -->
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>

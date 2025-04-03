@@ -1,5 +1,7 @@
 package org.folio.circulation;
 
+import static org.folio.Environment.getHttpMaxPoolSize;
+
 import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +10,7 @@ import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
+import org.folio.circulation.resources.CheckOutByBarcodeDryRunResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
 import org.folio.circulation.resources.CirculationSettingsResource;
@@ -73,7 +76,8 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
+    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
+      getHttpMaxPoolSize()));
 
     this.server = vertx.createHttpServer();
 
@@ -83,8 +87,12 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new HealthResource().register(router);
     new TenantActivationResource(client).register(router);
-
-    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
+    var checkOutByBarcodeResource = new CheckOutByBarcodeResource(
+      "/circulation/check-out-by-barcode", client);
+    checkOutByBarcodeResource.register(router);
+    new CheckOutByBarcodeDryRunResource(
+      "/circulation/check-out-by-barcode-dry-run", client, checkOutByBarcodeResource)
+      .register(router);
     new CheckInByBarcodeResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
@@ -171,7 +179,6 @@ public class CirculationVerticle extends AbstractVerticle {
   @Override
   public void stop(Promise<Void> stopFuture) {
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
     log.info("Stopping circulation module");
 
     if(server != null) {

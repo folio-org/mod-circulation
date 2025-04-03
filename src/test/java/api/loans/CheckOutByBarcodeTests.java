@@ -355,6 +355,29 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
+  void canCheckOutUsingForceLoanPolicyId() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId());
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID())
+        .forceLoanPolicy(forceLoanPolicy.getId().toString()));
+
+    loanHasLoanPolicyProperties(response.getJson(), forceLoanPolicy);
+  }
+
+  @Test
   void canCheckOutUsingDueDateLimitedRollingLoanPolicy() {
     FixedDueDateSchedulesBuilder dueDateLimitSchedule = new FixedDueDateSchedulesBuilder()
       .withName("March Only Due Date Limit")

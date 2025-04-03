@@ -104,6 +104,6 @@ public class WebContext {
 
   public Map<String, String> getHeaders() {
     return routingContext.request().headers().entries().stream()
-      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue, (a, b) -> b));
   }
 }

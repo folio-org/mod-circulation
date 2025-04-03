@@ -201,7 +201,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.4",
+      "version": "14.6",
       "handlers": [
         {
           "methods": [
@@ -218,6 +218,18 @@
             "circulation.override-patron-block.post",
             "circulation.override-item-limit-block.post",
             "circulation.override-item-not-loanable-block.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/check-out-by-barcode-dry-run",
+          "permissionsRequired": [
+            "circulation.check-out-by-barcode-dry-run.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.check-out-by-barcode-dry-run.post"
           ]
         },
         {
@@ -317,7 +329,8 @@
             "circulation.loans.item.put"
           ],
           "modulePermissions": [
-            "modperms.circulation.loans.item.put"
+            "modperms.circulation.loans.item.put",
+            "overdue-fines-policies.item.get"
           ]
         },
         {
@@ -1359,6 +1372,22 @@
     {
       "id": "print-events-storage",
       "version": "1.0"
+    },
+    {
+      "id": "actual-cost-fee-fine",
+      "version": "0.3"
+    },
+    {
+      "id": "anonymize-storage-loans",
+      "version": "0.1"
+    },
+    {
+      "id": "identifier-types",
+      "version": "1.2"
+    },
+    {
+      "id": "template-engine",
+      "version": "2.2"
     }
   ],
   "optional": [
@@ -1388,6 +1417,11 @@
       "permissionName": "circulation.check-out-by-barcode.post",
       "displayName": "circulation - check out item by barcode",
       "description": "check out an item using barcodes for item and loanee"
+    },
+    {
+      "permissionName": "circulation.check-out-by-barcode-dry-run.post",
+      "displayName": "circulation - check out item by barcode dry run",
+      "description": "dry run of check out an item using barcodes for item and user"
     },
     {
       "permissionName": "circulation.check-in-by-barcode.post",
@@ -1896,6 +1930,52 @@
       "visible": false
     },
     {
+      "permissionName": "modperms.circulation.check-out-by-barcode-dry-run.post",
+      "displayName" : "module permissions for one op",
+      "description" : "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "circulation-storage.loans.item.post",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation-storage.circulation-rules.get",
+        "circulation-storage.patron-notice-policies.item.get",
+        "circulation-storage.request-batch.item.post",
+        "circulation-storage.request-policies.item.get",
+        "circulation-storage.request-policies.collection.get",
+        "circulation-storage.requests.collection.get",
+        "circulation-storage.requests.item.put",
+        "circulation-storage.fixed-due-date-schedules.item.get",
+        "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation.rules.overdue-fine-policy.get",
+        "circulation.rules.lost-item-policy.get",
+        "circulation.rules.loan-policy.get",
+        "circulation.rules.request-policy.get",
+        "inventory-storage.items.item.put",
+        "circulation-item.item.put",
+        "circulation.internal.fetch-items.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "addresstypes.collection.get",
+        "usergroups.collection.get",
+        "usergroups.item.get",
+        "proxiesfor.collection.get",
+        "overdue-fines-policies.item.get",
+        "overdue-fines-policies.collection.get",
+        "lost-item-fees-policies.item.get",
+        "lost-item-fees-policies.collection.get",
+        "mod-settings.entries.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.global.read.mod-circulation",
+        "mod-settings.global.read.circulation",
+        "manualblocks.item.get",
+        "manualblocks.collection.get",
+        "patron-blocks.automated-patron-blocks.collection.get"
+      ],
+      "visible": false
+    },
+    {
       "permissionName": "modperms.circulation.check-in-by-barcode.post",
       "displayName" : "module permissions for one op",
       "description" : "to reduce X-Okapi-Token size",
@@ -1944,10 +2024,10 @@
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "feesfines.accounts.refund.item.post",
-        "feesfines.accounts-bulk.refund.item.post",
-        "feesfines.accounts.cancel.item.post",
-        "feesfines.accounts-bulk.cancel.item.post",
+        "feesfines.accounts.refund.post",
+        "feesfines.accounts-bulk.refund.post",
+        "feesfines.accounts.cancel.post",
+        "feesfines.accounts-bulk.cancel.post",
         "configuration.entries.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
@@ -2005,8 +2085,8 @@
         "feefineactions.item.get",
         "owners.collection.get",
         "accounts.item.post",
-        "feesfines.accounts.cancel.item.post",
-        "feesfines.accounts-bulk.cancel.item.post",
+        "feesfines.accounts.cancel.post",
+        "feesfines.accounts-bulk.cancel.post",
         "pubsub.publish.post",
         "patron-blocks.automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
@@ -2552,7 +2632,10 @@
         "users.item.get",
         "users.collection.get",
         "addresstypes.item.get",
-        "addresstypes.collection.get"
+        "addresstypes.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },
@@ -2624,6 +2707,10 @@
       {
         "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
         "value": "50000"
+      },
+      {
+        "name": "ENABLE_FLOATING_COLLECTIONS",
+        "value": "true"
       },
       {
         "name": "KAFKA_HOST",

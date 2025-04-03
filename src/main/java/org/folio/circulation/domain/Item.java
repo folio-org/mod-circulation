@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
@@ -146,6 +147,10 @@ public class Item {
     return instance.getIdentifiers().stream();
   }
 
+  public String getInstanceHrid() {
+    return instance.getHrid();
+  }
+
   public String getBarcode() {
     return description.getBarcode();
   }
@@ -164,6 +169,10 @@ public class Item {
 
   public Stream<Publication> getPublication() {
     return instance.getPublication().stream();
+  }
+
+  public Collection<String> getDatesOfPublication() {
+    return getPublication().map(Publication::getDateOfPublication).toList();
   }
 
   public String getCallNumber() {
@@ -263,6 +272,22 @@ public class Item {
     return description.getYearCaption();
   }
 
+  public String getAccessionNumber() {
+    return description.getAccessionNumber();
+  }
+
+  public Collection<String> getEditions() {
+    return instance.getEditions();
+  }
+
+  public Collection<String> getPhysicalDescriptions() {
+    return instance.getPhysicalDescriptions();
+  }
+
+  public Collection<String> getAdministrativeNotes() {
+    return description.getAdministrativeNotes();
+  }
+
   private ServicePoint getPrimaryServicePoint() {
     return location.getPrimaryServicePoint();
   }
@@ -357,7 +382,7 @@ public class Item {
   }
 
   public boolean canFloatThroughCheckInServicePoint() {
-    return getLocation() != null
+    return CheckInByBarcodeResource.isFloatingEnabled() && getLocation() != null
       && getLocation().isFloatingCollection()
       && getFloatDestinationLocation() != null
       && getFloatDestinationLocation().getId()  != null;

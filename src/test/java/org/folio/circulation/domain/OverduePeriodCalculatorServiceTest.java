@@ -3,9 +3,7 @@ package org.folio.circulation.domain;
 import static api.support.fixtures.OpeningHourExamples.afternoon;
 import static api.support.fixtures.OpeningHourExamples.allDay;
 import static api.support.fixtures.OpeningHourExamples.morning;
-import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.singletonList;
-import static org.folio.circulation.support.utils.ClockUtil.getLocalTime;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -40,6 +38,7 @@ class OverduePeriodCalculatorServiceTest {
     new OverduePeriodCalculatorService(null, null);
   private static final ZoneId NEW_YORK = ZoneId.of("America/New_York");
   private static final ZoneId LONDON = ZoneId.of("Europe/London");
+  private static final ZoneId UTC = ZoneId.of("UTC");
 
   @Test
   void preconditionsCheckLoanHasNoDueDate() {
@@ -88,7 +87,7 @@ class OverduePeriodCalculatorServiceTest {
       .withDueDate(systemTime.minusMinutes(expectedResult))
       .asDomainObject();
 
-    int actualResult = calculator.getOverdueMinutes(loan, systemTime, true).get().value();
+    int actualResult = calculator.getOverdueMinutes(loan, systemTime, true, UTC).get().value();
 
     assertEquals(expectedResult, actualResult);
   }

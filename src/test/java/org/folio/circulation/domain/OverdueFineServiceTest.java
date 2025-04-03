@@ -63,6 +63,7 @@ class OverdueFineServiceTest {
   private static final ZonedDateTime RETURNED_DATE = ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, UTC);
   private static final UUID ITEM_ID = UUID.randomUUID();
   private static final UUID ITEM_MATERIAL_TYPE_ID = UUID.randomUUID();
+  private static final String ITEM_MATERIAL_TYPE = "material";
   private static final UUID FEE_FINE_OWNER_ID = UUID.randomUUID();
   private static final String FEE_FINE_OWNER = "fee-fine-owner";
   private static final String LOCATION_NAME = "location-name";
@@ -73,6 +74,7 @@ class OverdueFineServiceTest {
   private static final String FEE_FINE_TYPE = "Overdue fine";
   private static final String ITEM_MATERIAL_TYPE_NAME = "book";
   private static final String TITLE = "title";
+  private static final String INSTANCE_HRID = "1234";
   private static final String BARCODE = "barcode";
   private static final String CALL_NUMBER = "call-number";
   private static final User LOGGED_IN_USER =
@@ -166,7 +168,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -252,7 +254,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(0)));
 
     if (renewal) {
@@ -285,7 +287,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(null)));
@@ -325,7 +327,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(5)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -363,7 +365,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -528,7 +530,7 @@ class OverdueFineServiceTest {
 
     when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
       .thenReturn(completedFuture(succeeded(loan)));
-    when(overduePeriodCalculatorService.getMinutes(any(), any()))
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(periodCalculatorResult)));
     when(itemRepository.fetchItemRelatedRecords(any()))
       .thenReturn(completedFuture(succeeded(createItem())));
@@ -613,7 +615,7 @@ class OverdueFineServiceTest {
       .withLocation(new Location(null, LOCATION_NAME, null, null, emptyList(),
         SERVICE_POINT_ID, false, Institution.unknown(), Campus.unknown(), Library.unknown(),
         ServicePoint.unknown()))
-      .withInstance(new Instance(UUID.randomUUID().toString(), TITLE, emptyList(), contributors, emptyList(), emptyList()))
+      .withInstance(new Instance(UUID.randomUUID().toString(), INSTANCE_HRID, TITLE, emptyList(), contributors, emptyList(), emptyList(), emptyList()))
       .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_ID.toString(), ITEM_MATERIAL_TYPE_NAME, null));
   }
 
@@ -677,9 +679,9 @@ class OverdueFineServiceTest {
       new AccountRelatedRecordsInfo(
         new AccountFeeFineOwnerInfo(FEE_FINE_OWNER_ID.toString(), FEE_FINE_OWNER),
         new AccountFeeFineTypeInfo(FEE_FINE_ID.toString(), FEE_FINE_TYPE),
-        new AccountLoanInfo(LOAN_ID.toString(), LOAN_USER_ID.toString()),
+        new AccountLoanInfo(LOAN_ID.toString(), LOAN_USER_ID.toString(), DUE_DATE),
         new AccountItemInfo(ITEM_ID.toString(), TITLE, BARCODE, CALL_NUMBER,
-          LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString())
+          LOCATION_NAME, ITEM_MATERIAL_TYPE_ID.toString(), ITEM_MATERIAL_TYPE)
       ),
       new FeeAmount(correctOverdueFine), new FeeAmount(correctOverdueFine), "Open", "Outstanding",
       emptyList(), ClockUtil.getZonedDateTime(), null);

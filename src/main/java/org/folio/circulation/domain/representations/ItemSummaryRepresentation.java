@@ -34,6 +34,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "id", item.getItemId());
     write(itemSummary, "holdingsRecordId", item.getHoldingsRecordId());
     write(itemSummary, "instanceId", item.getInstanceId());
+    write(itemSummary, "instanceHrid", item.getInstanceHrid());
     write(itemSummary, "title", item.isDcbItem() ? item.getDcbItemTitle() : item.getTitle());
     write(itemSummary, "barcode", item.getBarcode());
     write(itemSummary, "contributors", mapContributorNamesToJson(item));
@@ -44,6 +45,11 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "displaySummary", item.getDisplaySummary());
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "copyNumber", item.getCopyNumber());
+    write(itemSummary, "editions", item.getEditions());
+    write(itemSummary, "datesOfPublication", item.getDatesOfPublication());
+    write(itemSummary, "physicalDescriptions", item.getPhysicalDescriptions());
+    write(itemSummary, "administrativeNotes", item.getAdministrativeNotes());
+    write(itemSummary, "accessionNumber", item.getAccessionNumber());
     write(itemSummary, CALL_NUMBER_COMPONENTS,
       createCallNumberComponents(item.getCallNumberComponents()));
     write(itemSummary, "tenantId", item.getTenantId());

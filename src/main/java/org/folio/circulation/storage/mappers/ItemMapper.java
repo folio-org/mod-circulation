@@ -47,6 +47,9 @@ public class ItemMapper {
       getProperty(representation, "descriptionOfPieces"),
       getProperty(representation, "displaySummary"),
       toStream(representation, "yearCaption")
+        .collect(Collectors.toList()),
+      getProperty(representation, "accessionNumber"),
+      toStream(representation, "administrativeNotes")
         .collect(Collectors.toList()));
   }
 
