@@ -1,3 +1,6 @@
+## 24.4.1 2025-03-24
+* Add missing key tokens for TLRs in Search slips (CIRC-2228)
+
 ## 24.4.0 2025-03-12
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
 * Fix automated patron blocks permission issue (CIRC-2185)

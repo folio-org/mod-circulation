@@ -66,10 +66,7 @@
           ],
           "pathPattern": "/circulation/search-slips/{servicePointId}",
           "permissionsRequired": [
-            "circulation.search-slips.get",
-            "mod-settings.entries.item.get",
-            "mod-settings.entries.collection.get",
-            "mod-settings.global.read.circulation"
+            "circulation.search-slips.get"
           ],
           "modulePermissions": [
             "modperms.circulation.search-slips.get"
@@ -2635,7 +2632,10 @@
         "users.item.get",
         "users.collection.get",
         "addresstypes.item.get",
-        "addresstypes.collection.get"
+        "addresstypes.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },
