@@ -2202,11 +2202,18 @@
         "circulation-storage.loan-policies.collection.get",
         "circulation.internal.fetch-items.collection.get",
         "accounts.collection.get",
+        "accounts.item.get",
+        "feefineactions.collection.get",
+        "feefineactions.item.get",
+        "users.collection.get",
+        "users.item.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "addresstypes.collection.get",
         "overdue-fines-policies.collection.get",
-        "lost-item-fees-policies.collection.get"
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.collection.get",
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
     },

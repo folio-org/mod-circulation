@@ -1,3 +1,6 @@
+## 24.4.2 2025-04-10
+* Add missing permissions for GET `/circulation/loans/{id}` (CIRC-2290)
+
 ## 24.4.1 2025-03-24
 * Add missing key tokens for TLRs in Search slips (CIRC-2228)
 
