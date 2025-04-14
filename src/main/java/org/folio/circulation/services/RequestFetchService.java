@@ -110,7 +110,7 @@ public class RequestFetchService {
     var holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
 
     return fetchTitleLevelRequests(clients, staffSlipsContext, requestType)
-      .thenComposeAsync(r -> r.after(ctx -> fetchByInstancesByRequests(ctx, instanceRepository)))
+      .thenComposeAsync(r -> r.after(ctx -> fetchInstancesByRequests(ctx, instanceRepository)))
       .thenApply(r -> r.next(this::mapRequestsToInstances))
       .thenComposeAsync(r -> r.after(ctx -> fetchHoldingsByInstances(ctx, holdingsRepository)))
       .thenApply(r -> r.next(this::mapRequestsToHoldings));
@@ -127,6 +127,7 @@ public class RequestFetchService {
 
     return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
       .findByQuery(statusTypeAndLevelQuery, maximumLimit())
+      .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, context.getItems())))
       .thenApply(r -> r.map(context::withTlrRequests));
   }
 
@@ -191,7 +192,7 @@ public class RequestFetchService {
       .orElse(null);
   }
 
-  private CompletableFuture<Result<StaffSlipsContext>> fetchByInstancesByRequests(
+  private CompletableFuture<Result<StaffSlipsContext>> fetchInstancesByRequests(
     StaffSlipsContext ctx, InstanceRepository instanceRepository) {
 
     var tlrRequests = ctx.getTlrRequests();

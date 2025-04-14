@@ -170,8 +170,7 @@ public abstract class SlipsResource extends Resource {
 
     if (locationIds.isEmpty()) {
       log.info("fetchPagedItemsForLocations:: locationIds is empty");
-
-      return ofAsync(context);
+      return ofAsync(context.withItems(emptyList()));
     }
 
     List<String> itemStatusValues = itemStatuses.stream()
