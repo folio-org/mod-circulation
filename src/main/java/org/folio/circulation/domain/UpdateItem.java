@@ -103,8 +103,13 @@ public class UpdateItem {
 
     UUID pickUpServicePointId = UUID.fromString(pickupServicePointIdString);
     if (checkInServicePointId.equals(pickUpServicePointId)) {
+      log.info("changeItemWithHoldRequest:: checkInServicePointId: {} equals pickUpServicePointId",
+        pickUpServicePointId);
       return succeeded(item.changeStatus(request.checkedInItemStatus()));
     } else {
+      log.info("changeItemWithHoldRequest:: checkInServicePointId: {} is not equal to " +
+          "pickUpServicePointId: {}", checkInServicePointId, pickUpServicePointId);
+      log.info("changeItemWithHoldRequest:: set item's pickUpServicePointId: {}", pickUpServicePointId);
       return succeeded(item.inTransitToServicePoint(pickUpServicePointId));
     }
   }
