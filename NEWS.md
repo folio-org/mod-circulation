@@ -1,3 +1,7 @@
+## 24.4.3 2025-04-22
+* Allow HTTP connection pool to be configurable (CIRC-2279)
+* Fix incorrect overdue fine amount (CIRC-2152)
+
 ## 24.4.2 2025-04-10
 * Add missing permissions for GET `/circulation/loans/{id}` (CIRC-2290)
 
