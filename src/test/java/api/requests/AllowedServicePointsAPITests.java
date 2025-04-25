@@ -917,17 +917,17 @@ class AllowedServicePointsAPITests extends APITests {
     final List<String> servicePointIds = response.stream()
       .map(JsonObject.class::cast)
       .map(sp -> sp.getString("id"))
-            .toList();
+      .toList();
 
     final List<String> servicePointNames = response.stream()
       .map(JsonObject.class::cast)
       .map(allowedSp -> allowedSp.getString("name"))
-            .toList();
+      .toList();
 
     final List<String> servicePointDiscoveryDisplayName = response.stream()
-            .map(JsonObject.class::cast)
-            .map(allowedSp -> allowedSp.getString("discoveryDisplayName"))
-            .toList();
+      .map(JsonObject.class::cast)
+      .map(allowedSp -> allowedSp.getString("discoveryDisplayName"))
+      .toList();
 
     // order is important: service points must be sorted by name
     assertThat(servicePointIds, contains(expectedIds.toArray(String[]::new)));
