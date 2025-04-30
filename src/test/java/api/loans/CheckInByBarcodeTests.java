@@ -44,7 +44,6 @@ import static org.folio.circulation.domain.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_UNFILLED;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.RECALL;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.domain.policy.ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE;
 import static org.folio.circulation.domain.representations.logs.LogEventType.CHECK_IN;
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE;
@@ -117,6 +116,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class CheckInByBarcodeTests extends APITests {
+  private static final String CURRENT_DATE_TIME = "currentDateTime";
   private final static String HOLD_SHELF = "Hold Shelf";
   private final static String DELIVERY = "Delivery";
   private final static String OPEN_NOT_YET_FILLED = "Open - Not yet filled";
