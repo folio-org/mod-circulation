@@ -1,3 +1,7 @@
+## 24.3.16 2025-04-30
+* Add missing tokens to TLR search slips (CIRC-2228)
+* Add item data to staff slips for title level requests (CIRC-2307)
+
 ## 24.3.15 2025-03-27
 * Fix incorrect overdue fine amount (CIRC-2152)
 * Send request create notification when the patron is resolved (CIRC-2269)
