@@ -1,3 +1,6 @@
+## 24.3.17 2025-05-06
+* [LOC Locate requirement] Allowed Service points should return discovery display name. (CIRC-2350)
+
 ## 24.3.16 2025-04-30
 * Add missing tokens to TLR search slips (CIRC-2228)
 * Add item data to staff slips for title level requests (CIRC-2307)
