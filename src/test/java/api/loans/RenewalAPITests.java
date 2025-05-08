@@ -30,6 +30,7 @@ import static api.support.matchers.EventTypeMatchers.LOAN_DUE_DATE_CHANGED;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
+import static api.support.matchers.RequestMatchers.isClosedFilled;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -60,11 +61,13 @@ import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 import static org.folio.circulation.support.utils.DateTimeUtil.atStartOfDay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -80,6 +83,7 @@ import java.util.concurrent.TimeUnit;
 import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -109,10 +113,12 @@ import api.support.fakes.FakePubSub;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
+import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.OkapiHeaders;
 import api.support.http.ResourceClient;
+import api.support.http.UserResource;
 import api.support.matchers.OverdueFineMatcher;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -2110,6 +2116,61 @@ public abstract class RenewalAPITests extends APITests {
     loansClient.attemptReplace(loan.getId(), loanFromStorage.put("loanDate", loanDate));
     renew(smallAngryPlanet, jessica);
   }
+
+  @Test
+  void loanCreatedForEcsRequestIsRenewedWithLoanPolicyUsedForCheckOut() {
+    UserResource user = usersFixture.james();
+    IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holding = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource itemLocation = locationsFixture.mainFloor();
+    IndividualResource item = circulationItemsFixture.createCirculationItem("item_barcode",
+      holding.getId(), itemLocation.getId(), instance.getJson().getString("title"));
+
+    IndividualResource fallbackLoanPolicy = loanPoliciesFixture.canCirculateFixed();
+    useFallbackPolicies(fallbackLoanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.inactiveNotice().getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .withInstanceId(instance.getId())
+      .by(user)
+      .itemRequestLevel()
+      .withEcsRequestPhase(EcsRequestPhase.PRIMARY.getValue())
+      .withRequestDate(ZonedDateTime.now())
+      .fulfillToHoldShelf()
+      .withPickupServicePointId(pickupServicePoint.getId()));
+
+    checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
+
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    String forceLoanPolicyId = forceLoanPolicy.getId().toString();
+    assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
+
+    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(user)
+        .on(getZonedDateTime())
+        .at(pickupServicePoint)
+        .forceLoanPolicy(forceLoanPolicyId));
+
+    assertThat(loan.getJson().getString("loanPolicyId"), equalTo(forceLoanPolicyId));
+
+    JsonObject requestAfterCheckOut = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckOut, isClosedFilled());
+
+    JsonObject renewalResponse = renew(item, user).getJson();
+    assertThat(renewalResponse.getString("loanPolicyId"), equalTo(forceLoanPolicyId));
+    assertThat(renewalResponse.getJsonObject("loanPolicy").getString("name"),
+      equalTo(forceLoanPolicy.getJson().getString("name")));
+  }
+
   private void checkOutItem(ZonedDateTime loanDate, IndividualResource item, ZonedDateTime expectedDueDate,
     IndividualResource steve, String servicePointId) {
 
