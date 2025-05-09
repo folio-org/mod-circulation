@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_IN_USE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
@@ -178,6 +179,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(records -> checkOut(records, clients)))
       .thenApply(r -> r.map(this::checkOutItem))
+      .thenApply(r -> r.map(this::markInUseIfForUseAtLocation))
       .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(settingsRepository,
         checkOutLockRepository, l, checkOutLockId, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -303,6 +305,14 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
+  }
+
+  private LoanAndRelatedRecords markInUseIfForUseAtLocation(LoanAndRelatedRecords loanAndRelatedRecords) {
+    Loan loan = loanAndRelatedRecords.getLoan();
+    if (loan.getLoanPolicy().isForUseAtLocation()) {
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE);
+    }
+    return loanAndRelatedRecords;
   }
 
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,

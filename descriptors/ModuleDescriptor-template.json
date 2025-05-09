@@ -274,6 +274,20 @@
         },
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/pickup-by-barcode-for-use-at-location",
+          "permissionsRequired": []
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/hold-by-barcode-for-use-at-location",
+          "permissionsRequired": []
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/circulation/loans",

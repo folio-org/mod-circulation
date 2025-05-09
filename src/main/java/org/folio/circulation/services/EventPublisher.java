@@ -377,6 +377,11 @@ public class EventPublisher {
     return publishLogRecord(noticeLogContext.withDate(getZonedDateTime()).asJson(), eventType);
   }
 
+  public CompletableFuture<Result<Loan>> publishUsageAtLocationEvent(Loan loan, LogEventType eventType) {
+    return publishLogRecord((LoanLogContext.from(loan)).asJson(), eventType)
+      .thenApply(r -> succeeded(loan));
+  }
+
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
     NoticeLogContext noticeLogContext, HttpFailure error) {
 
