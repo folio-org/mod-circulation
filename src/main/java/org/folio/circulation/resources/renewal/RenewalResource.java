@@ -51,7 +51,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -68,7 +67,6 @@ import org.folio.circulation.domain.OverduePeriodCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
@@ -132,7 +130,6 @@ public abstract class RenewalResource extends Resource {
   private static final String DUE_DATE = "dueDate";
   private static final String OVERRIDE_BLOCKS = "overrideBlocks";
   private static final String RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK = "renewalDueDateRequiredBlock";
-  private static final String DCB_USER_LAST_NAME = "DcbSystem";
   private static final EnumSet<ItemStatus> ITEM_STATUSES_DISALLOWED_FOR_RENEW = EnumSet.of(
     AGED_TO_LOST, DECLARED_LOST);
   private static final EnumSet<ItemStatus> ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW = EnumSet.of(
@@ -373,7 +370,7 @@ public abstract class RenewalResource extends Resource {
       return ofAsync(false);
     }
 
-    if (isDcbUser(loan.getUser())) {
+    if (loan.getUser().isDcbUser()) {
       log.info("isEcsLoan:: loan was created for DCB user");
       return ofAsync(false);
     }
@@ -817,10 +814,4 @@ public abstract class RenewalResource extends Resource {
       .isPresent();
   }
 
-  private static boolean isDcbUser(User user) {
-    return Optional.of(user)
-      .map(User::getLastName)
-      .map(DCB_USER_LAST_NAME::equals)
-      .orElse(false);
-  }
 }

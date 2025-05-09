@@ -2118,7 +2118,7 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   @Test
-  void loanCreatedForEcsRequestIsRenewedWithLoanPolicyUsedForCheckOut() {
+  void forcedLoanPolicyIsUsedWhenLoanWasCreatedForEcsRequest() {
     UserResource user = usersFixture.james();
     IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -2127,12 +2127,9 @@ public abstract class RenewalAPITests extends APITests {
     IndividualResource item = circulationItemsFixture.createCirculationItem("item_barcode",
       holding.getId(), itemLocation.getId(), instance.getJson().getString("title"));
 
-    IndividualResource fallbackLoanPolicy = loanPoliciesFixture.canCirculateFixed();
-    useFallbackPolicies(fallbackLoanPolicy.getId(),
-      requestPoliciesFixture.allowAllRequestPolicy().getId(),
-      noticePoliciesFixture.inactiveNotice().getId(),
-      overdueFinePoliciesFixture.facultyStandard().getId(),
-      lostItemFeePoliciesFixture.facultyStandard().getId());
+    var defaultPolicies = policiesActivation.defaultRollingPolicies().build();
+    IndividualResource fallbackLoanPolicy = defaultPolicies.getLoanPolicy();
+    use(defaultPolicies);
 
     IndividualResource request = requestsFixture.place(new RequestBuilder()
       .open()
@@ -2142,7 +2139,7 @@ public abstract class RenewalAPITests extends APITests {
       .by(user)
       .itemRequestLevel()
       .withEcsRequestPhase(EcsRequestPhase.PRIMARY.getValue())
-      .withRequestDate(ZonedDateTime.now())
+      .withRequestDate(getZonedDateTime())
       .fulfillToHoldShelf()
       .withPickupServicePointId(pickupServicePoint.getId()));
 
@@ -2165,10 +2162,114 @@ public abstract class RenewalAPITests extends APITests {
     JsonObject requestAfterCheckOut = requestsFixture.getById(request.getId()).getJson();
     assertThat(requestAfterCheckOut, isClosedFilled());
 
-    JsonObject renewalResponse = renew(item, user).getJson();
-    assertThat(renewalResponse.getString("loanPolicyId"), equalTo(forceLoanPolicyId));
-    assertThat(renewalResponse.getJsonObject("loanPolicy").getString("name"),
-      equalTo(forceLoanPolicy.getJson().getString("name")));
+    IndividualResource renewalResponse = renew(item, user);
+    assertLoanWasRenewedWithLoanPolicy(renewalResponse, forceLoanPolicy);
+  }
+
+  @Test
+  void forcedLoanPolicyIsNotUsedWhenLoanWasCreatedForDcbUser() {
+    UserResource user = usersFixture.dcbUser();
+    IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holding = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource itemLocation = locationsFixture.mainFloor();
+    IndividualResource item = circulationItemsFixture.createCirculationItem("item_barcode",
+      holding.getId(), itemLocation.getId(), instance.getJson().getString("title"));
+
+    var defaultPolicies = policiesActivation.defaultRollingPolicies().build();
+    IndividualResource fallbackLoanPolicy = defaultPolicies.getLoanPolicy();
+    use(defaultPolicies);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .withInstanceId(instance.getId())
+      .by(user)
+      .itemRequestLevel()
+      .withEcsRequestPhase(EcsRequestPhase.PRIMARY.getValue())
+      .withRequestDate(getZonedDateTime())
+      .fulfillToHoldShelf()
+      .withPickupServicePointId(pickupServicePoint.getId()));
+
+    checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
+
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    String forceLoanPolicyId = forceLoanPolicy.getId().toString();
+    assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
+
+    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(user)
+        .on(getZonedDateTime())
+        .at(pickupServicePoint)
+        .forceLoanPolicy(forceLoanPolicyId));
+
+    assertThat(loan.getJson().getString("loanPolicyId"), equalTo(forceLoanPolicyId));
+
+    JsonObject requestAfterCheckOut = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckOut, isClosedFilled());
+
+    IndividualResource renewalResponse = renew(item, user);
+    assertLoanWasRenewedWithLoanPolicy(renewalResponse, fallbackLoanPolicy);;
+  }
+
+  @Test
+  void forcedLoanPolicyIsNotUsedWhenRequestHasNoEcsPhase() {
+    UserResource user = usersFixture.james();
+    IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holding = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource itemLocation = locationsFixture.mainFloor();
+    IndividualResource item = circulationItemsFixture.createCirculationItem("item_barcode",
+      holding.getId(), itemLocation.getId(), instance.getJson().getString("title"));
+
+    var defaultPolicies = policiesActivation.defaultRollingPolicies().build();
+    IndividualResource fallbackLoanPolicy = defaultPolicies.getLoanPolicy();
+    use(defaultPolicies);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .withInstanceId(instance.getId())
+      .by(user)
+      .itemRequestLevel()
+      .withRequestDate(getZonedDateTime())
+      .fulfillToHoldShelf()
+      .withPickupServicePointId(pickupServicePoint.getId()));
+
+    checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
+
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    String forceLoanPolicyId = forceLoanPolicy.getId().toString();
+    assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
+
+    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(user)
+        .on(getZonedDateTime())
+        .at(pickupServicePoint)
+        .forceLoanPolicy(forceLoanPolicyId));
+
+    assertThat(loan.getJson().getString("loanPolicyId"), equalTo(forceLoanPolicyId));
+
+    JsonObject requestAfterCheckOut = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckOut, isClosedFilled());
+
+    IndividualResource renewalResponse = renew(item, user);
+    assertLoanWasRenewedWithLoanPolicy(renewalResponse, fallbackLoanPolicy);
+  }
+
+  private void assertLoanWasRenewedWithLoanPolicy(IndividualResource renewalResponse,
+    IndividualResource expectedLoanPolicy) {
+
+    JsonObject responseJson = renewalResponse.getJson();
+    assertThat(responseJson.getString("loanPolicyId"), equalTo(expectedLoanPolicy.getId().toString()));
+    assertThat(responseJson.getJsonObject("loanPolicy").getString("name"),
+      equalTo(expectedLoanPolicy.getJson().getString("name")));
   }
 
   private void checkOutItem(ZonedDateTime loanDate, IndividualResource item, ZonedDateTime expectedDueDate,

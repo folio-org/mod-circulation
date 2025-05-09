@@ -27,6 +27,10 @@ import lombok.val;
 public class User {
   private static final String PERSONAL_PROPERTY_NAME = "personal";
   private static final String ADDRESSES_PROPERTY_NAME = "addresses";
+  private static final String DCB_USER_LAST_NAME = "DcbSystem";
+  private static final String USER_TYPE_PROPERTY_NAME = "type";
+  private static final String DCB_USER_TYPE = "dcb";
+
   private final PatronGroup patronGroup;
   private final Collection<Department> departments;
 
@@ -172,4 +176,10 @@ public class User {
   public Collection<Department> getDepartments() {
     return departments;
   }
+
+  public boolean isDcbUser() {
+    return DCB_USER_TYPE.equals(getProperty(representation, USER_TYPE_PROPERTY_NAME)) &&
+      DCB_USER_LAST_NAME.equals(getLastName());
+  }
+
 }
