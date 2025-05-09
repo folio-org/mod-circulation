@@ -2212,7 +2212,7 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(requestAfterCheckOut, isClosedFilled());
 
     IndividualResource renewalResponse = renew(item, user);
-    assertLoanWasRenewedWithLoanPolicy(renewalResponse, fallbackLoanPolicy);;
+    assertLoanWasRenewedWithLoanPolicy(renewalResponse, fallbackLoanPolicy);
   }
 
   @Test
