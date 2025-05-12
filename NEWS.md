@@ -1,3 +1,6 @@
+## 24.4.4 2025-05-12
+* Add item data to pick slips for title level requests (CIRC-2307)
+
 ## 24.4.3 2025-04-22
 * Allow HTTP connection pool to be configurable (CIRC-2279)
 * Fix incorrect overdue fine amount (CIRC-2152)
