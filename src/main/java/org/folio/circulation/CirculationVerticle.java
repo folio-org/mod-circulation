@@ -1,5 +1,7 @@
 package org.folio.circulation;
 
+import static org.folio.Environment.getHttpMaxPoolSize;
+
 import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
@@ -74,7 +76,8 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
+    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
+      getHttpMaxPoolSize()));
 
     this.server = vertx.createHttpServer();
 
@@ -176,7 +179,6 @@ public class CirculationVerticle extends AbstractVerticle {
   @Override
   public void stop(Promise<Void> stopFuture) {
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
     log.info("Stopping circulation module");
 
     if(server != null) {
