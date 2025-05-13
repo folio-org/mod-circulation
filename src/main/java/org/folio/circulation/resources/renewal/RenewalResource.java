@@ -57,6 +57,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
@@ -364,6 +365,11 @@ public abstract class RenewalResource extends Resource {
 
   private CompletableFuture<Result<Boolean>> isEcsLoan(Loan loan, RequestRepository requestRepository) {
     log.info("isEcsLoan:: checking if loan {} was created for an ECS request", loan::getId);
+
+    if (!Environment.getEcsTlrFeatureEnabled()) {
+      log.info("isEcsLoan:: ECS TLR feature is not enabled");
+      return ofAsync(false);
+    }
 
     if (!loan.getItem().isDcbItem()) {
       log.info("isEcsLoan:: loaned item is not a DCB item");

@@ -119,6 +119,9 @@ for a single instance of mod-circulation. The default value is set to 100.
 |-----------------------------|-------------------|
 | HTTP_MAXPOOLSIZE            | 100               |
 
+Boolean variable `ECS_TLR_FEATURE_ENABLED` specifies if ECS TLR feature is enabled. Setting it to `true`
+enables switching from default and ECS-specific logic in various scenarios (such as loan renewal).
+Default value is `false`.
 
 ## Design Notes
 

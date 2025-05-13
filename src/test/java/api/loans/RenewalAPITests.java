@@ -83,6 +83,7 @@ import java.util.concurrent.TimeUnit;
 import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
+import org.folio.Environment;
 import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
@@ -2119,6 +2120,7 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   void forcedLoanPolicyIsUsedWhenLoanWasCreatedForEcsRequest() {
+    enableEcsTlrFeature();
     UserResource user = usersFixture.james();
     IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -2145,7 +2147,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
 
-    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling(Period.days(1));
     String forceLoanPolicyId = forceLoanPolicy.getId().toString();
     assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
 
@@ -2167,7 +2169,57 @@ public abstract class RenewalAPITests extends APITests {
   }
 
   @Test
+  void forcedLoanPolicyIsNotUsedWhenEcsFeatureIsNotEnabled() {
+    UserResource user = usersFixture.james();
+    IndividualResource pickupServicePoint = servicePointsFixture.cd1();
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holding = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource itemLocation = locationsFixture.mainFloor();
+    IndividualResource item = circulationItemsFixture.createCirculationItem("item_barcode",
+      holding.getId(), itemLocation.getId(), instance.getJson().getString("title"));
+
+    var defaultPolicies = policiesActivation.defaultRollingPolicies().build();
+    IndividualResource fallbackLoanPolicy = defaultPolicies.getLoanPolicy();
+    use(defaultPolicies);
+
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .open()
+      .hold()
+      .forItem(item)
+      .withInstanceId(instance.getId())
+      .by(user)
+      .itemRequestLevel()
+      .withEcsRequestPhase(EcsRequestPhase.PRIMARY.getValue())
+      .withRequestDate(getZonedDateTime())
+      .fulfillToHoldShelf()
+      .withPickupServicePointId(pickupServicePoint.getId()));
+
+    checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
+
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling(Period.days(1));
+    String forceLoanPolicyId = forceLoanPolicy.getId().toString();
+    assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
+
+    CheckOutResource loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(user)
+        .on(getZonedDateTime())
+        .at(pickupServicePoint)
+        .forceLoanPolicy(forceLoanPolicyId));
+
+    assertThat(loan.getJson().getString("loanPolicyId"), equalTo(forceLoanPolicyId));
+
+    JsonObject requestAfterCheckOut = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckOut, isClosedFilled());
+
+    IndividualResource renewalResponse = renew(item, user);
+    assertLoanWasRenewedWithLoanPolicy(renewalResponse, fallbackLoanPolicy);
+  }
+
+  @Test
   void forcedLoanPolicyIsNotUsedWhenLoanWasCreatedForDcbUser() {
+    enableEcsTlrFeature();
     UserResource user = usersFixture.dcbUser();
     IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -2194,7 +2246,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
 
-    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling(Period.days(1));
     String forceLoanPolicyId = forceLoanPolicy.getId().toString();
     assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
 
@@ -2217,6 +2269,7 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   void forcedLoanPolicyIsNotUsedWhenRequestHasNoEcsPhase() {
+    enableEcsTlrFeature();
     UserResource user = usersFixture.james();
     IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     IndividualResource instance = instancesFixture.basedUponDunkirk();
@@ -2242,7 +2295,7 @@ public abstract class RenewalAPITests extends APITests {
 
     checkInFixture.checkInByBarcode(item, pickupServicePoint.getId());
 
-    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling(Period.days(1));
     String forceLoanPolicyId = forceLoanPolicy.getId().toString();
     assertThat(forceLoanPolicyId, not(equalTo(fallbackLoanPolicy.getId())));
 
@@ -2361,5 +2414,9 @@ public abstract class RenewalAPITests extends APITests {
     return accountsClient.getMany(queryFromTemplate(
       "loanId==%s and feeFineType==%s and status.name==%s", loanId.toString(), feeType, status))
       .getFirst();
+  }
+
+  private static void enableEcsTlrFeature() {
+    Environment.MOCK_ENV.put("ECS_TLR_FEATURE_ENABLED", "true");
   }
 }
