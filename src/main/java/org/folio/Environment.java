@@ -29,6 +29,10 @@ public class Environment {
     return getVariable("HTTP_MAXPOOLSIZE", 100);
   }
 
+  public static boolean getEcsTlrFeatureEnabled() {
+    return getVariable("ECS_TLR_FEATURE_ENABLED", false);
+  }
+
   private static int getVariable(String key, int defaultValue) {
     final var variable = getVar(key);
 
