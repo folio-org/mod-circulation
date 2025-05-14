@@ -1,3 +1,6 @@
+## 24.4.5 2025-05-14
+* Log the stack trace and message for all 500 errors (CIRC-2212)
+
 ## 24.4.4 2025-05-12
 * Add item data to pick slips for title level requests (CIRC-2307)
 
