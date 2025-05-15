@@ -19,7 +19,7 @@ public class StoredRequestRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public JsonObject storedRequest(Request request) {
-    log.debug("storedRequest:: parameters request: {}", () -> request);
+    log.info("storedRequest:: parameters request: {}", () -> request);
     final JsonObject representation = request.asJson();
 
     addStoredItemProperties(representation, request.getItem());
@@ -30,11 +30,12 @@ public class StoredRequestRepresentation {
 
     removeDeliveryAddress(representation);
 
+    log.info("The final representation is {}", representation);
     return representation;
   }
 
   private static void addStoredItemProperties(JsonObject request, Item item) {
-    log.debug("addStoredItemProperties:: parameters request: {}, item: {}",
+    log.info("addStoredItemProperties:: parameters request: {}, item: {}",
       () -> request, () -> item);
     if (item == null || item.isNotFound()) {
       logUnableAddItemToTheRequest(request, item);
@@ -44,7 +45,8 @@ public class StoredRequestRepresentation {
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
 
-    if (Objects.nonNull(item.getLocation())) {
+    if (Objects.nonNull(item.getLocation()) && item.getLocation().getId()!=null) {
+      log.info("It went inside {}", item.getLocation());
       write(itemSummary, "itemEffectiveLocationId", item.getLocation().getId());
       write(itemSummary, "itemEffectiveLocationName",
         item.getLocation().getName());
@@ -56,10 +58,26 @@ public class StoredRequestRepresentation {
           item.getLocation().getPrimaryServicePoint().getName());
       }
     }
+    else {
+      log.info("Yes here");
+      JsonObject itemJson = request.getJsonObject("item");
+      if(itemJson!=null) {
+        log.info("Inside the itemJson {}", itemJson);
+        write(itemSummary, "itemEffectiveLocationId", itemJson.getString("itemEffectiveLocationId"));
+        write(itemSummary, "itemEffectiveLocationName",
+          itemJson.getString("itemEffectiveLocationName"));
+          write(itemSummary, "retrievalServicePointId",
+            itemJson.getString("retrievalServicePointId"));
+          write(itemSummary, "retrievalServicePointName",
+            itemJson.getString("retrievalServicePointName"));
+      }
+
+    }
     request.put("item", itemSummary);
   }
 
   private static void addStoredInstanceProperties(JsonObject request, Instance instance) {
+    log.info("After item details {}", request);
     if (instance == null || instance.isNotFound()) {
       log.info("Unable to add instance properties to request {}, instance is {}",
         request.getString("id"), request.getString("instanceId"));

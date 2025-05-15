@@ -80,7 +80,7 @@ public class CreateRequestService {
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("createRequest:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
+    log.info("createRequest:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
 
     final var requestRepository = repositories.getRequestRepository();
     final var configurationRepository = repositories.getConfigurationRepository();
@@ -278,7 +278,7 @@ public class CreateRequestService {
   }
 
   private CompletableFuture<Result<Boolean>> shouldCheckItem(RequestAndRelatedRecords records) {
-    log.debug("shouldCheckItem:: accumulated errors: {}", errorHandler::getErrors);
+    log.info("shouldCheckItem:: accumulated errors: {}", errorHandler::getErrors);
     return ofAsync(() -> errorHandler.hasNone(INVALID_INSTANCE_ID, INSTANCE_DOES_NOT_EXIST,
       INVALID_ITEM_ID));
   }
