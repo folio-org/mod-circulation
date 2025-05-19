@@ -1,0 +1,62 @@
+#%RAML 1.0
+title: Change usage status of items to be used at location (ie reading room)
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: API for changing usage status of items used at location
+    content: <b>Change usage status API</b>
+
+types:
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+/circulation:
+  /hold-by-barcode-for-use-at-location:
+    post:
+      is: [validate]
+      body:
+        application/json:
+          type: !include put-on-hold-for-use-at-location-request.json
+      responses:
+        200:
+          description: "The at-location usage status of the loaned item set to held"
+        422:
+          description: "Unable to change the usage status for the loan"
+          body:
+            application/json:
+              type: errors
+              example: !include examples/at-location-usage-status-change-error.json
+        404:
+          description: "The loan is not found"
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
+
+  /pickup-by-barcode-for-use-at-location:
+    post:
+      is: [validate]
+      body:
+        application/json:
+          type: !include pickup-for-use-at-location-request.json
+      responses:
+        200:
+          description: "The at-location usage status of the loaned item set to in-use"
+        422:
+          description: "Unable to change the usage status for the loan"
+          body:
+            application/json:
+              type: errors
+              example: !include examples/at-location-usage-status-change-error.json
+        404:
+          description: "The loan is not found"
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"

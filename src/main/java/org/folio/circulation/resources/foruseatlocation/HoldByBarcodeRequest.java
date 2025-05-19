@@ -12,14 +12,12 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 @Getter
 @AllArgsConstructor
-public class ChangeUsageStatusByBarcodeRequest {
+public class HoldByBarcodeRequest {
   private static final String ITEM_BARCODE = "itemBarcode";
-  private static final String USER_BARCODE = "userBarcode";
 
   private final String itemBarcode;
-  private final String userBarcode;
 
-  static Result<ChangeUsageStatusByBarcodeRequest> usageStatusChangeRequestFrom(JsonObject json) {
+  static Result<HoldByBarcodeRequest> holdByBarcodeRequestFrom(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (isBlank(itemBarcode)) {
@@ -27,14 +25,7 @@ public class ChangeUsageStatusByBarcodeRequest {
         ITEM_BARCODE, null);
     }
 
-    final String userBarcode = getProperty(json, USER_BARCODE);
-
-    if (isBlank(userBarcode)) {
-      return failedValidation("Request to change at-location-use status must have a user barcode",
-        USER_BARCODE, null);
-    }
-
-    return succeeded(new ChangeUsageStatusByBarcodeRequest(itemBarcode, userBarcode));
+    return succeeded(new HoldByBarcodeRequest(itemBarcode));
 
   }
 }

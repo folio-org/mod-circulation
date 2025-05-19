@@ -10,20 +10,31 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.Resource;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
+import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.OkapiPermissions;
+import org.folio.circulation.support.http.server.HttpResponse;
+import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
+
+import java.util.concurrent.CompletableFuture;
 
 import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_HELD;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.holdByBarcodeRequestFrom;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 
-public class HoldByBarcodeResource extends UsageStatusChangeResource {
+public class HoldByBarcodeResource extends Resource {
+  private static final String rootPath = "/circulation/hold-by-barcode-for-use-at-location";
 
   public HoldByBarcodeResource(HttpClient client) {
-    super("/circulation/hold-by-barcode-for-use-at-location",client);
+    super(client);
   }
 
   @Override
@@ -52,6 +63,31 @@ public class HoldByBarcodeResource extends UsageStatusChangeResource {
       .thenApply(loanResult -> loanResult.map(Loan::asJson))
       .thenApply(loanAsJsonResult -> loanAsJsonResult.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);;
+  }
+
+  protected CompletableFuture<Result<Loan>> findLoan(JsonObject request,
+                                                     LoanRepository loanRepository,
+                                                     ItemRepository itemRepository,
+                                                     UserRepository userRepository,
+                                                     CirculationErrorHandler errorHandler) {
+
+    final ItemByBarcodeInStorageFinder itemFinder =
+      new ItemByBarcodeInStorageFinder(itemRepository);
+
+    final SingleOpenLoanForItemInStorageFinder loanFinder =
+      new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, false);
+
+    return holdByBarcodeRequestFrom(request)
+      .after(shelfRequest -> itemFinder.findItemByBarcode(shelfRequest.getItemBarcode()))
+      .thenCompose(itemResult -> itemResult.after(loanFinder::findSingleOpenLoan)
+        .thenApply(r ->
+          errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN, (Loan) null))
+      );
+  }
+
+  private HttpResponse toResponse(JsonObject body) {
+    return JsonHttpResponse.ok(body,
+      String.format("/circulation/loans/%s", body.getString("id")));
   }
 
 
