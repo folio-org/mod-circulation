@@ -19,18 +19,18 @@ public class PickupByBarcodeRequest {
   private final String itemBarcode;
   private final String userBarcode;
 
-  static Result<PickupByBarcodeRequest> pickupByBarcodeRequestFrom(JsonObject json) {
+  static Result<PickupByBarcodeRequest> buildRequestFrom(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (isBlank(itemBarcode)) {
-      return failedValidation("Request to change at-location-use status must have an item barcode",
+      return failedValidation("Request to pick up from hold shelf must have an item barcode",
         ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
     if (isBlank(userBarcode)) {
-      return failedValidation("Request to change at-location-use status must have a user barcode",
+      return failedValidation("Request to pick up from hold shelf must have a user barcode",
         USER_BARCODE, null);
     }
 

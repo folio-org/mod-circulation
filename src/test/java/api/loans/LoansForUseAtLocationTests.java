@@ -98,6 +98,47 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
+  void holdWillFailWithDifferentItem() {
+    final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true);
+
+    use(forUseAtLocationPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    holdForUseAtLocationFixture.holdForUseAtLocation(
+      new HoldByBarcodeRequestBuilder("different-item"), 400);
+  }
+
+  @Test
+  void holdWillFailWithIncompleteRequest() {
+    final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true);
+
+    use(forUseAtLocationPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    holdForUseAtLocationFixture.holdForUseAtLocation(
+      new HoldByBarcodeRequestBuilder(null), 422);
+  }
+
+
+  @Test
   void willMarkItemInUseByBarcode() {
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
@@ -121,6 +162,53 @@ public class LoansForUseAtLocationTests extends APITests {
       forUseAtLocation, notNullValue());
     assertThat("loan.forUseAtLocation.status",
       forUseAtLocation.getString("status"), Is.is("In use"));
+  }
+
+  @Test
+  void pickupWillFailWithDifferentItemOrDifferentUser() {
+    final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true);
+
+    use(forUseAtLocationPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    pickupForUseAtLocationFixture.pickupForUseAtLocation(
+      new PickupByBarcodeRequestBuilder("different-item", borrower.getBarcode()), 400);
+
+    pickupForUseAtLocationFixture.pickupForUseAtLocation(
+      new PickupByBarcodeRequestBuilder(item.getBarcode(), "different-user"), 400);
+
+  }
+
+  @Test
+  void pickupWillFailWithIncompleteRequestObject() {
+    final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true);
+
+    use(forUseAtLocationPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    pickupForUseAtLocationFixture.pickupForUseAtLocation(
+      new PickupByBarcodeRequestBuilder(null, borrower.getBarcode()), 422);
+
+    pickupForUseAtLocationFixture.pickupForUseAtLocation(
+      new PickupByBarcodeRequestBuilder(item.getBarcode(), null), 422);
   }
 
   @Test

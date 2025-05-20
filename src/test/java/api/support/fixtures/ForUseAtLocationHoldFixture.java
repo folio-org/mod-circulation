@@ -12,11 +12,16 @@ public class ForUseAtLocationHoldFixture {
 
   public ForUseAtLocationHoldFixture() {
     restAssuredClient = new RestAssuredClient(getOkapiHeadersFromContext());
-
   }
 
   public Response holdForUseAtLocation(HoldByBarcodeRequestBuilder builder) {
     return restAssuredClient.post(builder.create(), holdForUseAtLocationUrl(), 200,
       "hold-for-use-at-location-by-barcode-request");
   }
+
+  public void holdForUseAtLocation(HoldByBarcodeRequestBuilder builder, int expectedStatusCode) {
+    restAssuredClient.post(builder.create(), holdForUseAtLocationUrl(), expectedStatusCode,
+      "hold-for-use-at-location-by-barcode-request");
+  }
+
 }

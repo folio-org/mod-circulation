@@ -17,11 +17,11 @@ public class HoldByBarcodeRequest {
 
   private final String itemBarcode;
 
-  static Result<HoldByBarcodeRequest> holdByBarcodeRequestFrom(JsonObject json) {
+  static Result<HoldByBarcodeRequest> buildRequestFrom(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (isBlank(itemBarcode)) {
-      return failedValidation("Request to change at-location-use status must have an item barcode",
+      return failedValidation("Request to put item on hold shelf must have an item barcode",
         ITEM_BARCODE, null);
     }
 

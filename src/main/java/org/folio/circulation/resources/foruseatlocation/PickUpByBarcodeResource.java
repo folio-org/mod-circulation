@@ -15,7 +15,9 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.storage.SingleOpenLoanByUserAndItemBarcodeFinder;
+import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
@@ -24,9 +26,12 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
+import static java.lang.String.format;
 import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_IN_USE;
-import static org.folio.circulation.resources.foruseatlocation.PickupByBarcodeRequest.pickupByBarcodeRequestFrom;
+import static org.folio.circulation.resources.foruseatlocation.PickupByBarcodeRequest.buildRequestFrom;
+
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 
 public class PickUpByBarcodeResource extends Resource {
@@ -52,20 +57,25 @@ public class PickUpByBarcodeResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final EventPublisher eventPublisher = new EventPublisher(routingContext);
 
-    JsonObject bodyAsJson = routingContext.body().asJsonObject();
+    JsonObject requestBodyAsJson = routingContext.body().asJsonObject();
+    Result<PickupByBarcodeRequest> pickupByBarcodeRequest = buildRequestFrom(requestBodyAsJson);
 
-    findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
-      .thenApply(loanResult -> loanResult.map(loan -> loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE)))
-      .thenApply(loanResult -> loanResult.map(loan -> loan.withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION)))
-      .thenComposeAsync(loanResult -> loanRepository.updateLoan(loanResult.value()))
-      .thenComposeAsync(loanResult -> loanResult.after(
+    pickupByBarcodeRequest
+      .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
+      .thenApply(loan -> failWhenOpenLoanForItemAndUserNotFound(loan, pickupByBarcodeRequest.value()))
+      .thenApply(loanResult -> loanResult.map(loan ->
+        loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE)
+          .withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION)))
+      .thenCompose(loanResult -> loanResult.after(
+        loan -> loanRepository.updateLoan(loanResult.value())))
+      .thenCompose(loanResult -> loanResult.after(
         loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.PICKED_UP_FOR_USE_AT_LOCATION)))
       .thenApply(loanResult -> loanResult.map(Loan::asJson))
       .thenApply(jsonResult -> jsonResult.map(this::toResponse))
-      .thenAccept(webContext::writeResultToHttpResponse);;
+      .thenAccept(webContext::writeResultToHttpResponse);
   }
 
-  protected CompletableFuture<Result<Loan>> findLoan(JsonObject request,
+  protected CompletableFuture<Result<Loan>> findLoan(PickupByBarcodeRequest request,
                                                      LoanRepository loanRepository,
                                                      ItemRepository itemRepository,
                                                      UserRepository userRepository,
@@ -75,16 +85,28 @@ public class PickUpByBarcodeResource extends Resource {
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
       itemRepository, userRepository);
 
-    return pickupByBarcodeRequestFrom(request)
-      .after(shelfRequest -> loanFinder.findLoan(shelfRequest.getItemBarcode(), shelfRequest.getUserBarcode())
-        .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-          (Loan) null)));
+    return loanFinder.findLoan(request.getItemBarcode(), request.getUserBarcode())
+        .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN, r.value()));
   }
 
   private HttpResponse toResponse(JsonObject body) {
     return JsonHttpResponse.ok(body,
-      String.format("/circulation/loans/%s", body.getString("id")));
+      format("/circulation/loans/%s", body.getString("id")));
   }
 
+  private Result<Loan> failWhenOpenLoanForItemAndUserNotFound (Result<Loan> loanResult, PickupByBarcodeRequest request) {
+    return loanResult.failWhen(this::loanIsNull, loan -> noOpenLoanFailure(request).get());
+  }
+
+  private Result<Boolean> loanIsNull (Loan loan) {
+    return Result.succeeded(loan == null);
+  }
+
+  private static Supplier<HttpFailure> noOpenLoanFailure(PickupByBarcodeRequest request) {
+    return () -> new BadRequestFailure(
+      format("No open loan found for item barcode (%s) and user (%s)",
+        request.getItemBarcode(), request.getUserBarcode())
+    );
+  }
 
 }

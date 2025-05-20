@@ -18,4 +18,10 @@ public class ForUseAtLocationPickupFixture {
     return restAssuredClient.post(builder.create(), pickupForUseAtLocationUrl(), 200,
       "pickup-for-use-at-location-by-barcode-request");
   }
+
+  public void pickupForUseAtLocation(PickupByBarcodeRequestBuilder builder, int expectedStatusCode) {
+    restAssuredClient.post(builder.create(), pickupForUseAtLocationUrl(), expectedStatusCode,
+      "pickup-for-use-at-location-by-barcode-request");
+  }
+
 }
