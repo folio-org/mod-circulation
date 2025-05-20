@@ -1,3 +1,6 @@
+## 24.3.18 2025-05-20
+* Renew ECS loan with loan policy used during check-out (CIRC-2344)
+
 ## 24.3.17 2025-05-06
 * [LOC Locate requirement] Allowed Service points should return discovery display name. (CIRC-2350)
 
