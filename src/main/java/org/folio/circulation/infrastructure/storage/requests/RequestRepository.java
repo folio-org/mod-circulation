@@ -142,7 +142,7 @@ public class RequestRepository {
       .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));
   }
 
-  CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
+  public CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
     CqlQuery query, PageLimit pageLimit) {
 
     log.debug("findByWithoutItems:: parameters query: {}, pageLimit: {}", query, pageLimit);
