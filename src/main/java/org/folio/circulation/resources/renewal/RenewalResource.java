@@ -29,37 +29,53 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
+import static org.folio.circulation.support.CqlSortBy.sortBy;
+import static org.folio.circulation.support.CqlSortClause.descending;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.greaterThan;
+import static org.folio.circulation.support.http.client.CqlQuery.hasValue;
+import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.OverdueFineService;
 import org.folio.circulation.domain.OverduePeriodCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.domain.representations.MetadataProperties;
+import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
 import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
@@ -94,6 +110,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -107,6 +125,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final String rootPath;
   private static final String COMMENT = "comment";
   private static final String DUE_DATE = "dueDate";
@@ -188,7 +207,7 @@ public abstract class RenewalResource extends Resource {
         overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
-      .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
+      .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, requestRepository, errorHandler)))
       .thenCompose(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         RenewalContext::withTlrSettings))
       .thenComposeAsync(r -> r.after(
@@ -330,7 +349,7 @@ public abstract class RenewalResource extends Resource {
 
   private CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
     RenewalContext renewalContext, LoanPolicyRepository loanPolicyRepository,
-    CirculationErrorHandler errorHandler) {
+    RequestRepository requestRepository, CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
       FAILED_TO_FETCH_USER)) {
@@ -338,7 +357,69 @@ public abstract class RenewalResource extends Resource {
       return completedFuture(succeeded(renewalContext));
     }
 
-    return loanPolicyRepository.lookupLoanPolicy(renewalContext);
+    return isEcsLoan(renewalContext.getLoan(), requestRepository)
+      .thenCompose(r -> r.after(isEcsLoan -> lookupLoanPolicy(renewalContext, isEcsLoan, loanPolicyRepository)))
+      .thenApply(mapResult(renewalContext.getLoan()::withLoanPolicy))
+      .thenApply(mapResult(renewalContext::withLoan));
+  }
+
+  private CompletableFuture<Result<Boolean>> isEcsLoan(Loan loan, RequestRepository requestRepository) {
+    log.info("isEcsLoan:: checking if loan {} was created for an ECS request", loan::getId);
+
+    if (!Environment.getEcsTlrFeatureEnabled()) {
+      log.info("isEcsLoan:: ECS TLR feature is not enabled");
+      return ofAsync(false);
+    }
+
+    if (!loan.getItem().isDcbItem()) {
+      log.info("isEcsLoan:: loaned item is not a DCB item");
+      return ofAsync(false);
+    }
+
+    if (loan.getUser().isDcbUser()) {
+      log.info("isEcsLoan:: loan was created for DCB user");
+      return ofAsync(false);
+    }
+
+    return findRequestForEcsLoan(loan, requestRepository)
+      .thenApply(mapResult(Objects::nonNull));
+  }
+
+  private CompletableFuture<Result<LoanPolicy>> lookupLoanPolicy(RenewalContext context, boolean isEcsLoan,
+    LoanPolicyRepository loanPolicyRepository) {
+
+    Loan loan = context.getLoan();
+    if (isEcsLoan) {
+      log.info("findLoanPolicy:: loan {} is an ECS loan, reusing loan policy {}",
+        loan::getId, loan::getLoanPolicyId);
+      return loanPolicyRepository.getLoanPolicyById(loan.getLoanPolicyId());
+    }
+
+    return loanPolicyRepository.lookupPolicy(loan);
+  }
+
+  private CompletableFuture<Result<Request>> findRequestForEcsLoan(Loan loan,
+    RequestRepository requestRepository) {
+
+    log.info("findRequestForEcsLoan:: looking for filled ECS request for loan {}", loan::getId);
+
+    Result<CqlQuery> requestQuery = exactMatch(RequestProperties.REQUESTER_ID, loan.getUserId())
+      .combine(exactMatch(RequestProperties.ITEM_ID, loan.getItemId()), CqlQuery::and)
+      .combine(exactMatch(RequestProperties.STATUS, RequestStatus.CLOSED_FILLED.getValue()), CqlQuery::and)
+      .combine(hasValue(RequestProperties.ECS_REQUEST_PHASE), CqlQuery::and)
+      .combine(greaterThan(MetadataProperties.UPDATED_DATE, loan.getCreatedDate().minusMinutes(1)), CqlQuery::and)
+      .combine(lessThan(MetadataProperties.UPDATED_DATE, loan.getCreatedDate()), CqlQuery::and)
+      .map(q -> q.sortBy(sortBy(descending(MetadataProperties.UPDATED_DATE))));
+
+    return requestQuery.after(query -> requestRepository.findByWithoutItems(query, PageLimit.one()))
+      .thenApply(mapResult(MultipleRecords::firstOrNull))
+      .thenApply(r -> r.peek(request -> {
+        if (request != null) {
+          log.info("findRequestForEcsLoan:: request found: {}", request::getId);
+        } else {
+          log.info("findRequestForEcsLoan:: request not found");
+        }
+      }));
   }
 
   private CompletableFuture<Result<RenewalContext>> lookupOverdueFinePolicy(

@@ -4,49 +4,37 @@ import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
-import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
-import static org.folio.circulation.support.utils.LogUtil.mapAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Holdings;
-import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestLevel;
-import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
-import org.folio.circulation.domain.notice.TemplateContextUtil;
+import org.folio.circulation.domain.mapper.StaffSlipMapper;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
-import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.users.AddressTypeRepository;
@@ -54,6 +42,7 @@ import org.folio.circulation.infrastructure.storage.users.DepartmentRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.StaffSlipsContext;
+import org.folio.circulation.services.RequestFetchService;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -73,12 +62,7 @@ public abstract class SlipsResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final PageLimit LOCATIONS_LIMIT = PageLimit.oneThousand();
   private static final String LOCATIONS_KEY = "locations";
-  private static final String STATUS_KEY = "status";
-  private static final String REQUESTS_KEY = "requests";
-  private static final String ITEM_ID_KEY = "itemId";
   private static final String STATUS_NAME_KEY = "status.name";
-  private static final String REQUEST_TYPE_KEY = "requestType";
-  private static final String REQUEST_LEVEL_KEY = "requestLevel";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
@@ -131,21 +115,21 @@ public abstract class SlipsResource extends Resource {
         .thenAccept(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
     }
 
-      fetchLocationsForServicePoint(servicePointId, clients)
-        .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
-          itemRepository, LocationRepository.using(clients, servicePointRepository))))
-        .thenComposeAsync(r -> r.after(ctx -> fetchRequests(ctx, clients)))
-        .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
-          ctx.getRequests())))
-        .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
-        .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
-        .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
-        .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
-        .thenApply(flatMapResult(this::mapResultToJson))
-        .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-          this::addPrimaryServicePointNameToStaffSlipContext))
-        .thenApply(r -> r.map(JsonHttpResponse::ok))
-        .thenAccept(context::writeResultToHttpResponse);
+    fetchLocationsForServicePoint(servicePointId, clients)
+      .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
+        itemRepository, LocationRepository.using(clients, servicePointRepository))))
+      .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
+      .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
+        ctx.getRequests())))
+      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
+      .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
+      .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
+      .thenApply(flatMapResult(this::mapResultToJson))
+      .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
+        this::addPrimaryServicePointNameToStaffSlipContext))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
   }
 
   private Result<Object> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
@@ -160,129 +144,6 @@ public abstract class SlipsResource extends Resource {
       )));
     }
     return succeeded(null);
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
-    StaffSlipsContext staffSlipsContext, Clients clients) {
-
-    final var instanceRepository = new InstanceRepository(clients);
-    final var holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
-
-    return fetchTitleLevelRequests(clients, staffSlipsContext)
-      .thenComposeAsync(r -> r.after(ctx -> fetchByInstancesByRequests(ctx, instanceRepository)))
-      .thenApply(r -> r.next(this::mapRequestsToInstances))
-      .thenComposeAsync(r -> r.after(ctx -> fetchHoldingsByInstances(ctx, holdingsRepository)))
-      .thenApply(r -> r.next(this::mapRequestsToHoldings));
-  }
-
-  private Result<StaffSlipsContext> mapRequestsToInstances(StaffSlipsContext context) {
-    log.debug("mapRequestsToInstances:: parameters context: {}", context);
-    if (context.getInstances() == null || context.getInstances().isEmpty()) {
-      log.info("mapRequestsToInstances:: no instances found");
-      return succeeded(context);
-    }
-
-    Set<String> fetchedInstanceIds = context.getInstances().getRecords().stream()
-      .map(Instance::getId)
-      .collect(Collectors.toSet());
-    log.info("mapRequestsToInstances:: fetchedInstanceIds: {}",
-      () -> collectionAsString(fetchedInstanceIds));
-
-    Map<Request, String> requestToInstanceIdMap = context.getTlrRequests().getRecords().stream()
-      .filter(request -> fetchedInstanceIds.contains(request.getInstanceId()))
-      .collect(Collectors.toMap(identity(), Request::getInstanceId));
-    log.info("mapRequestsToInstances:: requestToInstanceIdMap: {}",
-      () -> mapAsString(requestToInstanceIdMap));
-
-    return succeeded(context.withRequestToInstanceIdMap(requestToInstanceIdMap));
-  }
-
-  private Result<StaffSlipsContext> mapRequestsToHoldings(StaffSlipsContext context) {
-    log.debug("mapRequestsToHoldings:: parameters context: {}", context);
-    MultipleRecords<Holdings> holdings = context.getHoldings();
-    if (holdings == null || holdings.isEmpty()) {
-      log.info("mapRequestsToHoldings:: holdings are empty");
-      return succeeded(context);
-    }
-
-    Map<Holdings, String> holdingsToInstanceIdMap = holdings.getRecords().stream()
-      .collect(Collectors.toMap(identity(), Holdings::getInstanceId));
-
-    Map<Request, String> requestToInstanceIdMap = context.getRequestToInstanceIdMap();
-    if (requestToInstanceIdMap == null || requestToInstanceIdMap.isEmpty()) {
-      log.info("mapRequestsToHoldings:: no requests matched to holdings");
-      return succeeded(context);
-    }
-
-    Map<Request, Holdings> requestToHoldingsMap = requestToInstanceIdMap.entrySet().stream()
-      .filter(entry -> entry.getValue() != null && holdingsToInstanceIdMap.containsValue(
-        entry.getValue()))
-      .collect(Collectors.toMap(Map.Entry::getKey,
-        entry -> findHoldingsByInstanceId(holdings, entry.getValue())));
-    log.info("mapRequestsToHoldings:: requestToHoldingsMap: {}",
-      () -> mapAsString(requestToHoldingsMap));
-
-    return succeeded(context.withRequestToHoldingMap(requestToHoldingsMap));
-  }
-
-  private Holdings findHoldingsByInstanceId(MultipleRecords<Holdings> holdings,
-    String instanceId) {
-
-    return holdings.getRecords().stream()
-      .filter(holding -> holding.getInstanceId().equals(instanceId))
-      .findFirst()
-      .orElse(null);
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchByInstancesByRequests(
-    StaffSlipsContext ctx, InstanceRepository instanceRepository) {
-
-    var tlrRequests = ctx.getTlrRequests();
-    if (tlrRequests == null || tlrRequests.isEmpty()) {
-      log.info("fetchByInstancesByRequests:: no TLR requests found");
-
-      return ofAsync(ctx);
-    }
-
-    return instanceRepository.fetchByRequests(ctx.getTlrRequests())
-      .thenApply(r -> r.map(ctx::withInstances));
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchHoldingsByInstances(
-    StaffSlipsContext ctx, HoldingsRepository holdingsRepository) {
-
-    if (ctx.getRequestToInstanceIdMap() == null || ctx.getRequestToInstanceIdMap().isEmpty()) {
-      log.info("fetchHoldingsByInstances:: instances no requests matched to instances found");
-
-      return ofAsync(ctx);
-    }
-
-    return holdingsRepository.fetchByInstances(ctx.getRequestToInstanceIdMap().values())
-      .thenApply(r -> r.map(ctx::withHoldings));
-  }
-
-  private Result<StaffSlipsContext> combineRequests(StaffSlipsContext ctx) {
-    log.debug("combineRequests:: parameters ctx: {}", ctx);
-    Map<Request, Holdings> requestToHoldingMap = ctx.getRequestToHoldingMap();
-    if (requestToHoldingMap == null || requestToHoldingMap.isEmpty()) {
-      log.info("combineRequests:: no tlr requests to combine");
-      return succeeded(ctx);
-    }
-
-    Set<String> locationIds = ctx.getLocations().getRecords().stream()
-      .map(Location::getId)
-      .collect(Collectors.toSet());
-
-    List<Request> requestsToAdd = requestToHoldingMap.entrySet().stream()
-      .filter(entry -> locationIds.contains(entry.getValue().getEffectiveLocationId()))
-      .map(Map.Entry::getKey)
-      .toList();
-
-    List<Request> updatedRequests = new ArrayList<>(ctx.getRequests().getRecords());
-    updatedRequests.addAll(requestsToAdd);
-
-    return succeeded(ctx.withRequests(new MultipleRecords<>(updatedRequests,
-      updatedRequests.size())));
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchLocationsForServicePoint(
@@ -309,8 +170,7 @@ public abstract class SlipsResource extends Resource {
 
     if (locationIds.isEmpty()) {
       log.info("fetchPagedItemsForLocations:: locationIds is empty");
-
-      return ofAsync(context);
+      return ofAsync(context.withItems(emptyList()));
     }
 
     List<String> itemStatusValues = itemStatuses.stream()
@@ -322,62 +182,6 @@ public abstract class SlipsResource extends Resource {
       .thenComposeAsync(r -> r.after(items -> fetchLocationDetailsForItems(items, locations,
         locationRepository)))
       .thenApply(r -> r.map(context::withItems));
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchRequests(
-    StaffSlipsContext context, Clients clients) {
-
-    return fetchItemLevelRequests(context, clients)
-      .thenComposeAsync(r -> r.after(ctx -> fetchTitleLevelRequests(ctx, clients)))
-      .thenApply(r -> r.next(this::combineRequests));
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchItemLevelRequests(
-    StaffSlipsContext context, Clients clients) {
-
-    Collection<Item> items = context.getItems();
-    if (items == null || items.isEmpty()) {
-      log.info("fetchOpenPageRequestsForItems:: no items fetched");
-
-      return ofAsync(context.withRequests(MultipleRecords.empty()));
-    }
-    Set<String> itemIds = items.stream()
-      .map(Item::getItemId)
-      .filter(StringUtils::isNoneBlank)
-      .collect(toSet());
-
-    if (itemIds.isEmpty()) {
-      log.info("fetchOpenPageRequestsForItems:: itemIds is empty");
-
-      return ofAsync(context.withRequests(MultipleRecords.empty()));
-    }
-
-    final Result<CqlQuery> typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
-    final Result<CqlQuery> statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.ITEM.getValue());
-    final Result<CqlQuery> statusAndTypeQuery = requestType.equals(RequestType.PAGE)
-      ? typeQuery.combine(statusQuery, CqlQuery::and)
-      .combine(requestLevelQuery, CqlQuery::and)
-      :  typeQuery.combine(statusQuery, CqlQuery::and);
-
-    return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(statusAndTypeQuery))
-      .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, items)))
-      .thenApply(r -> r.map(context::withRequests));
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
-    Clients clients, StaffSlipsContext context) {
-
-    var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
-    var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue());
-    var statusTypeAndLevelQuery = typeQuery.combine(statusQuery, CqlQuery::and)
-      .combine(requestLevelQuery, CqlQuery::and);
-
-    return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .findByQuery(statusTypeAndLevelQuery, maximumLimit())
-      .thenApply(r -> r.map(context::withTlrRequests));
   }
 
   private CompletableFuture<Result<Collection<Item>>> fetchLocationDetailsForItems(
@@ -420,20 +224,10 @@ public abstract class SlipsResource extends Resource {
       .getRecords());
   }
 
-  private Result<MultipleRecords<Request>> matchItemsToRequests(
-    MultipleRecords<Request> requests, Collection<Item> items) {
-
-    Map<String, Item> itemMap = items.stream()
-      .collect(toMap(Item::getItemId, identity()));
-
-    return succeeded(requests.mapRecords(request -> request.withItem(
-      itemMap.getOrDefault(request.getItemId(), null))));
-  }
-
   private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
     log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
-      .map(TemplateContextUtil::createStaffSlipContext)
+      .map(StaffSlipMapper::createStaffSlipContext)
       .toList();
     JsonObject jsonRepresentations = new JsonObject()
       .put(collectionName, representations)
@@ -445,7 +239,7 @@ public abstract class SlipsResource extends Resource {
   private JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject context,
     ServicePoint servicePoint) {
 
-    return TemplateContextUtil.addPrimaryServicePointNameToStaffSlipContext(
+    return StaffSlipMapper.addPrimaryServicePointNameToStaffSlipContext(
       context, servicePoint, collectionName);
   }
 }

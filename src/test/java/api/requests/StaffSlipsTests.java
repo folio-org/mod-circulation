@@ -1,12 +1,12 @@
 package api.requests;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -252,7 +252,7 @@ class StaffSlipsTests extends APITests {
 
     JsonObject slip = getPickSlipsList(response, slipsType).get(0);
     JsonObject itemContext = slip.getJsonObject(ITEM_KEY);
-    assertNotNull(slip.getString(CURRENT_DATE_TIME));
+    assertNotNull(slip.getString("currentDateTime"));
 
     ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
 
@@ -582,6 +582,45 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
+    assertThat(response.getJson(), hasJsonPath("searchSlips[0].item.title", 
+      "The Long Way to a Small, Angry Planet"));
+  }
+
+  @Test
+  void pickSlipForTitleLevelRequestContainsItemData() {
+    configurationsFixture.configurePrintHoldRequests(true);
+    settingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var requester = usersFixture.steve();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    buildItem(instance.getId(), location);
+
+    var request = requestsClient.create(new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(instance.getId())
+      .withPickupServicePointId(servicePointId)
+      .by(requester));
+
+    assertThat(requestsClient.getAll(), hasSize(1));
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
+    assertResponseContains(response, SlipsType.PICK_SLIPS, request, requester);
+
+    JsonObject pickSips = response.getJson()
+      .getJsonArray(SlipsType.PICK_SLIPS.getCollectionName())
+      .getJsonObject(0);
+
+    assertThat(pickSips, hasJsonPath("item.title", "The Long Way to a Small, Angry Planet"));
+    assertThat(pickSips, hasJsonPath("item.barcode", "test"));
+    assertThat(pickSips, hasJsonPath("item.materialType", "Book"));
+    assertThat(pickSips, hasJsonPath("item.loanType", "Can Circulate"));
+    assertThat(pickSips, hasJsonPath("item.status", ItemStatus.PAGED.getValue()));
   }
 
   @Test
