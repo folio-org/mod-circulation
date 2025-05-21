@@ -66,10 +66,7 @@
           ],
           "pathPattern": "/circulation/search-slips/{servicePointId}",
           "permissionsRequired": [
-            "circulation.search-slips.get",
-            "mod-settings.entries.item.get",
-            "mod-settings.entries.collection.get",
-            "mod-settings.global.read.circulation"
+            "circulation.search-slips.get"
           ],
           "modulePermissions": [
             "modperms.circulation.search-slips.get"
@@ -681,7 +678,7 @@
     },
     {
       "id": "allowed-service-points",
-      "version": "1.1",
+      "version": "1.2",
       "handlers": [
         {
           "methods": [
@@ -2205,11 +2202,18 @@
         "circulation-storage.loan-policies.collection.get",
         "circulation.internal.fetch-items.collection.get",
         "accounts.collection.get",
+        "accounts.item.get",
+        "feefineactions.collection.get",
+        "feefineactions.item.get",
+        "users.collection.get",
+        "users.item.get",
         "usergroups.collection.get",
         "usergroups.item.get",
         "addresstypes.collection.get",
         "overdue-fines-policies.collection.get",
-        "lost-item-fees-policies.collection.get"
+        "overdue-fines-policies.item.get",
+        "lost-item-fees-policies.collection.get",
+        "lost-item-fees-policies.item.get"
       ],
       "visible": false
     },
@@ -2635,7 +2639,10 @@
         "users.item.get",
         "users.collection.get",
         "addresstypes.item.get",
-        "addresstypes.collection.get"
+        "addresstypes.collection.get",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.circulation"
       ],
       "visible": false
     },

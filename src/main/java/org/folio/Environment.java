@@ -25,18 +25,32 @@ public class Environment {
     return getVariable("ENABLE_FLOATING_COLLECTIONS", false);
   }
 
+  public static int getHttpMaxPoolSize() {
+    return getVariable("HTTP_MAXPOOLSIZE", 100);
+  }
+
+  public static boolean getEcsTlrFeatureEnabled() {
+    return getVariable("ECS_TLR_FEATURE_ENABLED", false);
+  }
+
   private static int getVariable(String key, int defaultValue) {
     final var variable = getVar(key);
 
     if (isBlank(variable)) {
+      log.info("getVariable:: environment variable '{}' is not set, using default value: '{}'",
+        key, defaultValue);
       return defaultValue;
     }
 
     try {
-      return parseInt(variable);
+      int parsedIntVariable = parseInt(variable);
+      log.info("getVariable:: environment variable: '{}' parsed value: '{}'",
+        key, parsedIntVariable);
+      return parsedIntVariable;
     }
     catch(Exception e) {
-      log.warn("Invalid value for '{}': '{}' ", key, variable);
+      log.warn("Invalid value for '{}': '{}', using default value: '{}'",
+        key, variable, defaultValue);
 
       return defaultValue;
     }

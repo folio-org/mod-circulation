@@ -110,6 +110,22 @@ collections support can be switched on by setting the environment variable ENABL
 |-----------------------------|-------------------|
 | ENABLE_FLOATING_COLLECTIONS | FALSE             |
 
+The `HTTP_MAXPOOLSIZE` variable specifies the HTTP connection pool size in mod-circulation.
+If this value is set too low in high-load environments that require a large number of HTTP requests to
+mod-circulation-storage and mod-inventory-storage, it can lead to significant performance bottlenecks
+for a single instance of mod-circulation. The default value is set to 100.
+
+| Variable name               | Default value     |
+|-----------------------------|-------------------|
+| HTTP_MAXPOOLSIZE            | 100               |
+
+Boolean variable `ECS_TLR_FEATURE_ENABLED` specifies if ECS TLR feature is enabled. Setting it to `true`
+enables switching from default to ECS-specific logic in various scenarios (such as loan renewal).
+Default value is `false`.
+
+| Variable name               | Default value |
+|-----------------------------|---------------|
+| ECS_TLR_FEATURE_ENABLED     | false         |
 
 ## Design Notes
 

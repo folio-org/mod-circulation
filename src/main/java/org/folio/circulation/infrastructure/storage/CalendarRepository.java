@@ -64,12 +64,12 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<Collection<OpeningDay>>> fetchOpeningDaysBetweenDates(
-    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate) {
+    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate, ZoneId zoneId) {
     String path = String.format(
       ALL_DATES_PATH,
       servicePointId,
-      startDate.toLocalDate(),
-      endDate.toLocalDate(),
+      startDate.withZoneSameInstant(zoneId).toLocalDate(),
+      endDate.withZoneSameInstant(zoneId).toLocalDate(),
       Integer.MAX_VALUE
     );
 
