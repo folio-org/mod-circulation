@@ -164,8 +164,8 @@ public class ChargeLostFeesWhenAgedToLostService {
         loanToChargeFees.getPrimaryServicePointId(), loan.getId());
 
       return completedFuture(failed(singleValidationError(
-          "No fee/fine owner found for item's permanent location",
-          "servicePointId", loanToChargeFees.getPrimaryServicePointId())));
+        "No fee/fine owner found for item's permanent location",
+        "servicePointId", loanToChargeFees.getPrimaryServicePointId())));
     }
 
     return actualCostRecordService.createIfNecessaryForAgedToLostItem(loanToChargeFees)

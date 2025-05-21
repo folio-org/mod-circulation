@@ -303,9 +303,9 @@ class ScheduledAgeToLostFeeChargingApiTest extends SpringApiTest {
     feeFineOwnerFixture.cleanUp();  // remove owner
 
     var policy = lostItemFeePoliciesFixture
-        .ageToLostAfterOneMinutePolicy()
-        .withActualCost(19.99)
-        .withLostItemProcessingFee(9.99);
+      .ageToLostAfterOneMinutePolicy()
+      .withActualCost(19.99)
+      .withLostItemProcessingFee(9.99);
     useLostItemPolicy(lostItemFeePoliciesFixture.create(policy).getId());
     val item = itemsFixture.basedUponNod(ItemBuilder::withRandomBarcode);
     val loanBefore = checkOutFixture.checkOutByBarcode(item, usersFixture.steve());
