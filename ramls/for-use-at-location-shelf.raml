@@ -20,7 +20,7 @@ traits:
       is: [validate]
       body:
         application/json:
-          type: !include put-on-hold-for-use-at-location-request.json
+          type: !include hold-for-use-at-location-request.json
       responses:
         200:
           description: "The at-location usage status of the loaned item set to held"
