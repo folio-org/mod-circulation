@@ -66,4 +66,12 @@ public class UserExamples {
       .withBarcode("6430777932")
       .withActive(true);
   }
+
+  static UserBuilder basedUponDcbUser() {
+    return new UserBuilder()
+      .withName("DcbSystem", null)
+      .withBarcode("dcb_user")
+      .withType("dcb")
+      .withActive(true);
+  }
 }

@@ -28,7 +28,6 @@ import org.folio.circulation.domain.policy.FixedDueDateSchedules;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.NoFixedDueDateSchedules;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
-import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.RulesExecutionParameters;
@@ -63,16 +62,6 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       ));
   }
 
-  public CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
-    RenewalContext renewalContext) {
-
-    log.debug("lookupLoanPolicy:: parameters renewalContext: {}", renewalContext);
-
-    return Result.of(renewalContext::getLoan)
-      .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
-      .thenApply(mapResult(renewalContext::withLoan));
-  }
-
   public CompletableFuture<Result<Loan>> findPolicyForLoan(Result<Loan> loanResult) {
     log.debug("findPolicyForLoan:: parameters loanResult: {}", () -> resultAsString(loanResult));
     return loanResult.after(loan ->
@@ -95,7 +84,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     return lookupPolicy(relatedRecords.getLoan());
   }
 
-  private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
+  public CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
     log.debug("getLoanPolicyById:: parameters loanPolicyId: {}", loanPolicyId);
     if (isNull(loanPolicyId)) {
       log.info("getLoanPolicyById:: loanPolicy id is null");
