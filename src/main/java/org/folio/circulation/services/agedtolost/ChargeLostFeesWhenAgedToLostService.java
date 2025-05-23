@@ -1,5 +1,6 @@
 package org.folio.circulation.services.agedtolost;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
@@ -36,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.FeeFine;
+import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -136,7 +138,6 @@ public class ChargeLostFeesWhenAgedToLostService {
     LoanToChargeFees loanToChargeFees) {
 
     return ofAsync(() -> loanToChargeFees)
-      .thenCompose(r -> r.after(actualCostRecordService::createIfNecessaryForAgedToLostItem))
       .thenCompose(r -> r.after(this::chargeLostFeesForLoan))
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent))
       .thenApply(r -> r.mapFailure(failure -> handleFailure(loanToChargeFees, failure.toString())))
@@ -149,18 +150,27 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CompletableFuture<Result<Loan>> chargeLostFeesForLoan(LoanToChargeFees loanToChargeFees) {
+    Loan loan = loanToChargeFees.getLoan();
+
     // we can close loans that have no fee to charge
     // and billed immediately
     if (loanToChargeFees.shouldCloseLoan()) {
-      log.info("No age to lost fees/fines to charge immediately, closing loan [{}]",
-        loanToChargeFees.getLoan().getId());
-
+      log.info("No age to lost fees/fines to charge immediately, closing loan [{}]", loan.getId());
       return closeLoanAsLostAndPaid(loanToChargeFees);
     }
 
-    Loan loan = loanToChargeFees.getLoan();
-    return createAccountsForLoan(loanToChargeFees)
-      .after(feeFineFacade::createAccounts)
+    if (loanToChargeFees.hasNoFeeFineOwner()) {
+      log.warn("No fee/fine owner present for primary service point {}, skipping loan {}",
+        loanToChargeFees.getPrimaryServicePointId(), loan.getId());
+
+      return completedFuture(failed(singleValidationError(
+        "No fee/fine owner found for item's permanent location",
+        "servicePointId", loanToChargeFees.getPrimaryServicePointId())));
+    }
+
+    return actualCostRecordService.createIfNecessaryForAgedToLostItem(loanToChargeFees)
+      .thenApply(r -> r.next(this::createAccountsForLoan))
+      .thenCompose(r -> r.after(feeFineFacade::createAccounts))
       .thenCompose(r -> r.after(actions ->
         feeFineScheduledNoticeService.scheduleNoticesForAgedLostFeeFineCharged(loan, actions)))
       .thenCompose(r -> r.after(notUsed -> updateLoanBillingInfo(loanToChargeFees)));
@@ -279,14 +289,6 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private Result<LoanToChargeFees> validateCanCreateAccountForLoan(LoanToChargeFees loanToChargeFees) {
-    if (loanToChargeFees.hasNoFeeFineOwner()) {
-      log.warn("No fee/fine owner present for service point {}, skipping loan {}",
-        loanToChargeFees.getPrimaryServicePointId(), loanToChargeFees.getLoan().getId());
-
-      return failed(singleValidationError("No fee/fine owner found for item's effective location",
-        "servicePointId", loanToChargeFees.getPrimaryServicePointId()));
-    }
-
     final LostItemPolicy lostItemPolicy = loanToChargeFees.getLoan().getLostItemPolicy();
 
     if (lostItemPolicy.getSetCostFee().isChargeable() && loanToChargeFees.hasNoLostItemFee()) {
