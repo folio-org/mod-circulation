@@ -17,7 +17,9 @@ public enum OverridableBlockType {
   RENEWAL_BLOCK("renewalBlock",
     OkapiPermissions.of("circulation.override-renewal-block.post")),
   RENEWAL_DUE_DATE_REQUIRED_BLOCK("renewalDueDateRequiredBlock",
-    OkapiPermissions.of("circulation.override-renewal-block.post"));
+    OkapiPermissions.of("circulation.override-renewal-block.post")),
+  ITEM_REQUESTED_BY_ANOTHER_PATRON_BLOCK("itemRequestedByAnotherPatronBlock",
+    OkapiPermissions.of("circulation.override-item-limit-block.post")); //TODO
 
   private final String name;
   private final OkapiPermissions requiredOverridePermissions;

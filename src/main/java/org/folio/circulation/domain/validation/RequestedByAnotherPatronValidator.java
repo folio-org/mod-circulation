@@ -49,6 +49,10 @@ public class RequestedByAnotherPatronValidator {
       "%s (Barcode: %s) cannot be checked out to user %s" +
         " because it has been requested by another patron",
       item.getTitle(), item.getBarcode(), loan.getUser().getPersonalName()));
+
+//    return result.after(l -> manualPatronBlocksValidator.validate(l)
+//      .thenApply(r -> errorHandler.handleValidationResult(
+//        r, manualPatronBlocksValidator.getErrorType(), result)));
   }
 
   private CompletableFuture<Result<Boolean>> isRequestedByAnotherPatron(
