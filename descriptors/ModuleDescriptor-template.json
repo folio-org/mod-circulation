@@ -277,14 +277,20 @@
             "POST"
           ],
           "pathPattern": "/circulation/pickup-by-barcode-for-use-at-location",
-          "permissionsRequired": []
+          "permissionsRequired": ["circulation.pickup-by-barcode-for-use-at-location.post"],
+          "modulePermissions": [
+            "circulation.usage-at-location.all"
+          ]
         },
         {
           "methods": [
             "POST"
           ],
           "pathPattern": "/circulation/hold-by-barcode-for-use-at-location",
-          "permissionsRequired": []
+          "permissionsRequired": ["circulation.hold-by-barcode-for-use-at-location.post"],
+          "modulePermissions": [
+            "circulation.usage-at-location.all"
+          ]
         },
         {
           "methods": [
@@ -1453,6 +1459,16 @@
       "description": "renew a loan using IDs for item and loanee"
     },
     {
+      "permissionName": "circulation.pickup-by-barcode-for-use-at-location.post",
+      "displayName": "circulation - pick up from hold shelf for use at location",
+      "description": "pick up item of an existing loan from hold shelf for use at location (i.e. in reading room)"
+    },
+    {
+      "permissionName": "circulation.hold-by-barcode-for-use-at-location.post",
+      "displayName": "circulation - put item on hold shelf for another use at location",
+      "description": "put the item of an existing loan on the hold shelf for later use at location (i.e. in reading room)"
+    },
+    {
       "permissionName": "circulation.loans.collection.get",
       "displayName": "circulation - get loan collection",
       "description": "get loan collection"
@@ -1736,6 +1752,8 @@
         "circulation.check-in-by-barcode.post",
         "circulation.renew-by-barcode.post",
         "circulation.renew-by-id.post",
+        "circulation.hold-by-barcode-for-use-at-location.post",
+        "circulation.pickup-by-barcode-for-use-at-location.post",
         "circulation.loans.collection.get",
         "circulation.loans.item.get",
         "circulation.loans.item.post",
@@ -2115,6 +2133,23 @@
       ],
       "visible": false,
       "replaces": ["circulation.renew-loan"]
+    },
+    {
+      "permissionName": "circulation.usage-at-location.all",
+      "displayName" : "Put item on hold or pick it up for use at location",
+      "description" : "Permissions needed to take an item on or off hold shelf for use at location",
+      "subPermissions": [
+        "circulation-storage.loans.item.put",
+        "circulation-storage.loans.item.get",
+        "circulation-storage.loans.collection.get",
+        "circulation-storage.loan-policies.item.get",
+        "circulation-storage.loan-policies.collection.get",
+        "circulation.internal.fetch-items.collection.get",
+        "users.item.get",
+        "users.collection.get",
+        "pubsub.publish.post"
+      ],
+      "visible": false
     },
     {
       "permissionName": "perms.circulation.loans.anonymize.all",

@@ -61,6 +61,7 @@ public class HoldByBarcodeResource extends Resource {
     requestResult
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
       .thenApply(loan -> failWhenOpenLoanNotFoundForItem(loan, requestResult.value()))
+      .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, requestResult.value()))
       .thenApply(loanResult -> loanResult.map(loan -> loan.changeStatusOfUsageAtLocation(USAGE_STATUS_HELD)))
       .thenApply(loanResult -> loanResult.map(loan -> loan.withAction(LoanAction.HELD_FOR_USE_AT_LOCATION)))
       .thenCompose(loanResult -> loanResult.after(
@@ -90,17 +91,31 @@ public class HoldByBarcodeResource extends Resource {
       );
   }
 
-  private Result<Loan> failWhenOpenLoanNotFoundForItem (Result<Loan> loanResult, HoldByBarcodeRequest request) {
-    return loanResult.failWhen(this::loanIsNull, loan -> noOpenLoanFailure(request).get());
+  private static Result<Loan> failWhenOpenLoanNotFoundForItem (Result<Loan> loanResult, HoldByBarcodeRequest request) {
+    return loanResult.failWhen(HoldByBarcodeResource::loanIsNull, loan -> noOpenLoanFailure(request).get());
   }
 
-  private Result<Boolean> loanIsNull (Loan loan) {
+  private Result<Loan> failWhenOpenLoanIsNotForUseAtLocation (Result<Loan> loanResult, HoldByBarcodeRequest request) {
+    return loanResult.failWhen(HoldByBarcodeResource::loanIsNotForUseAtLocation, loan -> loanIsNotForUseAtLocationFailure(request).get());
+  }
+
+  private static Result<Boolean> loanIsNull (Loan loan) {
     return Result.succeeded(loan == null);
+  }
+
+  private static Result<Boolean> loanIsNotForUseAtLocation(Loan loan) {
+    return Result.succeeded(!loan.isForUseAtLocation());
   }
 
   private static Supplier<HttpFailure> noOpenLoanFailure(HoldByBarcodeRequest request) {
     return () -> new BadRequestFailure(
       format("No open loan found for the item barcode (%s)", request.getItemBarcode())
+    );
+  }
+
+  private static Supplier<HttpFailure> loanIsNotForUseAtLocationFailure(HoldByBarcodeRequest request) {
+    return () -> new BadRequestFailure(
+      format("The loan is open but is not for use at location, item barcode (%s)", request.getItemBarcode())
     );
   }
 

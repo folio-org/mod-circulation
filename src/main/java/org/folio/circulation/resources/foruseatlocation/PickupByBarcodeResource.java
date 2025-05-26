@@ -34,11 +34,11 @@ import static org.folio.circulation.resources.foruseatlocation.PickupByBarcodeRe
 
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 
-public class PickUpByBarcodeResource extends Resource {
+public class PickupByBarcodeResource extends Resource {
 
   private static final String rootPath = "/circulation/pickup-by-barcode-for-use-at-location";
 
-  public PickUpByBarcodeResource(HttpClient client) {
+  public PickupByBarcodeResource(HttpClient client) {
     super(client);
   }
 
@@ -63,6 +63,7 @@ public class PickUpByBarcodeResource extends Resource {
     pickupByBarcodeRequest
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
       .thenApply(loan -> failWhenOpenLoanForItemAndUserNotFound(loan, pickupByBarcodeRequest.value()))
+      .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, pickupByBarcodeRequest.value()))
       .thenApply(loanResult -> loanResult.map(loan ->
         loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE)
           .withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION)))
@@ -89,17 +90,20 @@ public class PickUpByBarcodeResource extends Resource {
         .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN, r.value()));
   }
 
-  private HttpResponse toResponse(JsonObject body) {
-    return JsonHttpResponse.ok(body,
-      format("/circulation/loans/%s", body.getString("id")));
+  private static Result<Loan> failWhenOpenLoanForItemAndUserNotFound (Result<Loan> loanResult, PickupByBarcodeRequest request) {
+    return loanResult.failWhen(PickupByBarcodeResource::loanIsNull, loan -> noOpenLoanFailure(request).get());
   }
 
-  private Result<Loan> failWhenOpenLoanForItemAndUserNotFound (Result<Loan> loanResult, PickupByBarcodeRequest request) {
-    return loanResult.failWhen(this::loanIsNull, loan -> noOpenLoanFailure(request).get());
+  private static Result<Loan> failWhenOpenLoanIsNotForUseAtLocation (Result<Loan> loanResult, PickupByBarcodeRequest request) {
+    return loanResult.failWhen(PickupByBarcodeResource::loanIsNotForUseAtLocation, loan -> loanIsNotForUseAtLocationFailure(request).get());
   }
 
-  private Result<Boolean> loanIsNull (Loan loan) {
+  private static Result<Boolean> loanIsNull (Loan loan) {
     return Result.succeeded(loan == null);
+  }
+
+  private static Result<Boolean> loanIsNotForUseAtLocation(Loan loan) {
+    return Result.succeeded(!loan.isForUseAtLocation());
   }
 
   private static Supplier<HttpFailure> noOpenLoanFailure(PickupByBarcodeRequest request) {
@@ -108,5 +112,17 @@ public class PickUpByBarcodeResource extends Resource {
         request.getItemBarcode(), request.getUserBarcode())
     );
   }
+
+  private static Supplier<HttpFailure> loanIsNotForUseAtLocationFailure(PickupByBarcodeRequest request) {
+    return () -> new BadRequestFailure(
+      format("The loan is open but is not for use at location, item barcode (%s)", request.getItemBarcode())
+    );
+  }
+
+  private HttpResponse toResponse(JsonObject body) {
+    return JsonHttpResponse.ok(body,
+      format("/circulation/loans/%s", body.getString("id")));
+  }
+
 
 }

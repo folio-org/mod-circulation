@@ -118,6 +118,25 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
+  void holdWillFailIfLoanIsNotForUseAtLocation() {
+    final LoanPolicyBuilder homeLoansPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Home loans")
+      .withDescription("Policy for items that can be taken home")
+      .rolling(Period.days(30));
+
+    use(homeLoansPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    holdForUseAtLocationFixture.holdForUseAtLocation(
+      new HoldByBarcodeRequestBuilder(item.getBarcode()), 400);
+  }
+
+  @Test
   void holdWillFailWithIncompleteRequest() {
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
@@ -209,6 +228,25 @@ public class LoansForUseAtLocationTests extends APITests {
 
     pickupForUseAtLocationFixture.pickupForUseAtLocation(
       new PickupByBarcodeRequestBuilder(item.getBarcode(), null), 422);
+  }
+
+  @Test
+  void pickupWillFailIfLoanIsNotForUseAtLocation() {
+    final LoanPolicyBuilder homeLoansPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Home loans")
+      .withDescription("Policy for items that can be taken home")
+      .rolling(Period.days(30));
+
+    use(homeLoansPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    pickupForUseAtLocationFixture.pickupForUseAtLocation(
+      new PickupByBarcodeRequestBuilder(item.getBarcode(), borrower.getBarcode()), 400);
   }
 
   @Test

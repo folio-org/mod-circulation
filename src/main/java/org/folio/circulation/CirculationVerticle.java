@@ -53,7 +53,7 @@ import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerR
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
 import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
-import org.folio.circulation.resources.foruseatlocation.PickUpByBarcodeResource;
+import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
 
@@ -100,7 +100,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);
     new HoldByBarcodeResource(client).register(router);
-    new PickUpByBarcodeResource(client).register(router);
+    new PickupByBarcodeResource(client).register(router);
     new AllowedServicePointsResource(client).register(router);
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
