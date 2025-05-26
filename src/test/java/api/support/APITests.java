@@ -25,6 +25,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import api.support.fixtures.SearchInstanceFixture;
+
+import org.folio.Environment;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -353,6 +355,8 @@ public abstract class APITests {
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
     FakeStorageModule.cleanUpRequestMappings();
+
+    Environment.MOCK_ENV.clear();
   }
 
   @AfterEach
