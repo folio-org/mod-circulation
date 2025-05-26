@@ -22,6 +22,8 @@ import static api.support.fixtures.CalendarExamples.MONDAY_DATE;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
+import static api.support.fixtures.SettingsFixture.newYorkTimezoneConfiguration;
+import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventActionMatchers.ITEM_RENEWED;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
@@ -106,7 +108,6 @@ import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -189,7 +190,7 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   void canRenewRollingLoanFromCurrentDueDate() {
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    settingsClient.create(utcTimezoneConfiguration());
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -867,7 +868,7 @@ public abstract class RenewalAPITests extends APITests {
     final Response response = attemptRenewal(smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("item is Declared lost"),
+      hasMessage(ITEM_IS_DECLARED_LOST),
       hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
     assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
@@ -1134,7 +1135,7 @@ public abstract class RenewalAPITests extends APITests {
   void testRespectSelectedTimezoneForDueDateCalculations() {
     String expectedTimeZone = "America/New_York";
 
-    Response response = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
+    Response response = settingsClient.create(newYorkTimezoneConfiguration())
       .getResponse();
     assertThat(response.getBody(), containsString(expectedTimeZone));
 

@@ -10,7 +10,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -62,7 +62,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   private final CollectionResourceClient accountsStorageClient;
   private final CollectionResourceClient feeFineActionsStorageClient;
 
-  private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
 
 
   static final String ACCOUNT_FEE_FINE_ID_VALUE = "6b830703-f828-4e38-a0bb-ee81deacbd03";
@@ -74,7 +74,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   public ScheduledDigitalReminderHandler(Clients clients, LoanRepository loanRepository) {
     super(clients, loanRepository);
-    configurationRepository = new ConfigurationRepository(clients);
+    this.settingsRepository = new SettingsRepository(clients);
     this.systemTime = ClockUtil.getZonedDateTime();
     this.loanPolicyRepository = new LoanPolicyRepository(clients);
     this.calendarRepository = new CalendarRepository(clients);
@@ -135,8 +135,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
-    return configurationRepository
-      .findTimeZoneConfiguration()
+    return settingsRepository.lookupTimeZoneSettings()
       .thenApply(tenantTimeZone -> systemTime.withZoneSameInstant(tenantTimeZone.value()));
   }
 
@@ -258,7 +257,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     log.debug("buildNextNotice:: parameters notice context: {}, reminder config: {}",
       context, nextReminder);
 
-    return configurationRepository.findTimeZoneConfiguration()
+    return settingsRepository.lookupTimeZoneSettings()
       .thenCompose(tenantTimeZone -> nextReminder.nextNoticeDueOn(systemTime, tenantTimeZone.value(),
         context.getLoan().getCheckoutServicePointId(), calendarRepository))
       .thenApply(r -> r.map(nextRunTime -> buildNextNotice(context, nextReminder, nextRunTime)));

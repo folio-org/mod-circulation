@@ -21,8 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
@@ -36,7 +36,7 @@ public class UpdateRequestQueue {
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
-  private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
   private final RequestQueueService requestQueueService;
   private final CalendarRepository calendarRepository;
   private static final String NOT_DEFINED_INTERVAL = "";
@@ -45,14 +45,14 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     RequestQueueService requestQueueService,
     CalendarRepository calendarRepository) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
-    this.configurationRepository = configurationRepository;
+    this.settingsRepository = settingsRepository;
     this.requestQueueService = requestQueueService;
     this.calendarRepository = calendarRepository;
   }
@@ -62,7 +62,7 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository) {
 
     return new UpdateRequestQueue(requestQueueRepository,
-      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients),
+      requestRepository, new ServicePointRepository(clients), new SettingsRepository(clients),
       RequestQueueService.using(clients), new CalendarRepository(clients));
   }
 
@@ -163,7 +163,7 @@ public class UpdateRequestQueue {
       String pickupServicePointId = request.getPickupServicePointId();
 
       return servicePointRepository.getServicePointById(pickupServicePointId)
-        .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
+        .thenCombineAsync(settingsRepository.lookupTimeZoneSettings(),
           Result.combined((servicePoint, tenantTimeZone) ->
             populateHoldShelfExpirationDate(
               request.withPickupServicePoint(servicePoint),
@@ -394,7 +394,7 @@ public class UpdateRequestQueue {
     List<Request> requests = queue.getRequests()
       .stream()
       .sorted(comparingInt(Request::getPosition))
-      .collect(Collectors.toList());
+      .toList();
 
     return new RequestQueue(requests);
   }

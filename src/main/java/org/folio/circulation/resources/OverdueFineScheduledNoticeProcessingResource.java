@@ -21,7 +21,7 @@ import org.folio.circulation.domain.notice.schedule.GroupedScheduledNoticeHandle
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.grouping.OverdueFineScheduledNoticeGroupDefinitionFactory;
 import org.folio.circulation.domain.notice.session.PatronSessionRecord;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
@@ -51,11 +51,11 @@ public class OverdueFineScheduledNoticeProcessingResource
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
-    return super.findNoticesToSend(configurationRepository, scheduledNoticesRepository,
+    return super.findNoticesToSend(settingsRepository, scheduledNoticesRepository,
         patronActionSessionRepository, pageLimit)
       .thenCompose(r -> r.after(notices -> filterNotices(notices, patronActionSessionRepository)));
   }

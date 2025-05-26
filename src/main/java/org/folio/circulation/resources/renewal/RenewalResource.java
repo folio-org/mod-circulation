@@ -69,7 +69,6 @@ import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
@@ -150,7 +149,6 @@ public abstract class RenewalResource extends Resource {
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
     final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
@@ -193,7 +191,7 @@ public abstract class RenewalResource extends Resource {
         RenewalContext::withTlrSettings))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RenewalContext::withTimeZone))
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -425,7 +423,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private BlockOverrides getOverrideBlocks(JsonObject request) {
-    return BlockOverrides.from(getObjectProperty(request, "overrideBlocks"));
+    return BlockOverrides.from(getObjectProperty(request, OVERRIDE_BLOCKS));
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseIfNoPermissionsForRenewalOverride(
@@ -634,7 +632,7 @@ public abstract class RenewalResource extends Resource {
 
     if (errors.isEmpty()) {
       final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
-        context.getRenewalRequest(), "overrideBlocks"));
+        context.getRenewalRequest(), OVERRIDE_BLOCKS));
 
       if (!blockOverrides.getPatronBlockOverride().isRequested() &&
         !blockOverrides.getRenewalBlockOverride().isRequested()) {

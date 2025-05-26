@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage;
 
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Configuration;
@@ -14,6 +15,8 @@ import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +28,11 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class SettingsRepository {
+  private static final ZoneId DEFAULT_DATE_TIME_ZONE = ZoneOffset.UTC;
+  private static final String TIMEZONE_KEY = "timezone";
+  private static final String TIMEZONE_SETTINGS_SCOPE = "stripes-core.prefs.manage";
+  private static final String TIMEZONE_SETTINGS_KEY = "tenantLocaleSettings";
+
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
   private final ConfigurationRepository configurationRepository;
@@ -59,6 +67,33 @@ public class SettingsRepository {
     return fetchSettings("circulation", List.of("generalTlr", "regularTlr"))
       .thenApply(r -> r.map(SettingsRepository::extractAndMergeValues))
       .thenCompose(r -> r.after(this::buildTlrSettings));
+  }
+
+  public CompletableFuture<Result<ZoneId>> lookupTimeZoneSettings() {
+    log.info("lookupTimeZoneSettings:: fetching timezone settings");
+    return fetchSettings(TIMEZONE_SETTINGS_SCOPE, TIMEZONE_SETTINGS_KEY)
+      .thenApply(r -> r.map(records -> records.mapRecords(Configuration::new)))
+      .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
+        .map(this::applyTimeZone)
+        .orElse(DEFAULT_DATE_TIME_ZONE)))
+      .thenApply(r -> r.mapFailure(failure -> {
+        log.warn("lookupTimeZoneSettings:: Error while fetching timezone settings {}", failure);
+        return succeeded(DEFAULT_DATE_TIME_ZONE);
+      }));
+  }
+
+  private ZoneId applyTimeZone(Configuration config) {
+    String value = config.getValue();
+    return StringUtils.isBlank(value)
+      ? DEFAULT_DATE_TIME_ZONE
+      : parseDateTimeZone(value);
+  }
+
+  private ZoneId parseDateTimeZone(String value) {
+    String timezone = new JsonObject(value).getString(TIMEZONE_KEY);
+    return StringUtils.isBlank(timezone)
+      ? DEFAULT_DATE_TIME_ZONE
+      : ZoneId.of(timezone);
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String key) {

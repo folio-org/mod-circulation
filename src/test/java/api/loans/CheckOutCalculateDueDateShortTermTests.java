@@ -20,13 +20,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import api.support.fixtures.SettingsFixture;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanPolicyBuilder;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
@@ -64,7 +63,7 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
     String expectedTimeZone = "America/New_York";
     int duration = 24;
 
-    Response response = configClient.create(ConfigurationExample.newYorkTimezoneConfiguration())
+    Response response = settingsClient.create(SettingsFixture.newYorkTimezoneConfiguration())
       .getResponse();
     assertThat(response.getBody(), containsString(expectedTimeZone));
 
@@ -80,8 +79,8 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
   void testRespectUtcTimezoneForDueDateCalculations() throws Exception {
     int duration = 24;
 
-    Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
-      .getResponse();
+    Response response = settingsClient.create(SettingsFixture.utcTimezoneConfiguration()).getResponse();
+
     assertThat(response.getBody(), containsString(UTC.toString()));
 
     ZonedDateTime loanDate = ZonedDateTime.of(CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE,
@@ -96,9 +95,8 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
   void testMoveToTheEndOfCurrentServicePointHoursRolloverScenario() throws Exception {
     int duration = 18;
 
-    Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
-      .getResponse();
-    assertThat(response.getBody(), containsString(ZoneOffset.UTC.toString()));
+    Response response = settingsClient.create(SettingsFixture.utcTimezoneConfiguration()).getResponse();
+    assertThat(response.getBody(), containsString(UTC.toString()));
 
     ZonedDateTime loanDate = ZonedDateTime.of(CASE_CURRENT_IS_OPEN_CURR_DAY, TEST_TIME_MORNING, UTC);
 
@@ -111,9 +109,8 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
   void testMoveToTheEndOfCurrentServicePointHoursNextDayIsClosed() throws Exception {
     int duration = 1;
 
-    Response response = configClient.create(ConfigurationExample.utcTimezoneConfiguration())
-      .getResponse();
-    assertThat(response.getBody(), containsString(ZoneOffset.UTC.toString()));
+    Response response = settingsClient.create(SettingsFixture.utcTimezoneConfiguration()).getResponse();
+    assertThat(response.getBody(), containsString(UTC.toString()));
 
     ZonedDateTime loanDate = ZonedDateTime.of(CASE_CURRENT_IS_OPEN_CURR_DAY, TEST_TIME_MORNING, UTC);
     ZonedDateTime expectedDueDate = atEndOfDay(CASE_CURRENT_IS_OPEN_CURR_DAY, UTC);

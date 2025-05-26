@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
@@ -49,6 +50,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
       ScheduledNoticesRepository.using(clients);
     final ConfigurationRepository configurationRepository =
       new ConfigurationRepository(clients);
+    final var settingsRepository = new SettingsRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -58,7 +60,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
       clients, loanRepository, userRepository);
 
     safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
-      .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
+      .thenCompose(r -> r.after(limit -> findNoticesToSend(settingsRepository,
         scheduledNoticesRepository, patronActionSessionRepository, limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,
         loanRepository, notices)))
@@ -68,7 +70,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
   }
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit);
 

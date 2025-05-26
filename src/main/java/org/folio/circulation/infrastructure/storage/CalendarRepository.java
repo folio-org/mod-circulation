@@ -39,11 +39,11 @@ public class CalendarRepository {
     "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=%d";
 
   private final CollectionResourceClient calendarClient;
-  private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
 
   public CalendarRepository(Clients clients) {
     this.calendarClient = clients.calendarStorageClient();
-    this.configurationRepository = new ConfigurationRepository(clients);
+    this.settingsRepository = new SettingsRepository(clients);
   }
 
   public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(
@@ -75,7 +75,7 @@ public class CalendarRepository {
 
     return calendarClient.get(path)
       .thenCombineAsync(
-        configurationRepository.findTimeZoneConfiguration(),
+        settingsRepository.lookupTimeZoneSettings(),
         Result.combined(CalendarRepository::getOpeningDaysFromOpeningDayCollection)
       );
   }

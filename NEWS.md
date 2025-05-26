@@ -1,3 +1,6 @@
+## 24.5.0-SNAPSHOT 2025-xx-xx
+* Replace deprecated mod-configuration with mod-settings for fetching tenant's locale settings ([CIRC-2295](https://folio-org.atlassian.net/browse/CIRC-2295))
+
 ## 24.4.0 2025-03-12
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
 * Fix automated patron blocks permission issue (CIRC-2185)

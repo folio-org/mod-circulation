@@ -83,7 +83,7 @@ public class CreateRequestService {
     log.debug("createRequest:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
 
     final var requestRepository = repositories.getRequestRepository();
-    final var configurationRepository = repositories.getConfigurationRepository();
+    final var settingsRepository = repositories.getSettingsRepository();
     final var automatedBlocksValidator = requestBlockValidators.getAutomatedPatronBlocksValidator();
     final var manualBlocksValidator = requestBlockValidators.getManualPatronBlocksValidator();
 
@@ -103,7 +103,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(this::checkPolicy))
       .thenApply(r -> r.next(this::refuseHoldOrRecallTlrWhenPageableItemExists))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
