@@ -265,17 +265,17 @@ Below is a short summary summary of most of the validation checks performed when
 
 Each includes an example of the error message provided and the parameter key included with the error.
 
-|Check|Example Message|Parameter Key|Notes|
-|---|---|---|---|
-|Item does not exist|No item with barcode 036000291452 exists|itemBarcode| |
-|Holding does not exist| | |otherwise it is not possible to lookup circulation rules|
-|Item is already checked out|Item is already checked out|itemBarcode| |
-|Existing open loan for item|Cannot check out item that already has an open loan|itemBarcode| |
-|Proxy relationship is valid|Cannot check out item via proxy when relationship is invalid| |only if proxying|
-|User must be requesting user|User checking out must be requester awaiting pickup|userBarcode|if there is an outstanding fulfillable request for item|
-|User does not exist|Could not find user with matching barcode|userBarcode| |
-|User needs to be active and not expired|Cannot check out to inactive user|userBarcode| |
-|Proxy user needs to be active and not expired|Cannot check out via inactive proxying user|proxyUserBarcode|only if proxying|
+| Check                                         | Example Message                                              | Parameter Key    | Notes                                                    |
+|-----------------------------------------------|--------------------------------------------------------------|------------------|----------------------------------------------------------|
+| Item does not exist                           | No item with barcode 036000291452 exists                     | itemBarcode      |                                                          |
+| Holding does not exist                        |                                                              |                  | otherwise it is not possible to lookup circulation rules |
+| Item is already checked out                   | Item is already checked out                                  | itemBarcode      |                                                          |
+| Existing open loan for item                   | Cannot check out item that already has an open loan          | itemBarcode      |                                                          |
+| Proxy relationship is valid                   | Cannot check out item via proxy when relationship is invalid |                  | only if proxying                                         |
+| User must be requesting user                  | User checking out must be requester awaiting pickup          | userBarcode      | if there is an outstanding fulfillable request for item  |
+| User does not exist                           | Could not find user with matching barcode                    | userBarcode      |                                                          |
+| User needs to be active and not expired       | Cannot check out to inactive user                            | userBarcode      |                                                          |
+| Proxy user needs to be active and not expired | Cannot check out via inactive proxying user                  | proxyUserBarcode | only if proxying                                         |
 
 ### Renew By Barcode
 
@@ -404,19 +404,19 @@ based on the patron's patron group and the item's material type, loan type, and 
 During the circulation process an item can change between a variety of states,
 below is a table describing the most common states defined at the moment.
 
-| Name | Description |
-|---|---|
-| Available | This item is available to be lent to a patron |
-| Checked out | This item is currently checked out to a patron |
-| Awaiting pickup | This item is awaiting pickup by a patron who has a request at the top of the queue|
+| Name            | Description                                                                        |
+|-----------------|------------------------------------------------------------------------------------|
+| Available       | This item is available to be lent to a patron                                      |
+| Checked out     | This item is currently checked out to a patron                                     |
+| Awaiting pickup | This item is awaiting pickup by a patron who has a request at the top of the queue |
 
 ### Request Status
 
-| Name | Description |
-|---|---|
-| Open - Not yet filled | The requested item is not yet available to the requesting user |
-| Open - Awaiting pickup | The item is available to the requesting user |
-| Closed - Filled | |
+| Name                   | Description                                                    |
+|------------------------|----------------------------------------------------------------|
+| Open - Not yet filled  | The requested item is not yet available to the requesting user |
+| Open - Awaiting pickup | The item is available to the requesting user                   |
+| Closed - Filled        |                                                                |
 
 ### Storing Information from Other Records
 
@@ -530,7 +530,7 @@ content-length: 230
 }
 ```
 ### Configuration setting for CheckoutLock Feature
-  To enable this feature for a tenant, we need to add the below configuration in mod-settings. See https://issues.folio.org/browse/UXPROD-3515 to know more about this feature.
+  To enable this feature for a tenant, we need to add the below configuration in mod-settings. See [UXPROD-3515](https://issues.folio.org/browse/UXPROD-3515) to know more about this feature.
 
 #### Permissions
   To make a post call to mod-settings, user should have below permissions.
@@ -551,19 +551,19 @@ POST https://{okapi-location}/settings/entries
 ```
 
 | parameter | Type        | Description                                                                                           |
-|---------|-------------|-------------------------------------------------------------------------------------------------------|
-| `id`    | UUID        | id should be provided of type UUID.                                                                   |
-| `scope` | String      | Scope should be the module name. Here, it will be "mod-circulation"                                   |
-| `key`   | String      | Key should be feature name which we are enabling the settings. Here, it will be "checkoutLockFeature" |
-| `value` | Json Object | Settings for checkout lock feature                                                                    |
+|-----------|-------------|-------------------------------------------------------------------------------------------------------|
+| `id`      | UUID        | id should be provided of type UUID.                                                                   |
+| `scope`   | String      | Scope should be the module name. Here, it will be "mod-circulation"                                   |
+| `key`     | String      | Key should be feature name which we are enabling the settings. Here, it will be "checkoutLockFeature" |
+| `value`   | Json Object | Settings for checkout lock feature                                                                    |
 
 
 | Value options                | Type    | Description                                                                                                                                                                                    |
 |------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `checkOutLockFeatureEnabled` | boolean | Indicates whether or not to enable this feature for the tenant. Default value is false(disabled).                                                                                              |
 | `noOfRetryAttempts`          | int     | The maximum number of times to retry the lock ackquiring process during checkout. Once the retry is exhausted, system will return error. Default value is 30.                                  |
-| `retryInterval`              | int | The amount of time to wait between retries in milliseconds. Default value is 250.                                                                                                              |
-| `lockTtl`                    | int | Maximum amount of time(milliseconds) that the lock should exist for a patron. After this time, the lock will gets deleted and lock will be provided for another request. Default value is 3000 |
+| `retryInterval`              | int     | The amount of time to wait between retries in milliseconds. Default value is 250.                                                                                                              |
+| `lockTtl`                    | int     | Maximum amount of time(milliseconds) that the lock should exist for a patron. After this time, the lock will gets deleted and lock will be provided for another request. Default value is 3000 |
 
 ## Additional Information
 

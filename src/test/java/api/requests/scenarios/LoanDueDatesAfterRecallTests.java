@@ -4,7 +4,7 @@ import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;
-import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -80,12 +80,12 @@ class LoanDueDatesAfterRecallTests extends APITests {
   }
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     setClock(Clock.fixed(getInstant(), ZoneOffset.UTC));
   }
 
   @AfterEach
-  public void afterEach() {
+  void afterEach() {
     // The clock must be reset after each test.
     setDefaultClock();
   }
@@ -420,7 +420,7 @@ class LoanDueDatesAfterRecallTests extends APITests {
     final IndividualResource steve = usersFixture.steve();
     final IndividualResource jessica = usersFixture.jessica();
 
-    configClient.create(timezoneConfigurationFor(stockholmTimeZone));
+    settingsClient.create(timezoneConfigurationFor(stockholmTimeZone));
 
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling With Recalls")

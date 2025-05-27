@@ -15,9 +15,9 @@ import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
 import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
-import static api.support.fixtures.ConfigurationExample.newYorkTimezoneConfiguration;
-import static api.support.fixtures.ConfigurationExample.utcTimezoneConfiguration;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
+import static api.support.fixtures.SettingsFixture.newYorkTimezoneConfiguration;
+import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasCode;
@@ -76,7 +76,7 @@ class CheckOutCalculateDueDateTests extends APITests {
 
   @Test
   void testRespectSelectedTimezoneForDueDateCalculations() {
-    configClient.create(newYorkTimezoneConfiguration());
+    settingsClient.create(newYorkTimezoneConfiguration());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -100,7 +100,7 @@ class CheckOutCalculateDueDateTests extends APITests {
 
   @Test
   void testRespectUtcTimezoneForDueDateCalculations() {
-    configClient.create(utcTimezoneConfiguration());
+    settingsClient.create(utcTimezoneConfiguration());
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

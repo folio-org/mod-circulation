@@ -12,6 +12,7 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -100,6 +101,36 @@ class SettingsRepositoryTest {
     assertEquals(new TlrSettingsConfiguration(true, true, true, null, null, null), actualResult);
     verify(settingsClient).getMany(any(), any());
     verifyNoInteractions(configurationClient);
+  }
+
+  @Test
+  @SneakyThrows
+  void fetchTenantLocaleSettings() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient settingsClient = mock(CollectionResourceClient.class);
+
+    JsonObject mockSettingsResponse = new JsonObject()
+      .put("items", new JsonArray()
+        .add(new JsonObject()
+          .put("id", UUID.randomUUID().toString())
+          .put("scope", "stripes-core.prefs.manage")
+          .put("key", "tenantLocaleSettings")
+          .put("value", "{\"locale\":\"en-US\",\"timezone\":\"Europe/Berlin\",\"currency\":\"USD\"}")))
+      .put("resultInfo", new JsonObject()
+        .put("totalRecords", 1)
+        .put("diagnostics", new JsonArray()));
+
+    when(clients.settingsStorageClient()).thenReturn(settingsClient);
+    when(settingsClient.getMany(any(), any()))
+      .thenReturn(ofAsync(new Response(200, mockSettingsResponse.encode(), "application/json")));
+
+    ZoneId actualResult = new SettingsRepository(clients)
+      .lookupTimeZoneSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+
+    assertEquals(ZoneId.of("Europe/Berlin"), actualResult);
+    verify(settingsClient).getMany(any(), any());
   }
 
   @Test
