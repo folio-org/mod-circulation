@@ -288,6 +288,10 @@ public class Item {
     return description.getAdministrativeNotes();
   }
 
+  public Collection<String> getSeriesStatementValues() {
+    return instance.getSeriesStatementValues().toList();
+  }
+
   private ServicePoint getPrimaryServicePoint() {
     return location.getPrimaryServicePoint();
   }

@@ -50,6 +50,8 @@ public class ItemMapper {
         .collect(Collectors.toList()),
       getProperty(representation, "accessionNumber"),
       toStream(representation, "administrativeNotes")
+        .collect(Collectors.toList()),
+      toStream(representation, "seriesStatements")
         .collect(Collectors.toList()));
   }
 
