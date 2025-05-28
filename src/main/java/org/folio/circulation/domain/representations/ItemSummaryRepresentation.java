@@ -46,6 +46,7 @@ public class ItemSummaryRepresentation {
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "copyNumber", item.getCopyNumber());
     write(itemSummary, "editions", item.getEditions());
+    write(itemSummary, "seriesStatements", item.getSeriesStatementValues());
     write(itemSummary, "datesOfPublication", item.getDatesOfPublication());
     write(itemSummary, "physicalDescriptions", item.getPhysicalDescriptions());
     write(itemSummary, "administrativeNotes", item.getAdministrativeNotes());

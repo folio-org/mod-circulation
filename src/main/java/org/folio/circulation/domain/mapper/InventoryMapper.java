@@ -90,6 +90,7 @@ public class InventoryMapper {
       .put("datesOfPublication", instance.getPublication().stream().
         map(Publication::getDateOfPublication).collect(joining("; ")))
       .put("editions", String.join("; ", instance.getEditions()))
+      .put("seriesStatements", instance.getSeriesStatementValues().collect(joining("; '")))
       .put("physicalDescriptions", String.join("; ", instance.getPhysicalDescriptions()));
   }
 }
