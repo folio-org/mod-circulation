@@ -895,7 +895,8 @@
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
-            "circulation-storage.loans-history.collection.get"
+            "circulation-storage.loans-history.collection.get",
+            "mod-settings.global.read.stripes-core.prefs.manage"
           ],
           "unit": "minute",
           "delay": "2"
@@ -994,7 +995,8 @@
             "addresstypes.collection.get",
             "pubsub.publish.post",
             "templates.item.get",
-            "circulation-storage.loans-history.collection.get"
+            "circulation-storage.loans-history.collection.get",
+            "mod-settings.global.read.stripes-core.prefs.manage"
           ],
           "unit": "minute",
           "delay": "2"
@@ -1028,7 +1030,8 @@
             "addresstypes.collection.get",
             "pubsub.publish.post",
             "templates.item.get",
-            "circulation-storage.loans-history.collection.get"
+            "circulation-storage.loans-history.collection.get",
+            "mod-settings.global.read.stripes-core.prefs.manage"
           ],
           "unit": "minute",
           "delay": "2"
@@ -1166,7 +1169,8 @@
             "feefineactions.item.post",
             "circulation-storage.loans-history.collection.get",
             "calendar.endpoint.calendars.surroundingOpenings.get",
-            "calendar.endpoint.calendars.allOpenings.get"
+            "calendar.endpoint.calendars.allOpenings.get",
+            "mod-settings.global.read.stripes-core.prefs.manage"
           ],
           "schedule": {
             "cron": "1 0 * * *",
@@ -1867,6 +1871,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage",
         "calendar.endpoint.dates.get",
         "pubsub.publish.post",
         "circulation-storage.loans-history.collection.get"
@@ -1923,6 +1928,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.global.read.mod-circulation",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage",
         "manualblocks.item.get",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get"
@@ -2039,7 +2045,8 @@
         "circulation-storage.loans-history.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
-        "mod-settings.global.read.circulation"
+        "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage"
       ],
       "visible": false
     },
@@ -2075,6 +2082,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "patron-notice.post",
@@ -2273,6 +2281,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage",
         "manualblocks.collection.get",
         "pubsub.publish.post",
         "patron-blocks.automated-patron-blocks.collection.get",
@@ -2357,6 +2366,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
@@ -2444,6 +2454,7 @@
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
@@ -2592,7 +2603,8 @@
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "overdue-fines-policies.item.get",
-        "overdue-fines-policies.collection.get"
+        "overdue-fines-policies.collection.get",
+        "mod-settings.global.read.stripes-core.prefs.manage"
       ],
       "visible": false
     },
