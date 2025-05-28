@@ -3,7 +3,7 @@ package api.requests.scenarios;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
-import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
+import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -73,7 +73,7 @@ import lombok.val;
 class MoveRequestTests extends APITests {
 
   @AfterEach
-  public void afterEach() {
+  void afterEach() {
     // The clock must be reset after each test.
     setDefaultClock();
   }
@@ -1232,7 +1232,7 @@ class MoveRequestTests extends APITests {
     val steve = usersFixture.steve();
     val jessica = usersFixture.jessica();
 
-    configClient.create(timezoneConfigurationFor(stockholmTimeZone));
+    settingsClient.create(timezoneConfigurationFor(stockholmTimeZone));
 
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling With Recalls")

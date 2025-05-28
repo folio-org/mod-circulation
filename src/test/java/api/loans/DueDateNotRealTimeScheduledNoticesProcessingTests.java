@@ -1,5 +1,7 @@
 package api.loans;
 
+import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
+import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
@@ -49,12 +51,12 @@ import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
-  private final static UUID TEMPLATE_ID = UUID.randomUUID();
+  private static final UUID TEMPLATE_ID = UUID.randomUUID();
 
   private static final String LOAN_INFO_ADDED = "testing patron info";
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     templateFixture.createDummyNoticeTemplate(TEMPLATE_ID);
   }
 
@@ -127,7 +129,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void beforeRecurringNoticesAreRescheduled() {
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    settingsClient.create(utcTimezoneConfiguration());
 
     Period beforePeriod = Period.weeks(1);
     Period recurringPeriod = Period.days(1);
@@ -521,7 +523,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(1);
 
-    ZonedDateTime dueDate = parseDateTime(nodToJamesLoan.getJson().getString("dueDate"));;
+    ZonedDateTime dueDate = parseDateTime(nodToJamesLoan.getJson().getString("dueDate"));
     ZonedDateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
@@ -690,7 +692,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime systemTime = ZonedDateTime.of(2020, 6, 25, 0, 0, 0, 0, ZoneId.of(timeZoneId))
       .plusMinutes(plusMinutes);
     mockClockManagerToReturnFixedDateTime(systemTime);
-    configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
+    settingsClient.create(timezoneConfigurationFor(timeZoneId));
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)

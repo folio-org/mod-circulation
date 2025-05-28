@@ -39,7 +39,6 @@ import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -121,7 +120,6 @@ public class CheckOutByBarcodeResource extends Resource {
     final var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     final var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     final var patronGroupRepository = new PatronGroupRepository(clients);
-    final var configurationRepository = new ConfigurationRepository(clients);
     final var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
     final var scheduledNoticeService = new LoanScheduledNoticeService(scheduledNoticesRepository,
       patronNoticePolicyRepository);
@@ -165,7 +163,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenCompose(validators::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
       .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy));

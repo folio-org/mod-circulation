@@ -9,6 +9,7 @@ import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fixtures.CalendarExamples.CASE_CURRENT_DATE_CLOSE;
 import static api.support.fixtures.CalendarExamples.CASE_NEXT_DATE_OPEN;
+import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -46,20 +47,19 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 class HoldShelfExpirationDateTests extends APITests {
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     // reset the clock before each test (just in case)
     setClock(Clock .fixed(getInstant(), UTC));
   }
 
   @AfterEach
-  public void afterEach() {
+  void afterEach() {
     // The clock must be reset after each test.
     setDefaultClock();
   }
@@ -148,8 +148,7 @@ class HoldShelfExpirationDateTests extends APITests {
         assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(moveToBeginningOfNextServicePointHours2));
         break;
-      case "cd9" :
-      case "cd10" :
+      case "cd9", "cd10" :
         ZonedDateTime moveToTheNextOpenDay = atEndOfDay(interval.addTo(getZonedDateTime(), amount)).plusDays(1);
         assertThat("request hold shelf expiration date is " + amount + " " + interval.toString() + " in the future",
         storedRequest.getString("holdShelfExpirationDate"), isEquivalentTo(moveToTheNextOpenDay));
@@ -203,8 +202,9 @@ class HoldShelfExpirationDateTests extends APITests {
     final int amount = 30;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
 
-    IndividualResource updateTimeZoneConfig = configClient
-      .create(ConfigurationExample.timezoneConfigurationFor(tenantTimeZone.getId()));
+    IndividualResource updateTimeZoneConfig = settingsClient.create(
+      timezoneConfigurationFor(tenantTimeZone.getId())
+    );
     assertThat(updateTimeZoneConfig.getResponse().getStatusCode(), is(201));
 
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
@@ -241,8 +241,8 @@ class HoldShelfExpirationDateTests extends APITests {
     final int amount = 42;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
 
-    IndividualResource updateTimeZoneConfig = configClient
-      .create(ConfigurationExample.timezoneConfigurationFor(tenantTimeZone.getId()));
+    IndividualResource updateTimeZoneConfig = settingsClient
+      .create(timezoneConfigurationFor(tenantTimeZone.getId()));
     assertThat(updateTimeZoneConfig.getResponse().getStatusCode(), is(201));
 
     final IndividualResource checkInServicePoint = servicePointsFixture.cd5();

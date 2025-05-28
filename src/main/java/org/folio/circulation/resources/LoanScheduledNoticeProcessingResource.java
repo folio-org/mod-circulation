@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -37,7 +37,7 @@ public class LoanScheduledNoticeProcessingResource extends ScheduledNoticeProces
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 

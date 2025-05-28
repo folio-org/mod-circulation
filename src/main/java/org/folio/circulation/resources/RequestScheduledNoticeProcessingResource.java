@@ -29,7 +29,7 @@ import org.folio.circulation.domain.notice.schedule.InstanceAwareRequestSchedule
 import org.folio.circulation.domain.notice.schedule.ItemAwareRequestScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.ScheduledNoticeContext;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -39,7 +39,6 @@ import org.folio.circulation.support.CqlSortBy;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
-import org.folio.circulation.support.utils.LogUtil;
 
 import io.vertx.core.http.HttpClient;
 
@@ -52,7 +51,7 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 

@@ -27,7 +27,7 @@ import org.folio.circulation.domain.notice.schedule.grouping.DefaultScheduledNot
 import org.folio.circulation.domain.notice.schedule.grouping.ScheduledNoticeGroupDefinition;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
 import org.folio.circulation.domain.notice.schedule.grouping.ScheduledNoticeGroupDefinitionFactory;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -57,7 +57,7 @@ public abstract class GroupingScheduledNoticeProcessingResource
         "triggeringEvent", "noticeConfig.format",
         "noticeConfig.timing")
         .map(CqlSortClause::ascending)
-        .collect(toList())
+        .toList()
     );
 
   protected GroupingScheduledNoticeProcessingResource(HttpClient client, String rootPath,
@@ -82,19 +82,19 @@ public abstract class GroupingScheduledNoticeProcessingResource
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 
     log.debug("findNoticesToSend:: pageLimit: {}", pageLimit.getLimit());
 
-    return getTimeLimit(configurationRepository)
+    return getTimeLimit(settingsRepository)
       .thenCompose(r -> r.after(timeLimit -> findNotices(scheduledNoticesRepository,
         pageLimit, timeLimit)));
   }
 
   private CompletableFuture<Result<ZonedDateTime>> getTimeLimit(
-    ConfigurationRepository configurationRepository) {
+    SettingsRepository settingsRepository) {
 
     log.debug("getTimeLimit:: realTime: {}", realTime);
 
@@ -102,7 +102,7 @@ public abstract class GroupingScheduledNoticeProcessingResource
       return ofAsync(ClockUtil.getZonedDateTime());
     }
 
-    return configurationRepository.findTimeZoneConfiguration()
+    return settingsRepository.lookupTimeZoneSettings()
       .thenApply(r -> r.map(this::startOfTodayInTimeZone));
   }
 
@@ -146,7 +146,7 @@ public abstract class GroupingScheduledNoticeProcessingResource
       .stream()
       .limit(limit)
       .map(Map.Entry::getValue)
-      .collect(toList());
+      .toList();
   }
 
 }

@@ -40,6 +40,7 @@ public class LoanProperties {
   public static final String USAGE_STATUS_IN_USE = "In use";
   public static final String USAGE_STATUS_HELD = "Held";
   public static final String USAGE_STATUS_RETURNED = "Returned";
+  public static final String CREATED_DATE = "createdDate";
   public static final String REMINDERS = "reminders";
   public static final String LAST_FEE_BILLED = "lastFeeBilled";
   public static final String BILL_NUMBER = "number";

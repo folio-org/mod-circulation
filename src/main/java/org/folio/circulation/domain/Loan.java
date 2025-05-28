@@ -28,6 +28,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.BILL_N
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKOUT_SERVICE_POINT_ID;
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.CREATED_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
@@ -51,6 +52,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -845,6 +847,10 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getUpdatedByUserId() {
     return getNestedStringProperty(representation, METADATA, UPDATED_BY_USER_ID);
+  }
+
+  public ZonedDateTime getCreatedDate() {
+    return getNestedDateTimeProperty(representation, METADATA, CREATED_DATE);
   }
 
   public Loan setPreviousDueDate(ZonedDateTime previousDateTime) {

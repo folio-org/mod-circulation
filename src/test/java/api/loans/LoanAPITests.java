@@ -2,6 +2,7 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.fakes.PublishedEvents.byEventType;
+import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.http.AdditionalHttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
@@ -351,7 +352,7 @@ class LoanAPITests extends APITests {
 
   @Test
   void canGetMultipleFeesFinesForMultipleLoans() {
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    settingsClient.create(utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource item2 = itemsFixture.basedUponNod();
 
@@ -1078,7 +1079,7 @@ class LoanAPITests extends APITests {
   @Test
   void canGetLoanPolicyPropertiesForMultipleLoans() {
 
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    settingsClient.create(utcTimezoneConfiguration());
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource item2 = itemsFixture.basedUponNod();
 

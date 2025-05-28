@@ -1,16 +1,10 @@
 package org.folio.circulation.domain;
 
-import static org.folio.circulation.domain.MultipleRecords.from;
-
 import java.lang.invoke.MethodHandles;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Collection;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationService {
@@ -18,29 +12,8 @@ public class ConfigurationService {
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
   private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES = 3;
-  private static final ZoneId DEFAULT_DATE_TIME_ZONE = ZoneOffset.UTC;
-  private static final String TIMEZONE_KEY = "timezone";
-  private static final String RECORDS_NAME = "configs";
   private static final String CHECKOUT_TIMEOUT_DURATION_KEY = "checkoutTimeoutDuration";
   private static final String CHECKOUT_TIMEOUT_KEY = "checkoutTimeout";
-
-  ZoneId findDateTimeZone(JsonObject representation) {
-    return from(representation, Configuration::new, RECORDS_NAME)
-      .map(MultipleRecords::getRecords)
-      .map(this::findDateTimeZone)
-      .orElse(DEFAULT_DATE_TIME_ZONE);
-  }
-
-  public ZoneId findDateTimeZone(Collection<Configuration> configurations) {
-    final ZoneId chosenTimeZone = configurations.stream()
-      .map(this::applyTimeZone)
-      .findFirst()
-      .orElse(DEFAULT_DATE_TIME_ZONE);
-
-    log.debug("findDateTimeZone:: timezone={}", chosenTimeZone);
-
-    return chosenTimeZone;
-  }
 
   public Integer findSchedulerNoticesLimit(Collection<Configuration> configurations) {
     final Integer noticesLimit = configurations.stream()
@@ -93,19 +66,5 @@ public class ConfigurationService {
     return StringUtils.isNumeric(value)
       ? Integer.valueOf(value)
       : DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT;
-  }
-
-  private ZoneId applyTimeZone(Configuration config) {
-    String value = config.getValue();
-    return StringUtils.isBlank(value)
-      ? DEFAULT_DATE_TIME_ZONE
-      : parseDateTimeZone(value);
-  }
-
-  private ZoneId parseDateTimeZone(String value) {
-    String timezone = new JsonObject(value).getString(TIMEZONE_KEY);
-    return StringUtils.isBlank(timezone)
-      ? DEFAULT_DATE_TIME_ZONE
-      : ZoneId.of(timezone);
   }
 }
