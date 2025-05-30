@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -25,7 +24,6 @@ public class MoveRequestService {
   private final MoveRequestProcessAdapter moveRequestProcessAdapter;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
-  private final ConfigurationRepository configurationRepository;
   private final EventPublisher eventPublisher;
   private final RequestQueueRepository requestQueueRepository;
   private final SettingsRepository settingsRepository;
@@ -34,8 +32,8 @@ public class MoveRequestService {
   public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
     UpdateUponRequest updateUponRequest, MoveRequestProcessAdapter moveRequestHelper,
     RequestLoanValidator requestLoanValidator, RequestNoticeSender requestNoticeSender,
-    ConfigurationRepository configurationRepository, EventPublisher eventPublisher,
-    RequestQueueRepository requestQueueRepository, SettingsRepository settingsRepository) {
+    EventPublisher eventPublisher, RequestQueueRepository requestQueueRepository,
+    SettingsRepository settingsRepository) {
 
     this.requestRepository = requestRepository;
     this.requestPolicyRepository = requestPolicyRepository;
@@ -43,7 +41,6 @@ public class MoveRequestService {
     this.moveRequestProcessAdapter = moveRequestHelper;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
-    this.configurationRepository = configurationRepository;
     this.eventPublisher = eventPublisher;
     this.requestQueueRepository = requestQueueRepository;
     this.settingsRepository = settingsRepository;
@@ -61,7 +58,7 @@ public class MoveRequestService {
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(r -> r.map(this::pagedRequestIfDestinationItemAvailable))
       .thenCompose(r -> r.after(this::validateUpdateRequest))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RequestAndRelatedRecords::withTimeZone))
       .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))

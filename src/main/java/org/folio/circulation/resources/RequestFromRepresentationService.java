@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.lang.String.join;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.circulation.domain.EcsRequestPhase.INTERMEDIATE;
@@ -67,7 +66,6 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
@@ -98,7 +96,6 @@ class RequestFromRepresentationService {
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
-  private final ConfigurationRepository configurationRepository;
   private final SettingsRepository settingsRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
@@ -122,7 +119,6 @@ class RequestFromRepresentationService {
     this.userRepository = repositories.getUserRepository();
     this.loanRepository = repositories.getLoanRepository();
     this.servicePointRepository = repositories.getServicePointRepository();
-    this.configurationRepository = repositories.getConfigurationRepository();
     this.settingsRepository = repositories.getSettingsRepository();
     this.requestPolicyRepository = repositories.getRequestPolicyRepository();
 
@@ -148,7 +144,7 @@ class RequestFromRepresentationService {
       .thenApply(this::refuseWhenNoRequestDate)
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         Request::truncateRequestExpirationDateToTheEndOfTheDay))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
@@ -338,7 +334,7 @@ class RequestFromRepresentationService {
       .map(Item::getItemId)
       .filter(itemId -> request.getInstanceItemsRequestPolicies().get(itemId)
         .allowsType(RECALL))
-      .collect(toList());
+      .toList();
 
     return loanRepository.findLoanWithClosestDueDate(recallableItemIds, recalledLoansIds)
       //Loan is null means that we have no items that haven't been recalled. In this case we

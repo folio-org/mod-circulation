@@ -115,6 +115,7 @@ public abstract class APITests {
   protected final ResourceClient locationsClient = ResourceClient.forLocations();
 
   protected final ResourceClient configClient = ResourceClient.forConfiguration();
+  protected final ResourceClient settingsClient = ResourceClient.forSettingsStorage();
 
   private final ResourceClient patronGroupsClient
     = ResourceClient.forPatronGroups();

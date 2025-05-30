@@ -20,7 +20,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
-import static api.support.fixtures.ConfigurationExample.newYorkTimezoneConfiguration;
+import static api.support.fixtures.SettingsFixture.newYorkTimezoneConfiguration;
 import static api.support.http.CqlQuery.noQuery;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.http.Limit.limit;
@@ -765,7 +765,7 @@ class RequestsAPIRetrievalTests extends APITests {
 
     proxyRelationshipsFixture.nonExpiringProxyFor(sponsor, proxy);
     checkOutFixture.checkOutByBarcode(smallAngryPlanet);
-    configClient.create(newYorkTimezoneConfiguration());
+    settingsClient.create(newYorkTimezoneConfiguration());
 
     final IndividualResource createdRequest = requestsFixture.place(
       new RequestBuilder()

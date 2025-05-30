@@ -16,7 +16,6 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -78,8 +77,6 @@ public class CheckInByBarcodeResource extends Resource {
         PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
-
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
 
     refuseWhenLoggedInUserNotPresent(context)
@@ -92,7 +89,7 @@ public class CheckInByBarcodeResource extends Resource {
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
       .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
         CheckInContext::withTlrSettings))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         CheckInContext::withTimeZone))
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
