@@ -47,7 +47,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
 
   private void declareClaimedReturnedItemAsMissing(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
+    final Clients clients = Clients.create(context, client);
     final EventPublisher eventPublisher = new EventPublisher(clients);
 
     createRequest(routingContext)

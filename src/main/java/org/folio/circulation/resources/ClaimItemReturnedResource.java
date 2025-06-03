@@ -45,7 +45,7 @@ public class ClaimItemReturnedResource extends Resource {
   private void claimItemReturned(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
-    final EventPublisher eventPublisher = new EventPublisher(clients);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     createRequest(routingContext)
       .after(request -> processClaimItemReturned(clients, request))
