@@ -62,7 +62,7 @@ public class CheckInByBarcodeResource extends Resource {
     final Result<CheckInByBarcodeRequest> checkInRequestResult
       = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients,

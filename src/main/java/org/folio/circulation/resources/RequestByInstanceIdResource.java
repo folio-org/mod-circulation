@@ -1,7 +1,6 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.domain.InstanceRequestItemsComparer.sortRequestQueues;
 import static org.folio.circulation.domain.RequestFulfillmentPreference.HOLD_SHELF;
 import static org.folio.circulation.domain.RequestType.HOLD;
@@ -40,7 +39,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CreateRequestService;
@@ -84,7 +82,6 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
-
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -117,7 +114,7 @@ public class RequestByInstanceIdResource extends Resource {
     final var itemRepository = repositories.getItemRepository();
 
     final var itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
-    final var eventPublisher = new EventPublisher(routingContext);
+    final var eventPublisher = new EventPublisher(context, clients);
 
     final var requestBody = routingContext.getBodyAsJson();
 
@@ -266,7 +263,7 @@ public class RequestByInstanceIdResource extends Resource {
         .put(REQUEST_TYPE, requestType.getValue())
         .put(REQUEST_LEVEL, RequestLevel.TITLE.getValue())
         .put(FULFILLMENT_PREFERENCE, DEFAULT_FULFILLMENT_PREFERENCE.getValue()))
-      .collect(toList())
+      .toList()
     );
   }
 

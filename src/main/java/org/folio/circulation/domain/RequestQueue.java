@@ -49,7 +49,7 @@ public class RequestQueue {
   public RequestQueue filter(Predicate<Request> predicate) {
     return new RequestQueue(requests.stream()
       .filter(predicate)
-      .collect(toList()));
+      .toList());
   }
 
   Request getHighestPriorityFulfillableRequest() {
@@ -71,7 +71,7 @@ public class RequestQueue {
       .map(Request::getLoan)
       .filter(Objects::nonNull)
       .map(Loan::getId)
-      .collect(toList());
+      .toList();
   }
 
   public Loan getTheLeastRecalledLoan() {
@@ -92,7 +92,7 @@ public class RequestQueue {
     return requests
       .stream()
       .filter(Request::isFulfillable)
-      .collect(toList());
+      .toList();
   }
 
   public void add(Request newRequest) {
@@ -132,7 +132,7 @@ public class RequestQueue {
       .filter(Request::hasChangedPosition)
       // order by position descending
       .sorted((req1, req2) -> req2.getPosition().compareTo(req1.getPosition()))
-      .collect(toList());
+      .toList();
   }
 
   //TODO: Encapsulate this better

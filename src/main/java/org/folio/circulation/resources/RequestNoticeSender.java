@@ -65,7 +65,7 @@ public class RequestNoticeSender {
     loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     requestRepository = RequestRepository.using(clients, itemRepository, userRepository, loanRepository);
     servicePointRepository = new ServicePointRepository(clients);
-    eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    eventPublisher = new EventPublisher(clients);
     locationRepository = LocationRepository.using(clients, servicePointRepository);
   }
 

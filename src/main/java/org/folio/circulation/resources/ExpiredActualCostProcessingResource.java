@@ -42,7 +42,7 @@ public class ExpiredActualCostProcessingResource extends Resource {
     var context = new WebContext(routingContext);
     var clients = create(context, client);
 
-    var eventPublisher = new EventPublisher(routingContext);
+    var eventPublisher = new EventPublisher(context, clients);
     var itemRepository = new ItemRepository(clients);
     var userRepository = new UserRepository(clients);
     var loanRepository = new LoanRepository(clients, itemRepository, userRepository);

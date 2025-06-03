@@ -1,10 +1,9 @@
 package api.support.fixtures;
 
-import java.util.List;
-import java.util.UUID;
-
 import api.support.builders.SettingsBuilder;
 import api.support.http.ResourceClient;
+import java.util.List;
+import java.util.UUID;
 import io.vertx.core.json.JsonObject;
 
 public class SettingsFixture {
@@ -47,11 +46,12 @@ public class SettingsFixture {
   }
 
   private static SettingsBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
-    return new SettingsBuilder(UUID.randomUUID(), DEFAULT_TIME_ZONE_SCOPE, DEFAULT_TIME_ZONE_KEY,
-      new JsonObject().put("locale", US_LOCALE)
+    return new SettingsBuilder(
+      UUID.randomUUID(), DEFAULT_TIME_ZONE_SCOPE, DEFAULT_TIME_ZONE_KEY,
+      new JsonObject()
+        .put("locale", US_LOCALE)
         .put("timezone", timezone)
         .put("currency", "USD")
-        .encodePrettily()
     );
   }
 

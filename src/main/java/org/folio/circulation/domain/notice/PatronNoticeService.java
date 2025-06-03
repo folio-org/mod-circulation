@@ -20,7 +20,7 @@ public abstract class PatronNoticeService {
 
   protected PatronNoticeService(Clients clients) {
     this.patronNoticeClient = clients.patronNoticeClient();
-    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.eventPublisher = new EventPublisher(clients);
   }
 
   public CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,

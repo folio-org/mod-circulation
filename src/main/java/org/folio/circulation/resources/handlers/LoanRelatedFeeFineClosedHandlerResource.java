@@ -50,8 +50,8 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
   private void handleFeeFineClosedEvent(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final var eventPublisher = new EventPublisher(routingContext);
     final var clients = create(context, client);
+    final var eventPublisher = new EventPublisher(context, clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
