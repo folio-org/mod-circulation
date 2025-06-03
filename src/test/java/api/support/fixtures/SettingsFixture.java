@@ -47,11 +47,10 @@ public class SettingsFixture {
 
   private static SettingsBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
     return new SettingsBuilder(UUID.randomUUID(), DEFAULT_TIME_ZONE_SCOPE, DEFAULT_TIME_ZONE_KEY,
-      new JsonObject().put("value",
-        new JsonObject().put("locale", US_LOCALE)
-          .put("timezone", timezone)
-          .put("currency", "USD")
-          .encodePrettily())
+      new JsonObject()
+        .put("locale", US_LOCALE)
+        .put("timezone", timezone)
+        .put("currency", "USD")
     );
   }
 
