@@ -65,7 +65,7 @@ public class LostItemFeeChargingService {
     this.storeLoanAndItem = storeLoanAndItem;
     this.locationRepository = LocationRepository.using(clients,
       new ServicePointRepository(clients));
-    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.eventPublisher = new EventPublisher(clients);
     this.refundService = refundService;
     this.actualCostRecordService = new ActualCostRecordService(
       new ActualCostRecordRepository(clients), locationRepository,

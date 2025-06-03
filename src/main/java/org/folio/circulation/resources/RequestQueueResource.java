@@ -110,10 +110,9 @@ public class RequestQueueResource extends Resource {
     ReorderRequestContext reorderContext = new ReorderRequestContext(requestQueueType, idParamValue,
       routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);

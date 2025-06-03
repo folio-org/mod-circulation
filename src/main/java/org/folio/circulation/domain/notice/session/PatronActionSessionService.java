@@ -18,8 +18,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
@@ -37,7 +35,6 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -61,7 +58,7 @@ public class PatronActionSessionService {
 
     return new PatronActionSessionService(patronActionSessionRepository,
       new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
-      new EventPublisher(clients.pubSubPublishingService()));
+      new EventPublisher(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
@@ -217,7 +214,7 @@ public class PatronActionSessionService {
   private static List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
     return sessions.stream()
       .map(PatronActionSessionService::buildPatronNoticeEvent)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private static PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {

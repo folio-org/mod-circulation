@@ -148,7 +148,7 @@ class CheckInProcessAdapter {
       new LostItemFeeRefundService(clients, itemRepository,
         userRepository, loanRepository),
       requestQueueService,
-      new EventPublisher(clients.pubSubPublishingService()),
+      new EventPublisher(clients),
       new DepartmentRepository(clients));
   }
 

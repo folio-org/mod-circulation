@@ -44,7 +44,7 @@ public class LoanNoticeSender {
     return new LoanNoticeSender(
       new SingleImmediatePatronNoticeService(clients),
       new LoanPolicyRepository(clients),
-      new EventPublisher(clients.pubSubPublishingService()),
+      new EventPublisher(clients),
       loanRepository
     );
   }

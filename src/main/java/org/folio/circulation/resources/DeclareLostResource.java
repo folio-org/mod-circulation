@@ -59,7 +59,7 @@ public class DeclareLostResource extends Resource {
     final WebContext context = new WebContext(routingContext);
 
     final Clients clients = Clients.create(context, client);
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     validateDeclaredLostRequest(routingContext)
       .after(request -> declareItemLost(request, clients, context))
