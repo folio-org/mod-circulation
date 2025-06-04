@@ -4,9 +4,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
-
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.builders.ProxyRelationshipBuilder;
@@ -28,6 +28,26 @@ class ProxyRelationshipTests {
         .create());
 
     assertThat(relationship.isActive(), is(true));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "Sponsor, false",
+    "Proxy, true"
+  })
+  void shouldBeActiveAndNotificationsSentToSponsorOrProxy(String sentTo, boolean sentToProxy) {
+    final ProxyRelationship relationship = new ProxyRelationship(
+      new ProxyRelationshipBuilder()
+        .proxy(UUID.randomUUID())
+        .sponsor(UUID.randomUUID())
+        .active()
+        .doesNotExpire()
+        .notificationsSentTo(sentTo)
+        .create());
+
+    assertThat(relationship.isActive(), is(true));
+    assertThat(relationship.notificationsSentToSponsor(), is(!sentToProxy));
+    assertThat(relationship.notificationsSentToProxy(), is(sentToProxy));
   }
 
   @ParameterizedTest

@@ -30,6 +30,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.combiner.LoanNoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -51,6 +52,7 @@ public class PatronActionSessionService {
 
   private final PatronActionSessionRepository patronActionSessionRepository;
   private final ImmediatePatronNoticeService patronNoticeService;
+  private final ProxyRelationshipValidator proxyRelationshipValidator;
   protected final EventPublisher eventPublisher;
 
   public static PatronActionSessionService using(Clients clients,
@@ -58,6 +60,7 @@ public class PatronActionSessionService {
 
     return new PatronActionSessionService(patronActionSessionRepository,
       new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
+      new ProxyRelationshipValidator(clients),
       new EventPublisher(clients));
   }
 
@@ -180,12 +183,13 @@ public class PatronActionSessionService {
     }
 
     //The user is the same for all sessions
-    User user = sessions.get(0).getLoan().getUser();
+    User user = sessions.getFirst().getLoan().getUser();
 
     log.info("Attempting to send a notice for a group of {} action sessions to user {}",
       sessions.size(), user.getId());
 
-    return patronNoticeService.acceptNoticeEvents(buildNoticeEvents(sessions))
+    return allOf(sessions, this::buildNoticeEvents)
+      .thenApply(result -> result.map(patronNoticeService::acceptNoticeEvents))
       .thenApply(mapResult(v -> sessions));
   }
 
@@ -211,22 +215,35 @@ public class PatronActionSessionService {
     return succeeded(null);
   }
 
-  private static List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
-    return sessions.stream()
-      .map(PatronActionSessionService::buildPatronNoticeEvent)
-      .toList();
-  }
-
-  private static PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
+  private CompletableFuture<Result<PatronNoticeEvent>> buildNoticeEvents(PatronSessionRecord session) {
     Loan loan = session.getLoan();
 
-    return new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(actionToEventMap.get(session.getActionType()))
-      .withNoticeContext(createLoanNoticeContextWithoutUser(loan))
-      .withNoticeLogContext(NoticeLogContext.from(loan))
-      .build();
+    return getRecipientId(loan)
+      .thenApply(result -> result.map(recipientId -> {
+        if (recipientId == null) {
+          log.warn("No recipient ID found for loan: {}", loan.getId());
+        }
+        return new PatronNoticeEventBuilder()
+          .withItem(loan.getItem())
+          .withUser(loan.getUser())
+          .withRecipientId(recipientId)
+          .withEventType(actionToEventMap.get(session.getActionType()))
+          .withNoticeContext(createLoanNoticeContextWithoutUser(loan))
+          .withNoticeLogContext(NoticeLogContext.from(loan))
+          .build();
+      }));
   }
 
+  private CompletableFuture<Result<String>> getRecipientId(Loan loan) {
+    return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(loan)
+      .thenApply(result -> result.map(sentNoProxy -> {
+        if (sentNoProxy) {
+          log.info("getRecipientId:: notice recipient is proxy user: {}", loan.getProxyUserId());
+          return loan.getProxyUserId();
+        }
+
+        log.info("getRecipientId:: notice recipient is user: {}", loan.getProxyUserId());
+        return loan.getUserId();
+      }));
+  }
 }

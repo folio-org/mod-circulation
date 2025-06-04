@@ -149,7 +149,7 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
 
     private static NoticeEventGroupDefinition from(PatronNoticeEvent event) {
       return new NoticeEventGroupDefinition(
-        event.getUser().getId(),
+        event.getRecipientId(),
         event.getPatronNoticePolicyId(),
         event.getEventType());
     }
