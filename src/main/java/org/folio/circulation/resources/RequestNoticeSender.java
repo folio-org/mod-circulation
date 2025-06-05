@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
@@ -32,6 +31,7 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.NoticeEventType;
@@ -40,6 +40,7 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -51,26 +52,24 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
-
 import io.vertx.core.json.JsonObject;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RequestNoticeSender {
-  public RequestNoticeSender(Clients clients) {
-    final var itemRepository = new ItemRepository(clients);
-
-    userRepository = new UserRepository(clients);
-    patronNoticeService = new SingleImmediatePatronNoticeService(clients);
-    loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    requestRepository = RequestRepository.using(clients, itemRepository, userRepository, loanRepository);
-    servicePointRepository = new ServicePointRepository(clients);
-    eventPublisher = new EventPublisher(clients);
-    locationRepository = LocationRepository.using(clients, servicePointRepository);
-  }
-
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
+  private final RequestRepository requestRepository;
+  private final LoanRepository loanRepository;
+  private final UserRepository userRepository;
+  private final ServicePointRepository servicePointRepository;
+  private final EventPublisher eventPublisher;
+  private final ProxyRelationshipValidator proxyRelationshipValidator;
+
+  private long recallRequestCount = 0l;
+
+  protected final ImmediatePatronNoticeService patronNoticeService;
+  protected final LocationRepository locationRepository;
   protected static final Map<RequestType, NoticeEventType> requestTypeToEventMap;
 
   static {
@@ -81,19 +80,21 @@ public class RequestNoticeSender {
     requestTypeToEventMap = Collections.unmodifiableMap(map);
   }
 
+  public RequestNoticeSender(Clients clients) {
+    final var itemRepository = new ItemRepository(clients);
+    this.userRepository = new UserRepository(clients);
+    this.patronNoticeService = new SingleImmediatePatronNoticeService(clients);
+    this.loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    this.requestRepository = RequestRepository.using(clients, itemRepository, userRepository, loanRepository);
+    this.servicePointRepository = new ServicePointRepository(clients);
+    this.eventPublisher = new EventPublisher(clients);
+    this.locationRepository = LocationRepository.using(clients, servicePointRepository);
+    this.proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
+  }
+
   public static RequestNoticeSender using(Clients clients) {
     return new RequestNoticeSender(clients);
   }
-
-  protected final ImmediatePatronNoticeService patronNoticeService;
-  private final RequestRepository requestRepository;
-  private final LoanRepository loanRepository;
-  private final UserRepository userRepository;
-  private final ServicePointRepository servicePointRepository;
-  private final EventPublisher eventPublisher;
-  protected final LocationRepository locationRepository;
-
-  private long recallRequestCount = 0l;
 
   public Result<RequestAndRelatedRecords> sendNoticeOnMediatedRequestCreated(
     Request originalRequest, RequestAndRelatedRecords records) {
@@ -343,16 +344,20 @@ public class RequestNoticeSender {
   }
 
   private CompletableFuture<Result<Void>> sendLoanNotice(Loan updatedLoan){
-    PatronNoticeEvent itemRecalledEvent = new PatronNoticeEventBuilder()
-      .withItem(updatedLoan.getItem())
-      .withUser(updatedLoan.getUser())
-      .withEventType(ITEM_RECALLED)
-      .withNoticeContext(createLoanNoticeContext(updatedLoan))
-      .withNoticeLogContext(NoticeLogContext.from(updatedLoan))
-      .build();
+    return getRecipientId(updatedLoan)
+      .thenCompose(result -> result.after(recipientId -> {
+        var itemRecalledEvent = new PatronNoticeEventBuilder()
+          .withItem(updatedLoan.getItem())
+          .withUser(updatedLoan.getUser())
+          .withRecipientId(recipientId)
+          .withEventType(ITEM_RECALLED)
+          .withNoticeContext(createLoanNoticeContext(updatedLoan))
+          .withNoticeLogContext(NoticeLogContext.from(updatedLoan))
+          .build();
 
-    eventPublisher.publishRecallRequestedEvent(updatedLoan);
-    return patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
+        eventPublisher.publishRecallRequestedEvent(updatedLoan);
+        return patronNoticeService.acceptNoticeEvent(itemRecalledEvent);
+      }));
   }
 
   private CompletableFuture<Result<PatronNoticeEvent>> createPatronNoticeEvent(Request request,
@@ -365,7 +370,22 @@ public class RequestNoticeSender {
         .withItem(updatedRequest.hasItem() ? updatedRequest.getItem() : null)
         .withNoticeContext(createRequestNoticeContext(updatedRequest))
         .withNoticeLogContext(NoticeLogContext.from(updatedRequest))
-        .build()));
+        ))
+      .thenCompose(result -> result.combineAfter(() -> getRecipientId(request),
+        (builder, recipient) -> builder.withRecipientId(recipient).build()));
+  }
+
+  private CompletableFuture<Result<String>> getRecipientId(UserRelatedRecord userRelatedRecord) {
+    return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(userRelatedRecord)
+      .thenApply(result -> result.map(sentNoProxy -> {
+        if (sentNoProxy) {
+          log.info("getRecipientId:: notice recipient is proxy user: {}", userRelatedRecord.getProxyUserId());
+          return userRelatedRecord.getProxyUserId();
+        }
+
+        log.info("getRecipientId:: notice recipient is user: {}", userRelatedRecord.getProxyUserId());
+        return userRelatedRecord.getUserId();
+      }));
   }
 
   private static NoticeEventType getEventType(Request request) {

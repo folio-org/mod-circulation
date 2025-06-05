@@ -343,10 +343,6 @@ public class PatronActionSessionRepository {
   private static MultipleRecords<PatronSessionRecord> setLoansForSessionRecords(
     MultipleRecords<PatronSessionRecord> sessionRecords, MultipleRecords<Loan> loans) {
 
-    var loan = loans.getRecords().iterator().next();
-    log.info("setLoansForSessionRecords:: loan user {}", loan.getUserId());
-    log.info("setLoansForSessionRecords:: loan proxy {}", loan.getProxyUserId());
-
     Map<String, Loan> loanMap = loans.toMap(Loan::getId);
 
     return sessionRecords.mapRecords(r ->
