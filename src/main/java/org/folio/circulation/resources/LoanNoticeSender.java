@@ -15,7 +15,6 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
@@ -149,7 +148,7 @@ public class LoanNoticeSender {
   private CompletableFuture<Result<String>> getRecipientId(Loan loan) {
     return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(loan)
       .thenApply(result -> result.map(sentNoProxy -> {
-        if (sentNoProxy) {
+        if (Boolean.TRUE.equals(sentNoProxy)) {
           log.info("getRecipientId:: notice recipient is proxy user: {}", loan.getProxyUserId());
           return loan.getProxyUserId();
         }

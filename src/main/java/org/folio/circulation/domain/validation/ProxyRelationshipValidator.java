@@ -67,20 +67,20 @@ public class ProxyRelationshipValidator {
   }
 
   public CompletableFuture<Result<Boolean>> hasActiveProxyRelationshipWithNotificationsSentToProxy(
-    UserRelatedRecord record) {
-    log.debug("hasActiveProxyRelationshipWithNotificationsSentToProxy:: parameters record: {}", record);
+    UserRelatedRecord userRecord) {
+    log.debug("hasActiveProxyRelationshipWithNotificationsSentToProxy:: parameters record: {}", userRecord);
 
-    if (record.getProxyUserId() == null || record.getUserId() == null) {
+    if (userRecord.getProxyUserId() == null || userRecord.getUserId() == null) {
       log.info("hasActiveProxyRelationshipWithNotificationsSentToProxy:: proxy user ID or user ID is null");
       return completedFuture(succeeded(false));
     }
 
-    if (record.getProxyUserId().equals(record.getUserId())) {
+    if (userRecord.getProxyUserId().equals(userRecord.getUserId())) {
       log.info("hasActiveProxyRelationshipWithNotificationsSentToProxy:: proxy user ID is equal to user ID");
       return completedFuture(succeeded(false));
     }
 
-    return proxyRelationshipQuery(record.getProxyUserId(), record.getUserId())
+    return proxyRelationshipQuery(userRecord.getProxyUserId(), userRecord.getUserId())
       .after(query -> proxyRelationshipsClient.getMany(query, PageLimit.oneThousand())
         .thenApply(result -> result.next(
             response -> MultipleRecords.from(response, ProxyRelationship::new, PROXIES_COLLECTION_RECORDS_PROPERTY_NAME))

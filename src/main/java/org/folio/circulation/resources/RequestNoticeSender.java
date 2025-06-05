@@ -381,7 +381,7 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<String>> getRecipientId(UserRelatedRecord userRelatedRecord) {
     return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(userRelatedRecord)
       .thenApply(result -> result.map(sentNoProxy -> {
-        if (sentNoProxy) {
+        if (Boolean.TRUE.equals(sentNoProxy)) {
           log.info("getRecipientId:: notice recipient is proxy user: {}", userRelatedRecord.getProxyUserId());
           return userRelatedRecord.getProxyUserId();
         }

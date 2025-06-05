@@ -237,7 +237,7 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<String>> getRecipientId(Loan loan) {
     return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(loan)
       .thenApply(result -> result.map(sentNoProxy -> {
-        if (sentNoProxy) {
+        if (Boolean.TRUE.equals(sentNoProxy)) {
           log.info("getRecipientId:: notice recipient is proxy user: {}", loan.getProxyUserId());
           return loan.getProxyUserId();
         }
