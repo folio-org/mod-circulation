@@ -9,17 +9,16 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -28,7 +27,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -39,13 +37,15 @@ public class LoanNoticeSender {
   private final LoanPolicyRepository loanPolicyRepository;
   private final EventPublisher eventPublisher;
   private final LoanRepository loanRepository;
+  private final ProxyRelationshipValidator proxyRelationshipValidator;
 
   public static LoanNoticeSender using(Clients clients, LoanRepository loanRepository) {
     return new LoanNoticeSender(
       new SingleImmediatePatronNoticeService(clients),
       new LoanPolicyRepository(clients),
       new EventPublisher(clients),
-      loanRepository
+      loanRepository,
+      new ProxyRelationshipValidator(clients)
     );
   }
 
@@ -127,15 +127,35 @@ public class LoanNoticeSender {
 
   private CompletableFuture<Result<Void>> sendNotice(Loan loan, NoticeEventType eventType) {
     log.debug("sendNotice:: parameters loan: {}, eventType: {}", () -> loan, () -> eventType);
-    PatronNoticeEvent noticeEvent = new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(eventType)
-      .withNoticeContext(createLoanNoticeContext(loan))
-      .withNoticeLogContext(NoticeLogContext.from(loan))
-      .build();
 
-    return patronNoticeService.acceptNoticeEvent(noticeEvent);
+    return getRecipientId(loan)
+      .thenCompose(result -> result.after(recipientId -> {
+        if (recipientId == null) {
+          log.warn("No recipient ID found for loan: {}", loan.getId());
+        }
+        var patronNoticeEvent = new PatronNoticeEventBuilder()
+          .withItem(loan.getItem())
+          .withUser(loan.getUser())
+          .withRecipientId(recipientId)
+          .withEventType(eventType)
+          .withNoticeContext(createLoanNoticeContext(loan))
+          .withNoticeLogContext(NoticeLogContext.from(loan))
+          .build();
+        return patronNoticeService.acceptNoticeEvent(patronNoticeEvent);
+      }));
+  }
+
+  private CompletableFuture<Result<String>> getRecipientId(Loan loan) {
+    return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(loan)
+      .thenApply(result -> result.map(sentNoProxy -> {
+        if (Boolean.TRUE.equals(sentNoProxy)) {
+          log.info("getRecipientId:: notice recipient is proxy user: {}", loan.getProxyUserId());
+          return loan.getProxyUserId();
+        }
+
+        log.info("getRecipientId:: notice recipient is user: {}", loan.getProxyUserId());
+        return loan.getUserId();
+      }));
   }
 
 }

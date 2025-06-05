@@ -14,6 +14,7 @@ public class PatronNoticeEventBuilder {
   private JsonObject noticeContext;
   private NoticeLogContext noticeLogContext;
   private String patronNoticePolicyId;
+  private String recipientId;
 
   public PatronNoticeEventBuilder withItem(Item item) {
     this.item = item;
@@ -45,7 +46,12 @@ public class PatronNoticeEventBuilder {
     return this;
   }
 
+  public PatronNoticeEventBuilder withRecipientId(String recipientId) {
+    this.recipientId = recipientId;
+    return this;
+  }
+
   public PatronNoticeEvent build() {
-    return new PatronNoticeEvent(item, user, eventType, noticeContext, noticeLogContext, patronNoticePolicyId);
+    return new PatronNoticeEvent(item, user, eventType, noticeContext, noticeLogContext, patronNoticePolicyId, recipientId);
   }
 }

@@ -207,4 +207,19 @@ public class ProxyRelationshipBuilder implements Builder {
       false
     );
   }
+
+  public ProxyRelationshipBuilder notificationsSentTo(String notificationsTo) {
+    return new ProxyRelationshipBuilder(
+      this.id,
+      this.userId,
+      this.proxyUserId,
+      this.requestForSponsor,
+      this.createdDate,
+      this.expirationDate,
+      this.status,
+      this.accrueTo,
+      notificationsTo,
+      false
+    );
+  }
 }

@@ -16,7 +16,6 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
@@ -25,13 +24,13 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.support.utils.LogUtil;
-
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
+
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -90,11 +89,11 @@ public class NoticeLogContext {
     }
 
     return new NoticeLogContext()
-      .withUserId(sessions.get(0).getPatronId().toString())
+      .withUserId(sessions.getFirst().getPatronId().toString())
       .withItems(
         sessions.stream()
           .map(NoticeLogContextItem::from)
-          .collect(toList())
+          .toList()
       );
   }
 
@@ -102,7 +101,7 @@ public class NoticeLogContext {
     log.debug("withUser:: parameters user: {}", user);
 
     if (user != null) {
-      log.info("from:: user is null");
+      log.info("from:: user is not null");
       return withUserBarcode(user.getBarcode())
         .withUserId(user.getId());
     }
@@ -115,7 +114,7 @@ public class NoticeLogContext {
 
     return withItems(items.stream()
       .map(item -> item.withNoticePolicyId(noticePolicyId))
-      .collect(toList()));
+      .toList());
   }
 
   public NoticeLogContext withTemplateId(String templateId) {
@@ -123,7 +122,7 @@ public class NoticeLogContext {
 
     return withItems(items.stream()
       .map(item -> item.withTemplateId(templateId))
-      .collect(toList()));
+      .toList());
   }
 
   public NoticeLogContext withTriggeringEvent(String triggeringEvent) {
@@ -131,7 +130,7 @@ public class NoticeLogContext {
 
     return withItems(items.stream()
       .map(item -> item.withTriggeringEvent(triggeringEvent))
-      .collect(toList()));
+      .toList());
   }
 
   public JsonObject asJson() {

@@ -34,8 +34,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +60,6 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
-
 import io.vertx.core.json.JsonObject;
 
 public class PatronActionSessionRepository {
@@ -188,7 +185,7 @@ public class PatronActionSessionRepository {
     }
 
     Result<CqlQuery> actionTypeQuery = createActionTypeCqlQuery(
-      expiredSessions.get(0).getActionType());
+      expiredSessions.getFirst().getActionType());
 
     return findWithMultipleCqlIndexValues(patronActionSessionsStorageClient,
       PATRON_ACTION_SESSIONS, PatronSessionRecord::from)
@@ -269,7 +266,7 @@ public class PatronActionSessionRepository {
     List<String> loanIds = sessionRecords.getRecords().stream()
       .map(PatronSessionRecord::getLoanId)
       .map(UUID::toString)
-      .collect(Collectors.toList());
+      .toList();
 
     return loanRepository.findByIds(loanIds)
       .thenCompose(r -> r.after(this::fetchCampusesForLoanItems))
@@ -358,6 +355,6 @@ public class PatronActionSessionRepository {
       .filter(Item::isFound)
       .map(Item::getLocation)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
   }
 }
