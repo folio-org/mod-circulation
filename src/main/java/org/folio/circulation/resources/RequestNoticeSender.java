@@ -35,7 +35,6 @@ import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.NoticeEventType;
-import org.folio.circulation.domain.notice.PatronNotice;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.SingleImmediatePatronNoticeService;
@@ -66,7 +65,7 @@ public class RequestNoticeSender {
   private final EventPublisher eventPublisher;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
 
-  private long recallRequestCount = 0l;
+  private long recallRequestCount = 0L;
 
   protected final ImmediatePatronNoticeService patronNoticeService;
   protected final LocationRepository locationRepository;
@@ -287,8 +286,12 @@ public class RequestNoticeSender {
     NoticeLogContext noticeLogContext = NoticeLogContext.from(request)
       .withTriggeringEvent(eventType.getRepresentation())
       .withTemplateId(templateId.toString());
-    PatronNotice notice = buildEmail(request.getUserId(), templateId, noticeContext);
-    return patronNoticeService.sendNotice(notice, noticeLogContext);
+
+    return getRecipientId(request)
+      .thenCompose(result -> result.after(recipientId -> {
+        var notice = buildEmail(recipientId, templateId, noticeContext);
+        return patronNoticeService.sendNotice(notice, noticeLogContext);
+      }));
   }
 
   private CompletableFuture<Result<Void>> fetchDataAndSendRequestAwaitingPickupNotice(

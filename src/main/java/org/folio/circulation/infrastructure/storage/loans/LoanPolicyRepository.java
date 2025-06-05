@@ -103,8 +103,7 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       () -> multipleRecordsAsString(multipleLoans));
     Collection<Loan> loans = multipleLoans.getRecords();
 
-    log.info("findLoanPoliciesForLoans:: loans: {} - {}", loans.size(),
-      loans.stream().findFirst().map(Loan::asJson).map(JsonObject::toString).orElse(""));
+    log.info("findLoanPoliciesForLoans:: loans: {}", loans.size());
 
     return getLoanPolicies(loans)
       .thenApply(r -> r.map(loanPolicies -> multipleLoans.mapRecords(
