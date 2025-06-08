@@ -67,7 +67,7 @@ public class HoldByBarcodeResource extends Resource {
       .thenCompose(loanResult -> loanResult.after(
           loan -> loanRepository.updateLoan(loanResult.value())))
       .thenCompose(loanResult -> loanResult.after(
-        loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.HELD_FOR_USE_AT_LOCATION)))
+        loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.LOAN)))
       .thenApply(loanResult -> loanResult.map(Loan::asJson))
       .thenApply(loanAsJsonResult -> loanAsJsonResult.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);

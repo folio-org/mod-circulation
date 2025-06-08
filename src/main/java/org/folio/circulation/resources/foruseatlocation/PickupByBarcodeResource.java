@@ -70,7 +70,7 @@ public class PickupByBarcodeResource extends Resource {
       .thenCompose(loanResult -> loanResult.after(
         loan -> loanRepository.updateLoan(loanResult.value())))
       .thenCompose(loanResult -> loanResult.after(
-        loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.PICKED_UP_FOR_USE_AT_LOCATION)))
+        loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.LOAN)))
       .thenApply(loanResult -> loanResult.map(Loan::asJson))
       .thenApply(jsonResult -> jsonResult.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
