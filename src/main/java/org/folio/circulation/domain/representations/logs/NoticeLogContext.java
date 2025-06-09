@@ -33,6 +33,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
+
 @AllArgsConstructor
 @NoArgsConstructor
 @With
@@ -90,11 +91,11 @@ public class NoticeLogContext {
     }
 
     return new NoticeLogContext()
-      .withUserId(sessions.get(0).getPatronId().toString())
+      .withUserId(sessions.getFirst().getPatronId().toString())
       .withItems(
         sessions.stream()
           .map(NoticeLogContextItem::from)
-          .collect(toList())
+          .toList()
       );
   }
 
@@ -102,7 +103,7 @@ public class NoticeLogContext {
     log.debug("withUser:: parameters user: {}", user);
 
     if (user != null) {
-      log.info("from:: user is null");
+      log.info("from:: user is not null");
       return withUserBarcode(user.getBarcode())
         .withUserId(user.getId());
     }
@@ -115,7 +116,7 @@ public class NoticeLogContext {
 
     return withItems(items.stream()
       .map(item -> item.withNoticePolicyId(noticePolicyId))
-      .collect(toList()));
+      .toList());
   }
 
   public NoticeLogContext withTemplateId(String templateId) {
@@ -123,7 +124,7 @@ public class NoticeLogContext {
 
     return withItems(items.stream()
       .map(item -> item.withTemplateId(templateId))
-      .collect(toList()));
+      .toList());
   }
 
   public NoticeLogContext withTriggeringEvent(String triggeringEvent) {
@@ -131,7 +132,7 @@ public class NoticeLogContext {
 
     return withItems(items.stream()
       .map(item -> item.withTriggeringEvent(triggeringEvent))
-      .collect(toList()));
+      .toList());
   }
 
   public JsonObject asJson() {
