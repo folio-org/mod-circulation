@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
@@ -51,6 +52,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
+
 import io.vertx.core.json.JsonObject;
 import lombok.RequiredArgsConstructor;
 

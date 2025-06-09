@@ -16,6 +16,7 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
@@ -24,6 +25,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.session.PatronSessionRecord;
 import org.folio.circulation.support.utils.LogUtil;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
