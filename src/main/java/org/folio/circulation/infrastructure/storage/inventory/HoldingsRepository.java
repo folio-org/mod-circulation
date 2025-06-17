@@ -5,6 +5,7 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQ
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
@@ -56,8 +57,7 @@ public class HoldingsRepository {
     final var holdingsRecordFetcher = findWithCqlQuery(
       holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
-    return holdingsRecordFetcher.findByQuery(exactMatchAny("instanceId",
-      instanceIds));
+    return holdingsRecordFetcher.findByQuery(exactMatchAny("instanceId", instanceIds), maximumLimit());
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(

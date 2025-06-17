@@ -1,3 +1,6 @@
+## 24.3.19 2025-06-17
+* Fetch holdings for staff slips with maximum limit (CIRC-2393)
+
 ## 24.3.18 2025-05-20
 * Renew ECS loan with loan policy used during check-out (CIRC-2344)
 
