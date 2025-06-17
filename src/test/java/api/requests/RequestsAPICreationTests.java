@@ -1518,6 +1518,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(json.getJsonObject("item")
       .getString("status"), is(ItemStatus.PAGED.getValue()));
     assertThat(json.getString("requestLevel"), is(RequestLevel.TITLE.getValue()));
+    assertThat(json.getJsonObject("item").getString("retrievalServicePointName"), is("Circ Desk 1"));
   }
 
   @Test
