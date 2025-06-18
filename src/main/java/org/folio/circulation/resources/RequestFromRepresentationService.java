@@ -56,6 +56,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -307,7 +308,17 @@ class RequestFromRepresentationService {
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
       .flatMapFuture(this::fetchUserForLoan)
+      .flatMapFuture(this::fetchPrimaryServicePointForLocation)
       .toCompletableFuture();
+  }
+
+  private CompletableFuture<Result<Request>> fetchPrimaryServicePointForLocation(Request request) {
+    Location location = request.getItem().getLocation();
+
+    return servicePointRepository.getServicePointById(location.getPrimaryServicePointId())
+      .thenApply(mapResult(location::withPrimaryServicePoint))
+      .thenApply(mapResult(request.getItem()::withLocation))
+      .thenApply(mapResult(request::withItem));
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrReplacement(
