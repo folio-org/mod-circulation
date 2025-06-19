@@ -1,3 +1,6 @@
+## 24.3.20 2025-06-19
+* Add missing retrieval service point name for created page request (CIRC-2398)
+
 ## 24.3.19 2025-06-17
 * Fetch holdings for staff slips with maximum limit (CIRC-2393)
 
