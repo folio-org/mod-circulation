@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckOutLock;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
@@ -37,6 +38,7 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
@@ -273,6 +275,11 @@ public class CheckOutByBarcodeResource extends Resource {
     UserRepository userRepository, CirculationErrorHandler errorHandler) {
 
     log.debug("publishItemCheckedOutEvent:: parameters records: {}", () -> records);
+
+    if (records.getLoan().isForUseAtLocation()) {
+      eventPublisher.publishUsageAtLocationEvent(
+        records.getLoan().withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION), LogEventType.LOAN);
+    }
 
     return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
