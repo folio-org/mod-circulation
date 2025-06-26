@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
@@ -129,7 +130,9 @@ public abstract class ScheduledNoticeHandler {
 
   protected Result<ScheduledNoticeContext> failWhenLoanIsIncomplete(
     ScheduledNoticeContext context) {
-
+    log.info("failWhenLoanIsIncomplete>failWhenUserIsMissing: userId={}, isLoanClosed={}, loanId={}",
+            context.getLoan().getUserId(), context.getLoan().isClosed(), context.getLoan().getId());
+    log.info("failWhenLoanIsIncomplete>failWhenUserIsMissing: user: {}", context.getLoan().getUser());
     return failWhenUserIsMissing(context.getLoan())
       .next(r -> failWhenItemIsMissing(context.getLoan()))
       .map(v -> context);
@@ -137,7 +140,7 @@ public abstract class ScheduledNoticeHandler {
 
   protected Result<Void> failWhenUserIsMissing(UserRelatedRecord userRelatedRecord) {
     return userRelatedRecord.getUser() == null
-      ? failed(new RecordNotFoundFailure("user", userRelatedRecord.getUserId()))
+      ? failed(new RecordNotFoundFailure("Location-To-Fix-Kapil-TEST@-user", userRelatedRecord.getUserId()))
       : succeeded(null);
   }
 
