@@ -1,3 +1,7 @@
+## 24.4.6 2025-06-26
+* Fetch holdings for staff slips with maximum limit (CIRC-2397)
+* Add `discoveryDisplayName` to allowed service points response (CIRC-2408)
+
 ## 24.4.5 2025-05-14
 * Log the stack trace and message for all 500 errors (CIRC-2212)
 
