@@ -85,10 +85,15 @@ public abstract class ScheduledNoticeHandler {
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
     ScheduledNoticeContext context) {
-
+    log.info("Kapil@:> fetchNoticeData");
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
-      .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.getNotice())));
+      .thenApply(r -> r.mapFailure(f -> {
+        log.info("Kapil@:> fetchNoticeData> Inside mapFailure: loanRepre:{} ", context.getLoan().asJson());
+        log.info("Kapil@:> fetchNoticeData> Inside mapFailure: UserRepre:{} ", context.getLoan().getUser()==null?
+        "user is null": context.getLoan().getUser().toString());
+        return publishErrorEvent(f, context.getNotice());
+      }));
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
@@ -129,9 +134,9 @@ public abstract class ScheduledNoticeHandler {
 
   protected Result<ScheduledNoticeContext> failWhenLoanIsIncomplete(
     ScheduledNoticeContext context) {
-    log.info("failWhenLoanIsIncomplete>failWhenUserIsMissing: userId={}, isLoanClosed={}, loanId={}",
+    log.info("Kapil@failWhenLoanIsIncomplete>failWhenUserIsMissing: userId={}, isLoanClosed={}, loanId={}",
             context.getLoan().getUserId(), context.getLoan().isClosed(), context.getLoan().getId());
-    log.info("failWhenLoanIsIncomplete>failWhenUserIsMissing: user: {}", context.getLoan().getUser());
+    log.info("Kapil@failWhenLoanIsIncomplete>failWhenUserIsMissing: user: {}", context.getLoan().getUser());
     return failWhenUserIsMissing(context.getLoan())
       .next(r -> failWhenItemIsMissing(context.getLoan()))
       .map(v -> context);
