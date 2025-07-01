@@ -1,3 +1,6 @@
+## 24.4.7 2025-07-01
+* Values missing in Retrieval Service Point column of Requests results table (CIRC-2398)
+
 ## 24.4.6 2025-06-26
 * Fetch holdings for staff slips with maximum limit (CIRC-2397)
 * Add `discoveryDisplayName` to allowed service points response (CIRC-2408)
