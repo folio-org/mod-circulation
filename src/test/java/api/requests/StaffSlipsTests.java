@@ -709,6 +709,29 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
   }
 
+  @Test
+  void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings() {
+    settingsFixture.enableTlrFeature();
+    UserResource requester = usersFixture.steve();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+
+    for (int i = 0; i < 11; i++) {
+      UUID instanceId = UUID.randomUUID();
+      String itemBarcode = "item_" + i;
+      ItemResource item = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId).withBarcode(itemBarcode));
+
+      requestsFixture.placeItemLevelPageRequest(item, instanceId, requester);
+    }
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertResponseHasItems(response, 11, SlipsType.PICK_SLIPS);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }

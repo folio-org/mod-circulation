@@ -19,11 +19,14 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -32,6 +35,7 @@ public class SettingsRepository {
   private static final String TIMEZONE_KEY = "timezone";
   private static final String TIMEZONE_SETTINGS_SCOPE = "stripes-core.prefs.manage";
   private static final String TIMEZONE_SETTINGS_KEY = "tenantLocaleSettings";
+  private static final String SETTINGS_VALUE_PROPERTY = "value";
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
@@ -72,7 +76,6 @@ public class SettingsRepository {
   public CompletableFuture<Result<ZoneId>> lookupTimeZoneSettings() {
     log.info("lookupTimeZoneSettings:: fetching timezone settings");
     return fetchSettings(TIMEZONE_SETTINGS_SCOPE, TIMEZONE_SETTINGS_KEY)
-      .thenApply(r -> r.map(records -> records.mapRecords(Configuration::new)))
       .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
         .map(this::applyTimeZone)
         .orElse(DEFAULT_DATE_TIME_ZONE)))
@@ -82,18 +85,12 @@ public class SettingsRepository {
       }));
   }
 
-  private ZoneId applyTimeZone(Configuration config) {
-    String value = config.getValue();
-    return StringUtils.isBlank(value)
-      ? DEFAULT_DATE_TIME_ZONE
-      : parseDateTimeZone(value);
-  }
-
-  private ZoneId parseDateTimeZone(String value) {
-    String timezone = new JsonObject(value).getString(TIMEZONE_KEY);
-    return StringUtils.isBlank(timezone)
-      ? DEFAULT_DATE_TIME_ZONE
-      : ZoneId.of(timezone);
+  private ZoneId applyTimeZone(JsonObject tenantLocaleSettings) {
+    return Optional.ofNullable(getObjectProperty(tenantLocaleSettings, SETTINGS_VALUE_PROPERTY))
+      .map(valueObj -> getProperty(valueObj, TIMEZONE_KEY))
+      .filter(StringUtils::isNotBlank)
+      .map(ZoneId::of)
+      .orElse(DEFAULT_DATE_TIME_ZONE);
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String key) {
@@ -112,7 +109,7 @@ public class SettingsRepository {
   private static JsonObject extractAndMergeValues(MultipleRecords<JsonObject> entries) {
     return entries.getRecords()
       .stream()
-      .map(rec -> rec.getJsonObject("value"))
+      .map(rec -> rec.getJsonObject(SETTINGS_VALUE_PROPERTY))
       .reduce(new JsonObject(), JsonObject::mergeIn);
   }
 

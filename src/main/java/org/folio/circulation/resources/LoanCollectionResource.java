@@ -88,7 +88,7 @@ public class LoanCollectionResource extends CollectionResource {
     final UpdateItem updateItem = new UpdateItem(itemRepository, requestQueueService);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator =
@@ -181,7 +181,7 @@ public class LoanCollectionResource extends CollectionResource {
     final LoanScheduledNoticeService scheduledNoticeService
         = LoanScheduledNoticeService.using(clients);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 

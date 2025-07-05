@@ -29,15 +29,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.FeeFine;
-import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -94,7 +91,7 @@ public class ChargeLostFeesWhenAgedToLostService {
       userRepository);
     this.storeLoanAndItem = new StoreLoanAndItem(loanRepository,
       itemRepository);
-    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.eventPublisher = new EventPublisher(clients);
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.feeFineScheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
     this.actualCostRecordService = new ActualCostRecordService(new ActualCostRecordRepository(clients),
@@ -180,7 +177,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     return validateCanCreateAccountForLoan(loanToChargeFees)
       .map(notUsed -> getChargeableLostFeeToTypePairs(loanToChargeFees)
         .map(pair -> buildCreateAccountCommand(loanToChargeFees, pair))
-        .collect(Collectors.toList()));
+        .toList());
   }
 
   private Stream<Pair<AutomaticallyChargeableFee, FeeFine>> getChargeableLostFeeToTypePairs(
@@ -227,7 +224,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     return allLoansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withFeeFineTypes(feeTypes))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineOwners(
@@ -252,7 +249,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     return loansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withOwner(servicePointToOwner))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchItemsAndRelatedRecords(

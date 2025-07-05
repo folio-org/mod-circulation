@@ -81,7 +81,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     log.debug("create:: {}", representation);
 
-    final var eventPublisher = new EventPublisher(routingContext);
+    final var eventPublisher = new EventPublisher(context, clients);
 
     RequestRelatedRepositories repositories = new RequestRelatedRepositories(clients);
     final var itemRepository = repositories.getItemRepository();
@@ -146,7 +146,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var updateRequestQueue = UpdateRequestQueue.using(clients,
       requestRepository, requestQueueRepository);
-    final var eventPublisher = new EventPublisher(routingContext);
+    final var eventPublisher = new EventPublisher(context, clients);
     final var requestNoticeSender = new RequestNoticeSender(clients);
     final var updateItem = new UpdateItem(itemRepository,
       new RequestQueueService(new RequestPolicyRepository(clients), loanPolicyRepository));
@@ -289,7 +289,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
       loanRepository, requestRepository);
 
-    final var eventPublisher = new EventPublisher(routingContext);
+    final var eventPublisher = new EventPublisher(context, clients);
 
     final var moveRequestService = new MoveRequestService(
       requestRepository, requestPolicyRepository,

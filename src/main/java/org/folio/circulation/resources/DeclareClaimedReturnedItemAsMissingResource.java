@@ -22,7 +22,6 @@ import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.ChangeItemStatusService;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.services.PubSubPublishingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
@@ -48,20 +47,20 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
 
   private void declareClaimedReturnedItemAsMissing(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final EventPublisher eventPublisher = new EventPublisher(new PubSubPublishingService(context));
+    final Clients clients = Clients.create(context, client);
+    final EventPublisher eventPublisher = new EventPublisher(clients);
 
     createRequest(routingContext)
-      .after(request -> processDeclareClaimedReturnedItemAsMissing(routingContext, request))
+      .after(request -> processDeclareClaimedReturnedItemAsMissing(clients, request))
       .thenCompose(r -> r.after(eventPublisher::publishMarkedAsMissingLoanEvent))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<Loan>> processDeclareClaimedReturnedItemAsMissing(
-    RoutingContext routingContext, ChangeItemStatusRequest request) {
+    Clients clients, ChangeItemStatusRequest request) {
 
     log.debug("processDeclareClaimedReturnedItemAsMissing:: parameters request: {}", () -> request);
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);

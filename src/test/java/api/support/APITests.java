@@ -31,7 +31,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import api.support.fakes.FakeModNotify;
@@ -100,7 +100,7 @@ public abstract class APITests {
   protected static KafkaProducer<String, JsonObject> kafkaProducer;
   protected static KafkaAdminClient kafkaAdminClient;
   private static final KafkaContainer kafkaContainer
-    = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.2.0"));
+    = new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.8.0"));
 
   protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());

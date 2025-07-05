@@ -3,14 +3,19 @@ package org.folio.circulation.resources;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
+import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +33,9 @@ class RequestNoticeSenderTest {
 
   @Mock
   private ImmediatePatronNoticeService immediatePatronNoticeService;
+  @Mock
+  private ProxyRelationshipValidator proxyRelationshipValidator;
+
   @InjectMocks
   private RequestNoticeSender requestNoticeSender;
 
@@ -47,6 +55,12 @@ class RequestNoticeSenderTest {
     Request request = Request.from(new RequestBuilder().create()).withRequester(requester);
     RequestAndRelatedRecords records = new RequestAndRelatedRecords(request)
       .withRequestQueue(RequestQueue.requestQueueOf(request));
+
+    if (invokableTimes > 0) {
+      when(proxyRelationshipValidator
+        .hasActiveProxyRelationshipWithNotificationsSentToProxy(any(UserRelatedRecord.class)))
+        .thenReturn(CompletableFuture.completedFuture(Result.succeeded(Boolean.TRUE)));
+    }
 
     requestNoticeSender.sendNoticeOnMediatedRequestCreated(request, records);
     verify(immediatePatronNoticeService, times(invokableTimes)).acceptNoticeEvent(any());

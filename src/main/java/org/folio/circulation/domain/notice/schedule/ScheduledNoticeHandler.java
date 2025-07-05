@@ -53,7 +53,7 @@ public abstract class ScheduledNoticeHandler {
     this.patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
     this.templateNoticesClient = clients.noticeTemplatesClient();
     this.patronNoticeService = new ScheduledPatronNoticeService(clients);
-    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.eventPublisher = new EventPublisher(clients);
   }
 
   public CompletableFuture<Result<List<ScheduledNotice>>> handleContexts(
