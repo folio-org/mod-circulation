@@ -37,7 +37,7 @@ class HoldingsRepositoryTest {
     Mockito.when(holdingsClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
       .thenReturn(ofAsync(new Response(200, "{}", "application/json")));
 
-    int idsPerBatch = 50;
+    int idsPerBatch = 50; // default batch size from CqlIndexValuesFinder
     List<String> instanceIds = IntStream.range(0, idsPerBatch + 1)
       .boxed()
       .map(i -> UUID.randomUUID().toString())
