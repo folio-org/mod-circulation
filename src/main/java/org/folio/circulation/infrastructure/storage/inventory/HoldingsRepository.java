@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -54,10 +55,10 @@ public class HoldingsRepository {
     Collection<String> instanceIds) {
 
     final var mapper = new HoldingsMapper();
-    final var holdingsRecordFetcher = findWithCqlQuery(
+    final var holdingsRecordFetcher = findWithMultipleCqlIndexValues(
       holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
-    return holdingsRecordFetcher.findByQuery(exactMatchAny("instanceId", instanceIds), maximumLimit());
+    return holdingsRecordFetcher.find(byIndex("instanceId", instanceIds));
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(
