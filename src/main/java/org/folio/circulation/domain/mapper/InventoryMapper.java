@@ -23,6 +23,7 @@ public class InventoryMapper {
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
     String administrativeNotes = String.join("; ", item.getAdministrativeNotes());
+    String series = String.join("; ", item.getSeriesStatementValues());
 
     JsonObject itemContext = createInstanceContext(item.getInstance(), item)
       .put("barcode", item.getBarcode())
@@ -38,7 +39,8 @@ public class InventoryMapper {
       .put("displaySummary", item.getDisplaySummary())
       .put("descriptionOfPieces", item.getDescriptionOfPieces())
       .put("accessionNumber", item.getAccessionNumber())
-      .put("administrativeNotes", administrativeNotes);
+      .put("administrativeNotes", administrativeNotes)
+      .put("seriesStatements", series);
 
     var location = (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) ?
       item.getFloatDestinationLocation() : item.getLocation();
@@ -88,6 +90,7 @@ public class InventoryMapper {
       .put("datesOfPublication", instance.getPublication().stream().
         map(Publication::getDateOfPublication).collect(joining("; ")))
       .put("editions", String.join("; ", instance.getEditions()))
+      .put("seriesStatements", instance.getSeriesStatementValues().collect(joining("; '")))
       .put("physicalDescriptions", String.join("; ", instance.getPhysicalDescriptions()));
   }
 }

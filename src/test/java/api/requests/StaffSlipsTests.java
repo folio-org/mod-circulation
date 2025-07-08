@@ -260,6 +260,7 @@ class StaffSlipsTests extends APITests {
       .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
     String contributorNames = item.getContributorNames().collect(joining("; "));
+    String seriesStatements = String.join("; ",item.getSeriesStatementValues());
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
@@ -272,6 +273,7 @@ class StaffSlipsTests extends APITests {
     assertEquals(expectedItemStatus.getValue(), itemContext.getString("status"));
     assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
+    assertEquals(seriesStatements, itemContext.getString("seriesStatements"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
     assertEquals(item.getVolume(), itemContext.getString("volume"));
     assertEquals(item.getChronology(), itemContext.getString("chronology"));
@@ -582,7 +584,7 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
     assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
-    assertThat(response.getJson(), hasJsonPath("searchSlips[0].item.title", 
+    assertThat(response.getJson(), hasJsonPath("searchSlips[0].item.title",
       "The Long Way to a Small, Angry Planet"));
   }
 

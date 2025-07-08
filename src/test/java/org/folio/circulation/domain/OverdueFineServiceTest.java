@@ -615,7 +615,7 @@ class OverdueFineServiceTest {
       .withLocation(new Location(null, LOCATION_NAME, null, null, emptyList(),
         SERVICE_POINT_ID, false, Institution.unknown(), Campus.unknown(), Library.unknown(),
         ServicePoint.unknown()))
-      .withInstance(new Instance(UUID.randomUUID().toString(), INSTANCE_HRID, TITLE, emptyList(), contributors, emptyList(), emptyList(), emptyList()))
+      .withInstance(new Instance(UUID.randomUUID().toString(), INSTANCE_HRID, TITLE, emptyList(), contributors, emptyList(), emptyList(), emptyList(), emptyList()))
       .withMaterialType(new MaterialType(ITEM_MATERIAL_TYPE_ID.toString(), ITEM_MATERIAL_TYPE_NAME, null));
   }
 
