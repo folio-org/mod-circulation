@@ -41,18 +41,19 @@ public class HoldingsRepository {
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByInstanceId(String instanceId) {
-    return findWithCqlQuery(holdingsClient, HOLDINGS_RECORDS, new HoldingsMapper()::toDomain)
-      .findByQuery(exactMatch("instanceId", instanceId));
+    final var mapper = new HoldingsMapper();
+
+    final var holdingsRecordFetcher = findWithCqlQuery(
+      holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
+
+    return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
   }
 
   public CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByInstances(
     Collection<String> instanceIds) {
 
-    final var mapper = new HoldingsMapper();
-    final var holdingsRecordFetcher = findWithMultipleCqlIndexValues(
-      holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
-
-    return holdingsRecordFetcher.find(byIndex("instanceId", instanceIds));
+    return findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_RECORDS, new HoldingsMapper()::toDomain)
+      .find(byIndex("instanceId", instanceIds));
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(
