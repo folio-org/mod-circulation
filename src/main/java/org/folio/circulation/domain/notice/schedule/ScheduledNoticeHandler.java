@@ -87,7 +87,7 @@ public abstract class ScheduledNoticeHandler {
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
     ScheduledNoticeContext context) {
-    log.info("Kapil@:> fetchNoticeData");
+    log.info("Kapil@:> fetchNoticeData: {}", context.getNotice());
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
       .thenApply(r -> r.mapFailure(f -> {
@@ -95,6 +95,7 @@ public abstract class ScheduledNoticeHandler {
                 Optional.ofNullable(context.getLoan()).map(Loan::asJson).orElse(null));
         log.info("Kapil@:> fetchNoticeData> Inside mapFailure: UserRepre:{} ",
                 Optional.ofNullable(context.getLoan()).map(loan->loan.getUser().toString()).orElse(null));
+
         return publishErrorEvent(f, context.getNotice());
       }));
   }
