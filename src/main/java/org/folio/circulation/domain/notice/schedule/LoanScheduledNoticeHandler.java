@@ -87,7 +87,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(
     ScheduledNoticeContext context) {
-
+    log.info("Kapil@:> updateNotice executed for notice: {}", context.getNotice().getId());
     Loan loan = context.getLoan();
     ScheduledNotice notice = context.getNotice();
     ScheduledNoticeConfig noticeConfig = notice.getConfiguration();

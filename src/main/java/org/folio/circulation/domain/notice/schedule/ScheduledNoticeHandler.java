@@ -160,7 +160,7 @@ public abstract class ScheduledNoticeHandler {
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
-
+    log.info("Kapil@:> sendNotice executed for notice: {}", context.getNotice().getId());
     if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
     }
