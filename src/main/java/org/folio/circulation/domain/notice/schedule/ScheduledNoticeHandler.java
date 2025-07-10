@@ -88,7 +88,12 @@ public abstract class ScheduledNoticeHandler {
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
-      .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.getNotice())));
+      .thenApply(result -> {
+        if (context.getLoan() != null && context.getLoan().isClosed() && context.getLoan().getUser()==null) {
+          return result;
+        }
+        return result.mapFailure(failure -> publishErrorEvent(failure, context.getNotice()));
+      });
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
