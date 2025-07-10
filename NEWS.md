@@ -1,3 +1,6 @@
+## 24.3.21 2025-07-10
+* Use batching when fetching holdings for staff slips (CIRC-2413)
+
 ## 24.3.20 2025-06-19
 * Add missing retrieval service point name for created page request (CIRC-2398)
 
