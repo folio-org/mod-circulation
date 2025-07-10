@@ -1,3 +1,6 @@
+## 24.4.8 2025-07-10
+* Use batching when fetching holdings for staff slips (CIRC-2419)
+
 ## 24.4.7 2025-07-01
 * Values missing in Retrieval Service Point column of Requests results table (CIRC-2398)
 
