@@ -89,11 +89,22 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
       .thenApply(result -> {
-        if (context.getLoan() != null && context.getLoan().isClosed() && context.getLoan().getUser()==null) {
+        if (result.succeeded()) {
+          return result;
+        }
+
+        ScheduledNoticeContext scheduledNoticeContext = result.value();
+        if (hasClosedLoanWithNullUser(scheduledNoticeContext)) {
+          log.info("welcomeTest: Loan is closed and user is null, {}", context);
           return result;
         }
         return result.mapFailure(failure -> publishErrorEvent(failure, context.getNotice()));
       });
+  }
+
+  private boolean hasClosedLoanWithNullUser(ScheduledNoticeContext context) {
+    var loan = context.getLoan();
+    return loan != null && loan.isClosed() && loan.getUser() == null;
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
