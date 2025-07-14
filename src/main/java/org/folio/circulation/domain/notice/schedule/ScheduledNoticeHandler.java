@@ -95,7 +95,6 @@ public abstract class ScheduledNoticeHandler {
 
         ScheduledNoticeContext scheduledNoticeContext = result.value();
         if (hasClosedLoanWithNullUser(scheduledNoticeContext)) {
-          log.info("welcomeTest: Loan is closed and user is null, {}", context);
           return result;
         }
         return result.mapFailure(failure -> publishErrorEvent(failure, context.getNotice()));
