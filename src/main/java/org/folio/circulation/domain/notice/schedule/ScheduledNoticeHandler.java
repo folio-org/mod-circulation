@@ -88,17 +88,19 @@ public abstract class ScheduledNoticeHandler {
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
-      .thenApply(result -> {
-        if (result.succeeded()) {
-          return result;
-        }
+      .thenApply(result -> handleNoticeContextData(context, result));
+  }
 
-        ScheduledNoticeContext scheduledNoticeContext = result.value();
-        if (hasClosedLoanWithNullUser(scheduledNoticeContext)) {
-          return result;
-        }
-        return result.mapFailure(failure -> publishErrorEvent(failure, context.getNotice()));
-      });
+  private Result<ScheduledNoticeContext> handleNoticeContextData(ScheduledNoticeContext context,
+    Result<ScheduledNoticeContext> result) {
+    if (result.succeeded()) {
+      return result;
+    }
+
+    if (hasClosedLoanWithNullUser(context)) {
+      return succeeded(context);
+    }
+    return result.mapFailure(failure -> publishErrorEvent(failure, context.getNotice()));
   }
 
   private boolean hasClosedLoanWithNullUser(ScheduledNoticeContext context) {
@@ -199,7 +201,10 @@ public abstract class ScheduledNoticeHandler {
 
     return patronNoticePolicyRepository.lookupPolicyId(userAndItemRelatedRecord)
       .thenApply(mapResult(CirculationRuleMatch::getPolicyId))
-      .thenApply(mapResult(context::withPatronNoticePolicyId));
+      .thenApply(mapResult(patronNoticePolicyId -> {
+        context.setPatronNoticePolicyId(patronNoticePolicyId);
+        return context;
+      }));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchTemplate(

@@ -10,10 +10,12 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.With;
 
 @With
 @Getter
+@Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
 public class ScheduledNoticeContext {

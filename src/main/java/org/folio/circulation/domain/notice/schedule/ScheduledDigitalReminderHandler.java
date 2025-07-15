@@ -112,7 +112,10 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     return loanRepository.getById(context.getNotice().getLoanId())
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
       .thenCompose(overdueFinePolicyRepository::findOverdueFinePolicyForLoan)
-      .thenApply(mapResult(context::withLoan))
+      .thenApply(mapResult(loan -> {
+        context.setLoan(loan);
+        return context;
+      }))
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
 

@@ -31,6 +31,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import api.support.builders.AddInfoRequestBuilder;
+import org.folio.circulation.domain.LoanStatus;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateFormatUtil;
@@ -41,8 +42,10 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
+import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
+import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
@@ -492,6 +495,108 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
+  void testNoticesWhenLoanNotAnonymizedBeforeLoanNoticeProcessing() {
+    JsonObject beforeLoanDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(BEFORE_TEMPLATE_ID)
+      .withDueDateEvent()
+      .withBeforeTiming(Period.minutes(2))
+      .sendInRealTime(true)
+      .create();
+
+    JsonObject afterLoanDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(BEFORE_TEMPLATE_ID)
+      .withDueDateEvent()
+      .withAfterTiming(Period.minutes(1))
+      .sendInRealTime(true)
+      .create();
+
+    setCirculationRuleAndAnonymizeConfigs(beforeLoanDueDateNoticeConfig, afterLoanDueDateNoticeConfig);
+    loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(LOAN_DATE)
+        .at(UUID.randomUUID()));
+    addPatronInfoToLoan(loan.getId().toString());
+    dueDate = DateFormatUtil.parseDateTime(loan.getJson().getString("dueDate"));
+
+    JsonObject loanFromStorage = loansStorageClient.get(loan.getId()).getJson();
+    loanFromStorage.getJsonObject("status").put("name", LoanStatus.CLOSED.getValue());
+    loansStorageClient.replace(loan.getId(), loanFromStorage);
+
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void testNoticesWhenLoanAnonymizedBeforeLoanNoticeProcessing() {
+    JsonObject beforeLoanDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(BEFORE_TEMPLATE_ID)
+      .withDueDateEvent()
+      .withBeforeTiming(Period.minutes(2))
+      .sendInRealTime(true)
+      .create();
+
+    JsonObject afterLoanDueDateNoticeConfig = new NoticeConfigurationBuilder()
+      .withTemplateId(BEFORE_TEMPLATE_ID)
+      .withDueDateEvent()
+      .withAfterTiming(Period.minutes(1))
+      .sendInRealTime(true)
+      .create();
+
+    setCirculationRuleAndAnonymizeConfigs(beforeLoanDueDateNoticeConfig, afterLoanDueDateNoticeConfig);
+    loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(LOAN_DATE)
+        .at(UUID.randomUUID()));
+    addPatronInfoToLoan(loan.getId().toString());
+    dueDate = DateFormatUtil.parseDateTime(loan.getJson().getString("dueDate"));
+
+    JsonObject loanFromStorage = loansStorageClient.get(loan.getId()).getJson();
+    loanFromStorage.getJsonObject("status").put("name", LoanStatus.CLOSED.getValue());
+    loansStorageClient.replace(loan.getId(), loanFromStorage);
+
+    scheduledNoticeProcessingClient.runAnonymizationProcessing(dueDate.minusSeconds(2));
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void testNoticesErrorWhenLoanAnonymizedBeforeLoanNoticeProcessing() {
+    setCirculationRuleAndAnonymizeConfigs();
+    loan = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(LOAN_DATE)
+        .at(UUID.randomUUID()));
+    addPatronInfoToLoan(loan.getId().toString());
+    dueDate = DateFormatUtil.parseDateTime(loan.getJson().getString("dueDate"));
+
+    // Set null patron group to user to trigger error in notice processing
+    JsonObject userJsonObject = borrower.getJson();
+    userJsonObject.remove("patronGroup");
+    usersClient.attemptReplace(borrower.getId(), userJsonObject);
+
+    List<JsonObject> notices = createNoticesOverTime(dueDate.minusMinutes(1)::minusHours, 1);
+    notices.getFirst().put("loanId", loan.getId());
+    notices.getFirst().put("recipientUserId", borrower.getId().toString());
+
+    notices.forEach(scheduledNoticesClient::create);
+
+    scheduledNoticeProcessingClient.runLoanNoticesProcessing(dueDate.minusSeconds(1));
+
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 1);
+  }
+
+  @Test
   void scheduledOverdueNoticesShouldBeDeletedAfterOverdueFineIsCharged() {
     UUID uponAtTemplateId = UUID.randomUUID();
 
@@ -695,6 +800,35 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     dueDate = DateFormatUtil.parseDateTime(loan.getJson().getString("dueDate"));
 
     verifyNumberOfScheduledNotices(patronNoticeConfigurations.length);
+  }
+
+  private void setCirculationRuleAndAnonymizeConfigs(JsonObject... patronNoticeConfigurations) {
+    List<JsonObject> patronNoticeConfigurationsList =
+      List.of(patronNoticeConfigurations);
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with due date notices")
+      .withLoanNotices(patronNoticeConfigurationsList);
+
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandardShouldForgiveFine().getId(),
+      lostItemFeePoliciesFixture.chargeFee().getId());
+
+    LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
+      .loanCloseAnonymizeImmediately();
+    createConfiguration(loanHistoryConfig);
+  }
+
+  protected void createConfiguration(
+    LoanHistoryConfigurationBuilder loanHistoryConfig) {
+
+    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder(
+      "LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
+      .encodePrettily());
+
+    configClient.create(configRecordBuilder);
   }
 
   private static JsonObject beforeNotice(boolean recurring) {
