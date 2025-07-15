@@ -11,6 +11,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -88,7 +89,27 @@ public abstract class ScheduledNoticeHandler {
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
-      .thenApply(r -> r.mapFailure(f -> publishErrorEvent(f, context.getNotice())));
+      .thenApply(result -> handleNoticeContextData(context, result));
+  }
+
+  private Result<ScheduledNoticeContext> handleNoticeContextData(ScheduledNoticeContext context,
+    Result<ScheduledNoticeContext> result) {
+    if (result.succeeded()) {
+      return result;
+    }
+
+    if (result.cause() instanceof RecordNotFoundFailure failure &&
+        Objects.nonNull(failure.getScheduledNoticeContext()) &&
+        hasClosedLoanWithNullUser(failure.getScheduledNoticeContext())) {
+      return succeeded(context);
+    }
+
+    return result.mapFailure(failure -> publishErrorEvent(failure, context.getNotice()));
+  }
+
+  private boolean hasClosedLoanWithNullUser(ScheduledNoticeContext context) {
+    var loan = context.getLoan();
+    return loan != null && loan.isClosed() && loan.getUser() == null;
   }
 
   protected abstract CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
@@ -130,20 +151,20 @@ public abstract class ScheduledNoticeHandler {
   protected Result<ScheduledNoticeContext> failWhenLoanIsIncomplete(
     ScheduledNoticeContext context) {
 
-    return failWhenUserIsMissing(context.getLoan())
-      .next(r -> failWhenItemIsMissing(context.getLoan()))
+    return failWhenUserIsMissing(context, context.getLoan())
+      .next(r -> failWhenItemIsMissing(context, context.getLoan()))
       .map(v -> context);
   }
 
-  protected Result<Void> failWhenUserIsMissing(UserRelatedRecord userRelatedRecord) {
+  protected Result<Void> failWhenUserIsMissing(ScheduledNoticeContext context, UserRelatedRecord userRelatedRecord) {
     return userRelatedRecord.getUser() == null
-      ? failed(new RecordNotFoundFailure("user", userRelatedRecord.getUserId()))
+      ? failed(new RecordNotFoundFailure("user", userRelatedRecord.getUserId(), context))
       : succeeded(null);
   }
 
-  protected Result<Void> failWhenItemIsMissing(ItemRelatedRecord itemRelatedRecord) {
+  protected Result<Void> failWhenItemIsMissing(ScheduledNoticeContext context, ItemRelatedRecord itemRelatedRecord) {
     return itemRelatedRecord.getItem() == null || itemRelatedRecord.getItem().isNotFound()
-      ? failed(new RecordNotFoundFailure("item", itemRelatedRecord.getItemId()))
+      ? failed(new RecordNotFoundFailure("item", itemRelatedRecord.getItemId(), context))
       : succeeded(null);
   }
 
