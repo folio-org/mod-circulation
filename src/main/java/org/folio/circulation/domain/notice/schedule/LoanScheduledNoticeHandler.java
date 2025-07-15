@@ -119,10 +119,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     return loanRepository.getById(context.getNotice().getLoanId())
       .thenCompose(r -> r.after(loanRepository::fetchLatestPatronInfoAddedComment))
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
-      .thenApply(mapResult(loan -> {
-        context.setLoan(loan);
-        return context;
-      }))
+      .thenApply(mapResult(context::withLoan))
       .thenApply(r -> r.next(this::failWhenLoanIsIncomplete));
   }
 
@@ -139,10 +136,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
     return accountRepository.findAccountsForLoanByQuery(context.getLoan(), query)
       .thenApply(r -> r.map(CollectionUtils::isNotEmpty))
-      .thenApply(mapResult(existsFlag -> {
-        context.setLostItemFeesForAgedToLostNoticeExist(existsFlag);
-        return context;
-      }));
+      .thenApply(mapResult(context::withLostItemFeesForAgedToLostNoticeExist));
   }
 
   protected boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
