@@ -22,7 +22,7 @@ class CheckOutByBarcodeDryRunTests extends APITests {
     var smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     var steve = usersFixture.steve();
     var response = checkOutFixture.checkOutByBarcodeDryRun(new CheckOutByBarcodeDryRunRequest(
-      smallAngryPlanet.getBarcode(), steve.getBarcode(), null));
+      smallAngryPlanet.getBarcode(), steve.getBarcode(), null, null));
     var responseJson = response.getJson();
 
     assertThat(responseJson.getString("loanPolicyId"), is(loanPoliciesFixture.canCirculateRolling().getId()));
@@ -37,7 +37,7 @@ class CheckOutByBarcodeDryRunTests extends APITests {
     var steve = usersFixture.steve(UserBuilder::inactive);
 
     var response = checkOutFixture.attemptCheckOutByBarcodeDryRun(
-      new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(), steve.getBarcode(), null));
+      new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(), steve.getBarcode(), null, null));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out to inactive user"),
@@ -54,7 +54,7 @@ class CheckOutByBarcodeDryRunTests extends APITests {
 
     var response = checkOutFixture.attemptCheckOutByBarcodeDryRun(
       new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(),
-        james.getBarcode(), steve.getBarcode()));
+        james.getBarcode(), steve.getBarcode(), null));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot check out via inactive proxying user"),
@@ -68,7 +68,7 @@ class CheckOutByBarcodeDryRunTests extends APITests {
     itemsClient.delete(smallAngryPlanet.getId());
 
     var response = checkOutFixture.attemptCheckOutByBarcodeDryRun(
-      new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(), steve.getBarcode(), null));
+      new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(), steve.getBarcode(), null, null));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("No item with barcode 036000291452 could be found"),
@@ -83,7 +83,7 @@ class CheckOutByBarcodeDryRunTests extends APITests {
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, jessica);
 
     var response = checkOutFixture.attemptCheckOutByBarcodeDryRun(
-      new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(), steve.getBarcode(), null));
+      new CheckOutByBarcodeDryRunRequest(smallAngryPlanet.getBarcode(), steve.getBarcode(), null, null));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Item is already checked out"),
