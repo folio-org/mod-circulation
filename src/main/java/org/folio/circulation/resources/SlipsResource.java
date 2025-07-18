@@ -216,7 +216,7 @@ public abstract class SlipsResource extends Resource {
       () -> multipleRecordsAsString(items), () -> collectionAsString(locations));
 
     Map<String, Location> locationsMap = locations.stream()
-      .collect(toMap(Location::getId, identity()));
+      .collect(toMap(Location::getId, identity(), (a, b) -> a));
 
     return succeeded(items.mapRecords(item -> item.withLocation(
         locationsMap.getOrDefault(item.getEffectiveLocationId(),

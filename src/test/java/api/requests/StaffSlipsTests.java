@@ -720,16 +720,45 @@ class StaffSlipsTests extends APITests {
     for (int i = 0; i < 11; i++) {
       UUID instanceId = UUID.randomUUID();
       String itemBarcode = "item_" + i;
-      ItemResource item = itemsFixture.basedUponDunkirk(
+      itemsFixture.basedUponDunkirk(
         holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId),
         instanceBuilder -> instanceBuilder.withId(instanceId),
         itemBuilder -> itemBuilder.withEffectiveLocation(locationId).withBarcode(itemBarcode));
 
-      requestsFixture.placeItemLevelPageRequest(item, instanceId, requester);
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
     }
 
     Response response = SlipsType.PICK_SLIPS.get(servicePointId);
     assertResponseHasItems(response, 11, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance() {
+    settingsFixture.enableTlrFeature();
+    int batchSize = 50; // default value from CqlIndexValuesFinder
+
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+    UUID instanceId = UUID.randomUUID();
+    UUID holdingId = UUID.randomUUID();
+
+    for (int i = 0; i < batchSize + 1; i++) {
+      String userBarcode = "user_" + i;
+      String itemBarcode = "item_" + i;
+      UserResource requester = usersFixture.steve(builder ->
+        builder.withBarcode(userBarcode).withUsername(userBarcode));
+
+      itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withId(holdingId).withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId).withBarcode(itemBarcode));
+
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    }
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertResponseHasItems(response, batchSize + 1, SlipsType.PICK_SLIPS);
   }
 
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
