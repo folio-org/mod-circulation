@@ -29,7 +29,7 @@ public class CheckOutByBarcodeDryRunRequest {
   private final BlockOverrides blockOverrides;
 
   public static CheckOutByBarcodeDryRunRequest fromJson(JsonObject request) {
-    log.debug("fromJson:: parameters request: {}", request);
+    log.info("fromJson:: parameters request: {}", request);
 
     final String itemBarcode = getProperty(request, ITEM_BARCODE);
     final String userBarcode = getProperty(request, USER_BARCODE);
@@ -39,11 +39,4 @@ public class CheckOutByBarcodeDryRunRequest {
 
     return new CheckOutByBarcodeDryRunRequest(itemBarcode, userBarcode, proxyUserBarcode, blockOverrides);
   }
-
-//  public CheckOutByBarcodeDryRunRequest(String itemBarcode, String userBarcode, String proxyUserBarcode, BlockOverrides blockOverrides) {
-//    this.itemBarcode = itemBarcode;
-//    this.userBarcode = userBarcode;
-//    this.proxyUserBarcode = proxyUserBarcode;
-//    this.blockOverrides = blockOverrides;
-//  }
 }
