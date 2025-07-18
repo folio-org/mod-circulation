@@ -97,7 +97,7 @@ public class RequestFetchService {
     MultipleRecords<Request> requests, Collection<Item> items) {
 
     Map<String, Item> itemMap = items.stream()
-      .collect(toMap(Item::getItemId, identity()));
+      .collect(toMap(Item::getItemId, identity(), (a, b) -> a));
 
     return succeeded(requests.mapRecords(request -> request.withItem(
       itemMap.getOrDefault(request.getItemId(), null))));
@@ -139,7 +139,7 @@ public class RequestFetchService {
     }
 
     var fetchedInstancesByIdMap = context.getInstances().getRecords().stream()
-      .collect(Collectors.toMap(Instance::getId, identity()));
+      .collect(Collectors.toMap(Instance::getId, identity(), (a, b) -> a));
     log.info("mapRequestsToInstances:: fetchedInstanceIds: {}",
       () -> collectionAsString(fetchedInstancesByIdMap.keySet()));
 
