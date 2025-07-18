@@ -147,7 +147,8 @@ public class RequestFetchService {
       .filter(request -> fetchedInstancesByIdMap.containsKey(request.getInstanceId()))
       .collect(Collectors.toMap(
         r -> r.withInstance(fetchedInstancesByIdMap.get(r.getInstanceId())),
-        r -> fetchedInstancesByIdMap.get(r.getInstanceId()))
+        r -> fetchedInstancesByIdMap.get(r.getInstanceId()),
+        (a, b) -> a)
       );
     log.info("mapRequestsToInstances:: requestToInstanceIdMap: {}",
       () -> mapAsString(requestToInstanceMap));
@@ -164,7 +165,7 @@ public class RequestFetchService {
     }
 
     var holdingsToInstanceIdMap = holdings.getRecords().stream()
-      .collect(Collectors.toMap(identity(), Holdings::getInstanceId));
+      .collect(Collectors.toMap(identity(), Holdings::getInstanceId, (a, b) -> a));
 
     var requestToInstanceMap = context.getRequestToInstanceMap();
     if (requestToInstanceMap == null || requestToInstanceMap.isEmpty()) {
@@ -217,7 +218,8 @@ public class RequestFetchService {
 
     var instanceIds = ctx.getRequestToInstanceMap().values().stream()
       .map(Instance::getId)
-      .toList();
+      .collect(toSet());
+
     return holdingsRepository.fetchByInstances(instanceIds)
       .thenApply(r -> r.map(ctx::withHoldings));
   }
