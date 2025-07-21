@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
@@ -57,12 +58,13 @@ public class InstanceRepository {
 
     return fetchByIds(requests.getRecords().stream()
       .map(Request::getInstanceId)
-      .toList());
+      .collect(toSet()));
   }
 
   public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
     Collection<String> instanceIds) {
 
+    log.info("fetchByIds:: fetching instances by {} IDs", instanceIds::size);
     log.debug("fetchByIds:: parameters instanceIds: {}", () -> collectionAsString(instanceIds));
 
     InstanceMapper mapper = new InstanceMapper();
