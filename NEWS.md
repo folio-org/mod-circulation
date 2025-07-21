@@ -1,5 +1,7 @@
 ## 24.5.0-SNAPSHOT 2025-xx-xx
 * Replace deprecated mod-configuration with mod-settings for fetching tenant's locale settings ([CIRC-2295](https://folio-org.atlassian.net/browse/CIRC-2295))
+* Fix sending notifications specified to be sent to proxy ([CIRC-2295](https://folio-org.atlassian.net/browse/CIRC-2385))
+* Handling of patron notices for closed loans ([CIRC-1891](https://folio-org.atlassian.net/browse/CIRC-1891))
 
 ## 24.4.0 2025-03-12
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)

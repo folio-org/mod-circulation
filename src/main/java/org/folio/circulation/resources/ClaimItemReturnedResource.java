@@ -44,20 +44,21 @@ public class ClaimItemReturnedResource extends Resource {
 
   private void claimItemReturned(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final Clients clients = Clients.create(context, client);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     createRequest(routingContext)
-      .after(request -> processClaimItemReturned(routingContext, request))
+      .after(request -> processClaimItemReturned(clients, request))
       .thenCompose(r -> r.after(eventPublisher::publishItemClaimedReturnedEvent))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
 
   private CompletableFuture<Result<Loan>> processClaimItemReturned(
-    RoutingContext routingContext, ClaimItemReturnedRequest request) {
+    Clients clients, ClaimItemReturnedRequest request) {
 
     log.debug("processClaimItemReturned:: parameters request: {}", () -> request);
-    final Clients clients = Clients.create(new WebContext(routingContext), client);
+
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);

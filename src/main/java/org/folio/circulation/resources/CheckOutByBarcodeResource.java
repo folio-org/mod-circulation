@@ -131,7 +131,7 @@ public class CheckOutByBarcodeResource extends Resource {
       loanRepository);
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
       requestRepository, requestQueueRepository);
-    final var eventPublisher = new EventPublisher(routingContext);
+    final var eventPublisher = new EventPublisher(context, clients);
     final var patronActionSessionService = PatronActionSessionService.using(clients,
       PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 

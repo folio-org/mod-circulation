@@ -50,7 +50,7 @@ public class MarkOverdueLoansAsAgedLostService {
     this.itemRepository = itemRepository;
     this.lostItemPolicyRepository = new LostItemPolicyRepository(clients);
     this.storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.eventPublisher = new EventPublisher(clients);
     this.loanPageableFetcher = new PageableFetcher<>(loanRepository);
     this.loanScheduledNoticeService = LoanScheduledNoticeService.using(clients);
     this.userRepository = new UserRepository(clients);

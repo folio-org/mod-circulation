@@ -115,7 +115,10 @@ class SettingsRepositoryTest {
           .put("id", UUID.randomUUID().toString())
           .put("scope", "stripes-core.prefs.manage")
           .put("key", "tenantLocaleSettings")
-          .put("value", "{\"locale\":\"en-US\",\"timezone\":\"Europe/Berlin\",\"currency\":\"USD\"}")))
+          .put("value", new JsonObject()
+            .put("locale", "en-US")
+            .put("timezone", "Europe/Berlin")
+            .put("currency", "USD"))))
       .put("resultInfo", new JsonObject()
         .put("totalRecords", 1)
         .put("diagnostics", new JsonArray()));

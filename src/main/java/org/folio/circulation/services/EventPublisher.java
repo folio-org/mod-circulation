@@ -1,7 +1,7 @@
 package org.folio.circulation.services;
 
+import static java.lang.String.format;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
@@ -34,8 +34,9 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
+import java.time.ZoneId;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.*;
@@ -46,18 +47,17 @@ import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
-
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
 
 public class EventPublisher {
-
 
   private static final Logger logger = LogManager.getLogger(EventPublisher.class);
 
@@ -70,18 +70,23 @@ public class EventPublisher {
   public static final String METADATA = "metadata";
   public static final String FAILED_TO_PUBLISH_LOG_TEMPLATE =
     "Failed to publish {} event: loan is null";
-  public static final String NEW_DUE_DATE_FROM_PREVIOUS_DUE_DATE = "New due date: %s (from %s)";
+  private static final String NEW_DUE_DATE_FROM_PREVIOUS_TEMPLATE = "New due date: %s (from %s)";
+  private static final String ACTION_COMMENT_TEMPLATE = "Additional information: %s";
+
 
   private final PubSubPublishingService pubSubPublishingService;
+  private final Clients clients;
   private WebContext webContext;
 
-  public EventPublisher(RoutingContext routingContext) {
-    pubSubPublishingService = new PubSubPublishingService(routingContext);
-    webContext = new WebContext(routingContext);
+  public EventPublisher(WebContext webContext, Clients clients) {
+    this.webContext = webContext;
+    this.clients = clients;
+    this.pubSubPublishingService = clients.pubSubPublishingService();
   }
 
-  public EventPublisher(PubSubPublishingService pubSubPublishingService) {
-    this.pubSubPublishingService = pubSubPublishingService;
+  public EventPublisher(Clients clients) {
+    this.clients = clients;
+    this.pubSubPublishingService = clients.pubSubPublishingService();
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -142,55 +147,12 @@ public class EventPublisher {
     return completedFuture(succeeded(context));
   }
 
-  private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context,
-    UserRepository userRepository, LoanRepository loanRepository) {
-
-    if (context.isInHouseUse() || context.getRequestQueue().getRequests().isEmpty()) {
-      return emptyAsync();
-    }
-
-    return loanRepository.findLastLoanForItem(context.getItem().getItemId())
-      .thenCompose(r -> r.after(lastLoan -> getUserForLastLoan(context, lastLoan, userRepository, loanRepository)));
-  }
-
-  private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context, Loan lastLoan,
-    UserRepository userRepository, LoanRepository loanRepository) {
-
-    if (lastLoan == null) {
-      return emptyAsync();
-    }
-
-    return userRepository.getUser(lastLoan.getUserId())
-      .thenCompose(r1 -> r1.after(userFromLastLoan -> loanRepository.findOpenLoanForItem(context.getItem())
-        .thenApply(r2 -> r2.map(openLoan -> openLoan == null ? null : userFromLastLoan))));
-  }
-
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
     return publishStatusChangeEvent(ITEM_DECLARED_LOST, loan);
   }
 
   public CompletableFuture<Result<Loan>> publishItemClaimedReturnedEvent(Loan loan) {
     return publishStatusChangeEvent(ITEM_CLAIMED_RETURNED, loan);
-  }
-
-  private CompletableFuture<Result<Loan>> publishStatusChangeEvent(EventType eventType, Loan loan) {
-    final String eventName = eventType.name();
-
-    if (loan == null) {
-      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, eventName);
-      return completedFuture(succeeded(null));
-    }
-
-    LoanLogContext loanLogContext = LoanLogContext.from(loan)
-      .withDescription(String.format("Additional information: %s", loan.getActionComment()));
-    runAsync(() -> publishLogRecord(loanLogContext.asJson(), LOAN));
-
-    JsonObject payloadJson = new JsonObject();
-    write(payloadJson, USER_ID_FIELD, loan.getUserId());
-    write(payloadJson, LOAN_ID_FIELD, loan.getId());
-
-    return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
-      .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
   public CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
@@ -207,36 +169,6 @@ public class EventPublisher {
 
     return pubSubPublishingService.publishEvent(eventName, payload.encode())
       .handle((result, error) -> handlePublishEventError(error, loan));
-  }
-
-  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
-    if (records.getRecalledLoanPreviousDueDate() != null) {
-      loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
-    }
-    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
-  }
-
-  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
-    if (loan != null) {
-      JsonObject payloadJsonObject = new JsonObject();
-      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
-      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
-      write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
-      write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
-
-      runAsync(() -> publishDueDateLogEvent(loan));
-      if (renewalContext) {
-        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
-      }
-
-      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
-        .handle((result, error) -> handlePublishEventError(error, loan));
-    }
-    else {
-      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, LOAN_DUE_DATE_CHANGED.name());
-    }
-
-    return completedFuture(succeeded(null));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishDueDateChangedEvent(
@@ -289,14 +221,23 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishInfoAddedLogEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan)
+    var loanLogContext = LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
-      .withDescription(loan.getActionComment()).asJson(), LOAN);
+      .withDescription(loan.getActionComment())
+      .asJson();
+    return publishLogRecord(loanLogContext, LOAN);
   }
 
   public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan)
-      .withDescription(String.format("Due date: %s", formatDateTimeOptional(loan.getAgedToLostDateTime()))).asJson(), LOAN)
+    return getTenantTimeZone()
+      .thenApply(zoneResult -> zoneResult.map(zoneId -> {
+        var zonedDateTime = loan.getAgedToLostDateTime().withZoneSameInstant(zoneId);
+        var logDescription = format("Due date: %s", formatDateTimeOptional(zonedDateTime));
+        return LoanLogContext.from(loan)
+          .withDescription(logDescription)
+          .asJson();
+      }))
+      .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)))
       .thenCompose(r -> r.after(v -> publishStatusChangeEvent(ITEM_AGED_TO_LOST, loan)));
   }
 
@@ -309,8 +250,10 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishMarkedAsMissingLoanEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan)
-      .withDescription(String.format("Additional information: %s", loan.getActionComment())).asJson(), LOAN)
+    var loanLogContext = LoanLogContext.from(loan)
+      .withDescription(getLoanActionCommentLog(loan))
+      .asJson();
+    return publishLogRecord(loanLogContext, LOAN)
       .thenApply(r -> r.map(v -> loan));
   }
 
@@ -324,25 +267,38 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan)
-      .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
-      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
+    return getTenantTimeZone()
+      .thenApply(zoneResult -> zoneResult.map(zoneId -> {
+        var logDescription = getLoanDueDateChangeLog(loan, zoneId);
+        return LoanLogContext.from(loan)
+          .withAction(LogContextActionResolver.resolveAction(RECALLREQUESTED.getValue()))
+          .withDescription(logDescription)
+          .asJson();
+      }))
+      .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
   }
 
   public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan)
-      .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
-      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
+    return getTenantTimeZone()
+      .thenApply(zoneResult -> zoneResult.map(zoneId -> {
+        var logDescription = getLoanDueDateChangeLog(loan, zoneId);
+        return LoanLogContext.from(loan)
+          .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
+          .withDescription(logDescription)
+          .asJson();
+      }))
+      .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
   }
 
   public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
-    return publishLogRecord(LoanLogContext.from(loan)
-      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
-  }
-
-  private String getLoanDueDateChangeLogMessage(Loan loan) {
-    return String.format(NEW_DUE_DATE_FROM_PREVIOUS_DUE_DATE, formatDateTimeOptional(loan.getDueDate()),
-      formatDateTimeOptional(loan.getPreviousDueDate()));
+    return getTenantTimeZone()
+      .thenApply(zoneResult -> zoneResult.map(zoneId -> {
+        var logDescription = getLoanDueDateChangeLog(loan, zoneId);
+        return LoanLogContext.from(loan)
+          .withDescription(logDescription)
+          .asJson();
+      }))
+      .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
@@ -409,6 +365,95 @@ public class EventPublisher {
     return requestAndRelatedRecords;
   }
 
+  private CompletableFuture<Result<ZoneId>> getTenantTimeZone() {
+    var settingsRepository = new SettingsRepository(clients);
+    return settingsRepository.lookupTimeZoneSettings();
+  }
+
+  private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context,
+                                                             UserRepository userRepository, LoanRepository loanRepository) {
+
+    if (context.isInHouseUse() || context.getRequestQueue().getRequests().isEmpty()) {
+      return emptyAsync();
+    }
+
+    return loanRepository.findLastLoanForItem(context.getItem().getItemId())
+      .thenCompose(r -> r.after(lastLoan -> getUserForLastLoan(context, lastLoan, userRepository, loanRepository)));
+  }
+
+  private CompletableFuture<Result<User>> getUserForLastLoan(CheckInContext context, Loan lastLoan,
+                                                             UserRepository userRepository, LoanRepository loanRepository) {
+
+    if (lastLoan == null) {
+      return emptyAsync();
+    }
+
+    return userRepository.getUser(lastLoan.getUserId())
+      .thenCompose(r1 -> r1.after(userFromLastLoan -> loanRepository.findOpenLoanForItem(context.getItem())
+        .thenApply(r2 -> r2.map(openLoan -> openLoan == null ? null : userFromLastLoan))));
+  }
+
+  private CompletableFuture<Result<Loan>> publishStatusChangeEvent(EventType eventType, Loan loan) {
+    final String eventName = eventType.name();
+
+    if (loan == null) {
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, eventName);
+      return completedFuture(succeeded(null));
+    }
+
+    var loanLogContext = LoanLogContext.from(loan)
+      .withDescription(getLoanActionCommentLog(loan))
+      .asJson();
+    runAsync(() -> publishLogRecord(loanLogContext, LOAN));
+
+    JsonObject payloadJson = new JsonObject();
+    write(payloadJson, USER_ID_FIELD, loan.getUserId());
+    write(payloadJson, LOAN_ID_FIELD, loan.getId());
+
+    return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
+      .handle((result, error) -> handlePublishEventError(error, loan));
+  }
+
+  private String getLoanDueDateChangeLog(Loan loan, ZoneId zoneId) {
+    return format(NEW_DUE_DATE_FROM_PREVIOUS_TEMPLATE,
+      formatDateTimeOptional(loan.getDueDate().withZoneSameInstant(zoneId)),
+      formatDateTimeOptional(loan.getPreviousDueDate().withZoneSameInstant(zoneId)));
+  }
+
+  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, RequestAndRelatedRecords records) {
+    if (records.getRecalledLoanPreviousDueDate() != null) {
+      loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
+    }
+    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
+  }
+
+  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
+    if (loan != null) {
+      JsonObject payloadJsonObject = new JsonObject();
+      write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
+      write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
+      write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
+      write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
+
+      runAsync(() -> publishDueDateLogEvent(loan));
+      if (renewalContext) {
+        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
+      }
+
+      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
+        .handle((result, error) -> handlePublishEventError(error, loan));
+    }
+    else {
+      logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, LOAN_DUE_DATE_CHANGED.name());
+    }
+
+    return completedFuture(succeeded(null));
+  }
+
+  private String getLoanActionCommentLog(Loan loan) {
+    return format(ACTION_COMMENT_TEMPLATE, loan.getActionComment());
+  }
+
   private <T> Result<T> handlePublishEventError(Throwable error, T value) {
     if (error != null) {
       return failedDueToServerError(error.getMessage());
@@ -418,18 +463,20 @@ public class EventPublisher {
 
   private Request fetchRequestAndUpdateMetadata(RequestAndRelatedRecords requestAndRelatedRecords) {
     var request = requestAndRelatedRecords.getRequest();
-    if (nonNull(request)) {
-      var requestJson = request.asJson();
-      var metadataJson = requestJson.getJsonObject(METADATA);
-      if (nonNull(webContext)) {
-        if (isNull(metadataJson)) {
-          metadataJson = new JsonObject();
-        }
-        write(metadataJson, UPDATED_BY_USER_ID, webContext.getUserId());
-        write(requestJson, METADATA, metadataJson);
-        return Request.from(requestJson);
-      }
+    if (isNull(request)) {
+      return null;
     }
-    return requestAndRelatedRecords.getRequest();
+
+    if (isNull(webContext)) {
+      logger.debug("Web context is null, cannot update metadata for request {}", request.getId());
+      return request;
+    }
+
+    var requestJson = request.asJson();
+    var metadataJson = Optional.ofNullable(requestJson.getJsonObject(METADATA))
+      .orElseGet(JsonObject::new);
+    write(metadataJson, UPDATED_BY_USER_ID, webContext.getUserId());
+    write(requestJson, METADATA, metadataJson);
+    return Request.from(requestJson);
   }
 }

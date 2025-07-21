@@ -172,7 +172,7 @@ public abstract class RenewalResource extends Resource {
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
     final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(webContext, clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 

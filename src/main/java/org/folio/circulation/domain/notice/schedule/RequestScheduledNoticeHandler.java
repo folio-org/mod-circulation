@@ -142,12 +142,12 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
   }
 
   protected Result<ScheduledNoticeContext> failWhenRequestHasNoUser(ScheduledNoticeContext context) {
-    return failWhenUserIsMissing(context.getRequest())
+    return failWhenUserIsMissing(context, context.getRequest())
       .map(v -> context);
   }
 
   protected Result<ScheduledNoticeContext> failWhenRequestHasNoItem(ScheduledNoticeContext context) {
-    return failWhenItemIsMissing(context.getRequest())
+    return failWhenItemIsMissing(context, context.getRequest())
       .map(v -> context);
   }
 

@@ -58,7 +58,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final var accountRepository = new AccountRepository(clients);
 
     final var anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
-    final var eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    final var eventPublisher = new EventPublisher(clients);
 
     final var loansFinder = new LoansForTenantFinder(loanRepository, accountRepository,
       Environment.getScheduledAnonymizationNumberOfLoansToCheck());
