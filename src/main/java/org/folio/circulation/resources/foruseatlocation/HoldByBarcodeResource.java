@@ -53,7 +53,7 @@ public class HoldByBarcodeResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(webContext,clients);
 
     JsonObject requestBodyAsJson = routingContext.body().asJsonObject();
     Result<HoldByBarcodeRequest> requestResult = HoldByBarcodeRequest.buildRequestFrom(requestBodyAsJson);
