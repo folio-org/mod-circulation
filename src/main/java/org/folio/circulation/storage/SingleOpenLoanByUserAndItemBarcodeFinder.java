@@ -49,7 +49,6 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
 
   private Function<Loan, CompletableFuture<Result<Loan>>> refuseWhenUserDoesNotMatch(
     String userBarcode) {
-
     return loan -> refuseWhenUserDoesNotMatch(loan, userBarcode);
   }
 

@@ -102,6 +102,7 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
         processAdapter::checkInLoan, CheckInContext::withLoan))
+      .thenApply(r -> r.map(processAdapter::markReturnedIfForUseAtLocation))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
         .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
