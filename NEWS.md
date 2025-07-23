@@ -1,3 +1,6 @@
+## 24.4.9 2025-07-23
+* Handle duplicates when fetching instances and holdings for staff slips (CIRC-2414)
+
 ## 24.4.8 2025-07-10
 * Use batching when fetching holdings for staff slips (CIRC-2419)
 
