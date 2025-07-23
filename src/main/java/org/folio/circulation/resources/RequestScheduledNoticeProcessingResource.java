@@ -86,7 +86,7 @@ public class RequestScheduledNoticeProcessingResource extends ScheduledNoticePro
     log.debug("handleNotices:: parameters notices: {}, requests: {}", () ->
       collectionAsString(notices), () -> collectionAsString(requests));
     Map<String, Request> requestsById = requests.stream()
-      .collect(toMap(Request::getId, identity()));
+      .collect(toMap(Request::getId, identity(), (a, b) -> a));
 
     Map<Boolean, List<ScheduledNoticeContext>> groupedContexts = notices.stream()
       .map(notice -> new ScheduledNoticeContext(notice)
