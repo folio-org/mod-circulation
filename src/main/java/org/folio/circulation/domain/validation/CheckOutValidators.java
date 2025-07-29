@@ -175,7 +175,7 @@ public class CheckOutValidators {
   public CompletableFuture<Result<LoanAndRelatedRecords>>
   refuseWhenCheckOutActionIsBlockedManuallyForPatron(Result<LoanAndRelatedRecords> result) {
 
-    log.info("refuseWhenCheckOutActionIsBlockedManuallyForPatron:: parameters result: {}",
+    log.debug("refuseWhenCheckOutActionIsBlockedManuallyForPatron:: parameters result: {}",
       () -> resultAsString(result));
 
     if (errorHandler.hasAny(FAILED_TO_FETCH_USER)) {

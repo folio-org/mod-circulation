@@ -48,11 +48,9 @@ public class CheckOutByBarcodeDryRunResource extends Resource {
 
   private void dryRunCheckOut(RoutingContext routingContext) {
     var context = new WebContext(routingContext);
-    log.info("dryRunCheckOut:: jsonRequest: {}", routingContext.body().asJsonObject());
 
     var request = CheckOutByBarcodeDryRunRequest.fromJson(
       routingContext.body().asJsonObject());
-    log.info("dryRunCheckOut:: request: {}", request);
     var checkOutByBarcodeRequest = new CheckOutByBarcodeRequest(null,
       request.getItemBarcode(), request.getUserBarcode(), request.getProxyUserBarcode(),
       UUID.randomUUID().toString(), request.getBlockOverrides(), null);

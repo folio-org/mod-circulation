@@ -39,7 +39,7 @@ public class BlockOverrides {
   }
 
   public static BlockOverrides fromRequest(JsonObject requestRepresentation) {
-    log.info("fromRequest:: parameters requestRepresentation: {}", requestRepresentation);
+    log.debug("fromRequest:: parameters requestRepresentation: {}", requestRepresentation);
 
     return from(getNestedObjectProperty(
       requestRepresentation, "requestProcessingParameters", "overrideBlocks"));
