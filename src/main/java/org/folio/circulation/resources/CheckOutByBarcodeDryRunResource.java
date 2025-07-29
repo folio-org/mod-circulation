@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeDryRunRequest;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
