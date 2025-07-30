@@ -3,7 +3,11 @@ package org.folio.circulation.resources.foruseatlocation;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.results.Result;
+
+import java.lang.invoke.MethodHandles;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
@@ -19,19 +23,23 @@ public class PickupByBarcodeRequest {
   private final String itemBarcode;
   private final String userBarcode;
 
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   static Result<PickupByBarcodeRequest> buildRequestFrom(JsonObject json) {
     final String itemBarcode = getProperty(json, ITEM_BARCODE);
 
     if (isBlank(itemBarcode)) {
-      return failedValidation("Request to pick up from hold shelf must have an item barcode",
-        ITEM_BARCODE, null);
+      String message = "Request to pick up from hold shelf must have an item barcode";
+      log.warn("Missing information:: {}", message);
+      return failedValidation(message, ITEM_BARCODE, null);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
     if (isBlank(userBarcode)) {
-      return failedValidation("Request to pick up from hold shelf must have a user barcode",
-        USER_BARCODE, null);
+      String message = "Request to pick up from hold shelf must have a user barcode";
+      log.warn("Missing information:: {}", message);
+      return failedValidation(message, USER_BARCODE, null);
     }
 
     return succeeded(new PickupByBarcodeRequest(itemBarcode, userBarcode));

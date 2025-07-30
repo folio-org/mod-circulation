@@ -4,6 +4,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.representations.logs.LogEventType;
@@ -25,6 +27,7 @@ import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -37,6 +40,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 public class PickupByBarcodeResource extends Resource {
 
   private static final String rootPath = "/circulation/pickup-by-barcode-for-use-at-location";
+
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public PickupByBarcodeResource(HttpClient client) {
     super(client);
@@ -77,10 +82,8 @@ public class PickupByBarcodeResource extends Resource {
   }
 
   protected CompletableFuture<Result<Loan>> findLoan(PickupByBarcodeRequest request,
-                                                     LoanRepository loanRepository,
-                                                     ItemRepository itemRepository,
-                                                     UserRepository userRepository,
-                                                     CirculationErrorHandler errorHandler) {
+    LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
+    CirculationErrorHandler errorHandler) {
 
     final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
@@ -107,16 +110,15 @@ public class PickupByBarcodeResource extends Resource {
   }
 
   private static Supplier<HttpFailure> noOpenLoanFailure(PickupByBarcodeRequest request) {
-    return () -> new BadRequestFailure(
-      format("No open loan found for item barcode (%s) and user (%s)",
-        request.getItemBarcode(), request.getUserBarcode())
-    );
+    String message =  "No open loan found for item barcode and user ";
+    log.warn(message);
+    return () -> new BadRequestFailure(format(message + " (%s and %s).", request.getItemBarcode(), request.getUserBarcode()));
   }
 
   private static Supplier<HttpFailure> loanIsNotForUseAtLocationFailure(PickupByBarcodeRequest request) {
-    return () -> new BadRequestFailure(
-      format("The loan is open but is not for use at location, item barcode (%s)", request.getItemBarcode())
-    );
+    String message = "The loan is open but is not for use at location";
+    log.warn(message);
+    return () -> new BadRequestFailure(format(message + ", item barcode (%s)", request.getItemBarcode()));
   }
 
   private HttpResponse toResponse(JsonObject body) {

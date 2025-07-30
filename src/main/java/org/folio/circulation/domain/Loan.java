@@ -211,6 +211,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan changeStatusOfUsageAtLocation(String usageStatus) {
+    log.debug("changeStatusOfUsageAtLocation:: parameters usageStatus: {}", usageStatus);
     writeByPath(representation, usageStatus, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS);
     writeByPath(representation, ClockUtil.getZonedDateTime().toString(), FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS_DATE);
     return this;
