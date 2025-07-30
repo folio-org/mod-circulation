@@ -8,6 +8,7 @@ import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
 public class HoldingBuilder extends JsonBuilder implements Builder {
+  private final UUID id;
   private final UUID instanceId;
   private final UUID permanentLocationId;
   private final UUID temporaryLocationId;
@@ -18,10 +19,11 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
   private final String copyNumber;
 
   public HoldingBuilder() {
-    this(null, null, null, null, null, null, null, null);
+    this(null, null, null, null, null, null, null, null, null);
   }
 
   private HoldingBuilder(
+    UUID id,
     UUID instanceId,
     UUID permanentLocationId,
     UUID temporaryLocationId,
@@ -31,6 +33,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
     String callNumberSuffix,
     String copyNumber) {
 
+    this.id = id;
     this.instanceId = instanceId;
     this.permanentLocationId = permanentLocationId;
     this.temporaryLocationId = temporaryLocationId;
@@ -45,6 +48,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
   public JsonObject create() {
     final JsonObject holdings = new JsonObject();
 
+    put(holdings, "id", id);
     put(holdings, "instanceId", instanceId);
     put(holdings, "_version", 5);
     put(holdings, "permanentLocationId", permanentLocationId);
@@ -60,6 +64,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder forInstance(UUID instanceId) {
     return new HoldingBuilder(
+      this.id,
       instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
@@ -77,6 +82,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withPermanentLocation(UUID locationId) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       locationId,
       this.temporaryLocationId,
@@ -98,6 +104,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withTemporaryLocation(UUID locationId) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       this.permanentLocationId,
       locationId,
@@ -115,6 +122,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withEffectiveLocationId(UUID effectiveLocationId) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
@@ -128,6 +136,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withCallNumber(String callNumber) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
@@ -141,6 +150,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withCallNumberPrefix(String callNumberPrefix) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
@@ -154,6 +164,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withCallNumberSuffix(String callNumberSuffix) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
@@ -167,6 +178,7 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
 
   public HoldingBuilder withCopyNumbers(List<String> copyNumbers) {
     return new HoldingBuilder(
+      this.id,
       this.instanceId,
       this.permanentLocationId,
       this.temporaryLocationId,
@@ -175,6 +187,20 @@ public class HoldingBuilder extends JsonBuilder implements Builder {
       this.callNumberPrefix,
       this.callNumberSuffix,
       String.join("; ", copyNumbers)
+    );
+  }
+
+  public HoldingBuilder withId(UUID id) {
+    return new HoldingBuilder(
+      id,
+      this.instanceId,
+      this.permanentLocationId,
+      this.temporaryLocationId,
+      this.effectiveLocationId,
+      this.callNumber,
+      this.callNumberPrefix,
+      this.callNumberSuffix,
+      this.copyNumber
     );
   }
 }
