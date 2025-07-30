@@ -120,10 +120,9 @@ class CheckOutByBarcodeDryRunTests extends APITests {
       .getResponse();
 
     assertThat(dryRunWithoutOverride, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
-    assertThat(dryRunWithoutOverride.getJson(),
-      hasErrorWith(hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE)));
-    assertThat(dryRunWithoutOverride.getJson(),
-      hasErrorWith(hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)));
+    assertThat(dryRunWithoutOverride.getJson(), allOf(
+      hasErrorWith(hasMessage(MAX_OUTSTANDING_FEE_FINE_BALANCE_MESSAGE)),
+      hasErrorWith(hasMessage(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE))));
 
     CheckOutResource dryRunWithOverride = checkOutFixture.checkOutByBarcodeDryRun(
       new CheckOutByBarcodeDryRunRequestBuilder()
