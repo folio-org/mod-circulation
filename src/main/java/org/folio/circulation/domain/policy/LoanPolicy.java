@@ -50,6 +50,7 @@ public class LoanPolicy extends Policy {
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
   private static final String ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS = "allowRecallsToExtendOverdueLoans";
   private static final String ALTERNATE_RECALL_RETURN_INTERVAL = "alternateRecallReturnInterval";
+  private static final String FOR_USE_AT_LOCATION = "forUseAtLocation";
 
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
@@ -343,6 +344,10 @@ public class LoanPolicy extends Policy {
 
   public boolean isNotLoanable() {
     return !isLoanable();
+  }
+
+  public boolean isForUseAtLocation() {
+    return getBooleanProperty(getLoansPolicy(), FOR_USE_AT_LOCATION);
   }
 
   public DueDateManagement getDueDateManagement() {

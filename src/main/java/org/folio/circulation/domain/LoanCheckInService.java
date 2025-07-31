@@ -39,6 +39,10 @@ public class LoanCheckInService {
       loan.removeAgedToLostBillingInfo();
     }
 
+    if (loan.isForUseAtLocation()) {
+      loan.changeStatusOfUsageAtLocation("Returned");
+    }
+
     return succeeded(loan.checkIn(request.getCheckInDate(), systemDateTime,
       request.getServicePointId()));
   }
