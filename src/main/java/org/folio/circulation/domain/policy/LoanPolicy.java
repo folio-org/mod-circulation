@@ -216,7 +216,7 @@ public class LoanPolicy extends Policy {
         (!request.hasItem() || itemId.equals(request.getItemId())));
   }
 
-  private JsonObject getLoansPolicy() {
+  public JsonObject getLoansPolicy() {
     return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
@@ -348,6 +348,16 @@ public class LoanPolicy extends Policy {
 
   public boolean isForUseAtLocation() {
     return getBooleanProperty(getLoansPolicy(), FOR_USE_AT_LOCATION);
+  }
+
+  public Period getHoldShelfExpiryPeriodForUseAtLocation() {
+    if (isForUseAtLocation()) {
+      JsonObject holdShelfExpiryPeriod = getObjectProperty(getLoansPolicy(), "holdShelfExpiryPeriodForUseAtLocation");
+      if (holdShelfExpiryPeriod != null) {
+        return Period.from(holdShelfExpiryPeriod);
+      }
+    }
+    return null;
   }
 
   public DueDateManagement getDueDateManagement() {

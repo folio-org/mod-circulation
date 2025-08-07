@@ -18,6 +18,7 @@ import java.util.UUID;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 public class LoansForUseAtLocationTests extends APITests {
   private ItemResource item;
@@ -77,7 +78,8 @@ public class LoansForUseAtLocationTests extends APITests {
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
       .rolling(Period.days(30))
-      .withForUseAtLocation(true);
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "DAYS"));
 
     use(forUseAtLocationPolicyBuilder);
 
@@ -91,10 +93,13 @@ public class LoansForUseAtLocationTests extends APITests {
       new HoldByBarcodeRequestBuilder(item.getBarcode()));
 
     JsonObject forUseAtLocation = holdResponse.getJson().getJsonObject("forUseAtLocation");
+
     assertThat("loan.forUseAtLocation",
       forUseAtLocation, notNullValue());
     assertThat("loan.forUseAtLocation.status",
       forUseAtLocation.getString("status"), Is.is("Held"));
+    assertThat("loan.forUseAtLocation.holdShelfExpirationDate",
+      forUseAtLocation.getString("holdShelfExpirationDate"), notNullValue());
   }
 
   @Test
@@ -103,7 +108,8 @@ public class LoansForUseAtLocationTests extends APITests {
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
       .rolling(Period.days(30))
-      .withForUseAtLocation(true);
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "DAYS"));
 
     use(forUseAtLocationPolicyBuilder);
 
@@ -142,7 +148,8 @@ public class LoansForUseAtLocationTests extends APITests {
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
       .rolling(Period.days(30))
-      .withForUseAtLocation(true);
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "DAYS"));
 
     use(forUseAtLocationPolicyBuilder);
 
@@ -163,7 +170,8 @@ public class LoansForUseAtLocationTests extends APITests {
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
       .rolling(Period.days(30))
-      .withForUseAtLocation(true);
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "DAYS"));
 
     use(forUseAtLocationPolicyBuilder);
 
@@ -213,7 +221,8 @@ public class LoansForUseAtLocationTests extends APITests {
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
       .rolling(Period.days(30))
-      .withForUseAtLocation(true);
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "DAYS"));
 
     use(forUseAtLocationPolicyBuilder);
 
@@ -255,7 +264,8 @@ public class LoansForUseAtLocationTests extends APITests {
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
       .rolling(Period.days(30))
-      .withForUseAtLocation(true);
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "DAYS"));
 
     use(forUseAtLocationPolicyBuilder);
 
@@ -275,6 +285,8 @@ public class LoansForUseAtLocationTests extends APITests {
       forUseAtLocation, notNullValue());
     assertThat("loan.forUseAtLocation.status",
       forUseAtLocation.getString("status"), Is.is("Returned"));
+    assertThat("loan.forUseAtLocation.holdShelfExpirationDate",
+      forUseAtLocation.getString("holdShelfExpirationDate"), nullValue());
   }
 
 }

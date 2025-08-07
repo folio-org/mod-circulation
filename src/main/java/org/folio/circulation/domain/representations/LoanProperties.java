@@ -37,6 +37,7 @@ public class LoanProperties {
   public static final String FOR_USE_AT_LOCATION = "forUseAtLocation";
   public static final String AT_LOCATION_USE_STATUS = "status";
   public static final String AT_LOCATION_USE_STATUS_DATE = "statusDate";
+  public static final String AT_LOCATION_USE_EXPIRY_DATE = "holdShelfExpirationDate";
   public static final String USAGE_STATUS_IN_USE = "In use";
   public static final String USAGE_STATUS_HELD = "Held";
   public static final String USAGE_STATUS_RETURNED = "Returned";

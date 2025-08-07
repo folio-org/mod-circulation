@@ -10,6 +10,7 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.Resource;
@@ -58,6 +59,7 @@ public class HoldByBarcodeResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final EventPublisher eventPublisher = new EventPublisher(webContext,clients);
 
     JsonObject requestBodyAsJson = routingContext.body().asJsonObject();
@@ -67,6 +69,7 @@ public class HoldByBarcodeResource extends Resource {
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
       .thenApply(loan -> failWhenOpenLoanNotFoundForItem(loan, requestResult.value()))
       .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, requestResult.value()))
+      .thenCompose(loanPolicyRepository::findPolicyForLoan)
       .thenApply(loanResult -> loanResult.map(loan -> loan.changeStatusOfUsageAtLocation(USAGE_STATUS_HELD)))
       .thenApply(loanResult -> loanResult.map(loan -> loan.withAction(LoanAction.HELD_FOR_USE_AT_LOCATION)))
       .thenCompose(loanResult -> loanResult.after(
