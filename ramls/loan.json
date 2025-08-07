@@ -281,6 +281,26 @@
         }
       }
     },
+    "forUseAtLocation": {
+      "description": "Status of loan/item that is to be used in the library",
+      "type": "object",
+      "properties": {
+        "status": {
+          "description": "Indicates if the item is currently used by or being held for the patron",
+          "type": "string",
+          "enum": [
+            "In use",
+            "Held",
+            "Returned"
+          ]
+        },
+        "statusDate": {
+          "description": "Date and time the status was registered",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "loanDate": {
       "description": "Date and time when the loan began",
       "type": "string",

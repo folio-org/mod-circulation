@@ -21,6 +21,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
+import static org.folio.circulation.domain.representations.LoanProperties.AT_LOCATION_USE_STATUS;
+import static org.folio.circulation.domain.representations.LoanProperties.AT_LOCATION_USE_STATUS_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.BILL_NUMBER;
 import static org.folio.circulation.domain.representations.LoanProperties.CHECKIN_SERVICE_POINT_ID;
@@ -30,6 +32,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.CREATE
 import static org.folio.circulation.domain.representations.LoanProperties.DATE_LOST_ITEM_SHOULD_BE_BILLED;
 import static org.folio.circulation.domain.representations.LoanProperties.DECLARED_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.DUE_DATE;
+import static org.folio.circulation.domain.representations.LoanProperties.FOR_USE_AT_LOCATION;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_LOCATION_ID_AT_CHECKOUT;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.LAST_FEE_BILLED;
@@ -205,6 +208,17 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public String getAction() {
     return getProperty(representation, ACTION);
+  }
+
+  public Loan changeStatusOfUsageAtLocation(String usageStatus) {
+    log.debug("changeStatusOfUsageAtLocation:: parameters usageStatus: {}", usageStatus);
+    writeByPath(representation, usageStatus, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS);
+    writeByPath(representation, ClockUtil.getZonedDateTime().toString(), FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS_DATE);
+    return this;
+  }
+
+  public boolean isForUseAtLocation() {
+    return representation.containsKey(FOR_USE_AT_LOCATION);
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
@@ -736,7 +750,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   public Loan closeLoan(LoanAction action) {
     log.debug("closeLoan:: parameters action: {}", action);
     changeStatus(LoanStatus.CLOSED);
-
     changeAction(action);
     removeActionComment();
 
