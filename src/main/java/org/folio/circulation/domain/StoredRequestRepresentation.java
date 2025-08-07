@@ -56,6 +56,9 @@ public class StoredRequestRepresentation {
           item.getLocation().getPrimaryServicePoint().getName());
       }
     }
+    write(itemSummary, "loanTypeId", item.getLoanTypeId());
+    write(itemSummary, "loanTypeName", item.getLoanTypeName());
+
     request.put("item", itemSummary);
   }
 
