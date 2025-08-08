@@ -11,6 +11,7 @@ import org.folio.circulation.domain.representations.CheckOutByBarcodeDryRunReque
 import org.folio.circulation.support.http.client.Response;
 
 import api.support.RestAssuredClient;
+import api.support.builders.CheckOutByBarcodeDryRunRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
@@ -68,8 +69,20 @@ public class CheckOutFixture {
       checkOutByBarcodeDryRunUrl(), 201, "check-out-by-barcode-dry-run-request"));
   }
 
+  public CheckOutResource checkOutByBarcodeDryRun(CheckOutByBarcodeDryRunRequestBuilder builder,
+    OkapiHeaders headers) {
+
+    return new CheckOutResource(restAssuredClient.post(builder.create(),
+      checkOutByBarcodeDryRunUrl(), 201, headers));
+  }
+
   public CheckOutResource attemptCheckOutByBarcodeDryRun(CheckOutByBarcodeDryRunRequest request) {
     return new CheckOutResource(restAssuredClient.post(request,
+      checkOutByBarcodeDryRunUrl(), 422, "check-out-by-barcode-dry-run-request"));
+  }
+
+  public CheckOutResource attemptCheckOutByBarcodeDryRun(CheckOutByBarcodeDryRunRequestBuilder builder) {
+    return new CheckOutResource(restAssuredClient.post(builder.create(),
       checkOutByBarcodeDryRunUrl(), 422, "check-out-by-barcode-dry-run-request"));
   }
 
