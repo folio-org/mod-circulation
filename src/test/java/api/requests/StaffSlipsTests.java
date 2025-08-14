@@ -203,6 +203,7 @@ class StaffSlipsTests extends APITests {
   })
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
+
     if (slipsTypeName.equals(SlipsType.PICK_SLIPS.name())) {
       circulationSettingFixture.configurePrintEventLogFeature(true);
     } else {
@@ -795,6 +796,35 @@ class StaffSlipsTests extends APITests {
 
     Response response = SlipsType.PICK_SLIPS.get(servicePointId);
     assertResponseHasItems(response, batchSize + 1, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void responseContainsNoRecordsIfPickSlipsDisabled() {
+    circulationSettingFixture.configurePrintEventLogFeature(true);
+
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    val item = itemsFixture.basedUponSmallAngryPlanet();
+    val james = usersFixture.james();
+
+    RequestBuilder firstRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .page()
+      .withPickupServicePointId(servicePointId)
+      .forItem(item)
+      .by(james);
+
+    IndividualResource firstRequest = requestsClient.create(firstRequestBuilder);
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
+    assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
+
+    circulationSettingFixture.configurePrintEventLogFeature(false);
+    response = SlipsType.PICK_SLIPS.get(servicePointId);
+
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
   }
 
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
