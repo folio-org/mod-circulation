@@ -8,7 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
+import org.folio.circulation.domain.TimePeriod;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
+import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
 import org.folio.circulation.domain.representations.logs.LogEventType;
+import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -19,22 +26,24 @@ import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.storage.ItemByBarcodeInStorageFinder;
 import org.folio.circulation.storage.SingleOpenLoanForItemInStorageFinder;
-import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.ClockUtil;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import static java.lang.String.format;
-import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_HELD;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
+import static org.folio.circulation.domain.representations.LoanProperties.*;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.loanIsNotForUseAtLocationFailure;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.noOpenLoanFailure;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 
 public class HoldByBarcodeResource extends Resource {
@@ -60,31 +69,33 @@ public class HoldByBarcodeResource extends Resource {
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
+    final var servicePointRepository = new ServicePointRepository(clients);
+    final var settingsRepository = new SettingsRepository(clients);
+    final var calendarRepository = new CalendarRepository(clients);
     final EventPublisher eventPublisher = new EventPublisher(webContext,clients);
 
     JsonObject requestBodyAsJson = routingContext.body().asJsonObject();
-    Result<HoldByBarcodeRequest> requestResult = HoldByBarcodeRequest.buildRequestFrom(requestBodyAsJson);
 
-    requestResult
+    HoldByBarcodeRequest.buildRequestFrom(requestBodyAsJson)
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
-      .thenApply(loan -> failWhenOpenLoanNotFoundForItem(loan, requestResult.value()))
-      .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, requestResult.value()))
-      .thenCompose(loanPolicyRepository::findPolicyForLoan)
-      .thenApply(loanResult -> loanResult.map(loan -> loan.changeStatusOfUsageAtLocation(USAGE_STATUS_HELD)))
-      .thenApply(loanResult -> loanResult.map(loan -> loan.withAction(LoanAction.HELD_FOR_USE_AT_LOCATION)))
-      .thenCompose(loanResult -> loanResult.after(
-          loan -> loanRepository.updateLoan(loanResult.value())))
+      .thenApply(HoldByBarcodeResource::failWhenOpenLoanNotFoundForItem)
+      .thenApply(HoldByBarcodeResource::failWhenOpenLoanIsNotForUseAtLocation)
+      .thenCompose(request -> request.after(req -> findPolicy(req, loanPolicyRepository)))
+      .thenCompose(request -> request.after(req -> findServicePoint(req, servicePointRepository)))
+      .thenCompose(request -> request.after(req -> findTenantTimeZone(req, settingsRepository)))
+      .thenCompose(request -> request.after(req -> findHoldShelfExpirationDate(req, calendarRepository)))
+      .thenApply(this::setStatusToHeldWithExpirationDate)
+      .thenApply(this::setActionHeld)
+      .thenCompose(request -> request.after(req -> loanRepository.updateLoan(req.getLoan())))
       .thenCompose(loanResult -> loanResult.after(
         loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.LOAN)))
-      .thenApply(loanResult -> loanResult.map(Loan::asJson))
-      .thenApply(loanAsJsonResult -> loanAsJsonResult.map(this::toResponse))
+      .thenApply(loanResult -> loanResult.map(Loan::asJson).map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
   }
 
-  protected CompletableFuture<Result<Loan>> findLoan(HoldByBarcodeRequest request,
-    LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
-    CirculationErrorHandler errorHandler) {
-
+  protected CompletableFuture<Result<HoldByBarcodeRequest>> findLoan(HoldByBarcodeRequest request,
+                                                                     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
+                                                                     CirculationErrorHandler errorHandler) {
     final ItemByBarcodeInStorageFinder itemFinder =
       new ItemByBarcodeInStorageFinder(itemRepository);
 
@@ -93,36 +104,62 @@ public class HoldByBarcodeResource extends Resource {
 
     return itemFinder.findItemByBarcode(request.getItemBarcode())
       .thenCompose(itemResult -> itemResult.after(loanFinder::findSingleOpenLoan)
-        .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN, (Loan) null))
+        .thenApply(loanResult -> loanResult.map(request::withLoan))
+        .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN, request))
       );
   }
 
-  private static Result<Loan> failWhenOpenLoanNotFoundForItem (Result<Loan> loanResult, HoldByBarcodeRequest request) {
-    return loanResult.failWhen(HoldByBarcodeResource::loanIsNull, loan -> noOpenLoanFailure(request).get());
+  protected CompletableFuture<Result<HoldByBarcodeRequest>> findPolicy(HoldByBarcodeRequest request, LoanPolicyRepository loanPolicies) {
+    return loanPolicies.findPolicyForLoan(request.getLoan())
+      .thenApply(loanResult -> loanResult.map(request::withLoan));
   }
 
-  private Result<Loan> failWhenOpenLoanIsNotForUseAtLocation (Result<Loan> loanResult, HoldByBarcodeRequest request) {
-    return loanResult.failWhen(HoldByBarcodeResource::loanIsNotForUseAtLocation, loan -> loanIsNotForUseAtLocationFailure(request).get());
+  protected CompletableFuture<Result<HoldByBarcodeRequest>> findServicePoint(HoldByBarcodeRequest request, ServicePointRepository servicePoints) {
+    return servicePoints.getServicePointById(request.getLoan().getCheckoutServicePointId())
+      .thenApply(servicePoint -> servicePoint.map(request::withServicePoint));
   }
 
-  private static Result<Boolean> loanIsNull (Loan loan) {
-    return Result.succeeded(loan == null);
+  protected CompletableFuture<Result<HoldByBarcodeRequest>> findTenantTimeZone(HoldByBarcodeRequest request, SettingsRepository settings) {
+    return settings.lookupTimeZoneSettings()
+      .thenApply(zoneId -> zoneId.map(request::withTenantTimeZone));
   }
 
-  private static Result<Boolean> loanIsNotForUseAtLocation(Loan loan) {
-    return Result.succeeded(!loan.isForUseAtLocation());
+  protected CompletableFuture<Result<HoldByBarcodeRequest>> findHoldShelfExpirationDate(HoldByBarcodeRequest request, CalendarRepository calendars) {
+    Loan loan = request.getLoan();
+    Period expiry = loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
+    if (expiry == null) {
+      log.warn("No hold shelf expiry period for use at location defined in loan policy {}", loan.getLoanPolicy().getName());
+      return Result.ofAsync(request);
+    } else {
+      final ZonedDateTime baseExpirationDate = expiry.plusDate(ClockUtil.getZonedDateTime());
+        TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
+        ExpirationDateManagement expirationDateManagement = request.getServicePoint().getHoldShelfClosedLibraryDateManagement();
+        ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
+          expirationDateManagement, baseExpirationDate, request.getTenantTimeZone(), timePeriod);
+
+        return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(request.getTenantTimeZone()).toLocalDate(),
+            request.getServicePoint().getId())
+          .thenApply(adjacentOpeningDaysResult -> strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
+          .thenApply(dateTime -> dateTime.map(request::withHoldShelfExpirationDate));
+    }
   }
 
-  private static Supplier<HttpFailure> noOpenLoanFailure(HoldByBarcodeRequest request) {
-    String message = "No open loan found for the item barcode.";
-    log.warn(message);
-    return () -> new BadRequestFailure(format(message + " (%s)", request.getItemBarcode()));
+  private Result<HoldByBarcodeRequest> setStatusToHeldWithExpirationDate(Result<HoldByBarcodeRequest> request) {
+    return request.map (
+      req -> req.withLoan(req.getLoan().changeStatusOfUsageAtLocation(USAGE_STATUS_HELD, req.getHoldShelfExpirationDate())));
   }
 
-  private static Supplier<HttpFailure> loanIsNotForUseAtLocationFailure(HoldByBarcodeRequest request) {
-    String message = "The loan is open but is not for use at location.";
-    log.warn(message);
-    return () -> new BadRequestFailure(format(message + ", item barcode (%s)", request.getItemBarcode()));
+
+  private Result<HoldByBarcodeRequest> setActionHeld(Result<HoldByBarcodeRequest> request) {
+    return request.map(req -> req.withLoan(req.getLoan().withAction(LoanAction.HELD_FOR_USE_AT_LOCATION)));
+  }
+
+  private static Result<HoldByBarcodeRequest> failWhenOpenLoanNotFoundForItem(Result<HoldByBarcodeRequest> request) {
+     return request.failWhen(HoldByBarcodeRequest::loanIsNull, req -> noOpenLoanFailure(req).get());
+  }
+
+  private static Result<HoldByBarcodeRequest> failWhenOpenLoanIsNotForUseAtLocation (Result<HoldByBarcodeRequest> request) {
+    return request.failWhen(HoldByBarcodeRequest::loanIsNotForUseAtLocation, req -> loanIsNotForUseAtLocationFailure(req).get());
   }
 
   private HttpResponse toResponse(JsonObject body) {

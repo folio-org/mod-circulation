@@ -278,7 +278,7 @@ class CheckInProcessAdapter {
   CheckInContext markReturnedIfForUseAtLocation(CheckInContext checkInContext) {
     Loan loan = checkInContext.getLoan();
     if (loan != null && loan.isForUseAtLocation()) {
-      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_RETURNED);
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_RETURNED, null);
     }
     return checkInContext;
   }

@@ -47,7 +47,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.RETURN
 import static org.folio.circulation.domain.representations.LoanProperties.STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.SYSTEM_RETURN_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
-import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_HELD;
 import static org.folio.circulation.domain.representations.LoanProperties.USER_ID;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
@@ -81,7 +80,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
-import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.policy.RemindersPolicy;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.representations.LoanProperties;
@@ -213,20 +211,11 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getProperty(representation, ACTION);
   }
 
-  public Loan changeStatusOfUsageAtLocation(String usageStatus) {
-    log.info("changeStatusOfUsageAtLocation:: parameters usageStatus: {}", usageStatus);
+  public Loan changeStatusOfUsageAtLocation(String usageStatus, ZonedDateTime holdShelfExpirationDate) {
+    log.info("changeStatusOfUsageAtLocation:: parameters usageStatus: {}  expiration {}", usageStatus, holdShelfExpirationDate);
     writeByPath(representation, usageStatus, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS);
     writeByPath(representation, ClockUtil.getZonedDateTime().toString(), FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS_DATE);
-    if (usageStatus.equals(USAGE_STATUS_HELD)) {
-      Period expiry = getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
-      if (expiry == null) {
-        log.warn("No hold shelf expiry period for use at location defined in loan policy {}", getLoanPolicy().getName());
-      } else {
-        writeByPath(representation, expiry.plusDate(ClockUtil.getZonedDateTime()), FOR_USE_AT_LOCATION, AT_LOCATION_USE_EXPIRY_DATE);
-        return this;
-      }
-    }
-    remove(representation.getJsonObject(FOR_USE_AT_LOCATION), AT_LOCATION_USE_EXPIRY_DATE);
+    writeByPath(representation, holdShelfExpirationDate, FOR_USE_AT_LOCATION, AT_LOCATION_USE_EXPIRY_DATE);
     return this;
   }
 

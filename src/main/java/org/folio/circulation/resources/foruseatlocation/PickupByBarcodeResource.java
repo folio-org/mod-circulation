@@ -70,7 +70,7 @@ public class PickupByBarcodeResource extends Resource {
       .thenApply(loan -> failWhenOpenLoanForItemAndUserNotFound(loan, pickupByBarcodeRequest.value()))
       .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, pickupByBarcodeRequest.value()))
       .thenApply(loanResult -> loanResult.map(loan ->
-        loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE)
+        loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE, null)
           .withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION)))
       .thenCompose(loanResult -> loanResult.after(
         loan -> loanRepository.updateLoan(loanResult.value())))
