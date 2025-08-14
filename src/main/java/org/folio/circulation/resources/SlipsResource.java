@@ -17,6 +17,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -160,17 +161,16 @@ public abstract class SlipsResource extends Resource {
   private Result<Object> returnNoRecordsIfPickSlipsDisabled(
     MultipleRecords<CirculationSetting> settingsRecords, WebContext context) {
 
-    CirculationSetting printEventLogFeatureSetting = null;
-    if (settingsRecords != null) {
-      printEventLogFeatureSetting = settingsRecords.getRecords().stream()
+    log.debug("returnNoRecordsIfPickSlipsDisabled:: parameters settingsRecords: {}",
+      () -> multipleRecordsAsString(settingsRecords));
+    boolean pickSlipsEnabled = Optional.ofNullable(settingsRecords)
+      .flatMap(records -> records.getRecords().stream()
         .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
-        .findFirst()
-        .orElse(null);
-    }
+        .findFirst())
+      .map(setting -> setting.getValue().getBoolean("enablePrintLog"))
+      .orElse(false);
 
-    if (printEventLogFeatureSetting == null ||
-      !printEventLogFeatureSetting.getValue().getBoolean("enablePrintLog")) {
-
+    if (!pickSlipsEnabled) {
       log.info("returnNoRecordsIfPickSlipsDisabled:: Print pick slips configuration is disabled");
       context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
         new JsonObject()
