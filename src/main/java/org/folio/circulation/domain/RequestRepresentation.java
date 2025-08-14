@@ -102,6 +102,8 @@ public class RequestRepresentation {
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "chronology", item.getChronology());
     write(itemSummary, "displaySummary", item.getDisplaySummary());
+    write(itemSummary, "loanTypeId",  item.getLoanTypeId());
+    write(itemSummary, "loanTypeName",  item.getLoanTypeName());
 
     ItemStatus status = item.getStatus();
     if (status != null) {
