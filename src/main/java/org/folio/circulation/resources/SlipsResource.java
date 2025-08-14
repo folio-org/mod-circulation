@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.CirculationSetting;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -33,6 +34,7 @@ import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.mapper.StaffSlipMapper;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -65,9 +67,12 @@ public abstract class SlipsResource extends Resource {
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
+  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
+  public static final String PRINT_EVENT_LOG_FEATURE = "printEventLogFeature";
 
   private final String rootPath;
   private final String collectionName;
@@ -107,12 +112,18 @@ public abstract class SlipsResource extends Resource {
     final var patronGroupRepository = new PatronGroupRepository(clients);
     final var departmentRepository = new DepartmentRepository(clients);
     final var configurationRepository = new ConfigurationRepository(clients);
+    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
     if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       configurationRepository.lookupPrintHoldRequestsEnabled()
         .thenAccept(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
+    }
+
+    if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
+      circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
+        .thenAccept(r -> r.next(records -> returnNoRecordsIfPickSlipsDisabled(records, context)));
     }
 
     fetchLocationsForServicePoint(servicePointId, clients)
@@ -140,6 +151,30 @@ public abstract class SlipsResource extends Resource {
       context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
         new io.vertx.core.json.JsonObject()
           .put(SEARCH_SLIPS_KEY, new JsonArray())
+          .put(TOTAL_RECORDS_KEY, 0)
+      )));
+    }
+    return succeeded(null);
+  }
+
+  private Result<Object> returnNoRecordsIfPickSlipsDisabled(
+    MultipleRecords<CirculationSetting> settingsRecords, WebContext context) {
+
+    CirculationSetting printEventLogFeatureSetting = null;
+    if (settingsRecords != null) {
+      printEventLogFeatureSetting = settingsRecords.getRecords().stream()
+        .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
+        .findFirst()
+        .orElse(null);
+    }
+
+    if (printEventLogFeatureSetting == null ||
+      !printEventLogFeatureSetting.getValue().getBoolean("enablePrintLog")) {
+
+      log.info("returnNoRecordsIfPickSlipsDisabled:: Print pick slips configuration is disabled");
+      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
+        new JsonObject()
+          .put(PICK_SLIPS_KEY, new JsonArray())
           .put(TOTAL_RECORDS_KEY, 0)
       )));
     }
