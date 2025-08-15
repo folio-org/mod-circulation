@@ -120,11 +120,15 @@ public abstract class SlipsResource extends Resource {
     if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       configurationRepository.lookupPrintHoldRequestsEnabled()
         .thenAccept(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
+
+      return;
     }
 
     if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
       circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
         .thenAccept(r -> r.next(records -> returnNoRecordsIfPickSlipsDisabled(records, context)));
+
+      return;
     }
 
     fetchLocationsForServicePoint(servicePointId, clients)
