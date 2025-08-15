@@ -63,6 +63,8 @@ public class PickupByBarcodeResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(webContext, clients);
 
     JsonObject requestBodyAsJson = routingContext.body().asJsonObject();
+    log.debug("markInUse:: request body: {}", requestBodyAsJson);
+
     Result<PickupByBarcodeRequest> pickupByBarcodeRequest = buildRequestFrom(requestBodyAsJson);
 
     pickupByBarcodeRequest
@@ -70,7 +72,7 @@ public class PickupByBarcodeResource extends Resource {
       .thenApply(loan -> failWhenOpenLoanForItemAndUserNotFound(loan, pickupByBarcodeRequest.value()))
       .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, pickupByBarcodeRequest.value()))
       .thenApply(loanResult -> loanResult.map(loan ->
-        loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE, null)
+        loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE)
           .withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION)))
       .thenCompose(loanResult -> loanResult.after(
         loan -> loanRepository.updateLoan(loanResult.value())))
@@ -84,7 +86,7 @@ public class PickupByBarcodeResource extends Resource {
   protected CompletableFuture<Result<Loan>> findLoan(PickupByBarcodeRequest request,
     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
     CirculationErrorHandler errorHandler) {
-
+    log.debug("findLoan:: main parameter: request {}", request);
     final SingleOpenLoanByUserAndItemBarcodeFinder loanFinder
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
       itemRepository, userRepository);
@@ -111,13 +113,13 @@ public class PickupByBarcodeResource extends Resource {
 
   private static Supplier<HttpFailure> noOpenLoanFailure(PickupByBarcodeRequest request) {
     String message =  "No open loan found for item barcode and user ";
-    log.warn(message);
+    log.warn("noOpenLoanFailure:: {}", message);
     return () -> new BadRequestFailure(format(message + " (%s and %s).", request.getItemBarcode(), request.getUserBarcode()));
   }
 
   private static Supplier<HttpFailure> loanIsNotForUseAtLocationFailure(PickupByBarcodeRequest request) {
     String message = "The loan is open but is not for use at location";
-    log.warn(message);
+    log.warn("loanIsNotForUseAtLocationFailure:: {}", message);
     return () -> new BadRequestFailure(format(message + ", item barcode (%s)", request.getItemBarcode()));
   }
 

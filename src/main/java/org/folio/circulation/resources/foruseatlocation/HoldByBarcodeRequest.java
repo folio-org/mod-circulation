@@ -1,7 +1,10 @@
 package org.folio.circulation.resources.foruseatlocation;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
+import lombok.With;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
@@ -22,13 +25,19 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.results.Result.succeeded;
 
 @Getter
+@AllArgsConstructor
+@ToString
 public class HoldByBarcodeRequest {
   private static final String ITEM_BARCODE = "itemBarcode";
   private static final String SERVICE_POINT_ID = "servicePointId";
   private final String itemBarcode;
+  @With
   private Loan loan;
+  @With
   private ServicePoint servicePoint;
+  @With
   private ZonedDateTime holdShelfExpirationDate;
+  @With
   private ZoneId tenantTimeZone;
 
 
@@ -48,25 +57,6 @@ public class HoldByBarcodeRequest {
     return succeeded(new HoldByBarcodeRequest(itemBarcode));
   }
 
-  public HoldByBarcodeRequest withLoan(Loan loan) {
-    this.loan = loan;
-    return this;
-  }
-
-  public HoldByBarcodeRequest withServicePoint(ServicePoint servicePoint) {
-    this.servicePoint = servicePoint;
-    return this;
-  }
-
-  public HoldByBarcodeRequest withTenantTimeZone(ZoneId tenantTimeZone) {
-    this.tenantTimeZone = tenantTimeZone;
-    return this;
-  }
-
-  public HoldByBarcodeRequest withHoldShelfExpirationDate(ZonedDateTime date) {
-    this.holdShelfExpirationDate = date;
-    return this;
-  }
 
   static Result<Boolean> loanIsNull(HoldByBarcodeRequest request) {
     return Result.succeeded(request.getLoan() == null);
@@ -78,12 +68,13 @@ public class HoldByBarcodeRequest {
 
   static Supplier<HttpFailure> noOpenLoanFailure(HoldByBarcodeRequest request) {
     String message = "No open loan found for the item barcode.";
-    log.warn(message);
+    log.warn("noOpenLoanFailure:: {}", message);
     return () -> new BadRequestFailure(format(message + " (%s)", request.getItemBarcode()));
   }
+
   static Supplier<HttpFailure> loanIsNotForUseAtLocationFailure(HoldByBarcodeRequest request) {
     String message = "The loan is open but is not for use at location.";
-    log.warn(message);
+    log.warn("loanIsNotForUseAtLocationFailure:: {}", message);
     return () -> new BadRequestFailure(format(message + ", item barcode (%s)", request.getItemBarcode()));
   }
 

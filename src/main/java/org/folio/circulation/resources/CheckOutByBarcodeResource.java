@@ -313,9 +313,11 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private LoanAndRelatedRecords markInUseIfForUseAtLocation(LoanAndRelatedRecords loanAndRelatedRecords) {
+    log.debug("markInUseIfForUseAtLocation:: parameters: context: {}", loanAndRelatedRecords);
+
     Loan loan = loanAndRelatedRecords.getLoan();
     if (loan.getLoanPolicy().isForUseAtLocation()) {
-      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE, null);
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE);
     }
     return loanAndRelatedRecords;
   }

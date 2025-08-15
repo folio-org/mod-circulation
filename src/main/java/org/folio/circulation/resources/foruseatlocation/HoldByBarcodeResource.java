@@ -75,6 +75,8 @@ public class HoldByBarcodeResource extends Resource {
     final EventPublisher eventPublisher = new EventPublisher(webContext,clients);
 
     JsonObject requestBodyAsJson = routingContext.body().asJsonObject();
+    log.debug("markHeld:: request body: {}", requestBodyAsJson);
+
 
     HoldByBarcodeRequest.buildRequestFrom(requestBodyAsJson)
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
@@ -85,7 +87,7 @@ public class HoldByBarcodeResource extends Resource {
       .thenCompose(request -> request.after(req -> findTenantTimeZone(req, settingsRepository)))
       .thenCompose(request -> request.after(req -> findHoldShelfExpirationDate(req, calendarRepository)))
       .thenApply(this::setStatusToHeldWithExpirationDate)
-      .thenApply(this::setActionHeld)
+      .thenApply(this::setActionToHeld)
       .thenCompose(request -> request.after(req -> loanRepository.updateLoan(req.getLoan())))
       .thenCompose(loanResult -> loanResult.after(
         loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.LOAN)))
@@ -94,8 +96,9 @@ public class HoldByBarcodeResource extends Resource {
   }
 
   protected CompletableFuture<Result<HoldByBarcodeRequest>> findLoan(HoldByBarcodeRequest request,
-                                                                     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
-                                                                     CirculationErrorHandler errorHandler) {
+    LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
+    CirculationErrorHandler errorHandler) {
+    log.debug("findLoan:: main parameter: request {}", request);
     final ItemByBarcodeInStorageFinder itemFinder =
       new ItemByBarcodeInStorageFinder(itemRepository);
 
@@ -125,6 +128,7 @@ public class HoldByBarcodeResource extends Resource {
   }
 
   protected CompletableFuture<Result<HoldByBarcodeRequest>> findHoldShelfExpirationDate(HoldByBarcodeRequest request, CalendarRepository calendars) {
+    log.debug("findHoldShelfExpirationDate:: parameters: request {} calendar repository {}", request, calendars);
     Loan loan = request.getLoan();
     Period expiry = loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
     if (expiry == null) {
@@ -132,33 +136,37 @@ public class HoldByBarcodeResource extends Resource {
       return Result.ofAsync(request);
     } else {
       final ZonedDateTime baseExpirationDate = expiry.plusDate(ClockUtil.getZonedDateTime());
-        TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
-        ExpirationDateManagement expirationDateManagement = request.getServicePoint().getHoldShelfClosedLibraryDateManagement();
-        ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
-          expirationDateManagement, baseExpirationDate, request.getTenantTimeZone(), timePeriod);
+      TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
+      ExpirationDateManagement expirationDateManagement = request.getServicePoint().getHoldShelfClosedLibraryDateManagement();
+      ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
+        expirationDateManagement, baseExpirationDate, request.getTenantTimeZone(), timePeriod);
 
-        return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(request.getTenantTimeZone()).toLocalDate(),
-            request.getServicePoint().getId())
-          .thenApply(adjacentOpeningDaysResult -> strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
-          .thenApply(dateTime -> dateTime.map(request::withHoldShelfExpirationDate));
+      return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(request.getTenantTimeZone()).toLocalDate(),
+          request.getServicePoint().getId())
+        .thenApply(adjacentOpeningDaysResult -> strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
+        .thenApply(dateTime -> dateTime.map(request::withHoldShelfExpirationDate));
     }
   }
 
   private Result<HoldByBarcodeRequest> setStatusToHeldWithExpirationDate(Result<HoldByBarcodeRequest> request) {
+    log.debug("setStatusToHeldWithExpirationDate:: parameters: request {}", request);
     return request.map (
       req -> req.withLoan(req.getLoan().changeStatusOfUsageAtLocation(USAGE_STATUS_HELD, req.getHoldShelfExpirationDate())));
   }
 
 
-  private Result<HoldByBarcodeRequest> setActionHeld(Result<HoldByBarcodeRequest> request) {
+  private Result<HoldByBarcodeRequest> setActionToHeld(Result<HoldByBarcodeRequest> request) {
+    log.debug("setActionToHeld:: parameters: request {}", request);
     return request.map(req -> req.withLoan(req.getLoan().withAction(LoanAction.HELD_FOR_USE_AT_LOCATION)));
   }
 
   private static Result<HoldByBarcodeRequest> failWhenOpenLoanNotFoundForItem(Result<HoldByBarcodeRequest> request) {
-     return request.failWhen(HoldByBarcodeRequest::loanIsNull, req -> noOpenLoanFailure(req).get());
+    log.warn("failWhenOpenLoanNotFoundForItem");
+    return request.failWhen(HoldByBarcodeRequest::loanIsNull, req -> noOpenLoanFailure(req).get());
   }
 
   private static Result<HoldByBarcodeRequest> failWhenOpenLoanIsNotForUseAtLocation (Result<HoldByBarcodeRequest> request) {
+    log.warn("failWhenOpenLoanIsNotForUseAtLocation");
     return request.failWhen(HoldByBarcodeRequest::loanIsNotForUseAtLocation, req -> loanIsNotForUseAtLocationFailure(req).get());
   }
 

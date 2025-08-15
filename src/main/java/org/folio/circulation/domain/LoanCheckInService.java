@@ -40,7 +40,7 @@ public class LoanCheckInService {
     }
 
     if (loan.isForUseAtLocation()) {
-      loan.changeStatusOfUsageAtLocation("Returned", null);
+      loan.changeStatusOfUsageAtLocation("Returned");
     }
 
     return succeeded(loan.checkIn(request.getCheckInDate(), systemDateTime,
