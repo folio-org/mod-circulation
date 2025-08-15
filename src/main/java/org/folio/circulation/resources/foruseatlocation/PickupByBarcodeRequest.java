@@ -3,6 +3,7 @@ package org.folio.circulation.resources.foruseatlocation;
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.results.Result;
@@ -16,6 +17,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class PickupByBarcodeRequest {
   private static final String ITEM_BARCODE = "itemBarcode";
   private static final String USER_BARCODE = "userBarcode";
@@ -30,7 +32,7 @@ public class PickupByBarcodeRequest {
 
     if (isBlank(itemBarcode)) {
       String message = "Request to pick up from hold shelf must have an item barcode";
-      log.warn("Missing information:: {}", message);
+      log.warn("Missing information:: {}, parameter: {}", message, json);
       return failedValidation(message, ITEM_BARCODE, null);
     }
 
@@ -38,7 +40,7 @@ public class PickupByBarcodeRequest {
 
     if (isBlank(userBarcode)) {
       String message = "Request to pick up from hold shelf must have a user barcode";
-      log.warn("Missing information:: {}", message);
+      log.warn("Missing information:: {}, parameter: {}", message, json);
       return failedValidation(message, USER_BARCODE, null);
     }
 

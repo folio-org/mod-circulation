@@ -41,6 +41,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final Integer itemLimit;
   private final Period gracePeriod;
   private final boolean forUseAtLocation;
+  private final Period holdShelfExpiryPeriodForUseAtLocation;
 
   public LoanPolicyBuilder() {
     this(UUID.randomUUID(),
@@ -67,7 +68,8 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       null,
-      false
+      false,
+      null
     );
   }
 
@@ -91,6 +93,7 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       put(loansPolicy, "itemLimit", itemLimit);
       putIfNotNull(loansPolicy, "gracePeriod", gracePeriod, Period::asJson);
       put(loansPolicy, "forUseAtLocation", forUseAtLocation);
+      putIfNotNull(loansPolicy, "holdShelfExpiryPeriodForUseAtLocation", holdShelfExpiryPeriodForUseAtLocation, Period::asJson);
 
       //TODO: Replace with sub-builders
       if(Objects.equals(loansProfile, "Rolling")) {

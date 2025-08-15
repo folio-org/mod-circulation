@@ -28,8 +28,10 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.storage.mappers.TimePeriodMapper;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -216,7 +218,7 @@ public class LoanPolicy extends Policy {
         (!request.hasItem() || itemId.equals(request.getItemId())));
   }
 
-  private JsonObject getLoansPolicy() {
+  public JsonObject getLoansPolicy() {
     return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
@@ -348,6 +350,26 @@ public class LoanPolicy extends Policy {
 
   public boolean isForUseAtLocation() {
     return getBooleanProperty(getLoansPolicy(), FOR_USE_AT_LOCATION);
+  }
+
+  public Period getHoldShelfExpiryPeriodForUseAtLocation() {
+    if (isForUseAtLocation()) {
+      JsonObject holdShelfExpiryPeriod = getObjectProperty(getLoansPolicy(), "holdShelfExpiryPeriodForUseAtLocation");
+      if (holdShelfExpiryPeriod != null) {
+        return Period.from(holdShelfExpiryPeriod);
+      }
+    }
+    return null;
+  }
+
+  public TimePeriod getHoldShelfExpiryTimePeriodForUseAtLocation() {
+    if (isForUseAtLocation()) {
+      JsonObject holdShelfExpiryPeriod = getObjectProperty(getLoansPolicy(), "holdShelfExpiryPeriodForUseAtLocation");
+      if (holdShelfExpiryPeriod != null) {
+        return new TimePeriodMapper().toDomain(holdShelfExpiryPeriod);
+      }
+    }
+    return null;
   }
 
   public DueDateManagement getDueDateManagement() {
