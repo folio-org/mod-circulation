@@ -230,6 +230,11 @@
           ],
           "modulePermissions": [
             "modperms.circulation.check-out-by-barcode-dry-run.post"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block.post",
+            "circulation.override-item-limit-block.post",
+            "circulation.override-item-not-loanable-block.post"
           ]
         },
         {
