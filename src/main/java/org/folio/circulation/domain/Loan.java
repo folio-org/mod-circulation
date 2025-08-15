@@ -21,6 +21,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AGED_TO_LOST_DELAYED_BILLING;
+import static org.folio.circulation.domain.representations.LoanProperties.AT_LOCATION_USE_EXPIRY_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.AT_LOCATION_USE_STATUS;
 import static org.folio.circulation.domain.representations.LoanProperties.AT_LOCATION_USE_STATUS_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.BILL_DATE;
@@ -210,12 +211,18 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getProperty(representation, ACTION);
   }
 
-  public Loan changeStatusOfUsageAtLocation(String usageStatus) {
-    log.debug("changeStatusOfUsageAtLocation:: parameters usageStatus: {}", usageStatus);
+  public Loan changeStatusOfUsageAtLocation(String usageStatus, ZonedDateTime holdShelfExpirationDate) {
+    log.info("changeStatusOfUsageAtLocation:: parameters usageStatus: {}  expiration date {}", usageStatus, holdShelfExpirationDate);
     writeByPath(representation, usageStatus, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS);
     writeByPath(representation, ClockUtil.getZonedDateTime().toString(), FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS_DATE);
+    writeByPath(representation, holdShelfExpirationDate, FOR_USE_AT_LOCATION, AT_LOCATION_USE_EXPIRY_DATE);
     return this;
   }
+
+  public Loan changeStatusOfUsageAtLocation(String usageStatus) {
+    log.info("changeStatusOfUsageAtLocation:: parameters usageStatus: {}", usageStatus);
+    return changeStatusOfUsageAtLocation(usageStatus, null);  }
+
 
   public boolean isForUseAtLocation() {
     return representation.containsKey(FOR_USE_AT_LOCATION);
