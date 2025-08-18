@@ -117,7 +117,7 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    isStaffSlipPrintingDisabled(configurationRepository, circulationSettingsRepository, context)
+    returnEmptyRecordsIfNeeded(configurationRepository, circulationSettingsRepository, context)
       .thenAccept(result -> {
         if (result.succeeded() && Boolean.TRUE.equals(result.value())) {
           return;
@@ -141,19 +141,20 @@ public abstract class SlipsResource extends Resource {
       });
   }
 
-  private CompletableFuture<Result<Boolean>> isStaffSlipPrintingDisabled(
+  private CompletableFuture<Result<Boolean>> returnEmptyRecordsIfNeeded(
     ConfigurationRepository configurationRepository,
     CirculationSettingsRepository circulationSettingsRepository, WebContext context) {
 
     if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
-      log.info("isStaffSlipPrintingDisabled:: PICK_SLIPS_KEY and PAGE requestType condition met");
+      log.info("returnEmptyRecordsIfNeeded: PICK_SLIPS_KEY and PAGE requestType condition met");
       return circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
         .thenApply(r -> r.next(records -> returnNoRecordsIfPickSlipsDisabled(records, context)));
     } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
-      log.info("isStaffSlipPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
+      log.info("returnEmptyRecordsIfNeeded: SEARCH_SLIPS_KEY and HOLD requestType condition met");
       return configurationRepository.lookupPrintHoldRequestsEnabled()
         .thenApply(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
     } else {
+      // Neither condition matched, so continue normal flow
       return ofAsync(false);
     }
   }
