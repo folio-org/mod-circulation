@@ -154,23 +154,23 @@ public abstract class SlipsResource extends Resource {
     if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
       log.info("returnEmptyRecordsIfNeeded: PICK_SLIPS_KEY and PAGE requestType condition met");
       return circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
-        .thenApply(r -> r.next(records -> isPrintingPickSlipsEnabled(records)));
+        .thenApply(r -> r.next(this::isPrintingPickSlipsDisabled));
     } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("returnEmptyRecordsIfNeeded: SEARCH_SLIPS_KEY and HOLD requestType condition met");
       return configurationRepository.lookupPrintHoldRequestsEnabled()
-        .thenApply(r -> r.next(config -> succeeded(config.isPrintHoldRequestsEnabled())));
+        .thenApply(r -> r.next(config -> succeeded(!config.isPrintHoldRequestsEnabled())));
     } else {
       return ofAsync(false);
     }
   }
 
-  private Result<Boolean> isPrintingPickSlipsEnabled(
+  private Result<Boolean> isPrintingPickSlipsDisabled(
     MultipleRecords<CirculationSetting> settingsRecords) {
 
     log.debug("isPrintingPickSlipsEnabled:: parameters settingsRecords: {}",
       () -> multipleRecordsAsString(settingsRecords));
 
-    return succeeded(Optional.ofNullable(settingsRecords)
+    return succeeded(!Optional.ofNullable(settingsRecords)
       .flatMap(records -> records.getRecords().stream()
         .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
         .findFirst())
