@@ -117,52 +117,63 @@ public abstract class SlipsResource extends Resource {
     final UUID servicePointId = UUID.fromString(
       routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
-      configurationRepository.lookupPrintHoldRequestsEnabled()
-        .thenAccept(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
-
-      return;
-    }
-
-    if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
-      circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
-        .thenAccept(r -> r.next(records -> returnNoRecordsIfPickSlipsDisabled(records, context)));
-
-      return;
-    }
-
-    fetchLocationsForServicePoint(servicePointId, clients)
-      .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
-        itemRepository, LocationRepository.using(clients, servicePointRepository))))
-      .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
-      .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
-        ctx.getRequests())))
-      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
-      .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
-      .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
-      .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
-      .thenApply(flatMapResult(this::mapResultToJson))
-      .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-        this::addPrimaryServicePointNameToStaffSlipContext))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+    shouldReturnNoRecords(configurationRepository, circulationSettingsRepository, context)
+      .thenAccept(result -> {
+        if (result.succeeded() && Boolean.TRUE.equals(result.value())) {
+          // Response already written in shouldReturnNoRecords logic
+          return;
+        }
+        // Continue with normal flow if not short-circuited
+        fetchLocationsForServicePoint(servicePointId, clients)
+          .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
+            itemRepository, LocationRepository.using(clients, servicePointRepository))))
+          .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
+          .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
+            ctx.getRequests())))
+          .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+          .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
+          .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
+          .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
+          .thenApply(flatMapResult(this::mapResultToJson))
+          .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
+            this::addPrimaryServicePointNameToStaffSlipContext))
+          .thenApply(r -> r.map(JsonHttpResponse::ok))
+          .thenAccept(context::writeResultToHttpResponse);
+      });
   }
 
-  private Result<Object> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
+  private CompletableFuture<Result<Boolean>> shouldReturnNoRecords(
+    ConfigurationRepository configurationRepository,
+    CirculationSettingsRepository circulationSettingsRepository, WebContext context) {
+
+    if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
+      return circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
+        .thenApply(r -> r.next(records -> returnNoRecordsIfPickSlipsDisabled(records, context)));
+    } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
+      return configurationRepository.lookupPrintHoldRequestsEnabled()
+        .thenApply(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
+    } else {
+      // Neither condition matched, so continue normal flow
+      return ofAsync(false);
+    }
+  }
+
+  private Result<Boolean> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
     WebContext context) {
 
     if (config == null || !config.isPrintHoldRequestsEnabled()) {
       log.info("returnNoRecordsIfSearchSlipsDisabled:: Print hold requests configuration is disabled");
       context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
-        new io.vertx.core.json.JsonObject()
+        new JsonObject()
           .put(SEARCH_SLIPS_KEY, new JsonArray())
           .put(TOTAL_RECORDS_KEY, 0)
       )));
+      return succeeded(true);
     }
-    return succeeded(null);
+    return succeeded(false);
   }
 
-  private Result<Object> returnNoRecordsIfPickSlipsDisabled(
+  private Result<Boolean> returnNoRecordsIfPickSlipsDisabled(
     MultipleRecords<CirculationSetting> settingsRecords, WebContext context) {
 
     log.debug("returnNoRecordsIfPickSlipsDisabled:: parameters settingsRecords: {}",
@@ -181,8 +192,9 @@ public abstract class SlipsResource extends Resource {
           .put(PICK_SLIPS_KEY, new JsonArray())
           .put(TOTAL_RECORDS_KEY, 0)
       )));
+      return succeeded(true);
     }
-    return succeeded(null);
+    return succeeded(false);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchLocationsForServicePoint(
