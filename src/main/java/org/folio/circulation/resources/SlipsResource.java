@@ -33,7 +33,6 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.mapper.StaffSlipMapper;
 import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -56,8 +55,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
@@ -106,96 +105,77 @@ public abstract class SlipsResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
+    final UUID servicePointId = UUID.fromString(
+      routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
+    log.info("getMany:: servicePointId: {}", servicePointId);
+
+    isStaffSlipsPrintingDisabled(clients)
+      .thenCompose(r -> r.after(isPrintingDisabled -> buildStaffSlips(
+        servicePointId, clients, isPrintingDisabled)))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<JsonObject>> buildStaffSlips(UUID servicePointId,
+    Clients clients, boolean isPrintingDisabled) {
+
+    if (isPrintingDisabled) {
+      return ofAsync(new JsonObject()
+        .put(collectionName, new JsonArray())
+        .put(TOTAL_RECORDS_KEY, 0));
+    }
+
     final var userRepository = new UserRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var addressTypeRepository = new AddressTypeRepository(clients);
     final var servicePointRepository = new ServicePointRepository(clients);
     final var patronGroupRepository = new PatronGroupRepository(clients);
     final var departmentRepository = new DepartmentRepository(clients);
-    final var configurationRepository = new ConfigurationRepository(clients);
-    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
-    final UUID servicePointId = UUID.fromString(
-      routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    returnEmptyRecordsIfNeeded(configurationRepository, circulationSettingsRepository, context)
-      .thenAccept(result -> {
-        if (result.succeeded() && Boolean.TRUE.equals(result.value())) {
-          return;
-        }
-        // Continue with normal flow if not short-circuited
-        fetchLocationsForServicePoint(servicePointId, clients)
-          .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
-            itemRepository, LocationRepository.using(clients, servicePointRepository))))
-          .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
-          .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
-            ctx.getRequests())))
-          .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
-          .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
-          .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
-          .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
-          .thenApply(flatMapResult(this::mapResultToJson))
-          .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-            this::addPrimaryServicePointNameToStaffSlipContext))
-          .thenApply(r -> r.map(JsonHttpResponse::ok))
-          .thenAccept(context::writeResultToHttpResponse);
-      });
+    return fetchLocationsForServicePoint(servicePointId, clients)
+      .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
+        itemRepository, LocationRepository.using(clients, servicePointRepository))))
+      .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
+      .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
+        ctx.getRequests())))
+      .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
+      .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
+      .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
+      .thenApply(flatMapResult(this::mapResultToJson))
+      .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
+        this::addPrimaryServicePointNameToStaffSlipContext));
   }
 
-  private CompletableFuture<Result<Boolean>> returnEmptyRecordsIfNeeded(
-    ConfigurationRepository configurationRepository,
-    CirculationSettingsRepository circulationSettingsRepository, WebContext context) {
+  private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
+    final var configurationRepository = new ConfigurationRepository(clients);
+    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
       log.info("returnEmptyRecordsIfNeeded: PICK_SLIPS_KEY and PAGE requestType condition met");
       return circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
-        .thenApply(r -> r.next(records -> returnNoRecordsIfPickSlipsDisabled(records, context)));
+        .thenApply(r -> r.next(records -> isPrintingPickSlipsEnabled(records)));
     } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("returnEmptyRecordsIfNeeded: SEARCH_SLIPS_KEY and HOLD requestType condition met");
       return configurationRepository.lookupPrintHoldRequestsEnabled()
-        .thenApply(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
+        .thenApply(r -> r.next(config -> succeeded(config.isPrintHoldRequestsEnabled())));
     } else {
-      // Neither condition matched, so continue normal flow
       return ofAsync(false);
     }
   }
 
-  private Result<Boolean> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
-    WebContext context) {
+  private Result<Boolean> isPrintingPickSlipsEnabled(
+    MultipleRecords<CirculationSetting> settingsRecords) {
 
-    if (config == null || !config.isPrintHoldRequestsEnabled()) {
-      log.info("returnNoRecordsIfSearchSlipsDisabled:: Print hold requests configuration is disabled");
-      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
-        new JsonObject()
-          .put(SEARCH_SLIPS_KEY, new JsonArray())
-          .put(TOTAL_RECORDS_KEY, 0)
-      )));
-      return succeeded(true);
-    }
-    return succeeded(false);
-  }
-
-  private Result<Boolean> returnNoRecordsIfPickSlipsDisabled(
-    MultipleRecords<CirculationSetting> settingsRecords, WebContext context) {
-
-    log.debug("returnNoRecordsIfPickSlipsDisabled:: parameters settingsRecords: {}",
+    log.debug("isPrintingPickSlipsEnabled:: parameters settingsRecords: {}",
       () -> multipleRecordsAsString(settingsRecords));
-    boolean pickSlipsEnabled = Optional.ofNullable(settingsRecords)
+
+    return succeeded(Optional.ofNullable(settingsRecords)
       .flatMap(records -> records.getRecords().stream()
         .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
         .findFirst())
       .map(setting -> setting.getValue().getBoolean("enablePrintLog"))
-      .orElse(false);
-
-    if (!pickSlipsEnabled) {
-      log.info("returnNoRecordsIfPickSlipsDisabled:: Print pick slips configuration is disabled");
-      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
-        new JsonObject()
-          .put(PICK_SLIPS_KEY, new JsonArray())
-          .put(TOTAL_RECORDS_KEY, 0)
-      )));
-      return succeeded(true);
-    }
-    return succeeded(false);
+      .orElse(false));
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchLocationsForServicePoint(
