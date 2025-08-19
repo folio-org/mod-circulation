@@ -188,11 +188,7 @@ class StaffSlipsTests extends APITests {
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
 
-    if (slipsTypeName.equals(SlipsType.PICK_SLIPS.name())) {
-      circulationSettingFixture.configurePrintEventLogFeature(true);
-    } else {
-      configurationsFixture.configurePrintHoldRequests(true);
-    }
+    configureSlipsFeatureForType(SlipsType.valueOf(slipsTypeName), true);
     configurationsFixture.configurePrintHoldRequests(true);
     SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
@@ -802,7 +798,7 @@ class StaffSlipsTests extends APITests {
   private void configureSlipsFeatureForType(SlipsType slipsType, boolean enabled) {
     if (slipsType == SlipsType.PICK_SLIPS) {
       circulationSettingFixture.configurePrintEventLogFeature(enabled);
-    } else {
+    } else if (slipsType == SlipsType.SEARCH_SLIPS) {
       configurationsFixture.configurePrintHoldRequests(enabled);
     }
   }

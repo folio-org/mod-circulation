@@ -147,16 +147,13 @@ public abstract class SlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
-    final var configurationRepository = new ConfigurationRepository(clients);
-    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
-
     if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
-      log.info("isStaffSlipsPrintingDisabled: PICK_SLIPS_KEY and PAGE requestType condition met");
-      return circulationSettingsRepository.findBy(PRINT_EVENT_FLAG_QUERY)
+      log.info("isStaffSlipsPrintingDisabled:: PICK_SLIPS_KEY and PAGE requestType condition met");
+      return new CirculationSettingsRepository(clients).findBy(PRINT_EVENT_FLAG_QUERY)
         .thenApply(r -> r.map(this::isPrintingPickSlipsDisabled));
     } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
-      log.info("isStaffSlipsPrintingDisabled: SEARCH_SLIPS_KEY and HOLD requestType condition met");
-      return configurationRepository.lookupPrintHoldRequestsEnabled()
+      log.info("isStaffSlipsPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
+      return new ConfigurationRepository(clients).lookupPrintHoldRequestsEnabled()
         .thenApply(r -> r.map(config -> !config.isPrintHoldRequestsEnabled()));
     } else {
       return ofAsync(false);
