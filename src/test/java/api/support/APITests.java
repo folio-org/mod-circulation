@@ -24,8 +24,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import api.support.fixtures.SearchInstanceFixture;
-
 import org.folio.Environment;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +46,7 @@ import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.CirculationSettingFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
@@ -79,6 +78,7 @@ import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
+import api.support.fixtures.SearchInstanceFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.SettingsFixture;
 import api.support.fixtures.TemplateFixture;
@@ -310,6 +310,8 @@ public abstract class APITests {
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
   protected final ConfigurationsFixture configurationsFixture = new ConfigurationsFixture(configClient);
+  protected final CirculationSettingFixture circulationSettingFixture = new CirculationSettingFixture(
+    circulationSettingsClient);
   protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 
   protected final ForUseAtLocationHoldFixture holdForUseAtLocationFixture = new ForUseAtLocationHoldFixture();

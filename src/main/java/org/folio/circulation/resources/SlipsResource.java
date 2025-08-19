@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.CirculationSetting;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -31,8 +32,8 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
-import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.mapper.StaffSlipMapper;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -53,8 +54,8 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
@@ -65,9 +66,12 @@ public abstract class SlipsResource extends Resource {
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
+  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
+  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
+  public static final String PRINT_EVENT_LOG_FEATURE = "printEventLogFeature";
 
   private final String rootPath;
   private final String collectionName;
@@ -100,50 +104,80 @@ public abstract class SlipsResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
+    final UUID servicePointId = UUID.fromString(
+      routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
+    log.info("getMany:: servicePointId: {}", servicePointId);
+
+    isStaffSlipsPrintingDisabled(clients)
+      .thenCompose(r -> r.after(isPrintingDisabled -> buildStaffSlips(
+        servicePointId, clients, isPrintingDisabled)))
+      .thenApply(r -> r.map(JsonHttpResponse::ok))
+      .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<JsonObject>> buildStaffSlips(UUID servicePointId,
+    Clients clients, boolean isPrintingDisabled) {
+
+    if (isPrintingDisabled) {
+      return ofAsync(new JsonObject()
+        .put(collectionName, new JsonArray())
+        .put(TOTAL_RECORDS_KEY, 0));
+    }
+
     final var userRepository = new UserRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var addressTypeRepository = new AddressTypeRepository(clients);
     final var servicePointRepository = new ServicePointRepository(clients);
     final var patronGroupRepository = new PatronGroupRepository(clients);
     final var departmentRepository = new DepartmentRepository(clients);
-    final var configurationRepository = new ConfigurationRepository(clients);
-    final UUID servicePointId = UUID.fromString(
-      routingContext.request().getParam(SERVICE_POINT_ID_PARAM));
 
-    if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
-      configurationRepository.lookupPrintHoldRequestsEnabled()
-        .thenAccept(r -> r.next(config -> returnNoRecordsIfSearchSlipsDisabled(config, context)));
-    }
-
-    fetchLocationsForServicePoint(servicePointId, clients)
+    return fetchLocationsForServicePoint(servicePointId, clients)
       .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
         itemRepository, LocationRepository.using(clients, servicePointRepository))))
       .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
       .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
         ctx.getRequests())))
-      .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
+      .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
       .thenComposeAsync(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenComposeAsync(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApply(flatMapResult(this::mapResultToJson))
       .thenComposeAsync(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-        this::addPrimaryServicePointNameToStaffSlipContext))
-      .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+        this::addPrimaryServicePointNameToStaffSlipContext));
   }
 
-  private Result<Object> returnNoRecordsIfSearchSlipsDisabled(PrintHoldRequestsConfiguration config,
-    WebContext context) {
-
-    if (config == null || !config.isPrintHoldRequestsEnabled()) {
-      log.info("returnNoRecordsIfSearchSlipsDisabled:: Print hold requests configuration is disabled");
-      context.writeResultToHttpResponse(succeeded(JsonHttpResponse.ok(
-        new io.vertx.core.json.JsonObject()
-          .put(SEARCH_SLIPS_KEY, new JsonArray())
-          .put(TOTAL_RECORDS_KEY, 0)
-      )));
+  private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
+    if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
+      log.info("isStaffSlipsPrintingDisabled:: PICK_SLIPS_KEY and PAGE requestType condition met");
+      return new CirculationSettingsRepository(clients).findBy(PRINT_EVENT_FLAG_QUERY)
+        .thenApply(r -> r.map(this::isPrintingPickSlipsDisabled));
+    } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
+      log.info("isStaffSlipsPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
+      return new ConfigurationRepository(clients).lookupPrintHoldRequestsEnabled()
+        .thenApply(r -> r.map(config -> !config.isPrintHoldRequestsEnabled()));
+    } else {
+      return ofAsync(false);
     }
-    return succeeded(null);
+  }
+
+  private boolean isPrintingPickSlipsDisabled(
+    MultipleRecords<CirculationSetting> settingsRecords) {
+
+    log.debug("isPrintingPickSlipsEnabled:: parameters settingsRecords: {}",
+      () -> multipleRecordsAsString(settingsRecords));
+
+    if (settingsRecords == null) {
+      log.info("isPrintingPickSlipsEnabled:: settingsRecords is null");
+      return false;
+    }
+
+    return settingsRecords.getRecords()
+      .stream()
+      .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
+      .findFirst()
+      .map(CirculationSetting::getValue)
+      .map(setting -> !setting.getBoolean("enablePrintLog"))
+      .orElse(false);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchLocationsForServicePoint(
