@@ -33,31 +33,31 @@ public class LoanRepresentation {
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
 
     if(loan.isDueDateChangedByNearExpireUser()) {
-      log.info("extendedLoan:: due date changed by near expire user");
+      log.debug("extendedLoan:: due date changed by near expire user");
       extendedRepresentation.put("dueDateChangedByNearExpireUser", loan.isDueDateChangedByNearExpireUser());
     }
 
     if(loan.isDueDateChangedByHold()) {
-      log.info("extendedLoan:: due date changed by hold");
+      log.debug("extendedLoan:: due date changed by hold");
       extendedRepresentation.put("dueDateChangedByHold",loan.isDueDateChangedByHold());
     }
 
     if(loan.getCheckinServicePoint() != null) {
-      log.info("extendedLoan:: checkinServicePoint is not null");
+      log.debug("extendedLoan:: checkinServicePoint is not null");
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }
 
     if(loan.getCheckoutServicePoint() != null) {
-      log.info("extendedLoan:: checkoutServicePoint is not null");
+      log.debug("extendedLoan:: checkoutServicePoint is not null");
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
     }
 
     if (loan.getUser() != null) {
-      log.info("extendedLoan:: user is not null");
+      log.debug("extendedLoan:: user is not null");
       additionalBorrowerProperties(extendedRepresentation, loan.getUser());
     } else {
       //When there is no user, it means that the loan has been anonymized
-      log.info("extendedLoan:: there is no user, removing borrower");
+      log.debug("extendedLoan:: there is no user, removing borrower");
       extendedRepresentation.remove(BORROWER);
     }
 

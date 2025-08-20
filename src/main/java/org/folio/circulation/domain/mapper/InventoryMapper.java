@@ -46,7 +46,7 @@ public class InventoryMapper {
       item.getFloatDestinationLocation() : item.getLocation();
 
     if (location != null) {
-      log.info("createItemContext:: location is not null");
+      log.debug("createItemContext:: location is not null");
 
       itemContext
         .put("effectiveLocationSpecific", location.getName())
@@ -57,14 +57,14 @@ public class InventoryMapper {
 
       var primaryServicePoint = location.getPrimaryServicePoint();
       if (primaryServicePoint != null) {
-        log.info("createItemContext:: primaryServicePoint is not null");
+        log.debug("createItemContext:: primaryServicePoint is not null");
         itemContext.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName());
       }
     }
 
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
     if (callNumberComponents != null) {
-      log.info("createItemContext:: callNumberComponents is not null");
+      log.debug("createItemContext:: callNumberComponents is not null");
       itemContext
         .put("callNumber", callNumberComponents.getCallNumber())
         .put("callNumberPrefix", callNumberComponents.getPrefix())

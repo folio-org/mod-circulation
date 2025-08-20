@@ -121,7 +121,7 @@ public class AllowedServicePointsService {
       return ofAsync(allowedServicePointsRequest);
     }
 
-    log.info("fetchRequest:: requestId is not null, fetching request");
+    log.debug("fetchRequest:: requestId is not null, fetching request");
 
     return requestRepository.getByIdWithoutRelatedRecords(requestId)
       .thenApply(r -> r.mapFailure(failure ->  failed(failure instanceof RecordNotFoundFailure ?
