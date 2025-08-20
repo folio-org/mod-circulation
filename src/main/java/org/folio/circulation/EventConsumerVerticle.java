@@ -11,6 +11,7 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
@@ -108,6 +109,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .globalLoadSensor(new GlobalLoadSensor())
       .subscriptionDefinition(buildSubscriptionDefinition(eventType))
       .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
+      .groupInstanceId(getClass().getSimpleName() + "-" + UUID.randomUUID())
       .build();
 
     return moduleIdProvider.getModuleId()
