@@ -140,7 +140,7 @@ public class CirculationRulesProcessor {
     log.debug("fetchLocation:: parameters params: {}", params);
 
     if (params.getLocation() != null) {
-      log.info("fetchLocation:: location is not null");
+      log.debug("fetchLocation:: location is not null");
       return ofAsync(() -> params);
     }
 

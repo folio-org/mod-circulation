@@ -25,7 +25,7 @@ public class ItemSummaryRepresentation {
     log.debug("createItemSummary:: parameters item: {}", item);
 
     if (item == null || item.isNotFound()) {
-      log.info("createItemSummary:: item is null or not found");
+      log.debug("createItemSummary:: item is null or not found");
       return new JsonObject();
     }
 
@@ -59,7 +59,7 @@ public class ItemSummaryRepresentation {
       .put("name", item.getStatus().getValue());
 
     if (Objects.nonNull(item.getStatus().getDate())){
-      log.info("createItemSummary:: item.getStatus().getDate() is not null");
+      log.debug("createItemSummary:: item.getStatus().getDate() is not null");
       status.put("date", item.getStatus().getDate());
     }
 
@@ -72,7 +72,7 @@ public class ItemSummaryRepresentation {
       = item.getInTransitDestinationServicePoint();
 
     if (inTransitDestinationServicePoint != null) {
-      log.info("createItemSummary:: inTransitDestinationServicePoint is not null");
+      log.debug("createItemSummary:: inTransitDestinationServicePoint is not null");
       final JsonObject destinationServicePointSummary = new JsonObject();
 
       write(destinationServicePointSummary, "id",
@@ -91,14 +91,14 @@ public class ItemSummaryRepresentation {
       itemSummary.put("location", new JsonObject()
         .put("name", item.getFloatDestinationLocation().getName()));
     } else if (location != null) {
-      log.info("createItemSummary:: location is not null");
+      log.debug("createItemSummary:: location is not null");
       itemSummary.put("location", new JsonObject()
         .put("name", location.getName()));
     }
 
     writeByPath(itemSummary, item.getMaterialTypeName(), "materialType", "name");
 
-    log.info("createItemSummary:: result {}", itemSummary);
+    log.debug("createItemSummary:: result {}", itemSummary);
     return itemSummary;
   }
 }
