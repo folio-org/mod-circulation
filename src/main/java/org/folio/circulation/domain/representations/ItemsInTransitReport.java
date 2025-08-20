@@ -47,7 +47,7 @@ public class ItemsInTransitReport {
     JsonObject result = new JsonObject()
       .put("items", new JsonArray(reportEntries))
       .put("totalRecords", reportEntries.size());
-    log.info("build:: result {}", result);
+    log.debug("build:: result {}", result);
     return result;
   }
 
@@ -169,7 +169,7 @@ public class ItemsInTransitReport {
       writeLastCheckIn(entry, lastCheckIn);
     }
 
-    log.info("buildEntry:: result {}", entry);
+    log.debug("buildEntry:: result {}", entry);
     return entry;
   }
 
