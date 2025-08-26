@@ -1,3 +1,6 @@
+## 24.4.10 2025-08-26
+* Extend `check-out-by-barcode-dry-run` endpoint to support block overrides (CIRC-2425)
+
 ## 24.4.9 2025-07-23
 * Handle duplicates when fetching instances and holdings for staff slips (CIRC-2414)
 
