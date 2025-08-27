@@ -1,31 +1,34 @@
 package api.printEvents;
 
-import api.support.APITests;
-import api.support.builders.CirculationSettingBuilder;
-import api.support.builders.RequestBuilder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.support.http.client.Response;
-import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.IntStream;
-
 import static api.support.http.InterfaceUrls.printEventsUrl;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.IntStream;
+
+import org.folio.circulation.support.http.client.Response;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import api.support.APITests;
+import api.support.builders.CirculationSettingBuilder;
+import api.support.builders.RequestBuilder;
+import io.vertx.core.json.JsonObject;
+
 class PrintEventsTests extends APITests {
 
-
-  @Test
-  void postPrintEventsTest() {
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void postPrintEventsTest(Object trueValue) {
     circulationSettingsClient.create(new CirculationSettingBuilder()
       .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("enablePrintLog", true)));
+      .withValue(new JsonObject().put("enablePrintLog", trueValue)));
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requestIds", createOneHundredRequests());
     Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
@@ -40,14 +43,15 @@ class PrintEventsTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
-  @Test
-  void postPrintEventsWhenDuplicateCirculationSettingFound() {
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueAndFalseValues")
+  void postPrintEventsWhenDuplicateCirculationSettingFound(Object trueValue, Object falseValue) {
     circulationSettingsClient.create(new CirculationSettingBuilder()
       .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("enablePrintLog", true)));
+      .withValue(new JsonObject().put("enablePrintLog", trueValue)));
     circulationSettingsClient.create(new CirculationSettingBuilder()
       .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("Enable-Print-Event", false)));
+      .withValue(new JsonObject().put("Enable-Print-Event", falseValue)));
 
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requestIds", List.of(UUID.randomUUID()));
@@ -55,11 +59,12 @@ class PrintEventsTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
-  @Test
-  void postPrintEventsWhenPrintEventSettingIsDisable() {
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideFalseValues")
+  void postPrintEventsWhenPrintEventSettingIsDisable(Object falseValue) {
     circulationSettingsClient.create(new CirculationSettingBuilder()
       .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("enablePrintLog", false)));
+      .withValue(new JsonObject().put("enablePrintLog", falseValue)));
 
     JsonObject printRequest = getPrintEvent();
     printRequest.put("requestIds", List.of(UUID.randomUUID()));
@@ -67,11 +72,12 @@ class PrintEventsTests extends APITests {
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
 
-  @Test
-  void postPrintEventsWithInvalidRequestId() {
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void postPrintEventsWithInvalidRequestId(Object trueValue) {
     circulationSettingsClient.create(new CirculationSettingBuilder()
       .withName("printEventLogFeature")
-      .withValue(new JsonObject().put("enablePrintLog", true)));
+      .withValue(new JsonObject().put("enablePrintLog", trueValue)));
     JsonObject printRequest = getPrintEvent();
     List<UUID> requestIds = new ArrayList<>(createOneHundredRequests());
     requestIds.add(UUID.randomUUID());
@@ -79,7 +85,6 @@ class PrintEventsTests extends APITests {
     Response response = restAssuredClient.post(printRequest, printEventsUrl("/print-events-entry"), "post-print-event");
     assertThat(response, hasStatus(HTTP_UNPROCESSABLE_ENTITY));
   }
-
 
   @Test
   void postPrintEventsWithInvalidField() {
@@ -125,4 +130,5 @@ class PrintEventsTests extends APITests {
         .fulfillToHoldShelf()
         .withPickupServicePointId(pickupServicePointId)).getId()).toList();
   }
+
 }
