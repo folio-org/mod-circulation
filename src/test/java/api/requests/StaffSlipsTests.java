@@ -332,9 +332,10 @@ class StaffSlipsTests extends APITests {
     assertThat(requestContext.getString("requestDate"), isEquivalentTo(requestDate));
   }
 
-  @Test
-  void responseContainsPickSlipsForRequestsOfTypePageOnly() {
-    circulationSettingFixture.configurePrintEventLogFeature(true);
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void responseContainsPickSlipsForRequestsOfTypePageOnly(Object trueValue) {
+    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
@@ -591,9 +592,10 @@ class StaffSlipsTests extends APITests {
       "The Long Way to a Small, Angry Planet"));
   }
 
-  @Test
-  void pickSlipForTitleLevelRequestContainsItemData() {
-    circulationSettingFixture.configurePrintEventLogFeature(true);
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void pickSlipForTitleLevelRequestContainsItemData(Object trueValue) {
+    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
     settingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var requester = usersFixture.steve();
@@ -712,9 +714,12 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
   }
 
-  @Test
-  void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings() {
-    circulationSettingFixture.configurePrintEventLogFeature(true);
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings(
+    Object trueValue) {
+
+    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
     settingsFixture.enableTlrFeature();
     UserResource requester = usersFixture.steve();
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -736,9 +741,12 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 11, SlipsType.PICK_SLIPS);
   }
 
-  @Test
-  void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance() {
-    circulationSettingFixture.configurePrintEventLogFeature(true);
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance(
+    Object trueValue) {
+
+    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
     settingsFixture.enableTlrFeature();
     int batchSize = 50; // default value from CqlIndexValuesFinder
 
@@ -766,9 +774,10 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, batchSize + 1, SlipsType.PICK_SLIPS);
   }
 
-  @Test
-  void responseContainsNoRecordsIfPickSlipsDisabled() {
-    circulationSettingFixture.configurePrintEventLogFeature(true);
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueAndFalseValues")
+  void responseContainsNoRecordsIfPickSlipsDisabled(Object trueValue, Object falseValue) {
+    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
@@ -788,7 +797,7 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
     assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
 
-    circulationSettingFixture.configurePrintEventLogFeature(false);
+    circulationSettingFixture.configurePrintEventLogFeature(falseValue);
     response = SlipsType.PICK_SLIPS.get(servicePointId);
 
     assertThat(response.getStatusCode(), is(HTTP_OK));
