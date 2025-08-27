@@ -179,10 +179,10 @@ public abstract class SlipsResource extends Resource {
       .map(CirculationSetting::getValue)
       .map(setting -> setting.getValue("enablePrintLog"))
       .map(enablePrintLogValue -> {
-        if (enablePrintLogValue instanceof Boolean) {
-          return !(Boolean) enablePrintLogValue;
-        } else if (enablePrintLogValue instanceof String) {
-          return !BooleanUtils.toBoolean((String) enablePrintLogValue);
+        if (enablePrintLogValue instanceof Boolean enablePrintLogBoolean) {
+          return !enablePrintLogBoolean;
+        } else if (enablePrintLogValue instanceof String enablePrintLogString) {
+          return !BooleanUtils.toBoolean(enablePrintLogString);
         }
         return false;
       })
