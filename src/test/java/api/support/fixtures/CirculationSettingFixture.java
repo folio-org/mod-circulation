@@ -13,7 +13,7 @@ public class CirculationSettingFixture {
     this.client = circulationSettingsClient;
   }
 
-  public void configurePrintEventLogFeature(boolean enablePrintLog) {
+  public void configurePrintEventLogFeature(Object enablePrintLog) {
     deletePrintEventLogFeatureConfig();
     printEventLogFeatureConfigurationEntryId = client.create(
       setPrintEventLogFeatureEnabled(enablePrintLog)).getId();
@@ -26,7 +26,7 @@ public class CirculationSettingFixture {
     }
   }
 
-  private JsonObject setPrintEventLogFeatureEnabled(boolean enablePrintLog) {
+  private JsonObject setPrintEventLogFeatureEnabled(Object enablePrintLog) {
     return new JsonObject()
       .put("id", UUID.randomUUID())
       .put("name", "printEventLogFeature")

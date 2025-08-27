@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -176,7 +177,15 @@ public abstract class SlipsResource extends Resource {
       .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
       .findFirst()
       .map(CirculationSetting::getValue)
-      .map(setting -> !setting.getBoolean("enablePrintLog"))
+      .map(setting -> setting.getValue("enablePrintLog"))
+      .map(enablePrintLogValue -> {
+        if (enablePrintLogValue instanceof Boolean enablePrintLogBoolean) {
+          return !enablePrintLogBoolean;
+        } else if (enablePrintLogValue instanceof String enablePrintLogString) {
+          return !BooleanUtils.toBoolean(enablePrintLogString);
+        }
+        return false;
+      })
       .orElse(false);
   }
 
