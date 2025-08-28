@@ -1,3 +1,7 @@
+## 24.4.11 2025-08-28
+* Support boolean and string `enablePrintLog` (CIRC-2448)
+* Address high memory consumption if pick-slips disabled (CIRC-2416)
+
 ## 24.4.10 2025-08-26
 * Extend `check-out-by-barcode-dry-run` endpoint to support block overrides (CIRC-2425)
 
