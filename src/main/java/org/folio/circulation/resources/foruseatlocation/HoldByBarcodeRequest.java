@@ -7,6 +7,7 @@ import lombok.ToString;
 import lombok.With;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.support.BadRequestFailure;
@@ -78,5 +79,15 @@ public class HoldByBarcodeRequest {
     return () -> new BadRequestFailure(format(message + ", item barcode (%s)", request.getItemBarcode()));
   }
 
+  Result<Boolean> forUseAtLocationIsNotEnabled() {
+    return Result.succeeded(!Environment.getForUseAtLocationEnabled());
+  }
+
+
+  static Supplier<HttpFailure> forUseAtLocationIsNotEnabledFailure() {
+    String message = "For-use-at-location is not enabled for this tenant.";
+    log.warn("loanIsNotForUseAtLocationFailure:: {}", message);
+    return () -> new BadRequestFailure(format(message));
+  }
 
 }
