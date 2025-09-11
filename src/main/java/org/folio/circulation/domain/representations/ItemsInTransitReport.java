@@ -47,7 +47,7 @@ public class ItemsInTransitReport {
     JsonObject result = new JsonObject()
       .put("items", new JsonArray(reportEntries))
       .put("totalRecords", reportEntries.size());
-    log.info("build:: result {}", result);
+    log.debug("build:: result {}", result);
     return result;
   }
 
@@ -80,11 +80,11 @@ public class ItemsInTransitReport {
 
     Location location = null;
     if (item.getEffectiveLocationId() != null) {
-      log.info("buildEntry:: effectiveLocationId is not null");
+      log.debug("buildEntry:: effectiveLocationId is not null");
       location = reportContext.getLocations().get(item.getEffectiveLocationId());
     }
     if (location != null) {
-      log.info("buildEntry:: location is not null");
+      log.debug("buildEntry:: location is not null");
       item = ofNullable(location.getPrimaryServicePointId())
         .map(UUID::toString)
         .map(reportContext.getServicePoints()::get)
@@ -125,17 +125,17 @@ public class ItemsInTransitReport {
 
     ServicePoint inTransitDestinationServicePoint = item.getInTransitDestinationServicePoint();
     if (inTransitDestinationServicePoint != null) {
-      log.info("buildEntry:: inTransitDestinationServicePoint is not null");
+      log.debug("buildEntry:: inTransitDestinationServicePoint is not null");
       writeServicePoint(entry, inTransitDestinationServicePoint, "inTransitDestinationServicePoint");
     }
 
     if (location != null) {
-      log.info("buildEntry:: location is not null");
+      log.debug("buildEntry:: location is not null");
       writeLocation(entry, location);
     }
 
     if (request != null) {
-      log.info("buildEntry:: request is not null");
+      log.debug("buildEntry:: request is not null");
       User requester = reportContext.getUsers().get(request.getRequesterId());
 
       PatronGroup requesterPatronGroup = requester == null ? null :
@@ -152,7 +152,7 @@ public class ItemsInTransitReport {
     }
 
     if (loan != null) {
-      log.info("buildEntry:: loan is not null");
+      log.debug("buildEntry:: loan is not null");
       var checkoutServicePoint = getServicePoint(loan.getCheckoutServicePointId());
       var checkInServicePoint = getServicePoint(loan.getCheckInServicePointId());
 
@@ -165,11 +165,11 @@ public class ItemsInTransitReport {
 
     final LastCheckIn lastCheckIn = item.getLastCheckIn();
     if (lastCheckIn != null) {
-      log.info("buildEntry:: lastCheckIn is not null");
+      log.debug("buildEntry:: lastCheckIn is not null");
       writeLastCheckIn(entry, lastCheckIn);
     }
 
-    log.info("buildEntry:: result {}", entry);
+    log.debug("buildEntry:: result {}", entry);
     return entry;
   }
 
@@ -226,7 +226,7 @@ public class ItemsInTransitReport {
 
     final JsonObject tags = request.asJson().getJsonObject("tags");
     if (tags != null) {
-      log.info("writeRequest:: tags is not null");
+      log.debug("writeRequest:: tags is not null");
       final JsonArray tagsJson = tags.getJsonArray("tagList");
       write(requestJson, "tags", tagsJson);
     }
@@ -252,7 +252,7 @@ public class ItemsInTransitReport {
       servicePoint);
 
     if (servicePoint != null) {
-      log.info("writeCheckInServicePoint:: servicePoint is not null");
+      log.debug("writeCheckInServicePoint:: servicePoint is not null");
       final JsonObject checkInServicePointJson = new JsonObject();
       write(checkInServicePointJson, "name", servicePoint.getName());
       write(checkInServicePointJson, "code", servicePoint.getCode());

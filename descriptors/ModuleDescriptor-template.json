@@ -51,7 +51,9 @@
             "circulation.pick-slips.get"
           ],
           "modulePermissions": [
-            "modperms.circulation.pick-slips.get"
+            "modperms.circulation.pick-slips.get",
+            "circulation.settings.collection.get",
+            "circulation.settings.item.get"
           ]
         }
       ]

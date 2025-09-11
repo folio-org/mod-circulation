@@ -89,7 +89,7 @@ public class NoticeLogContextItem {
     }
 
     if (Objects.nonNull(request.getPickupServicePointId())) {
-      log.info("from:: request.getPickupServicePointId() is not null");
+      log.debug("from:: request.getPickupServicePointId() is not null");
       logContextItem = logContextItem.withServicePointId(request.getPickupServicePointId());
     }
 

@@ -103,7 +103,7 @@ public class NoticeLogContext {
     log.debug("withUser:: parameters user: {}", user);
 
     if (user != null) {
-      log.info("from:: user is not null");
+      log.debug("from:: user is not null");
       return withUserBarcode(user.getBarcode())
         .withUserId(user.getId());
     }
