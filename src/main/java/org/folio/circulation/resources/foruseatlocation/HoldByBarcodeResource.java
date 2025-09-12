@@ -173,7 +173,7 @@ public class HoldByBarcodeResource extends Resource {
   }
 
   private static Result<HoldByBarcodeRequest> failWhenForUseAtLocationIsNotEnabled (Result<HoldByBarcodeRequest> request) {
-    log.warn("failWhenForUseAtLocationIsNotEnabled - cannot process {} as a for-use-at-location request", request);
+    log.warn("failWhenForUseAtLocationIsNotEnabled:: cannot hold by barcode, for-use-at-location is not enabled for this tenant");
     return request.failWhen(HoldByBarcodeRequest::forUseAtLocationIsNotEnabled, req -> forUseAtLocationIsNotEnabledFailure().get());
   }
   private HttpResponse toResponse(JsonObject body) {

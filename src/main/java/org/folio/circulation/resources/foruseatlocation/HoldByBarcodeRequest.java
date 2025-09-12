@@ -83,10 +83,9 @@ public class HoldByBarcodeRequest {
     return Result.succeeded(!Environment.getForUseAtLocationEnabled());
   }
 
-
   static Supplier<HttpFailure> forUseAtLocationIsNotEnabledFailure() {
     String message = "For-use-at-location is not enabled for this tenant.";
-    log.warn("loanIsNotForUseAtLocationFailure:: {}", message);
+    log.warn("forUseAtLocationIsNotEnabledFailure:: {}", message);
     return () -> new BadRequestFailure(format(message));
   }
 
