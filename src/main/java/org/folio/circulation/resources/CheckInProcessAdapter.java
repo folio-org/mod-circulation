@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
@@ -279,7 +280,7 @@ class CheckInProcessAdapter {
     log.debug("markReturnedIfForUseAtLocation:: parameters checkInContext: {}", checkInContext);
 
     Loan loan = checkInContext.getLoan();
-    if (loan != null && loan.isForUseAtLocation()) {
+    if (Environment.getForUseAtLocationEnabled() && loan != null && loan.isForUseAtLocation()) {
       loan.changeStatusOfUsageAtLocation(USAGE_STATUS_RETURNED);
     }
     return checkInContext;

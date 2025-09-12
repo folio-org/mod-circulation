@@ -103,12 +103,21 @@ be configured using the following environment variables:
 If a variable is not present, its default values is used as a fallback. If this configuration is
 invalid, the module will start, but Kafka integration will not work.
 
-Module supports so-called floating collections but the feature is disabled by default. Floating
-collections support can be switched on by setting the environment variable ENABLE_FLOATING_COLLECTIONS to TRUE.
+Module supports so-called floating collections but the feature is disabled by default if the environment variable is
+not present. Floating collections support can be switched on by setting the environment variable
+ENABLE_FLOATING_COLLECTIONS to TRUE.
 
 | Variable name               | Default value     |
 |-----------------------------|-------------------|
 | ENABLE_FLOATING_COLLECTIONS | FALSE             |
+
+Module supports reading room circulation (also called "for-use-at-location") but the feature is disabled by default,
+if the environment variable is not present.  Reading room circulation can be switched on by setting the environment
+variable ENABLE_FOR_USE_AT_LOCATION to TRUE.
+
+| Variable name               | Default value     |
+|-----------------------------|-------------------|
+| ENABLE_FOR_USE_AT_LOCATION  | FALSE             |
 
 The `HTTP_MAXPOOLSIZE` variable specifies the HTTP connection pool size in mod-circulation.
 If this value is set too low in high-load environments that require a large number of HTTP requests to

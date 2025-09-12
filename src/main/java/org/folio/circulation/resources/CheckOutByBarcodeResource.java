@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckOutLock;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
@@ -316,7 +317,7 @@ public class CheckOutByBarcodeResource extends Resource {
     log.debug("markInUseIfForUseAtLocation:: parameters: context: {}", loanAndRelatedRecords);
 
     Loan loan = loanAndRelatedRecords.getLoan();
-    if (loan.getLoanPolicy().isForUseAtLocation()) {
+    if (Environment.getForUseAtLocationEnabled() && loan.getLoanPolicy().isForUseAtLocation()) {
       loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE);
     }
     return loanAndRelatedRecords;

@@ -25,6 +25,10 @@ public class Environment {
     return getVariable("ENABLE_FLOATING_COLLECTIONS", false);
   }
 
+  public static boolean getForUseAtLocationEnabled() {
+    return getVariable("ENABLE_FOR_USE_AT_LOCATION", false);
+  }
+
   public static int getHttpMaxPoolSize() {
     return getVariable("HTTP_MAXPOOLSIZE", 100);
   }
