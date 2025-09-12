@@ -42,6 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.lang.String.format;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
 import static org.folio.circulation.domain.representations.LoanProperties.*;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.forUseAtLocationIsNotEnabledFailure;
 import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.loanIsNotForUseAtLocationFailure;
 import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.noOpenLoanFailure;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
@@ -80,6 +81,7 @@ public class HoldByBarcodeResource extends Resource {
 
     HoldByBarcodeRequest.buildRequestFrom(requestBodyAsJson)
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
+      .thenApply(HoldByBarcodeResource::failWhenForUseAtLocationIsNotEnabled)
       .thenApply(HoldByBarcodeResource::failWhenOpenLoanNotFoundForItem)
       .thenApply(HoldByBarcodeResource::failWhenOpenLoanIsNotForUseAtLocation)
       .thenCompose(request -> request.after(req -> findPolicy(req, loanPolicyRepository)))
@@ -170,6 +172,10 @@ public class HoldByBarcodeResource extends Resource {
     return request.failWhen(HoldByBarcodeRequest::loanIsNotForUseAtLocation, req -> loanIsNotForUseAtLocationFailure(req).get());
   }
 
+  private static Result<HoldByBarcodeRequest> failWhenForUseAtLocationIsNotEnabled (Result<HoldByBarcodeRequest> request) {
+    log.warn("failWhenForUseAtLocationIsNotEnabled:: cannot hold by barcode, for-use-at-location is not enabled for this tenant");
+    return request.failWhen(HoldByBarcodeRequest::forUseAtLocationIsNotEnabled, req -> forUseAtLocationIsNotEnabledFailure().get());
+  }
   private HttpResponse toResponse(JsonObject body) {
     return JsonHttpResponse.ok(body,
       format("/circulation/loans/%s", body.getString("id")));
