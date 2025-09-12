@@ -6,6 +6,7 @@ import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
+import org.folio.Environment;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
@@ -29,11 +30,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 public class LoansForUseAtLocationTests extends APITests {
+
   private ItemResource item;
   private UserResource borrower;
 
+  private static final String ENV_VAR_ENABLE_FOR_USE_AT_LOCATION = "ENABLE_FOR_USE_AT_LOCATION";
+
+
   @BeforeEach
   void beforeEach() {
+    Environment.MOCK_ENV.remove(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION);
 
     HoldingBuilder holdingsBuilder = itemsFixture.applyCallNumberHoldings(
       "CN",
@@ -55,7 +61,8 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
-  void willSetAtLocationUsageStatusToInUseOnCheckout() {
+  void willSetAtLocationUsageStatusToInUseOnCheckoutIfEnabled() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -79,7 +86,30 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
+  void willNotSetAtLocationUsageStatusOnCheckoutIfNotEnabled() {
+    final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true);
+
+    use(forUseAtLocationPolicyBuilder);
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    JsonObject loan = loansFixture.getLoanById(response.getId()).getJson();
+    JsonObject forUseAtLocation = loan.getJsonObject("forUseAtLocation");
+    assertThat("loan.forUseAtLocation", forUseAtLocation, nullValue());
+  }
+
+
+  @Test
   void willMarkItemHeldByBarcode() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     // Check item out and put it on hold at 2020-10-27 (two days before mock calendar starts)
     ZonedDateTime dateOfHold = atStartOfDay(FIRST_DAY_OPEN.minusDays(2), UTC).plusHours(10).plusSeconds(10);
     mockClockManagerToReturnFixedDateTime(dateOfHold);
@@ -123,6 +153,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void willSetHoldShelfExpiryToEndOfDayBeforeClosedDayOnPutOnHold() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     // Check item out and put it on hold at 2020-10-27 (two days before mock calendar starts)
     ZonedDateTime dateOfHold = atStartOfDay(FIRST_DAY_OPEN.minusDays(2), UTC).plusHours(10).plusSeconds(10);
     mockClockManagerToReturnFixedDateTime(dateOfHold);
@@ -163,6 +194,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void willSetHoldShelfExpiryToEndOfDayAfterClosedDayOnPutOnHold() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     // Check item out and put it on hold at 2020-10-27 (two days before mock calendar starts)
     ZonedDateTime dateOfHold = atStartOfDay(FIRST_DAY_OPEN.minusDays(2), UTC).plusHours(10).plusSeconds(10);
     mockClockManagerToReturnFixedDateTime(dateOfHold);
@@ -203,6 +235,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void willSetNoHoldShelfExpirationIfPolicyNotDefined() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     ZonedDateTime dateOfHold = atStartOfDay(FIRST_DAY_OPEN.minusDays(2), UTC).plusHours(10).plusSeconds(10);
     mockClockManagerToReturnFixedDateTime(dateOfHold);
 
@@ -233,6 +266,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void holdWillFailWithDifferentItem() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -253,7 +287,29 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
+  void holdWillFailIfForUseAtLocationNotEnabled() {
+    final LoanPolicyBuilder homeLoansPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "Days"));
+    use(homeLoansPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    holdForUseAtLocationFixture.holdForUseAtLocation(
+      new HoldByBarcodeRequestBuilder(item.getBarcode()), 400);
+  }
+
+
+  @Test
   void holdWillFailIfLoanIsNotForUseAtLocation() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder homeLoansPolicyBuilder = new LoanPolicyBuilder()
       .withName("Home loans")
       .withDescription("Policy for items that can be taken home")
@@ -273,6 +329,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void holdWillFailWithIncompleteRequest() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -295,6 +352,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void willMarkItemInUseByBarcode() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -322,6 +380,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void pickupWillFailWithDifferentItemOrDifferentUser() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -346,6 +405,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void pickupWillFailWithIncompleteRequestObject() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -370,6 +430,7 @@ public class LoansForUseAtLocationTests extends APITests {
 
   @Test
   void pickupWillFailIfLoanIsNotForUseAtLocation() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder homeLoansPolicyBuilder = new LoanPolicyBuilder()
       .withName("Home loans")
       .withDescription("Policy for items that can be taken home")
@@ -388,7 +449,34 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
-  void willSetAtLocationUsageStatusToReturnedOnCheckIn() {
+  void pickupWillFailIfForUseAtLocationNotEnabled() {
+    // Create loan with for-use-at-location enabled
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
+    final LoanPolicyBuilder homeLoansPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "Days"));
+
+    use(homeLoansPolicyBuilder);
+    // Enabled, so can set for-use-at-location status during check-out
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"FALSE");
+    // If, in the meantime, for-use-at-location has been disabled, pickups should not be supported
+    pickupForUseAtLocationFixture.pickupForUseAtLocation(
+      new PickupByBarcodeRequestBuilder(item.getBarcode(), borrower.getBarcode()), 400);
+  }
+
+
+  @Test
+  void willSetAtLocationUsageStatusToReturnedOnCheckInIfEnabled() {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
       .withDescription("Policy for items to be used at location")
@@ -417,5 +505,33 @@ public class LoansForUseAtLocationTests extends APITests {
     assertThat("loan.forUseAtLocation.holdShelfExpirationDate",
       forUseAtLocation.getString("holdShelfExpirationDate"), nullValue());
   }
+
+  @Test
+  void willNotSetAtLocationUsageStatusOnCheckInIfNotEnabled() {
+    final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
+      .withName("Reading room loans")
+      .withDescription("Policy for items to be used at location")
+      .rolling(Period.days(30))
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.from(5, "Days"));
+
+    use(forUseAtLocationPolicyBuilder);
+
+    checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .at(servicePointsFixture.cd1()));
+
+    final IndividualResource response = checkInFixture.checkInByBarcode(item);
+
+    JsonObject loan = loansFixture.getLoanById(
+        UUID.fromString(response.getJson().getJsonObject("loan").getString("id")))
+      .getJson();
+    JsonObject forUseAtLocation = loan.getJsonObject("forUseAtLocation");
+    assertThat("loan.forUseAtLocation",
+      forUseAtLocation, nullValue());
+  }
+
 
 }

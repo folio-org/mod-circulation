@@ -6,6 +6,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.representations.logs.LogEventType;
@@ -69,6 +70,7 @@ public class PickupByBarcodeResource extends Resource {
 
     pickupByBarcodeRequest
       .after(request -> findLoan(request, loanRepository, itemRepository, userRepository, errorHandler))
+      .thenApply(PickupByBarcodeResource::failWhenForUseAtLocationIsNotEnabled)
       .thenApply(loan -> failWhenOpenLoanForItemAndUserNotFound(loan, pickupByBarcodeRequest.value()))
       .thenApply(loan -> failWhenOpenLoanIsNotForUseAtLocation(loan, pickupByBarcodeRequest.value()))
       .thenApply(loanResult -> loanResult.map(loan ->
@@ -95,6 +97,9 @@ public class PickupByBarcodeResource extends Resource {
         .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN, r.value()));
   }
 
+  private static Result<Loan> failWhenForUseAtLocationIsNotEnabled (Result<Loan> loanResult) {
+    return loanResult.failWhen(PickupByBarcodeResource::forUseAtLocationIsNotEnabled, loan -> forUseAtLocationIsNotEnabledFailure().get());
+  }
   private static Result<Loan> failWhenOpenLoanForItemAndUserNotFound (Result<Loan> loanResult, PickupByBarcodeRequest request) {
     return loanResult.failWhen(PickupByBarcodeResource::loanIsNull, loan -> noOpenLoanFailure(request).get());
   }
@@ -111,6 +116,10 @@ public class PickupByBarcodeResource extends Resource {
     return Result.succeeded(!loan.isForUseAtLocation());
   }
 
+  private static Result<Boolean> forUseAtLocationIsNotEnabled(Loan loan) {
+    return Result.succeeded(!Environment.getForUseAtLocationEnabled());
+  }
+
   private static Supplier<HttpFailure> noOpenLoanFailure(PickupByBarcodeRequest request) {
     String message =  "No open loan found for item barcode and user ";
     log.warn("noOpenLoanFailure:: {}", message);
@@ -123,10 +132,14 @@ public class PickupByBarcodeResource extends Resource {
     return () -> new BadRequestFailure(format(message + ", item barcode (%s)", request.getItemBarcode()));
   }
 
+  private static Supplier<HttpFailure> forUseAtLocationIsNotEnabledFailure() {
+    String message = "For-use-at-location is not enabled for this tenant.";
+    log.warn("forUseAtLocationIsNotEnabledFailure:: {}", message);
+    return () -> new BadRequestFailure(format(message));
+  }
+
   private HttpResponse toResponse(JsonObject body) {
     return JsonHttpResponse.ok(body,
       format("/circulation/loans/%s", body.getString("id")));
   }
-
-
 }

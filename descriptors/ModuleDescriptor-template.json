@@ -2788,6 +2788,10 @@
         "value": "true"
       },
       {
+        "name": "ENABLE_FOR_USE_AT_LOCATION",
+        "value": "false"
+      },
+      {
         "name": "KAFKA_HOST",
         "value": "kafka"
       },
