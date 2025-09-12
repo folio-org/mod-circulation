@@ -9,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Objects;
 
+import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.representations.ItemProperties;
@@ -20,7 +21,10 @@ public class StoredRequestRepresentation {
 
   public JsonObject storedRequest(Request request) {
     log.debug("storedRequest:: parameters request: {}", () -> request);
-    final JsonObject representation = request.asJson();
+    final JsonObject representation = request.getRequestRepresentation() != null
+      ? request.getRequestRepresentation().copy()
+      : new JsonObject();
+
 
     addStoredItemProperties(representation, request.getItem());
     addStoredInstanceProperties(representation, request.getInstance());
@@ -32,6 +36,7 @@ public class StoredRequestRepresentation {
 
     return representation;
   }
+
 
   private static void addStoredItemProperties(JsonObject request, Item item) {
     log.debug("addStoredItemProperties:: parameters request: {}, item: {}",

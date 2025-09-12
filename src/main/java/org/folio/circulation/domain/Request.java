@@ -126,10 +126,16 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public JsonObject asJson() {
-    final JsonObject json = requestRepresentation.copy();
-    if (isAnonymized(json)){
-      return (JsonObject) json.remove("requester");
+    final JsonObject json = requestRepresentation;
+    if (json !=  null){
+      requestRepresentation.copy();
+    } else {
+      new JsonObject();
     }
+    if (isAnonymized(json)){
+      json.remove("requester");
+    }
+
     return json;
   }
 
