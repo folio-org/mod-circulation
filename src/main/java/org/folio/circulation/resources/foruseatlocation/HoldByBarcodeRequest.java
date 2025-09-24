@@ -8,6 +8,7 @@ import lombok.With;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.Environment;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.support.BadRequestFailure;
@@ -89,4 +90,17 @@ public class HoldByBarcodeRequest {
     return () -> new BadRequestFailure(format(message));
   }
 
+  public JsonObject responseBody() {
+    JsonObject body = new JsonObject();
+    body.put("loan", loan.asJson());
+    JsonObject itemAsJson = new JsonObject();
+    Item item = getLoan().getItem();
+    itemAsJson.put("title", item.getTitle());
+    JsonObject location = new JsonObject();
+    location.put("id", item.getLocation().getId());
+    location.put("name", item.getLocation().getName());
+    itemAsJson.put("location", location);
+    body.getJsonObject("loan").put("item", itemAsJson);
+    return body;
+  }
 }

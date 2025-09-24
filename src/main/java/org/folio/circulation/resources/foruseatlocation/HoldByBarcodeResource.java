@@ -39,7 +39,6 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
-import static java.lang.String.format;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
 import static org.folio.circulation.domain.representations.LoanProperties.*;
 import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.forUseAtLocationIsNotEnabledFailure;
@@ -90,10 +89,9 @@ public class HoldByBarcodeResource extends Resource {
       .thenCompose(request -> request.after(req -> findHoldShelfExpirationDate(req, calendarRepository)))
       .thenApply(this::setStatusToHeldWithExpirationDate)
       .thenApply(this::setActionToHeld)
-      .thenCompose(request -> request.after(req -> loanRepository.updateLoan(req.getLoan())))
-      .thenCompose(loanResult -> loanResult.after(
-        loan -> eventPublisher.publishUsageAtLocationEvent(loan, LogEventType.LOAN)))
-      .thenApply(loanResult -> loanResult.map(Loan::asJson).map(this::toResponse))
+      .thenCompose(request -> request.after(req -> updateLoan(req, loanRepository)))
+      .thenCompose(request -> request.after(req -> publishEvent(req, eventPublisher)))
+      .thenApply(request -> request.map(req -> toResponse(req.responseBody())))
       .thenAccept(webContext::writeResultToHttpResponse);
   }
 
@@ -162,6 +160,17 @@ public class HoldByBarcodeResource extends Resource {
     return request.map(req -> req.withLoan(req.getLoan().withAction(LoanAction.HELD_FOR_USE_AT_LOCATION)));
   }
 
+  private CompletableFuture<Result<HoldByBarcodeRequest>> updateLoan(HoldByBarcodeRequest request, LoanRepository loanRepository) {
+    log.info("updateLoan:: parameters: loan {}", request.getLoan().asJson());
+    return loanRepository.updateLoan(request.getLoan())
+      .thenApply(loanResult -> loanResult.map(request::withLoan));
+  }
+
+  private CompletableFuture<Result<HoldByBarcodeRequest>> publishEvent (HoldByBarcodeRequest request, EventPublisher eventPublisher) {
+    return eventPublisher.publishUsageAtLocationEvent(request.getLoan(), LogEventType.LOAN)
+      .thenApply(loanResult -> loanResult.map(loan -> request));
+  }
+
   private static Result<HoldByBarcodeRequest> failWhenOpenLoanNotFoundForItem(Result<HoldByBarcodeRequest> request) {
     log.warn("failWhenOpenLoanNotFoundForItem");
     return request.failWhen(HoldByBarcodeRequest::loanIsNull, req -> noOpenLoanFailure(req).get());
@@ -177,8 +186,7 @@ public class HoldByBarcodeResource extends Resource {
     return request.failWhen(HoldByBarcodeRequest::forUseAtLocationIsNotEnabled, req -> forUseAtLocationIsNotEnabledFailure().get());
   }
   private HttpResponse toResponse(JsonObject body) {
-    return JsonHttpResponse.ok(body,
-      format("/circulation/loans/%s", body.getString("id")));
+    return JsonHttpResponse.ok(body);
   }
 
 
