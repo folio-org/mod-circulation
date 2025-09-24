@@ -436,8 +436,14 @@ public class CheckOutByBarcodeResource extends Resource {
           log.info("overrideWhenItemIsRequestedByAnotherPatron:: no request found");
           return ofAsync(records);
         }
+        log.info("overrideWhenItemIsRequestedByAnotherPatron:: found request {}", request::getId);
         if (StringUtils.equals(request.getRequesterId(), records.getLoan().getUserId())) {
           log.info("overrideWhenItemIsRequestedByAnotherPatron:: item is requested by the same patron");
+          return ofAsync(records);
+        }
+        if (RequestStatus.OPEN_NOT_YET_FILLED == request.getStatus()) {
+          log.info("overrideWhenItemIsRequestedByAnotherPatron:: request {} is already in status " +
+            "'Open - Not yet filled'", request::getId);
           return ofAsync(records);
         }
 
