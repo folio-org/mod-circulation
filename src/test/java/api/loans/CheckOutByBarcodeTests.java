@@ -37,6 +37,7 @@ import static api.support.matchers.RequestMatchers.hasPosition;
 import static api.support.matchers.RequestMatchers.isClosedFilled;
 import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
 import static api.support.matchers.RequestMatchers.isOpenInTransit;
+import static api.support.matchers.RequestMatchers.isOpenNotYetFilled;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -2813,6 +2814,38 @@ class CheckOutByBarcodeTests extends APITests {
 
     checkOutFixture.checkOutByBarcode(circulationItem, requester);
     assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
+  }
+
+  @Test
+  void canCheckOutItemWhenItemLevelPageRequestExistsForDifferentPatron() {
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    IndividualResource loanee = usersFixture.jessica();
+    IndividualResource request = requestsFixture.placeItemLevelPageRequest(item, item.getInstanceId(), requester);
+    checkInFixture.checkInByBarcode(item);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenAwaitingPickup());
+    checkOutFixture.checkOutByBarcode(item, loanee);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenNotYetFilled());
+    checkInFixture.checkInByBarcode(item);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenAwaitingPickup());
+    checkOutFixture.checkOutByBarcode(item, requester);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isClosedFilled());
+  }
+
+  @Test
+  void canCheckOutItemWhenTitleLevelPageRequestExistsForDifferentPatron() {
+    settingsFixture.enableTlrFeature();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.steve();
+    IndividualResource loanee = usersFixture.jessica();
+    IndividualResource request = requestsFixture.placeTitleLevelPageRequest(item.getInstanceId(), requester);
+    checkInFixture.checkInByBarcode(item);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenAwaitingPickup());
+    checkOutFixture.checkOutByBarcode(item, loanee);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenNotYetFilled());
+    checkInFixture.checkInByBarcode(item);
+    assertThat(requestsFixture.getById(request.getId()).getJson(), isOpenAwaitingPickup());
+    checkOutFixture.checkOutByBarcode(item, requester);
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,

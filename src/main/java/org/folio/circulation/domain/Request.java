@@ -287,7 +287,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
     return RequestStatus.from(requestRepresentation.getString(STATUS));
   }
 
-  void changeStatus(RequestStatus newStatus) {
+  public void changeStatus(RequestStatus newStatus) {
     if (getStatus() != newStatus) {
       newStatus.writeTo(requestRepresentation);
       changedStatus = true;

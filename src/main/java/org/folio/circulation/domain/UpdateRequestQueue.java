@@ -270,6 +270,11 @@ public class UpdateRequestQueue {
     RequestQueue requestQueue = relatedRecords.getRequestQueue();
     Request originalRequest = Request.from(firstRequest.asJson());
 
+    if (!relatedRecords.getLoan().getUserId().equals(firstRequest.getRequesterId())) {
+      log.warn("onCheckOut:: first request was placed for a different patron, skipping");
+      return ofAsync(relatedRecords);
+    }
+
     log.info("onCheckOut:: Closing request '{}'", firstRequest.getId());
     firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
 

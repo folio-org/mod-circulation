@@ -51,7 +51,7 @@ public class RequestedByAnotherPatronValidator {
       item.getTitle(), item.getBarcode(), loan.getUser().getPersonalName()));
   }
 
-  private CompletableFuture<Result<Boolean>> isRequestedByAnotherPatron(
+  public CompletableFuture<Result<Boolean>> isRequestedByAnotherPatron(
     LoanAndRelatedRecords records) {
 
     log.debug("isRequestedByAnotherPatron:: parameters records: {}", records);

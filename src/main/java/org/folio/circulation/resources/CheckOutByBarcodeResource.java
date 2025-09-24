@@ -30,6 +30,7 @@ import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.UpdateRequestQueue;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
@@ -58,6 +59,7 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -138,6 +140,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
     final var checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
     final var settingsRepository = new SettingsRepository(clients);
+    final var requestQueueService = RequestQueueService.using(clients);
 
 
     var dryRunCheckOut = ofAsync(() -> new LoanAndRelatedRecords(request.toLoan(),
@@ -160,7 +163,8 @@ public class CheckOutByBarcodeResource extends Resource {
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l, requestQueueRepository),
         LoanAndRelatedRecords::withRequestQueue))
-      .thenCompose(validators::refuseWhenRequestedByAnotherPatron)
+//      .thenCompose(validators::refuseWhenRequestedByAnotherPatron)
+      .thenCompose(r -> r.after(records -> overrideWhenItemIsRequestedByAnotherPatron(records, requestQueueService, requestRepository)))
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenCompose(validators::refuseWhenItemIsNotLoanable)
@@ -422,4 +426,27 @@ public class CheckOutByBarcodeResource extends Resource {
       ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
       : requestQueueRepository.getByItemId(item.getItemId());
   }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> overrideWhenItemIsRequestedByAnotherPatron(
+    LoanAndRelatedRecords records, RequestQueueService requestQueueService, RequestRepository requestRepository) {
+
+    return requestQueueService.findRequestFulfillableByItem(records.getLoan().getItem(), records.getRequestQueue())
+      .thenCompose(r -> r.after(request -> {
+        if (request == null) {
+          log.info("overrideWhenItemIsRequestedByAnotherPatron:: no request found");
+          return ofAsync(records);
+        }
+        if (StringUtils.equals(request.getRequesterId(), records.getLoan().getUserId())) {
+          log.info("overrideWhenItemIsRequestedByAnotherPatron:: item is requested by the same patron");
+          return ofAsync(records);
+        }
+
+        log.warn("overrideWhenItemIsRequestedByAnotherPatron:: item is requested by another patron, " +
+          "changing status of request {} to 'Open - Not yet filled'", request.getId());
+        request.changeStatus(RequestStatus.OPEN_NOT_YET_FILLED);
+        return requestRepository.update(request)
+          .thenApply(updateResult -> updateResult.map(ignore -> records));
+      }));
+  }
+
 }
