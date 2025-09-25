@@ -138,7 +138,8 @@ public class LoansForUseAtLocationTests extends APITests {
     Response holdResponse = holdForUseAtLocationFixture.holdForUseAtLocation(
       new HoldByBarcodeRequestBuilder(item.getBarcode()));
 
-    JsonObject forUseAtLocation = holdResponse.getJson().getJsonObject("forUseAtLocation");
+    JsonObject forUseAtLocation = holdResponse.getJson()
+      .getJsonObject("loan").getJsonObject("forUseAtLocation");
 
     assertThat("loan.forUseAtLocation",
       forUseAtLocation, notNullValue());
@@ -180,7 +181,8 @@ public class LoansForUseAtLocationTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN));
 
     JsonObject forUseAtLocation = holdForUseAtLocationFixture.holdForUseAtLocation(
-      new HoldByBarcodeRequestBuilder(item.getBarcode())).getJson().getJsonObject("forUseAtLocation");
+      new HoldByBarcodeRequestBuilder(item.getBarcode()))
+      .getJson().getJsonObject("loan").getJsonObject("forUseAtLocation");
 
     ZonedDateTime expectedExpiryDateTime =
       atEndOfDay(holdShelfExpiryPeriod
@@ -221,7 +223,8 @@ public class LoansForUseAtLocationTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN));
 
     JsonObject forUseAtLocation = holdForUseAtLocationFixture.holdForUseAtLocation(
-      new HoldByBarcodeRequestBuilder(item.getBarcode())).getJson().getJsonObject("forUseAtLocation");
+        new HoldByBarcodeRequestBuilder(item.getBarcode()))
+      .getJson().getJsonObject("loan").getJsonObject("forUseAtLocation");
 
     ZonedDateTime expectedExpiryDateTime =
       atEndOfDay(holdShelfExpiryPeriod
@@ -258,7 +261,8 @@ public class LoansForUseAtLocationTests extends APITests {
         .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN));
 
     JsonObject forUseAtLocation = holdForUseAtLocationFixture.holdForUseAtLocation(
-      new HoldByBarcodeRequestBuilder(item.getBarcode())).getJson().getJsonObject("forUseAtLocation");
+        new HoldByBarcodeRequestBuilder(item.getBarcode()))
+      .getJson().getJsonObject("loan").getJsonObject("forUseAtLocation");
 
     assertThat("loan.forUseAtLocation.holdShelfExpirationDate",
       forUseAtLocation.getString("holdShelfExpirationDate"), nullValue());
