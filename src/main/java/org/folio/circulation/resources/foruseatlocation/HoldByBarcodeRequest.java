@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.Environment;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.ServicePoint;
+import org.folio.circulation.domain.representations.ItemSummaryRepresentation;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.results.Result;
@@ -87,6 +88,17 @@ public class HoldByBarcodeRequest {
     String message = "For-use-at-location is not enabled for this tenant.";
     log.warn("forUseAtLocationIsNotEnabledFailure:: {}", message);
     return () -> new BadRequestFailure(format(message));
+  }
+
+  public JsonObject responseBody() {
+    JsonObject body = new JsonObject();
+    JsonObject loanJson = loan.asJson();
+    JsonObject itemJson = new ItemSummaryRepresentation().createItemSummary(loan.getItem());
+
+    loanJson.put("item", itemJson);
+    body.put("loan", loanJson);
+
+    return body;
   }
 
 }
