@@ -22,13 +22,14 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
   private final List<Pair<UUID, String>> identifiers;
   private final JsonArray publication;
   private final JsonArray editions;
+  private final List<Pair<UUID, String>> series;
 
   public InstanceBuilder(String title, UUID instanceTypeId) {
     this(UUID.randomUUID(), title, instanceTypeId);
   }
 
   public InstanceBuilder(UUID id, String title, UUID instanceTypeId) {
-    this(id, title, new JsonArray(), instanceTypeId, Collections.emptyList(), new JsonArray(), new JsonArray());
+    this(id, title, new JsonArray(), instanceTypeId, Collections.emptyList(), new JsonArray(), new JsonArray(), Collections.emptyList());
   }
 
   private InstanceBuilder(UUID id,
@@ -37,7 +38,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     UUID instanceTypeId,
     List<Pair<UUID, String>> identifiers,
     JsonArray publication,
-    JsonArray editions) {
+    JsonArray editions,
+    List<Pair<UUID, String>> series) {
 
     this.id = id;
     this.title = title;
@@ -46,6 +48,7 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     this.identifiers = identifiers;
     this.editions = editions;
     this.publication = publication;
+    this.series = series;
   }
 
   @Override
@@ -61,6 +64,7 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
     put(instance, "identifiers", identifiersToJson());
     put(instance, "editions", editions);
     put(instance, "publication", publication);
+    put(instance, "series", seriesToJson());
 
     return instance;
   }
@@ -81,7 +85,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId,
       this.identifiers,
       this.publication,
-      this.editions);
+      this.editions,
+      this.series);
   }
 
   public Builder withInstanceTypeId(UUID instanceTypeId) {
@@ -92,7 +97,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       instanceTypeId,
       this.identifiers,
       this.publication,
-      this.editions);
+      this.editions,
+      this.series);
   }
 
   public InstanceBuilder withContributor(String name, UUID typeId) {
@@ -117,7 +123,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId,
       this.identifiers,
       this.publication,
-      this.editions);
+      this.editions,
+      this.series);
   }
 
   public InstanceBuilder withSinglePublication(String publisher, String place, String dateOfPublication) {
@@ -136,7 +143,8 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId,
       this.identifiers,
       publication,
-      this.editions);
+      this.editions,
+      this.series);
   }
 
   public InstanceBuilder withSingleEdition(String edition) {
@@ -151,7 +159,30 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId,
       this.identifiers,
       this.publication,
-      editions);
+      editions,
+      this.series);
+  }
+
+  public InstanceBuilder addSeriesStatement(UUID authorityId, String value) {
+    List<Pair<UUID, String>> seriesCopy = new ArrayList<>(series);
+    seriesCopy.add(new ImmutablePair<>(authorityId, value));
+    return new InstanceBuilder(
+      this.id,
+      this.title,
+      this.contributors,
+      this.instanceTypeId,
+      this.identifiers,
+      this.publication,
+      this.editions,
+      seriesCopy);
+  }
+
+  private JsonArray seriesToJson() {
+    return new JsonArray(series.stream()
+      .map(pair -> new JsonObject()
+        .put("authorityId", pair.getKey().toString())
+        .put("value", pair.getValue()))
+      .collect(Collectors.toList()));
   }
 
   public InstanceBuilder addIdentifier(UUID typeId, String value) {
@@ -165,6 +196,7 @@ public class InstanceBuilder extends JsonBuilder implements Builder {
       this.instanceTypeId,
       identifiersCopy,
       this.publication,
-      this.editions);
+      this.editions,
+      this.series);
   }
 }

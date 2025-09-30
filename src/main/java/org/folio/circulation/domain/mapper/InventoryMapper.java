@@ -23,6 +23,7 @@ public class InventoryMapper {
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
     String administrativeNotes = String.join("; ", item.getAdministrativeNotes());
+    String series = String.join("; ", item.getSeriesStatementValues());
 
     JsonObject itemContext = createInstanceContext(item.getInstance(), item)
       .put("barcode", item.getBarcode())
@@ -38,13 +39,14 @@ public class InventoryMapper {
       .put("displaySummary", item.getDisplaySummary())
       .put("descriptionOfPieces", item.getDescriptionOfPieces())
       .put("accessionNumber", item.getAccessionNumber())
-      .put("administrativeNotes", administrativeNotes);
+      .put("administrativeNotes", administrativeNotes)
+      .put("seriesStatements", series);
 
     var location = (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) ?
       item.getFloatDestinationLocation() : item.getLocation();
 
     if (location != null) {
-      log.info("createItemContext:: location is not null");
+      log.debug("createItemContext:: location is not null");
 
       itemContext
         .put("effectiveLocationSpecific", location.getName())
@@ -55,14 +57,14 @@ public class InventoryMapper {
 
       var primaryServicePoint = location.getPrimaryServicePoint();
       if (primaryServicePoint != null) {
-        log.info("createItemContext:: primaryServicePoint is not null");
+        log.debug("createItemContext:: primaryServicePoint is not null");
         itemContext.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName());
       }
     }
 
     CallNumberComponents callNumberComponents = item.getCallNumberComponents();
     if (callNumberComponents != null) {
-      log.info("createItemContext:: callNumberComponents is not null");
+      log.debug("createItemContext:: callNumberComponents is not null");
       itemContext
         .put("callNumber", callNumberComponents.getCallNumber())
         .put("callNumberPrefix", callNumberComponents.getPrefix())
@@ -88,6 +90,7 @@ public class InventoryMapper {
       .put("datesOfPublication", instance.getPublication().stream().
         map(Publication::getDateOfPublication).collect(joining("; ")))
       .put("editions", String.join("; ", instance.getEditions()))
+      .put("seriesStatements", instance.getSeriesStatementValues().collect(joining("; '")))
       .put("physicalDescriptions", String.join("; ", instance.getPhysicalDescriptions()));
   }
 }

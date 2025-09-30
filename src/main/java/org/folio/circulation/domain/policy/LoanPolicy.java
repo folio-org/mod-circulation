@@ -28,8 +28,10 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
+import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.storage.mappers.TimePeriodMapper;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -50,6 +52,7 @@ public class LoanPolicy extends Policy {
   private static final String ALTERNATE_RENEWAL_LOAN_PERIOD_KEY = "alternateRenewalLoanPeriod";
   private static final String ALLOW_RECALLS_TO_EXTEND_OVERDUE_LOANS = "allowRecallsToExtendOverdueLoans";
   private static final String ALTERNATE_RECALL_RETURN_INTERVAL = "alternateRecallReturnInterval";
+  private static final String FOR_USE_AT_LOCATION = "forUseAtLocation";
 
   private static final String INTERVAL_ID = "intervalId";
   private static final String DURATION = "duration";
@@ -215,7 +218,7 @@ public class LoanPolicy extends Policy {
         (!request.hasItem() || itemId.equals(request.getItemId())));
   }
 
-  private JsonObject getLoansPolicy() {
+  public JsonObject getLoansPolicy() {
     return representation.getJsonObject(LOANS_POLICY_KEY);
   }
 
@@ -343,6 +346,30 @@ public class LoanPolicy extends Policy {
 
   public boolean isNotLoanable() {
     return !isLoanable();
+  }
+
+  public boolean isForUseAtLocation() {
+    return getBooleanProperty(getLoansPolicy(), FOR_USE_AT_LOCATION);
+  }
+
+  public Period getHoldShelfExpiryPeriodForUseAtLocation() {
+    if (isForUseAtLocation()) {
+      JsonObject holdShelfExpiryPeriod = getObjectProperty(getLoansPolicy(), "holdShelfExpiryPeriodForUseAtLocation");
+      if (holdShelfExpiryPeriod != null) {
+        return Period.from(holdShelfExpiryPeriod);
+      }
+    }
+    return null;
+  }
+
+  public TimePeriod getHoldShelfExpiryTimePeriodForUseAtLocation() {
+    if (isForUseAtLocation()) {
+      JsonObject holdShelfExpiryPeriod = getObjectProperty(getLoansPolicy(), "holdShelfExpiryPeriodForUseAtLocation");
+      if (holdShelfExpiryPeriod != null) {
+        return new TimePeriodMapper().toDomain(holdShelfExpiryPeriod);
+      }
+    }
+    return null;
   }
 
   public DueDateManagement getDueDateManagement() {

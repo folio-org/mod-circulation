@@ -274,6 +274,9 @@ class LoanAPITests extends APITests {
 
     assertThat("Item has publication years",
       loan.getJsonObject("item").containsKey("datesOfPublication"), is(true));
+
+    assertThat("Item has series statement",
+      loan.getJsonObject("item").containsKey("seriesStatements"), is(true));
   }
 
   @Test

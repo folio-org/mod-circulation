@@ -132,7 +132,8 @@ class RequestRepresentationTests {
       emptyList(),
       List.of(new Publication("fake publisher", "fake place", "2016", null)),
       List.of("First American Edition"),
-      List.of("Hardback"));
+      List.of("Hardback"),
+      emptyList());
 
     JsonObject itemJson = new JsonObject()
       .put("effectiveCallNumberComponents", new JsonObject()

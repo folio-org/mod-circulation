@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_RETURNED;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -10,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
@@ -272,6 +274,16 @@ class CheckInProcessAdapter {
         checkInContext.getItem(),
         checkInContext.getRequestQueue(),
         checkInContext.getCheckInRequest()));
+  }
+
+  CheckInContext markReturnedIfForUseAtLocation(CheckInContext checkInContext) {
+    log.debug("markReturnedIfForUseAtLocation:: parameters checkInContext: {}", checkInContext);
+
+    Loan loan = checkInContext.getLoan();
+    if (Environment.getForUseAtLocationEnabled() && loan != null && loan.isForUseAtLocation()) {
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_RETURNED);
+    }
+    return checkInContext;
   }
 
   public CompletableFuture<Result<CheckInContext>> logCheckInOperation(

@@ -13,6 +13,7 @@ import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Publication;
 
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.domain.SeriesStatement;
 
 public class InstanceMapper {
   public Instance toDomain(JsonObject representation) {
@@ -21,7 +22,7 @@ public class InstanceMapper {
       getProperty(representation, "title"),
       mapIdentifiers(representation), mapContributors(representation),
       mapPublication(representation), mapEditions(representation),
-      mapPhysicalDescriptions(representation));
+      mapPhysicalDescriptions(representation), mapSeries(representation));
   }
 
   private List<Contributor> mapContributors(JsonObject representation) {
@@ -44,6 +45,10 @@ public class InstanceMapper {
       .stream()
       .map(String.class::cast)
       .collect(Collectors.toList());
+  }
+
+  private List<SeriesStatement> mapSeries(JsonObject representation) {
+    return mapToList(representation, "series", new SeriesMapper()::toDomain);
   }
 
 }
