@@ -128,11 +128,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   public JsonObject asJson() {
 
     JsonObject json = requestRepresentation;
-    if (json !=  null){
        json = requestRepresentation.copy();
-    } else {
-       json = new JsonObject();
-    }
     if (isAnonymized(json)){
       json.remove("requester");
     }
@@ -142,9 +138,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   private boolean isAnonymized(JsonObject json) {
-    if (json == null) {
-      return false;
-    }
 
 
     String requesterId = json.getString("requester");
