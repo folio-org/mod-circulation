@@ -257,6 +257,9 @@ class AllowedServicePointsAPITests extends APITests {
 
     Response response = get("create", requesterId, patronGroupId, instanceId, null, null, null, null, 200);
     assertThat(response.getStatusCode(), is(200));
+    AllowedServicePoint expectedAllowedSp = new AllowedServicePoint(
+      servicePoint.getId().toString(), "Circ Desk 1");
+    assertThat(response.getJson(), allowedServicePointMatcher(Map.of(PAGE, List.of(expectedAllowedSp))));
   }
 
   @Test
