@@ -25,8 +25,16 @@ public class Environment {
     return getVariable("ENABLE_FLOATING_COLLECTIONS", false);
   }
 
+  public static boolean getForUseAtLocationEnabled() {
+    return getVariable("ENABLE_FOR_USE_AT_LOCATION", false);
+  }
+
   public static int getHttpMaxPoolSize() {
     return getVariable("HTTP_MAXPOOLSIZE", 100);
+  }
+
+  public static boolean getEcsTlrFeatureEnabled() {
+    return getVariable("ECS_TLR_FEATURE_ENABLED", false);
   }
 
   private static int getVariable(String key, int defaultValue) {

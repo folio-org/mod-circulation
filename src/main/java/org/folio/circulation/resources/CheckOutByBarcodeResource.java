@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_IN_USE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
@@ -21,9 +22,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckOutLock;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
@@ -36,6 +39,7 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
@@ -178,6 +182,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
       .thenComposeAsync(r -> r.after(records -> checkOut(records, clients)))
       .thenApply(r -> r.map(this::checkOutItem))
+      .thenApply(r -> r.map(this::markInUseIfForUseAtLocation))
       .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(settingsRepository,
         checkOutLockRepository, l, checkOutLockId, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -274,6 +279,11 @@ public class CheckOutByBarcodeResource extends Resource {
 
     log.debug("publishItemCheckedOutEvent:: parameters records: {}", () -> records);
 
+    if (records.getLoan().isForUseAtLocation()) {
+      eventPublisher.publishUsageAtLocationEvent(
+        records.getLoan().withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION), LogEventType.LOAN);
+    }
+
     return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
         succeeded(records)));
@@ -303,6 +313,16 @@ public class CheckOutByBarcodeResource extends Resource {
 
   private LoanAndRelatedRecords checkOutItem(LoanAndRelatedRecords loanAndRelatedRecords) {
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
+  }
+
+  private LoanAndRelatedRecords markInUseIfForUseAtLocation(LoanAndRelatedRecords loanAndRelatedRecords) {
+    log.debug("markInUseIfForUseAtLocation:: parameters: context: {}", loanAndRelatedRecords);
+
+    Loan loan = loanAndRelatedRecords.getLoan();
+    if (Environment.getForUseAtLocationEnabled() && loan.getLoanPolicy().isForUseAtLocation()) {
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE);
+    }
+    return loanAndRelatedRecords;
   }
 
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,

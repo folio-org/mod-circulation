@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import api.support.fixtures.SearchInstanceFixture;
-import org.folio.Environment;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,6 +57,8 @@ import api.support.fixtures.ExpiredSessionProcessingClient;
 import api.support.fixtures.FeeFineAccountFixture;
 import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.FeeFineTypeFixture;
+import api.support.fixtures.ForUseAtLocationHoldFixture;
+import api.support.fixtures.ForUseAtLocationPickupFixture;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.IdentifierTypesFixture;
 import api.support.fixtures.InstancesFixture;
@@ -311,6 +312,9 @@ public abstract class APITests {
   protected final CirculationSettingFixture circulationSettingFixture = new CirculationSettingFixture(
     circulationSettingsClient);
   protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
+
+  protected final ForUseAtLocationHoldFixture holdForUseAtLocationFixture = new ForUseAtLocationHoldFixture();
+  protected final ForUseAtLocationPickupFixture pickupForUseAtLocationFixture = new ForUseAtLocationPickupFixture();
 
   protected APITests() {
     this(true, false);
