@@ -249,14 +249,14 @@ class AllowedServicePointsAPITests extends APITests {
     UserResource requester = usersFixture.steve();
     String requesterId = requester.getId().toString();
     String patronGroupId = requester.getJson().getString("patronGroup");
-    List<ItemResource> items = itemsFixture.createMultipleItemForTheSameInstance(2, List.of(
-      ib -> ib.withStatus(AVAILABLE.getValue()),
+    List<ItemResource> items = itemsFixture.createMultipleItemForTheSameInstance(1, List.of(
       ib -> ib.withStatus(RESTRICTED.getValue())));
     var instanceId = items.get(0).getInstanceId().toString();
     IndividualResource servicePoint = servicePointsFixture.cd1();
     setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(servicePoint.getId()));
 
-    get("create", requesterId, patronGroupId, instanceId, null, null, null, null, 200);
+    Response response = get("create", requesterId, patronGroupId, instanceId, null, null, null, null, 200);
+    assertThat(response.getStatusCode(), is(200));
   }
 
   @Test
