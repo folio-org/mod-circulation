@@ -143,6 +143,7 @@ public class RequestTypeItemStatusWhiteList {
     noneRules.put(LONG_MISSING, false);
     noneRules.put(UNAVAILABLE, false);
     noneRules.put(UNKNOWN, false);
+    noneRules.put(RESTRICTED, false);
   }
 
   private static void initRequestRulesMap() {
@@ -159,7 +160,7 @@ public class RequestTypeItemStatusWhiteList {
 
   public static List<RequestType> getRequestTypesAllowedForItemStatus(ItemStatus itemStatus) {
     return Arrays.stream(RequestType.values())
-      .filter(requestType -> requestsRulesMap.get(requestType).get(itemStatus))
+      .filter(requestType -> requestsRulesMap.get(requestType).getOrDefault(itemStatus, Boolean.FALSE))
       .toList();
   }
 
