@@ -9,6 +9,7 @@ import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.lang.Boolean.TRUE;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
+import static org.folio.circulation.domain.ItemStatus.RESTRICTED;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestType.HOLD;
@@ -59,6 +60,7 @@ import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.QueryStringParameter;
+import api.support.http.UserResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -239,6 +241,23 @@ class AllowedServicePointsAPITests extends APITests {
         HttpStatus.SC_OK).getJson();
 
     assertThat(response, allowedServicePointMatcher(Map.of(requestType, allowedSpInResponse)));
+  }
+
+  @Test
+  void canGetAllowedServicePointsForInstanceWithRestrictedItem() {
+    settingsFixture.enableTlrFeature();
+    UserResource requester = usersFixture.steve();
+    String requesterId = requester.getId().toString();
+    String patronGroupId = requester.getJson().getString("patronGroup");
+    List<ItemResource> items = itemsFixture.createMultipleItemForTheSameInstance(1, List.of(
+      ib -> ib.withStatus(RESTRICTED.getValue())));
+    var instanceId = items.get(0).getInstanceId().toString();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    setRequestPolicyWithAllowedServicePoints(PAGE, Set.of(servicePointId));
+
+    Response response = get("create", requesterId, patronGroupId, instanceId, null, null, null, null, 200);
+    AllowedServicePoint expectedSp = new AllowedServicePoint(servicePointId.toString(), "Circ Desk 1");
+    assertThat(response.getJson(), allowedServicePointMatcher(Map.of(PAGE, List.of(expectedSp))));
   }
 
   @Test
