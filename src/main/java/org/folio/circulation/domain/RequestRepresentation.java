@@ -29,10 +29,11 @@ public class RequestRepresentation {
     addItemProperties(requestRepresentation, request.getItem());
     addInstanceProperties(requestRepresentation, request.getInstance(), request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
+
     if (anonymized) {
       requestRepresentation.remove("requester");
       requestRepresentation.remove("deliveryAddress");
-    } else {
+    } else if (request.getRequester() != null) {
       addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
       addDeliveryAddress(requestRepresentation, request, request.getRequester());
     }
