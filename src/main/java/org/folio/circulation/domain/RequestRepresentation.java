@@ -44,7 +44,6 @@ public class RequestRepresentation {
     }
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
     addPrintDetailsProperties(request, requestRepresentation);
-
     removeSearchIndexFields(requestRepresentation);
 
     return requestRepresentation;
@@ -320,7 +319,12 @@ public class RequestRepresentation {
   }
 
   private static boolean isAnonymized(JsonObject json, Request req) {
-    return json.getString("requesterId") == null || Boolean.TRUE.equals(json.getBoolean("anonymized") || json.getString("anonymizedDate") != null);
+    if(json == null) return false;
+    String requesterId = json.getString("requesterId");
+    Boolean anonymized = json.getBoolean("anonymized");
+    String anonymizedDate = json.getString("anonymizedDate");
+
+    return requesterId == null || Boolean.TRUE.equals(anonymized) || anonymizedDate != null;
   }
 }
 
