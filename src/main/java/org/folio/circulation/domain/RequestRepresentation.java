@@ -319,12 +319,7 @@ public class RequestRepresentation {
   }
 
   private static boolean isAnonymized(JsonObject json, Request req) {
-    if (req.getRequester() == null) return true;
-    if (json.getString("requesterId") == null) return true;
-    if (Boolean.TRUE.equals(json.getBoolean("anonymized"))) return true;
-    if (json.getString("anonymizedDate") != null) return true;
-
-    return false;
+    return json.getString("requesterId") == null || Boolean.TRUE.equals(json.getBoolean("anonymized") || json.getString("anonymizedDate") != null);
   }
 }
 
