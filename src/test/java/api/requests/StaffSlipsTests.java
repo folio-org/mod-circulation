@@ -804,6 +804,39 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
   }
 
+  @ParameterizedTest
+  @EnumSource(SlipsType.class)
+  void slipsAreBuiltAtCorrectServicePointForHoldingsOfSameInstance(SlipsType slipsType) {
+    configureSlipsFeatureForType(slipsType, true);
+    settingsFixture.enableTlrFeature();
+
+    UUID instanceId = UUID.randomUUID();
+    UserResource requester1 = usersFixture.steve();
+    UserResource requester2 = usersFixture.jessica();
+    UUID servicePointId1 = servicePointsFixture.cd1().getId();
+    UUID servicePointId2 = servicePointsFixture.cd2().getId();
+    UUID locationId1 = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId1)).getId();
+    UUID locationId2 = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId2)).getId();
+
+    ItemResource item1 = itemsFixture.basedUponDunkirk(
+      holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId1),
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      itemBuilder -> itemBuilder.withEffectiveLocation(null).withBarcode("item1"));
+
+    ItemResource item2 = itemsFixture.basedUponDunkirk(
+      holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId2),
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      itemBuilder -> itemBuilder.withEffectiveLocation(null).withBarcode("item2"));
+
+    requestsFixture.placeTitleLevelPageRequest(instanceId, requester1);
+    requestsFixture.placeTitleLevelPageRequest(instanceId, requester2);
+
+    assertResponseHasItems(slipsType.get(servicePointId1), 1, slipsType);
+    assertResponseHasItems(slipsType.get(servicePointId2), 1, slipsType);
+  }
+
   private void configureSlipsFeatureForType(SlipsType slipsType, boolean enabled) {
     if (slipsType == SlipsType.PICK_SLIPS) {
       circulationSettingFixture.configurePrintEventLogFeature(enabled);
