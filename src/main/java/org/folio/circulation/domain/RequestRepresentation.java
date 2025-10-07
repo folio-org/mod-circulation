@@ -323,7 +323,6 @@ public class RequestRepresentation {
     String requesterId = json.getString("requesterId");
     Boolean anonymized = json.getBoolean("anonymized");
     String anonymizedDate = json.getString("anonymizedDate");
-
     return requesterId == null || Boolean.TRUE.equals(anonymized) || anonymizedDate != null;
   }
 }
