@@ -25,16 +25,30 @@ public class RequestRepresentation {
 
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
+    final boolean isAnonymized = isAnonymized(requestRepresentation);
+
 
     addItemProperties(requestRepresentation, request.getItem());
     addInstanceProperties(requestRepresentation, request.getInstance(), request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
-    addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
-    addAdditionalProxyProperties(requestRepresentation, request.getProxy());
-    addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
-    addDeliveryAddress(requestRepresentation, request, request.getRequester());
-    addPrintDetailsProperties(request, requestRepresentation);
 
+
+    if (isAnonymized) {
+      requestRepresentation.remove("requester");
+      requestRepresentation.remove("deliveryAddress");
+    } else {
+      addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
+      addDeliveryAddress(requestRepresentation, request, request.getRequester());
+    }
+
+    if(request.getProxy() != null) {
+      addAdditionalProxyProperties(requestRepresentation, request.getProxy());
+    }else{
+      requestRepresentation.remove("proxy");
+    }
+
+    addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
+    addPrintDetailsProperties(request, requestRepresentation);
     removeSearchIndexFields(requestRepresentation);
 
     return requestRepresentation;
@@ -78,6 +92,14 @@ public class RequestRepresentation {
     }
 
     request.put("proxy", userSummary(proxy));
+  }
+
+  private static boolean isAnonymized(JsonObject json) {
+    String requesterId = json.getString("requester");
+    Boolean anonymized = json.getBoolean("anonymized");
+    String anonymizedDate = json.getString("anonymizedDate");
+
+    return requesterId == null || Boolean.TRUE.equals(anonymized) || anonymizedDate != null;
   }
 
   private static void addItemProperties(JsonObject request, Item item) {

@@ -126,26 +126,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public JsonObject asJson() {
-
-    JsonObject json = requestRepresentation;
-       json = requestRepresentation.copy();
-    if (isAnonymized(json)){
-      json.remove("requester");
-    }
-
-
-    return json;
-  }
-
-  private boolean isAnonymized(JsonObject json) {
-
-
-    String requesterId = json.getString("requester");
-    Boolean anonlyized = json.getBoolean("anonymized");
-    String anonoymizedDate = json.getString("anonymizedDate");
-
-
-    return requesterId == null || Boolean.TRUE.equals(anonlyized) || anonoymizedDate != null;
+    return requestRepresentation.copy();
   }
 
   boolean isFulfillable() {
