@@ -20,19 +20,28 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   private static final String PICKUP_SERVICE_POINT = "pickupServicePoint";
 
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
+    final boolean anonymized = isAnonymized(requestRepresentation, request);
 
     addItemProperties(requestRepresentation, request.getItem());
     addInstanceProperties(requestRepresentation, request.getInstance(), request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
-    addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
-    addAdditionalProxyProperties(requestRepresentation, request.getProxy());
+    if (anonymized) {
+      requestRepresentation.remove("requester");
+      requestRepresentation.remove("deliveryAddress");
+    } else {
+      addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
+      addDeliveryAddress(requestRepresentation, request, request.getRequester());
+    }
+    if (request.getProxy() != null) {
+      addAdditionalProxyProperties(requestRepresentation, request.getProxy());
+    } else {
+      requestRepresentation.remove("proxy");
+    }
     addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
-    addDeliveryAddress(requestRepresentation, request, request.getRequester());
     addPrintDetailsProperties(request, requestRepresentation);
 
     removeSearchIndexFields(requestRepresentation);
@@ -307,6 +316,15 @@ public class RequestRepresentation {
 
   private static void removeSearchIndexFields(JsonObject request) {
     request.remove("searchIndex");
+  }
+
+  private static boolean isAnonymized(JsonObject json, Request req) {
+    if (req.getRequester() == null) return true;
+    if (json.getString("requesterId") == null) return true;
+    if (Boolean.TRUE.equals(json.getBoolean("anonymized"))) return true;
+    if (json.getString("anonymizedDate") != null) return true;
+
+    return false;
   }
 }
 
