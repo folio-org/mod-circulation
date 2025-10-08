@@ -172,7 +172,9 @@ class RequestRepresentationTests {
 
     assertThat("Proxy summary should be present when proxy exists",
       out.containsKey("proxy"), is(true));
-    assertThat("Proxy lastName", out.getJsonObject("proxy").getString("lastName"), is("Person"));
+    var pj = out.getJsonObject("proxy");
+    assertThat("Proxy firstName", pj.getString("firstName"), is("Person"));
+    assertThat("Proxy lastName",  pj.getString("lastName"),  is("Proxy"));
   }
 
   @Test
