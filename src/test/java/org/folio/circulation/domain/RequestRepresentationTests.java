@@ -104,6 +104,7 @@ class RequestRepresentationTests {
       callNumberComponents.getString("suffix"), is(CALL_NUMBER_SUFFIX_VALUE));
   }
 
+  @Test
   void testExtendedRepresentationForAnonymization() {
     RequestRepresentation requestRepresentation = new RequestRepresentation();
     Request request = createMockRequest();
@@ -123,7 +124,6 @@ class RequestRepresentationTests {
     assertThat("Anonymized: deliveryAddress must be omitted",
       out.containsKey("deliveryAddress"), is(false));
 
-
     JsonObject instance = out.getJsonObject(INSTANCE);
 
     assertTrue(instance.containsKey(EDITIONS));
@@ -139,8 +139,57 @@ class RequestRepresentationTests {
     JsonObject identifier = instance.getJsonArray(IDENTIFIERS).getJsonObject(0);
     assertEquals(IDENTIFIER_VALUE, identifier.getString("value"));
     assertEquals(IDENTIFIER_ID.toString(), identifier.getString("identifierTypeId"));
+  }
 
+  @Test
+  void nonAnonymizedWithRequesterExpandedIncludesRequesterAndDeliveryAddress() {
+    var rep = new RequestRepresentation();
+    var request = createMockRequest();
 
+    JsonObject json = request.asJson();
+    assertThat("requesterId should be present for non-anonymized",
+      json.containsKey("requesterId"), is(true));
+
+    JsonObject out = rep.extendedRepresentation(request);
+
+    assertThat("Non-anonymized: requester should be present",
+      out.containsKey("requester"), is(true));
+
+    assertThat("Non-anonymized: deliveryAddress should be present",
+      out.containsKey("deliveryAddress"), is(true));
+  }
+
+  @Test
+  void proxyPresentAddsProxySummary() {
+    var rep = new RequestRepresentation();
+    var request = createMockRequest();
+
+    var proxy = new User(new api.support.builders.UserBuilder()
+      .withName("Proxy", "Person").withBarcode("P-001").create());
+    request = request.withProxy(proxy);
+
+    JsonObject out = rep.extendedRepresentation(request);
+
+    assertThat("Proxy summary should be present when proxy exists",
+      out.containsKey("proxy"), is(true));
+    assertThat("Proxy lastName", out.getJsonObject("proxy").getString("lastName"), is("Person"));
+  }
+
+  @Test
+  void proxyMissingRemovesStaleProxyKeyIfPresentInBaseJson() {
+    var rep = new RequestRepresentation();
+    var request = createMockRequest();
+
+    JsonObject base = request.asJson().put("proxy", new JsonObject().put("firstName", "Stale"));
+    request = Request.from(base)
+      .withInstance(request.getInstance())
+      .withPickupServicePoint(request.getPickupServicePoint())
+      .withItem(request.getItem());
+
+    JsonObject out = rep.extendedRepresentation(request);
+
+    assertThat("Stale proxy key should be removed when no proxy is present",
+      out.containsKey("proxy"), is(false));
   }
 
   private Request createMockRequest() {
