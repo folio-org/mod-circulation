@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "processed": {
+      "type": "integer",
+      "description": "Number of requests processed"
+    },
+    "anonymizedRequests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "List of anonymized request IDs"
+    }
+  },
+  "required": ["processed", "anonymizedRequests"]
+}

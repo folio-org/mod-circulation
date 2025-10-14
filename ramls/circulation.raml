@@ -372,9 +372,9 @@ resourceTypes:
         description: Anonymize closed circulation requests
         body:
           application/json:
-            type: !include schemas/anonymize-circulation-request.json
+            type: !include schema/anonymize-circulation-request.json
         responses:
           200:
             body:
               application/json:
-                type: !include schemas/anonymization-result.json
+                type: !include schema/anonymization-result.json
