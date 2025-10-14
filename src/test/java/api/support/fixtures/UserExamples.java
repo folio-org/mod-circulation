@@ -34,6 +34,7 @@ public class UserExamples {
 
   static UserBuilder basedUponGroot() {
     return new UserBuilder()
+      .withType("dcb")
       .withName("DcbSystem", "dcb")
       .withBarcode("6430530304")
       .withActive(true);
