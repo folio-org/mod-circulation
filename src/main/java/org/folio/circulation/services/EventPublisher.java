@@ -39,13 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.CheckInContext;
-import org.folio.circulation.domain.EventType;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.LoanAndRelatedRecords;
-import org.folio.circulation.domain.Request;
-import org.folio.circulation.domain.RequestAndRelatedRecords;
-import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.*;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
@@ -331,6 +325,12 @@ public class EventPublisher {
     LogEventType eventType) {
 
     return publishLogRecord(noticeLogContext.withDate(getZonedDateTime()).asJson(), eventType);
+  }
+
+  public CompletableFuture<Result<Loan>> publishUsageAtLocationEvent(Loan loan, LogEventType eventType) {
+    return publishLogRecord((LoanLogContext.from(loan))
+      .withDescription(LogContextActionResolver.resolveAction(loan.getAction())).asJson(), eventType)
+      .thenApply(r -> succeeded(loan));
   }
 
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(

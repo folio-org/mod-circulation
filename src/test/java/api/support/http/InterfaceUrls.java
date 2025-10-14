@@ -162,6 +162,14 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/renew-by-id");
   }
 
+  public static URL holdForUseAtLocationUrl() {
+    return circulationModuleUrl("/circulation/hold-by-barcode-for-use-at-location");
+  }
+
+  public static URL pickupForUseAtLocationUrl() {
+    return circulationModuleUrl("/circulation/pickup-by-barcode-for-use-at-location");
+  }
+
   public static URL loansUrl() {
     return loansUrl("");
   }

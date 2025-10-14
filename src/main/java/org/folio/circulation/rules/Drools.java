@@ -77,7 +77,7 @@ public class Drools {
     kieSession.insert(new PatronGroup(patronGroupId));
     kieSession.insert(new ItemLocation(locationId));
     if (location != null) {
-      log.info("createSession:: location is not null");
+      log.debug("createSession:: location is not null");
       kieSession.insert(new Institution(location.getInstitutionId()));
       kieSession.insert(new Campus(location.getCampusId()));
       kieSession.insert(new Library(location.getLibraryId()));

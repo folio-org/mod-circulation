@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to switch status of use at location to 'In use'",
+  "properties": {
+    "itemBarcode": {
+      "description": "Barcode of the item lent to the patron for use at location",
+      "type": "string"
+    },
+    "userBarcode": {
+      "description": "Barcode of the user (representing the patron)",
+      "type": "string"
+    }
+  },
+  "required": [
+    "itemBarcode",
+    "userBarcode"
+  ]
+}
