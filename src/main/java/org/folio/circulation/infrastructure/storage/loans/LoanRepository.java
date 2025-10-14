@@ -89,7 +89,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String USER_ID = "userId";
 
   private static final String IS_DCB = "isDcb";
-  private static final String DCB_USER_LASTNAME = "DcbSystem";
 
   public LoanRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository) {
@@ -303,8 +302,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   }
 
   private static boolean isDcbLoan(Loan loan, Item item) {
-      return item.isDcbItem() || (nonNull(loan.getUser()) && nonNull(loan.getUser().getLastName())
-              && loan.getUser().getLastName().equalsIgnoreCase(DCB_USER_LASTNAME));
+      return item.isDcbItem() || (nonNull(loan.getUser()) && loan.getUser().isDcbUser());
   }
 
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
