@@ -204,6 +204,11 @@
       "version": "14.6",
       "handlers": [
         {
+        "methods": ["POST"],
+        "pathPattern": "/circulation/requests/anonymize",
+        "permissionsRequired": ["circulation.requests.item.post"]
+      },
+        {
           "methods": [
             "POST"
           ],
