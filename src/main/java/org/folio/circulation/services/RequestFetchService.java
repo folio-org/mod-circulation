@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.ObjectUtils.allNull;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
@@ -11,17 +12,14 @@ import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
-import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
-import static org.folio.circulation.support.utils.LogUtil.mapAsString;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -39,6 +37,7 @@ import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.resources.context.StaffSlipsContext;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
@@ -51,16 +50,25 @@ public class RequestFetchService {
   private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String REQUEST_LEVEL_KEY = "requestLevel";
 
-  public CompletableFuture<Result<StaffSlipsContext>> fetchRequests(
-    StaffSlipsContext context, Clients clients, RequestType requestType) {
+  private final RequestType requestType;
+  private final InstanceRepository instanceRepository;
+  private final HoldingsRepository holdingsRepository;
+  private final CollectionResourceClient requestStorageClient;
 
-    return fetchItemLevelRequests(context, clients, requestType)
-      .thenComposeAsync(r -> r.after(ctx -> fetchTitleLevelRequests(ctx, clients, requestType)))
-      .thenApply(r -> r.next(this::combineRequests));
+  public RequestFetchService(Clients clients, RequestType requestType) {
+    this.requestType = requestType;
+    this.instanceRepository = new InstanceRepository(clients);
+    this.holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
+    this.requestStorageClient = clients.requestsStorage();
   }
 
-  private CompletableFuture<Result<StaffSlipsContext>> fetchItemLevelRequests(
-    StaffSlipsContext context, Clients clients, RequestType requestType) {
+  public CompletableFuture<Result<StaffSlipsContext>> fetchRequests(StaffSlipsContext context) {
+    return fetchRequestsWithItems(context)
+      .thenCompose(r -> r.after(this::fetchRequestsWithoutItems));
+  }
+
+  private CompletableFuture<Result<StaffSlipsContext>> fetchRequestsWithItems(
+    StaffSlipsContext context) {
 
     Collection<Item> items = context.getItems();
     if (items == null || items.isEmpty()) {
@@ -79,16 +87,11 @@ public class RequestFetchService {
       return ofAsync(context.withRequests(MultipleRecords.empty()));
     }
 
-    var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
-    var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.ITEM.getValue());
-    var statusAndTypeQuery = requestType.equals(RequestType.PAGE)
-      ? typeQuery.combine(statusQuery, CqlQuery::and)
-        .combine(requestLevelQuery, CqlQuery::and)
-      : typeQuery.combine(statusQuery, CqlQuery::and);
+    var query = exactMatch(REQUEST_TYPE_KEY, requestType.getValue())
+      .combine(exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue()), CqlQuery::and);
 
-    return findWithMultipleCqlIndexValues(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(statusAndTypeQuery))
+    return findWithMultipleCqlIndexValues(requestStorageClient, REQUESTS_KEY, Request::from)
+      .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(query))
       .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, items)))
       .thenApply(r -> r.map(context::withRequests));
   }
@@ -103,148 +106,98 @@ public class RequestFetchService {
       itemMap.getOrDefault(request.getItemId(), null))));
   }
 
-  private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
-    StaffSlipsContext staffSlipsContext, Clients clients, RequestType requestType) {
+  private CompletableFuture<Result<StaffSlipsContext>> fetchRequestsWithoutItems(
+    StaffSlipsContext context) {
 
-    var instanceRepository = new InstanceRepository(clients);
-    var holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
-
-    return fetchTitleLevelRequests(clients, staffSlipsContext, requestType)
-      .thenComposeAsync(r -> r.after(ctx -> fetchInstancesByRequests(ctx, instanceRepository)))
-      .thenApply(r -> r.next(this::mapRequestsToInstances))
-      .thenComposeAsync(r -> r.after(ctx -> fetchHoldingsByInstances(ctx, holdingsRepository)))
-      .thenApply(r -> r.next(this::mapRequestsToHoldings));
-  }
-
-  private CompletableFuture<Result<StaffSlipsContext>> fetchTitleLevelRequests(
-    Clients clients, StaffSlipsContext context, RequestType requestType) {
-
-    var typeQuery = exactMatch(REQUEST_TYPE_KEY, requestType.getValue());
-    var statusQuery = exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue());
-    var requestLevelQuery = exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue());
-    var statusTypeAndLevelQuery = typeQuery.combine(statusQuery, CqlQuery::and)
-      .combine(requestLevelQuery, CqlQuery::and);
-
-    return findWithCqlQuery(clients.requestsStorage(), REQUESTS_KEY, Request::from)
-      .findByQuery(statusTypeAndLevelQuery, maximumLimit())
-      .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, context.getItems())))
-      .thenApply(r -> r.map(context::withTlrRequests));
-  }
-
-  private Result<StaffSlipsContext> mapRequestsToInstances(StaffSlipsContext context) {
-    log.debug("mapRequestsToInstances:: parameters context: {}", context);
-    if (context.getInstances() == null || context.getInstances().isEmpty()) {
-      log.info("mapRequestsToInstances:: no instances found");
-      return succeeded(context);
+    log.info("fetchRequestsWithoutItems:: requestType={}", requestType);
+    if (requestType != RequestType.HOLD) {
+      return ofAsync(context);
     }
 
-    var fetchedInstancesByIdMap = context.getInstances().getRecords().stream()
-      .collect(Collectors.toMap(Instance::getId, identity(), (a, b) -> a));
-    log.info("mapRequestsToInstances:: fetchedInstanceIds: {}",
-      () -> collectionAsString(fetchedInstancesByIdMap.keySet()));
-
-    var requestToInstanceMap = context.getTlrRequests().getRecords().stream()
-      .filter(request -> fetchedInstancesByIdMap.containsKey(request.getInstanceId()))
-      .collect(Collectors.toMap(
-        r -> r.withInstance(fetchedInstancesByIdMap.get(r.getInstanceId())),
-        r -> fetchedInstancesByIdMap.get(r.getInstanceId()),
-        (a, b) -> a)
-      );
-    log.info("mapRequestsToInstances:: requestToInstanceIdMap: {}",
-      () -> mapAsString(requestToInstanceMap));
-
-    return succeeded(context.withRequestToInstanceMap(requestToInstanceMap));
+    return fetchRequestsWithoutItems()
+      .thenCompose(r -> r.after(requests -> processRequestsWithoutItems(context, requests)));
   }
 
-  private Result<StaffSlipsContext> mapRequestsToHoldings(StaffSlipsContext context) {
-    log.debug("mapRequestsToHoldings:: parameters context: {}", context);
-    MultipleRecords<Holdings> holdings = context.getHoldings();
-    if (holdings == null || holdings.isEmpty()) {
-      log.info("mapRequestsToHoldings:: holdings are empty");
-      return succeeded(context);
-    }
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchRequestsWithoutItems() {
+    var query = exactMatch(REQUEST_TYPE_KEY, RequestType.HOLD.getValue())
+      .combine(exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue()), CqlQuery::and)
+      .combine(exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue()), CqlQuery::and);
 
-    var holdingsToInstanceIdMap = holdings.getRecords().stream()
-      .collect(Collectors.toMap(identity(), Holdings::getInstanceId, (a, b) -> a));
-
-    var requestToInstanceMap = context.getRequestToInstanceMap();
-    if (requestToInstanceMap == null || requestToInstanceMap.isEmpty()) {
-      log.info("mapRequestsToHoldings:: no requests matched to holdings");
-      return succeeded(context);
-    }
-
-    var requestToHoldingsMap = requestToInstanceMap.entrySet().stream()
-      .filter(entry -> entry.getValue() != null && holdingsToInstanceIdMap.containsValue(
-        entry.getValue().getId()))
-      .collect(Collectors.toMap(Map.Entry::getKey,
-        entry -> findHoldingsByInstanceId(holdings, entry.getValue().getId())));
-    log.info("mapRequestsToHoldings:: requestToHoldingsMap: {}",
-      () -> mapAsString(requestToHoldingsMap));
-
-    return succeeded(context.withRequestToHoldingMap(requestToHoldingsMap));
+    return findWithCqlQuery(requestStorageClient, REQUESTS_KEY, Request::from)
+      .findByQuery(query, maximumLimit())
+      // Title-level holds in status "Open - Not yet filled" are not supposed to be linked to items,
+      // but we need double-check anyway. These requests could have been filtered out on DB level using
+      // CQL predicate 'not itemId=""', but CQL parser used in tests does not seem to support this construct.
+      .thenApply(mapResult(this::filterOutRequestsWithItems));
   }
 
-  private Holdings findHoldingsByInstanceId(MultipleRecords<Holdings> holdings,
-    String instanceId) {
-
-    return holdings.getRecords().stream()
-      .filter(holding -> holding.getInstanceId().equals(instanceId))
-      .findFirst()
-      .orElse(null);
+  private MultipleRecords<Request> filterOutRequestsWithItems(MultipleRecords<Request> requests) {
+    return requests.filter(r -> allNull(r.getHoldingsRecordId(), r.getItemId()));
   }
 
-  private CompletableFuture<Result<StaffSlipsContext>> fetchInstancesByRequests(
-    StaffSlipsContext ctx, InstanceRepository instanceRepository) {
+  private CompletableFuture<Result<StaffSlipsContext>> processRequestsWithoutItems(
+    StaffSlipsContext context, MultipleRecords<Request> requestsWithoutItems) {
 
-    var tlrRequests = ctx.getTlrRequests();
-    if (tlrRequests == null || tlrRequests.isEmpty()) {
-      log.info("fetchByInstancesByRequests:: no TLR requests found");
-
-      return ofAsync(ctx);
+    log.info("processRequestsWithoutItems:: requests: {}", requestsWithoutItems::size);
+    if (requestsWithoutItems.isEmpty()) {
+      return ofAsync(context);
     }
 
-    return instanceRepository.fetchByRequests(ctx.getTlrRequests())
-      .thenApply(r -> r.map(ctx::withInstances));
+    return fetchInstances(requestsWithoutItems)
+      .thenCompose(r -> r.after(requests -> fetchHoldings(requests)
+        .thenApply(rr -> rr.map(holdings -> addRelevantRequestsToContext(context, holdings, requests)))));
   }
 
-  private CompletableFuture<Result<StaffSlipsContext>> fetchHoldingsByInstances(
-    StaffSlipsContext ctx, HoldingsRepository holdingsRepository) {
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchInstances(
+    MultipleRecords<Request> requests) {
 
-    if (ctx.getRequestToInstanceMap() == null || ctx.getRequestToInstanceMap().isEmpty()) {
-      log.info("fetchHoldingsByInstances:: instances no requests matched to instances found");
+    return instanceRepository.fetchByRequests(requests)
+      .thenApply(r -> r.map(instances -> mapRequestsToInstances(requests, instances)));
+  }
 
-      return ofAsync(ctx);
-    }
+  private CompletableFuture<Result<MultipleRecords<Holdings>>> fetchHoldings(
+    MultipleRecords<Request> requests) {
 
-    var instanceIds = ctx.getRequestToInstanceMap().values().stream()
-      .map(Instance::getId)
+    Set<String> instanceIds = requests.getRecords()
+      .stream()
+      .map(Request::getInstanceId)
       .collect(toSet());
 
-    return holdingsRepository.fetchByInstances(instanceIds)
-      .thenApply(r -> r.map(ctx::withHoldings));
+    return holdingsRepository.fetchByInstances(instanceIds);
   }
 
-  private Result<StaffSlipsContext> combineRequests(StaffSlipsContext ctx) {
-    log.debug("combineRequests:: parameters ctx: {}", ctx);
-    Map<Request, Holdings> requestToHoldingMap = ctx.getRequestToHoldingMap();
-    if (requestToHoldingMap == null || requestToHoldingMap.isEmpty()) {
-      log.info("combineRequests:: no tlr requests to combine");
-      return succeeded(ctx);
-    }
+  private StaffSlipsContext addRelevantRequestsToContext(StaffSlipsContext context,
+    MultipleRecords<Holdings> holdings, MultipleRecords<Request> requests) {
 
-    Set<String> locationIds = ctx.getLocations().getRecords().stream()
+    List<String> relevantLocationIds = context.getLocations()
+      .getRecords()
+      .stream()
       .map(Location::getId)
-      .collect(Collectors.toSet());
-
-    List<Request> requestsToAdd = requestToHoldingMap.entrySet().stream()
-      .filter(entry -> locationIds.contains(entry.getValue().getEffectiveLocationId()))
-      .map(Map.Entry::getKey)
       .toList();
 
-    List<Request> updatedRequests = new ArrayList<>(ctx.getRequests().getRecords());
-    updatedRequests.addAll(requestsToAdd);
+    Set<String> relevantInstanceIds = holdings.getRecords()
+      .stream()
+      .filter(holding -> relevantLocationIds.contains(holding.getEffectiveLocationId()))
+      .map(Holdings::getInstanceId)
+      .collect(toSet());
 
-    return succeeded(ctx.withRequests(new MultipleRecords<>(updatedRequests,
-      updatedRequests.size())));
+    MultipleRecords<Request> relevantRequests = requests.filter(
+      request -> relevantInstanceIds.contains(request.getInstanceId()));
+
+    log.info("addRelevantRequestsToContext:: found {} locations, {} instances, {} requests",
+      relevantLocationIds::size, relevantInstanceIds::size, relevantRequests::size);
+
+    return relevantRequests.isEmpty()
+      ? context
+      : context.withRequests(context.getRequests().combine(relevantRequests));
   }
+
+
+  private MultipleRecords<Request> mapRequestsToInstances(MultipleRecords<Request> requests,
+    MultipleRecords<Instance> instances) {
+
+    Map<String, Instance> instancesById = instances.getRecordsMap(Instance::getId);
+    return requests.mapRecords(r -> r.withInstance(instancesById.get(r.getInstanceId())));
+  }
+
 }

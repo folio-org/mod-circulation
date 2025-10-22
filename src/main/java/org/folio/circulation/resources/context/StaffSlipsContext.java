@@ -22,9 +22,6 @@ import lombok.With;
 public class StaffSlipsContext {
   private MultipleRecords<Location> locations;
   private MultipleRecords<Request> requests;
-  private MultipleRecords<Request> tlrRequests;
-  private MultipleRecords<Instance> instances;
-  private MultipleRecords<Holdings> holdings;
   private Collection<Item> items;
   private Map<Request, Instance> requestToInstanceMap;
   private Map<Request, Holdings> requestToHoldingMap;
