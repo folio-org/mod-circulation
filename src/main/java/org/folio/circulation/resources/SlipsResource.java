@@ -131,11 +131,12 @@ public abstract class SlipsResource extends Resource {
     final var servicePointRepository = new ServicePointRepository(clients);
     final var patronGroupRepository = new PatronGroupRepository(clients);
     final var departmentRepository = new DepartmentRepository(clients);
+    final var requestFetchService = new RequestFetchService(clients, requestType);
 
     return fetchLocationsForServicePoint(servicePointId, clients)
       .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
         itemRepository, LocationRepository.using(clients, servicePointRepository))))
-      .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
+      .thenComposeAsync(r -> r.after(requestFetchService::fetchRequests))
       .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
         ctx.getRequests())))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
