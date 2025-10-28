@@ -1,8 +1,13 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
 import static org.folio.circulation.domain.ItemStatus.IN_TRANSIT;
 import static org.folio.circulation.domain.MultipleRecords.CombinationMatchers.matchRecordsById;
@@ -24,12 +29,17 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import java.util.stream.Stream;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
@@ -54,6 +64,7 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import org.folio.circulation.support.results.SuccessfulResult;
 
 @AllArgsConstructor
 public class ItemRepository {
@@ -61,6 +72,7 @@ public class ItemRepository {
 
   private final CollectionResourceClient itemsClient;
   private final LocationRepository locationRepository;
+  private final ShadowLocationRepository shadowLocationRepository;
   private final MaterialTypeRepository materialTypeRepository;
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
@@ -70,8 +82,10 @@ public class ItemRepository {
     item -> getProperty(item, "id"));
 
   public ItemRepository(Clients clients) {
-    this(clients.itemsStorage(), LocationRepository.using(clients,
-        new ServicePointRepository(clients)),
+    this(
+      clients.itemsStorage(),
+      LocationRepository.using(clients, new ServicePointRepository(clients)),
+      ShadowLocationRepository.using(clients, new ServicePointRepository(clients)),
       new MaterialTypeRepository(clients), new InstanceRepository(clients),
       new HoldingsRepository(clients.holdingsStorage()),
       new LoanTypeRepository(clients.loanTypesStorage()),
@@ -189,8 +203,25 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<Map<String, Location>>> fetchLocations(
-    MultipleRecords<Item> items) {
+    MultipleRecords<Item> allItems) {
+    final var groupedItems = allItems.getRecords().stream()
+      .collect(groupingBy(Item::isDcbItem));
 
+    final var items = groupedItems.getOrDefault(Boolean.FALSE, emptyList());
+    final var circItems = groupedItems.getOrDefault(Boolean.TRUE, emptyList());
+
+    return fetchLocations(new MultipleRecords<>(items, items.size()), false)
+      .thenCompose(itemLocations -> itemLocations.combineAfter(
+        () -> fetchLocations(new MultipleRecords<>(circItems, circItems.size()), true),
+        (locations, circItemLocations) ->
+          Stream.of(locations, circItemLocations)
+            .map(Map::entrySet)
+            .flatMap(Collection::stream)
+            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (o1, o2) -> o2))));
+  }
+
+  private CompletableFuture<Result<Map<String, Location>>> fetchLocations(
+    MultipleRecords<Item> items, boolean isDcbItem) {
     final var locationIds = items.toKeys(Item::getEffectiveLocationId);
     final var permanentLocationIds = items.toKeys(Item::getPermanentLocationId);
 
@@ -198,8 +229,8 @@ public class ItemRepository {
 
     allLocationIds.addAll(locationIds);
     allLocationIds.addAll(permanentLocationIds);
-
-    return locationRepository.fetchLocations(allLocationIds)
+    final var repository = isDcbItem ? this.shadowLocationRepository : this.locationRepository;
+    return repository.fetchLocations(allLocationIds)
       .thenApply(r -> r.map(records -> records.getRecordsMap(Location::getId)));
   }
 
