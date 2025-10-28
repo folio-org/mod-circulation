@@ -126,7 +126,7 @@ public class RequestFetchService {
     return findWithCqlQuery(requestStorageClient, REQUESTS_KEY, Request::from)
       .findByQuery(query, maximumLimit())
       // Title-level holds in status "Open - Not yet filled" are not supposed to be linked to items,
-      // but we need double-check anyway. These requests can be filtered out on DB level using
+      // but we need to double-check anyway. These requests can be filtered out at DB level using
       // CQL predicate 'not itemId=""', but CQL parser used in tests does not seem to support this construct.
       .thenApply(mapResult(this::filterOutRequestsWithItems));
   }
@@ -152,7 +152,7 @@ public class RequestFetchService {
     MultipleRecords<Request> requests) {
 
     return instanceRepository.fetchByRequests(requests)
-      .thenApply(r -> r.map(instances -> mapRequestsToInstances(requests, instances)));
+      .thenApply(r -> r.map(instances -> mapInstancesToRequests(requests, instances)));
   }
 
   private CompletableFuture<Result<MultipleRecords<Holdings>>> fetchHoldings(
@@ -193,7 +193,7 @@ public class RequestFetchService {
   }
 
 
-  private MultipleRecords<Request> mapRequestsToInstances(MultipleRecords<Request> requests,
+  private MultipleRecords<Request> mapInstancesToRequests(MultipleRecords<Request> requests,
     MultipleRecords<Instance> instances) {
 
     Map<String, Instance> instancesById = instances.getRecordsMap(Instance::getId);
