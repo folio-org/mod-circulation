@@ -779,7 +779,7 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
-  void searchSlipForTitleLevelHoldRequestArePrintableAtAllServicePointsWithRelevantHoldings() {
+  void searchSlipForTitleLevelHoldRequestIsPrintableAtAllServicePointsWithRelevantHoldings() {
     configurationsFixture.configurePrintHoldRequests(true);
     settingsFixture.enableTlrFeature();
 
