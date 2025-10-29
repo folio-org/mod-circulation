@@ -1,3 +1,6 @@
+## 24.4.12 2025-10-29
+* Switch DCB user check from lastName to the user type (CIRC-2482)
+
 ## 24.4.11 2025-08-28
 * Support boolean and string `enablePrintLog` (CIRC-2448)
 * Address high memory consumption if pick-slips disabled (CIRC-2416)
