@@ -30,13 +30,4 @@ public class ShadowLocationRepository extends LocationRepository{
       clients.shadowLibrariesStorage(),
       servicePointRepository);
   }
-
-  public static ShadowLocationRepository using(Clients clients) {
-    return new ShadowLocationRepository(
-      clients.shadowLocationsStorage(),
-      clients.shadowInstitutionsStorage(),
-      clients.shadowCampusesStorage(),
-      clients.shadowLibrariesStorage(),
-      new ServicePointRepository(clients));
-  }
 }
