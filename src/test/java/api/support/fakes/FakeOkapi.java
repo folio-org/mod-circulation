@@ -240,6 +240,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
       .withRootPath("/location-units/institutions")
+      .withQueryParameters("includeShadow")
       .withCollectionPropertyName("locinsts")
       .validateRecordsWith(validatorForLocationInstSchema())
       .create().register(router);
@@ -247,6 +248,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("campus")
       .withRootPath("/location-units/campuses")
+      .withQueryParameters("includeShadow")
       .withCollectionPropertyName("loccamps")
       .validateRecordsWith(validatorForLocationCampSchema())
       .create().register(router);
@@ -254,6 +256,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("library")
       .withRootPath("/location-units/libraries")
+      .withQueryParameters("includeShadow")
       .withCollectionPropertyName("loclibs")
       .validateRecordsWith(validatorForLocationLibSchema())
       .create().register(router);
@@ -261,6 +264,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("locations")
       .withRootPath("/locations")
+      .withQueryParameters("includeShadowLocations")
       .withCollectionPropertyName("locations")
       .withRequiredProperties("name", "code", "institutionId", "campusId",
         "libraryId", "primaryServicePoint")
