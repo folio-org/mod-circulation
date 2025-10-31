@@ -1274,7 +1274,7 @@
     },
     {
       "id": "locations",
-      "version": "3.0"
+      "version": "3.2"
     },
     {
       "id": "material-types",
@@ -1330,7 +1330,7 @@
     },
     {
       "id": "location-units",
-      "version": "2.0"
+      "version": "2.1"
     },
     {
       "id": "patron-action-session-storage",
