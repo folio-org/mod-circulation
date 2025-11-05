@@ -1,5 +1,7 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
+
 import java.net.MalformedURLException;
 
 import org.folio.circulation.rules.CirculationRulesProcessor;
@@ -27,6 +29,10 @@ public class Clients {
   private final CollectionResourceClient institutionsStorageClient;
   private final CollectionResourceClient campusesStorageClient;
   private final CollectionResourceClient librariesStorageClient;
+  private final CollectionResourceClient shadowLocationsStorageClient;
+  private final CollectionResourceClient shadowInstitutionsStorageClient;
+  private final CollectionResourceClient shadowCampusesStorageClient;
+  private final CollectionResourceClient shadowLibrariesStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
   private final CollectionResourceClient loanTypesStorageClient;
   private final GetManyRecordsClient proxiesForClient;
@@ -105,6 +111,10 @@ public class Clients {
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
+      shadowLocationsStorageClient = createShadowLocationsStorageClient(client, context);
+      shadowInstitutionsStorageClient = createShadowInstitutionsStorageClient(client, context);
+      shadowCampusesStorageClient = createShadowCampusesStorageClient(client, context);
+      shadowLibrariesStorageClient = createShadowLibrariesStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
@@ -225,6 +235,22 @@ public class Clients {
 
   public CollectionResourceClient librariesStorage() {
     return librariesStorageClient;
+  }
+
+  public CollectionResourceClient shadowLocationsStorage() {
+    return shadowLocationsStorageClient;
+  }
+
+  public CollectionResourceClient shadowInstitutionsStorage() {
+    return shadowInstitutionsStorageClient;
+  }
+
+  public CollectionResourceClient shadowCampusesStorage() {
+    return shadowCampusesStorageClient;
+  }
+
+  public CollectionResourceClient shadowLibrariesStorage() {
+    return shadowLibrariesStorageClient;
   }
 
   public CollectionResourceClient materialTypesStorage() {
@@ -586,6 +612,38 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/location-units/libraries");
+  }
+
+  private static CollectionResourceClient createShadowLocationsStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(
+      client, context, "/locations", namedParameter("includeShadowLocations", "true"));
+  }
+
+  private static CollectionResourceClient createShadowInstitutionsStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context,
+      "/location-units/institutions", namedParameter("includeShadow", "true"));
+  }
+
+  private static CollectionResourceClient createShadowCampusesStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context,
+      "/location-units/campuses", namedParameter("includeShadow", "true"));
+  }
+
+  private static CollectionResourceClient createShadowLibrariesStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context,
+      "/location-units/libraries", namedParameter("includeShadow", "true"));
   }
 
   private GetManyRecordsClient createProxyUsersStorageClient(
