@@ -55,8 +55,8 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
+import api.support.builders.UserBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
@@ -279,6 +279,27 @@ class LoanAPITests extends APITests {
     assertThat("Item has series statement",
       loan.getJsonObject("item").containsKey("seriesStatements"), is(true));
   }
+
+  @Test
+  void borrowerPreferredFirstNameFallsBackToFirstNameWhenBlankOrNull() {
+    testPreferredFirstName("Jones", "Steven", "", "Steven", itemsFixture.basedUponSmallAngryPlanet());
+    testPreferredFirstName("Rodwell", "James", null, "James", itemsFixture.basedUponNod());
+    testPreferredFirstName("Kim", "Jam", "kimJ", "kimJ", itemsFixture.basedUponDunkirk());
+  }
+
+  private void testPreferredFirstName(String lastName, String firstName, String preferredFirstName,
+    String expectedFirstName, IndividualResource item) {
+
+    var user = usersFixture.from(new UserBuilder()
+      .withPreferredFirstName(lastName, firstName, preferredFirstName)
+      .withActive(true));
+    var loan = loansFixture.createLoan(item, user);
+    var loanJson = loansFixture.getLoanById(loan.getId()).getJson();
+    assertThat("Borrower preferredFirstName logic",
+      loanJson.getJsonObject("borrower").getString("preferredFirstName"),
+      is(expectedFirstName));
+  }
+
 
   @Test
   void canGetLoanWithoutOpenFeesFines() {
