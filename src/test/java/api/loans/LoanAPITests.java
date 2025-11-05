@@ -300,7 +300,6 @@ class LoanAPITests extends APITests {
       is(expectedFirstName));
   }
 
-
   @Test
   void canGetLoanWithoutOpenFeesFines() {
     UUID id = UUID.randomUUID();
