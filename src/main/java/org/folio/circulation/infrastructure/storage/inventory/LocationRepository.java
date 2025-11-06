@@ -51,7 +51,7 @@ public class LocationRepository {
   private final CollectionResourceClient librariesStorageClient;
   private final ServicePointRepository servicePointRepository;
 
-  private LocationRepository(CollectionResourceClient locationsStorageClient,
+  protected LocationRepository(CollectionResourceClient locationsStorageClient,
     CollectionResourceClient institutionsStorageClient,
     CollectionResourceClient campusesStorageClient,
     CollectionResourceClient librariesStorageClient,
