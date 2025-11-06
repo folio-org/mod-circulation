@@ -14,6 +14,9 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.domain.RequestStatus;
+import org.folio.circulation.support.logging.Logging;
+
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
@@ -23,6 +26,10 @@ import io.vertx.ext.web.RoutingContext;
 
 public class RequestAnonymizationResource extends Resource {
 
+  private static final java.lang.invoke.MethodHandles.Lookup LOOKUP =
+    java.lang.invoke.MethodHandles.lookup();
+  private static final org.apache.logging.log4j.Logger log =
+    org.apache.logging.log4j.LogManager.getLogger(LOOKUP.lookupClass());
   public RequestAnonymizationResource(HttpClient client) {
     super(client);
   }
@@ -40,7 +47,9 @@ public class RequestAnonymizationResource extends Resource {
 
     JsonObject body = routingContext.getBodyAsJson();
 
+    // Validate request body
     if (body == null || !body.containsKey("requestIds")) {
+      log.warn("anonymizeRequests:: Request body missing requestIds");
       Result<JsonObject> failedResult = Result.failed(new ValidationErrorFailure(
         new ValidationError("requestIds array is required", "requestIds", null)));
       context.writeResultToHttpResponse(failedResult.map(JsonHttpResponse::ok));
@@ -53,20 +62,37 @@ public class RequestAnonymizationResource extends Resource {
       .collect(Collectors.toList());
 
     if (requestIds.isEmpty()) {
+      log.warn("anonymizeRequests:: requestIds array is empty");
       Result<JsonObject> failedResult = Result.failed(new ValidationErrorFailure(
         new ValidationError("requestIds array cannot be empty", "requestIds", null)));
       context.writeResultToHttpResponse(failedResult.map(JsonHttpResponse::ok));
       return;
     }
 
+    // Get includeCirculationLogs parameter (default to true)
+    boolean includeCirculationLogs = body.getBoolean("includeCirculationLogs", true);
+
+    log.info("anonymizeRequests:: Processing {} requests, includeCirculationLogs={}",
+      requestIds.size(), includeCirculationLogs);
+
     // Chain the operations
     validateRequestsEligible(requestIds, clients)
-      .thenCompose(r -> r.after(v -> anonymizeRequestsInStorage(requestIds, clients)))
-      .thenApply(r -> r.map(v -> new JsonObject()
-        .put("processed", requestIds.size())
-        .put("anonymizedRequests", new JsonArray(requestIds))))
+      .thenCompose(r -> r.after(v ->
+        anonymizeRequestsInStorage(requestIds, includeCirculationLogs, clients)))
+      .thenApply(r -> r.map(v -> {
+        log.info("anonymizeRequests:: Successfully anonymized {} requests", requestIds.size());
+        return new JsonObject()
+          .put("processed", requestIds.size())
+          .put("anonymizedRequests", new JsonArray(requestIds));
+      }))
       .thenApply(r -> r.map(JsonHttpResponse::ok))
-      .thenAccept(context::writeResultToHttpResponse);
+      .thenAccept(result -> {
+        if (result.failed()) {
+          log.error("anonymizeRequests:: Failed to anonymize requests: {}",
+            result.cause().toString());
+        }
+        context.writeResultToHttpResponse(result);
+      });
   }
 
   private CompletableFuture<Result<Void>> validateRequestsEligible(
@@ -85,36 +111,66 @@ public class RequestAnonymizationResource extends Resource {
           Result<org.folio.circulation.domain.Request> result = future.join();
 
           if (result.failed()) {
+            log.warn("validateRequestsEligible:: Failed to retrieve request: {}",
+              result.cause().toString());
             return Result.failed(result.cause());
           }
 
           org.folio.circulation.domain.Request request = result.value();
-          String status = request.getStatus().getValue();
+          RequestStatus status = request.getStatus();
 
-          boolean isEligible = status.equals("Closed - Filled") ||
-            status.equals("Closed - Cancelled") ||
-            status.equals("Closed - Pickup expired") ||
-            status.equals("Closed - Unfilled");
+          // Use the RequestStatus enum for cleaner validation
+          boolean isEligible = status == RequestStatus.CLOSED_FILLED ||
+            status == RequestStatus.CLOSED_CANCELLED ||
+            status == RequestStatus.CLOSED_PICKUP_EXPIRED ||
+            status == RequestStatus.CLOSED_UNFILLED;
 
           if (!isEligible) {
+            log.warn("validateRequestsEligible:: Request {} has ineligible status: {}",
+              request.getId(), status.getValue());
             return Result.failed(new ValidationErrorFailure(
               new ValidationError(
                 "Request " + request.getId() + " cannot be anonymized - status must be closed",
-                "status", status)));
+                "status", status.getValue())));
+          }
+
+          // Optional: Check if already anonymized
+          if (request.getRequesterId() == null || request.getRequesterId().isEmpty()) {
+            log.warn("validateRequestsEligible:: Request {} appears to be already anonymized",
+              request.getId());
+            return Result.failed(new ValidationErrorFailure(
+              new ValidationError(
+                "Request " + request.getId() + " appears to be already anonymized",
+                "requesterId", null)));
           }
         }
+
+        log.info("validateRequestsEligible:: All {} requests are eligible for anonymization",
+          requestIds.size());
         return succeeded(null);
       });
   }
 
+
   private CompletableFuture<Result<Void>> anonymizeRequestsInStorage(
-    List<String> requestIds, Clients clients) {
+    List<String> requestIds, boolean includeCirculationLogs, Clients clients) {
 
     JsonObject payload = new JsonObject()
-      .put("requestIds", new JsonArray(requestIds));
+      .put("requestIds", new JsonArray(requestIds))
+      .put("includeCirculationLogs", includeCirculationLogs);  // NOW USING THIS
+
+    log.info("anonymizeRequestsInStorage:: Sending anonymization request to storage layer");
 
     return clients.requestsStorage()
       .post(payload, "/request-storage/requests/anonymize")
-      .thenApply(r -> r.map(response -> null));
+      .thenApply(r -> {
+        if (r.succeeded()) {
+          log.info("anonymizeRequestsInStorage:: Storage layer successfully processed requests");
+        } else {
+          log.error("anonymizeRequestsInStorage:: Storage layer failed: {}",
+            r.cause().toString());
+        }
+        return r.map(response -> null);
+      });
   }
 }

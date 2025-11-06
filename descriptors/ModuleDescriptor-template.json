@@ -206,10 +206,15 @@
       "version": "14.7",
       "handlers": [
         {
-        "methods": ["POST"],
-        "pathPattern": "/circulation/requests/anonymize",
-        "permissionsRequired": ["circulation.requests.item.post"]
-      },
+          "methods": ["POST"],
+          "pathPattern": "/circulation/requests/anonymize",
+          "permissionsRequired": ["circulation.requests.anonymize.execute"],
+          "modulePermissions": [
+            "circulation-storage.requests.item.post",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.circulation-logs.post"
+          ]
+        },
         {
           "methods": [
             "POST"
@@ -1433,6 +1438,12 @@
     }
   ],
   "permissionSets": [
+    {
+      "permissionName": "circulation.requests.anonymize.execute",
+      "displayName": "Circulation - Anonymize closed requests",
+      "description": "Permission to anonymize closed circulation requests",
+      "visible": true
+    },
     {
       "permissionName": "circulation.print-events-entry.item.post",
       "displayName": "circulation - create print events",
