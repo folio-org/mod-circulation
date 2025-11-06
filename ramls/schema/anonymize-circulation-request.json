@@ -1,13 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Request to anonymize one or more closed circulation requests by removing personally identifiable information",
   "type": "object",
   "properties": {
     "requestIds": {
       "type": "array",
-      "items": {"type": "string", "format": "uuid"}
+      "description": "Array of request UUIDs to be anonymized. All requests must have a closed status.",
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of a request to anonymize"
+      }
     },
     "includeCirculationLogs": {
       "type": "boolean",
+      "description": "Whether to anonymize circulation logs associated with these requests. When true, existing circulation log entries will have userBarcode set to '-' and a new anonymization log entry will be created. Defaults to true if not specified.",
       "default": true
     }
   },

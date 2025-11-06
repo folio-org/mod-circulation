@@ -1,18 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Result of request anonymization operation containing the number of processed requests and list of anonymized request IDs",
   "type": "object",
   "properties": {
     "processed": {
       "type": "integer",
-      "description": "Number of requests processed"
+      "description": "Total number of requests processed in the anonymization operation"
     },
     "anonymizedRequests": {
       "type": "array",
+      "description": "List of UUIDs for requests that were successfully anonymized",
       "items": {
         "type": "string",
-        "format": "uuid"
-      },
-      "description": "List of anonymized request IDs"
+        "format": "uuid",
+        "description": "UUID of an anonymized request"
+      }
     }
   },
   "required": ["processed", "anonymizedRequests"]
