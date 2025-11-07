@@ -1,8 +1,6 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.notice.NoticeEventType.AVAILABLE;
-import static org.folio.circulation.domain.notice.NoticeEventType.ITEM_RECALLED;
-import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCELLATION;
+import static org.folio.circulation.domain.notice.NoticeEventType.*;
 import static org.folio.circulation.domain.notice.PatronNotice.buildEmail;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
@@ -13,10 +11,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -227,7 +222,10 @@ public class RequestNoticeSender {
     log.debug("sendConfirmationNoticeForRequestWithItem:: parameters request: {}", () -> request);
     return createPatronNoticeEvent(request, getEventType(request))
       .thenCompose(r -> r.after(patronNoticeService::acceptNoticeEvent))
-      .whenComplete((r, t) -> sendNoticeOnRecall(request));
+      .whenComplete((r, t) -> {
+        sendNoticeOnRecall(request);
+        sendHoldNoticeForItemLevelRequest(request);
+      });
   }
 
   private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithoutItemId(
@@ -345,17 +343,43 @@ public class RequestNoticeSender {
     }
 
     return fetchAdditionalInfo(request)
-      .thenCompose(r -> r.after(req -> sendLoanNotice(req.getLoan())));
+      .thenCompose(r -> r.after(req -> sendLoanNotice(req.getLoan(), ITEM_RECALLED)));
   }
 
-  private CompletableFuture<Result<Void>> sendLoanNotice(Loan updatedLoan){
+  /**
+   * Sends hold notice to the borrower of a specific item
+   */
+  private CompletableFuture<Result<Void>> sendHoldNoticeForItemLevelRequest(Request request) {
+    log.debug("sendHoldNoticeForItemLevelRequest:: sending notice for item: {}",
+      request.getItemId());
+
+    return fetchAdditionalInfo(request)
+      .thenCompose(r -> r.after(req -> {
+        Loan loan = req.getLoan();
+
+        if (loan == null || loan.getUser() == null || loan.getItem() == null) {
+          log.debug("sendHoldNoticeForItemLevelRequest:: no active loan found, skipping notice");
+          return ofAsync(null);
+        }
+
+        if (!loan.isOpen()) {
+          log.debug("sendHoldNoticeForItemLevelRequest:: loan is not open, skipping notice");
+          return ofAsync(null);
+        }
+
+        return sendLoanNotice(loan, HOLD_REQUEST_FOR_ITEM);
+      }));
+  }
+
+
+  private CompletableFuture<Result<Void>> sendLoanNotice(Loan updatedLoan, NoticeEventType eventType){
     return getRecipientId(updatedLoan)
       .thenCompose(result -> result.after(recipientId -> {
         var itemRecalledEvent = new PatronNoticeEventBuilder()
           .withItem(updatedLoan.getItem())
           .withUser(updatedLoan.getUser())
           .withRecipientId(recipientId)
-          .withEventType(ITEM_RECALLED)
+          .withEventType(eventType)
           .withNoticeContext(createLoanNoticeContext(updatedLoan))
           .withNoticeLogContext(NoticeLogContext.from(updatedLoan))
           .build();
