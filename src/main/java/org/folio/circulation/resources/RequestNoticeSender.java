@@ -63,6 +63,7 @@ public class RequestNoticeSender {
   private final ProxyRelationshipValidator proxyRelationshipValidator;
 
   private long recallRequestCount = 0L;
+  private long holdRequestCount = 0L;
 
   protected final ImmediatePatronNoticeService patronNoticeService;
   protected final LocationRepository locationRepository;
@@ -112,8 +113,16 @@ public class RequestNoticeSender {
     Request request = records.getRequest();
     recallRequestCount = records.getRequestQueue().getRequests()
       .stream()
-      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled()
-        && r.getItemId().equals(request.getItemId()))
+      .filter(r -> r.getRequestType() == RequestType.RECALL
+        && r.isNotYetFilled()
+        && Objects.equals(r.getItemId(), request.getItemId()))
+      .count();
+
+    holdRequestCount = records.getRequestQueue().getRequests()
+      .stream()
+      .filter(r -> r.getRequestType() == RequestType.HOLD
+        && r.isNotYetFilled()
+        && Objects.equals(r.getItemId(), request.getItemId()))
       .count();
 
     if (request.hasItemId()) {
@@ -357,7 +366,7 @@ public class RequestNoticeSender {
       .thenCompose(r -> r.after(req -> {
         Loan loan = req.getLoan();
 
-        if (loan == null || loan.getUser() == null || loan.getItem() == null) {
+        if (!request.isHold() || loan == null || loan.getUser() == null || loan.getItem() == null || holdRequestCount > 1) {
           log.debug("sendHoldNoticeForItemLevelRequest:: no active loan found, skipping notice");
           return ofAsync(null);
         }
