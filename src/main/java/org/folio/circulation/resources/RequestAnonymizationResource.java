@@ -17,7 +17,6 @@ import org.folio.circulation.support.results.Result;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.logging.Logging;
 
-
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -157,7 +156,7 @@ public class RequestAnonymizationResource extends Resource {
 
     JsonObject payload = new JsonObject()
       .put("requestIds", new JsonArray(requestIds))
-      .put("includeCirculationLogs", includeCirculationLogs);  // NOW USING THIS
+      .put("includeCirculationLogs", includeCirculationLogs);
 
     log.info("anonymizeRequestsInStorage:: Sending anonymization request to storage layer");
 
