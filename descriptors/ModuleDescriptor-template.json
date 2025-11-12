@@ -1755,6 +1755,30 @@
       "description": "To create and edit circulation functionality settings in mod-settings"
     },
     {
+      "permissionName": "circulation.request-anonymization-settings.get",
+      "displayName": "Circulation: Request Anonymization settings — GET",
+      "description": "Allows requesting Request Anonymization settings (placeholder)",
+      "subPermissions": []
+    },
+    {
+      "permissionName": "circulation.request-anonymization-settings.put",
+      "displayName": "Circulation: Request Anonymization settings — PUT",
+      "description": "Allows updating Request Anonymization settings (placeholder)",
+      "subPermissions": []
+    },
+    {
+      "permissionName": "modperms.circulation.request-anonymization-settings.get",
+      "displayName": "Module perms: Request Anonymization settings — GET",
+      "description": "Backend module permission for GET (placeholder)",
+      "subPermissions": []
+    },
+    {
+      "permissionName": "modperms.circulation.request-anonymization-settings.put",
+      "displayName": "Module perms: Request Anonymization settings — PUT",
+      "description": "Backend module permission for PUT (placeholder)",
+      "subPermissions": []
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
