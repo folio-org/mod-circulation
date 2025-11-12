@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Response for single requests anonymization ",
+  "type": "object",
+  "properties": {
+    "requestId": { "type": "string" },
+    "anonymized": { "type": "boolean" }
+  },
+  "required": ["requestId", "anonymized"],
+  "additionalProperties": false
+}

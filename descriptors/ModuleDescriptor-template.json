@@ -77,6 +77,21 @@
       ]
     },
     {
+      "id": "request-anonymization",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/request-anonymization/{requestId}",
+          "modulePermissions": [
+            "pubsub.publish.post"
+          ]
+        }
+      ]
+    },
+    {
       "id": "request-move",
       "version": "0.7",
       "handlers": [

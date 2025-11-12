@@ -1,0 +1,85 @@
+#%RAML 1.0
+title: Circulation
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: request Anonymization API
+    content: <b>request Anonymization API</b>
+
+types:
+  anonymize-requests-response: !include schema/anonymize-requests-response.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+
+/request-anonymization:
+    /{requestId} :
+      uriParameters:
+          requestId:
+            type: string
+            description: Request UUID to anonymize
+            example: "9fd9b9d8-1b1a-4a7a-9f54-5e7c5f5e0b2e"
+            pattern: "^[0-9a-fA-F-]{36}$"
+      post:
+        is: [validate]
+        description: "Note that a 422 error with haveAssociatedFeesAndFines message and key requestIds has a value that is not a JSON array but a JSON string that contains a serialized JSON array of the request ids."
+        responses:
+          200:
+            description: "Chosen requests have been successfully anonymized"
+            body:
+              application/json:
+                type: anonymize-requests-response
+           403:
+              description: Missing required capability to anonymize requests (e.g. ui-requests.request-anonymize-single.execute) or insufficient permissions.
+              body:
+                application/json:
+                  type: errors
+                  example:
+                    errors:
+                      - message: "Permission denied: missing execute capability"
+                        parameters:
+                          - key: "permissionRequired"
+                            value: "ui-requests.request-anonymize-single.execute"
+
+            404:
+              description: Request with the given requestId was not found.
+              body:
+                application/json:
+                  type: errors
+                  example:
+                    errors:
+                      - message: "Request not found"
+                        parameters:
+                          - key: "requestId"
+                            value: "00000000-0000-0000-0000-000000000000"
+
+            422:
+              description: Validation error — request is not closed or other business-rule violation prevents anonymization.
+              body:
+                application/json:
+                  type: errors
+                  example:
+                    errors:
+                      - message: "requestNotClosed"
+                        parameters:
+                          - key: "requestId"
+                            value: "00000000-0000-0000-0000-000000000000"
+
+            500:
+              description: Internal server error.
+              body:
+                application/json:
+                  type: errors
+                  example:
+                    errors:
+                      - message: "Internal server error"
+
+
+
+
+
+

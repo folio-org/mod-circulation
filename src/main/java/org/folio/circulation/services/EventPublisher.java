@@ -47,6 +47,7 @@ import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -448,6 +449,33 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(null));
+  }
+
+  public CompletableFuture<Result<Void>> publishRequestAnonymizedLog(Request req) {
+    // Build the circulation-log payload for a Request action
+    final Item item = req.getItem();
+
+    final JsonObject linkToIds = new JsonObject()
+      .put("requestId", req.getId());
+
+    final JsonObject items = new JsonObject()
+      .put("itemBarcode", item != null ? item.getBarcode() : null)
+      .put("itemId",      item != null ? item.getItemId()   : null)
+      .put("instanceId",  item != null ? item.getInstanceId(): req.getInstanceId())
+      .put("holdingsId",  item != null ? item.getHoldingsRecordId() : req.getHoldingsRecordId());
+
+    final JsonObject context = new JsonObject()
+      .put("object", "Request")
+      .put("action", "anonymizeRequest")
+      .put("date", getZonedDateTime())
+      .put("userBarcode", "-")
+      .put("linkToIds", linkToIds)
+      .put("items", items);
+
+
+    final LogEventType type = LogEventType.REQUEST_ANONYMIZED;
+
+    return publishLogRecord(context, LogEventType.REQUEST_ANONYMIZED);
   }
 
   private String getLoanActionCommentLog(Loan loan) {
