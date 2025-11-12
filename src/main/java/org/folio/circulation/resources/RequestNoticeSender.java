@@ -14,6 +14,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +44,7 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
@@ -61,6 +63,7 @@ public class RequestNoticeSender {
   private final ServicePointRepository servicePointRepository;
   private final EventPublisher eventPublisher;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
+  private final ItemByInstanceIdFinder itemByInstanceIdFinder;
 
   private long recallRequestCount = 0L;
   private long holdRequestCount = 0L;
@@ -87,6 +90,7 @@ public class RequestNoticeSender {
     this.eventPublisher = new EventPublisher(clients);
     this.locationRepository = LocationRepository.using(clients, servicePointRepository);
     this.proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
+    this.itemByInstanceIdFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
   }
 
   public static RequestNoticeSender using(Clients clients) {
@@ -285,7 +289,16 @@ public class RequestNoticeSender {
       () -> request, () -> templateId, () -> eventType);
 
     return fetchAdditionalInfo(request)
-      .thenCompose(r -> r.after(req -> sendNotice(req, templateId, eventType)));
+      .thenCompose(r -> r.after(req -> {
+        CompletableFuture<Result<Void>> noticeFuture = sendNotice(req, templateId, eventType);
+        if (req.isHold()) {
+          CompletableFuture<Result<Void>> titleLevelFuture = sendNoticeForTitleLevelRequest(req);
+          return CompletableFuture.allOf(noticeFuture, titleLevelFuture)
+            .thenApply(v -> Result.succeeded(null));
+        } else {
+          return noticeFuture;
+        }
+      }));
   }
 
   private CompletableFuture<Result<Void>> sendNotice(Request request, UUID templateId,
@@ -378,6 +391,76 @@ public class RequestNoticeSender {
 
         return sendLoanNotice(loan, HOLD_REQUEST_FOR_ITEM);
       }));
+  }
+
+  private CompletableFuture<Result<Void>> sendNoticeForTitleLevelRequest(Request request) {
+    log.debug("sendNoticeForTitleLevelRequest:: sending notice for item: {}", request.getItemId());
+
+    return collectOpenLoansForTitleLevel(request)
+      .thenCompose(loansResult -> {
+        if (loansResult.failed() || loansResult.value() == null) {
+          return ofAsync(null);
+        }
+
+        Collection<Loan> openLoans = loansResult.value();
+        if (openLoans.isEmpty()) {
+          return ofAsync(null);
+        }
+
+        List<CompletableFuture<Result<Void>>> noticeFutures = openLoans.stream()
+          .map(loan -> sendLoanNotice(loan, HOLD_REQUEST_FOR_ITEM))
+          .toList();
+
+        CompletableFuture<Void> allDone =
+          CompletableFuture.allOf(noticeFutures.toArray(new CompletableFuture[0]));
+
+        return allDone.thenApply(r -> Result.succeeded(null));
+      });
+  }
+
+
+  public CompletableFuture<Result<Collection<Loan>>> collectOpenLoansForTitleLevel(Request request) {
+
+    // Step 1: Fetch all items for this title level
+    return fetchItemsForTitleLevel(request)
+      .thenCompose(itemsResult -> {
+        if (itemsResult.failed() || itemsResult.value() == null) {
+          return CompletableFuture.completedFuture(Result.failed(itemsResult.cause()));
+        }
+
+        Collection<Item> items = itemsResult.value();
+
+        // Step 2: For each item, find open loan asynchronously
+        List<CompletableFuture<Optional<Loan>>> loanFutures = items.stream()
+          .map(item -> loanRepository.findOpenLoanForItem(item)
+            .thenApply(loanResult -> {
+              if (loanResult.succeeded() && loanResult.value() != null) {
+                return Optional.of(loanResult.value());
+              } else {
+                return Optional.<Loan>empty();
+              }
+            })
+          )
+          .toList();
+
+        // Step 3: Combine all futures
+        CompletableFuture<Void> allDone =
+          CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[0]));
+
+        // Step 4: Gather successful loans
+        return allDone.thenApply(v -> {
+          List<Loan> openLoans = loanFutures.stream()
+            .map(CompletableFuture::join)
+            .flatMap(Optional::stream)
+            .collect(Collectors.toList());
+
+          return Result.succeeded(openLoans);
+        });
+      });
+  }
+
+  private CompletableFuture<Result<Collection<Item>>> fetchItemsForTitleLevel(Request request) {
+    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), false);
   }
 
 
