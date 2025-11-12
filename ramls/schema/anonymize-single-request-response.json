@@ -1,10 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "Response for single requests anonymization ",
+  "description": "Single Request Anonymization Response",
   "type": "object",
   "properties": {
-    "requestId": { "type": "string" },
-    "anonymized": { "type": "boolean" }
+    "requestId": {
+      "type": "string",
+      "description": "UUID of the request that was processed."
+    },
+    "anonymized": {
+      "type": "boolean",
+      "description": "True if the request is anonymized after this call (PII removed or already absent)."
+    }
   },
   "required": ["requestId", "anonymized"],
   "additionalProperties": false
