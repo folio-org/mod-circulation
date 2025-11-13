@@ -40,7 +40,7 @@ public class RequestAnonymizationResource extends Resource {
     routeRegistration.create(this::anonymizeRequests);
   }
 
-  private void anonymizeRequests(RoutingContext routingContext) {
+  void anonymizeRequests(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
@@ -94,7 +94,7 @@ public class RequestAnonymizationResource extends Resource {
       });
   }
 
-  private CompletableFuture<Result<Void>> validateRequestsEligible(
+  CompletableFuture<Result<Void>> validateRequestsEligible(
     List<String> requestIds, Clients clients) {
 
     RequestRepository requestRepository = new RequestRepository(clients);
@@ -150,8 +150,7 @@ public class RequestAnonymizationResource extends Resource {
       });
   }
 
-
-  private CompletableFuture<Result<Void>> anonymizeRequestsInStorage(
+  CompletableFuture<Result<Void>> anonymizeRequestsInStorage(
     List<String> requestIds, boolean includeCirculationLogs, Clients clients) {
 
     JsonObject payload = new JsonObject()
