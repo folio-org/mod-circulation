@@ -361,4 +361,8 @@ public class InterfaceUrls {
   public static URL printEventsUrl(String subPath) {
     return circulationModuleUrl("/circulation" + subPath);
   }
+
+  public static URL requestsAnonymizeUrl() {
+    return requestsUrl("/anonymize");
+  }
 }
