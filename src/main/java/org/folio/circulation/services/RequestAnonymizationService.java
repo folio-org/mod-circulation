@@ -1,6 +1,5 @@
 package org.folio.circulation.services;
 
-import static java.lang.invoke.MethodHandles.lookup;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
@@ -11,8 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.domain.RequestStatus;
@@ -22,13 +19,10 @@ import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.services.EventPublisher;
 
 import io.vertx.core.json.JsonObject;
 
 public class RequestAnonymizationService {
-  private static final Logger log = LogManager.getLogger(lookup().lookupClass());
-
   private static final Set<RequestStatus> ALLOWED_STATUSES = EnumSet.of(
     RequestStatus.CLOSED_FILLED,
     RequestStatus.CLOSED_CANCELLED,

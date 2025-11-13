@@ -24,7 +24,7 @@ public class ValidationErrorFailure implements HttpFailure {
 
   private final Collection<ValidationError> errors = new ArrayList<>();
 
-  public static <T> Result<T> ValidationErrorFailure(String code, String paramKey, String paramValue) {
+  public static <T> Result<T> validationErrorFailure(String code, String paramKey, String paramValue) {
     return failedValidation(new ValidationError(code, paramKey, paramValue));
   }
 

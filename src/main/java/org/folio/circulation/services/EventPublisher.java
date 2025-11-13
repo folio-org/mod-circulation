@@ -472,9 +472,6 @@ public class EventPublisher {
       .put("linkToIds", linkToIds)
       .put("items", items);
 
-
-    final LogEventType type = LogEventType.REQUEST_ANONYMIZED;
-
     return publishLogRecord(context, LogEventType.REQUEST_ANONYMIZED);
   }
 

@@ -5,15 +5,6 @@ import java.lang.invoke.MethodHandles;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.anonymization.DefaultLoanAnonymizationService;
-import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
-import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
-import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
-import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.RequestAnonymizationService;
 import org.folio.circulation.support.Clients;
@@ -29,7 +20,7 @@ public class RequestAnonymizationResource extends Resource {
   private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
 
-  public RequestAnonymizationResource(HttpClient client) {
+  public RequestAnonymizationResource(HttpClient client, RequestAnonymizationService service) {
     super((io.vertx.core.http.HttpClient) client);
   }
 
@@ -40,7 +31,7 @@ public class RequestAnonymizationResource extends Resource {
     rr.create(this::anonymizeRequest);
   }
 
-  private void anonymizeRequest(RoutingContext routingContext) {
+  public void anonymizeRequest(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
