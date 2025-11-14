@@ -4,6 +4,12 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -40,7 +46,23 @@ public class RequestAnonymizationService {
   private final EventPublisher eventPublisher;
 
   public RequestAnonymizationService(Clients clients, EventPublisher eventPublisher) {
-    this.requestRepository = new RequestRepository(clients);
+    ItemRepository itemRepository = new ItemRepository(clients);
+    UserRepository userRepository = new UserRepository(clients);
+    LoanRepository loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+
+    this.requestRepository = RequestRepository.using(
+      clients,
+      itemRepository,
+      userRepository,
+      loanRepository
+    );
+
+    this.eventPublisher = eventPublisher;
+  }
+
+  public RequestAnonymizationService(RequestRepository requestRepository,
+                                     EventPublisher eventPublisher) {
+    this.requestRepository = requestRepository;
     this.eventPublisher = eventPublisher;
   }
 
@@ -94,8 +116,8 @@ public class RequestAnonymizationService {
       return succeeded(req);
     }
 
-    rep.remove("requesterId");
-    rep.remove("proxyUserId");
+    rep.putNull("requesterId");
+    rep.putNull("proxyUserId");
     rep.remove("requester");
     rep.remove("proxy");
 

@@ -1,6 +1,7 @@
 package api.requests;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +15,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.RequestAnonymizationService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -90,8 +92,10 @@ class RequestAnonymizationServiceTest extends APITests {
     ArgumentCaptor<Request> updatedCap = ArgumentCaptor.forClass(Request.class);
     verify(requestRepository).update(updatedCap.capture());
     var updatedJson = updatedCap.getValue().asJson();
-    assertFalse(updatedJson.containsKey("requesterId"));
-    assertFalse(updatedJson.containsKey("proxyUserId"));
+    Assert.assertTrue(updatedJson.containsKey("requesterId"));
+    assertNull(updatedJson.getValue("requesterId"));
+    Assert.assertTrue(updatedJson.containsKey("proxyUserId"));
+    assertNull(updatedJson.getValue("proxyUserId"));
     assertFalse(updatedJson.containsKey("requester"));
     assertFalse(updatedJson.containsKey("proxy"));
 

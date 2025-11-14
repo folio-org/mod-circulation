@@ -35,6 +35,8 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
@@ -454,6 +456,7 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishRequestAnonymizedLog(Request req) {
     // Build the circulation-log payload for a Request action
     final Item item = req.getItem();
+    ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
     final JsonObject linkToIds = new JsonObject()
       .put("requestId", req.getId());
@@ -467,7 +470,7 @@ public class EventPublisher {
     final JsonObject context = new JsonObject()
       .put("object", "Request")
       .put("action", "anonymizeRequest")
-      .put("date", getZonedDateTime())
+      .put("date", now.toInstant().toString())
       .put("userBarcode", "-")
       .put("linkToIds", linkToIds)
       .put("items", items);

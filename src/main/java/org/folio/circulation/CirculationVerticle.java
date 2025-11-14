@@ -56,6 +56,7 @@ import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
 import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
+import org.folio.circulation.resources.RequestAnonymizationResource;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -145,6 +146,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new ScheduledDigitalRemindersProcessingResource(client).register(router);
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
+    new RequestAnonymizationResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);
     new FeeFineNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new OverdueFineScheduledNoticeProcessingResource(client).register(router);
