@@ -1,12 +1,9 @@
 package api.requests;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static api.support.http.InterfaceUrls.allowedServicePointsUrl;
 import static api.support.http.InterfaceUrls.circulationRequestAnonymizationUrl;
 
 import java.util.UUID;
@@ -33,10 +30,8 @@ class RequestAnonymizationApiTests extends APITests {
       "anonymize-request-" + requestId
     );
 
-
     assertEquals(200, response.getStatusCode());
 
-    JsonObject body = response.getJson();
     Response updated =
       requestsStorageClient.getById(UUID.fromString(requestId));
     JsonObject stored = updated.getJson();

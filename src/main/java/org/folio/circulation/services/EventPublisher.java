@@ -49,7 +49,6 @@ import org.folio.circulation.domain.representations.logs.LoanLogContext;
 import org.folio.circulation.domain.representations.logs.LogContextActionResolver;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
-import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;

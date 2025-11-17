@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import api.support.APITests;
 
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpClientInternal;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -32,7 +31,6 @@ class RequestAnonymizationResourceTests extends APITests {
     HttpClientInternal internalClient = mock(HttpClientInternal.class);
     HttpClient httpClient = internalClient;
 
-    RequestAnonymizationService service = mock(RequestAnonymizationService.class);
     RequestAnonymizationResource resource = new RequestAnonymizationResource(httpClient);
 
     Router router = mock(Router.class);

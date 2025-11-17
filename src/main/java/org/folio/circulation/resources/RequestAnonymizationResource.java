@@ -19,12 +19,6 @@ import io.vertx.ext.web.RoutingContext;
 public class RequestAnonymizationResource extends Resource {
   private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-/*
-  public RequestAnonymizationResource(HttpClient client, RequestAnonymizationService service) {
-    super((io.vertx.core.http.HttpClient) client);
-  }
-*/
-
   public RequestAnonymizationResource(HttpClient client) {
     super(client);
   }
@@ -44,8 +38,6 @@ public class RequestAnonymizationResource extends Resource {
 
     final var eventPublisher = new EventPublisher(clients);
     final var requestAnonymizationService = new RequestAnonymizationService(clients, eventPublisher);
-
-    log.info("anonymizeRequest:: requestId={}, user={}");
 
     requestAnonymizationService.anonymizeSingle(requestId, context.getUserId())
       .thenApply(r -> r.map(id ->

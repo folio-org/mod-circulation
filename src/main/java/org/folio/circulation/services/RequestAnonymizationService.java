@@ -4,12 +4,6 @@ import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
-import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
-import org.folio.circulation.infrastructure.storage.users.UserRepository;
-import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -19,12 +13,15 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.domain.RequestStatus;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 
 import io.vertx.core.json.JsonObject;
 
@@ -77,11 +74,11 @@ public class RequestAnonymizationService {
     }
 
     return fetchRequest(id)
-      .thenApply(flatMapResult(req -> validateStatus(req, requestId)))        // 404 / 422 mapping
-      .thenApply(flatMapResult(this::scrubPii))                               // apply 2292 field clearing
-      .thenCompose(r -> r.after(requestRepository::update))                   // persist
-      .thenCompose(r -> r.after(updated -> publishLog(updated, performedByUserId))) // audit/event
-      .thenApply(mapResult(updated -> requestId));                            // success payload = id
+      .thenApply(flatMapResult(req -> validateStatus(req, requestId)))
+      .thenApply(flatMapResult(this::scrubPii))
+      .thenCompose(r -> r.after(requestRepository::update))
+      .thenCompose(r -> r.after(updated -> publishLog(updated, performedByUserId)))
+      .thenApply(mapResult(updated -> requestId));
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(UUID id) {
