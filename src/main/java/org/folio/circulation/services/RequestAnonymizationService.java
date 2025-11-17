@@ -77,7 +77,7 @@ public class RequestAnonymizationService {
       .thenApply(flatMapResult(req -> validateStatus(req, requestId)))
       .thenApply(flatMapResult(this::scrubPii))
       .thenCompose(r -> r.after(requestRepository::update))
-      .thenCompose(r -> r.after(updated -> publishLog(updated, performedByUserId)))
+      .thenCompose(r -> r.after(this::publishLog))
       .thenApply(mapResult(updated -> requestId));
   }
 
@@ -126,7 +126,7 @@ public class RequestAnonymizationService {
     return succeeded(Request.from(rep));
   }
 
-  private CompletableFuture<Result<Request>> publishLog(Request req, String performedByUserId) {
+  private CompletableFuture<Result<Request>> publishLog(Request req) {
     return eventPublisher.publishRequestAnonymizedLog(req)
       .thenApply(r -> r.map(v -> req));
   }

@@ -17,8 +17,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RequestAnonymizationResource extends Resource {
-  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   public RequestAnonymizationResource(HttpClient client) {
     super(client);
   }

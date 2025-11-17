@@ -16,12 +16,8 @@ import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 
 import org.folio.circulation.resources.RequestAnonymizationResource;
-import org.folio.circulation.services.RequestAnonymizationService;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-
-
 
 @Nested
 class RequestAnonymizationResourceTests extends APITests {

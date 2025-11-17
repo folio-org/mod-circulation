@@ -114,7 +114,7 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods":["POST"],
           "pathPattern": "/loan-anonymization/by-user/{userId}",
           "permissionsRequired": [
             "circulation.loans.collection.anonymize.user.post"
@@ -2317,6 +2317,21 @@
         "overdue-fines-policies.item.get",
         "lost-item-fees-policies.collection.get",
         "lost-item-fees-policies.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "perms.circulation.requests.anonymize.single.all",
+      "displayName": "module permissions for single request anonymization",
+      "description": "Permissions needed to anonymize a single closed request",
+      "subPermissions": [
+        "circulation.request-anonymization.item.post",
+        "circulation-storage.requests.item.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings-records.item.get",
+        "inventory-storage.instances.item.get",
+        "service-points.item.get",
+        "pubsub.publish.post"
       ],
       "visible": false
     },
