@@ -23,13 +23,12 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(MockitoExtension.class)
 class AnonymizeRequestTests {
@@ -51,7 +50,7 @@ class AnonymizeRequestTests {
   }
 
   @Test
-  void anonymizeSingle_happyPath_removesPII_updates_repo_and_logs() {
+  void anonymizeSingleHappyPathRemovesPIIUpdatesRepoAndLogs() {
     // given a closed request with PII
     String id = UUID.randomUUID().toString();
 

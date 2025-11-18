@@ -74,7 +74,7 @@ class RequestAnonymizationServiceTest extends APITests {
   }
 
   @Test
- void anonymizeSingle_happyPath_removesPII_updates_repo_and_logs() {
+ void anonymizeSingleHappyPathRemovesPIIUpdatesRepoAndLogs() {
     String id = UUID.randomUUID().toString();
     var req = closedFilledRequest(id);
 
@@ -102,10 +102,8 @@ class RequestAnonymizationServiceTest extends APITests {
     verify(eventPublisher).publishRequestAnonymizedLog(any());
   }
 
-
-
   @Test
-  void anonymizeSingle_delivery_removesDeliveryFields() {
+  void anonymizeSingleDeliveryRemovesDeliveryFields() {
     String id = UUID.randomUUID().toString();
     var req = closedDeliveryRequest(id);
 
@@ -126,7 +124,7 @@ class RequestAnonymizationServiceTest extends APITests {
   }
 
   @Test
- void anonymizeSingle_returns404_whenRequestNotFound() {
+ void anonymizeSingleReturns404WhenRequestNotFound() {
     String id = UUID.randomUUID().toString();
 
     when(requestRepository.getById(id)).thenReturn(completedFuture(Result.succeeded(null)));
@@ -140,7 +138,7 @@ class RequestAnonymizationServiceTest extends APITests {
   }
 
   @Test
-void anonymizeSingle_returns422_whenRequestIsOpen() {
+void anonymizeSingleReturns422WhenRequestIsOpen() {
     String id = UUID.randomUUID().toString();
     var json = new io.vertx.core.json.JsonObject()
       .put("id", id)
@@ -158,7 +156,7 @@ void anonymizeSingle_returns422_whenRequestIsOpen() {
   }
 
   @Test
- void anonymizeSingle_returns422_whenIdIsNotUuid() {
+ void anonymizeSingleReturns422WhenIdIsNotUuid() {
     var out = service.anonymizeSingle("not-a-uuid", "user-123").join();
     assertFalse(out.succeeded());
     assertTrue(out.cause().toString().contains("invalidRequestId"));

@@ -58,7 +58,8 @@ public class RequestAnonymizationService {
   }
 
   public RequestAnonymizationService(RequestRepository requestRepository,
-                                     EventPublisher eventPublisher) {
+      EventPublisher eventPublisher) {
+      
     this.requestRepository = requestRepository;
     this.eventPublisher = eventPublisher;
   }

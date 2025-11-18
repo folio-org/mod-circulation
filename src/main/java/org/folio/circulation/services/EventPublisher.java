@@ -469,7 +469,7 @@ public class EventPublisher {
     final JsonObject context = new JsonObject()
       .put("object", "Request")
       .put("action", "anonymizeRequest")
-      .put("date", now.toInstant().toString())
+      .put("date", ZonedDateTime.now(ZoneOffset.UTC).toInstant().toString())
       .put("userBarcode", "-")
       .put("linkToIds", linkToIds)
       .put("items", items);

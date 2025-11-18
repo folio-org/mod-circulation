@@ -363,9 +363,7 @@ public class RequestRepository {
     return new SingleRecordFetcher<>(requestsStorageClient, "request", interpreter);
   }
 
-
-
-    @AllArgsConstructor
+  @AllArgsConstructor
   @Getter
   private static class Clients {
     private final CollectionResourceClient requestsStorageClient;

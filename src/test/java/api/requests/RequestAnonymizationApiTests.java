@@ -21,7 +21,7 @@ import io.vertx.core.json.JsonObject;
 class RequestAnonymizationApiTests extends APITests {
 
   @Test
-  void anonymizeSingleRequest_removesPII_andReturns200() {
+  void anonymizeSingleRequestRemovesPIIAndReturns200() {
 
     String requestId = createClosedDeliveryRequest();
 

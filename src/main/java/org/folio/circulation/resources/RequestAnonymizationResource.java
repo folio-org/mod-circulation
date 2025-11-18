@@ -1,10 +1,6 @@
 package org.folio.circulation.resources;
 
-import java.lang.invoke.MethodHandles;
-
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.RequestAnonymizationService;
 import org.folio.circulation.support.Clients;
@@ -23,11 +19,9 @@ public class RequestAnonymizationResource extends Resource {
 
   @Override
   public void register(Router router) {
-    final RouteRegistration rr =
-      new RouteRegistration("/request-anonymization/:requestId", router);
-    rr.create(this::anonymizeRequest);
+    new RouteRegistration("/request-anonymization/:requestId", router)
+      .create(this::anonymizeRequest);
   }
-
   public void anonymizeRequest(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);

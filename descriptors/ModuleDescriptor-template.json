@@ -114,7 +114,7 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods":["POST"],
+          "methods": ["POST"],
           "pathPattern": "/loan-anonymization/by-user/{userId}",
           "permissionsRequired": [
             "circulation.loans.collection.anonymize.user.post"

@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class RequestAnonymizationResourceTests extends APITests {
 
   @Test
-  void register_doesNotThrowAndRegistersRoute() {
+  void registerDoesNotThrowAndRegistersRoute() {
     HttpClientInternal internalClient = mock(HttpClientInternal.class);
     HttpClient httpClient = internalClient;
 
