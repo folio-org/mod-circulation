@@ -56,6 +56,7 @@ import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
 import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
+import org.folio.circulation.resources.RequestAnonymizationResource;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -167,6 +168,8 @@ public class CirculationVerticle extends AbstractVerticle {
     new FeeFineBalanceChangedHandlerResource(client).register(router);
     new CirculationSettingsResource(client).register(router);
     new PrintEventsResource(client).register(router);
+
+    new RequestAnonymizationResource(client).register(router);
 
     server.requestHandler(router)
       .listen(config().getInteger("port"), result -> {
