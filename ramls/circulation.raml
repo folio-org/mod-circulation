@@ -367,14 +367,22 @@ resourceTypes:
             body:
               text/plain:
                 example: "Internal server error"
-    /requests/anonymize:
-      post:
-        description: Anonymize closed circulation requests
+/request-anonymization:
+  displayName: Request Anonymization
+  description: Anonymize closed circulation requests
+  post:
+    description: Anonymize closed circulation requests
+    body:
+      application/json:
+        type: !include schema/anonymize-circulation-request.json
+    responses:
+      200:
         body:
           application/json:
-            type: !include schema/anonymize-circulation-request.json
-        responses:
-          200:
-            body:
-              application/json:
-                type: !include schema/anonymization-result.json
+            type: !include schema/anonymization-result.json
+      422:
+        description: "Validation errors"
+        body:
+          application/json:
+            type: errors
+

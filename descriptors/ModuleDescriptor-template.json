@@ -207,7 +207,7 @@
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/circulation/requests/anonymize",
+          "pathPattern": "/request-anonymization",
           "permissionsRequired": ["circulation.requests.anonymize.execute"],
           "modulePermissions": [
             "circulation-storage.requests.item.post",

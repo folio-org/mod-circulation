@@ -36,7 +36,7 @@ public class RequestAnonymizationResource extends Resource {
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/request-anonymization", router);
+      "/request-anonymization", router);
     routeRegistration.create(this::anonymizeRequests);
   }
 
