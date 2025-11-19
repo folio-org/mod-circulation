@@ -362,7 +362,7 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation" + subPath);
   }
 
-  public static URL requestsAnonymizeUrl() {
-    return requestsUrl("/anonymize");
+  public static URL requestAnonymizationUrl() {
+    return circulationModuleUrl("/request-anonymization");
   }
 }

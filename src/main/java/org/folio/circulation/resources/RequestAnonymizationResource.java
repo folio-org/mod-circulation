@@ -36,7 +36,7 @@ public class RequestAnonymizationResource extends Resource {
   @Override
   public void register(Router router) {
     RouteRegistration routeRegistration = new RouteRegistration(
-      "/circulation/requests/anonymize", router);
+      "/circulation/request-anonymization", router);
     routeRegistration.create(this::anonymizeRequests);
   }
 
@@ -70,7 +70,6 @@ public class RequestAnonymizationResource extends Resource {
 
     // Get includeCirculationLogs parameter (default to true)
     boolean includeCirculationLogs = body.getBoolean("includeCirculationLogs", true);
-
     log.info("anonymizeRequests:: Processing {} requests, includeCirculationLogs={}",
       requestIds.size(), includeCirculationLogs);
 
