@@ -453,19 +453,14 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishRequestAnonymizedLog(Request req) {
-    // Build the circulation-log payload for a Request action
     final Item item = req.getItem();
-    ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-
     final JsonObject linkToIds = new JsonObject()
       .put("requestId", req.getId());
-
     final JsonObject items = new JsonObject()
       .put("itemBarcode", item != null ? item.getBarcode() : null)
       .put("itemId",      item != null ? item.getItemId()   : null)
       .put("instanceId",  item != null ? item.getInstanceId(): req.getInstanceId())
       .put("holdingsId",  item != null ? item.getHoldingsRecordId() : req.getHoldingsRecordId());
-
     final JsonObject context = new JsonObject()
       .put("object", "Request")
       .put("action", "anonymizeRequest")

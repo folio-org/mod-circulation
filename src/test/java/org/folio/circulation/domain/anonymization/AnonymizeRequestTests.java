@@ -78,7 +78,7 @@ class AnonymizeRequestTests {
     when(eventPublisher.publishRequestAnonymizedLog(any(Request.class)))
       .thenReturn(completedFuture(succeeded(null)));
 
-    var result = service.anonymizeSingle(id, "user-123").join();
+    var result = service.anonymizeSingle(id).join();
 
     assertTrue(result.succeeded());
     assertThat(result.value(), is(id));

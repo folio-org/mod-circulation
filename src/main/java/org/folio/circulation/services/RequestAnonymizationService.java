@@ -59,12 +59,12 @@ public class RequestAnonymizationService {
 
   public RequestAnonymizationService(RequestRepository requestRepository,
       EventPublisher eventPublisher) {
-      
+
     this.requestRepository = requestRepository;
     this.eventPublisher = eventPublisher;
   }
 
-  public CompletableFuture<Result<String>> anonymizeSingle(String requestId, String performedByUserId) {
+  public CompletableFuture<Result<String>> anonymizeSingle(String requestId) {
     final UUID id;
     try {
       id = UUID.fromString(requestId);

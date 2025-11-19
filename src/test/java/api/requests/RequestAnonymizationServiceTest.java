@@ -84,7 +84,7 @@ class RequestAnonymizationServiceTest extends APITests {
     when(eventPublisher.publishRequestAnonymizedLog(org.mockito.ArgumentMatchers.any()))
       .thenReturn(completedFuture(Result.succeeded(null)));
 
-    var out = service.anonymizeSingle(id, "user-123").join();
+    var out = service.anonymizeSingle(id).join();
 
     assertTrue(out.succeeded());
     assertEquals(id, out.value());
@@ -113,7 +113,7 @@ class RequestAnonymizationServiceTest extends APITests {
     when(eventPublisher.publishRequestAnonymizedLog(any()))
       .thenReturn(completedFuture(Result.succeeded(null)));
 
-    var out = service.anonymizeSingle(id, "user-123").join();
+    var out = service.anonymizeSingle(id).join();
     assertTrue(out.succeeded());
 
     ArgumentCaptor<Request> updatedCap = ArgumentCaptor.forClass(Request.class);
@@ -129,7 +129,7 @@ class RequestAnonymizationServiceTest extends APITests {
 
     when(requestRepository.getById(id)).thenReturn(completedFuture(Result.succeeded(null)));
 
-    var out = service.anonymizeSingle(id, "user-123").join();
+    var out = service.anonymizeSingle(id).join();
 
     assertFalse(out.succeeded());
     assertTrue(out.cause().toString().contains("cannot be found")); // RecordNotFoundFailure message
@@ -147,7 +147,7 @@ void anonymizeSingleReturns422WhenRequestIsOpen() {
 
     when(requestRepository.getById(id)).thenReturn(completedFuture(Result.succeeded(req)));
 
-    var out = service.anonymizeSingle(id, "user-123").join();
+    var out = service.anonymizeSingle(id).join();
 
     assertFalse(out.succeeded());
     assertTrue(out.cause().toString().contains("requestNotClosed"));
@@ -157,7 +157,7 @@ void anonymizeSingleReturns422WhenRequestIsOpen() {
 
   @Test
  void anonymizeSingleReturns422WhenIdIsNotUuid() {
-    var out = service.anonymizeSingle("not-a-uuid", "user-123").join();
+    var out = service.anonymizeSingle("not-a-uuid").join();
     assertFalse(out.succeeded());
     assertTrue(out.cause().toString().contains("invalidRequestId"));
   }

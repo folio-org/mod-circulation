@@ -31,7 +31,7 @@ public class RequestAnonymizationResource extends Resource {
     final var eventPublisher = new EventPublisher(clients);
     final var requestAnonymizationService = new RequestAnonymizationService(clients, eventPublisher);
 
-    requestAnonymizationService.anonymizeSingle(requestId, context.getUserId())
+    requestAnonymizationService.anonymizeSingle(requestId)
       .thenApply(r -> r.map(id ->
         JsonHttpResponse.ok(new JsonObject()
           .put("requestId", id)
