@@ -7,14 +7,12 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -22,7 +20,7 @@ import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
-
+import org.folio.util.UuidUtil;
 import io.vertx.core.json.JsonObject;
 
 public class RequestAnonymizationService {
@@ -65,29 +63,26 @@ public class RequestAnonymizationService {
   }
 
   public CompletableFuture<Result<String>> anonymizeSingle(String requestId) {
-    final UUID id;
-    try {
-      id = UUID.fromString(requestId);
-    } catch (IllegalArgumentException e) {
+    if (!UuidUtil.isUuid(requestId)) {
       return CompletableFuture.completedFuture(
-        failed(new ValidationErrorFailure(new ValidationError("invalidRequestId", "requestId", requestId)))
+        ValidationErrorFailure.failedValidation(
+          "invalidRequestId",
+          "requestId",
+          requestId
+        )
       );
     }
 
-    return fetchRequest(id)
+    return fetchRequest(requestId)
       .thenApply(flatMapResult(req -> validateStatus(req, requestId)))
-      .thenApply(flatMapResult(this::scrubPii))
+      .thenApply(mapResult(this::scrubPii))
       .thenCompose(r -> r.after(requestRepository::update))
       .thenCompose(r -> r.after(this::publishLog))
       .thenApply(mapResult(updated -> requestId));
   }
 
-  private CompletableFuture<Result<Request>> fetchRequest(UUID id) {
-    return requestRepository.getById(id.toString())
-      .thenApply(res -> res.failWhen(
-        r -> succeeded(r == null),
-        r -> new RecordNotFoundFailure("Request", id.toString())
-      ));
+  private CompletableFuture<Result<Request>> fetchRequest(String requestId) {
+    return requestRepository.getById(requestId);
   }
 
   private Result<Request> validateStatus(Request request, String id) {
@@ -102,8 +97,8 @@ public class RequestAnonymizationService {
     return failed(new ValidationErrorFailure((new ValidationError("requestNotEligibleForAnonymization", "requestId", id))));
   }
 
-  private Result<Request> scrubPii(Request req) {
-    final JsonObject rep = req.asJson().copy();
+  private Request scrubPii(Request req) {
+    final JsonObject rep = req.asJson();
 
     final boolean hadRequester = rep.containsKey("requester") || rep.containsKey("requesterId");
     final boolean hadProxy = rep.containsKey("proxy") || rep.containsKey("proxyUserId");
@@ -111,7 +106,7 @@ public class RequestAnonymizationService {
     final boolean hadDelivery = isDelivery && (rep.containsKey("deliveryAddress") || rep.containsKey("deliveryAddressTypeId"));
 
     if (!hadRequester && !hadProxy && (!isDelivery || !hadDelivery)) {
-      return succeeded(req);
+      return req;
     }
 
     rep.putNull("requesterId");
@@ -119,16 +114,15 @@ public class RequestAnonymizationService {
     rep.remove("requester");
     rep.remove("proxy");
 
-    if (req.getfulfillmentPreference() == RequestFulfillmentPreference.DELIVERY) {
+    if (isDelivery) {
       rep.remove("deliveryAddress");
       rep.remove("deliveryAddressTypeId");
     }
 
-    return succeeded(Request.from(rep));
+    return Request.from(rep);
   }
 
-  private CompletableFuture<Result<Request>> publishLog(Request req) {
-    return eventPublisher.publishRequestAnonymizedLog(req)
-      .thenApply(r -> r.map(v -> req));
+  private CompletableFuture<Result<Void>> publishLog(Request req) {
+    return eventPublisher.publishRequestAnonymizedLog(req);
   }
 }

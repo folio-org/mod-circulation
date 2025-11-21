@@ -7,16 +7,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import api.support.APITests;
+import org.folio.circulation.resources.RequestAnonymizationResource;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
+import api.support.APITests;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.impl.HttpClientInternal;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
-
-import org.folio.circulation.resources.RequestAnonymizationResource;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 
 @Nested
 class RequestAnonymizationResourceTests extends APITests {

@@ -22,6 +22,7 @@ public class RequestAnonymizationResource extends Resource {
     new RouteRegistration("/request-anonymization/:requestId", router)
       .create(this::anonymizeRequest);
   }
+  
   public void anonymizeRequest(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);

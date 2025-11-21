@@ -1,19 +1,22 @@
 package api.requests;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.UUID;
+import io.vertx.core.json.JsonObject;
 
 import org.folio.circulation.domain.*;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.RequestAnonymizationService;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,19 +39,12 @@ class RequestAnonymizationServiceTest extends APITests {
     eventPublisher = mock(EventPublisher.class);
 
     when(clients.requestsStorage()).thenReturn(null);
-    service = new RequestAnonymizationService(clients, eventPublisher) {
-      {
-        try {
-          var f = RequestAnonymizationService.class.getDeclaredField("requestRepository");
-          f.setAccessible(true);
-          f.set(this, requestRepository);
-        } catch (Exception e) { throw new RuntimeException(e); }
-      }
-    };
+
+    service = new RequestAnonymizationService(requestRepository, eventPublisher);
   }
 
   private static Request closedFilledRequest(String id) {
-    var json = new io.vertx.core.json.JsonObject()
+     JsonObject json = new JsonObject()
       .put("id", id)
       .put("status", RequestStatus.CLOSED_FILLED.getValue())
       .put("requesterId", "r1")
@@ -127,12 +123,16 @@ class RequestAnonymizationServiceTest extends APITests {
  void anonymizeSingleReturns404WhenRequestNotFound() {
     String id = UUID.randomUUID().toString();
 
-    when(requestRepository.getById(id)).thenReturn(completedFuture(Result.succeeded(null)));
+    //when(requestRepository.getById(id)).thenReturn(completedFuture(Result.succeeded(null)));
+    when(requestRepository.getById(id))
+      .thenReturn(completedFuture(
+        failed(new RecordNotFoundFailure("Request", id))
+      ));
 
     var out = service.anonymizeSingle(id).join();
 
     assertFalse(out.succeeded());
-    assertTrue(out.cause().toString().contains("cannot be found")); // RecordNotFoundFailure message
+    assertTrue(out.cause().toString().contains("cannot be found"));
     verify(requestRepository, never()).update((Request) any());
     verify(eventPublisher, never()).publishRequestAnonymizedLog(any());
   }

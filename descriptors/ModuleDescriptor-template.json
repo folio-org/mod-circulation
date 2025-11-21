@@ -85,7 +85,11 @@
             "POST"
           ],
           "pathPattern": "/request-anonymization/{requestId}",
+          "permissionsRequired": [
+            "circulation.requests.anonymize.single.post"
+          ],
           "modulePermissions": [
+            "modperms.circulation.requests.anonymize.single",
             "pubsub.publish.post"
           ]
         }
@@ -1525,6 +1529,11 @@
       "description": "anonymize loans"
     },
     {
+      "permissionName": "circulation.requests.anonymize.single.post",
+      "displayName": "circulation - anonymize requests",
+      "description": "anonymize requests"
+    },
+    {
       "permissionName": "circulation.loans.item.delete",
       "displayName": "circulation - delete individual loan",
       "description": "delete individual loan"
@@ -2321,7 +2330,7 @@
       "visible": false
     },
     {
-      "permissionName": "perms.circulation.requests.anonymize.single.all",
+      "permissionName": "modperms.circulation.requests.anonymize.single.all",
       "displayName": "module permissions for single request anonymization",
       "description": "Permissions needed to anonymize a single closed request",
       "subPermissions": [

@@ -1,14 +1,13 @@
 package api.requests;
 
+import static api.support.http.InterfaceUrls.circulationRequestAnonymizationUrl;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static api.support.http.InterfaceUrls.circulationRequestAnonymizationUrl;
 
 import java.util.UUID;
 
-import lombok.extern.slf4j.Slf4j;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
@@ -17,12 +16,10 @@ import api.support.builders.RequestBuilder;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonObject;
 
-@Slf4j
 class RequestAnonymizationApiTests extends APITests {
 
   @Test
   void anonymizeSingleRequestRemovesPIIAndReturns200() {
-
     String requestId = createClosedDeliveryRequest();
 
     Response response = restAssuredClient.post(
