@@ -122,8 +122,6 @@ class RequestAnonymizationServiceTest extends APITests {
   @Test
  void anonymizeSingleReturns404WhenRequestNotFound() {
     String id = UUID.randomUUID().toString();
-
-    //when(requestRepository.getById(id)).thenReturn(completedFuture(Result.succeeded(null)));
     when(requestRepository.getById(id))
       .thenReturn(completedFuture(
         failed(new RecordNotFoundFailure("Request", id))
