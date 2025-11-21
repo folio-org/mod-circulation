@@ -20,7 +20,9 @@ import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.DoubleUnaryOperator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
