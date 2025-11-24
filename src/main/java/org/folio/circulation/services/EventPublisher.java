@@ -35,6 +35,8 @@ import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTimeOptional;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
@@ -448,6 +450,26 @@ public class EventPublisher {
     }
 
     return completedFuture(succeeded(null));
+  }
+
+  public CompletableFuture<Result<Void>> publishRequestAnonymizedLog(Request req) {
+    final Item item = req.getItem();
+    final JsonObject linkToIds = new JsonObject()
+    .put("requestId", req.getId());
+    final JsonObject items = new JsonObject()
+    .put("itemBarcode", item != null ? item.getBarcode() : null)
+    .put("itemId",      item != null ? item.getItemId()   : null)
+    .put("instanceId",  item != null ? item.getInstanceId(): req.getInstanceId())
+    .put("holdingsId",  item != null ? item.getHoldingsRecordId() : req.getHoldingsRecordId());
+    final JsonObject context = new JsonObject()
+    .put("object", "Request")
+    .put("action", "anonymizeRequest")
+    .put("date", ZonedDateTime.now(ZoneOffset.UTC).toInstant().toString())
+    .put("userBarcode", "-")
+    .put("linkToIds", linkToIds)
+    .put("items", items);
+
+    return publishLogRecord(context, LogEventType.REQUEST_ANONYMIZED);
   }
 
   private String getLoanActionCommentLog(Loan loan) {
