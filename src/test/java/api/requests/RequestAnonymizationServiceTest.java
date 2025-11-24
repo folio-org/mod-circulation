@@ -3,13 +3,15 @@ package api.requests;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.UUID;
-import io.vertx.core.json.JsonObject;
 
 import org.folio.circulation.domain.*;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -24,6 +26,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import api.support.APITests;
+import io.vertx.core.json.JsonObject;
+
 
 class RequestAnonymizationServiceTest extends APITests {
 

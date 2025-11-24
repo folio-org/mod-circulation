@@ -455,19 +455,19 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishRequestAnonymizedLog(Request req) {
     final Item item = req.getItem();
     final JsonObject linkToIds = new JsonObject()
-      .put("requestId", req.getId());
+    .put("requestId", req.getId());
     final JsonObject items = new JsonObject()
-      .put("itemBarcode", item != null ? item.getBarcode() : null)
-      .put("itemId",      item != null ? item.getItemId()   : null)
-      .put("instanceId",  item != null ? item.getInstanceId(): req.getInstanceId())
-      .put("holdingsId",  item != null ? item.getHoldingsRecordId() : req.getHoldingsRecordId());
+    .put("itemBarcode", item != null ? item.getBarcode() : null)
+    .put("itemId",      item != null ? item.getItemId()   : null)
+    .put("instanceId",  item != null ? item.getInstanceId(): req.getInstanceId())
+    .put("holdingsId",  item != null ? item.getHoldingsRecordId() : req.getHoldingsRecordId());
     final JsonObject context = new JsonObject()
-      .put("object", "Request")
-      .put("action", "anonymizeRequest")
-      .put("date", ZonedDateTime.now(ZoneOffset.UTC).toInstant().toString())
-      .put("userBarcode", "-")
-      .put("linkToIds", linkToIds)
-      .put("items", items);
+    .put("object", "Request")
+    .put("action", "anonymizeRequest")
+    .put("date", ZonedDateTime.now(ZoneOffset.UTC).toInstant().toString())
+    .put("userBarcode", "-")
+    .put("linkToIds", linkToIds)
+    .put("items", items);
 
     return publishLogRecord(context, LogEventType.REQUEST_ANONYMIZED);
   }

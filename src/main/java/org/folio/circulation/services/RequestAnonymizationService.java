@@ -45,12 +45,7 @@ public class RequestAnonymizationService {
     UserRepository userRepository = new UserRepository(clients);
     LoanRepository loanRepository = new LoanRepository(clients, itemRepository, userRepository);
 
-    this.requestRepository = RequestRepository.using(
-      clients,
-      itemRepository,
-      userRepository,
-      loanRepository
-    );
+    this.requestRepository = RequestRepository.using(clients, itemRepository, userRepository, loanRepository);
 
     this.eventPublisher = eventPublisher;
   }
@@ -65,11 +60,7 @@ public class RequestAnonymizationService {
   public CompletableFuture<Result<String>> anonymizeSingle(String requestId) {
     if (!UuidUtil.isUuid(requestId)) {
       return CompletableFuture.completedFuture(
-        ValidationErrorFailure.failedValidation(
-          "invalidRequestId",
-          "requestId",
-          requestId
-        )
+        ValidationErrorFailure.failedValidation("invalidRequestId", "requestId", requestId)
       );
     }
 

@@ -5,6 +5,7 @@
   "properties": {
     "requestId": {
       "type": "string",
+      "format": "UUID",
       "description": "UUID of the request that was processed."
     },
     "anonymized": {
