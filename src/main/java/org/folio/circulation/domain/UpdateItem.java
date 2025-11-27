@@ -161,7 +161,7 @@ public class UpdateItem {
   CompletableFuture<Result<RequestAndRelatedRecords>> onRequestCreateOrUpdate(
     RequestAndRelatedRecords requestAndRelatedRecords) {
 
-    log.debug("onRequestCreateOrUpdate:: parameters requestAndRelatedRecords: {}",
+    log.info("onRequestCreateOrUpdate:: parameters requestAndRelatedRecords: {}",
       () -> requestAndRelatedRecords);
 
     return of(() -> itemStatusOnRequestCreateOrUpdate(requestAndRelatedRecords))
