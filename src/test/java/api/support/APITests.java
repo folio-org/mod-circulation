@@ -46,7 +46,6 @@ import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
-import api.support.fixtures.CirculationSettingFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
 import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
@@ -310,8 +309,6 @@ public abstract class APITests {
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
   protected final ConfigurationsFixture configurationsFixture = new ConfigurationsFixture(configClient);
-  protected final CirculationSettingFixture circulationSettingFixture = new CirculationSettingFixture(
-    circulationSettingsClient);
   protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 
   protected final ForUseAtLocationHoldFixture holdForUseAtLocationFixture = new ForUseAtLocationHoldFixture();
