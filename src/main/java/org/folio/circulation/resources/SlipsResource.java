@@ -67,12 +67,9 @@ public abstract class SlipsResource extends Resource {
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
-  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
-  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
-  public static final String PRINT_EVENT_LOG_FEATURE = "printEventLogFeature";
 
   private final String rootPath;
   private final String collectionName;
@@ -149,45 +146,13 @@ public abstract class SlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
-    if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
-      log.info("isStaffSlipsPrintingDisabled:: PICK_SLIPS_KEY and PAGE requestType condition met");
-      return new CirculationSettingsRepository(clients).findBy(PRINT_EVENT_FLAG_QUERY)
-        .thenApply(r -> r.map(this::isPrintingPickSlipsDisabled));
-    } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
+    if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("isStaffSlipsPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
       return new ConfigurationRepository(clients).lookupPrintHoldRequestsEnabled()
         .thenApply(r -> r.map(config -> !config.isPrintHoldRequestsEnabled()));
     } else {
       return ofAsync(false);
     }
-  }
-
-  private boolean isPrintingPickSlipsDisabled(
-    MultipleRecords<CirculationSetting> settingsRecords) {
-
-    log.debug("isPrintingPickSlipsEnabled:: parameters settingsRecords: {}",
-      () -> multipleRecordsAsString(settingsRecords));
-
-    if (settingsRecords == null) {
-      log.info("isPrintingPickSlipsEnabled:: settingsRecords is null");
-      return false;
-    }
-
-    return settingsRecords.getRecords()
-      .stream()
-      .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
-      .findFirst()
-      .map(CirculationSetting::getValue)
-      .map(setting -> setting.getValue("enablePrintLog"))
-      .map(enablePrintLogValue -> {
-        if (enablePrintLogValue instanceof Boolean enablePrintLogBoolean) {
-          return !enablePrintLogBoolean;
-        } else if (enablePrintLogValue instanceof String enablePrintLogString) {
-          return !BooleanUtils.toBoolean(enablePrintLogString);
-        }
-        return false;
-      })
-      .orElse(false);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchLocationsForServicePoint(
