@@ -595,10 +595,8 @@ class StaffSlipsTests extends APITests {
       "The Long Way to a Small, Angry Planet"));
   }
 
-  @ParameterizedTest
-  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
-  void pickSlipForTitleLevelRequestContainsItemData(Object trueValue) {
-    configurationsFixture.configurePrintHoldRequests(true);
+  @Test
+  void pickSlipForTitleLevelRequestContainsItemData() {
     settingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var requester = usersFixture.steve();
