@@ -4,6 +4,7 @@
 * Handling of patron notices for closed loans ([CIRC-1891](https://folio-org.atlassian.net/browse/CIRC-1891))
 * Render item's loan type in requests responses ([CIRC-2441](https://folio-org.atlassian.net/browse/CIRC-2441))
 * Switch DCB user check from lastName to the user type ([CIRC-2482](https://folio-org.atlassian.net/browse/CIRC-2482))
+* Fail on startup if Kafka config is invalid ([CIRC-2003](https://folio-org.atlassian.net/browse/CIRC-2003))
 
 ## 24.4.0 2025-03-12
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
