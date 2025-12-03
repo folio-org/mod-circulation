@@ -2,10 +2,10 @@ package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;
@@ -16,6 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CirculationSetting;
 import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
+import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
@@ -24,6 +26,8 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public class CirculationSettingsRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -96,7 +100,7 @@ public class CirculationSettingsRepository {
       .thenApply(interpreter()::flatMap);
   }
 
-  public CompletableFuture<Result<PageLimit>> lookupSchedulerNoticesProcessingLimit() {
+  public CompletableFuture<Result<PageLimit>> getScheduledNoticesProcessingLimit() {
     return findByName(SETTING_NAME_NOTICES_LIMIT)
       .thenApply(r -> r.map(setting -> setting
         .map(CirculationSetting::getValue)
@@ -105,6 +109,22 @@ public class CirculationSettingsRepository {
         .map(Integer::valueOf)
         .map(PageLimit::limit)
         .orElseGet(() -> PageLimit.limit(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT))));
+  }
+
+  public CompletableFuture<Result<PrintHoldRequestsConfiguration>> getPrintHoldRequestsEnabled() {
+    return findByName(SETTING_NAME_PRINT_HOLD_REQUESTS)
+      .thenApply(mapResult(setting -> setting
+        .map(CirculationSetting::getValue)
+        .map(PrintHoldRequestsConfiguration::from)
+        .orElseGet(() -> new PrintHoldRequestsConfiguration(false))));
+  }
+
+  public CompletableFuture<Result<LoanAnonymizationConfiguration>> getLoanAnonymizationSettings() {
+    return findByName(SETTING_NAME_LOAN_HISTORY)
+      .thenApply(mapResult(setting -> setting
+        .map(CirculationSetting::getValue)
+        .map(LoanAnonymizationConfiguration::from)
+        .orElseGet(() -> LoanAnonymizationConfiguration.from(new JsonObject()))));
   }
 
   private ResponseInterpreter<CirculationSetting> interpreter() {

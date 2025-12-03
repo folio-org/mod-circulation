@@ -32,7 +32,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.mapper.StaffSlipMapper;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -145,8 +145,9 @@ public abstract class SlipsResource extends Resource {
   private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
     if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("isStaffSlipsPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
-      return new ConfigurationRepository(clients).lookupPrintHoldRequestsEnabled()
-        .thenApply(r -> r.map(config -> !config.isPrintHoldRequestsEnabled()));
+      return new CirculationSettingsRepository(clients)
+        .getPrintHoldRequestsEnabled()
+        .thenApply(r -> r.map(setting -> !setting.isPrintHoldRequestsEnabled()));
     } else {
       return ofAsync(false);
     }

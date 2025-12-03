@@ -3,15 +3,12 @@ package org.folio.circulation.infrastructure.storage;
 import static org.folio.circulation.domain.MultipleRecords.from;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.ConfigurationService;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
-import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.GetManyRecordsClient;
@@ -49,38 +46,6 @@ public class ConfigurationRepository {
       "SETTINGS", "TLR");
 
     return findAndMapFirstConfiguration(queryResult, TlrSettingsConfiguration::from);
-  }
-
-  public CompletableFuture<Result<PrintHoldRequestsConfiguration>> lookupPrintHoldRequestsEnabled() {
-    log.info("lookupPrintHoldRequestsEnabled:: fetching PrintHoldRequest configuration");
-
-    return findAndMapFirstConfiguration(defineModuleNameAndConfigNameFilter(
-      "SETTINGS", "PRINT_HOLD_REQUESTS"), PrintHoldRequestsConfiguration::from);
-  }
-
-  /**
-   * Gets loan history tenant configuration - settings for loan anonymization
-   *
-   */
-  public CompletableFuture<Result<LoanAnonymizationConfiguration>> loanHistoryConfiguration() {
-    return defineModuleNameAndConfigNameFilter("LOAN_HISTORY", "loan_history")
-      .after(query -> configurationClient.getMany(query, DEFAULT_PAGE_LIMIT))
-      .thenApply(result -> result.next(response ->
-        MultipleRecords.from(response, Configuration::new, CONFIGS_KEY)))
-      .thenApply(r -> r.next(r1 -> r.map(MultipleRecords::getRecords)))
-      .thenApply(r -> r.map(ConfigurationRepository::getFirstConfiguration));
-  }
-
-  private static LoanAnonymizationConfiguration getFirstConfiguration(
-    Collection<Configuration> configurations) {
-
-    final JsonObject period = configurations.stream()
-        .map(Configuration::getValue)
-        .findFirst()
-        .map(JsonObject::new)
-        .orElse(new JsonObject());
-
-    return LoanAnonymizationConfiguration.from(period);
   }
 
   private <T> CompletableFuture<Result<T>> lookupConfigurations(

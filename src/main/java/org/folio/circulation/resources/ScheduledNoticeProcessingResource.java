@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -60,7 +59,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     final var patronActionSessionRepository = PatronActionSessionRepository.using(
       clients, loanRepository, userRepository);
 
-    safelyInitialise(circulationSettingsRepository::lookupSchedulerNoticesProcessingLimit)
+    safelyInitialise(circulationSettingsRepository::getScheduledNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(settingsRepository,
         scheduledNoticesRepository, patronActionSessionRepository, limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,

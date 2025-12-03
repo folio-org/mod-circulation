@@ -1,6 +1,5 @@
 package api.loans;
 
-import static api.support.fixtures.CirculationSettingExamples.scheduledNoticesLimit;
 import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
 import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
@@ -29,7 +28,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -40,13 +38,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.AddInfoRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.CirculationSettingExamples;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -253,7 +250,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(12);
 
     int noticesLimitConfig = 10;
-    circulationSettingsFixture.create(scheduledNoticesLimit(noticesLimitConfig));
+    circulationSettingsFixture.setScheduledNoticesProcessingLimit(noticesLimitConfig);
 
     //Should fetch 10 notices, when total records is 12
     //So that notices for one of the users should not be processed

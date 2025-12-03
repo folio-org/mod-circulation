@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum CirculationSettingsNames {
+public enum CirculationSettingName {
   TLR("TLR"), // unified TLR feature settings migrated from single-tenant mod-configuration
   REGULAR_TLR("regularTlr"), // TLR notice templates settings migrated from multi-tenant mod-settings
   GENERAL_TLR("generalTlr"), // TLR settings migrated from multi-tenant mod-settings

@@ -74,7 +74,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -93,7 +93,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -114,7 +114,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
 
@@ -125,7 +125,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -149,7 +149,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @MethodSource(value = "getAllowedStatusesForHoldRequest")
   void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponNod(b -> b.withStatus(itemStatus.getValue()));
 
@@ -191,8 +191,8 @@ class StaffSlipsTests extends APITests {
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
 
-    configurationsFixture.configurePrintHoldRequests(true);
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
@@ -338,7 +338,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
   void responseContainsPickSlipsForRequestsOfTypePageOnly(Object trueValue) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
@@ -370,7 +370,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource steve = usersFixture.steve();
@@ -402,7 +402,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -458,7 +458,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -522,7 +522,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 
@@ -566,7 +566,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForTLR() {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     settingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
@@ -633,7 +633,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForQueueTLRs() {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     settingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
@@ -740,7 +740,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void searchSlipForTitleLevelHoldRequestIsPrintableAtAllServicePointsWithRelevantHoldings() {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     settingsFixture.enableTlrFeature();
 
     UserResource requester = usersFixture.steve();

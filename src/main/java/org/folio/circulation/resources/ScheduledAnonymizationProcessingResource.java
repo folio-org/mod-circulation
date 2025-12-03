@@ -11,7 +11,7 @@ import org.folio.circulation.domain.anonymization.DefaultLoanAnonymizationServic
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
@@ -51,7 +51,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    CirculationSettingsRepository circulationSettingsRepository = new CirculationSettingsRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -65,7 +65,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
 
     log.info("Initializing loan anonymization for current tenant");
 
-    safelyInitialise(configurationRepository::loanHistoryConfiguration)
+    safelyInitialise(circulationSettingsRepository::getLoanAnonymizationSettings)
       .thenApply(r -> r.map(config -> new DefaultLoanAnonymizationService(
           new AnonymizationCheckersService(config, ClockUtil::getZonedDateTime),
           anonymizeStorageLoansRepository, eventPublisher)))
