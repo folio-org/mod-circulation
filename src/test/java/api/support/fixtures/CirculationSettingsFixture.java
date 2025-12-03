@@ -1,10 +1,10 @@
 package api.support.fixtures;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.configuration.CirculationSettingName;
@@ -13,12 +13,11 @@ import api.support.builders.CirculationSettingBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
-import io.vertx.core.json.JsonObject;
 
 public class CirculationSettingsFixture {
 
   private final ResourceClient circulationSettingsClient;
-  private static Map<String, UUID> namesToIds = new HashMap<>();
+  private static final Map<String, UUID> namesToIds = new HashMap<>();
 
   public CirculationSettingsFixture() {
     circulationSettingsClient = ResourceClient.forCirculationSettings();
@@ -26,13 +25,12 @@ public class CirculationSettingsFixture {
 
   public IndividualResource create(CirculationSettingBuilder builder) {
     if (builder.getId() == null) {
-      builder = builder.withId(UUID.randomUUID());
+      builder = builder.withId(randomUUID());
     }
-    JsonObject setting = builder.create();
-    String settingName = setting.getString("name");
+    String settingName = builder.getValue().getString("name");
     requireNonNull(settingName);
     delete(settingName);
-    IndividualResource createdSetting = circulationSettingsClient.create(setting);
+    IndividualResource createdSetting = circulationSettingsClient.create(builder);
     namesToIds.put(settingName, createdSetting.getId());
     return createdSetting;
   }
@@ -42,8 +40,11 @@ public class CirculationSettingsFixture {
   }
 
   public void delete(String settingName) {
-    Optional.ofNullable(namesToIds.get(settingName))
-      .ifPresent(circulationSettingsClient::delete);
+    UUID value = namesToIds.get(settingName);
+    if (value != null) {
+      circulationSettingsClient.delete(value);
+      namesToIds.remove(settingName);
+    }
   }
 
   public IndividualResource setScheduledNoticesProcessingLimit(int limit) {
@@ -60,7 +61,7 @@ public class CirculationSettingsFixture {
 
   public IndividualResource createLoanHistorySettings(LoanHistoryConfigurationBuilder configBuilder) {
     return create(new CirculationSettingBuilder()
-      .withId(UUID.randomUUID())
+      .withId(randomUUID())
       .withName("loan_history")
       .withValue(configBuilder.create()));
   }

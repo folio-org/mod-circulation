@@ -846,6 +846,8 @@
             "circulation-storage.loans.collection.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation-storage.loan-policies.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "users.item.get",
             "users.collection.get",
             "addresstypes.collection.get",
@@ -854,7 +856,6 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
-            "configuration.entries.collection.get",
             "pubsub.publish.post",
             "circulation-storage.loans-history.collection.get"
           ],

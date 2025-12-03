@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CirculationSetting;
+import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
 import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
@@ -45,6 +46,9 @@ public class CirculationSettingsRepository {
   private static final String SETTING_NAME_LOAN_HISTORY = "loan_history";
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+  private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES = 3;
+  private static final String CHECKOUT_TIMEOUT_DURATION_KEY = "checkoutTimeoutDuration";
+  private static final String CHECKOUT_TIMEOUT_KEY = "checkoutTimeout";
 
   private final CollectionResourceClient circulationSettingsStorageClient;
 
@@ -125,6 +129,32 @@ public class CirculationSettingsRepository {
         .map(CirculationSetting::getValue)
         .map(LoanAnonymizationConfiguration::from)
         .orElseGet(() -> LoanAnonymizationConfiguration.from(new JsonObject()))));
+  }
+
+  public CompletableFuture<Result<Integer>> getCheckOutSessionTimeout() {
+    return findByName(SETTING_NAME_OTHER_SETTINGS)
+      .thenApply(mapResult(setting -> setting
+        .map(CirculationSetting::getValue)
+        .map(CirculationSettingsRepository::extractCheckOutSessionTimeout)
+        .orElse(DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES)));
+  }
+
+  private static Integer extractCheckOutSessionTimeout(JsonObject loanHistorySettingValue) {
+    if (isConfigurationEmptyOrUnavailable(loanHistorySettingValue)) {
+      return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
+    }
+    try {
+      return loanHistorySettingValue.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY,
+        DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
+    } catch (Exception e) {
+      log.warn("extractCheckOutSessionTimeout:: using default value: {}",
+        DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES, e);
+      return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
+    }
+  }
+
+  private static boolean isConfigurationEmptyOrUnavailable(JsonObject configJson) {
+    return configJson.isEmpty() || !configJson.getBoolean(CHECKOUT_TIMEOUT_KEY, false);
   }
 
   private ResponseInterpreter<CirculationSetting> interpreter() {
