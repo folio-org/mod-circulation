@@ -2342,6 +2342,19 @@
       "visible": false
     },
     {
+      "permissionName": "circulation.requests.anonymize.item.post",
+      "displayName": "Requests: anonymize single closed request",
+      "description": "Allows anonymizing a single closed request and updating the circulation log.",
+      "subPermissions": [
+        "modperms.circulation.requests.anonymize.item"
+      ],
+      "metadata": {
+        "resource": "UI-Requests Anonymize-Single-Request",
+        "type": "procedural",
+        "action": "execute"
+      }
+    },
+    {
       "permissionName": "modperms.circulation.requests.collection.get",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
