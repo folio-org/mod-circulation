@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -48,8 +49,8 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
 
     final ScheduledNoticesRepository scheduledNoticesRepository =
       ScheduledNoticesRepository.using(clients);
-    final ConfigurationRepository configurationRepository =
-      new ConfigurationRepository(clients);
+    final CirculationSettingsRepository circulationSettingsRepository =
+      new CirculationSettingsRepository(clients);
     final var settingsRepository = new SettingsRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
@@ -59,7 +60,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     final var patronActionSessionRepository = PatronActionSessionRepository.using(
       clients, loanRepository, userRepository);
 
-    safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
+    safelyInitialise(circulationSettingsRepository::lookupSchedulerNoticesProcessingLimit)
       .thenCompose(r -> r.after(limit -> findNoticesToSend(settingsRepository,
         scheduledNoticesRepository, patronActionSessionRepository, limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,

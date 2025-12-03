@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.CirculationSettingExamples.scheduledNoticesLimit;
 import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
 import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
@@ -44,6 +45,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
+import api.support.fixtures.CirculationSettingExamples;
 import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -251,7 +253,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(12);
 
     int noticesLimitConfig = 10;
-    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
+    circulationSettingsFixture.create(scheduledNoticesLimit(noticesLimitConfig));
 
     //Should fetch 10 notices, when total records is 12
     //So that notices for one of the users should not be processed

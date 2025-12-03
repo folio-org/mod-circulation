@@ -2,12 +2,16 @@ package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.PageLimit.one;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CirculationSetting;
@@ -16,12 +20,28 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.RecordNotFoundFailure;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
 public class CirculationSettingsRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public static final String RECORDS_PROPERTY_NAME = "circulationSettings";
+
+  // unified TLR feature settings migrated from single-tenant mod-configuration
+  private static final String SETTING_NAME_TLR = "TLR";
+  // TLR notice templates settings migrated from multi-tenant mod-settings
+  private static final String SETTING_NAME_REGULAR_TLR = "regularTlr";
+  // TLR settings migrated from multi-tenant mod-settings
+  private static final String SETTING_NAME_GENERAL_TLR = "generalTlr";
+  private static final String SETTING_NAME_PRINT_HOLD_REQUESTS = "PRINT_HOLD_REQUESTS";
+  private static final String SETTING_NAME_NOTICES_LIMIT = "noticesLimit";
+  private static final String SETTING_NAME_OTHER_SETTINGS = "other_settings";
+  private static final String SETTING_NAME_LOAN_HISTORY = "loan_history";
+
+  private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
+
   private final CollectionResourceClient circulationSettingsStorageClient;
 
   public CirculationSettingsRepository(Clients clients) {
@@ -36,6 +56,16 @@ public class CirculationSettingsRepository {
       .mapTo(CirculationSetting::from)
       .whenNotFound(failed(new RecordNotFoundFailure(RECORDS_PROPERTY_NAME, id)))
       .fetch(id);
+  }
+
+  private CompletableFuture<Result<Optional<CirculationSetting>>> findByName(String name) {
+    log.debug("getByName:: name: {}", name);
+
+    return CqlQuery.exactMatch("name", name)
+      .after(query -> circulationSettingsStorageClient.getMany(query, one()))
+      .thenApply(flatMapResult(r -> MultipleRecords.from(r, CirculationSetting::from, RECORDS_PROPERTY_NAME)
+        .map(MultipleRecords::firstOrNull)
+        .map(Optional::ofNullable)));
   }
 
   public CompletableFuture<Result<MultipleRecords<CirculationSetting>>> findBy(String query) {
@@ -64,6 +94,17 @@ public class CirculationSettingsRepository {
 
     return circulationSettingsStorageClient.put(circulationSetting.getId(), storageCirculationSetting)
       .thenApply(interpreter()::flatMap);
+  }
+
+  public CompletableFuture<Result<PageLimit>> lookupSchedulerNoticesProcessingLimit() {
+    return findByName(SETTING_NAME_NOTICES_LIMIT)
+      .thenApply(r -> r.map(setting -> setting
+        .map(CirculationSetting::getValue)
+        .map(json -> json.getString("value"))
+        .filter(StringUtils::isNumeric)
+        .map(Integer::valueOf)
+        .map(PageLimit::limit)
+        .orElseGet(() -> PageLimit.limit(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT))));
   }
 
   private ResponseInterpreter<CirculationSetting> interpreter() {

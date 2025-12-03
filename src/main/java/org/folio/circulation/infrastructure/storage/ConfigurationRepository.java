@@ -36,14 +36,6 @@ public class ConfigurationRepository {
     configurationClient = clients.configurationStorageClient();
   }
 
-  public CompletableFuture<Result<PageLimit>> lookupSchedulerNoticesProcessingLimit() {
-    Result<CqlQuery> cqlQueryResult = defineModuleNameAndConfigNameFilter(
-      "NOTIFICATION_SCHEDULER", "noticesLimit");
-
-    return lookupConfigurations(cqlQueryResult, applySearchSchedulerNoticesLimit())
-      .thenApply(result -> result.map(PageLimit::limit));
-  }
-
   public CompletableFuture<Result<Integer>> lookupSessionTimeout() {
     Result<CqlQuery> otherSettingsQuery = defineModuleNameAndConfigNameFilter(
       "CHECKOUT", "other_settings");
@@ -109,11 +101,6 @@ public class ConfigurationRepository {
     final Result<CqlQuery> configNameQuery = exactMatch(CONFIG_NAME_KEY, configName);
 
     return moduleQuery.combine(configNameQuery, CqlQuery::and);
-  }
-
-  private Function<MultipleRecords<Configuration>, Integer> applySearchSchedulerNoticesLimit() {
-    return configurations -> new ConfigurationService()
-      .findSchedulerNoticesLimit(configurations.getRecords());
   }
 
   private Function<MultipleRecords<Configuration>, Integer> applySessionTimeout() {

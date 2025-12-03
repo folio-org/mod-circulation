@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.fixtures.CirculationSettingExamples.scheduledNoticesLimit;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.ScheduledNoticeMatchers.hasScheduledLoanNotice;
@@ -51,6 +52,8 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
+import api.support.fixtures.CirculationSettingExamples;
+import api.support.fixtures.CirculationSettingsFixture;
 import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
@@ -256,7 +259,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     int numberOfNotices = 300;
 
     // create a new configuration
-    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
+    circulationSettingsFixture.create(scheduledNoticesLimit(noticesLimitConfig));
 
     createNotices(numberOfNotices);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
@@ -272,8 +275,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     int numberOfNotices = 259;
 
-    // create a incorrect configuration
-    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration("IncorrectVal"));
+    // create an incorrect configuration
+    circulationSettingsFixture.create(scheduledNoticesLimit("IncorrectVal"));
 
     createNotices(numberOfNotices);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();

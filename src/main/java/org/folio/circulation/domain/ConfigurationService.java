@@ -2,9 +2,10 @@ package org.folio.circulation.domain;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import org.apache.commons.lang3.StringUtils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import io.vertx.core.json.JsonObject;
 
 public class ConfigurationService {
@@ -14,17 +15,6 @@ public class ConfigurationService {
   private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES = 3;
   private static final String CHECKOUT_TIMEOUT_DURATION_KEY = "checkoutTimeoutDuration";
   private static final String CHECKOUT_TIMEOUT_KEY = "checkoutTimeout";
-
-  public Integer findSchedulerNoticesLimit(Collection<Configuration> configurations) {
-    final Integer noticesLimit = configurations.stream()
-      .map(this::applySchedulerNoticesLimit)
-      .findFirst()
-      .orElse(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT);
-
-    log.debug("findSchedulerNoticesLimit:: limit={}", noticesLimit);
-
-    return noticesLimit;
-  }
 
   public Integer findSessionTimeout(Collection<Configuration> configurations) {
     final Integer sessionTimeout = configurations.stream()
@@ -61,10 +51,4 @@ public class ConfigurationService {
     }
   }
 
-  private Integer applySchedulerNoticesLimit(Configuration config) {
-    String value = config.getValue();
-    return StringUtils.isNumeric(value)
-      ? Integer.valueOf(value)
-      : DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT;
-  }
 }
