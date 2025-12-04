@@ -24,11 +24,11 @@ public class CirculationSettingsFixture {
   }
 
   public IndividualResource create(CirculationSettingBuilder builder) {
+    requireNonNull(builder.getName());
     if (builder.getId() == null) {
       builder = builder.withId(randomUUID());
     }
     String settingName = builder.getValue().getString("name");
-    requireNonNull(settingName);
     delete(settingName);
     IndividualResource createdSetting = circulationSettingsClient.create(builder);
     namesToIds.put(settingName, createdSetting.getId());
