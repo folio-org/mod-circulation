@@ -32,7 +32,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.mapper.StaffSlipMapper;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -41,6 +40,7 @@ import org.folio.circulation.infrastructure.storage.users.DepartmentRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.StaffSlipsContext;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.RequestFetchService;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
@@ -145,7 +145,7 @@ public abstract class SlipsResource extends Resource {
   private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
     if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("isStaffSlipsPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
-      return new CirculationSettingsRepository(clients)
+      return new CirculationSettingsService(clients)
         .getPrintHoldRequestsEnabled()
         .thenApply(r -> r.map(setting -> !setting.isPrintHoldRequestsEnabled()));
     } else {

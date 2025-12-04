@@ -32,7 +32,6 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -44,6 +43,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.services.RequestQueueService;
@@ -112,7 +112,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       Request.Operation.CREATE, repositories,
-      new CirculationSettingsRepository(clients),
+      new CirculationSettingsService(clients),
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
@@ -169,7 +169,7 @@ public class RequestCollectionResource extends CollectionResource {
       updateItem, eventPublisher);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      Request.Operation.REPLACE, repositories, new CirculationSettingsRepository(clients),
+      Request.Operation.REPLACE, repositories, new CirculationSettingsService(clients),
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
@@ -283,7 +283,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestPolicyRepository = new RequestPolicyRepository(clients);
     final var settingsRepository = new SettingsRepository(clients);
-    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(requestPolicyRepository, loanPolicyRepository)),
@@ -300,7 +300,7 @@ public class RequestCollectionResource extends CollectionResource {
       updateUponRequest, moveRequestProcessAdapter,
       new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       RequestNoticeSender.using(clients), eventPublisher,
-      requestQueueRepository, settingsRepository, circulationSettingsRepository);
+      requestQueueRepository, settingsRepository, circulationSettingsService);
 
     fromFutureResult(requestRepository.getById(id))
       .map(request -> request.withOperation(Request.Operation.MOVE))

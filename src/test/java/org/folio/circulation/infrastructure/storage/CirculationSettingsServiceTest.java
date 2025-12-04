@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
@@ -22,7 +23,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
-class CirculationSettingsRepositoryTest {
+class CirculationSettingsServiceTest {
 
   @Test
   @SneakyThrows
@@ -52,7 +53,7 @@ class CirculationSettingsRepositoryTest {
     when(circulationSettingsClient.getMany(any(), any()))
       .thenReturn(ofAsync(new Response(200, mockSettingsResponse.encode(), MimeType.JSON.toString())));
 
-    TlrSettingsConfiguration actualResult = new CirculationSettingsRepository(clients)
+    TlrSettingsConfiguration actualResult = new CirculationSettingsService(clients)
       .getTlrSettings()
       .get(30, TimeUnit.SECONDS)
       .value();
@@ -90,7 +91,7 @@ class CirculationSettingsRepositoryTest {
     when(circulationSettingsClient.getMany(any(), any()))
       .thenReturn(ofAsync(new Response(200, mockResponse.encode(), MimeType.JSON.toString())));
 
-    TlrSettingsConfiguration actualResult = new CirculationSettingsRepository(clients)
+    TlrSettingsConfiguration actualResult = new CirculationSettingsService(clients)
       .getTlrSettings()
       .get(30, TimeUnit.SECONDS)
       .value();
@@ -113,7 +114,7 @@ class CirculationSettingsRepositoryTest {
     when(circulationSettingsClient.getMany(any(), any()))
       .thenReturn(ofAsync(new Response(200, mockResponse.encode(), MimeType.JSON.toString())));
 
-    TlrSettingsConfiguration actualResult = new CirculationSettingsRepository(clients)
+    TlrSettingsConfiguration actualResult = new CirculationSettingsService(clients)
       .getTlrSettings()
       .get(30, TimeUnit.SECONDS)
       .value();

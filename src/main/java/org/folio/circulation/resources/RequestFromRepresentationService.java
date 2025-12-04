@@ -24,8 +24,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
-import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.CANNOT_CREATE_PAGE_TLR_WITHOUT_ITEM_ID;
+import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -67,7 +67,6 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
@@ -78,6 +77,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
@@ -99,7 +99,7 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final SettingsRepository settingsRepository;
-  private final CirculationSettingsRepository circulationSettingsRepository;
+  private final CirculationSettingsService circulationSettingsService;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
@@ -108,7 +108,7 @@ class RequestFromRepresentationService {
   private final ItemForTlrService itemForTlrService;
 
   public RequestFromRepresentationService(Request.Operation operation,
-    RequestRelatedRepositories repositories, CirculationSettingsRepository circulationSettingsRepository,
+    RequestRelatedRepositories repositories, CirculationSettingsService circulationSettingsService,
     ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler, ItemByInstanceIdFinder itemByInstanceIdFinder,
@@ -125,7 +125,7 @@ class RequestFromRepresentationService {
     this.servicePointRepository = repositories.getServicePointRepository();
     this.settingsRepository = repositories.getSettingsRepository();
     this.requestPolicyRepository = repositories.getRequestPolicyRepository();
-    this.circulationSettingsRepository = circulationSettingsRepository;
+    this.circulationSettingsService = circulationSettingsService;
 
     this.proxyRelationshipValidator = proxyRelationshipValidator;
     this.pickupLocationValidator = pickupLocationValidator;
@@ -136,7 +136,7 @@ class RequestFromRepresentationService {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
 
-    return circulationSettingsRepository.getTlrSettings()
+    return circulationSettingsService.getTlrSettings()
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))

@@ -85,7 +85,6 @@ import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
@@ -103,6 +102,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.LostItemFeeRefundService;
@@ -170,7 +170,7 @@ public abstract class RenewalResource extends Resource {
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
-    final CirculationSettingsRepository circulationSettingsRepository = new CirculationSettingsRepository(clients);
+    final CirculationSettingsService circulationSettingsService = new CirculationSettingsService(clients);
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
     final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
 
@@ -208,7 +208,7 @@ public abstract class RenewalResource extends Resource {
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, requestRepository, errorHandler)))
-      .thenCompose(r -> r.combineAfter(circulationSettingsRepository::getTlrSettings,
+      .thenCompose(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         RenewalContext::withTlrSettings))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))

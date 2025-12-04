@@ -16,7 +16,6 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -24,6 +23,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestQueueReposit
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -79,7 +79,7 @@ public class CheckInByBarcodeResource extends Resource {
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
-    final CirculationSettingsRepository circulationSettingsRepository = new CirculationSettingsRepository(clients);
+    final CirculationSettingsService circulationSettingsService = new CirculationSettingsService(clients);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
@@ -89,7 +89,7 @@ public class CheckInByBarcodeResource extends Resource {
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
-      .thenComposeAsync(r -> r.combineAfter(circulationSettingsRepository::getTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         CheckInContext::withTlrSettings))
       .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         CheckInContext::withTimeZone))

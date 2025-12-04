@@ -41,7 +41,6 @@ import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -66,7 +65,7 @@ public class AllowedServicePointsService {
   private final RequestPolicyRepository requestPolicyRepository;
   private final ServicePointRepository servicePointRepository;
   private final ItemByInstanceIdFinder itemFinder;
-  private final CirculationSettingsRepository circulationSettingsRepository;
+  private final CirculationSettingsService circulationSettingsService;
   private final InstanceRepository instanceRepository;
   private final String indexName;
 
@@ -76,7 +75,7 @@ public class AllowedServicePointsService {
     requestRepository = new RequestRepository(clients);
     requestPolicyRepository = new RequestPolicyRepository(clients);
     servicePointRepository = new ServicePointRepository(clients, isEcsRequestRouting);
-    circulationSettingsRepository = new CirculationSettingsRepository(clients);
+    circulationSettingsService = new CirculationSettingsService(clients);
     instanceRepository = new InstanceRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
     indexName = isEcsRequestRouting ? ECS_REQUEST_ROUTING_INDEX_NAME : PICKUP_LOCATION_INDEX_NAME;
@@ -184,7 +183,7 @@ public class AllowedServicePointsService {
 
     if (request.isForTitleLevelRequest() && request.getOperation() == CREATE) {
       log.info("getAllowedServicePointsForTitleWithNoItems:: checking TLR settings");
-      return circulationSettingsRepository.getTlrSettings()
+      return circulationSettingsService.getTlrSettings()
         .thenCompose(r -> r.after(this::considerTlrSettings));
     }
 
