@@ -41,8 +41,8 @@ import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.RequestPolicy;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
@@ -66,7 +66,7 @@ public class AllowedServicePointsService {
   private final RequestPolicyRepository requestPolicyRepository;
   private final ServicePointRepository servicePointRepository;
   private final ItemByInstanceIdFinder itemFinder;
-  private final SettingsRepository settingsRepository;
+  private final CirculationSettingsRepository circulationSettingsRepository;
   private final InstanceRepository instanceRepository;
   private final String indexName;
 
@@ -76,7 +76,7 @@ public class AllowedServicePointsService {
     requestRepository = new RequestRepository(clients);
     requestPolicyRepository = new RequestPolicyRepository(clients);
     servicePointRepository = new ServicePointRepository(clients, isEcsRequestRouting);
-    settingsRepository = new SettingsRepository(clients);
+    circulationSettingsRepository = new CirculationSettingsRepository(clients);
     instanceRepository = new InstanceRepository(clients);
     itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
     indexName = isEcsRequestRouting ? ECS_REQUEST_ROUTING_INDEX_NAME : PICKUP_LOCATION_INDEX_NAME;
@@ -184,7 +184,7 @@ public class AllowedServicePointsService {
 
     if (request.isForTitleLevelRequest() && request.getOperation() == CREATE) {
       log.info("getAllowedServicePointsForTitleWithNoItems:: checking TLR settings");
-      return settingsRepository.lookupTlrSettings()
+      return circulationSettingsRepository.getTlrSettings()
         .thenCompose(r -> r.after(this::considerTlrSettings));
     }
 

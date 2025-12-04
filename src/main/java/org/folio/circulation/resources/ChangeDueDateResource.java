@@ -28,7 +28,7 @@ import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeSe
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
-import org.folio.circulation.infrastructure.storage.SettingsRepository;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
@@ -82,7 +82,7 @@ public class ChangeDueDateResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
-    final var settingsRepository = new SettingsRepository(clients);
+    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     final WebContext webContext = new WebContext(routingContext);
     final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
@@ -112,7 +112,7 @@ public class ChangeDueDateResource extends Resource {
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
-      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsRepository::getTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)

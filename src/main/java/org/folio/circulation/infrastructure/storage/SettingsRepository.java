@@ -1,18 +1,11 @@
 package org.folio.circulation.infrastructure.storage;
 
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.Configuration;
-import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.configuration.CheckoutLockConfiguration;
-import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.results.Result;
+import static java.util.function.Function.identity;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
@@ -22,13 +15,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.function.Function.identity;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
-import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Configuration;
+import org.folio.circulation.domain.MultipleRecords;
+import org.folio.circulation.domain.configuration.CheckoutLockConfiguration;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.GetManyRecordsClient;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public class SettingsRepository {
   private static final ZoneId DEFAULT_DATE_TIME_ZONE = ZoneOffset.UTC;
@@ -39,11 +38,9 @@ public class SettingsRepository {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
-  private final ConfigurationRepository configurationRepository;
 
   public SettingsRepository(Clients clients) {
     settingsClient = clients.settingsStorageClient();
-    configurationRepository = new ConfigurationRepository(clients);
   }
 
   public CompletableFuture<Result<CheckoutLockConfiguration>> lookUpCheckOutLockSettings() {
@@ -64,13 +61,6 @@ public class SettingsRepository {
       log.warn("lookUpCheckOutLockSettings:: Unable to retrieve checkoutLockFeature settings ", ex);
       return CompletableFuture.completedFuture(succeeded(CheckoutLockConfiguration.from(new JsonObject())));
     }
-  }
-
-  public CompletableFuture<Result<TlrSettingsConfiguration>> lookupTlrSettings() {
-    log.info("lookupTlrSettings:: fetching TLR settings");
-    return fetchSettings("circulation", List.of("generalTlr", "regularTlr"))
-      .thenApply(r -> r.map(SettingsRepository::extractAndMergeValues))
-      .thenCompose(r -> r.after(this::buildTlrSettings));
   }
 
   public CompletableFuture<Result<ZoneId>> lookupTimeZoneSettings() {
@@ -113,12 +103,4 @@ public class SettingsRepository {
       .reduce(new JsonObject(), JsonObject::mergeIn);
   }
 
-  private CompletableFuture<Result<TlrSettingsConfiguration>> buildTlrSettings(JsonObject tlrSettings) {
-    if (tlrSettings.isEmpty()) {
-      log.info("getTlrSettings:: failed to find TLR settings, falling back to legacy configuration");
-      return configurationRepository.lookupTlrSettings();
-    }
-
-    return ofAsync(TlrSettingsConfiguration.from(tlrSettings));
-  }
 }

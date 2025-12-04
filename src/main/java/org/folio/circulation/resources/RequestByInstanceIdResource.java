@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CreateRequestService;
@@ -61,7 +62,7 @@ import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.SettingsRepository;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
@@ -82,6 +83,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
+
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -118,7 +120,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final var requestBody = routingContext.getBodyAsJson();
 
-    new SettingsRepository(clients).lookupTlrSettings()
+    new CirculationSettingsRepository(clients).getTlrSettings()
       .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher,
         repositories, itemFinder, config, requestBody)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -322,6 +324,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(Request.Operation.CREATE, repositories,
+        new CirculationSettingsRepository(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler(),

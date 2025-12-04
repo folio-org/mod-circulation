@@ -67,6 +67,7 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
+import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
@@ -98,6 +99,7 @@ class RequestFromRepresentationService {
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
   private final SettingsRepository settingsRepository;
+  private final CirculationSettingsRepository circulationSettingsRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
@@ -106,7 +108,8 @@ class RequestFromRepresentationService {
   private final ItemForTlrService itemForTlrService;
 
   public RequestFromRepresentationService(Request.Operation operation,
-    RequestRelatedRepositories repositories, ProxyRelationshipValidator proxyRelationshipValidator,
+    RequestRelatedRepositories repositories, CirculationSettingsRepository circulationSettingsRepository,
+    ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler, ItemByInstanceIdFinder itemByInstanceIdFinder,
     ItemForTlrService itemForTlrService) {
@@ -122,6 +125,7 @@ class RequestFromRepresentationService {
     this.servicePointRepository = repositories.getServicePointRepository();
     this.settingsRepository = repositories.getSettingsRepository();
     this.requestPolicyRepository = repositories.getRequestPolicyRepository();
+    this.circulationSettingsRepository = circulationSettingsRepository;
 
     this.proxyRelationshipValidator = proxyRelationshipValidator;
     this.pickupLocationValidator = pickupLocationValidator;
@@ -132,7 +136,7 @@ class RequestFromRepresentationService {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
 
-    return settingsRepository.lookupTlrSettings()
+    return circulationSettingsRepository.getTlrSettings()
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
