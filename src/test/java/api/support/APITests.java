@@ -461,13 +461,13 @@ public abstract class APITests {
 
   protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      settingsFixture.enableTlrFeature();
+      circulationSettingsFixture.enableTlrFeature();
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      settingsFixture.disableTlrFeature();
+      circulationSettingsFixture.disableTlrFeature();
     }
     else {
-      settingsFixture.deleteTlrFeatureSettings();
+      circulationSettingsFixture.deleteTlrFeatureSettings();
     }
   }
 
@@ -483,15 +483,15 @@ public abstract class APITests {
     UUID cancellationTemplateId, UUID expirationTemplateId) {
 
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      settingsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
+      circulationSettingsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      settingsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
+      circulationSettingsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else {
-      settingsFixture.deleteTlrFeatureSettings();
+      circulationSettingsFixture.deleteTlrFeatureSettings();
     }
   }
 

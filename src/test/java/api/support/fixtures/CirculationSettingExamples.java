@@ -21,4 +21,28 @@ public class CirculationSettingExamples {
       .withValue(new JsonObject().put("printHoldRequestsEnabled", value));
   }
 
+  public static CirculationSettingBuilder generalTlrSettings(boolean isTlrFeatureEnabled,
+    boolean tlrHoldShouldFollowCirculationRules) {
+
+    return new CirculationSettingBuilder()
+      .withId(UUID.randomUUID())
+      .withName("generalTlr")
+      .withValue(new JsonObject()
+        .put("titleLevelRequestsFeatureEnabled", isTlrFeatureEnabled)
+        .put("createTitleLevelRequestsByDefault", false)
+        .put("tlrHoldShouldFollowCirculationRules", tlrHoldShouldFollowCirculationRules));
+  }
+
+  public static CirculationSettingBuilder regularTlrSettings(UUID confirmationTemplateId,
+    UUID cancellationTemplateId, UUID expirationTemplateId) {
+
+    return new CirculationSettingBuilder()
+      .withId(UUID.randomUUID())
+      .withName("regularTlr")
+      .withValue(new JsonObject()
+        .put("confirmationPatronNoticeTemplateId", confirmationTemplateId)
+        .put("cancellationPatronNoticeTemplateId", cancellationTemplateId)
+        .put("expirationPatronNoticeTemplateId", expirationTemplateId));
+  }
+
 }

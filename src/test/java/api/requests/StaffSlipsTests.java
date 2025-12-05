@@ -567,7 +567,7 @@ class StaffSlipsTests extends APITests {
   @Test
   void responseContainsSearchSlipsForTLR() {
     circulationSettingsFixture.setPrintHoldRequests(true);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
     var instance = instancesFixture.basedUponDunkirk();
@@ -597,7 +597,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void pickSlipForTitleLevelRequestContainsItemData() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var requester = usersFixture.steve();
     var instance = instancesFixture.basedUponDunkirk();
@@ -634,7 +634,7 @@ class StaffSlipsTests extends APITests {
   @Test
   void responseContainsSearchSlipsForQueueTLRs() {
     circulationSettingsFixture.setPrintHoldRequests(true);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
     var james = usersFixture.james();
@@ -688,7 +688,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     UserResource requester = usersFixture.steve();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     UUID locationId = locationsFixture.basedUponExampleLocation(
@@ -711,7 +711,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     int batchSize = 50; // default value from CqlIndexValuesFinder
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -741,7 +741,7 @@ class StaffSlipsTests extends APITests {
   @Test
   void searchSlipForTitleLevelHoldRequestIsPrintableAtAllServicePointsWithRelevantHoldings() {
     circulationSettingsFixture.setPrintHoldRequests(true);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     UserResource requester = usersFixture.steve();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
@@ -766,7 +766,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void servicePointForTitleLevelRequestPickSlipIsChosenBasedOnItemLocation() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     UUID instanceId = UUID.randomUUID();
     UserResource requester = usersFixture.steve();
