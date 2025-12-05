@@ -165,7 +165,7 @@ class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
   void alternatePeriodShouldBeAppliedWhenRequestQueueContainsHoldTlr() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     var firstItem = items.get(0);
     var secondItem = items.get(1);
@@ -245,7 +245,7 @@ class CheckoutWithRequestScenarioTests extends APITests {
 
   @Test
   void alternatePeriodShouldNotBeAppliedWhenRequestQueueContainsHoldIlrForDifferentItem() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     var firstItem = items.get(0);
     var secondItem = items.get(1);
