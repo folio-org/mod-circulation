@@ -84,10 +84,9 @@ public class CirculationSettingsService {
   }
 
   private static Integer extractCheckOutSessionTimeout(JsonObject value) {
-    if (value.isEmpty() || !value.getBoolean(CHECKOUT_TIMEOUT_KEY, false)) {
-      return DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES;
-    }
-    return value.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES);
+    return value.isEmpty() || !value.getBoolean(CHECKOUT_TIMEOUT_KEY, false)
+      ? DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES
+      : value.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES);
   }
 
   public CompletableFuture<Result<TlrSettingsConfiguration>> getTlrSettings() {
