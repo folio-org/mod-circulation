@@ -1,11 +1,13 @@
 package org.folio.circulation.services;
 
-import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.CirculationSetting;
@@ -29,13 +31,15 @@ public class CirculationSettingsService {
   private static final String SETTING_NAME_REGULAR_TLR = "regularTlr";
   // TLR settings migrated from multi-tenant mod-settings
   private static final String SETTING_NAME_GENERAL_TLR = "generalTlr";
+  public static final List<String> ALL_TLR_SETTINGS_NAMES =
+    List.of(SETTING_NAME_TLR, SETTING_NAME_GENERAL_TLR, SETTING_NAME_REGULAR_TLR);
   private static final String SETTING_NAME_PRINT_HOLD_REQUESTS = "PRINT_HOLD_REQUESTS";
   private static final String SETTING_NAME_NOTICES_LIMIT = "noticesLimit";
   private static final String SETTING_NAME_OTHER_SETTINGS = "other_settings";
   private static final String SETTING_NAME_LOAN_HISTORY = "loan_history";
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
-  private static final int DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES = 3;
+  private static final int DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES = 3;
   private static final String CHECKOUT_TIMEOUT_DURATION_KEY = "checkoutTimeoutDuration";
   private static final String CHECKOUT_TIMEOUT_KEY = "checkoutTimeout";
 
@@ -46,56 +50,48 @@ public class CirculationSettingsService {
   }
 
   public CompletableFuture<Result<PageLimit>> getScheduledNoticesProcessingLimit() {
-    return circulationSettingsRepository.findByName(SETTING_NAME_NOTICES_LIMIT)
-      .thenApply(r -> r.map(setting -> setting
-        .map(CirculationSetting::getValue)
-        .map(json -> json.getString("value"))
+    return getSetting(SETTING_NAME_NOTICES_LIMIT,
+      CirculationSettingsService::extractScheduledNoticesProcessingLimit,
+      () -> PageLimit.limit(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT));
+  }
+
+  private static PageLimit extractScheduledNoticesProcessingLimit(JsonObject settingValue) {
+    return PageLimit.limit(
+      Optional.ofNullable(settingValue)
+        .map(value -> value.getString("value"))
         .filter(StringUtils::isNumeric)
-        .map(Integer::valueOf)
-        .map(PageLimit::limit)
-        .orElseGet(() -> limit(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT))));
+        .map(Integer::parseInt)
+        .orElse(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT)
+    );
   }
 
   public CompletableFuture<Result<PrintHoldRequestsConfiguration>> getPrintHoldRequestsEnabled() {
-    return circulationSettingsRepository.findByName(SETTING_NAME_PRINT_HOLD_REQUESTS)
-      .thenApply(mapResult(setting -> setting
-        .map(CirculationSetting::getValue)
-        .map(PrintHoldRequestsConfiguration::from)
-        .orElseGet(() -> new PrintHoldRequestsConfiguration(false))));
+    return getSetting(SETTING_NAME_PRINT_HOLD_REQUESTS,
+      PrintHoldRequestsConfiguration::from,
+      () -> new PrintHoldRequestsConfiguration(false));
   }
 
   public CompletableFuture<Result<LoanAnonymizationConfiguration>> getLoanAnonymizationSettings() {
-    return circulationSettingsRepository.findByName(SETTING_NAME_LOAN_HISTORY)
-      .thenApply(mapResult(setting -> setting
-        .map(CirculationSetting::getValue)
-        .map(LoanAnonymizationConfiguration::from)
-        .orElseGet(() -> LoanAnonymizationConfiguration.from(new JsonObject()))));
+    return getSetting(SETTING_NAME_LOAN_HISTORY,
+      LoanAnonymizationConfiguration::from,
+      () -> LoanAnonymizationConfiguration.from(new JsonObject()));
   }
 
   public CompletableFuture<Result<Integer>> getCheckOutSessionTimeout() {
-    return circulationSettingsRepository.findByName(SETTING_NAME_OTHER_SETTINGS)
-      .thenApply(mapResult(setting -> setting
-        .map(CirculationSetting::getValue)
-        .map(CirculationSettingsService::extractCheckOutSessionTimeout)
-        .orElse(DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES)));
+    return getSetting(SETTING_NAME_OTHER_SETTINGS,
+      CirculationSettingsService::extractCheckOutSessionTimeout,
+      () -> DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES);
   }
 
   private static Integer extractCheckOutSessionTimeout(JsonObject value) {
     if (value.isEmpty() || !value.getBoolean(CHECKOUT_TIMEOUT_KEY, false)) {
-      return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
+      return DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES;
     }
-    try {
-      return value.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY,
-        DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES);
-    } catch (Exception e) {
-      log.warn("extractCheckOutSessionTimeout:: failed to extract timeout value, using default value: {}",
-        DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES, e);
-      return DEFAULT_CHECKOUT_TIMEOUT_DURATION_IN_MINUTES;
-    }
+    return value.getInteger(CHECKOUT_TIMEOUT_DURATION_KEY, DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES);
   }
 
   public CompletableFuture<Result<TlrSettingsConfiguration>> getTlrSettings() {
-    return circulationSettingsRepository.findByNames(List.of(SETTING_NAME_TLR, SETTING_NAME_GENERAL_TLR, SETTING_NAME_REGULAR_TLR))
+    return circulationSettingsRepository.findByNames(ALL_TLR_SETTINGS_NAMES)
       .thenApply(mapResult(CirculationSettingsService::buildTlrSettings));
   }
 
@@ -123,4 +119,13 @@ public class CirculationSettingsService {
       .map(TlrSettingsConfiguration::from)
       .orElseGet(TlrSettingsConfiguration::defaultSettings);
   }
+
+  public <T> CompletableFuture<Result<T>> getSetting(String name,
+    Function<JsonObject, T> valueMapper, Supplier<T> defaultValueSupplier) {
+
+    return circulationSettingsRepository.findByName(name)
+      .thenApply(mapResult(setting -> setting.map(CirculationSetting::getValue)))
+      .thenApply(mapResult(value -> value.map(valueMapper).orElseGet(defaultValueSupplier)));
+  }
+
 }

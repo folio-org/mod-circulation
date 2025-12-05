@@ -95,12 +95,5 @@ public class SettingsRepository {
       .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
       .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")));
   }
-
-  private static JsonObject extractAndMergeValues(MultipleRecords<JsonObject> entries) {
-    return entries.getRecords()
-      .stream()
-      .map(rec -> rec.getJsonObject(SETTINGS_VALUE_PROPERTY))
-      .reduce(new JsonObject(), JsonObject::mergeIn);
-  }
-
+  
 }
