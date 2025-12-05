@@ -6,6 +6,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,7 @@ import api.support.builders.CirculationSettingBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
+import io.vertx.core.json.JsonObject;
 
 public class CirculationSettingsFixture {
 
@@ -31,7 +33,7 @@ public class CirculationSettingsFixture {
     if (builder.getId() == null) {
       builder = builder.withId(randomUUID());
     }
-    String settingName = builder.getValue().getString("name");
+    String settingName = builder.getName();
     delete(settingName);
     IndividualResource createdSetting = circulationSettingsClient.create(builder);
     nameToId.put(settingName, createdSetting.getId());
@@ -101,6 +103,10 @@ public class CirculationSettingsFixture {
     delete("generalTlr");
     delete("regularTlr");
     delete("TLR");
+  }
+
+  public List<JsonObject> getAllSettings() {
+    return circulationSettingsClient.getAll();
   }
 
 }
