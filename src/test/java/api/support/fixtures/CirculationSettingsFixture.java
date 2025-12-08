@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.circulation.domain.configuration.CirculationSettingName;
-
 import api.support.builders.CirculationSettingBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
 import api.support.http.IndividualResource;
@@ -38,10 +36,6 @@ public class CirculationSettingsFixture {
     IndividualResource createdSetting = circulationSettingsClient.create(builder);
     nameToId.put(settingName, createdSetting.getId());
     return createdSetting;
-  }
-
-  public void delete(CirculationSettingName settingName) {
-    delete(settingName.getValue());
   }
 
   public void delete(String settingName) {
