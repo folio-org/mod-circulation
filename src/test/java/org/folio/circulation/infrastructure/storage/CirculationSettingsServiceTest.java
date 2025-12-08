@@ -3,8 +3,6 @@ package org.folio.circulation.infrastructure.storage;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -15,7 +13,11 @@ import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.github.tomakehurst.wiremock.http.MimeType;
 
@@ -23,14 +25,24 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
+@ExtendWith(MockitoExtension.class)
 class CirculationSettingsServiceTest {
 
-  @Test
-  @SneakyThrows
-  void fetchTlrSettings() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient circulationSettingsClient = mock(CollectionResourceClient.class);
+  @Mock
+  private Clients clients;
+  @Mock
+  private CollectionResourceClient circulationSettingsClient;
+  private CirculationSettingsService circulationSettingsService;
 
+  @BeforeEach
+  void beforeEach() {
+    when(clients.circulationSettingsStorageClient())
+      .thenReturn(circulationSettingsClient);
+    circulationSettingsService = new CirculationSettingsService(clients);
+  }
+
+  @Test
+  void fetchTlrSettings() {
     JsonObject mockSettingsResponse = new JsonObject()
       .put("circulationSettings", new JsonArray()
         .add(new JsonObject()
@@ -49,31 +61,17 @@ class CirculationSettingsServiceTest {
             .put("expirationPatronNoticeTemplateId", "51958757-df1d-4c71-84d3-820575d73f83"))))
       .put("totalRecords", 2);
 
-    when(clients.circulationSettingsStorageClient()).thenReturn(circulationSettingsClient);
-    when(circulationSettingsClient.getMany(any(), any()))
-      .thenReturn(ofAsync(new Response(200, mockSettingsResponse.encode(), MimeType.JSON.toString())));
-
-    TlrSettingsConfiguration actualResult = new CirculationSettingsService(clients)
-      .getTlrSettings()
-      .get(30, TimeUnit.SECONDS)
-      .value();
-
-    TlrSettingsConfiguration expectedResult = new TlrSettingsConfiguration(true, false, true,
+    TlrSettingsConfiguration expected = new TlrSettingsConfiguration(true, false, true,
       UUID.fromString("51958757-df1d-4c71-84d3-820575d73f81"),
       UUID.fromString("51958757-df1d-4c71-84d3-820575d73f82"),
       UUID.fromString("51958757-df1d-4c71-84d3-820575d73f83"));
 
-    assertEquals(expectedResult, actualResult);
-    verify(circulationSettingsClient).getMany(any(), any());
+    verifySettings(mockSettingsResponse, expected);
   }
 
   @Test
-  @SneakyThrows
   void fallBackToLegacySettingsWhenTlrSettingsAreNotFound() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient circulationSettingsClient = mock(CollectionResourceClient.class);
-
-    JsonObject mockResponse = new JsonObject()
+    JsonObject mockSettingsResponse = new JsonObject()
       .put("circulationSettings", new JsonArray().add(
         new JsonObject()
           .put("id", UUID.randomUUID().toString())
@@ -87,40 +85,34 @@ class CirculationSettingsServiceTest {
             .put("expirationPatronNoticeTemplateId", null))))
       .put("totalRecords", 1);
 
-    when(clients.circulationSettingsStorageClient()).thenReturn(circulationSettingsClient);
-    when(circulationSettingsClient.getMany(any(), any()))
-      .thenReturn(ofAsync(new Response(200, mockResponse.encode(), MimeType.JSON.toString())));
-
-    TlrSettingsConfiguration actualResult = new CirculationSettingsService(clients)
-      .getTlrSettings()
-      .get(30, TimeUnit.SECONDS)
-      .value();
-
-    assertEquals(new TlrSettingsConfiguration(true, true, true, null, null, null), actualResult);
-    verify(circulationSettingsClient).getMany(any(), any());
+    TlrSettingsConfiguration expected = new TlrSettingsConfiguration(true, true, true, null, null, null);
+    verifySettings(mockSettingsResponse, expected);
   }
 
   @Test
-  @SneakyThrows
   void fallBackToDefaultSettingsWhenNoTlrSettingsAreFound() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient circulationSettingsClient = mock(CollectionResourceClient.class);
-
-    JsonObject mockResponse = new JsonObject()
+    JsonObject mockSettingsResponse = new JsonObject()
       .put("circulationSettings", new JsonArray())
       .put("totalRecords", 0);
 
-    when(clients.circulationSettingsStorageClient()).thenReturn(circulationSettingsClient);
-    when(circulationSettingsClient.getMany(any(), any()))
-      .thenReturn(ofAsync(new Response(200, mockResponse.encode(), MimeType.JSON.toString())));
-
-    TlrSettingsConfiguration actualResult = new CirculationSettingsService(clients)
-      .getTlrSettings()
-      .get(30, TimeUnit.SECONDS)
-      .value();
-
-    assertEquals(new TlrSettingsConfiguration(false, false, false, null, null, null), actualResult);
-    verify(circulationSettingsClient).getMany(any(), any());
+    TlrSettingsConfiguration expected = new TlrSettingsConfiguration(false, false, false, null, null, null);
+    verifySettings(mockSettingsResponse, expected);
   }
 
+  private void verifySettings(JsonObject mockSettingsResponse, TlrSettingsConfiguration expectedResult) {
+    mockGetCirculationSettingsResponse(mockSettingsResponse);
+    assertEquals(expectedResult, getTlrSettings());
+  }
+
+  private void mockGetCirculationSettingsResponse(JsonObject responseBody) {
+    when(circulationSettingsClient.getMany(any(), any()))
+      .thenReturn(ofAsync(new Response(200, responseBody.encode(), MimeType.JSON.toString())));
+  }
+
+  @SneakyThrows
+  private TlrSettingsConfiguration getTlrSettings() {
+    return circulationSettingsService.getTlrSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+  }
 }

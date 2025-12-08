@@ -119,7 +119,7 @@ public class CirculationSettingsService {
       .orElseGet(TlrSettingsConfiguration::defaultSettings);
   }
 
-  public <T> CompletableFuture<Result<T>> getSetting(String name,
+  private <T> CompletableFuture<Result<T>> getSetting(String name,
     Function<JsonObject, T> valueMapper, Supplier<T> defaultValueSupplier) {
 
     return circulationSettingsRepository.findByName(name)
