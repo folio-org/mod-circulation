@@ -153,8 +153,7 @@
             "circulation.loans.change-due-date.post"
           ],
           "modulePermissions": [
-            "perms.circulation.loans.change-due-date.post",
-            "configuration.entries.collection.get"
+            "perms.circulation.loans.change-due-date.post"
           ]
         }
       ]
@@ -702,8 +701,6 @@
             "patron-action-session-storage.patron-action-sessions.collection.get",
             "circulation-storage.loans.collection.get",
             "circulation-storage.circulation-rules.get",
-            "configuration.entries.item.get",
-            "configuration.entries.collection.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
@@ -1352,10 +1349,6 @@
       "version": "1.0"
     },
     {
-      "id": "configuration",
-      "version": "2.0"
-    },
-    {
       "id" : "cancellation-reason-storage",
       "version": "1.1"
     },
@@ -1954,7 +1947,6 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "configuration.entries.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
         "mod-settings.entries.item.get",
@@ -2126,7 +2118,6 @@
         "feesfines.accounts-bulk.refund.post",
         "feesfines.accounts.cancel.post",
         "feesfines.accounts-bulk.cancel.post",
-        "configuration.entries.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
         "actual-cost-record-storage.actual-cost-records.collection.get",
@@ -2172,7 +2163,6 @@
         "proxiesfor.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
-        "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -2246,7 +2236,6 @@
         "users.collection.get",
         "addresstypes.collection.get",
         "proxiesfor.collection.get",
-        "configuration.entries.collection.get",
         "circulation.rules.notice-policy.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
@@ -2418,7 +2407,6 @@
         "calendar.endpoint.calendars.allOpenings.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -2505,7 +2493,6 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -2556,8 +2543,6 @@
         "usergroups.collection.get",
         "usergroups.item.get",
         "pubsub.publish.post",
-        "configuration.entries.collection.get",
-        "configuration.entries.item.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation"
@@ -2738,7 +2723,6 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
-        "configuration.entries.collection.get",
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "overdue-fines-policies.item.get",
