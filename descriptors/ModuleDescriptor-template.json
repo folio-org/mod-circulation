@@ -1759,26 +1759,16 @@
       "permissionName": "circulation.settings.request-anonymization.view",
       "displayName": "Settings (Circulation): View request anonymization settings",
       "description": "View request anonymization settings",
-      "visible": true,
-      "metadata": {
-        "resource": "UI-Circulation Settings Request-Anonymization",
-        "type": "settings",
-        "action": "view"
-      }
+      "visible": false
     },
     {
       "permissionName": "circulation.settings.request-anonymization.edit",
       "displayName": "Settings (Circulation): Edit request anonymization settings",
       "description": "Create and edit request anonymization settings",
-      "visible": true,
+      "visible": false,
       "subPermissions": [
         "circulation.settings.request-anonymization.view"
-      ],
-      "metadata": {
-        "resource": "UI-Circulation Settings Request-Anonymization",
-        "type": "settings",
-        "action": "edit"
-      }
+      ]
     },
     {
       "permissionName": "mod-settings.global.read.mod-circulation",
