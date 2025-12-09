@@ -1756,6 +1756,31 @@
       "description": "delete circulation setting by ID"
     },
     {
+      "permissionName": "circulation.settings.request-anonymization.view",
+      "displayName": "Settings (Circulation): View request anonymization settings",
+      "description": "View request anonymization settings",
+      "visible": true,
+      "metadata": {
+        "resource": "UI-Circulation Settings Request-Anonymization",
+        "type": "settings",
+        "action": "view"
+      }
+    },
+    {
+      "permissionName": "circulation.settings.request-anonymization.edit",
+      "displayName": "Settings (Circulation): Edit request anonymization settings",
+      "description": "Create and edit request anonymization settings",
+      "visible": true,
+      "subPermissions": [
+        "circulation.settings.request-anonymization.view"
+      ],
+      "metadata": {
+        "resource": "UI-Circulation Settings Request-Anonymization",
+        "type": "settings",
+        "action": "edit"
+      }
+    },
+    {
       "permissionName": "mod-settings.global.read.mod-circulation",
       "displayName": "mod-circulation settings - read",
       "description": "To read mod-circulation settings from mod-settings"
