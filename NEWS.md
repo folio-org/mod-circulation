@@ -1,3 +1,6 @@
+## 24.4.13 2025-12-10
+ * Implement shadow location search for circulation items (CIRC-2466)
+
 ## 24.4.12 2025-10-29
 * Switch DCB user check from lastName to the user type (CIRC-2482)
 
