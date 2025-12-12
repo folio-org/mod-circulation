@@ -93,7 +93,7 @@ public class ItemRepository {
   }
 
   public CompletableFuture<Result<Item>> fetchFor(ItemRelatedRecord itemRelatedRecord) {
-    log.debug("fetchFor:: itemRelatedRecord: {}", itemRelatedRecord);
+    log.info("fetchFor:: itemRelatedRecord: {}", itemRelatedRecord);
     if (itemRelatedRecord.getItemId() == null) {
       log.info("fetchFor:: item id is null");
       return completedFuture(succeeded(Item.from(null)));
@@ -186,6 +186,7 @@ public class ItemRepository {
   private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
     final var mapper = new ItemMapper();
 
+    log.info("Fetching circulation item now..");
     return SingleRecordFetcher.jsonOrNull(circulationItemClient, "item")
       .fetch(id)
       .thenApply(mapResult(identityMap::add))
@@ -195,6 +196,7 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLocations(
     Result<MultipleRecords<Item>> result) {
 
+    // That location should be present in central tenant..
     return result.combineAfter(this::fetchLocations,
       (items, locations) -> items
         .combineRecords(locations, Item::getPermanentLocationId, Item::withPermanentLocation, null)
