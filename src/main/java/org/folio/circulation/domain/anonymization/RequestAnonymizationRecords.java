@@ -1,7 +1,11 @@
 package org.folio.circulation.domain.anonymization;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.circulation.domain.Request;
