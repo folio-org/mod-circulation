@@ -2,6 +2,7 @@ package org.folio.circulation.domain.anonymization;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.util.List;
@@ -59,4 +60,59 @@ class RequestAnonymizationRecordsTest {
     assertEquals(2, records.getNotAnonymizedRequests().size());
     assertTrue(records.getNotAnonymizedRequests().containsKey("requestNotClosed"));
   }
+
+  @Test
+  void withRequestsFoundReturnsSameInstanceWhenEmpty() {
+    RequestAnonymizationRecords records = new RequestAnonymizationRecords();
+
+    RequestAnonymizationRecords result1 = records.withRequestsFound(null);
+    RequestAnonymizationRecords result2 = records.withRequestsFound(List.of());
+
+    assertSame(records, result1);
+    assertSame(records, result2);
+  }
+
+  @Test
+  void withAnonymizedRequestsReturnsSameInstanceWhenEmpty() {
+    RequestAnonymizationRecords records = new RequestAnonymizationRecords();
+
+    RequestAnonymizationRecords result1 = records.withAnonymizedRequests(null);
+    RequestAnonymizationRecords result2 = records.withAnonymizedRequests(List.of());
+
+    assertSame(records, result1);
+    assertSame(records, result2);
+  }
+
+  @Test
+  void withNotAnonymizedRequestsReturnsSameInstanceWhenNullOrEmpty() {
+    RequestAnonymizationRecords records = new RequestAnonymizationRecords();
+
+    RequestAnonymizationRecords result1 = records.withNotAnonymizedRequests(null);
+    RequestAnonymizationRecords result2 = records.withNotAnonymizedRequests(Map.of());
+
+    assertSame(records, result1);
+    assertSame(records, result2);
+  }
+
+  @Test
+  void getAnonymizedRequestsAndToStringAreCovered() {
+    Request r1 = Request.from(new JsonObject().put("id", "r1"));
+    Request r2 = Request.from(new JsonObject().put("id", "r2"));
+
+    RequestAnonymizationRecords records = new RequestAnonymizationRecords()
+      .withRequestsFound(List.of(r1, r2))
+      .withAnonymizedRequests(List.of("r2"))
+      .withNotAnonymizedRequests(Map.of("requestNotClosed", Set.of("r1")));
+
+    // covers stream/filter/collect path
+    List<Request> anonymized = records.getAnonymizedRequests();
+    assertEquals(1, anonymized.size());
+    assertEquals("r2", anonymized.get(0).getId());
+
+    // covers toString
+    String s = records.toString();
+    assertTrue(s.contains("RequestAnonymizationRecords"));
+    assertTrue(s.contains("anonymizedRequestIds"));
+  }
+
 }

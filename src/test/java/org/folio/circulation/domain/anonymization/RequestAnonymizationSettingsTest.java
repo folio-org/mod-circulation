@@ -78,4 +78,85 @@ class RequestAnonymizationSettingsTest {
     assertEquals(original.getDelay(), roundTrip.getDelay());
     assertEquals(original.getDelayUnit(), roundTrip.getDelayUnit());
   }
+
+  @Test
+  void modeFromAndToStorageValueAreCovered() {
+    assertEquals(RequestAnonymizationSettings.Mode.IMMEDIATELY,
+      RequestAnonymizationSettings.Mode.from("immediately"));
+    assertEquals(RequestAnonymizationSettings.Mode.DELAYED,
+      RequestAnonymizationSettings.Mode.from("delayed"));
+    assertEquals(RequestAnonymizationSettings.Mode.NEVER,
+      RequestAnonymizationSettings.Mode.from("never"));
+
+    assertEquals(RequestAnonymizationSettings.Mode.NEVER,
+      RequestAnonymizationSettings.Mode.from("unknown"));
+    assertEquals(RequestAnonymizationSettings.Mode.NEVER,
+      RequestAnonymizationSettings.Mode.from(null));
+
+    assertEquals("immediately", RequestAnonymizationSettings.Mode.IMMEDIATELY.toStorageValue());
+    assertEquals("delayed", RequestAnonymizationSettings.Mode.DELAYED.toStorageValue());
+    assertEquals("never", RequestAnonymizationSettings.Mode.NEVER.toStorageValue());
+  }
+
+  @Test
+  void delayUnitFromAndToStorageValueAreCovered() {
+    assertEquals(RequestAnonymizationSettings.DelayUnit.MINUTES,
+      RequestAnonymizationSettings.DelayUnit.from("minute"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.MINUTES,
+      RequestAnonymizationSettings.DelayUnit.from("minutes"));
+
+    assertEquals(RequestAnonymizationSettings.DelayUnit.DAYS,
+      RequestAnonymizationSettings.DelayUnit.from("day"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.DAYS,
+      RequestAnonymizationSettings.DelayUnit.from("days"));
+
+    assertEquals(RequestAnonymizationSettings.DelayUnit.MONTHS,
+      RequestAnonymizationSettings.DelayUnit.from("month"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.MONTHS,
+      RequestAnonymizationSettings.DelayUnit.from("months"));
+
+    assertEquals(RequestAnonymizationSettings.DelayUnit.YEARS,
+      RequestAnonymizationSettings.DelayUnit.from("year"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.YEARS,
+      RequestAnonymizationSettings.DelayUnit.from("years"));
+
+    assertEquals(RequestAnonymizationSettings.DelayUnit.HOURS,
+      RequestAnonymizationSettings.DelayUnit.from("hour"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.HOURS,
+      RequestAnonymizationSettings.DelayUnit.from("hours"));
+
+    assertEquals(RequestAnonymizationSettings.DelayUnit.MINUTES,
+      RequestAnonymizationSettings.DelayUnit.from("minute(s)"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.DAYS,
+      RequestAnonymizationSettings.DelayUnit.from("day(s)"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.MONTHS,
+      RequestAnonymizationSettings.DelayUnit.from("month(s)"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.YEARS,
+      RequestAnonymizationSettings.DelayUnit.from("year(s)"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.HOURS,
+      RequestAnonymizationSettings.DelayUnit.from("hour(s)"));
+
+    assertEquals(RequestAnonymizationSettings.DelayUnit.HOURS,
+      RequestAnonymizationSettings.DelayUnit.from("nonsense"));
+    assertEquals(RequestAnonymizationSettings.DelayUnit.HOURS,
+      RequestAnonymizationSettings.DelayUnit.from(null));
+
+    assertEquals("minutes", RequestAnonymizationSettings.DelayUnit.MINUTES.toStorageValue());
+    assertEquals("days", RequestAnonymizationSettings.DelayUnit.DAYS.toStorageValue());
+    assertEquals("months", RequestAnonymizationSettings.DelayUnit.MONTHS.toStorageValue());
+    assertEquals("years", RequestAnonymizationSettings.DelayUnit.YEARS.toStorageValue());
+    assertEquals("hours", RequestAnonymizationSettings.DelayUnit.HOURS.toStorageValue()); // hits default or HOURS
+  }
+
+  @Test
+  void constructorDefaultsAndClampAreCovered() {
+    RequestAnonymizationSettings s = new RequestAnonymizationSettings(null, -5, null);
+
+    assertEquals(RequestAnonymizationSettings.Mode.NEVER, s.getMode());
+    assertEquals(0, s.getDelay());
+    assertEquals(RequestAnonymizationSettings.DelayUnit.HOURS, s.getDelayUnit());
+  }
+
+
+
 }

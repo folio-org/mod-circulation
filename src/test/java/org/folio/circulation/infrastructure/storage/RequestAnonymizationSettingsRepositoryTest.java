@@ -10,6 +10,7 @@ import static org.mockito.Mockito.isNull;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.anonymization.RequestAnonymizationSettings;
+import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
@@ -88,4 +89,39 @@ class RequestAnonymizationSettingsRepositoryTest {
 
     assertEquals(RequestAnonymizationSettings.defaultSettings().toString(), settings.toString());
   }
+
+  @Test
+  void clientsConstructorUsesCirculationSettingsStorageClient() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient client = mock(CollectionResourceClient.class);
+
+    when(clients.circulationSettingsStorageClient()).thenReturn(client);
+
+    RequestAnonymizationSettingsRepository repo = new RequestAnonymizationSettingsRepository(clients);
+
+    Response response = mock(Response.class);
+    when(response.getJson()).thenReturn(new JsonObject()
+      .put("circulationSettings", new io.vertx.core.json.JsonArray()));
+    when(client.getMany(any(CqlQuery.class), isNull()))
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(response)));
+
+    RequestAnonymizationSettings settings = repo.getSettings().join().value();
+    assertEquals(RequestAnonymizationSettings.defaultSettings().toString(), settings.toString());
+  }
+
+  @Test
+  void returnsDefaultWhenResponseIsNull() {
+    CollectionResourceClient client = mock(CollectionResourceClient.class);
+
+    when(client.getMany(any(CqlQuery.class), isNull()))
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
+
+    RequestAnonymizationSettingsRepository repo = new RequestAnonymizationSettingsRepository(client);
+
+    RequestAnonymizationSettings settings = repo.getSettings().join().value();
+
+    assertEquals(RequestAnonymizationSettings.defaultSettings().toString(), settings.toString());
+  }
+
+
 }
