@@ -26,7 +26,6 @@ class RequestAnonymizationSettingsRepositoryTest {
     CollectionResourceClient client = mock(CollectionResourceClient.class);
 
     Response response = mock(Response.class);
-    //CqlQuery query = mock(CqlQuery.class);
     when(response.getJson()).thenReturn(new JsonObject()
       .put("circulationSettings", new io.vertx.core.json.JsonArray())
       .put("totalRecords", 0));
@@ -57,7 +56,6 @@ class RequestAnonymizationSettingsRepositoryTest {
       .put("totalRecords", 1);
 
     Response response = mock(Response.class);
-    CqlQuery query = mock(CqlQuery.class);
     when(response.getJson()).thenReturn(body);
 
     when(client.getMany(any(CqlQuery.class), isNull()))
@@ -77,7 +75,6 @@ class RequestAnonymizationSettingsRepositoryTest {
     CollectionResourceClient client = mock(CollectionResourceClient.class);
 
     Response response = mock(Response.class);
-    CqlQuery query = mock(CqlQuery.class);
     when(response.getJson()).thenReturn(null);
 
     when(client.getMany(any(CqlQuery.class), isNull()))

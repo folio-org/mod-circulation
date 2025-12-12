@@ -57,25 +57,15 @@ public class RequestAnonymizationSettings {
       }
 
       switch (value.toLowerCase(ROOT)) {
-        case "minute":
-        case "minutes":
-        case "minute(s)":
+        case "minute", "minutes", "minute(s)":
           return MINUTES;
-        case "day":
-        case "days":
-        case "day(s)":
+        case "day", "days", "day(s)":
           return DAYS;
-        case "month":
-        case "months":
-        case "month(s)":
+        case "month", "months", "month(s)":
           return MONTHS;
-        case "year":
-        case "years":
-        case "year(s)":
+        case "year", "years", "year(s)":
           return YEARS;
-        case "hour":
-        case "hours":
-        case "hour(s)":
+        case "hour", "hours", "hour(s)":
         default:
           return HOURS;
       }

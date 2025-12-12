@@ -66,7 +66,7 @@ public class RequestAnonymizationRecords {
   public List<Request> getAnonymizedRequests() {
     return requestsFound.stream()
       .filter(request -> anonymizedRequestIds.contains(request.getId()))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   public Map<String, Collection<String>> getNotAnonymizedRequests() {
