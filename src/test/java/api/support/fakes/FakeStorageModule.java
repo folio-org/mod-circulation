@@ -184,7 +184,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private void batchUpdate(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    JsonObject body = routingContext.getBodyAsJson();
+    JsonObject body = routingContext.body().asJsonObject();
 
     if (batchUpdatePreProcessor != null) {
       body = batchUpdatePreProcessor.apply(body);
@@ -466,14 +466,14 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private static JsonObject getJsonFromBody(RoutingContext routingContext) {
     if (hasBody(routingContext)) {
-      return routingContext.getBodyAsJson();
+      return routingContext.body().asJsonObject();
     } else {
       return new JsonObject();
     }
   }
 
   private static boolean hasBody(RoutingContext routingContext) {
-    return StringUtils.isNotBlank(routingContext.getBodyAsString());
+    return StringUtils.isNotBlank(routingContext.body().asString());
   }
 
   private void checkTokenHeader(RoutingContext routingContext) {
@@ -512,7 +512,7 @@ public class FakeStorageModule extends AbstractVerticle {
     }
 
     final Result<String> validationResult = recordValidator.validate(
-      routingContext.getBodyAsString());
+      routingContext.body().asString());
 
     if (validationResult.failed()) {
       validationResult.cause().writeTo(routingContext.response());

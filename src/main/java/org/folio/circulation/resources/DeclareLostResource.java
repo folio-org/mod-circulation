@@ -149,7 +149,7 @@ public class DeclareLostResource extends Resource {
     RoutingContext routingContext) {
 
     String loanId = routingContext.request().getParam("id");
-    return DeclareItemLostRequest.from(routingContext.getBodyAsJson(), loanId);
+    return DeclareItemLostRequest.from(routingContext.body().asJsonObject(), loanId);
   }
 
   private Result<Loan> refuseWhenItemIsAlreadyDeclaredLost(Result<Loan> loanResult) {

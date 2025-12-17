@@ -59,7 +59,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       itemRepository, new AccountRepository(clients), new LostItemPolicyRepository(clients),
       eventPublisher, new ActualCostRecordRepository(clients));
 
-    log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.getBodyAsString());
+    log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.body().asString());
 
     createAndValidateRequest(routingContext)
       .after(request -> processEvent(loanRepository, request, closeLoanWithLostItemService))
@@ -67,7 +67,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
         log.error("Cannot handle event [{}], error occurred {}",
-          routingContext.getBodyAsString(), failure);
+          routingContext.body().asString(), failure);
 
         context.write(noContent());
       }));
@@ -81,7 +81,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {
-    final LoanRelatedFeeFineClosedEvent eventPayload = fromJson(context.getBodyAsJson());
+    final LoanRelatedFeeFineClosedEvent eventPayload = fromJson(context.body().asJsonObject());
 
     if (eventPayload.getLoanId() == null) {
       return failed(singleValidationError(

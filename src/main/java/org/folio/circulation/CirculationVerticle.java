@@ -36,6 +36,7 @@ import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource
 import org.folio.circulation.resources.OverdueFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.PickSlipsResource;
 import org.folio.circulation.resources.PrintEventsResource;
+import org.folio.circulation.resources.RequestAnonymizationResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -48,21 +49,20 @@ import org.folio.circulation.resources.SearchSlipsResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
+import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
+import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
 import org.folio.circulation.resources.handlers.FeeFineBalanceChangedHandlerResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
-import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
-import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
 import org.folio.circulation.support.logging.LogHelper;
 import org.folio.circulation.support.logging.Logging;
-import org.folio.circulation.resources.RequestAnonymizationResource;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.Router;
 
 public class CirculationVerticle extends AbstractVerticle {
@@ -79,8 +79,10 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(
-      getHttpMaxPoolSize()));
+    int httpMaxPoolSize = getHttpMaxPoolSize();
+    final HttpClient client = vertx.createHttpClient(new PoolOptions()
+      .setHttp1MaxSize(httpMaxPoolSize)
+      .setHttp2MaxSize(httpMaxPoolSize));
 
     this.server = vertx.createHttpServer();
 
@@ -171,13 +173,11 @@ public class CirculationVerticle extends AbstractVerticle {
     new PrintEventsResource(client).register(router);
 
     server.requestHandler(router)
-      .listen(config().getInteger("port"), result -> {
-        if (result.succeeded()) {
-          log.info("Listening on {}", server.actualPort());
-          startFuture.complete();
-        } else {
-          startFuture.fail(result.cause());
-        }
+      .listen(config().getInteger("port"))
+      .onFailure(startFuture::fail)
+      .onSuccess(httpServer -> {
+        log.info("Listening on {}", server.actualPort());
+        startFuture.complete();
       });
   }
 
@@ -186,15 +186,13 @@ public class CirculationVerticle extends AbstractVerticle {
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
     log.info("Stopping circulation module");
 
-    if(server != null) {
-      server.close(result -> {
-        if (result.succeeded()) {
+    if (server != null) {
+      server.close()
+        .onFailure(stopFuture::fail)
+        .onSuccess(v -> {
           log.info("Stopped listening on {}", server.actualPort());
           stopFuture.complete();
-        } else {
-          stopFuture.fail(result.cause());
-        }
-      });
+        });
     }
   }
 }
