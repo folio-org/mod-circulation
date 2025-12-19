@@ -47,7 +47,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
-public class VertxWebClientOkapiHttpClientTests {
+class VertxWebClientOkapiHttpClientTests {
   private static VertxAssistant vertxAssistant;
 
   @RegisterExtension
