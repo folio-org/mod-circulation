@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.policy.library;
 
 import static java.time.ZoneOffset.UTC;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.List;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
-import org.junit.Assert;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -33,7 +33,7 @@ class DetermineClosedLibraryStrategyTest {
     closedLibraryStrategy = ClosedLibraryStrategyUtils
       .determineClosedLibraryStrategy(loanPolicy, startDate, UTC);
 
-    Assert.assertEquals(expectedClass, closedLibraryStrategy.getClass());
+    assertEquals(expectedClass, closedLibraryStrategy.getClass());
   }
 
   private static List<Object[]> testDetermineClosedLibraryStrategyParameters() {
