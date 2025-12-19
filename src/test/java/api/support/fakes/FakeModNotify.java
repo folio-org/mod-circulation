@@ -32,7 +32,7 @@ public class FakeModNotify {
           routingContext.response().end();
         }
         else {
-          sentPatronNotices.add(routingContext.getBodyAsJson());
+          sentPatronNotices.add(routingContext.body().asJsonObject());
           routingContext.response()
             .setStatusCode(HTTP_OK.toInt())
             .end();

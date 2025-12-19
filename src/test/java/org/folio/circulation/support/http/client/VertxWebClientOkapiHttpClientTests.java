@@ -12,7 +12,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_CREATED;
@@ -36,22 +36,24 @@ import java.util.concurrent.TimeoutException;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.VertxAssistant;
 import org.folio.circulation.support.results.Result;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
-public class VertxWebClientOkapiHttpClientTests {
+class VertxWebClientOkapiHttpClientTests {
   private static VertxAssistant vertxAssistant;
 
-  @Rule
-  public WireMockRule fakeWebServer = new WireMockRule(options().port(8081));
+  @RegisterExtension
+  static WireMockExtension fakeWebServer = WireMockExtension.newInstance()
+    .options(wireMockConfig().port(8081))
+    .build();
 
   private final URL okapiUrl = new URL("http://okapi.com");
   private final String tenantId = "test-tenant";
@@ -61,22 +63,22 @@ public class VertxWebClientOkapiHttpClientTests {
 
   public VertxWebClientOkapiHttpClientTests() throws MalformedURLException { }
 
-  @BeforeClass
-  public static void beforeAll() {
+  @BeforeAll
+  static void beforeAll() {
     vertxAssistant = new VertxAssistant();
 
     vertxAssistant.start();
   }
 
-  @AfterClass
-  public static void afterAll() {
+  @AfterAll
+  static void afterAll() {
     if (vertxAssistant != null) {
       vertxAssistant.stop();
     }
   }
 
   @Test
-  public void canPostWithJson()
+  void canPostWithJson()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     final String locationResponseHeader = "/a-different-location";
@@ -102,7 +104,7 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void canGetJson()
+  void canGetJson()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     final String locationResponseHeader = "/a-different-location";
@@ -125,7 +127,7 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void canGetJsonUsingQueryParameters()
+  void canGetJsonUsingQueryParameters()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))
@@ -147,7 +149,7 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void canPutWithJson()
+  void canPutWithJson()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     fakeWebServer.stubFor(
@@ -168,7 +170,7 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void canDeleteAResource()
+  void canDeleteAResource()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     fakeWebServer.stubFor(matchingFolioHeaders(delete(urlPathEqualTo("/record")))
@@ -185,7 +187,7 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void canDeleteAResourceUsingQueryParameters()
+  void canDeleteAResourceUsingQueryParameters()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     fakeWebServer.stubFor(matchingFolioHeaders(delete(urlPathEqualTo("/record")))
@@ -205,7 +207,7 @@ public class VertxWebClientOkapiHttpClientTests {
   }
 
   @Test
-  public void failsWhenGetTimesOut()
+  void failsWhenGetTimesOut()
     throws InterruptedException, ExecutionException, TimeoutException {
 
     fakeWebServer.stubFor(matchingFolioHeaders(get(urlPathEqualTo("/record")))

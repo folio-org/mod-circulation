@@ -26,7 +26,6 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,16 +33,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
 class FindMultipleRecordsByIdTests {
-  @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Captor
   private ArgumentCaptor<Result<CqlQuery>> generatedCqlQueries;

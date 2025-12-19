@@ -69,7 +69,7 @@ public class LoanCollectionResource extends CollectionResource {
   void create(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    JsonObject incomingRepresentation = routingContext.getBodyAsJson();
+    JsonObject incomingRepresentation = routingContext.body().asJsonObject();
 
     final Loan loan = Loan.from(incomingRepresentation);
 
@@ -143,7 +143,7 @@ public class LoanCollectionResource extends CollectionResource {
   void replace(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
 
-    JsonObject incomingRepresentation = routingContext.getBodyAsJson();
+    JsonObject incomingRepresentation = routingContext.body().asJsonObject();
 
     incomingRepresentation.put("id", routingContext.request().getParam("id"));
 

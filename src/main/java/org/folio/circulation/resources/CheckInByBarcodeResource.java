@@ -60,7 +60,7 @@ public class CheckInByBarcodeResource extends Resource {
       itemRepository, userRepository, loanRepository);
 
     final Result<CheckInByBarcodeRequest> checkInRequestResult
-      = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
+      = CheckInByBarcodeRequest.from(routingContext.body().asJsonObject());
 
     final EventPublisher eventPublisher = new EventPublisher(context, clients);
 

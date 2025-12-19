@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
@@ -33,16 +34,11 @@ public class VertxAssistant {
     final CompletableFuture<Void> future = new CompletableFuture<>();
 
     if (vertx != null) {
-      vertx.close(result -> {
-        if (result.succeeded()) {
-          future.complete(null);
-        } else {
-          future.completeExceptionally(result.cause());
-        }
-      });
-
-      future.thenAccept(result -> this.vertx = null);
+      vertx.close()
+        .onSuccess(v -> future.complete(null))
+        .onFailure(future::completeExceptionally);
     }
+    future.thenAccept(result -> this.vertx = null);
 
     return future;
   }
@@ -64,35 +60,23 @@ public class VertxAssistant {
     DeploymentOptions options = new DeploymentOptions();
 
     options.setConfig(config);
-    options.setWorker(true);
+    options.setThreadingModel(ThreadingModel.WORKER);
 
     log.info("Deploying verticle: {}", verticleClass.getSimpleName());
-    vertx.deployVerticle(verticleClass1, options, result -> {
-      if (result.succeeded()) {
+    vertx.deployVerticle(verticleClass1, options)
+      .onFailure(deployed::completeExceptionally)
+      .onSuccess(verticleName -> {
         long elapsedTime = System.currentTimeMillis() - startTime;
-
         log.info("{} deployed in {} milliseconds", verticleClass1, elapsedTime);
-
-        deployed.complete(result.result());
-      } else {
-        deployed.completeExceptionally(result.cause());
-      }
-    });
+        deployed.complete(verticleName);
+      });
 
     return deployed;
   }
 
   public CompletableFuture<Void> undeployVerticle(String moduleDeploymentId) {
-    CompletableFuture<Void> undeployed = new CompletableFuture<>();
-
-    vertx.undeploy(moduleDeploymentId, result -> {
-      if (result.succeeded()) {
-        undeployed.complete(null);
-      } else {
-        undeployed.completeExceptionally(result.cause());
-      }
-    });
-
-    return undeployed;
+    return vertx.undeploy(moduleDeploymentId)
+      .toCompletionStage()
+      .toCompletableFuture();
   }
 }
