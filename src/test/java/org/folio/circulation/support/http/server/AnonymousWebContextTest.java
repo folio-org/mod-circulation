@@ -38,7 +38,7 @@ class AnonymousWebContextTest {
 
   @Test
   void getHeadersShouldNotFailOnDuplicateHeaderKeys() {
-    when(request.headers()).thenReturn(new HeadersMultiMap()
+    when(request.headers()).thenReturn(HeadersMultiMap.httpHeaders()
       .add("test-header", "value1")
       .add("TEST-HEADER", "value2"));
 

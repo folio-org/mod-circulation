@@ -82,7 +82,7 @@ public class DeclareClaimedReturnedItemAsMissingResource extends Resource {
 
   private Result<ChangeItemStatusRequest> createRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
-    final JsonObject body = routingContext.getBodyAsJson();
+    final JsonObject body = routingContext.body().asJsonObject();
     log.debug("createRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     final ChangeItemStatusRequest request = ChangeItemStatusRequest.from(loanId, body);

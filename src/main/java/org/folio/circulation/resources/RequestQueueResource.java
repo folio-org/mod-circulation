@@ -108,7 +108,7 @@ public class RequestQueueResource extends Resource {
     String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
 
     ReorderRequestContext reorderContext = new ReorderRequestContext(requestQueueType, idParamValue,
-      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
+      routingContext.body().asPojo(ReorderQueueRequest.class));
 
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);

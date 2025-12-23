@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
@@ -25,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -337,7 +337,7 @@ public abstract class APITests {
       try {
         undeployVerticles();
       } catch (Exception ex) {
-        Assert.fail("Failed to undeploy verticle: " + ex);
+        fail("Failed to undeploy verticle: " + ex);
       }
     }));
     okapiAlreadyDeployed = true;

@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CreateRequestService;
@@ -82,6 +83,7 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
+
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -116,7 +118,7 @@ public class RequestByInstanceIdResource extends Resource {
     final var itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
     final var eventPublisher = new EventPublisher(context, clients);
 
-    final var requestBody = routingContext.getBodyAsJson();
+    final var requestBody = routingContext.body().asJsonObject();
 
     new SettingsRepository(clients).lookupTlrSettings()
       .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher,

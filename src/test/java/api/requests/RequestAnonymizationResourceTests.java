@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.impl.HttpClientInternal;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 
@@ -22,9 +21,7 @@ class RequestAnonymizationResourceTests extends APITests {
 
   @Test
   void registerDoesNotThrowAndRegistersRoute() {
-    HttpClientInternal internalClient = mock(HttpClientInternal.class);
-    HttpClient httpClient = internalClient;
-
+    HttpClient httpClient = mock(HttpClient.class);
     RequestAnonymizationResource resource = new RequestAnonymizationResource(httpClient);
 
     Router router = mock(Router.class);

@@ -77,7 +77,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var representation = routingContext.getBodyAsJson();
+    final var representation = routingContext.body().asJsonObject();
 
     log.debug("create:: {}", representation);
 
@@ -133,7 +133,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var representation = routingContext.getBodyAsJson();
+    final var representation = routingContext.body().asJsonObject();
 
     write(representation, "id", getRequestId(routingContext));
 
@@ -266,7 +266,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var representation = routingContext.getBodyAsJson();
+    final var representation = routingContext.body().asJsonObject();
 
     final var id = getRequestId(routingContext);
 
