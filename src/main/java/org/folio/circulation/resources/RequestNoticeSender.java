@@ -1,6 +1,8 @@
 package org.folio.circulation.resources;
 
-import static org.folio.circulation.domain.notice.NoticeEventType.*;
+import static org.folio.circulation.domain.notice.NoticeEventType.AVAILABLE;
+import static org.folio.circulation.domain.notice.NoticeEventType.ITEM_RECALLED;
+import static org.folio.circulation.domain.notice.NoticeEventType.REQUEST_CANCELLATION;
 import static org.folio.circulation.domain.notice.PatronNotice.buildEmail;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createRequestNoticeContext;
@@ -11,10 +13,12 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +48,6 @@ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
-import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RecordNotFoundFailure;
@@ -63,10 +66,8 @@ public class RequestNoticeSender {
   private final ServicePointRepository servicePointRepository;
   private final EventPublisher eventPublisher;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
-  private final ItemByInstanceIdFinder itemByInstanceIdFinder;
 
   private long recallRequestCount = 0L;
-  private long holdRequestCount = 0L;
 
   protected final ImmediatePatronNoticeService patronNoticeService;
   protected final LocationRepository locationRepository;
@@ -90,7 +91,6 @@ public class RequestNoticeSender {
     this.eventPublisher = new EventPublisher(clients);
     this.locationRepository = LocationRepository.using(clients, servicePointRepository);
     this.proxyRelationshipValidator = new ProxyRelationshipValidator(clients);
-    this.itemByInstanceIdFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
   }
 
   public static RequestNoticeSender using(Clients clients) {
@@ -117,16 +117,8 @@ public class RequestNoticeSender {
     Request request = records.getRequest();
     recallRequestCount = records.getRequestQueue().getRequests()
       .stream()
-      .filter(r -> r.getRequestType() == RequestType.RECALL
-        && r.isNotYetFilled()
-        && Objects.equals(r.getItemId(), request.getItemId()))
-      .count();
-
-    holdRequestCount = records.getRequestQueue().getRequests()
-      .stream()
-      .filter(r -> r.getRequestType() == RequestType.HOLD
-        && r.isNotYetFilled()
-        && Objects.equals(r.getItemId(), request.getItemId()))
+      .filter(r -> r.getRequestType() == RequestType.RECALL && r.isNotYetFilled()
+        && r.getItemId().equals(request.getItemId()))
       .count();
 
     if (request.hasItemId()) {
@@ -235,10 +227,7 @@ public class RequestNoticeSender {
     log.debug("sendConfirmationNoticeForRequestWithItem:: parameters request: {}", () -> request);
     return createPatronNoticeEvent(request, getEventType(request))
       .thenCompose(r -> r.after(patronNoticeService::acceptNoticeEvent))
-      .whenComplete((r, t) -> {
-        sendNoticeOnRecall(request);
-        sendHoldNoticeForItemLevelRequest(request);
-      });
+      .whenComplete((r, t) -> sendNoticeOnRecall(request));
   }
 
   private CompletableFuture<Result<Void>> sendConfirmationNoticeForRequestWithoutItemId(
@@ -289,16 +278,7 @@ public class RequestNoticeSender {
       () -> request, () -> templateId, () -> eventType);
 
     return fetchAdditionalInfo(request)
-      .thenCompose(r -> r.after(req -> {
-        CompletableFuture<Result<Void>> noticeFuture = sendNotice(req, templateId, eventType);
-        if (req.isHold()) {
-          CompletableFuture<Result<Void>> titleLevelFuture = sendNoticeForTitleLevelRequest(req);
-          return CompletableFuture.allOf(noticeFuture, titleLevelFuture)
-            .thenApply(v -> Result.succeeded(null));
-        } else {
-          return noticeFuture;
-        }
-      }));
+      .thenCompose(r -> r.after(req -> sendNotice(req, templateId, eventType)));
   }
 
   private CompletableFuture<Result<Void>> sendNotice(Request request, UUID templateId,
@@ -365,113 +345,17 @@ public class RequestNoticeSender {
     }
 
     return fetchAdditionalInfo(request)
-      .thenCompose(r -> r.after(req -> sendLoanNotice(req.getLoan(), ITEM_RECALLED)));
+      .thenCompose(r -> r.after(req -> sendLoanNotice(req.getLoan())));
   }
 
-  /**
-   * Sends hold notice to the borrower of a specific item
-   */
-  private CompletableFuture<Result<Void>> sendHoldNoticeForItemLevelRequest(Request request) {
-    log.debug("sendHoldNoticeForItemLevelRequest:: sending notice for item: {}",
-      request.getItemId());
-
-    return fetchAdditionalInfo(request)
-      .thenCompose(r -> r.after(req -> {
-        Loan loan = req.getLoan();
-
-        if (!request.isHold() || loan == null || loan.getUser() == null || loan.getItem() == null || holdRequestCount > 1) {
-          log.debug("sendHoldNoticeForItemLevelRequest:: no active loan found, skipping notice");
-          return ofAsync(null);
-        }
-
-        if (!loan.isOpen()) {
-          log.debug("sendHoldNoticeForItemLevelRequest:: loan is not open, skipping notice");
-          return ofAsync(null);
-        }
-
-        return sendLoanNotice(loan, HOLD_REQUEST_FOR_ITEM);
-      }));
-  }
-
-  private CompletableFuture<Result<Void>> sendNoticeForTitleLevelRequest(Request request) {
-    log.debug("sendNoticeForTitleLevelRequest:: sending notice for item: {}", request.getItemId());
-
-    return collectOpenLoansForTitleLevel(request)
-      .thenCompose(loansResult -> {
-        if (loansResult.failed() || loansResult.value() == null) {
-          return ofAsync(null);
-        }
-
-        Collection<Loan> openLoans = loansResult.value();
-        if (openLoans.isEmpty()) {
-          return ofAsync(null);
-        }
-
-        List<CompletableFuture<Result<Void>>> noticeFutures = openLoans.stream()
-          .map(loan -> sendLoanNotice(loan, HOLD_REQUEST_FOR_ITEM))
-          .toList();
-
-        CompletableFuture<Void> allDone =
-          CompletableFuture.allOf(noticeFutures.toArray(new CompletableFuture[0]));
-
-        return allDone.thenApply(r -> Result.succeeded(null));
-      });
-  }
-
-
-  public CompletableFuture<Result<Collection<Loan>>> collectOpenLoansForTitleLevel(Request request) {
-
-    // Step 1: Fetch all items for this title level
-    return fetchItemsForTitleLevel(request)
-      .thenCompose(itemsResult -> {
-        if (itemsResult.failed() || itemsResult.value() == null) {
-          return CompletableFuture.completedFuture(Result.failed(itemsResult.cause()));
-        }
-
-        Collection<Item> items = itemsResult.value();
-
-        // Step 2: For each item, find open loan asynchronously
-        List<CompletableFuture<Optional<Loan>>> loanFutures = items.stream()
-          .map(item -> loanRepository.findOpenLoanForItem(item)
-            .thenApply(loanResult -> {
-              if (loanResult.succeeded() && loanResult.value() != null) {
-                return Optional.of(loanResult.value());
-              } else {
-                return Optional.<Loan>empty();
-              }
-            })
-          )
-          .toList();
-
-        // Step 3: Combine all futures
-        CompletableFuture<Void> allDone =
-          CompletableFuture.allOf(loanFutures.toArray(new CompletableFuture[0]));
-
-        // Step 4: Gather successful loans
-        return allDone.thenApply(v -> {
-          List<Loan> openLoans = loanFutures.stream()
-            .map(CompletableFuture::join)
-            .flatMap(Optional::stream)
-            .collect(Collectors.toList());
-
-          return Result.succeeded(openLoans);
-        });
-      });
-  }
-
-  private CompletableFuture<Result<Collection<Item>>> fetchItemsForTitleLevel(Request request) {
-    return itemByInstanceIdFinder.getItemsByInstanceId(UUID.fromString(request.getInstanceId()), false);
-  }
-
-
-  private CompletableFuture<Result<Void>> sendLoanNotice(Loan updatedLoan, NoticeEventType eventType){
+  private CompletableFuture<Result<Void>> sendLoanNotice(Loan updatedLoan){
     return getRecipientId(updatedLoan)
       .thenCompose(result -> result.after(recipientId -> {
         var itemRecalledEvent = new PatronNoticeEventBuilder()
           .withItem(updatedLoan.getItem())
           .withUser(updatedLoan.getUser())
           .withRecipientId(recipientId)
-          .withEventType(eventType)
+          .withEventType(ITEM_RECALLED)
           .withNoticeContext(createLoanNoticeContext(updatedLoan))
           .withNoticeLogContext(NoticeLogContext.from(updatedLoan))
           .build();

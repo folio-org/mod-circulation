@@ -139,6 +139,13 @@ public class FakePubSub {
     publishedEvents.clear();
   }
 
+  public static void clearRegistrationData() {
+    createdEventTypes.clear();
+    registeredPublishers.clear();
+    registeredSubscribers.clear();
+    deletedEventTypes.clear();
+  }
+
   public static void setFailPubSubRegistration(boolean failPubSubRegistration) {
     FakePubSub.failPubSubRegistration = failPubSubRegistration;
   }
