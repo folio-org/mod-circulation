@@ -4,8 +4,13 @@ import io.vertx.core.Future;
 
 public class DefaultModuleIdProvider implements ModuleIdProvider {
 
+//  @Override
+//  public Future<String> getModuleId() {
+//    return Future.succeededFuture(ModuleIdProvider.REAL_MODULE_ID);
+//  }
+
   @Override
-  public Future<String> getModuleId() {
-    return Future.succeededFuture(ModuleIdProvider.REAL_MODULE_ID);
+  public String buildUniqueModuleId() {
+    return ModuleIdProvider.REAL_MODULE_ID;
   }
 }
