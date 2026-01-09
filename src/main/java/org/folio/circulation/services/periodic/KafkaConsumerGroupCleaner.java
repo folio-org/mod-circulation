@@ -27,7 +27,7 @@ public class KafkaConsumerGroupCleaner implements PeriodicAPI {
 
   @Override
   public long runEvery() {
-    return 60;
+    return 60 * 1000;
   }
 
   @Override
