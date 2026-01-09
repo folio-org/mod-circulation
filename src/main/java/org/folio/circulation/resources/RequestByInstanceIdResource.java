@@ -62,10 +62,10 @@ import org.folio.circulation.domain.representations.RequestByInstanceIdRequest;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.services.RequestQueueService;
@@ -120,7 +120,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final var requestBody = routingContext.body().asJsonObject();
 
-    new SettingsRepository(clients).lookupTlrSettings()
+    new CirculationSettingsService(clients).getTlrSettings()
       .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher,
         repositories, itemFinder, config, requestBody)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
@@ -324,6 +324,7 @@ public class RequestByInstanceIdResource extends Resource {
 
     final RequestFromRepresentationService requestFromRepresentationService =
       new RequestFromRepresentationService(Request.Operation.CREATE, repositories,
+        new CirculationSettingsService(clients),
         createProxyRelationshipValidator(currentItemRequest, clients),
         new ServicePointPickupLocationValidator(),
         new FailFastErrorHandler(),

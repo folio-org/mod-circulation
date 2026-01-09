@@ -42,7 +42,7 @@ import api.support.http.ItemResource;
 class HoldShelfFulfillmentTests extends APITests {
   @AfterEach
   public void afterEach() {
-    settingsFixture.deleteTlrFeatureSettings();
+    circulationSettingsFixture.deleteTlrFeatureSettings();
   }
 
   @ParameterizedTest
@@ -81,7 +81,7 @@ class HoldShelfFulfillmentTests extends APITests {
   @ParameterizedTest
   @ValueSource(ints = {1, 2})
   void tlrRequestIsPositionedCorrectlyInUnifiedQueue(int checkedInItemNumber) {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
@@ -219,7 +219,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
   @Test
   void canBeCheckedOutToPatronRequestingTitleWhenReadyForPickup() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
 
@@ -285,7 +285,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
   @Test
   void checkInItemWithTlrRequestAtDifferentServicePointPlacesItemInTransit() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -360,7 +360,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
   @Test
   void canCheckoutItemForTitleLevelRequestWhenInTransit() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -427,7 +427,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
   @Test
   void itemWithTlrRequestIsReadyForPickUpWhenCheckedInAtPickupServicePointAfterTransit() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     final IndividualResource pickupServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();
@@ -505,7 +505,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
   @Test
   void cannotCheckOutToOtherPatronWhenTlrRequestIsAwaitingPickup() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     ItemResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource james = usersFixture.james();
@@ -577,7 +577,7 @@ class HoldShelfFulfillmentTests extends APITests {
 
   @Test
   void cannotCheckOutToOtherPatronWhenTlrRequestIsInTransitForPickup() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     final IndividualResource requestServicePoint = servicePointsFixture.cd1();
     final IndividualResource checkInServicePoint = servicePointsFixture.cd2();

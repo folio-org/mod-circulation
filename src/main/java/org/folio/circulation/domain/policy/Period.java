@@ -23,7 +23,9 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.Getter;
 
+@Getter
 public class Period {
   private static final Period ZERO_DURATION_PERIOD = minutes(0);
 
