@@ -1,5 +1,6 @@
 package org.folio.circulation;
 
+import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getenv;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_ENV;
@@ -11,18 +12,18 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
-import org.folio.circulation.services.events.DefaultModuleIdProvider;
-import org.folio.circulation.services.events.ModuleIdProvider;
-import org.folio.circulation.services.events.UniqueKafkaModuleIdProvider;
+import org.folio.circulation.services.periodic.KafkaConsumerGroupCleaner;
 import org.folio.kafka.AsyncRecordHandler;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaConsumerWrapper;
 import org.folio.kafka.SubscriptionDefinition;
 import org.folio.kafka.services.KafkaEnvironmentProperties;
+import org.folio.util.pubsub.support.PomReader;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
@@ -35,6 +36,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
 
+  public static final String REAL_MODULE_ID = String.format("%s-%s",
+    PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
   private static final String DEFAULT_OKAPI_URL = "http://okapi:9130";
@@ -42,11 +45,13 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
   private final List<KafkaConsumerWrapper<String, String>> consumers = new ArrayList<>();
   private KafkaConfig kafkaConfig;
+  private KafkaConsumerGroupCleaner kafkaConsumerGroupCleaner;
 
   @Override
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
     kafkaConfig = buildKafkaConfig();
+    kafkaConsumerGroupCleaner = new KafkaConsumerGroupCleaner(vertx);
   }
 
   @Override
@@ -54,6 +59,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     log.info("start:: starting verticle");
 
     createConsumers()
+//      .onSuccess(v -> kafkaConsumerGroupCleaner.start())
       .onSuccess(v -> log.info("start:: verticle started"))
       .onFailure(t -> log.error("start:: verticle start failed", t))
       .onComplete(promise);
@@ -64,6 +70,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
     log.info("stop:: stopping verticle");
 
     stopConsumers()
+//      .onSuccess(v -> kafkaConsumerGroupCleaner.stop())
       .onSuccess(v -> log.info("stop:: verticle stopped"))
       .onFailure(t -> log.error("stop:: verticle stop failed", t))
       .onComplete(promise);
@@ -84,19 +91,12 @@ public class EventConsumerVerticle extends AbstractVerticle {
     log.info("createConsumers:: creating consumers");
     return Future.all(List.of(
       createConsumer(CIRCULATION_RULES_UPDATED, new CirculationRulesUpdateEventHandler(),
-        // puts consumers into separate groups so that they all receive the same event
-        new UniqueKafkaModuleIdProvider(vertx, CIRCULATION_RULES_UPDATED))
+        buildUniqueModuleId()) // puts consumers into separate groups so that they all receive the same event
     )).mapEmpty();
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
-    AsyncRecordHandler<String, String> handler) {
-
-    return createConsumer(eventType, handler, new DefaultModuleIdProvider());
-  }
-
-  private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
-    AsyncRecordHandler<String, String> handler, ModuleIdProvider moduleIdProvider) {
+    AsyncRecordHandler<String, String> handler, String moduleId) {
 
     log.info("createConsumer:: creating consumer for event type {}", eventType);
 
@@ -110,7 +110,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
       .build();
 
-    return consumer.start(handler, moduleIdProvider.buildUniqueModuleId())
+    return consumer.start(handler, moduleId)
       .map(consumer)
       .onSuccess(consumers::add);
   }
@@ -135,7 +135,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .maxRequestSize(Integer.parseInt(vertxConfig.getString(KAFKA_MAX_REQUEST_SIZE, "10")))
       .build();
 
-    log.info("buildKafkaConfig:: {}", config);
+    log.debug("buildKafkaConfig:: {}", config);
     return config;
   }
 
@@ -149,6 +149,23 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .put(OKAPI_URL, getenv().getOrDefault(OKAPI_URL, DEFAULT_OKAPI_URL))
       .put(KAFKA_MAX_REQUEST_SIZE, getenv().getOrDefault(KAFKA_MAX_REQUEST_SIZE,
         String.valueOf(DEFAULT_KAFKA_MAX_REQUEST_SIZE)));
+  }
+
+  public String buildUniqueModuleId() {
+      String id = String.format("%s_%s_%s", REAL_MODULE_ID, generateRandomDigits(8), currentTimeMillis());
+      log.info("buildUniqueModuleId:: using module ID {}", id);
+      return id;
+  }
+
+  public static String generateRandomDigits(int length) {
+    StringBuilder builder = new StringBuilder(length);
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+
+    for (int i = 0; i < length; i++) {
+      builder.append(random.nextInt(10)); // 0–9
+    }
+
+    return builder.toString();
   }
 
 }

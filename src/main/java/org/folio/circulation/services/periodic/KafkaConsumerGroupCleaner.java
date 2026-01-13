@@ -1,18 +1,17 @@
 package org.folio.circulation.services.periodic;
 
+import static io.vertx.core.Future.succeededFuture;
+import static java.lang.System.currentTimeMillis;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
-import static org.folio.kafka.KafkaTopicNameHelper.formatGroupName;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.folio.circulation.domain.events.DomainEventType;
-import org.folio.circulation.services.events.ModuleIdProvider;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.services.KafkaEnvironmentProperties;
-import org.folio.rest.resource.interfaces.PeriodicAPI;
 
-import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
@@ -20,75 +19,111 @@ import io.vertx.kafka.admin.KafkaAdminClient;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class KafkaConsumerGroupCleaner implements PeriodicAPI {
-  private final static DomainEventType CIRCULATION_RULES_UPDATED_EVENT_TYPE
-    = CIRCULATION_RULES_UPDATED;
-  private final static int EXPIRATION_PERIOD_MILLIS = 60 * 60 * 1000; // 1 hour
+public class KafkaConsumerGroupCleaner {
 
-  @Override
-  public long runEvery() {
-    return 60 * 1000;
+  private final static int CLEANUP_INITIAL_DELAY_MILLIS = 5000;
+  private final static int CLEANUP_PERIOD_MILLIS = 60 * 60 * 1000;
+  private final static int EMPTY_GROUP_AGE_THRESHOLD_MILLIS = 24 * 60 * 60 * 1000;
+  private static final String CIRCULATION_RULES_UPDATED_CONSUMER_GROUP_NAME_PATTERN =
+    CIRCULATION_RULES_UPDATED.name() + "\\.mod-circulation-[\\d.]+_\\d+_\\d+";
+
+  private final Vertx vertx;
+  private final KafkaAdminClient adminClient;
+
+  public KafkaConsumerGroupCleaner(Vertx vertx) {
+    this.vertx = vertx;
+    this.adminClient = KafkaAdminClient.create(vertx, buildKafkaConfig());
   }
 
-  @Override
-  public void run(Vertx vertx, Context context) {
-    try {
-      Map<String, String> config = KafkaConfig.builder()
-        .kafkaHost(KafkaEnvironmentProperties.host())
-        .kafkaPort(KafkaEnvironmentProperties.port())
-        .build()
-        .getProducerProps();
+  public void start() {
+    log.info("start:: scheduling expired consumer group cleanup");
+    vertx.setPeriodic(CLEANUP_PERIOD_MILLIS, timerId -> runCleanup());
+  }
 
-      log.info("KafkaConsumerGroupCleaner.run:: KafkaAdminClient config: {}", config);
+  public void stop() {
+    log.info("disable:: stopping expired consumer group cleanup");
+    adminClient.close();
+  }
 
-      KafkaAdminClient kafkaAdminClient = KafkaAdminClient.create(vertx, config);
+  public void runCleanup() {
+    log.info("runCleanup:: running expired empty consumer group cleanup");
 
-      kafkaAdminClient.listConsumerGroups()
-        .compose(consumerGroupListing -> kafkaAdminClient.listConsumerGroups())
-        .map(this::filterExpiredConsumerGroups)
-        .compose(kafkaAdminClient::describeConsumerGroups)
-        .map(this::filterEmptyConsumerGroups)
-        .map(this::logDeletionAttempt)
-        .compose(kafkaAdminClient::deleteConsumerGroups)
-        .onSuccess(r -> log.info("Successfully deleted expired consumer groups"))
-        .onFailure(t -> log.error("Failed to delete expired consumer groups", t))
-        .onComplete(r -> kafkaAdminClient.close());
-    } catch (Exception e) {
-      log.error("KafkaConsumerGroupCleaner.run:: failed to run Periodic API", e);
-    }
+    adminClient.listConsumerGroups()
+      .map(this::filterExpiredConsumerGroups)
+      .compose(this::describeConsumerGroups)
+      .compose(this::deleteEmptyConsumerGroups)
+      .onSuccess(r -> log.info("runCleanup:: consumer group cleanup done"))
+      .onFailure(t -> log.error("runCleanup:: consumer group cleanup failed", t));
   }
 
   private List<String> filterExpiredConsumerGroups(List<ConsumerGroupListing> consumerGroups) {
-    return consumerGroups.stream()
+    List<String> expiredGroups = consumerGroups.stream()
       .map(ConsumerGroupListing::getGroupId)
-      .filter(groupId -> groupId.startsWith(formatGroupName(
-        CIRCULATION_RULES_UPDATED_EVENT_TYPE.name(), ModuleIdProvider.REAL_MODULE_ID)))
       .filter(this::isConsumerGroupExpired)
       .toList();
+
+    log.info("filterExpiredConsumerGroups:: found {} expired consumer groups", expiredGroups::size);
+    return expiredGroups;
   }
 
-  private List<String> filterEmptyConsumerGroups(Map<String, ConsumerGroupDescription> consumerGroups) {
-    return consumerGroups.values().stream()
+  private Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(
+    List<String> consumerGroupIds) {
+
+    if (consumerGroupIds.isEmpty()) {
+      log.debug("describeConsumerGroups:: no consumer groups to describe");
+      return succeededFuture(new HashMap<>());
+    }
+
+    return adminClient.describeConsumerGroups(consumerGroupIds);
+  }
+
+  private Future<Void> deleteEmptyConsumerGroups(Map<String, ConsumerGroupDescription> consumerGroups) {
+    List<String> emptyGroupIds = consumerGroups.values().stream()
       .filter(description -> description.getMembers().isEmpty())
       .map(ConsumerGroupDescription::getGroupId)
       .toList();
-  }
 
-  private List<String> logDeletionAttempt(List<String> consumerGroups) {
-    log.info("deleteConsumerGroups:: Deleting consumer groups: {}", consumerGroups);
-    return consumerGroups;
+    if (emptyGroupIds.isEmpty()) {
+      log.info("deleteEmptyConsumerGroups:: no empty consumer groups to delete");
+      return succeededFuture();
+    }
+
+    log.info("deleteEmptyConsumerGroups:: deleting {} consumer groups: {}", emptyGroupIds.size(),  emptyGroupIds);
+    return adminClient.deleteConsumerGroups(emptyGroupIds);
   }
 
   private boolean isConsumerGroupExpired(String consumerGroupName) {
+    if (!consumerGroupName.matches(CIRCULATION_RULES_UPDATED_CONSUMER_GROUP_NAME_PATTERN)) {
+      log.debug("isConsumerGroupExpired:: skipping group: {}", consumerGroupName);
+      return false;
+    }
+
     log.debug("isConsumerGroupExpired:: Consumer group name: {}", consumerGroupName);
-    long timestamp = Long.parseLong(extractTimeMillisFromModuleId(consumerGroupName));
-    long oneHourAgo = System.currentTimeMillis() - EXPIRATION_PERIOD_MILLIS;
-    return timestamp > 0 && timestamp < oneHourAgo;
+    long timestamp = extractTimestamp(consumerGroupName);
+    return timestamp > 0 && (currentTimeMillis() - timestamp) > EMPTY_GROUP_AGE_THRESHOLD_MILLIS;
   }
 
-  private String extractTimeMillisFromModuleId(String consumerGroupName) {
-    log.debug("extractTimeMillisFromModuleId:: Consumer group name: {}", consumerGroupName);
-    String[] parts = consumerGroupName.split("_");
-    return parts[parts.length - 1];
+  private static long extractTimestamp(String groupName) {
+    log.debug("extractTimestamp:: Consumer group name: {}", groupName);
+    long timestamp;
+    try {
+      timestamp = Long.parseLong(groupName.substring(groupName.lastIndexOf("_") + 1));
+      log.debug("extractTimestamp:: timestamp: {}", timestamp);
+    } catch (NumberFormatException e) {
+      log.error("extractTimestamp:: failed to extract timestamp from group name: {}", groupName, e);
+      timestamp = -1;
+    }
+    return timestamp;
+  }
+
+  private static Map<String, String> buildKafkaConfig() {
+    Map<String, String> config = KafkaConfig.builder()
+      .kafkaHost(KafkaEnvironmentProperties.host())
+      .kafkaPort(KafkaEnvironmentProperties.port())
+      .build()
+      .getProducerProps();
+
+    log.debug("buildKafkaConfig:: config: {}", config);
+    return config;
   }
 }

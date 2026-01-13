@@ -16,6 +16,7 @@ import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
@@ -45,6 +46,7 @@ import api.support.http.UserResource;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
+import io.vertx.kafka.admin.ConsumerGroupListing;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
@@ -103,27 +105,36 @@ public class EventConsumerVerticleTest extends APITests {
 
   @Test
   void circulationRulesUpdateEventsAreDeliveredToMultipleConsumers() {
-    final String subgroup0 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 0);
-    final String subgroup1 = buildConsumerSubgroupId(CIRCULATION_RULES_UPDATED, 1);
 
-    // first verticle has been deployed beforehand, so we should already see subgroup0 with 1 consumer
-    verifyConsumerGroups(Map.of(subgroup0, 1));
+    // first verticle has been deployed beforehand, so we should already see a group with 1 consumer
+    List<String> groupsBeforeDeployment = waitForConsumerGroupCount(1);
+    assertThat(groupsBeforeDeployment, hasSize(1));
+    String group1 = groupsBeforeDeployment.getFirst();
+    verifyConsumerGroups(Map.of(group1, 1));
+
     String verticleId = deployVerticle();
-    verifyConsumerGroups(Map.of(subgroup0, 1, subgroup1, 1));
 
-    int initialOffsetForSubgroup0 = getOffsetForCirculationRulesUpdateEvents(0);
-    int initialOffsetForSubgroup1 = getOffsetForCirculationRulesUpdateEvents(1);
+    // after deploying second verticle we should see 2 groups with 1 consumer each
+    List<String> groupsAfterDeployment = waitForConsumerGroupCount(2);
+    assertThat(groupsAfterDeployment, hasSize(2));
+    String group2 = groupsAfterDeployment.stream()
+      .filter(groupId -> !groupId.equals(group1))
+      .findFirst()
+      .orElseThrow();
+    verifyConsumerGroups(Map.of(group1, 1, group2, 1));
+
+    int initialOffsetForGroup1 = getOffset(CIRCULATION_RULES_TOPIC, group1);
+    int initialOffsetForGroup2 = getOffset(CIRCULATION_RULES_TOPIC, group2);
 
     JsonObject rules = circulationRulesFixture.getRules().getJson();
     publishCirculationRulesUpdateEvent(rules, rules);
 
-    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(0), initialOffsetForSubgroup0 + 1);
-    waitForValue(() -> getOffsetForCirculationRulesUpdateEvents(1), initialOffsetForSubgroup1 + 1);
+    // verify that both consumer groups have received and processed the event
+    waitForValue(() -> getOffset(CIRCULATION_RULES_TOPIC, group1), initialOffsetForGroup1 + 1);
+    waitForValue(() -> getOffset(CIRCULATION_RULES_TOPIC, group2), initialOffsetForGroup2 + 1);
 
-    // clean up: undeploy verticle, delete its consumer group
     undeployVerticle(verticleId);
-    waitFor(kafkaAdminClient.deleteConsumerGroups(List.of(subgroup1)));
-    verifyConsumerGroups(Map.of(subgroup0, 1));
+    verifyConsumerGroups(Map.of(group1, 1));
   }
 
   @Test
@@ -354,6 +365,14 @@ public class EventConsumerVerticleTest extends APITests {
           .collect(toMap(Map.Entry::getKey, e -> e.getValue().getMembers().size()))
           .equals(groupIdToSize)
       );
+  }
+
+  private List<String> waitForConsumerGroupCount(int expectedGroupCount) {
+    return waitAtMost(30, SECONDS)
+      .until(() -> waitFor(kafkaAdminClient.listConsumerGroups()), groups -> groups.size() == expectedGroupCount)
+      .stream()
+      .map(ConsumerGroupListing::getGroupId)
+      .toList();
   }
 
 }
