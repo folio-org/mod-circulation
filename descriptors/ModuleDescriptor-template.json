@@ -1123,6 +1123,17 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/scheduled-request-anonymize-processing",
+          "modulePermissions": [
+           /*TO DO*/
+          ],
+          "unit": "minute",
+          "delay": "60"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/scheduled-age-to-lost",
           "modulePermissions": [
             "circulation-storage.loans.item.put",
