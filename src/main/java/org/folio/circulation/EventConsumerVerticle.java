@@ -9,14 +9,13 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_MAX
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_PORT;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_REPLICATION_FACTOR;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL;
+import static org.folio.circulation.support.utils.RandomUtil.generateRandomDigits;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
-import org.folio.circulation.services.periodic.KafkaConsumerGroupCleaner;
 import org.folio.kafka.AsyncRecordHandler;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
@@ -45,13 +44,14 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
   private final List<KafkaConsumerWrapper<String, String>> consumers = new ArrayList<>();
   private KafkaConfig kafkaConfig;
-  private KafkaConsumerGroupCleaner kafkaConsumerGroupCleaner;
 
   @Override
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
     kafkaConfig = buildKafkaConfig();
-    kafkaConsumerGroupCleaner = new KafkaConsumerGroupCleaner(vertx);
+    // This is for CIRCULATION_RULES_UPDATED topic consumers only.
+    // Consider removing this line when adding another consumer.
+//    System.setProperty("kafka.consumer.auto.offset.reset", "latest");
   }
 
   @Override
@@ -59,7 +59,6 @@ public class EventConsumerVerticle extends AbstractVerticle {
     log.info("start:: starting verticle");
 
     createConsumers()
-//      .onSuccess(v -> kafkaConsumerGroupCleaner.start())
       .onSuccess(v -> log.info("start:: verticle started"))
       .onFailure(t -> log.error("start:: verticle start failed", t))
       .onComplete(promise);
@@ -70,7 +69,6 @@ public class EventConsumerVerticle extends AbstractVerticle {
     log.info("stop:: stopping verticle");
 
     stopConsumers()
-//      .onSuccess(v -> kafkaConsumerGroupCleaner.stop())
       .onSuccess(v -> log.info("stop:: verticle stopped"))
       .onFailure(t -> log.error("stop:: verticle stop failed", t))
       .onComplete(promise);
@@ -152,20 +150,9 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   public String buildUniqueModuleId() {
-      String id = String.format("%s_%s_%s", REAL_MODULE_ID, generateRandomDigits(8), currentTimeMillis());
+      String id = String.format("%s_%s_%s", REAL_MODULE_ID, generateRandomDigits(10), currentTimeMillis());
       log.info("buildUniqueModuleId:: using module ID {}", id);
       return id;
-  }
-
-  public static String generateRandomDigits(int length) {
-    StringBuilder builder = new StringBuilder(length);
-    ThreadLocalRandom random = ThreadLocalRandom.current();
-
-    for (int i = 0; i < length; i++) {
-      builder.append(random.nextInt(10)); // 0–9
-    }
-
-    return builder.toString();
   }
 
 }
