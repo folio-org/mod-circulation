@@ -1124,9 +1124,7 @@
             "POST"
           ],
           "pathPattern": "/circulation/scheduled-request-anonymize-processing",
-          "modulePermissions": [
-           /*TO DO*/
-          ],
+          "modulePermissions": [],
           "unit": "minute",
           "delay": "60"
         },
