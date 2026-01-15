@@ -41,6 +41,8 @@ public class EventConsumerVerticle extends AbstractVerticle {
   private static final String TENANT_ID_PATTERN = "\\w+";
   private static final String DEFAULT_OKAPI_URL = "http://okapi:9130";
   private static final int DEFAULT_KAFKA_MAX_REQUEST_SIZE = 4000000;
+  private  static final String AUTO_OFFSET_RESET_PROPERTY = "kafka.consumer.auto.offset.reset";
+  private  static final String AUTO_OFFSET_RESET_LATEST = "latest";
 
   private final List<KafkaConsumerWrapper<String, String>> consumers = new ArrayList<>();
   private KafkaConfig kafkaConfig;
@@ -49,9 +51,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
     kafkaConfig = buildKafkaConfig();
-    // This is for CIRCULATION_RULES_UPDATED topic consumers only.
-    // Consider removing this line when adding another consumer.
-//    System.setProperty("kafka.consumer.auto.offset.reset", "latest");
+    setSystemProperties();
   }
 
   @Override
@@ -153,6 +153,20 @@ public class EventConsumerVerticle extends AbstractVerticle {
       String id = String.format("%s_%s_%s", REAL_MODULE_ID, generateRandomDigits(10), currentTimeMillis());
       log.info("buildUniqueModuleId:: using module ID {}", id);
       return id;
+  }
+
+  private static void setSystemProperties() {
+    // This is for CIRCULATION_RULES_UPDATED topic consumers only.
+    // Consider removing this when adding another consumer.
+    String autoOffsetReset = System.getProperty(AUTO_OFFSET_RESET_PROPERTY);
+    if (autoOffsetReset == null) {
+      log.info("setSystemProperties:: setting system property: {}={}",
+        AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_LATEST);
+      System.setProperty(AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_LATEST);
+    } else {
+      log.info("setSystemProperties:: system property {} is already set to '{}', doing nothing",
+        AUTO_OFFSET_RESET_PROPERTY, autoOffsetReset);
+    }
   }
 
 }
