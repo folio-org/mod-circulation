@@ -40,19 +40,4 @@ class ScheduledRequestAnonymizationProcessingResourceTest {
     assertEquals(true, routeExists);
   }
 
-  @Test
-  void scheduledAnonymizeRequest_initializesWebContextAndClients() {
-    Vertx vertx = Vertx.vertx();
-    HttpClient httpClient = vertx.createHttpClient();
-
-    ScheduledRequestAnonymizationProcessingResource resource =
-      new ScheduledRequestAnonymizationProcessingResource(httpClient);
-
-    RoutingContext routingContext = Mockito.mock(RoutingContext.class);
-    HttpServerResponse response = Mockito.mock(HttpServerResponse.class);
-
-    Mockito.when(routingContext.response()).thenReturn(response);
-    Mockito.when(response.setStatusCode(Mockito.anyInt())).thenReturn(response);
-  }
-
 }

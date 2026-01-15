@@ -30,10 +30,6 @@ public class ScheduledRequestAnonymizationProcessingResource extends Resource {
   }
 
   private void scheduledAnonymizeRequest(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
-    final Clients clients = Clients.create(context, client);
-
 // implement the request anonymization process here
-
   }
 }
