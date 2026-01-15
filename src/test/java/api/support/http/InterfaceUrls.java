@@ -186,6 +186,11 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/scheduled-anonymize-processing/");
   }
 
+  public static URL circulationAnonymizeRequestInTenantURL() {
+    return circulationModuleUrl("/circulation/scheduled-request-anonymize-processing/");
+  }
+
+
   public static URL declareLoanItemLostURL(String loanId) {
     return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
   }
