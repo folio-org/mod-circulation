@@ -329,6 +329,7 @@ public abstract class APITests {
       return;
     }
 
+    setSystemProperties();
     runKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -493,5 +494,11 @@ public abstract class APITests {
 
   public static String randomId() {
     return UUID.randomUUID().toString();
+  }
+
+  private static void setSystemProperties() {
+    // Set Kafka consumer to read messages from the beginning of the topic if no offset is present.
+    // Helps avoid race condition between consumer and producer in tests.
+    System.setProperty("kafka.consumer.auto.offset.reset", "earliest");
   }
 }
