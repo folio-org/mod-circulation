@@ -118,7 +118,7 @@ public class RequestByInstanceIdResource extends Resource {
     final var itemFinder = new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository);
     final var eventPublisher = new EventPublisher(context, clients);
 
-    final var requestBody = routingContext.getBodyAsJson();
+    final var requestBody = routingContext.body().asJsonObject();
 
     new CirculationSettingsService(clients).getTlrSettings()
       .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher,

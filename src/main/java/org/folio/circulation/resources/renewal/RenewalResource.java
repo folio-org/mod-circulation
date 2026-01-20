@@ -184,7 +184,7 @@ public abstract class RenewalResource extends Resource {
       FeeFineScheduledNoticeService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
-    JsonObject bodyAsJson = routingContext.getBodyAsJson();
+    JsonObject bodyAsJson = routingContext.body().asJsonObject();
     BlockOverrides overrideBlocks = getOverrideBlocks(bodyAsJson);
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     final Validator<RenewalContext> automatedPatronBlocksValidator =

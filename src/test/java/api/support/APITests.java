@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
@@ -25,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -331,13 +331,14 @@ public abstract class APITests {
       return;
     }
 
+    setSystemProperties();
     runKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
         undeployVerticles();
       } catch (Exception ex) {
-        Assert.fail("Failed to undeploy verticle: " + ex);
+        fail("Failed to undeploy verticle: " + ex);
       }
     }));
     okapiAlreadyDeployed = true;
@@ -497,5 +498,11 @@ public abstract class APITests {
 
   public static String randomId() {
     return UUID.randomUUID().toString();
+  }
+
+  private static void setSystemProperties() {
+    // Set Kafka consumer to read messages from the beginning of the topic if no offset is present.
+    // Helps avoid race condition between consumer and producer in tests.
+    System.setProperty("kafka.consumer.auto.offset.reset", "earliest");
   }
 }

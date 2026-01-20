@@ -1,20 +1,20 @@
 package org.folio.circulation.domain.policy.library;
 
-import api.support.builders.ServicePointBuilder;
-import io.vertx.core.json.JsonObject;
-import org.folio.circulation.domain.TimePeriod;
-import org.folio.circulation.domain.policy.ExpirationDateManagement;
-import org.junit.Assert;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import static java.lang.Boolean.TRUE;
+import static java.time.ZoneOffset.UTC;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Boolean.TRUE;
-import static java.time.ZoneOffset.UTC;
+import org.folio.circulation.domain.TimePeriod;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import api.support.builders.ServicePointBuilder;
+import io.vertx.core.json.JsonObject;
 
 class DetermineClosedLibraryStrategyForHoldShelfExpirationDateTests {
   private ClosedLibraryStrategy closedLibraryStrategy;
@@ -33,7 +33,7 @@ class DetermineClosedLibraryStrategyForHoldShelfExpirationDateTests {
     closedLibraryStrategy = ClosedLibraryStrategyUtils
       .determineClosedLibraryStrategyForHoldShelfExpirationDate(expirationDateManagement, startDate, UTC, period);
 
-    Assert.assertEquals(expectedClass, closedLibraryStrategy.getClass());
+    assertEquals(expectedClass, closedLibraryStrategy.getClass());
   }
 
   private static List<Object[]> testDetermineClosedLibraryStrategyHoldShelfParameters() {

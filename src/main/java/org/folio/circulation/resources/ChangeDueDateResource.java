@@ -187,7 +187,7 @@ public class ChangeDueDateResource extends Resource {
 
   private Result<ChangeDueDateRequest> createChangeDueDateRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
-    final JsonObject body = routingContext.getBodyAsJson();
+    final JsonObject body = routingContext.body().asJsonObject();
     log.debug("createChangeDueDateRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     if (!body.containsKey(DUE_DATE)) {
