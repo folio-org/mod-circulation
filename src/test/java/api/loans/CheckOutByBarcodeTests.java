@@ -2516,7 +2516,7 @@ class CheckOutByBarcodeTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.steve();
@@ -2543,7 +2543,7 @@ class CheckOutByBarcodeTests extends APITests {
     "Title, Title"
   })
   void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
     UserResource firstRequester = usersFixture.steve();
@@ -2606,7 +2606,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(4);
     UUID instanceId = items.stream().findAny().orElseThrow().getInstanceId();
@@ -2637,7 +2637,7 @@ class CheckOutByBarcodeTests extends APITests {
   void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(
     String firstRequestLevel, String secondRequestLevel) {
 
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource randomItem = items.stream().findAny().orElseThrow();
@@ -2778,7 +2778,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void circulationItemCheckOutUpdatesPrimaryEcsRequestStatus() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     UUID itemId = UUID.randomUUID();
     String itemBarcode = "item_barcode";
     UUID pickupServicePointId = servicePointsFixture.cd1().getId();

@@ -4,12 +4,14 @@ import java.util.UUID;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @With
+@Getter
 public class CirculationSettingBuilder extends JsonBuilder implements Builder {
   private UUID id = null;
   private String name = null;

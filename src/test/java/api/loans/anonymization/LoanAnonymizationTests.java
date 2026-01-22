@@ -8,18 +8,17 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import api.support.fakes.FakePubSub;
 import org.folio.circulation.domain.representations.anonymization.LoanAnonymizationAPIResponse;
-import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import api.support.APITests;
 import api.support.builders.AccountBuilder;
-import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
+import api.support.fakes.FakePubSub;
+import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.TimedTaskClient;
 
@@ -95,13 +94,7 @@ abstract public class LoanAnonymizationTests extends APITests {
     feeFineActionsClient.create(builder1);
   }
 
-  protected void createConfiguration(
-    LoanHistoryConfigurationBuilder loanHistoryConfig) {
-
-    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder(
-      "LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-      .encodePrettily());
-
-    configClient.create(configRecordBuilder);
+  protected void createConfiguration(LoanHistoryConfigurationBuilder loanHistoryConfig) {
+    circulationSettingsFixture.createLoanHistorySettings(loanHistoryConfig);
   }
 }
