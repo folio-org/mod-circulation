@@ -337,7 +337,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     IndividualResource servicePoint = servicePointsFixture.cd1();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource requester = usersFixture.jessica();
-    FakeStorageModule.setDelayForRequestStorageOperations(500);
+    FakeStorageModule.setFakeStorageDelay(500);
     FakeStorageModule.setDelayedPaths(List.of("/request-storage/requests"));
 
     // Place a Page request - this does NOT set holdShelfExpirationDate initially
