@@ -104,6 +104,7 @@ import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CheckOutResource;
 import api.support.http.CqlQuery;
@@ -329,6 +330,53 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
     assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
+  }
+
+  @Test
+  void checkInShouldUpdateRequestStatusAndHoldShelfExpirationDateAtomically() {
+    IndividualResource servicePoint = servicePointsFixture.cd1();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.jessica();
+    FakeStorageModule.setDelayForRequestStorageOperations(500);
+    FakeStorageModule.setDelayedPaths(List.of("/request-storage/requests"));
+
+    // Place a Page request - this does NOT set holdShelfExpirationDate initially
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .fulfillToHoldShelf()
+      .withPickupServicePointId(servicePoint.getId())
+      .withRequestDate(getZonedDateTime()));
+
+    // Verify the request is in initial state before check-in
+    JsonObject requestBeforeCheckIn = requestsClient.getById(request.getId()).getJson();
+    assertThat("Request should be 'Open - Not yet filled' before check-in",
+      requestBeforeCheckIn.getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertNull(requestBeforeCheckIn.getString("holdShelfExpirationDate"),
+      "Page request should not have holdShelfExpirationDate before check-in");
+
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .at(servicePoint.getId()));
+
+    JsonObject requestAfterCheckIn = requestsClient.getById(request.getId()).getJson();
+
+    assertThat("Request status must be updated to 'Open - Awaiting pickup' when check-in completes",
+      requestAfterCheckIn.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    assertNotNull(requestAfterCheckIn.getString("holdShelfExpirationDate"),
+      "Request must have holdShelfExpirationDate set when check-in completes");
+
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+    assertNotNull(staffSlipContext, "staffSlipContext should not be null");
+
+    JsonObject requestContext = staffSlipContext.getJsonObject("request");
+    assertNotNull(requestContext, "request context should not be null in staffSlipContext");
+
+    assertNotNull(requestContext.getString("holdShelfExpirationDate"),
+      "holdShelfExpirationDate must be present in staffSlipContext for print slip dialog to appear");
   }
 
   @Test
