@@ -209,14 +209,14 @@ public class UpdateRequestQueue {
       (finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(), tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod());
     return calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
-      .thenCompose(calculatedDate -> {
-        log.info("calculatedDate after :{}",calculatedDate.value());
-        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
-        requestQueue.update(originalRequest,calculatedRequest);
+      .thenCompose(calculatedDateResult -> calculatedDateResult.after(calculatedDate -> {
+        log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: calculatedDate after: {}", calculatedDate);
+        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate);
+        requestQueue.update(originalRequest, calculatedRequest);
 
         return requestRepository.update(calculatedRequest)
           .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
-      });
+      }));
   }
 
   private boolean isShortTerm(String intervalId) {
