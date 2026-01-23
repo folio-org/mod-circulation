@@ -210,9 +210,9 @@ public class UpdateRequestQueue {
     return calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
       .thenCompose(calculatedDate -> {
-        log.info("calculatedDate after :{}", calculatedDate.value());
+        log.info("calculatedDate after :{}",calculatedDate.value());
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
-        requestQueue.update(originalRequest, calculatedRequest);
+        requestQueue.update(originalRequest,calculatedRequest);
 
         return requestRepository.update(calculatedRequest)
           .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
