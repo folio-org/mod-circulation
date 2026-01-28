@@ -221,6 +221,11 @@ public class Clients {
     return anonymizeStorageLoansClient;
   }
 
+  public CollectionResourceClient anonymizeStorageRequestsClient() {
+    return createCollectionResourceClient("/request-storage/requests/anonymize",
+      RequestAnonymizationRecords::new);
+  }
+
   public CollectionResourceClient locationsStorage() {
     return locationsStorageClient;
   }

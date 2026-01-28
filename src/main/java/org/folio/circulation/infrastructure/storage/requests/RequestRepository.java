@@ -3,6 +3,7 @@ package org.folio.circulation.infrastructure.storage.requests;
 import static java.util.Objects.isNull;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.RequestStatus.openStates;
+import static org.folio.circulation.domain.RequestStatus.closedStates;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -317,6 +318,36 @@ public class RequestRepository {
       .findByIds(requestIds)
       .thenApply(mapResult(records -> records.mapRecords(Request::from)))
       .thenApply(mapResult(MultipleRecords::getRecords));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findRequestsToAnonymize(
+    PageLimit pageLimit) {
+
+    log.debug("findRequestsToAnonymize:: parameters pageLimit: {}", pageLimit);
+
+    Result<CqlQuery> cqlQuery = exactMatchAny("status", closedStates())
+      .combine(CqlQuery.hasValue("requesterId"), CqlQuery::and);
+
+    return queryRequestStorage(cqlQuery, pageLimit);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findClosedRequests(
+    String userId, PageLimit pageLimit) {
+
+    log.debug("findClosedRequests:: parameters userId: {}, pageLimit: {}", userId, pageLimit);
+
+    Result<CqlQuery> userQuery = exactMatch("requesterId", userId);
+    Result<CqlQuery> statusQuery = exactMatchAny("status", closedStates());
+
+    return queryRequestStorage(statusQuery.combine(userQuery, CqlQuery::and), pageLimit);
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> queryRequestStorage(
+    Result<CqlQuery> cqlQuery, PageLimit pageLimit) {
+
+    return cqlQuery
+      .after(q -> requestsStorageClient.getMany(q, pageLimit))
+      .thenApply(result -> result.next(this::mapResponseToRequests));
   }
 
   private CompletableFuture<Result<Request>> fetchRequester(Result<Request> result) {
