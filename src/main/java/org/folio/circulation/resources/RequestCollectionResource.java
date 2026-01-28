@@ -90,6 +90,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestRepository = repositories.getRequestRepository();
 
     final var requestNoticeSender = new RequestNoticeSender(clients);
+    final var holdNoticeSender = HoldNoticeSender.using(clients);
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(new RequestPolicyRepository(clients), loanPolicyRepository)),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
@@ -106,8 +107,8 @@ public class RequestCollectionResource extends CollectionResource {
       clients.holdingsStorage(), itemRepository), loanRepository);
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
-      requestLoanValidator, requestNoticeSender, requestBlocksValidators, eventPublisher,
-      errorHandler);
+      requestLoanValidator, requestNoticeSender, holdNoticeSender, requestBlocksValidators,
+      eventPublisher, errorHandler);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       Request.Operation.CREATE, repositories,
@@ -157,10 +158,11 @@ public class RequestCollectionResource extends CollectionResource {
     final var errorHandler = new FailFastErrorHandler();
     final var requestLoanValidator = new RequestLoanValidator(
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository);
+    final var holdNoticeSender = HoldNoticeSender.using(clients);
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
-      requestLoanValidator, requestNoticeSender, regularRequestBlockValidators(clients),
-      eventPublisher, errorHandler);
+      requestLoanValidator, requestNoticeSender, holdNoticeSender,
+      regularRequestBlockValidators(clients), eventPublisher, errorHandler);
 
     final var updateRequestService = new UpdateRequestService(requestRepository,
       updateRequestQueue, new ClosedRequestValidator(requestRepository), requestNoticeSender,
