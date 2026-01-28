@@ -18,6 +18,8 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
