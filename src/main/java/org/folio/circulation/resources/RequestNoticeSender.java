@@ -299,7 +299,7 @@ public class RequestNoticeSender {
   private CompletableFuture<Result<Void>> fetchDataAndSendRequestAwaitingPickupNotice(
     Request request) {
 
-    log.debug("fetchDataAndSendRequestAwaitingPickupNotice:: parameters request: {}",
+    log.info("fetchDataAndSendRequestAwaitingPickupNotice:: parameters request: {}",
       () -> request);
     return ofAsync(() -> request)
       .thenCompose(r -> r.combineAfter(this::fetchServicePoint, Request::withPickupServicePoint))
