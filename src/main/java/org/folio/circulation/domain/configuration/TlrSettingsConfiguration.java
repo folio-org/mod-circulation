@@ -31,6 +31,7 @@ public class TlrSettingsConfiguration {
   private final UUID expirationPatronNoticeTemplateId;
 
   public static TlrSettingsConfiguration from(JsonObject jsonObject) {
+    log.debug("from:: {}", jsonObject);
     try {
       return new TlrSettingsConfiguration(
         getBooleanProperty(jsonObject, "titleLevelRequestsFeatureEnabled"),
@@ -45,5 +46,10 @@ public class TlrSettingsConfiguration {
       log.error("Failed to parse TLR setting configuration");
       return null;
     }
+  }
+
+  public static TlrSettingsConfiguration defaultSettings() {
+    log.info("defaultSettings:: building default TLR settings");
+    return new TlrSettingsConfiguration(false, false, false, null, null, null);
   }
 }
