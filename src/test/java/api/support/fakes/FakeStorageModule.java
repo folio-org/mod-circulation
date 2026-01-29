@@ -22,12 +22,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
@@ -57,6 +60,8 @@ import lombok.RequiredArgsConstructor;
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
+  private static final AtomicLong fakeStorageDelay = new AtomicLong(0);
+  private static final AtomicReference<String[]> requestDelayedPaths = new AtomicReference<>(new String[0]);
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
@@ -78,6 +83,26 @@ public class FakeStorageModule extends AbstractVerticle {
 
   public static Stream<String> getQueries() {
     return queries.stream();
+  }
+
+  /**
+   * Set artificial delay (in milliseconds) for fake storage operations (PUT by id only).
+   * Used in tests to simulate network/database latency and expose race conditions.
+   *
+   * @param delayMs delay in milliseconds, or 0 to disable delay
+   */
+  public static void setFakeStorageDelay(long delayMs) {
+    fakeStorageDelay.set(delayMs);
+  }
+
+  /**
+   * Sets the list of paths that should be delayed for request storage operations.
+   * Clears the existing delayed paths and adds all provided paths.
+   *
+   * @param delayedPaths the list of paths to delay
+   */
+  public static void setDelayedPaths(List<String> delayedPaths) {
+    requestDelayedPaths.set(delayedPaths.toArray(String[]::new));
   }
 
   FakeStorageModule(
@@ -255,6 +280,24 @@ public class FakeStorageModule extends AbstractVerticle {
     String id = routingContext.request().getParam("id");
 
     JsonObject body = getJsonFromBody(routingContext);
+
+    if (shouldApplyDelay(rootPath)) {
+      var vertx = routingContext.vertx();
+      var path = routingContext.request().path();
+      var method = routingContext.request().method();
+      log.debug("replace:: Using delay for: '{} {}', delayMs={}", method, path, fakeStorageDelay);
+      vertx.setTimer(fakeStorageDelay.get(), timerId -> vertx.executeBlocking(() -> {
+        log.debug("replace:: Executing delayed action: {} {}", method, path);
+        replaceSingleItem(routingContext, context, id, body);
+        return null;
+      }));
+    } else {
+      replaceSingleItem(routingContext, context, id, body);
+    }
+  }
+
+  private void replaceSingleItem(RoutingContext routingContext,
+    WebContext context, String id, JsonObject body) {
 
     final Result<Void> replaceResult = replaceSingleItem(context, id, body);
     if (replaceResult.succeeded()) {
@@ -683,6 +726,15 @@ public class FakeStorageModule extends AbstractVerticle {
 
   public static void cleanUpRequestMappings() {
     requestMappings.clear();
+  }
+
+  public static void cleanupDelayData() {
+    fakeStorageDelay.set(0);
+    requestDelayedPaths.set(new String[0]);
+  }
+
+  private static boolean shouldApplyDelay(String p) {
+    return fakeStorageDelay.get() != 0 && Strings.CI.startsWithAny(p, requestDelayedPaths.get());
   }
 
   @Getter

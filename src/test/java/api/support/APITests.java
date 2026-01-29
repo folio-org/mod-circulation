@@ -369,6 +369,7 @@ public abstract class APITests {
   public final void baseTearDown() {
     forTenantStorage().deleteAll();
     scheduledNoticesClient.deleteAll();
+    FakeStorageModule.cleanupDelayData();
 
     mockClockManagerToReturnDefaultDateTime();
   }
