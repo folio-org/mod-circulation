@@ -82,7 +82,7 @@ public class ClaimItemReturnedResource extends Resource {
 
   private Result<ClaimItemReturnedRequest> createRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
-    final JsonObject body = routingContext.getBodyAsJson();
+    final JsonObject body = routingContext.body().asJsonObject();
     final ClaimItemReturnedRequest request = ClaimItemReturnedRequest.from(loanId, body);
     log.debug("createRequest:: parameters request: {}, loanId: {}, body: {}",
       () -> request, () -> loanId, () -> body);

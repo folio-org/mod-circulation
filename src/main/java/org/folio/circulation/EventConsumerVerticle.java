@@ -1,5 +1,6 @@
 package org.folio.circulation;
 
+import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getenv;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_ENV;
@@ -8,21 +9,20 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_MAX
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_PORT;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_REPLICATION_FACTOR;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL;
+import static org.folio.circulation.support.utils.RandomUtil.generateRandomDigits;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
-import org.folio.circulation.services.events.DefaultModuleIdProvider;
-import org.folio.circulation.services.events.ModuleIdProvider;
-import org.folio.circulation.services.events.UniqueKafkaModuleIdProvider;
 import org.folio.kafka.AsyncRecordHandler;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaConsumerWrapper;
 import org.folio.kafka.SubscriptionDefinition;
 import org.folio.kafka.services.KafkaEnvironmentProperties;
+import org.folio.util.pubsub.support.PomReader;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
@@ -35,10 +35,14 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class EventConsumerVerticle extends AbstractVerticle {
 
+  public static final String REAL_MODULE_ID = String.format("%s-%s",
+    PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
   private static final String DEFAULT_OKAPI_URL = "http://okapi:9130";
   private static final int DEFAULT_KAFKA_MAX_REQUEST_SIZE = 4000000;
+  private  static final String AUTO_OFFSET_RESET_PROPERTY = "kafka.consumer.auto.offset.reset";
+  private  static final String AUTO_OFFSET_RESET_LATEST = "latest";
 
   private final List<KafkaConsumerWrapper<String, String>> consumers = new ArrayList<>();
   private KafkaConfig kafkaConfig;
@@ -47,6 +51,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
     kafkaConfig = buildKafkaConfig();
+    setSystemProperties();
   }
 
   @Override
@@ -84,19 +89,12 @@ public class EventConsumerVerticle extends AbstractVerticle {
     log.info("createConsumers:: creating consumers");
     return Future.all(List.of(
       createConsumer(CIRCULATION_RULES_UPDATED, new CirculationRulesUpdateEventHandler(),
-        // puts consumers into separate groups so that they all receive the same event
-        new UniqueKafkaModuleIdProvider(vertx, CIRCULATION_RULES_UPDATED))
+        buildUniqueModuleId()) // puts consumers into separate groups so that they all receive the same event
     )).mapEmpty();
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
-    AsyncRecordHandler<String, String> handler) {
-
-    return createConsumer(eventType, handler, new DefaultModuleIdProvider());
-  }
-
-  private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
-    AsyncRecordHandler<String, String> handler, ModuleIdProvider moduleIdProvider) {
+    AsyncRecordHandler<String, String> handler, String moduleId) {
 
     log.info("createConsumer:: creating consumer for event type {}", eventType);
 
@@ -110,9 +108,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
       .build();
 
-    return moduleIdProvider.getModuleId()
-      .onSuccess(moduleId -> log.info("createConsumer:: moduleId={}", moduleId))
-      .compose(moduleId -> consumer.start(handler, moduleId))
+    return consumer.start(handler, moduleId)
       .map(consumer)
       .onSuccess(consumers::add);
   }
@@ -137,7 +133,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .maxRequestSize(Integer.parseInt(vertxConfig.getString(KAFKA_MAX_REQUEST_SIZE, "10")))
       .build();
 
-    log.info("buildKafkaConfig:: {}", config);
+    log.debug("buildKafkaConfig:: {}", config);
     return config;
   }
 
@@ -151,6 +147,26 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .put(OKAPI_URL, getenv().getOrDefault(OKAPI_URL, DEFAULT_OKAPI_URL))
       .put(KAFKA_MAX_REQUEST_SIZE, getenv().getOrDefault(KAFKA_MAX_REQUEST_SIZE,
         String.valueOf(DEFAULT_KAFKA_MAX_REQUEST_SIZE)));
+  }
+
+  public String buildUniqueModuleId() {
+      String id = String.format("%s_%s_%s", REAL_MODULE_ID, generateRandomDigits(10), currentTimeMillis());
+      log.info("buildUniqueModuleId:: using module ID {}", id);
+      return id;
+  }
+
+  private static void setSystemProperties() {
+    // This is for CIRCULATION_RULES_UPDATED topic consumers only.
+    // Consider removing this when adding another consumer.
+    String autoOffsetReset = System.getProperty(AUTO_OFFSET_RESET_PROPERTY);
+    if (autoOffsetReset == null) {
+      log.info("setSystemProperties:: setting system property: {}={}",
+        AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_LATEST);
+      System.setProperty(AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_LATEST);
+    } else {
+      log.info("setSystemProperties:: system property {} is already set to '{}', doing nothing",
+        AUTO_OFFSET_RESET_PROPERTY, autoOffsetReset);
+    }
   }
 
 }

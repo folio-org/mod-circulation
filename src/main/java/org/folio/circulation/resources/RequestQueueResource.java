@@ -33,6 +33,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.resources.context.RequestQueueType;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
@@ -108,7 +109,7 @@ public class RequestQueueResource extends Resource {
     String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
 
     ReorderRequestContext reorderContext = new ReorderRequestContext(requestQueueType, idParamValue,
-      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
+      routingContext.body().asPojo(ReorderQueueRequest.class));
 
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
@@ -120,13 +121,14 @@ public class RequestQueueResource extends Resource {
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var settingsRepository = new SettingsRepository(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
       settingsRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
 
-    validateTlrFeatureStatus(settingsRepository, requestQueueType, idParamValue)
+    validateTlrFeatureStatus(circulationSettingsService, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->
         getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository)))
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
@@ -145,10 +147,10 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<TlrSettingsConfiguration>> validateTlrFeatureStatus(
-    SettingsRepository settingsRepository, RequestQueueType requestQueueType,
+    CirculationSettingsService circulationSettingsService, RequestQueueType requestQueueType,
     String idParamValue) {
 
-    return settingsRepository.lookupTlrSettings()
+    return circulationSettingsService.getTlrSettings()
       .thenApply(r -> r.failWhen(
         tlrSettings -> succeeded(
           requestQueueType == FOR_INSTANCE ^ tlrSettings.isTitleLevelRequestsFeatureEnabled()),

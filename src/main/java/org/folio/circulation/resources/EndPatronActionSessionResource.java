@@ -49,7 +49,7 @@ public class EndPatronActionSessionResource extends Resource {
         PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     List<Result<EndPatronSessionRequest>> resultListOfEndSessionRequestResult =
-      EndPatronSessionRequest.from(routingContext.getBodyAsJson());
+      EndPatronSessionRequest.from(routingContext.body().asJsonObject());
 
     for (Result<EndPatronSessionRequest> result : resultListOfEndSessionRequestResult) {
       if (result.failed()) {

@@ -11,12 +11,12 @@ import org.folio.circulation.domain.anonymization.DefaultLoanAnonymizationServic
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -51,7 +51,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    CirculationSettingsService circulationSettingsService = new CirculationSettingsService(clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -65,7 +65,7 @@ public class ScheduledAnonymizationProcessingResource extends Resource {
 
     log.info("Initializing loan anonymization for current tenant");
 
-    safelyInitialise(configurationRepository::loanHistoryConfiguration)
+    safelyInitialise(circulationSettingsService::getLoanAnonymizationSettings)
       .thenApply(r -> r.map(config -> new DefaultLoanAnonymizationService(
           new AnonymizationCheckersService(config, ClockUtil::getZonedDateTime),
           anonymizeStorageLoansRepository, eventPublisher)))

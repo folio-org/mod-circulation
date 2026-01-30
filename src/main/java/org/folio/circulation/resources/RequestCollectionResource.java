@@ -43,6 +43,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.services.RequestQueueService;
@@ -77,7 +78,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var representation = routingContext.getBodyAsJson();
+    final var representation = routingContext.body().asJsonObject();
 
     log.debug("create:: {}", representation);
 
@@ -111,6 +112,7 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       Request.Operation.CREATE, repositories,
+      new CirculationSettingsService(clients),
       createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
@@ -133,7 +135,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var representation = routingContext.getBodyAsJson();
+    final var representation = routingContext.body().asJsonObject();
 
     write(representation, "id", getRequestId(routingContext));
 
@@ -167,7 +169,8 @@ public class RequestCollectionResource extends CollectionResource {
       updateItem, eventPublisher);
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
-      Request.Operation.REPLACE, repositories, createProxyRelationshipValidator(representation, clients),
+      Request.Operation.REPLACE, repositories, new CirculationSettingsService(clients),
+      createProxyRelationshipValidator(representation, clients),
       new ServicePointPickupLocationValidator(), errorHandler,
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository),
       ItemForTlrService.using(repositories));
@@ -266,7 +269,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
 
-    final var representation = routingContext.getBodyAsJson();
+    final var representation = routingContext.body().asJsonObject();
 
     final var id = getRequestId(routingContext);
 
@@ -280,6 +283,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var loanPolicyRepository = new LoanPolicyRepository(clients);
     final var requestPolicyRepository = new RequestPolicyRepository(clients);
     final var settingsRepository = new SettingsRepository(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(requestPolicyRepository, loanPolicyRepository)),
@@ -293,9 +297,10 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var moveRequestService = new MoveRequestService(
       requestRepository, requestPolicyRepository,
-      updateUponRequest, moveRequestProcessAdapter, new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
+      updateUponRequest, moveRequestProcessAdapter,
+      new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
       RequestNoticeSender.using(clients), eventPublisher,
-      requestQueueRepository, settingsRepository);
+      requestQueueRepository, settingsRepository, circulationSettingsService);
 
     fromFutureResult(requestRepository.getById(id))
       .map(request -> request.withOperation(Request.Operation.MOVE))

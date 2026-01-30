@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
@@ -25,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,8 +46,8 @@ import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.CirculationSettingsFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
-import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.DepartmentFixture;
 import api.support.fixtures.EndPatronSessionClient;
@@ -308,7 +308,7 @@ public abstract class APITests {
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
-  protected final ConfigurationsFixture configurationsFixture = new ConfigurationsFixture(configClient);
+  protected final CirculationSettingsFixture circulationSettingsFixture = new CirculationSettingsFixture();
   protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 
   protected final ForUseAtLocationHoldFixture holdForUseAtLocationFixture = new ForUseAtLocationHoldFixture();
@@ -331,13 +331,14 @@ public abstract class APITests {
       return;
     }
 
+    setSystemProperties();
     runKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
         undeployVerticles();
       } catch (Exception ex) {
-        Assert.fail("Failed to undeploy verticle: " + ex);
+        fail("Failed to undeploy verticle: " + ex);
       }
     }));
     okapiAlreadyDeployed = true;
@@ -368,6 +369,7 @@ public abstract class APITests {
   public final void baseTearDown() {
     forTenantStorage().deleteAll();
     scheduledNoticesClient.deleteAll();
+    FakeStorageModule.cleanupDelayData();
 
     mockClockManagerToReturnDefaultDateTime();
   }
@@ -461,13 +463,13 @@ public abstract class APITests {
 
   protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      settingsFixture.enableTlrFeature();
+      circulationSettingsFixture.enableTlrFeature();
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      settingsFixture.disableTlrFeature();
+      circulationSettingsFixture.disableTlrFeature();
     }
     else {
-      settingsFixture.deleteTlrFeatureSettings();
+      circulationSettingsFixture.deleteTlrFeatureSettings();
     }
   }
 
@@ -483,19 +485,25 @@ public abstract class APITests {
     UUID cancellationTemplateId, UUID expirationTemplateId) {
 
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      settingsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
+      circulationSettingsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      settingsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
+      circulationSettingsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else {
-      settingsFixture.deleteTlrFeatureSettings();
+      circulationSettingsFixture.deleteTlrFeatureSettings();
     }
   }
 
   public static String randomId() {
     return UUID.randomUUID().toString();
+  }
+
+  private static void setSystemProperties() {
+    // Set Kafka consumer to read messages from the beginning of the topic if no offset is present.
+    // Helps avoid race condition between consumer and producer in tests.
+    System.setProperty("kafka.consumer.auto.offset.reset", "earliest");
   }
 }
