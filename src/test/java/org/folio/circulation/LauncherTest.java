@@ -15,14 +15,16 @@ class LauncherTest {
 
   @BeforeAll
   static void beforeAll() {
-    oldKafkaPort = System.getProperty("kafka-port");
-    System.clearProperty("kafka-port");
+    oldKafkaPort = System.getProperty("KAFKA_PORT");
+    System.setProperty("KAFKA_PORT", "1");
   }
 
   @AfterAll
   static void afterAll() {
-    if (oldKafkaPort != null) {
-      System.setProperty("kafka-port", oldKafkaPort);
+    if (oldKafkaPort == null) {
+      System.clearProperty("KAFKA_PORT");
+    } else {
+      System.setProperty("KAFKA_PORT", oldKafkaPort);
     }
   }
 
