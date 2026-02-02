@@ -20,9 +20,7 @@ import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.DoubleUnaryOperator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -254,6 +252,7 @@ public class RequestRepository {
 
     JsonObject representation = new StoredRequestRepresentation()
       .storedRequest(request);
+    log.info("request representation before update: {}", representation);
 
     final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
       .flatMapOn(201, mapUsingJson(request::withRequestRepresentation))
