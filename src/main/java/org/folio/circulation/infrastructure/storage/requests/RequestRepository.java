@@ -225,6 +225,8 @@ public class RequestRepository {
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 
+    log.info("update:: request representation before update: {}", representation);
+
     final ResponseInterpreter<Request> interpreter = new ResponseInterpreter<Request>()
       .on(204, of(() -> request))
       .otherwise(forwardOnFailure());
