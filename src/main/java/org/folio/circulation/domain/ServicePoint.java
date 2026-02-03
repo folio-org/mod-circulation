@@ -1,9 +1,8 @@
 package org.folio.circulation.domain;
 
-import org.folio.circulation.domain.policy.ExpirationDateManagement;
-
 import lombok.ToString;
 import lombok.Value;
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
 
 @Value
 @ToString(onlyExplicitlyIncluded = true)
