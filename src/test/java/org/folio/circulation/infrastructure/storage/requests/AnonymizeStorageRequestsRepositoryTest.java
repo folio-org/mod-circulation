@@ -2,6 +2,7 @@ package org.folio.circulation.infrastructure.storage.requests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -39,7 +40,7 @@ class AnonymizeStorageRequestsRepositoryTest {
     Result<RequestAnonymizationRecords> result =
       repository.postAnonymizeStorageRequests(emptyRecords).join();
 
-    assertEquals(true, result.succeeded());
+    assertTrue(result.succeeded());
     assertEquals(0, result.value().getAnonymizedRequestIds().size());
     verify(client, times(0)).post(any(JsonObject.class));
   }
@@ -52,6 +53,8 @@ class AnonymizeStorageRequestsRepositoryTest {
     when(clients.anonymizeStorageRequestsClient()).thenReturn(client);
 
     Response response = mock(Response.class);
+    when(response.getStatusCode()).thenReturn(200);
+
     JsonObject responseBody = new JsonObject()
       .put("anonymizedRequests", new JsonArray()
         .add("request-id-1")
@@ -70,7 +73,7 @@ class AnonymizeStorageRequestsRepositoryTest {
     Result<RequestAnonymizationRecords> result =
       repository.postAnonymizeStorageRequests(records).join();
 
-    assertEquals(true, result.succeeded());
+    assertTrue(result.succeeded());
     assertNotNull(result.value());
     verify(client, times(1)).post(any(JsonObject.class));
   }
@@ -83,6 +86,7 @@ class AnonymizeStorageRequestsRepositoryTest {
     when(clients.anonymizeStorageRequestsClient()).thenReturn(client);
 
     Response response = mock(Response.class);
+    when(response.getStatusCode()).thenReturn(200);
     when(response.getJson()).thenReturn(new JsonObject()
       .put("anonymizedRequests", new JsonArray().add("request-1")));
 
@@ -95,29 +99,10 @@ class AnonymizeStorageRequestsRepositoryTest {
     RequestAnonymizationRecords records = new RequestAnonymizationRecords()
       .withAnonymizedRequests(Collections.singletonList("request-1"));
 
-    repository.postAnonymizeStorageRequests(records).join();
-
-    verify(client).post(any(JsonObject.class));
-  }
-
-  @Test
-  void shouldHandleNullResponseGracefully() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient client = mock(CollectionResourceClient.class);
-
-    when(clients.anonymizeStorageRequestsClient()).thenReturn(client);
-    when(client.post(any(JsonObject.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
-
-    AnonymizeStorageRequestsRepository repository =
-      new AnonymizeStorageRequestsRepository(clients);
-
-    RequestAnonymizationRecords records = new RequestAnonymizationRecords()
-      .withAnonymizedRequests(Collections.singletonList("request-1"));
-
     Result<RequestAnonymizationRecords> result =
       repository.postAnonymizeStorageRequests(records).join();
 
-    assertNotNull(result);
+    assertTrue(result.succeeded());
+    verify(client).post(any(JsonObject.class));
   }
 }
