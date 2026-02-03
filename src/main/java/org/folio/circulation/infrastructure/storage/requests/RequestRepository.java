@@ -20,10 +20,13 @@ import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -221,7 +224,10 @@ public class RequestRepository {
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {
-    log.debug("update:: parameters request: {}", request);
+    log.info("update:: parameters request: {}", request);
+    log.info("update:: primary service point: id={}, name={}",
+      Optional.ofNullable(request.getItem()).map(Item::getLocation).map(Location::getPrimaryServicePoint).map(ServicePoint::getId).orElse(null),
+      Optional.ofNullable(request.getItem()).map(Item::getLocation).map(Location::getPrimaryServicePoint).map(ServicePoint::getName).orElse(null));
     final JsonObject representation
       = new StoredRequestRepresentation().storedRequest(request);
 

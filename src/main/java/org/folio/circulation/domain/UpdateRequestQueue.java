@@ -3,8 +3,8 @@ package org.folio.circulation.domain;
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
@@ -152,7 +152,7 @@ public class UpdateRequestQueue {
   private CompletableFuture<Result<RequestQueue>> awaitPickup(Request request,
     RequestQueue requestQueue) {
 
-    log.debug("awaitPickup:: parameters request: {}, requestQueue: {}",
+    log.info("awaitPickup:: parameters request: {}, requestQueue: {}",
       () -> request, () -> requestQueue);
     Request originalRequest = Request.from(request.asJson());
     request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);

@@ -17,12 +17,12 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
-import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
 import static org.folio.circulation.domain.representations.RequestProperties.ECS_REQUEST_PHASE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
+import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
 import static org.folio.circulation.domain.representations.RequestProperties.POSITION;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_EXPIRATION_DATE;
@@ -84,6 +84,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final Map<String, RequestPolicy> instanceItemsRequestPolicies;
 
+  @ToString.Include
   private final Item item;
 
   @With

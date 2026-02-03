@@ -1,8 +1,9 @@
 package org.folio.circulation.domain;
 
+import org.folio.circulation.domain.policy.ExpirationDateManagement;
+
 import lombok.ToString;
 import lombok.Value;
-import org.folio.circulation.domain.policy.ExpirationDateManagement;
 
 @Value
 @ToString(onlyExplicitlyIncluded = true)
@@ -20,6 +21,7 @@ public class ServicePoint {
 
   @ToString.Include
   String id;
+  @ToString.Include
   String name;
   String code;
   boolean pickupLocation;

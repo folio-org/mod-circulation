@@ -37,6 +37,7 @@ import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
+import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
@@ -76,7 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import api.support.builders.ServicePointBuilder;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -102,6 +102,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.builders.ServicePointBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
@@ -430,6 +431,24 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
         "Checkin request must have a service point id")));
+  }
+
+  @Test
+  void test() {
+    final IndividualResource james = usersFixture.james();
+    final ItemResource nod = itemsFixture.basedUponNod();
+
+    IndividualResource request = requestsFixture.placeItemLevelPageRequest(nod, nod.getInstanceId(), usersFixture.jessica());
+
+    final Response response = checkInFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .on(ClockUtil.getZonedDateTime())
+        .at(servicePointsFixture.cd1()));
+
+    assertThat(response, hasStatus(HTTP_OK));
+
+
   }
 
   @Test

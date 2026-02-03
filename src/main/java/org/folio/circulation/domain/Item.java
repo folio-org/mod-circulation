@@ -44,6 +44,7 @@ public class Item {
   @NonNull private final Location permanentLocation;
 
   @Getter
+  @ToString.Include
   private final Location floatDestinationLocation;
   private final ServicePoint inTransitDestinationServicePoint;
 

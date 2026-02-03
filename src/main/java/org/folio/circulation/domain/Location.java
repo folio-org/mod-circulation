@@ -6,9 +6,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.Value;
 
 @Value
+@ToString(onlyExplicitlyIncluded = true)
 public class Location {
   String id;
   String name;
@@ -20,6 +22,7 @@ public class Location {
   @NonNull Institution institution;
   @NonNull Campus campus;
   @NonNull Library library;
+  @ToString.Include
   ServicePoint primaryServicePoint;
 
   public static Location unknown() {
@@ -124,9 +127,9 @@ public class Location {
       .anyMatch(otherServicePointId -> Objects.equals(servicePointId, otherServicePointId));
   }
 
-  @Override
-  public String toString() {
-    return String.format("Institution: `%s`, Campus: `%s`, Library: `%s` Location: `%s`",
-      getInstitutionId(), getCampusId(), getLibraryId(), getId());
-  }
+//  @Override
+//  public String toString() {
+//    return String.format("Institution: `%s`, Campus: `%s`, Library: `%s` Location: `%s`",
+//      getInstitutionId(), getCampusId(), getLibraryId(), getId());
+//  }
 }
