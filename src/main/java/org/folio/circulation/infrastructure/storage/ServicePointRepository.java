@@ -1,6 +1,8 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.UnaryOperator.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -12,8 +14,11 @@ import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +27,9 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.ServicePoint;
@@ -160,49 +167,80 @@ public class ServicePointRepository {
 
     log.debug("findServicePointsForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
 
+    if (multipleRequests.getRecords().isEmpty()) {
+      log.info("findServicePointsForRequests:: no requests to fetch service points for");
+      return ofAsync(multipleRequests);
+    }
+
     Collection<Request> requests = multipleRequests.getRecords();
 
-    final List<String> servicePointsToFetch = requests.stream()
-      .filter(Objects::nonNull)
-      .map(Request::getPickupServicePointId)
-      .filter(Objects::nonNull)
-      .distinct()
-      .collect(Collectors.toList());
+    Map<String, String> requestIdToPickupServicePointId = new HashMap<>();
+    Map<String, String> requestIdToPrimaryServicePointId = new HashMap<>();
+    for (Request request : requests) {
+      String requestId = request.getId();
 
-    if(servicePointsToFetch.isEmpty()) {
+      Optional.ofNullable(request.getItem())
+        .map(Item::getLocation)
+        .map(Location::getPrimaryServicePointId)
+        .map(UUID::toString)
+        .ifPresent(servicePointId -> requestIdToPrimaryServicePointId.put(requestId, servicePointId));
+
+      Optional.ofNullable(request.getPickupServicePointId())
+        .ifPresent(servicePointId -> requestIdToPickupServicePointId.put(requestId, servicePointId));
+    }
+
+    Set<String> servicePointsToFetch = Stream.of(requestIdToPickupServicePointId.values(),
+        requestIdToPrimaryServicePointId.values())
+      .flatMap(Collection::stream)
+      .collect(Collectors.toSet());
+
+    if (servicePointsToFetch.isEmpty()) {
       log.info("findServicePointsForRequests:: No service points to query");
       return completedFuture(succeeded(multipleRequests));
     }
 
-    final FindWithMultipleCqlIndexValues<ServicePoint> fetcher = createServicePointsFetcher();
+    return createServicePointsFetcher().findByIds(servicePointsToFetch)
+      .thenApply(r -> r.map(servicePoints -> {
+        List<Request> newRequestList = new ArrayList<>();
 
-    return fetcher.findByIds(servicePointsToFetch)
-        .thenApply(multipleServicePointsResult -> multipleServicePointsResult.next(
-          multipleServicePoints -> {
-            List<Request> newRequestList = new ArrayList<>();
-            Collection<ServicePoint> spCollection = multipleServicePoints.getRecords();
-            for(Request request : requests) {
-              Request newRequest = null;
-              boolean foundSP = false; //Have we found a matching service point for the request?
-              for(ServicePoint servicePoint : spCollection) {
-                if(request.getPickupServicePointId() != null &&
-                    request.getPickupServicePointId().equals(servicePoint.getId())) {
-                  newRequest = request.withPickupServicePoint(servicePoint);
-                  foundSP = true;
-                  break;
-                }
-              }
-              if(!foundSP) {
-                log.info("No service point (out of {}) found for request {} (pickupServicePointId {})",
-                    spCollection.size(), request.getId(), request.getPickupServicePointId());
-                newRequest = request;
-              }
-              newRequestList.add(newRequest);
+        Map<String, ServicePoint> servicePointsById = servicePoints.getRecords()
+          .stream()
+          .collect(toMap(ServicePoint::getId, identity()));
+
+        for (Request request : requests) {
+          Request newRequest = request;
+          String requestId = request.getId();
+
+          String pickupServicePointId = requestIdToPickupServicePointId.get(requestId);
+          if (pickupServicePointId != null) {
+            ServicePoint pickupServicePoint = servicePointsById.get(pickupServicePointId);
+            if (pickupServicePoint != null) {
+              newRequest = newRequest.withPickupServicePoint(pickupServicePoint);
+            } else {
+              log.warn("findServicePointsForRequests:: failed to find pickup service point {} for request {}",
+                pickupServicePointId, requestId);
             }
+          }
 
-            return succeeded(new MultipleRecords<>(newRequestList,
-              multipleRequests.getTotalRecords()));
-          }));
+          String primaryServicePointId = requestIdToPrimaryServicePointId.get(requestId);
+          if (primaryServicePointId != null) {
+            ServicePoint primaryServicePoint = servicePointsById.get(primaryServicePointId);
+            if (primaryServicePoint != null) {
+              Item item = newRequest.getItem();
+              Location location = item.getLocation();
+              newRequest = newRequest.withItem(item.withLocation(
+                location.withPrimaryServicePoint(primaryServicePoint)));
+            } else {
+              log.warn("findServicePointsForRequests:: failed to find item primary service point {} for request {}",
+                primaryServicePointId, requestId);
+            }
+          }
+
+          newRequestList.add(newRequest);
+        }
+
+        return new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords());
+      }));
   }
 
   public CompletableFuture<Result<Collection<ServicePoint>>> findServicePointsByIds(
