@@ -239,7 +239,7 @@ public class ServicePointRepository {
           newRequestList.add(newRequest);
         }
 
-        return new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords());
+        return new MultipleRecords<>(newRequestList, newRequestList.size());
       }));
   }
 
