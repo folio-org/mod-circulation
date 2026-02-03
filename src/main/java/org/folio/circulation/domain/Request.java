@@ -84,7 +84,6 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @With
   private final Map<String, RequestPolicy> instanceItemsRequestPolicies;
 
-  @ToString.Include
   private final Item item;
 
   @With

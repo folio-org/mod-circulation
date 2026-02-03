@@ -6,7 +6,7 @@ import lombok.ToString;
 import lombok.Value;
 
 @Value
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class ServicePoint {
   public static ServicePoint unknown() {
     return unknown(null);
@@ -19,6 +19,7 @@ public class ServicePoint {
     return new ServicePoint(id, name, null, false, null, null, null, null, null);
   }
 
+  @ToString.Include
   String id;
   String name;
   String code;

@@ -208,8 +208,8 @@ public class ServicePointRepository {
           .collect(toMap(ServicePoint::getId, identity()));
 
         for (Request request : requests) {
-          Request newRequest = request;
           String requestId = request.getId();
+          Request newRequest = request;
 
           String pickupServicePointId = requestIdToPickupServicePointId.get(requestId);
           if (pickupServicePointId != null) {

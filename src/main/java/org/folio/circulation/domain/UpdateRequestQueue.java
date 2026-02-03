@@ -152,7 +152,7 @@ public class UpdateRequestQueue {
   private CompletableFuture<Result<RequestQueue>> awaitPickup(Request request,
     RequestQueue requestQueue) {
 
-    log.info("awaitPickup:: parameters request: {}, requestQueue: {}",
+    log.debug("awaitPickup:: parameters request: {}, requestQueue: {}",
       () -> request, () -> requestQueue);
     Request originalRequest = Request.from(request.asJson());
     request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
