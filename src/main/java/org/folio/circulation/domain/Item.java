@@ -36,6 +36,7 @@ public class Item {
   private final String id;
   @ToString.Include
   private final JsonObject itemRepresentation;
+  @ToString.Include
   @NonNull private final Location location;
   private final LastCheckIn lastCheckIn;
   private final CallNumberComponents callNumberComponents;
