@@ -200,47 +200,70 @@ public class ServicePointRepository {
     }
 
     return createServicePointsFetcher().findByIds(servicePointsToFetch)
-      .thenApply(r -> r.map(servicePoints -> {
-        List<Request> newRequestList = new ArrayList<>();
+      .thenApply(r -> r.map(servicePoints -> enrichRequestsWithServicePoints(
+        requests, multipleRequests.getTotalRecords(), servicePoints,
+        requestIdToPickupServicePointId, requestIdToPrimaryServicePointId)));
+  }
 
-        Map<String, ServicePoint> servicePointsById = servicePoints.getRecords()
-          .stream()
-          .collect(toMap(ServicePoint::getId, identity()));
+  private MultipleRecords<Request> enrichRequestsWithServicePoints(
+    Collection<Request> requests, int totalRecords,
+    MultipleRecords<ServicePoint> servicePoints,
+    Map<String, String> requestIdToPickupServicePointId,
+    Map<String, String> requestIdToPrimaryServicePointId) {
 
-        for (Request request : requests) {
-          String requestId = request.getId();
-          Request newRequest = request;
+    List<Request> newRequestList = new ArrayList<>();
 
-          String pickupServicePointId = requestIdToPickupServicePointId.get(requestId);
-          if (pickupServicePointId != null) {
-            ServicePoint pickupServicePoint = servicePointsById.get(pickupServicePointId);
-            if (pickupServicePoint != null) {
-              newRequest = newRequest.withPickupServicePoint(pickupServicePoint);
-            } else {
-              log.warn("findServicePointsForRequests:: failed to find pickup service point {} for request {}",
-                pickupServicePointId, requestId);
-            }
-          }
+    Map<String, ServicePoint> servicePointsById = servicePoints.getRecords()
+      .stream()
+      .collect(toMap(ServicePoint::getId, identity()));
 
-          String primaryServicePointId = requestIdToPrimaryServicePointId.get(requestId);
-          if (primaryServicePointId != null) {
-            ServicePoint primaryServicePoint = servicePointsById.get(primaryServicePointId);
-            if (primaryServicePoint != null) {
-              Item item = newRequest.getItem();
-              Location location = item.getLocation();
-              newRequest = newRequest.withItem(item.withLocation(
-                location.withPrimaryServicePoint(primaryServicePoint)));
-            } else {
-              log.warn("findServicePointsForRequests:: failed to find item primary service point {} for request {}",
-                primaryServicePointId, requestId);
-            }
-          }
+    for (Request request : requests) {
+      String requestId = request.getId();
+      Request enrichedRequest = enrichRequestWithPickupServicePoint(
+        request, requestId, requestIdToPickupServicePointId, servicePointsById);
+      enrichedRequest = enrichRequestWithPrimaryServicePoint(
+        enrichedRequest, requestId, requestIdToPrimaryServicePointId, servicePointsById);
+      newRequestList.add(enrichedRequest);
+    }
 
-          newRequestList.add(newRequest);
-        }
+    return new MultipleRecords<>(newRequestList, totalRecords);
+  }
 
-        return new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords());
-      }));
+  private Request enrichRequestWithPickupServicePoint(Request request, String requestId,
+                                                      Map<String, String> requestIdToPickupServicePointId,
+                                                      Map<String, ServicePoint> servicePointsById) {
+
+    String pickupServicePointId = requestIdToPickupServicePointId.get(requestId);
+    if (pickupServicePointId != null) {
+      ServicePoint pickupServicePoint = servicePointsById.get(pickupServicePointId);
+      if (pickupServicePoint != null) {
+        return request.withPickupServicePoint(pickupServicePoint);
+      } else {
+        log.warn("enrichRequestWithPickupServicePoint:: failed to find pickup service point {} for request {}",
+          pickupServicePointId, requestId);
+      }
+    }
+    return request;
+  }
+
+  private Request enrichRequestWithPrimaryServicePoint(Request request, String requestId,
+                                                       Map<String, String> requestIdToPrimaryServicePointId,
+                                                       Map<String, ServicePoint> servicePointsById) {
+
+    String primaryServicePointId = requestIdToPrimaryServicePointId.get(requestId);
+    if (primaryServicePointId != null) {
+      ServicePoint primaryServicePoint = servicePointsById.get(primaryServicePointId);
+      if (primaryServicePoint != null) {
+        Item item = request.getItem();
+        Location location = item.getLocation();
+        return request.withItem(item.withLocation(
+          location.withPrimaryServicePoint(primaryServicePoint)));
+      } else {
+        log.warn("enrichRequestWithPrimaryServicePoint:: failed to find item primary service point {} for request {}",
+          primaryServicePointId, requestId);
+      }
+    }
+    return request;
   }
 
   public CompletableFuture<Result<Collection<ServicePoint>>> findServicePointsByIds(
