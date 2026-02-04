@@ -76,7 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import api.support.builders.ServicePointBuilder;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
@@ -102,6 +101,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
+import api.support.builders.ServicePointBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
@@ -430,6 +430,20 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     assertThat(response.getJson(), hasErrorWith(hasMessage(
         "Checkin request must have a service point id")));
+  }
+
+  @Test
+  void requestRetainsRetrievalServicePointNameAfterCheckIn() {
+    UUID locationId = locationsFixture.mezzanineDisplayCase().getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID holdingsId = holdingsFixture.createHoldingsRecord(instanceId, locationId).getId();
+    IndividualResource item = itemsFixture.createItemWithHoldingsAndLocation(holdingsId, locationId);
+
+    IndividualResource request = requestsFixture.placeItemLevelPageRequest(item, instanceId, usersFixture.steve());
+    checkInFixture.checkInByBarcode(item, servicePointsFixture.cd1().getId());
+
+    JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckIn.getJsonObject("item").getString("retrievalServicePointName"), is("Circ Desk 1"));
   }
 
   @Test
