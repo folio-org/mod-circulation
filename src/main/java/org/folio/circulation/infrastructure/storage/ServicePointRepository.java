@@ -15,6 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -189,10 +190,9 @@ public class ServicePointRepository {
         .ifPresent(servicePointId -> requestIdToPickupServicePointId.put(requestId, servicePointId));
     }
 
-    Set<String> servicePointsToFetch = Stream.of(requestIdToPickupServicePointId.values(),
-        requestIdToPrimaryServicePointId.values())
-      .flatMap(Collection::stream)
-      .collect(Collectors.toSet());
+    Set<String> servicePointsToFetch = new HashSet<>();
+    servicePointsToFetch.addAll(requestIdToPickupServicePointId.values());
+    servicePointsToFetch.addAll(requestIdToPrimaryServicePointId.values());
 
     if (servicePointsToFetch.isEmpty()) {
       log.info("findServicePointsForRequests:: No service points to query");
@@ -239,7 +239,7 @@ public class ServicePointRepository {
           newRequestList.add(newRequest);
         }
 
-        return new MultipleRecords<>(newRequestList, newRequestList.size());
+        return new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords());
       }));
   }
 

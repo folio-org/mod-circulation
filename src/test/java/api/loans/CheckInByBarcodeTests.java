@@ -37,7 +37,6 @@ import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
-import static org.folio.HttpStatus.HTTP_OK;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.domain.RequestStatus.CLOSED_CANCELLED;
@@ -434,21 +433,17 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  void test() {
-    final IndividualResource james = usersFixture.james();
-    final ItemResource nod = itemsFixture.basedUponNod();
+  void requestRetainsRetrievalServicePointNameAfterCheckIn() {
+    UUID locationId = locationsFixture.mezzanineDisplayCase().getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID holdingsId = holdingsFixture.createHoldingsRecord(instanceId, locationId).getId();
+    IndividualResource item = itemsFixture.createItemWithHoldingsAndLocation(holdingsId, locationId);
 
-    IndividualResource request = requestsFixture.placeItemLevelPageRequest(nod, nod.getInstanceId(), usersFixture.jessica());
+    IndividualResource request = requestsFixture.placeItemLevelPageRequest(item, instanceId, usersFixture.steve());
+    checkInFixture.checkInByBarcode(item, servicePointsFixture.cd1().getId());
 
-    final Response response = checkInFixture.attemptCheckInByBarcode(
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(nod)
-        .on(ClockUtil.getZonedDateTime())
-        .at(servicePointsFixture.cd1()));
-
-    assertThat(response, hasStatus(HTTP_OK));
-
-
+    JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckIn.getJsonObject("item").getString("retrievalServicePointName"), is("Circ Desk 1"));
   }
 
   @Test
