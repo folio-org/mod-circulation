@@ -167,7 +167,7 @@ public class ServicePointRepository {
 
     log.debug("findServicePointsForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
 
-    if (multipleRequests.getRecords().isEmpty()) {
+    if (multipleRequests.isEmpty()) {
       log.info("findServicePointsForRequests:: no requests to fetch service points for");
       return ofAsync(multipleRequests);
     }
