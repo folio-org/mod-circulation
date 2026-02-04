@@ -447,6 +447,48 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
+  void requestRetainsRetrievalServicePointNameAfterCheckInAtSameLocation() {
+    UUID locationId = locationsFixture.mezzanineDisplayCase().getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID holdingsId = holdingsFixture.createHoldingsRecord(instanceId, locationId).getId();
+    IndividualResource item = itemsFixture.createItemWithHoldingsAndLocation(holdingsId, locationId);
+    IndividualResource request = requestsFixture.placeItemLevelPageRequest(item, instanceId, usersFixture.steve());
+
+    JsonObject requestBeforeCheckIn = requestsFixture.getById(request.getId()).getJson();
+    String retrievalServicePointIdBefore = requestBeforeCheckIn.getJsonObject("item").getString("retrievalServicePointId");
+    assertThat(retrievalServicePointIdBefore, is(servicePointsFixture.cd1().getId().toString()));
+
+    checkInFixture.checkInByBarcode(item, servicePointsFixture.cd1().getId());
+
+    JsonObject requestAfterCheckIn = requestsFixture.getById(request.getId()).getJson();
+    assertThat(requestAfterCheckIn.getJsonObject("item").getString("retrievalServicePointId"),
+      is(servicePointsFixture.cd1().getId().toString()));
+    assertThat(requestAfterCheckIn.getJsonObject("item").getString("retrievalServicePointName"), is("Circ Desk 1"));
+  }
+
+  @Test
+  void multipleRequestsRetainTheirRetrievalServicePointNames() {
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+    UUID location1Id = locationsFixture.mezzanineDisplayCase().getId();
+    UUID holdingsId1 = holdingsFixture.createHoldingsRecord(instanceId, location1Id).getId();
+    IndividualResource item1 = itemsFixture.createItemWithHoldingsAndLocation(holdingsId1, location1Id);
+    UUID location2Id = locationsFixture.mezzanineDisplayCase().getId();
+    UUID holdingsId2 = holdingsFixture.createHoldingsRecord(instanceId, location2Id).getId();
+    IndividualResource item2 = itemsFixture.createItemWithHoldingsAndLocation(holdingsId2, location2Id);
+    IndividualResource request1 = requestsFixture.placeItemLevelPageRequest(item1, instanceId, usersFixture.steve());
+    IndividualResource request2 = requestsFixture.placeItemLevelPageRequest(item2, instanceId, usersFixture.charlotte());
+
+    checkInFixture.checkInByBarcode(item1, servicePointsFixture.cd1().getId());
+    checkInFixture.checkInByBarcode(item2, servicePointsFixture.cd1().getId());
+
+    JsonObject request1AfterCheckIn = requestsFixture.getById(request1.getId()).getJson();
+    JsonObject request2AfterCheckIn = requestsFixture.getById(request2.getId()).getJson();
+
+    assertThat(request1AfterCheckIn.getJsonObject("item").getString("retrievalServicePointName"), is("Circ Desk 1"));
+    assertThat(request2AfterCheckIn.getJsonObject("item").getString("retrievalServicePointName"), is("Circ Desk 1"));
+  }
+
+  @Test
   void cannotCheckInWithoutAnItem() {
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 1, 13, 25, 46, 0, UTC);
 

@@ -95,5 +95,37 @@ class RequestsServicePointsTests extends APITests {
     assertThat(pagedRequestRecord.getJsonObject("item").getString("status"), is(ItemStatus.IN_TRANSIT.getValue()));
     assertThat(pagedRequestRecord.getString("status"), is(RequestStatus.OPEN_IN_TRANSIT.getValue()));
   }
+
+  @Test
+  void multipleRequestsRetainServicePointInformation() {
+
+    final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource interestingTimes = itemsFixture.basedUponInterestingTimes();
+    final IndividualResource cd1ServicePoint = servicePointsFixture.cd1();
+    final IndividualResource cd2ServicePoint = servicePointsFixture.cd2();
+
+    final IndividualResource request1 = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(smallAngryPlanet)
+      .withPickupServicePointId(cd1ServicePoint.getId())
+      .by(usersFixture.james()));
+
+    final IndividualResource request2 = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(interestingTimes)
+      .withPickupServicePointId(cd2ServicePoint.getId())
+      .by(usersFixture.charlotte()));
+
+    checkInFixture.checkInByBarcode(smallAngryPlanet, ClockUtil.getZonedDateTime(), cd1ServicePoint.getId());
+    checkInFixture.checkInByBarcode(interestingTimes, ClockUtil.getZonedDateTime(), cd2ServicePoint.getId());
+
+    JsonObject request1AfterCheckIn = requestsClient.getById(request1.getId()).getJson();
+    JsonObject request2AfterCheckIn = requestsClient.getById(request2.getId()).getJson();
+
+    assertThat(request1AfterCheckIn.getJsonObject("item").containsKey("retrievalServicePointName"), is(true));
+    assertThat(request2AfterCheckIn.getJsonObject("item").containsKey("retrievalServicePointName"), is(true));
+    assertThat(request1AfterCheckIn.getJsonObject("pickupServicePoint").getString("name"), is("Circ Desk 1"));
+    assertThat(request2AfterCheckIn.getJsonObject("pickupServicePoint").getString("name"), is("Circ Desk 2"));
+  }
 }
 
