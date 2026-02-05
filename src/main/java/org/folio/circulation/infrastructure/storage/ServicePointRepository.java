@@ -201,12 +201,12 @@ public class ServicePointRepository {
 
     return createServicePointsFetcher().findByIds(servicePointsToFetch)
       .thenApply(r -> r.map(servicePoints -> enrichRequestsWithServicePoints(
-        requests, multipleRequests.getTotalRecords(), servicePoints,
+        multipleRequests, servicePoints,
         requestIdToPickupServicePointId, requestIdToPrimaryServicePointId)));
   }
 
   private MultipleRecords<Request> enrichRequestsWithServicePoints(
-    Collection<Request> requests, int totalRecords,
+    MultipleRecords<Request> multipleRequests,
     MultipleRecords<ServicePoint> servicePoints,
     Map<String, String> requestIdToPickupServicePointId,
     Map<String, String> requestIdToPrimaryServicePointId) {
@@ -217,22 +217,22 @@ public class ServicePointRepository {
       .stream()
       .collect(toMap(ServicePoint::getId, identity()));
 
-    for (Request request : requests) {
-      String requestId = request.getId();
+    for (Request request : multipleRequests.getRecords()) {
       Request enrichedRequest = enrichRequestWithPickupServicePoint(
-        request, requestId, requestIdToPickupServicePointId, servicePointsById);
+        request, requestIdToPickupServicePointId, servicePointsById);
       enrichedRequest = enrichRequestWithPrimaryServicePoint(
-        enrichedRequest, requestId, requestIdToPrimaryServicePointId, servicePointsById);
+        enrichedRequest, requestIdToPrimaryServicePointId, servicePointsById);
       newRequestList.add(enrichedRequest);
     }
 
-    return new MultipleRecords<>(newRequestList, totalRecords);
+    return new MultipleRecords<>(newRequestList, multipleRequests.getTotalRecords());
   }
 
-  private Request enrichRequestWithPickupServicePoint(Request request, String requestId,
-                                                      Map<String, String> requestIdToPickupServicePointId,
-                                                      Map<String, ServicePoint> servicePointsById) {
+  private Request enrichRequestWithPickupServicePoint(Request request,
+    Map<String, String> requestIdToPickupServicePointId,
+    Map<String, ServicePoint> servicePointsById) {
 
+    String requestId = request.getId();
     String pickupServicePointId = requestIdToPickupServicePointId.get(requestId);
     if (pickupServicePointId != null) {
       ServicePoint pickupServicePoint = servicePointsById.get(pickupServicePointId);
@@ -246,10 +246,11 @@ public class ServicePointRepository {
     return request;
   }
 
-  private Request enrichRequestWithPrimaryServicePoint(Request request, String requestId,
-                                                       Map<String, String> requestIdToPrimaryServicePointId,
-                                                       Map<String, ServicePoint> servicePointsById) {
+  private Request enrichRequestWithPrimaryServicePoint(Request request,
+    Map<String, String> requestIdToPrimaryServicePointId,
+    Map<String, ServicePoint> servicePointsById) {
 
+    String requestId = request.getId();
     String primaryServicePointId = requestIdToPrimaryServicePointId.get(requestId);
     if (primaryServicePointId != null) {
       ServicePoint primaryServicePoint = servicePointsById.get(primaryServicePointId);
