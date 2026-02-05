@@ -167,9 +167,10 @@ public class UpdateRequestQueue {
             populateHoldShelfExpirationDate(
               request.withPickupServicePoint(servicePoint),
               tenantTimeZone
-            ).map(calculatedRequest-> setHoldShelfExpirationDateWithExpirationDateManagement(tenantTimeZone, calculatedRequest,
-              requestQueue, originalRequest)))
-        );
+            ).map(calculatedRequest -> new RequestWithTimeZone(calculatedRequest, tenantTimeZone))))
+        .thenCompose(r -> r.after(requestWithTimeZone ->
+          setHoldShelfExpirationDateWithExpirationDateManagement(
+            requestWithTimeZone.tenantTimeZone, requestWithTimeZone.request, requestQueue, originalRequest)));
     } else {
       Request updatedRequest = Request.from(request.asJson());
       requestQueue.update(originalRequest, updatedRequest);
@@ -179,7 +180,7 @@ public class UpdateRequestQueue {
     }
   }
 
-  private RequestQueue setHoldShelfExpirationDateWithExpirationDateManagement(
+  private CompletableFuture<Result<RequestQueue>> setHoldShelfExpirationDateWithExpirationDateManagement(
     ZoneId tenantTimeZone, Request calculatedRequest, RequestQueue requestQueue,
     Request originalRequest) {
 
@@ -206,17 +207,16 @@ public class UpdateRequestQueue {
 
     ClosedLibraryStrategy closedLibraryStrategy = determineClosedLibraryStrategyForHoldShelfExpirationDate
       (finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(), tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod());
-    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
+    return calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
-      .thenApply(calculatedDate -> {
-        log.info("calculatedDate after :{}",calculatedDate.value());
-        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
-        requestQueue.update(originalRequest,calculatedRequest);
+      .thenCompose(calculatedDateResult -> calculatedDateResult.after(calculatedDate -> {
+        log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: calculatedDate after: {}", calculatedDate);
+        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate);
+        requestQueue.update(originalRequest, calculatedRequest);
 
         return requestRepository.update(calculatedRequest)
           .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
-      });
-    return requestQueue;
+      }));
   }
 
   private boolean isShortTerm(String intervalId) {
@@ -412,4 +412,9 @@ public class UpdateRequestQueue {
 
     return holdShelfExpirationDate;
   }
+
+  /**
+   * Simple record to hold a {@link Request} and its associated tenant {@link ZoneId}.
+   */
+  private record RequestWithTimeZone(Request request, ZoneId tenantTimeZone) {}
 }

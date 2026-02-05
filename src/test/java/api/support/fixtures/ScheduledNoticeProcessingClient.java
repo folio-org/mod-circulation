@@ -43,6 +43,18 @@ public class ScheduledNoticeProcessingClient {
       "scheduled-notices-anonymize-processing-request");
   }
 
+  public void runAnonymizationRequestProcessing(ZonedDateTime mockSystemTime) {
+    runWithFrozenClock(this::runAnonymizationRequestProcessing, mockSystemTime);
+  }
+
+  public void runAnonymizationRequestProcessing() {
+    URL url = circulationModuleUrl(
+      "/circulation/scheduled-request-anonymize-processing");
+
+    timedTaskClient.start(url, 200,
+      "scheduled-notices-request-anonymize-processing-request");
+  }
+
   public void runDueDateNotRealTimeNoticesProcessing(ZonedDateTime mockSystemTime) {
     runWithFrozenClock(this::runDueDateNotRealTimeNoticesProcessing, mockSystemTime);
   }

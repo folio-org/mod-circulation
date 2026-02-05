@@ -104,6 +104,7 @@ import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CheckOutResource;
 import api.support.http.CqlQuery;
@@ -329,6 +330,53 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestContext.getString("servicePointPickup"), is(servicePoint.getJson().getString("name")));
     assertThat(requestContext.getString("patronComments"), is("I need the book"));
     assertNotNull(staffSlipContext.getString(CURRENT_DATE_TIME));
+  }
+
+  @Test
+  void checkInShouldUpdateRequestStatusAndHoldShelfExpirationDateAtomically() {
+    IndividualResource servicePoint = servicePointsFixture.cd1();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    IndividualResource requester = usersFixture.jessica();
+    FakeStorageModule.setFakeStorageDelay(500);
+    FakeStorageModule.setDelayedPaths(List.of("/request-storage/requests"));
+
+    // Place a Page request - this does NOT set holdShelfExpirationDate initially
+    IndividualResource request = requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(item)
+      .by(requester)
+      .fulfillToHoldShelf()
+      .withPickupServicePointId(servicePoint.getId())
+      .withRequestDate(getZonedDateTime()));
+
+    // Verify the request is in initial state before check-in
+    JsonObject requestBeforeCheckIn = requestsClient.getById(request.getId()).getJson();
+    assertThat("Request should be 'Open - Not yet filled' before check-in",
+      requestBeforeCheckIn.getString("status"), is(OPEN_NOT_YET_FILLED));
+    assertNull(requestBeforeCheckIn.getString("holdShelfExpirationDate"),
+      "Page request should not have holdShelfExpirationDate before check-in");
+
+    CheckInByBarcodeResponse checkInResponse = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(item)
+        .at(servicePoint.getId()));
+
+    JsonObject requestAfterCheckIn = requestsClient.getById(request.getId()).getJson();
+
+    assertThat("Request status must be updated to 'Open - Awaiting pickup' when check-in completes",
+      requestAfterCheckIn.getString("status"), is(OPEN_AWAITING_PICKUP));
+
+    assertNotNull(requestAfterCheckIn.getString("holdShelfExpirationDate"),
+      "Request must have holdShelfExpirationDate set when check-in completes");
+
+    JsonObject staffSlipContext = checkInResponse.getStaffSlipContext();
+    assertNotNull(staffSlipContext, "staffSlipContext should not be null");
+
+    JsonObject requestContext = staffSlipContext.getJsonObject("request");
+    assertNotNull(requestContext, "request context should not be null in staffSlipContext");
+
+    assertNotNull(requestContext.getString("holdShelfExpirationDate"),
+      "holdShelfExpirationDate must be present in staffSlipContext for print slip dialog to appear");
   }
 
   @Test
@@ -1639,7 +1687,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   void linkItemToHoldTLRWithHoldShelfWhenCheckedInItemThenFulfilledWithSuccess(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
@@ -1715,7 +1763,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   @Test
   void linkItemToHoldTLRWithDeliveryWhenCheckedInThenFulfilledWithSuccess(){
     reconfigureTlrFeature(TlrFeatureStatus.NOT_CONFIGURED);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     UUID instanceId = instancesFixture.basedUponDunkirk().getId();
     IndividualResource defaultWithHoldings = holdingsFixture.defaultWithHoldings(instanceId);
     IndividualResource checkedOutItem = itemsClient.create(buildCheckedOutItemWithHoldingRecordsId(defaultWithHoldings.getId()));
@@ -1741,7 +1789,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void requestsShouldChangePositionWhenTheyGoInFulfillmentOnCheckIn() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource firstItem = items.get(0);
@@ -1792,7 +1840,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void canCheckinItemWhenRequestForAnotherItemOfSameInstanceExists() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource firstItem = items.get(0);
@@ -1813,7 +1861,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void canFulFillRecallRequestWhenCheckInAnotherItemOfSameInstance() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource firstItem = items.get(0);
     ItemResource secondItem = items.get(1);
@@ -1839,7 +1887,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void canFulFillRecallRequestWhenCheckInAnotherItemOfSameInstanceWithMultipleRecallRequests() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
     ItemResource firstItem = items.get(0);
     ItemResource secondItem = items.get(1);
@@ -1880,7 +1928,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelHoldRequestToAnItemUponCheckInWhenItemIsNonRequestable() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     ItemResource item = itemsFixture.basedUponNod();
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
     IndividualResource request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(),
@@ -1910,7 +1958,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelHoldRequestToAnItemUponCheckInWhenItemIsNonLoanable() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     ItemResource item = itemsFixture.basedUponNod();
     checkOutFixture.checkOutByBarcode(item, usersFixture.rebecca());
     IndividualResource request = requestsFixture.placeTitleLevelRequest(HOLD, item.getInstanceId(),
@@ -1926,7 +1974,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelRecallRequestToNewItemUponCheckInWhenItemIsNonRequestable() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     UUID canCirculateLoanTypeId = loanTypesFixture.canCirculate().getId();
     UUID readingRoomLoanTypeId = loanTypesFixture.readingRoom().getId();
@@ -1972,7 +2020,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
   @Test
   void shouldNotLinkTitleLevelRecallRequestToNewItemUponCheckInWhenItemIsNonLoanable() {
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     UUID canCirculateLoanTypeId = loanTypesFixture.canCirculate().getId();
     UUID readingRoomLoanTypeId = loanTypesFixture.readingRoom().getId();
