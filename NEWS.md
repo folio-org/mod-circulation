@@ -4,6 +4,7 @@
 * Handling of patron notices for closed loans ([CIRC-1891](https://folio-org.atlassian.net/browse/CIRC-1891))
 * Render item's loan type in requests responses ([CIRC-2441](https://folio-org.atlassian.net/browse/CIRC-2441))
 * Switch DCB user check from lastName to the user type ([CIRC-2482](https://folio-org.atlassian.net/browse/CIRC-2482))
+* Upgrade wiremock from 2.35.0 to 3.13.2 fixing CVE-2023-41329 ([CIRC-2543](https://folio-org.atlassian.net/browse/CIRC-2543))
 * Fail on startup if Kafka config is invalid ([CIRC-2003](https://folio-org.atlassian.net/browse/CIRC-2003))
 
 ## 24.4.0 2025-03-12
