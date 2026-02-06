@@ -1,3 +1,6 @@
+## 24.4.15 2026-02-06
+* Fix fail to display the Print Slip dialog when checking in (CIRC-2521)
+
 ## 24.4.14 2026-01-16
 * Fix circulation rules caching by avoiding race condition on module startup (CIRC-2530)
 
