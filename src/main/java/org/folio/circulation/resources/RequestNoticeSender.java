@@ -335,7 +335,7 @@ public class RequestNoticeSender {
 
     if (!request.isRecall() || loan == null || loan.getUser() == null
       || loan.getItem() == null || recallRequestCount > 1) {
-      return ofAsync(null);
+      return emptyAsync();
     }
 
     return fetchAdditionalInfo(request)
