@@ -198,4 +198,3 @@ class RequestsServicePointsTests extends APITests {
       is(nonExistentServicePointId.toString()));
   }
 }
-
