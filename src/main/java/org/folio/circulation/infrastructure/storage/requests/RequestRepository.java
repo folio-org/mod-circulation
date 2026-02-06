@@ -20,9 +20,7 @@ import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.DoubleUnaryOperator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -137,8 +135,8 @@ public class RequestRepository {
 
     return ofAsync(() -> requestRecords)
       .thenComposeAsync(requests -> itemRepository.fetchItemsFor(requests, Request::withItem))
-      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
+      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));
