@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
@@ -734,7 +733,7 @@ public class FakeStorageModule extends AbstractVerticle {
   }
 
   private static boolean shouldApplyDelay(String p) {
-    return fakeStorageDelay.get() != 0 && Strings.CI.startsWithAny(p, requestDelayedPaths.get());
+    return fakeStorageDelay.get() != 0 && StringUtils.startsWithAny(p, requestDelayedPaths.get());
   }
 
   @Getter
