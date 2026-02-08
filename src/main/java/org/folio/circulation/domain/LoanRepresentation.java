@@ -1,6 +1,7 @@
 package org.folio.circulation.domain;
 
 import static java.util.Objects.isNull;
+import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 import static org.folio.circulation.domain.representations.LoanProperties.BORROWER;
 import static org.folio.circulation.domain.representations.LoanProperties.LOAN_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
@@ -177,7 +178,7 @@ public class LoanRepresentation {
     borrowerSummary.put("lastName", borrower.getLastName());
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
-    borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
+    borrowerSummary.put("preferredFirstName", firstNonBlank(borrower.getPreferredFirstName(), borrower.getFirstName()));
     borrowerSummary.put("patronGroup",borrower.getPatronGroupId());
     loanRepresentation.put(BORROWER, borrowerSummary);
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
