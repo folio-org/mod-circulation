@@ -8,10 +8,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedSt
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
 import org.folio.circulation.domain.notice.NoticeConfigurationBuilder;
 import org.folio.circulation.domain.notice.NoticeEventType;
@@ -26,6 +29,8 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class PatronNoticePolicyMapper implements Function<JsonObject, Result<PatronNoticePolicy>> {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private static final String LOAN_NOTICES = "loanNotices";
   private static final String REQUEST_NOTICES = "requestNotices";
   private static final String FEE_FINE_NOTICES = "feeFineNotices";
@@ -98,9 +103,11 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     NoticeConfigurationBuilder builder, JsonObject representation) {
 
     if (getNoticeTiming(representation).requiresPeriod()) {
+      log.info("setTimingPeriod:: notice timing requires period");
       return getNestedPeriodProperty(representation, SEND_BY)
         .map(builder::setTimingPeriod);
     }
+    log.info("setTimingPeriod:: notice timing does not require period");
     return succeeded(builder);
   }
 
@@ -112,9 +119,11 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     NoticeConfigurationBuilder builder, JsonObject representation) {
 
     if (getRecurring(representation)) {
+      log.info("setRecurringTiming:: notice is recurring");
       return getNestedPeriodProperty(representation, SEND_EVERY)
         .map(builder::setRecurringPeriod);
     }
+    log.info("setRecurringTiming:: notice is not recurring");
     return succeeded(builder);
   }
 

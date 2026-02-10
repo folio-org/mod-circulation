@@ -80,7 +80,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
-    log.debug("findAccountsForLoan:: parameters loan: {}", loan);
+    log.debug("findAccountsForLoan:: parameters loanId: {}", loan != null ? loan.getId() : "null");
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
       .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
@@ -90,7 +90,8 @@ public class AccountRepository {
   public CompletableFuture<Result<Collection<Account>>> findAccountsForLoanByQuery(Loan loan,
     Result<CqlQuery> query) {
 
-    log.debug("findAccountsForLoanByQuery:: parameters loan: {}, query: {}", () -> loan, () -> resultAsString(query));
+    log.debug("findAccountsForLoanByQuery:: parameters loanId: {}, query: {}",
+      () -> loan != null ? loan.getId() : "null", () -> resultAsString(query));
 
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
       .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()).combine(query, CqlQuery::and))
@@ -177,7 +178,8 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> findAccountForAction(FeeFineAction action) {
-    log.debug("findAccountForAction:: parameters action: {}", action);
+    log.debug("findAccountForAction:: parameters actionId: {}",
+      action != null ? action.getId() : "null");
     if (isNull(action)) {
       log.info("findAccountForAction:: action is null");
       return ofAsync(() -> null);
@@ -201,7 +203,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Account>> create(StoredAccount account) {
-    log.debug("create:: parameters account: {}", account);
+    log.debug("create:: creating account");
     final ResponseInterpreter<Account> interpreter = new ResponseInterpreter<Account>()
       .flatMapOn(201, mapUsingJson(Account::from))
       .otherwise(forwardOnFailure());
@@ -211,7 +213,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Void>> update(StoredAccount account) {
-    log.debug("update:: parameters account: {}", account);
+    log.debug("update:: updating account id: {}", account != null ? account.getId() : "null");
     final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
       .on(204, succeeded(null))
       .otherwise(forwardOnFailure());

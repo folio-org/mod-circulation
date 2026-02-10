@@ -5,6 +5,7 @@ import static java.util.concurrent.CompletableFuture.allOf;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.ofAsync;
@@ -30,7 +31,6 @@ import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
-import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 public class FeeFineActionRepository {
@@ -42,7 +42,7 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> create(StoredFeeFineAction feeFineAction) {
-    log.debug("create:: parameters feeFineAction: {}", feeFineAction);
+    log.debug("create:: creating fee/fine action");
     final ResponseInterpreter<FeeFineAction> interpreter =
       new ResponseInterpreter<FeeFineAction>()
         .flatMapOn(201, mapUsingJson(FeeFineAction::from))
@@ -71,7 +71,8 @@ public class FeeFineActionRepository {
   }
 
   public CompletableFuture<Result<FeeFineAction>> findChargeActionForAccount(Account account) {
-    log.debug("findChargeActionForAccount:: params account: {}", account);
+    log.debug("findChargeActionForAccount:: parameters accountId: {}",
+      account != null ? account.getId() : "null");
 
     if (isNull(account)) {
       log.info("findChargeActionForAccount:: account is null");
@@ -95,6 +96,13 @@ public class FeeFineActionRepository {
       .map(this::create)
       .toArray(CompletableFuture[]::new))
       .thenApply(Result::succeeded)
-      .exceptionally(CommonFailures::failedDueToServerError);
+      .thenApply(r -> {
+        log.info("createAll:: result: created {} fee/fine actions", feeFineActions.size());
+        return r;
+      })
+      .exceptionally(t -> {
+        log.warn("createAll:: failed to create fee/fine actions", t);
+        return failedDueToServerError(t);
+      });
   }
 }

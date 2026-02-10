@@ -4,12 +4,15 @@ import static org.folio.circulation.domain.notice.session.PatronActionSessionPro
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ACTION_SESSIONS;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.PATRON_ID;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.support.Clients;
@@ -21,6 +24,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class PatronExpiredSessionRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final int EXPIRED_SESSIONS_LIMIT = 100;
   private static final String PATH_PARAM_WITH_QUERY = "expired-session-patron-ids?action_type=%s&session_inactivity_time_limit=%s&limit=%d";
   private static final String EXPIRED_SESSIONS = "expiredSessions";
@@ -47,8 +51,10 @@ public class PatronExpiredSessionRepository {
   }
 
   private List<ExpiredSession> mapFromJson(JsonObject json) {
+    log.debug("mapFromJson:: processing expired sessions from response");
     List<ExpiredSession> expiredSessions = new ArrayList<>();
     if (json.isEmpty() || json.getJsonArray(EXPIRED_SESSIONS).isEmpty()) {
+      log.info("mapFromJson:: no expired sessions found in response");
       return expiredSessions;
     }
 
@@ -63,6 +69,7 @@ public class PatronExpiredSessionRepository {
         .ifPresent(patronActionType -> expiredSessions.add(
           new ExpiredSession(patronId, patronActionType)));
     }
+    log.info("mapFromJson:: mapped {} expired sessions", expiredSessions.size());
     return expiredSessions;
   }
 }
