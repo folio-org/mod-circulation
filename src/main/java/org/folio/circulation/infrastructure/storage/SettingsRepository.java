@@ -32,9 +32,6 @@ import io.vertx.core.json.JsonObject;
 public class SettingsRepository {
   private static final ZoneId DEFAULT_DATE_TIME_ZONE = ZoneOffset.UTC;
   private static final String TIMEZONE_KEY = "timezone";
-  private static final String TIMEZONE_SETTINGS_SCOPE = "stripes-core.prefs.manage";
-  private static final String TIMEZONE_SETTINGS_KEY = "tenantLocaleSettings";
-  private static final String SETTINGS_VALUE_PROPERTY = "value";
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
@@ -64,8 +61,10 @@ public class SettingsRepository {
   }
 
   public CompletableFuture<Result<ZoneId>> lookupTimeZoneSettings() {
-    log.info("lookupTimeZoneSettings:: fetching timezone settings");
-    return fetchSettings(TIMEZONE_SETTINGS_SCOPE, TIMEZONE_SETTINGS_KEY)
+    log.info("lookupTimeZoneSettings:: fetching timezone settings from /locale API");
+    return CqlQuery.noQuery()
+      .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
+      .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")))
       .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
         .map(this::applyTimeZone)
         .orElse(DEFAULT_DATE_TIME_ZONE)))
@@ -75,9 +74,9 @@ public class SettingsRepository {
       }));
   }
 
-  private ZoneId applyTimeZone(JsonObject tenantLocaleSettings) {
-    return Optional.ofNullable(getObjectProperty(tenantLocaleSettings, SETTINGS_VALUE_PROPERTY))
-      .map(valueObj -> getProperty(valueObj, TIMEZONE_KEY))
+  private ZoneId applyTimeZone(JsonObject localeSettings) {
+    // New /locale API returns timezone directly in the response
+    return Optional.ofNullable(getProperty(localeSettings, TIMEZONE_KEY))
       .filter(StringUtils::isNotBlank)
       .map(ZoneId::of)
       .orElse(DEFAULT_DATE_TIME_ZONE);
@@ -95,5 +94,5 @@ public class SettingsRepository {
       .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
       .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")));
   }
-  
+
 }
