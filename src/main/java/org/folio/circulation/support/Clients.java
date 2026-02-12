@@ -765,7 +765,7 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
-      "/configurations/entries");
+      "/locale");
   }
 
   private CollectionResourceClient createScheduledNoticesStorageClient(
@@ -933,7 +933,7 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
-      "/settings/entries");
+      "/locale");
   }
 
 }

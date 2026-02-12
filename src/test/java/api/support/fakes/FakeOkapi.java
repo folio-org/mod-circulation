@@ -414,7 +414,7 @@ public class FakeOkapi extends AbstractVerticle {
 
     new FakeStorageModuleBuilder()
       .withRecordName("settings")
-      .withRootPath("/settings/entries")
+      .withRootPath("/locale")
       .withCollectionPropertyName("items")
       .withChangeMetadata()
       .create().register(router);
