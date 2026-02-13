@@ -58,7 +58,7 @@ public class FeeFineRepository {
   }
 
   public CompletableFuture<Result<FeeFine>> create(FeeFine feeFine) {
-    log.debug("create:: parameters feeFine: {}", feeFine);
+    log.debug("create:: creating fee/fine");
     final ResponseInterpreter<FeeFine> interpreter = new ResponseInterpreter<FeeFine>()
       .flatMapOn(201, mapUsingJson(FeeFine::from))
       .otherwise(forwardOnFailure());
