@@ -64,7 +64,9 @@ public class SettingsRepository {
     return CqlQuery.noQuery()
       .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
       .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")))
-      .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
+      .thenApply(r -> r.map(r1 -> r1.getRecords().stream()
+        .filter(record -> record.containsKey(TIMEZONE_KEY))  // Filter for records with timezone field
+        .findFirst()
         .map(this::applyTimeZone)
         .orElse(DEFAULT_DATE_TIME_ZONE)))
       .thenApply(r -> r.mapFailure(failure -> {
