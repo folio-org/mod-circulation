@@ -79,6 +79,7 @@ public class Clients {
   private final CollectionResourceClient circulationItemClient;
   private final CollectionResourceClient searchClient;
   private final GetManyRecordsClient settingsStorageClient;
+  private final CollectionResourceClient localeClient;
   private final CollectionResourceClient circulationSettingsStorageClient;
   private final CollectionResourceClient printEventsStorageClient;
 
@@ -158,6 +159,7 @@ public class Clients {
       departmentClient = createDepartmentClient(client, context);
       checkOutLockStorageClient = createCheckoutLockClient(client, context);
       settingsStorageClient = createSettingsStorageClient(client, context);
+      localeClient = createLocaleClient(client, context);
       circulationItemClient = createCirculationItemClient(client, context);
       searchClient = createSearchClient(client, context);
       circulationSettingsStorageClient = createCirculationSettingsStorageClient(client, context);
@@ -415,6 +417,10 @@ public class Clients {
 
   public GetManyRecordsClient settingsStorageClient() {
     return settingsStorageClient;
+  }
+
+  public CollectionResourceClient localeClient() {
+    return localeClient;
   }
 
   public CollectionResourceClient circulationItemClient() {
@@ -934,6 +940,14 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/settings/entries");
+  }
+
+  private CollectionResourceClient createLocaleClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/locale");
   }
 
 }

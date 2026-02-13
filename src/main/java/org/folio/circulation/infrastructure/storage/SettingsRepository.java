@@ -22,6 +22,7 @@ import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.configuration.CheckoutLockConfiguration;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -38,9 +39,11 @@ public class SettingsRepository {
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
+  private final CollectionResourceClient localeClient;
 
   public SettingsRepository(Clients clients) {
     settingsClient = clients.settingsStorageClient();
+    localeClient = clients.localeClient();
   }
 
   public CompletableFuture<Result<CheckoutLockConfiguration>> lookUpCheckOutLockSettings() {
@@ -64,15 +67,31 @@ public class SettingsRepository {
   }
 
   public CompletableFuture<Result<ZoneId>> lookupTimeZoneSettings() {
-    log.info("lookupTimeZoneSettings:: fetching timezone settings");
-    return fetchSettings(TIMEZONE_SETTINGS_SCOPE, TIMEZONE_SETTINGS_KEY)
-      .thenApply(r -> r.map(r1 -> r1.getRecords().stream().findFirst()
-        .map(this::applyTimeZone)
-        .orElse(DEFAULT_DATE_TIME_ZONE)))
-      .thenApply(r -> r.mapFailure(failure -> {
-        log.warn("lookupTimeZoneSettings:: Error while fetching timezone settings {}", failure);
+    log.info("lookupTimeZoneSettings:: fetching timezone settings from /locale endpoint");
+
+    return localeClient.get()
+      .thenApply(localeResult -> {
+        if (localeResult.succeeded() && localeResult.value().getStatusCode() == 200) {
+          log.debug("lookupTimeZoneSettings:: successfully fetched from /locale endpoint");
+          JsonObject localeSettings = localeResult.value().getJson();
+          return Result.succeeded(applyTimeZoneFromLocale(localeSettings));
+        } else {
+          log.warn("lookupTimeZoneSettings:: /locale endpoint returned non-200 status: {}",
+            localeResult.succeeded() ? localeResult.value().getStatusCode() : "failed");
+          return succeeded(DEFAULT_DATE_TIME_ZONE);
+        }
+      })
+      .exceptionally(ex -> {
+        log.warn("lookupTimeZoneSettings:: Exception while fetching timezone settings from /locale", ex);
         return succeeded(DEFAULT_DATE_TIME_ZONE);
-      }));
+      });
+  }
+
+  private ZoneId applyTimeZoneFromLocale(JsonObject localeSettings) {
+    return Optional.ofNullable(getProperty(localeSettings, TIMEZONE_KEY))
+      .filter(StringUtils::isNotBlank)
+      .map(ZoneId::of)
+      .orElse(DEFAULT_DATE_TIME_ZONE);
   }
 
   private ZoneId applyTimeZone(JsonObject tenantLocaleSettings) {
@@ -95,5 +114,5 @@ public class SettingsRepository {
       .after(query -> settingsClient.getMany(query, PageLimit.noLimit()))
       .thenApply(r -> r.next(response -> MultipleRecords.from(response, identity(), "items")));
   }
-  
+
 }

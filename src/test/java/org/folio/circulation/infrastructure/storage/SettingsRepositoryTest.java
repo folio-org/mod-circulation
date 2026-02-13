@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -67,35 +68,69 @@ class SettingsRepositoryTest {
 
   @Test
   @SneakyThrows
-  void fetchTenantLocaleSettings() {
+  void fetchTenantLocaleSettingsFallsBackToDefaultWhenLocaleEndpointFails() {
     Clients clients = mock(Clients.class);
-    CollectionResourceClient settingsClient = mock(CollectionResourceClient.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
 
-    JsonObject mockSettingsResponse = new JsonObject()
-      .put("items", new JsonArray()
-        .add(new JsonObject()
-          .put("id", UUID.randomUUID().toString())
-          .put("scope", "stripes-core.prefs.manage")
-          .put("key", "tenantLocaleSettings")
-          .put("value", new JsonObject()
-            .put("locale", "en-US")
-            .put("timezone", "Europe/Berlin")
-            .put("currency", "USD"))))
-      .put("resultInfo", new JsonObject()
-        .put("totalRecords", 1)
-        .put("diagnostics", new JsonArray()));
-
-    when(clients.settingsStorageClient()).thenReturn(settingsClient);
-    when(settingsClient.getMany(any(), any()))
-      .thenReturn(ofAsync(new Response(200, mockSettingsResponse.encode(), "application/json")));
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(localeClient.get()).thenReturn(ofAsync(new Response(404, "", "application/json")));
 
     ZoneId actualResult = new SettingsRepository(clients)
       .lookupTimeZoneSettings()
       .get(30, TimeUnit.SECONDS)
       .value();
 
-    assertEquals(ZoneId.of("Europe/Berlin"), actualResult);
-    verify(settingsClient).getMany(any(), any());
+    assertEquals(ZoneOffset.UTC, actualResult);
+    verify(localeClient).get();
+  }
+
+  @Test
+  @SneakyThrows
+  void fetchTimezoneFromLocaleEndpoint() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+
+    JsonObject mockLocaleResponse = new JsonObject()
+      .put("locale", "en-US")
+      .put("timezone", "America/New_York")
+      .put("currency", "USD");
+
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(localeClient.get())
+      .thenReturn(ofAsync(new Response(200, mockLocaleResponse.encode(), "application/json")));
+
+    ZoneId actualResult = new SettingsRepository(clients)
+      .lookupTimeZoneSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+
+    assertEquals(ZoneId.of("America/New_York"), actualResult);
+    verify(localeClient).get();
+  }
+
+  @Test
+  @SneakyThrows
+  void fetchTimezoneFromLocaleEndpointWithNumberingSystem() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+
+    JsonObject mockLocaleResponse = new JsonObject()
+      .put("locale", "ar-SA")
+      .put("timezone", "Asia/Riyadh")
+      .put("currency", "SAR")
+      .put("numberingSystem", "arab");
+
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(localeClient.get())
+      .thenReturn(ofAsync(new Response(200, mockLocaleResponse.encode(), "application/json")));
+
+    ZoneId actualResult = new SettingsRepository(clients)
+      .lookupTimeZoneSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+
+    assertEquals(ZoneId.of("Asia/Riyadh"), actualResult);
+    verify(localeClient).get();
   }
 
   private JsonObject createCheckoutLockJsonResponse(boolean checkoutFeatureFlag) {
