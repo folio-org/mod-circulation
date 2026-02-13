@@ -101,7 +101,7 @@ public class JsonScheduledNoticeMapper {
       .put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation())
       .put(NEXT_RUN_TIME, formatDateTime(notice.getNextRunTime().withZoneSameInstant(ZoneOffset.UTC)))
       .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
-    log.info("mapToJson:: result: scheduled notice mapped to json");
+    log.debug("mapToJson:: result: scheduled notice mapped to json");
     return result;
   }
 

@@ -80,7 +80,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Loan>> findAccountsForLoan(Loan loan) {
-    log.debug("findAccountsForLoan:: parameters loanId: {}", loan != null ? loan.getId() : "null");
+    log.debug("findAccountsForLoan:: loanId: {}", loan != null ? loan.getId() : "null");
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
       .findByQuery(exactMatch(LOAN_ID_FIELD_NAME, loan.getId()))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
@@ -90,7 +90,7 @@ public class AccountRepository {
   public CompletableFuture<Result<Collection<Account>>> findAccountsForLoanByQuery(Loan loan,
     Result<CqlQuery> query) {
 
-    log.debug("findAccountsForLoanByQuery:: parameters loanId: {}, query: {}",
+    log.debug("findAccountsForLoanByQuery:: loanId: {}, query: {}",
       () -> loan != null ? loan.getId() : "null", () -> resultAsString(query));
 
     return findWithCqlQuery(accountsStorageClient, ACCOUNTS_COLLECTION_PROPERTY_NAME, Account::from)
@@ -105,7 +105,7 @@ public class AccountRepository {
   public CompletableFuture<Result<MultipleRecords<Loan>>> findAccountsForLoans(
     MultipleRecords<Loan> multipleLoans) {
 
-    log.debug("findAccountsForLoans:: parameters multipleLoans: {}",() -> multipleRecordsAsString(multipleLoans));
+    log.debug("findAccountsForLoans:: parameters multipleLoans: {}", () -> multipleRecordsAsString(multipleLoans));
 
     if (multipleLoans.getRecords().isEmpty()) {
       log.info("findAccountsForLoans:: multipleLoans is empty");
@@ -213,8 +213,7 @@ public class AccountRepository {
   }
 
   public CompletableFuture<Result<Void>> update(StoredAccount account) {
-    log.debug("update:: updating account id: {}", account != null ? account.getId() : "null");
-    final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
+    log.debug("update:: updating account {}", account != null ? account.getId() : "null");    final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
       .on(204, succeeded(null))
       .otherwise(forwardOnFailure());
 

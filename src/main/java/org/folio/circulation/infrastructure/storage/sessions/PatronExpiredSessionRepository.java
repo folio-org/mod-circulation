@@ -69,7 +69,7 @@ public class PatronExpiredSessionRepository {
         .ifPresent(patronActionType -> expiredSessions.add(
           new ExpiredSession(patronId, patronActionType)));
     }
-    log.info("mapFromJson:: mapped {} expired sessions", expiredSessions.size());
+    log.debug("mapFromJson:: mapped {} expired sessions", expiredSessions.size());
     return expiredSessions;
   }
 }

@@ -103,11 +103,11 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     NoticeConfigurationBuilder builder, JsonObject representation) {
 
     if (getNoticeTiming(representation).requiresPeriod()) {
-      log.info("setTimingPeriod:: notice timing requires period");
+      log.debug("setTimingPeriod:: notice timing requires period");
       return getNestedPeriodProperty(representation, SEND_BY)
         .map(builder::setTimingPeriod);
     }
-    log.info("setTimingPeriod:: notice timing does not require period");
+    log.debug("setTimingPeriod:: notice timing does not require period");
     return succeeded(builder);
   }
 
@@ -119,11 +119,11 @@ public class PatronNoticePolicyMapper implements Function<JsonObject, Result<Pat
     NoticeConfigurationBuilder builder, JsonObject representation) {
 
     if (getRecurring(representation)) {
-      log.info("setRecurringTiming:: notice is recurring");
+      log.debug("setRecurringTiming:: notice is recurring");
       return getNestedPeriodProperty(representation, SEND_EVERY)
         .map(builder::setRecurringPeriod);
     }
-    log.info("setRecurringTiming:: notice is not recurring");
+    log.debug("setRecurringTiming:: notice is not recurring");
     return succeeded(builder);
   }
 

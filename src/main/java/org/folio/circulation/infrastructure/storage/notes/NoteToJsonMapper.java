@@ -34,7 +34,7 @@ public class NoteToJsonMapper {
     write(json, "content", note.getContent());
     write(json, "links", new JsonArray(jsonLinks));
 
-    log.info("toJson:: result: note converted to JSON successfully with {} links", jsonLinks.size());
+    log.debug("toJson:: result: note converted to JSON successfully with {} links", jsonLinks.size());
     return json;
   }
 
