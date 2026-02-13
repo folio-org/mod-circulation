@@ -301,14 +301,6 @@ public class FakeOkapi extends AbstractVerticle {
       .register(router);
 
     new FakeStorageModuleBuilder()
-      .withRecordName("configuration")
-      .withCollectionPropertyName("configs")
-      .withRootPath("/configurations/entries")
-      .withChangeMetadata()
-      .create()
-      .register(router);
-
-    new FakeStorageModuleBuilder()
       .withCollectionPropertyName("expiredSessions")
       .withRootPath("/patron-action-session-storage/expired-session-patron-ids")
       .withQueryParameters("action_type", "session_inactivity_time")
@@ -418,13 +410,6 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("check-out-lock-storage")
       .withChangeMetadata()
       .withRecordConstraint(this::userHasAlreadyAcquiredLock)
-      .create().register(router);
-
-    new FakeStorageModuleBuilder()
-      .withRecordName("settings")
-      .withRootPath("/locale")
-      .withCollectionPropertyName("items")
-      .withChangeMetadata()
       .create().register(router);
 
     new FakeStorageModuleBuilder()
