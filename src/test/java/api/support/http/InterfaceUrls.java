@@ -349,7 +349,7 @@ public class InterfaceUrls {
   }
 
   public static URL settingsStorageUrl() {
-    return APITestContext.viaOkapiModuleUrl("/settings/entries");
+    return APITestContext.viaOkapiModuleUrl("/locale");
   }
 
   public static URL searchUrl(String subPath) {

@@ -8,9 +8,8 @@ import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
 public class SettingsFixture {
-  private static final String DEFAULT_TIME_ZONE_SCOPE = "stripes-core.prefs.manage";
-  private static final String DEFAULT_TIME_ZONE_KEY = "tenantLocaleSettings";
   private static final String US_LOCALE = "en-US";
+  private static final String DEFAULT_CURRENCY = "USD";
 
   private final ResourceClient settingsClient;
 
@@ -45,12 +44,9 @@ public class SettingsFixture {
   }
 
   private static SettingsBuilder getLocaleAndTimeZoneConfiguration(String timezone) {
+    // Using new constructor for /locale API - direct structure without scope/key/value
     return new SettingsBuilder(
-      UUID.randomUUID(), DEFAULT_TIME_ZONE_SCOPE, DEFAULT_TIME_ZONE_KEY,
-      new JsonObject()
-        .put("locale", US_LOCALE)
-        .put("timezone", timezone)
-        .put("currency", "USD")
+      UUID.randomUUID(), US_LOCALE, timezone, DEFAULT_CURRENCY
     );
   }
 
