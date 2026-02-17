@@ -429,14 +429,19 @@ public class FakeStorageModule extends AbstractVerticle {
       .limit(limit)
       .collect(Collectors.toList());
 
-    JsonObject result = new JsonObject();
+    JsonObject result;
 
-    result.put(collectionPropertyName, new JsonArray(pagedItems));
-    result.put("totalRecords", filteredItems.size());
-    if(collectionPropertyName.equalsIgnoreCase("requests")) {
-      System.out.println();
+    // Handle singleton endpoints (e.g., /locale) that return a single object
+    if (collectionPropertyName == null) {
+      result = pagedItems.stream().findFirst().orElse(new JsonObject());
+      log.debug("Found {} singleton resource: {}", recordTypeName, result.encodePrettily());
+    } else {
+      // Return as a collection with metadata
+      result = new JsonObject()
+        .put(collectionPropertyName, new JsonArray(pagedItems))
+        .put("totalRecords", filteredItems.size());
+      log.debug("Found {} {} resources", filteredItems.size(), recordTypeName);
     }
-    log.debug("Found {} resources: {}", recordTypeName, result.encodePrettily());
 
     HttpServerResponse response = routingContext.response();
 

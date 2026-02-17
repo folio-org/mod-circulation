@@ -75,6 +75,12 @@ public class SettingsRepository {
   }
 
   private Result<ZoneId> extractTimeZoneFromLocaleResponse(Response localeResponse) {
+    if (localeResponse.getStatusCode() != 200) {
+      log.warn("extractTimeZoneFromLocaleResponse:: /locale endpoint returned status {}, using default UTC",
+        localeResponse.getStatusCode());
+      return succeeded(DEFAULT_DATE_TIME_ZONE);
+    }
+
     log.debug("extractTimeZoneFromLocaleResponse:: successfully fetched from /locale endpoint");
 
     return succeeded(Optional.ofNullable(getProperty(localeResponse.getJson(), TIMEZONE_KEY))
