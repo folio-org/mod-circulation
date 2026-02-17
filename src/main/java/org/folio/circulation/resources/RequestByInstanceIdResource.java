@@ -299,7 +299,8 @@ public class RequestByInstanceIdResource extends Resource {
 
     final CreateRequestService createRequestService = new CreateRequestService(repositories,
       updateUponRequest, new RequestLoanValidator(itemFinder, loanRepository),
-      new RequestNoticeSender(clients), regularRequestBlockValidators(clients), eventPublisher,
+      new RequestNoticeSender(clients), HoldNoticeSender.using(clients),
+      regularRequestBlockValidators(clients), eventPublisher,
       new FailFastErrorHandler());
 
     return placeRequest(requestRepresentations, 0, createRequestService,

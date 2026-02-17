@@ -280,6 +280,26 @@ public class EventPublisher {
       .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
   }
 
+  public CompletableFuture<Result<Void>> publishHoldRequestedEvent(Loan loan) {
+    logger.debug("publishHoldRequestedEvent:: publishing hold requested event for loan {}",
+      loan != null ? loan.getId() : "null");
+
+    if (loan == null || loan.getId() == null) {
+      logger.error("publishHoldRequestedEvent:: loan or loan ID is null, cannot publish event");
+      return emptyAsync();
+    }
+
+    return getTenantTimeZone()
+      .thenApply(zoneResult -> zoneResult.map(zoneId -> {
+        var logDescription = format("Hold request placed on item (loan %s)", loan.getId());
+        return LoanLogContext.from(loan)
+          .withAction("Hold request")
+          .withDescription(logDescription)
+          .asJson();
+      }))
+      .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
+  }
+
   public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {

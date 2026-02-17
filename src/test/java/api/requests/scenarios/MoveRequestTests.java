@@ -1333,7 +1333,7 @@ class MoveRequestTests extends APITests {
     // There should be four events published - for "check out", for "log event", for "hold" and for "move"
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(11));
+      .until(FakePubSub::getPublishedEvents, hasSize(12));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 
