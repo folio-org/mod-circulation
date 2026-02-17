@@ -9,6 +9,10 @@ public class LocaleFixture {
 
   private final ResourceClient localeClient;
 
+  public LocaleFixture(ResourceClient localeClient) {
+    this.localeClient = localeClient;
+  }
+
   public LocaleFixture() {
     this.localeClient = ResourceClient.forLocale();
   }
@@ -26,6 +30,14 @@ public class LocaleFixture {
     JsonObject settings = buildLocaleSettings(locale, timezone, currency);
     settings.put("numberingSystem", numberingSystem);
     localeClient.create(settings);
+  }
+
+  public void createUtcLocaleSettings() {
+    createLocaleSettingsForTimezone("UTC");
+  }
+
+  public void createNewYorkLocaleSettings() {
+    createLocaleSettingsForTimezone("America/New_York");
   }
 
   private JsonObject buildLocaleSettings(String locale, String timezone, String currency) {
