@@ -3,7 +3,6 @@ package org.folio.circulation.infrastructure.storage;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
-import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -34,7 +33,6 @@ import io.vertx.core.json.JsonObject;
 public class SettingsRepository {
   private static final ZoneId DEFAULT_DATE_TIME_ZONE = ZoneOffset.UTC;
   private static final String TIMEZONE_KEY = "timezone";
-  private static final String SETTINGS_VALUE_PROPERTY = "value";
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final GetManyRecordsClient settingsClient;
