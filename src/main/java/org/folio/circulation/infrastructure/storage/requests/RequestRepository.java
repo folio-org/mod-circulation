@@ -135,8 +135,8 @@ public class RequestRepository {
 
     return ofAsync(() -> requestRecords)
       .thenComposeAsync(requests -> itemRepository.fetchItemsFor(requests, Request::withItem))
-      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(servicePointRepository::findServicePointsForRequests))
+      .thenComposeAsync(result -> result.after(loanRepository::findOpenLoansFor))
       .thenComposeAsync(result -> result.after(userRepository::findUsersForRequests))
       .thenComposeAsync(result -> result.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
       .thenComposeAsync(result -> result.after(instanceRepository::findInstancesForRequests));

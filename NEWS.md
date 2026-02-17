@@ -1,3 +1,6 @@
+## 24.4.16 2026-02-17
+* Fix request losing retrieval service point name upon check-in (CIRC-2535)
+
 ## 24.4.15 2026-02-06
 * Fix fail to display the Print Slip dialog when checking in (CIRC-2521)
 
