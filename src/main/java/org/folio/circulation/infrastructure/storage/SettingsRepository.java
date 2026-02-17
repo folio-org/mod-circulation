@@ -28,13 +28,12 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class SettingsRepository {
   private static final ZoneId DEFAULT_DATE_TIME_ZONE = ZoneOffset.UTC;
   private static final String TIMEZONE_KEY = "timezone";
-  private static final String TIMEZONE_SETTINGS_SCOPE = "stripes-core.prefs.manage";
-  private static final String TIMEZONE_SETTINGS_KEY = "tenantLocaleSettings";
   private static final String SETTINGS_VALUE_PROPERTY = "value";
 
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -73,7 +72,21 @@ public class SettingsRepository {
       .thenApply(localeResult -> {
         if (localeResult.succeeded() && localeResult.value().getStatusCode() == 200) {
           log.debug("lookupTimeZoneSettings:: successfully fetched from /locale endpoint");
-          JsonObject localeSettings = localeResult.value().getJson();
+          JsonObject responseBody = localeResult.value().getJson();
+
+          // The response might be a single locale object or might contain it directly
+          JsonObject localeSettings = responseBody;
+
+          // If the response has a 'locale' array property (from fake storage), extract first element
+          if (responseBody.containsKey("locale") && responseBody.getValue("locale") instanceof JsonArray) {
+            JsonArray localeArray = responseBody.getJsonArray("locale");
+            if (localeArray.isEmpty()) {
+              log.warn("lookupTimeZoneSettings:: locale array is empty");
+              return succeeded(DEFAULT_DATE_TIME_ZONE);
+            }
+            localeSettings = localeArray.getJsonObject(0);
+          }
+
           return Result.succeeded(applyTimeZoneFromLocale(localeSettings));
         } else {
           log.warn("lookupTimeZoneSettings:: /locale endpoint returned non-200 status: {}",
@@ -89,14 +102,6 @@ public class SettingsRepository {
 
   private ZoneId applyTimeZoneFromLocale(JsonObject localeSettings) {
     return Optional.ofNullable(getProperty(localeSettings, TIMEZONE_KEY))
-      .filter(StringUtils::isNotBlank)
-      .map(ZoneId::of)
-      .orElse(DEFAULT_DATE_TIME_ZONE);
-  }
-
-  private ZoneId applyTimeZone(JsonObject tenantLocaleSettings) {
-    return Optional.ofNullable(getObjectProperty(tenantLocaleSettings, SETTINGS_VALUE_PROPERTY))
-      .map(valueObj -> getProperty(valueObj, TIMEZONE_KEY))
       .filter(StringUtils::isNotBlank)
       .map(ZoneId::of)
       .orElse(DEFAULT_DATE_TIME_ZONE);
