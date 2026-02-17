@@ -44,7 +44,8 @@ public class LocaleFixture {
     return new JsonObject()
       .put("locale", locale)
       .put("timezone", timezone)
-      .put("currency", currency);
+      .put("currency", currency)
+      .put("numberingSystem", "latn");
   }
 
   public JsonObject get() {

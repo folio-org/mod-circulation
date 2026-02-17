@@ -25,9 +25,9 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class SettingsRepository {
@@ -67,42 +67,20 @@ public class SettingsRepository {
     log.info("lookupTimeZoneSettings:: fetching timezone settings from /locale endpoint");
 
     return localeClient.get()
-      .thenApply(localeResult -> {
-        if (localeResult.succeeded() && localeResult.value().getStatusCode() == 200) {
-          log.debug("lookupTimeZoneSettings:: successfully fetched from /locale endpoint");
-          JsonObject responseBody = localeResult.value().getJson();
-
-          // The response might be a single locale object or might contain it directly
-          JsonObject localeSettings = responseBody;
-
-          // If the response has a 'locale' array property (from fake storage), extract first element
-          if (responseBody.containsKey("locale") && responseBody.getValue("locale") instanceof JsonArray) {
-            JsonArray localeArray = responseBody.getJsonArray("locale");
-            if (localeArray.isEmpty()) {
-              log.warn("lookupTimeZoneSettings:: locale array is empty");
-              return succeeded(DEFAULT_DATE_TIME_ZONE);
-            }
-            localeSettings = localeArray.getJsonObject(0);
-          }
-
-          return Result.succeeded(applyTimeZoneFromLocale(localeSettings));
-        } else {
-          log.warn("lookupTimeZoneSettings:: /locale endpoint returned non-200 status: {}",
-            localeResult.succeeded() ? localeResult.value().getStatusCode() : "failed");
-          return succeeded(DEFAULT_DATE_TIME_ZONE);
-        }
-      })
+      .thenApply(r -> r.next(this::extractTimeZoneFromLocaleResponse))
       .exceptionally(ex -> {
         log.warn("lookupTimeZoneSettings:: Exception while fetching timezone settings from /locale", ex);
         return succeeded(DEFAULT_DATE_TIME_ZONE);
       });
   }
 
-  private ZoneId applyTimeZoneFromLocale(JsonObject localeSettings) {
-    return Optional.ofNullable(getProperty(localeSettings, TIMEZONE_KEY))
+  private Result<ZoneId> extractTimeZoneFromLocaleResponse(Response localeResponse) {
+    log.debug("extractTimeZoneFromLocaleResponse:: successfully fetched from /locale endpoint");
+
+    return succeeded(Optional.ofNullable(getProperty(localeResponse.getJson(), TIMEZONE_KEY))
       .filter(StringUtils::isNotBlank)
       .map(ZoneId::of)
-      .orElse(DEFAULT_DATE_TIME_ZONE);
+      .orElse(DEFAULT_DATE_TIME_ZONE));
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String key) {
