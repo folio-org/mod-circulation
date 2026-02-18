@@ -116,7 +116,7 @@ class SettingsRepositoryTest {
 
     JsonObject mockLocaleResponse = new JsonObject()
       .put("locale", "ar-SA")
-      .put("timezone", "Asia/Riyadh")
+      .put("timezone", "Europe/Berlin")
       .put("currency", "SAR")
       .put("numberingSystem", "arab");
 
@@ -129,7 +129,7 @@ class SettingsRepositoryTest {
       .get(30, TimeUnit.SECONDS)
       .value();
 
-    assertEquals(ZoneId.of("Asia/Riyadh"), actualResult);
+    assertEquals(ZoneId.of("Europe/Berlin"), actualResult);
     verify(localeClient).get();
   }
 

@@ -18,15 +18,18 @@ public class LocaleFixture {
   }
 
   public void createLocaleSettingsForTimezone(String timezone) {
+    localeClient.deleteAll();
     localeClient.create(buildLocaleSettings(US_LOCALE, timezone, DEFAULT_CURRENCY));
   }
 
   public void createLocaleSettings(String locale, String timezone, String currency) {
+    localeClient.deleteAll();
     localeClient.create(buildLocaleSettings(locale, timezone, currency));
   }
 
   public void createLocaleSettingsWithNumberingSystem(String locale, String timezone,
       String currency, String numberingSystem) {
+    localeClient.deleteAll();
     JsonObject settings = buildLocaleSettings(locale, timezone, currency);
     settings.put("numberingSystem", numberingSystem);
     localeClient.create(settings);

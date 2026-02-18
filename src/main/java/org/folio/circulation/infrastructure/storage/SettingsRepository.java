@@ -67,26 +67,36 @@ public class SettingsRepository {
     log.info("lookupTimeZoneSettings:: fetching timezone settings from /locale endpoint");
 
     return localeClient.get()
-      .thenApply(r -> r.next(this::extractTimeZoneFromLocaleResponse))
-      .exceptionally(ex -> {
-        log.warn("lookupTimeZoneSettings:: Exception while fetching timezone settings from /locale", ex);
-        return succeeded(DEFAULT_DATE_TIME_ZONE);
+      .thenApply(result -> {
+        if (result.failed()) {
+          log.warn("lookupTimeZoneSettings:: Failed to fetch timezone settings, using default UTC");
+          return succeeded(DEFAULT_DATE_TIME_ZONE);
+        }
+        return result.next(this::extractTimeZoneFromLocaleResponse);
       });
   }
 
   private Result<ZoneId> extractTimeZoneFromLocaleResponse(Response localeResponse) {
+    log.info("extractTimeZoneFromLocaleResponse:: status code: {}", localeResponse.getStatusCode());
+
     if (localeResponse.getStatusCode() != 200) {
       log.warn("extractTimeZoneFromLocaleResponse:: /locale endpoint returned status {}, using default UTC",
         localeResponse.getStatusCode());
       return succeeded(DEFAULT_DATE_TIME_ZONE);
     }
 
-    log.debug("extractTimeZoneFromLocaleResponse:: successfully fetched from /locale endpoint");
+    String timezoneValue = getProperty(localeResponse.getJson(), TIMEZONE_KEY);
 
-    return succeeded(Optional.ofNullable(getProperty(localeResponse.getJson(), TIMEZONE_KEY))
+    log.info("extractTimeZoneFromLocaleResponse:: extracted timezone: {}", timezoneValue);
+
+    ZoneId timezone = Optional.ofNullable(timezoneValue)
       .filter(StringUtils::isNotBlank)
       .map(ZoneId::of)
-      .orElse(DEFAULT_DATE_TIME_ZONE));
+      .orElse(DEFAULT_DATE_TIME_ZONE);
+
+    log.info("extractTimeZoneFromLocaleResponse:: using ZoneId: {}", timezone);
+
+    return succeeded(timezone);
   }
 
   private CompletableFuture<Result<MultipleRecords<JsonObject>>> fetchSettings(String scope, String key) {

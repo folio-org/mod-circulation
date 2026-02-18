@@ -60,8 +60,8 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
 
     ZonedDateTime loanDate = ZonedDateTime.of(CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE,
       TEST_TIME_MORNING, ZoneId.of(expectedTimeZone));
-    ZonedDateTime expectedDueDate = atStartOfDay(CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE, ZoneId.of(expectedTimeZone))
-      .plusDays(1);
+    ZonedDateTime expectedDueDate = atStartOfDay(CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE,
+      ZoneId.of(expectedTimeZone)).plusDays(1);
 
     checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID, INTERVAL_HOURS, duration);
   }
@@ -156,7 +156,8 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
    * Check result
    */
   private void checkOffsetTime(ZonedDateTime loanDate, ZonedDateTime expectedDueDate,
-                               String servicePointId, String interval, int duration) {
+    String servicePointId, String interval, int duration) {
+
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
 
