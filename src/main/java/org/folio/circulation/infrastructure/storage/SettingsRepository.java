@@ -67,13 +67,12 @@ public class SettingsRepository {
     log.info("lookupTimeZoneSettings:: fetching timezone settings from /locale endpoint");
 
     return localeClient.get()
-      .thenApply(result -> {
-        if (result.failed()) {
-          log.warn("lookupTimeZoneSettings:: Failed to fetch timezone settings, using default UTC");
-          return succeeded(DEFAULT_DATE_TIME_ZONE);
-        }
-        return result.next(this::extractTimeZoneFromLocaleResponse);
-      });
+      .thenApply(r -> r.next(this::extractTimeZoneFromLocaleResponse))
+      .thenApply(r -> r.mapFailure(failure -> {
+        log.warn("lookupTimeZoneSettings:: Failed to fetch timezone settings, using default UTC. Failure: {}",
+          failure);
+        return succeeded(DEFAULT_DATE_TIME_ZONE);
+      }));
   }
 
   private Result<ZoneId> extractTimeZoneFromLocaleResponse(Response localeResponse) {

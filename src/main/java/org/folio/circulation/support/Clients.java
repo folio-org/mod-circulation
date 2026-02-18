@@ -946,8 +946,7 @@ public class Clients {
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
-    return getCollectionResourceClient(client, context,
-      "/locale");
+    return getCollectionResourceClient(client, context, "/locale");
   }
 
 }
