@@ -53,7 +53,7 @@ public class RequestFetchService {
   private static final String REQUESTS_KEY = "requests";
   private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String REQUEST_LEVEL_KEY = "requestLevel";
-  private static final int REQUESTS_LIMIT = 1000;
+  private static final int REQUESTS_LIMIT = 10_000;
 
   private final RequestType requestType;
   private final InstanceRepository instanceRepository;
