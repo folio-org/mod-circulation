@@ -352,6 +352,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/settings/entries");
   }
 
+  public static URL localeUrl() {
+    return APITestContext.viaOkapiModuleUrl("/locale");
+  }
+
   public static URL searchUrl(String subPath) {
     return APITestContext.viaOkapiModuleUrl("/search/instances" + subPath);
   }
