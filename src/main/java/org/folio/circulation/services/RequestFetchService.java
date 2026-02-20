@@ -5,8 +5,8 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.ObjectUtils.allNull;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
-import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -39,6 +39,8 @@ import org.folio.circulation.infrastructure.storage.inventory.LocationRepository
 import org.folio.circulation.resources.context.StaffSlipsContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
@@ -51,7 +53,7 @@ public class RequestFetchService {
   private static final String REQUESTS_KEY = "requests";
   private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String REQUEST_LEVEL_KEY = "requestLevel";
-  private static final PageLimit REQUESTS_LIMIT = PageLimit.oneThousand();
+  private static final int REQUESTS_LIMIT = 1000;
 
   private final RequestType requestType;
   private final InstanceRepository instanceRepository;
@@ -85,9 +87,14 @@ public class RequestFetchService {
 
     var query = exactMatch(REQUEST_TYPE_KEY, requestType.getValue())
       .combine(exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue()), CqlQuery::and);
+    var criteria = byIndex(ITEM_EFFECTIVE_LOCATION_ID_KEY, locations.toKeys(Location::getId))
+      .withQuery(query);
 
-    return findWithMultipleCqlIndexValues(requestStorageClient, REQUESTS_KEY, Request::from)
-      .findByIdIndexAndQuery(locations.toKeys(Location::getId), ITEM_EFFECTIVE_LOCATION_ID_KEY, query)
+    log.info("fetchRequestsWithItems:: fetching requests by item location with limit {}", REQUESTS_LIMIT);
+
+//    return findWithMultipleCqlIndexValues(requestStorageClient, REQUESTS_KEY, Request::from)
+    return new CqlIndexValuesFinder<>(new CqlQueryFinder<>(requestStorageClient, REQUESTS_KEY, Request::from), 70)
+      .find(criteria, REQUESTS_LIMIT)
       .thenCompose(r -> r.after(requests -> fetchItemsForRequests(requests, locations)))
       .thenApply(r -> r.map(context::withRequests));
   }
@@ -168,25 +175,23 @@ public class RequestFetchService {
       return ofAsync(context);
     }
 
-    int requestsToFetch = REQUESTS_LIMIT.getLimit() - context.getRequests().size();
+    int requestsToFetch = REQUESTS_LIMIT - context.getRequests().size();
     if (requestsToFetch <= 0) {
       log.info("fetchRequestsWithoutItems:: requests limit reached, doing nothing");
       return ofAsync(context);
     }
 
-    return fetchRequestsWithoutItems(PageLimit.limit(requestsToFetch))
+    return fetchRequestsWithoutItems()
       .thenCompose(r -> r.after(requests -> processRequestsWithoutItems(context, requests)));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Request>>> fetchRequestsWithoutItems(
-    PageLimit requestsToFetch) {
-
+  private CompletableFuture<Result<MultipleRecords<Request>>> fetchRequestsWithoutItems() {
     var query = exactMatch(REQUEST_TYPE_KEY, RequestType.HOLD.getValue())
       .combine(exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue()), CqlQuery::and)
       .combine(exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue()), CqlQuery::and);
 
     return findWithCqlQuery(requestStorageClient, REQUESTS_KEY, Request::from)
-      .findByQuery(query, requestsToFetch)
+      .findByQuery(query, PageLimit.limit(REQUESTS_LIMIT))
       // Title-level holds in status "Open - Not yet filled" are not supposed to be linked to items,
       // but we need to double-check anyway. These requests can be filtered out at DB level using
       // CQL predicate 'not itemId=""', but CQL parser used in tests does not seem to support this construct.
