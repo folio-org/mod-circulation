@@ -22,12 +22,9 @@ public class LoanClosePeriodChecker implements AnonymizationChecker {
     this.clock = clock;
   }
 
-    @Override
+  @Override
   public boolean canBeAnonymized(Loan loan) {
-    log.debug("canBeAnonymized:: checking loan {} for anonymization eligibility", loan != null ? loan.getId() : "null");
-    boolean result = loan.isClosed() && itemReturnedEarlierThanPeriod(loan.getSystemReturnDate());
-    log.debug("canBeAnonymized:: loan {}: {}", loan != null ? loan.getId() : "null", result ? "can be anonymized" : "cannot be anonymized (reason: " + getReason() + ")");
-    return result;
+    return loan.isClosed() && itemReturnedEarlierThanPeriod(loan.getSystemReturnDate());
   }
 
   @Override
@@ -37,6 +34,7 @@ public class LoanClosePeriodChecker implements AnonymizationChecker {
 
   boolean itemReturnedEarlierThanPeriod(ZonedDateTime returnDate) {
     if (returnDate == null) {
+      log.debug("itemReturnedEarlierThanPeriod:: returnDate is null, cannot check if loan can be anonymized");
       return false;
     }
 
