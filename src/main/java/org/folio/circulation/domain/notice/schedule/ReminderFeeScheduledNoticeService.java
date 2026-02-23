@@ -21,6 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class ReminderFeeScheduledNoticeService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
 
   protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ScheduledNoticesRepository scheduledNoticesRepository;

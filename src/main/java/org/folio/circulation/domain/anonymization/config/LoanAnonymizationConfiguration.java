@@ -1,4 +1,9 @@
-package org.folio.circulation.domain.anonymization.config;
+﻿package org.folio.circulation.domain.anonymization.config;
+
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedIntegerProperty;
@@ -11,6 +16,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class LoanAnonymizationConfiguration {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String FEEFINE = "feeFine";
 
   private final ClosingType loanClosingType;
@@ -20,15 +26,16 @@ public class LoanAnonymizationConfiguration {
   private final Period feeFineClosePeriod;
 
   public static LoanAnonymizationConfiguration from(JsonObject jsonObject) {
+    log.debug("from:: parsing loan anonymization configuration");
     return new LoanAnonymizationConfiguration(
-        ClosingType.from(getNestedStringProperty(jsonObject, "closingType", "loan")),
-        ClosingType.from(getNestedStringProperty(jsonObject, "closingType", FEEFINE)),
-        getBooleanProperty(jsonObject, "treatEnabled"),
-        Period.from(getNestedIntegerProperty(jsonObject, "loan", "duration"),
-            getNestedStringProperty(jsonObject, "loan", "intervalId")),
-        Period.from(
-            getNestedIntegerProperty(jsonObject, FEEFINE, "duration"),
-            getNestedStringProperty(jsonObject, FEEFINE, "intervalId")));
+      ClosingType.from(getNestedStringProperty(jsonObject, "closingType", "loan")),
+      ClosingType.from(getNestedStringProperty(jsonObject, "closingType", FEEFINE)),
+      getBooleanProperty(jsonObject, "treatEnabled"),
+      Period.from(getNestedIntegerProperty(jsonObject, "loan", "duration"),
+        getNestedStringProperty(jsonObject, "loan", "intervalId")),
+      Period.from(
+        getNestedIntegerProperty(jsonObject, FEEFINE, "duration"),
+        getNestedStringProperty(jsonObject, FEEFINE, "intervalId")));
   }
 
   public ClosingType getLoanClosingType() {
