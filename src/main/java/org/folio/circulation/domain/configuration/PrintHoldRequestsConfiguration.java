@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.domain.configuration;
+package org.folio.circulation.domain.configuration;
 
 import java.lang.invoke.MethodHandles;
 

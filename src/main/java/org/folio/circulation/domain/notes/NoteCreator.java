@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.domain.notes;
+package org.folio.circulation.domain.notes;
 
 import java.lang.invoke.MethodHandles;
 

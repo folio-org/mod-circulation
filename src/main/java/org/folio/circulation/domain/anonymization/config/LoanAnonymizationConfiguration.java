@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.domain.anonymization.config;
+package org.folio.circulation.domain.anonymization.config;
 
 import java.lang.invoke.MethodHandles;
 

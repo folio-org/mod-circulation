@@ -35,8 +35,6 @@ import lombok.With;
 
 public class ImmediatePatronNoticeService extends PatronNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
-
   private final PatronNoticePolicyRepository noticePolicyRepository;
   private final NoticeContextCombiner noticeContextCombiner;
 
@@ -74,8 +72,6 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
       .map(EventGroupContext::from)
       .map(groupContext -> groupContext.combineContexts(noticeContextCombiner))
       .collect(toList());
-    log.info("groupEvents:: grouped {} events into {} groups", events.size(), result.size());
-    return result;
   }
 
   private CompletableFuture<Result<Void>> handleEventGroups(List<EventGroupContext> contexts) {

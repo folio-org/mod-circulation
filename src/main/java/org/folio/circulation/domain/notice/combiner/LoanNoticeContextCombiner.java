@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.domain.notice.combiner;
+package org.folio.circulation.domain.notice.combiner;
 
 import java.lang.invoke.MethodHandles;
 

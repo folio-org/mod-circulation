@@ -17,7 +17,6 @@ public class GroupedFeeFineScheduledNoticeHandler extends GroupedScheduledNotice
 
 
   public GroupedFeeFineScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
-    log.debug("GroupedFeeFineScheduledNoticeHandler:: initializing grouped fee/fine scheduled notice handler");
     super(clients, new FeeFineScheduledNoticeHandler(clients, loanRepository), "feeCharges");
   }
 

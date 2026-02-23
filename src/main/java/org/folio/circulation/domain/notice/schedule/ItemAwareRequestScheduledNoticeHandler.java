@@ -20,8 +20,6 @@ public class ItemAwareRequestScheduledNoticeHandler extends RequestScheduledNoti
 
   public ItemAwareRequestScheduledNoticeHandler(Clients clients,
     RequestRepository requestRepository, LoanRepository loanRepository) {
-    log.debug("ItemAwareRequestScheduledNoticeHandler:: initializing item-aware request scheduled notice handler");
-
     super(clients, loanRepository, requestRepository);
   }
 

@@ -20,7 +20,6 @@ public class InstanceAwareRequestScheduledNoticeHandler extends RequestScheduled
 
   public InstanceAwareRequestScheduledNoticeHandler(Clients clients,
     RequestRepository requestRepository, LoanRepository loanRepository) {
-    log.debug("InstanceAwareRequestScheduledNoticeHandler:: initializing instance-aware request scheduled notice handler");
 
     super(clients, loanRepository, requestRepository);
   }
