@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.domain.notice;
+package org.folio.circulation.domain.notice;
 
 import java.util.concurrent.CompletableFuture;
 

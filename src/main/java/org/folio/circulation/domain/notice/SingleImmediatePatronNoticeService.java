@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.domain.notice;
+package org.folio.circulation.domain.notice;
 
 import org.folio.circulation.domain.notice.combiner.SingleNoticeContextCombiner;
 import org.folio.circulation.support.Clients;
