@@ -42,7 +42,6 @@ public class RequestScheduledNoticeService {
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final PatronNoticePolicyRepository noticePolicyRepository;
 
-
   private RequestScheduledNoticeService(
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronNoticePolicyRepository noticePolicyRepository) {

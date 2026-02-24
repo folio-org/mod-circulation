@@ -1,4 +1,4 @@
-package org.folio.circulation.domain.notice;
+﻿package org.folio.circulation.domain.notice;
 
 import java.lang.invoke.MethodHandles;
 
@@ -21,7 +21,6 @@ import org.folio.circulation.support.results.Result;
 public abstract class PatronNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-
   private final CollectionResourceClient patronNoticeClient;
   private final EventPublisher eventPublisher;
 
@@ -32,8 +31,8 @@ public abstract class PatronNoticeService {
 
   public CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
     NoticeLogContext noticeLogContext) {
-    log.debug("sendNotice:: sending notice to recipient {}, template {}", 
-      patronNotice != null ? patronNotice.getRecipientId() : "null", 
+    log.debug("sendNotice:: sending notice to recipient {}, template {}",
+      patronNotice != null ? patronNotice.getRecipientId() : "null",
       patronNotice != null && patronNotice.getTemplateId() != null ? patronNotice.getTemplateId() : "null");
 
     log.debug("sendNotice:: posting notice to patron notice client");

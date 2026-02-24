@@ -17,7 +17,6 @@ import org.folio.circulation.support.results.Result;
 public class ItemAwareRequestScheduledNoticeHandler extends RequestScheduledNoticeHandler {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-
   public ItemAwareRequestScheduledNoticeHandler(Clients clients,
     RequestRepository requestRepository, LoanRepository loanRepository) {
     super(clients, loanRepository, requestRepository);
