@@ -1,10 +1,5 @@
 package org.folio.circulation.domain.notice.schedule;
 
-import java.lang.invoke.MethodHandles;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createLoanNoticeContextWithoutUser;
 
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
