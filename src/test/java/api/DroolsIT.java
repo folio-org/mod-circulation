@@ -26,7 +26,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 
@@ -57,7 +56,7 @@ class DroolsIT {
   @RegisterExtension
   private static WireMockExtension OKAPI = WireMockExtension.newInstance()
   .options(WireMockConfiguration.wireMockConfig().dynamicPort()
-      .extensions(new ResponseTemplateTransformer(true))).build();
+      .globalTemplating(true)).build();
 
   @Container
   private static final GenericContainer<?> MOD_CIRCULATION =
@@ -101,7 +100,7 @@ class DroolsIT {
     stub("/holdings-storage/holdings/.*", "{'instanceId':'a02b6833-1fd6-441a-bfda-5249d2d56f66'}");
     stub("/instance-storage/instances/.*", "{}");
     stub("/loan-storage/loans\\?.*", "{'loans':[]}");
-    stub("/configurations/entries\\?.*", "{'configs':[]}");
+    stub("/circulation-settings-storage/.*", "{'circulationSettings':[]}");
     stub("/request-storage/requests\\?.*", "{'requests':[]}");
     stub("/locations/.*", "{'id':'24be82a3-f7f0-490d-9598-473faa0f47ac', "
         + "'primaryServicePoint':'54ca624a-d37f-4e16-b274-7284ce2ecbd8'}");

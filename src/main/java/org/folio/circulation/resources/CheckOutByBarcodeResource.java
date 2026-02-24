@@ -58,6 +58,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -139,6 +140,7 @@ public class CheckOutByBarcodeResource extends Resource {
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
     final var checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
     final var settingsRepository = new SettingsRepository(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
 
     var dryRunCheckOut = ofAsync(() -> new LoanAndRelatedRecords(request.toLoan(),
@@ -157,7 +159,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
-      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l, requestQueueRepository),
         LoanAndRelatedRecords::withRequestQueue))

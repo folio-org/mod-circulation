@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import api.support.builders.AddInfoRequestBuilder;
 import org.folio.circulation.domain.LoanStatus;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -40,9 +39,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.AddInfoRequestBuilder;
 import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.ConfigRecordBuilder;
 import api.support.builders.HoldingBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
@@ -51,7 +50,6 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.ConfigurationExample;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -256,7 +254,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     int numberOfNotices = 300;
 
     // create a new configuration
-    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
+    circulationSettingsFixture.setScheduledNoticesProcessingLimit(noticesLimitConfig);
 
     createNotices(numberOfNotices);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
@@ -272,8 +270,8 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     int numberOfNotices = 259;
 
-    // create a incorrect configuration
-    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration("IncorrectVal"));
+    // create an incorrect configuration
+    circulationSettingsFixture.setScheduledNoticesProcessingLimit("IncorrectVal");
 
     createNotices(numberOfNotices);
     scheduledNoticeProcessingClient.runLoanNoticesProcessing();
@@ -818,17 +816,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
 
     LoanHistoryConfigurationBuilder loanHistoryConfig = new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeImmediately();
-    createConfiguration(loanHistoryConfig);
-  }
-
-  protected void createConfiguration(
-    LoanHistoryConfigurationBuilder loanHistoryConfig) {
-
-    ConfigRecordBuilder configRecordBuilder = new ConfigRecordBuilder(
-      "LOAN_HISTORY", "loan_history", loanHistoryConfig.create()
-      .encodePrettily());
-
-    configClient.create(configRecordBuilder);
+    circulationSettingsFixture.createLoanHistorySettings(loanHistoryConfig);
   }
 
   private static JsonObject beforeNotice(boolean recurring) {
