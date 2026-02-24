@@ -30,7 +30,7 @@ class AnonymizeStorageRequestsRepositoryTest {
     Clients clients = mock(Clients.class);
     CollectionResourceClient client = mock(CollectionResourceClient.class);
 
-    when(clients.anonymizeStorageRequestsClient()).thenReturn(client);
+    when(clients.requestsBatchStorage()).thenReturn(client);
 
     AnonymizeStorageRequestsRepository repository =
       new AnonymizeStorageRequestsRepository(clients);
@@ -50,15 +50,12 @@ class AnonymizeStorageRequestsRepositoryTest {
     Clients clients = mock(Clients.class);
     CollectionResourceClient client = mock(CollectionResourceClient.class);
 
-    when(clients.anonymizeStorageRequestsClient()).thenReturn(client);
+    when(clients.requestsBatchStorage()).thenReturn(client);
 
     Response response = mock(Response.class);
-    when(response.getStatusCode()).thenReturn(200);
+    when(response.getStatusCode()).thenReturn(201);
 
-    JsonObject responseBody = new JsonObject()
-      .put("anonymizedRequests", new JsonArray()
-        .add("request-id-1")
-        .add("request-id-2"));
+    JsonObject responseBody = new JsonObject();
 
     when(response.getJson()).thenReturn(responseBody);
     when(client.post(any(JsonObject.class)))
@@ -83,12 +80,11 @@ class AnonymizeStorageRequestsRepositoryTest {
     Clients clients = mock(Clients.class);
     CollectionResourceClient client = mock(CollectionResourceClient.class);
 
-    when(clients.anonymizeStorageRequestsClient()).thenReturn(client);
+    when(clients.requestsBatchStorage()).thenReturn(client);
 
     Response response = mock(Response.class);
-    when(response.getStatusCode()).thenReturn(200);
-    when(response.getJson()).thenReturn(new JsonObject()
-      .put("anonymizedRequests", new JsonArray().add("request-1")));
+    when(response.getStatusCode()).thenReturn(201);
+    when(response.getJson()).thenReturn(new JsonObject());
 
     when(client.post(any(JsonObject.class)))
       .thenReturn(CompletableFuture.completedFuture(Result.succeeded(response)));
