@@ -65,7 +65,7 @@ public enum RequestStatus {
 
   public static List<String> closedStates() {
     return CLOSED_STATUSES.stream().map(RequestStatus::getValue)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   public boolean isValid() {
