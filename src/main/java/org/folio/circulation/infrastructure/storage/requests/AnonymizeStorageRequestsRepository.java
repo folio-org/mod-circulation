@@ -16,6 +16,7 @@ import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.storage.RequestBatch;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -24,7 +25,7 @@ public class AnonymizeStorageRequestsRepository {
   private final CollectionResourceClient requestStorageClient;
 
   public AnonymizeStorageRequestsRepository(Clients clients) {
-    requestStorageClient = clients.anonymizeStorageRequestsClient();
+    requestStorageClient = clients.requestsBatchStorage();
   }
 
   private static ResponseInterpreter<RequestAnonymizationRecords>
@@ -32,9 +33,10 @@ public class AnonymizeStorageRequestsRepository {
 
     Function<Response, Result<RequestAnonymizationRecords>> mapper = mapUsingJson(
       response -> records.withAnonymizedRequests(
-        toStream(response, "anonymizedRequests").collect(toList())));
+        toStream(response, "anonymizedRequests").toList()));
 
-    return new ResponseInterpreter<RequestAnonymizationRecords>().flatMapOn(200, mapper)
+    return new ResponseInterpreter<RequestAnonymizationRecords>()
+      .on(201, Result.of(() -> records))
       .otherwise(forwardOnFailure());
   }
 
@@ -50,7 +52,9 @@ public class AnonymizeStorageRequestsRepository {
     if (records.getAnonymizedRequestIds().isEmpty()) {
       return completedFuture(succeeded(records));
     }
-    return requestStorageClient.post(createRequestPayload(records))
+    RequestBatch requestBatch = new RequestBatch(records.getAnonymizedRequests());
+
+    return requestStorageClient.post(requestBatch.toJson())
       .thenApply(createStorageRequestResponseInterpreter(records)::flatMap);
   }
 }

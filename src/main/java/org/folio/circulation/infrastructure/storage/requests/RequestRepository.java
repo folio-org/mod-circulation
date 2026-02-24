@@ -8,7 +8,6 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;

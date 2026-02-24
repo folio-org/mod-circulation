@@ -10,7 +10,6 @@ import org.folio.circulation.support.http.client.IncludeRoutingServicePoints;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.QueryParameter;
 import org.folio.circulation.support.http.server.WebContext;
-import org.folio.circulation.domain.anonymization.RequestAnonymizationRecords;
 
 import io.vertx.core.http.HttpClient;
 
@@ -61,7 +60,6 @@ public class Clients {
   private final CollectionResourceClient feeFineOwnerStorageClient;
   private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
-  private final CollectionResourceClient anonymizeStorageRequestsClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final GetManyRecordsClient userManualBlocksStorageClient;
@@ -110,7 +108,6 @@ public class Clients {
       lostItemPoliciesStorageClient = createLostItemPoliciesStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       anonymizeStorageLoansClient = createAnonymizeStorageLoansClient(client, context);
-      anonymizeStorageRequestsClient = createAnonymizeStorageRequestsClient(client, context);
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
@@ -222,10 +219,6 @@ public class Clients {
 
   public CollectionResourceClient anonymizeStorageLoansClient() {
     return anonymizeStorageLoansClient;
-  }
-
-  public CollectionResourceClient anonymizeStorageRequestsClient() {
-    return anonymizeStorageRequestsClient;
   }
 
   public CollectionResourceClient locationsStorage() {
@@ -588,14 +581,6 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/anonymize-storage-loans");
-  }
-
-  private static CollectionResourceClient createAnonymizeStorageRequestsClient(
-    OkapiHttpClient client, WebContext context)
-    throws MalformedURLException {
-
-    return getCollectionResourceClient(client, context,
-      "/request-storage/requests/anonymize");
   }
 
   private static CollectionResourceClient createLocationsStorageClient(
