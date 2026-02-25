@@ -32,7 +32,6 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria;
 import org.folio.circulation.support.http.client.CqlQuery;
-import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 public class StaffSlipsRequestFetchService {
@@ -44,7 +43,6 @@ public class StaffSlipsRequestFetchService {
   private static final String REQUESTS_KEY = "requests";
   private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String REQUEST_LEVEL_KEY = "requestLevel";
-  private static final PageLimit REQUESTS_PAGE_LIMIT = PageLimit.limit(10_000);
 
 
   private final RequestType requestType;
@@ -114,7 +112,7 @@ public class StaffSlipsRequestFetchService {
       .combine(exactMatch(REQUEST_LEVEL_KEY, RequestLevel.TITLE.getValue()), CqlQuery::and);
 
     return findWithCqlQuery(requestStorageClient, REQUESTS_KEY, Request::from)
-      .findByQuery(query, REQUESTS_PAGE_LIMIT)
+      .findByQuery(query)
       // Title-level holds in status "Open - Not yet filled" are not supposed to be linked to items,
       // but we need to double-check anyway. These requests can be filtered out at DB level using
       // CQL predicate 'not itemId=""', but CQL parser used in tests does not seem to support this construct.
