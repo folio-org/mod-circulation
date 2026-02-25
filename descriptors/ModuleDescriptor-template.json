@@ -1960,6 +1960,7 @@
         "calendar.endpoint.calendars.allOpenings.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "calendar.endpoint.dates.get",
@@ -2017,6 +2018,7 @@
         "checkout-lock-storage.checkout-locks.item.delete",
         "mod-settings.entries.collection.get",
         "mod-settings.entries.item.get",
+        "locale.item.get",
         "mod-settings.global.read.mod-circulation",
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
@@ -2064,6 +2066,7 @@
         "lost-item-fees-policies.collection.get",
         "mod-settings.entries.collection.get",
         "mod-settings.entries.item.get",
+        "locale.item.get",
         "mod-settings.global.read.mod-circulation",
         "mod-settings.global.read.circulation",
         "manualblocks.item.get",
@@ -2137,6 +2140,7 @@
         "circulation-storage.loans-history.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage"
       ],
@@ -2174,6 +2178,7 @@
         "calendar.endpoint.calendars.allOpenings.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
@@ -2413,6 +2418,7 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "manualblocks.collection.get",
@@ -2499,6 +2505,7 @@
         "patron-notice.post",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
@@ -2549,6 +2556,7 @@
         "pubsub.publish.post",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation"
       ],
       "visible": false
@@ -2785,6 +2793,7 @@
         "addresstypes.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
+        "locale.item.get",
         "mod-settings.global.read.circulation"
       ],
       "visible": false
