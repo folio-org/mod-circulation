@@ -119,7 +119,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
     return fetchItemsAndRelatedRecords(loans)
       .thenCompose(r -> r.after(allLoans -> {
-        log.info("chargeFees:: loans to charge fees {}", multipleRecordsAsString(loans));
+        log.info("chargeFees:: loans to charge fees {}", allLoans.size());
 
         return succeeded(LoanToChargeFees.usingLoans(allLoans))
           .after(this::fetchFeeFineOwners)
@@ -248,13 +248,13 @@ public class ChargeLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineOwners(
     List<LoanToChargeFees> allLoansToCharge) {
 
-    log.debug("fetchFeeFineOwners:: parameters loans: {}", collectionAsString(allLoansToCharge));
+    log.debug("fetchFeeFineOwners:: parameters loans: {}", () -> collectionAsString(allLoansToCharge));
     final Set<String> primaryServicePointIds = allLoansToCharge.stream()
       .map(LoanToChargeFees::getPrimaryServicePointId)
       .filter(Objects::nonNull)
       .collect(toSet());
     log.debug("fetchFeeFineOwners:: fetching fee/fine owners for {} service point(s)",
-      collectionAsString(primaryServicePointIds));
+      () -> collectionAsString(primaryServicePointIds));
 
     return feeFineOwnerRepository.findOwnersForServicePoints(primaryServicePointIds)
       .thenApply(r -> r.map(owners -> mapOwnersToLoans(owners, allLoansToCharge)));
@@ -263,7 +263,8 @@ public class ChargeLostFeesWhenAgedToLostService {
   private List<LoanToChargeFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
     List<LoanToChargeFees> loansToCharge) {
 
-    log.debug("mapOwnersToLoans:: mapping owners to {} loans", collectionAsString(loansToCharge));
+    log.debug("mapOwnersToLoans:: mapping owners to {} loans",
+      () -> collectionAsString(loansToCharge));
     final Map<String, FeeFineOwner> servicePointToOwner = new HashMap<>();
 
     owners.forEach(owner -> owner.getServicePoints()

@@ -7,6 +7,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
@@ -37,12 +38,10 @@ public class ActualCostRecordExpirationService {
   public ActualCostRecordExpirationService(
     CloseLoanWithLostItemService closeLoanWithLostItemService, ItemRepository itemRepository,
     ActualCostRecordRepository actualCostRecordRepository, LoanRepository loanRepository) {
-    log.debug("ActualCostRecordExpirationService:: initializing service");
     this.itemRepository = itemRepository;
     this.closeLoanWithLostItemService = closeLoanWithLostItemService;
     this.actualCostRecordRepository = actualCostRecordRepository;
     this.loanRepository = loanRepository;
-    log.info("ActualCostRecordExpirationService:: service initialized successfully");
   }
 
   public CompletableFuture<Result<Void>> expireActualCostRecords() {
@@ -55,44 +54,22 @@ public class ActualCostRecordExpirationService {
   private CompletableFuture<Result<Void>> processExpiredActualCostRecords(
     Collection<ActualCostRecord> records) {
 
-    log.debug("processExpiredActualCostRecords:: parameters records size: {}",
-      records != null ? records.size() : 0);
+    log.debug("processExpiredActualCostRecords:: parameters records: {}",
+      () -> collectionAsString(records));
     if (records.isEmpty()) {
       log.info("processExpiredActualCostRecords:: found no expired actual cost records to process");
       return emptyAsync();
     }
-    int recordCount = records.size();
-    log.info("processExpiredActualCostRecords:: processing {} expired actual cost records", recordCount);
-    if (log.isDebugEnabled()) {
-      List<String> recordIds = records.stream()
-        .map(ActualCostRecord::getId)
-        .limit(10)
-        .collect(toList());
-      log.debug("processExpiredActualCostRecords:: first {} record IDs: {}",
-        Math.min(10, recordCount), recordIds);
-    }
+
+    log.info("Processing {} expired actual cost records", records.size());
+
     List<ActualCostRecord> expiredRecords = records.stream()
       .map(rec -> rec.withStatus(EXPIRED))
       .collect(toList());
     log.debug("processExpiredActualCostRecords:: marked {} records with EXPIRED status", expiredRecords.size());
     return actualCostRecordRepository.update(expiredRecords)
-      .thenCompose(r -> {
-        if (r.succeeded()) {
-          log.info("processExpiredActualCostRecords:: successfully updated {} actual cost records to EXPIRED status",
-            r.value().size());
-        } else {
-          log.warn("processExpiredActualCostRecords:: failed to update actual cost records: {}", r.cause());
-        }
-        return r.after(this::fetchLoansForExpiredRecords);
-      })
-      .thenCompose(r -> {
-        if (r.succeeded()) {
-          log.debug("processExpiredActualCostRecords:: proceeding to close loans");
-        } else {
-          log.warn("processExpiredActualCostRecords:: failed to fetch loans: {}", r.cause());
-        }
-        return r.after(this::closeLoans);
-      });
+      .thenCompose(r -> r.after(this::fetchLoansForExpiredRecords))
+      .thenCompose(r -> r.after(this::closeLoans));
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchLoansForExpiredRecords(
@@ -106,7 +83,7 @@ public class ActualCostRecordExpirationService {
   }
 
   private CompletableFuture<Result<Void>> closeLoans(MultipleRecords<Loan> expiredLoans) {
-    log.debug("closeLoans:: parameters expiredLoans: {}", multipleRecordsAsString(expiredLoans));
+    log.debug("closeLoans:: parameters expiredLoans: {}", () -> multipleRecordsAsString(expiredLoans));
     if (expiredLoans.isEmpty()) {
       log.info("closeLoans:: no loans to close, returning empty result");
       return emptyAsync();

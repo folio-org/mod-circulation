@@ -106,7 +106,7 @@ public class ActualCostRecordService {
 
     if (!loan.getLostItemPolicy().hasActualCostFee()) {
       log.info("createActualCostRecordIfNecessary:: lost item policy does not have actual cost fee, " +
-        "skipping actual cost record creation for loanId: {}", loan.getId());
+        "skipping actual cost record creation for loanId: {}", loan::getId);
 
       return completedFuture(succeeded(null));
     }
@@ -118,7 +118,7 @@ public class ActualCostRecordService {
       .withFeeFineOwner(feeFineOwner)
       .withFeeFine(feeFine);
     log.debug("createActualCostRecordIfNecessary:: created context for loanId: {}, " +
-      "starting lookup chain", loan.getId());
+      "starting lookup chain", loan::getId);
 
     return lookupPermanentLocation(context)
       .thenCompose(r -> r.after(this::lookupIdentifierTypes))
@@ -144,7 +144,7 @@ public class ActualCostRecordService {
     }
 
     log.debug("lookupPatronGroup:: patron group not found, fetching from repository for userId: {}",
-      user.getId());
+      user::getId);
 
     return patronGroupRepository.findGroupForUser(user)
       .thenApply(r -> r.map(context.getLoan()::withUser))
