@@ -61,11 +61,14 @@ public class FeeFineFacade {
   public CompletableFuture<Result<List<FeeFineAction>>> createAccounts(
     Collection<CreateAccountCommand> commands) {
 
+    log.debug("createAccounts:: parameters commands count: {}", commands::size);
     return allOf(commands, this::createAccount)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   public CompletableFuture<Result<FeeFineAction>> createAccount(CreateAccountCommand command) {
+    log.debug("createAccount:: parameters loanId: {}",
+      command.getLoan() != null ? command.getLoan().getId() : "null");
     return ofAsync(() -> new StoredAccount(command))
       .thenCompose(r -> r.after(accountRepository::create))
       .thenCompose(r -> r.after(account -> createFeeFineChargeAction(account, command)))
@@ -75,6 +78,7 @@ public class FeeFineFacade {
   private CompletableFuture<Result<FeeFineAction>> createFeeFineChargeAction(Account account,
     CreateAccountCommand command) {
 
+    log.debug("createFeeFineChargeAction:: parameters accountId: {}", account::getId);
     return ofAsync(() -> StoredFeeFineAction.builder(account))
       .thenCompose(r -> r.after(builder -> populateCreatedBy(builder, command)))
       .thenCompose(r -> r.after(builder -> populateCreatedAt(builder, command)))
@@ -133,6 +137,7 @@ public class FeeFineFacade {
   private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedBy(
     StoredFeeFineActionBuilder builder, CreateAccountCommand command) {
 
+    log.debug("populateCreatedBy:: createdByAutomatedProcess: {}", command::isCreatedByAutomatedProcess);
     if (command.isCreatedByAutomatedProcess()) {
       return completedFuture(succeeded(builder.createdByAutomatedProcess()));
     }
@@ -142,12 +147,14 @@ public class FeeFineFacade {
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchServicePoint(String servicePointId) {
+    log.debug("fetchServicePoint:: parameters servicePointId: {}", servicePointId);
     return servicePointRepository.getServicePointById(servicePointId);
   }
 
   private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedAt(
     StoredFeeFineActionBuilder builder, CreateAccountCommand command) {
 
+    log.debug("populateCreatedAt:: createdByAutomatedProcess: {}", command::isCreatedByAutomatedProcess);
     if (command.isCreatedByAutomatedProcess()) {
       return completedFuture(succeeded(builder));
     }

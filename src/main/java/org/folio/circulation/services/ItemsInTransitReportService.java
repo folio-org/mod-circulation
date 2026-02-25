@@ -75,6 +75,7 @@ public class ItemsInTransitReportService {
   }
 
   public CompletableFuture<Result<JsonObject>> buildReport() {
+    log.debug("buildReport:: building items in transit report");
     return completedFuture(succeeded(new ItemsInTransitReportContext()))
       .thenCompose(r -> r.after(this::fetchItems))
       .thenCompose(r -> r.after(this::fetchHoldingsRecords))
@@ -106,6 +107,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchItems(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchItems:: fetching items in transit");
     return itemReportRepository.getAllItemsByField("status.name", IN_TRANSIT.getValue())
       .thenApply(r -> r.next(itemsReportFetcher ->
         combineAll(itemsReportFetcher.getResultListOfItems())
@@ -119,6 +121,8 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchHoldingsRecords(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchHoldingsRecords:: fetching holdings records for {} items",
+      context.getItems().size());
     return succeeded(mapToStrings(context.getItems().values(), Item::getHoldingsRecordId))
       .after(itemRepository::findHoldingsByIds)
       .thenApply(mapResult(records -> toMap(records.getRecords(), Holdings::getId)))
@@ -128,6 +132,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchInstances(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchInstances:: fetching instances for {} items", context.getItems().size());
     return instanceRepository.fetchByIds(mapToStrings(context.getItems().values(),
           context::getInstanceId))
       .thenApply(mapResult(records -> toMap(records.getRecords(), Instance::getId)))
@@ -137,6 +142,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLocations(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchLocations:: fetching locations for {} items", context.getItems().size());
     return locationRepository
       .getItemLocations(context.getItems().values())
       .thenApply(mapResult(context::withLocations));
@@ -145,6 +151,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchLoans(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchLoans:: fetching loans for {} items", context.getItems().size());
     return succeeded(context.getItems().keySet())
       .after(loanRepository::findByItemIds)
       .thenApply(mapResult(loans -> toMap(loans, Loan::getItemId)))
@@ -154,6 +161,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchRequests(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchRequests:: fetching requests for {} items", context.getItems().size());
     return requestRepository.findOpenRequestsByItemIds(context.getItems().keySet())
       .thenApply(mapResult(requests -> toMap(requests.getRecords(), Request::getItemId)))
       .thenApply(mapResult(context::withRequests));
@@ -162,6 +170,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchUsers(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchUsers:: fetching users for {} requests", context.getRequests().size());
     return userRepository.findUsersByRequests(context.getRequests().values())
       .thenApply(mapResult(userMultipleRecords -> toMap(userMultipleRecords.getRecords(),
         User::getId)))
@@ -171,6 +180,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchPatronGroups(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchPatronGroups:: fetching patron groups for {} users", context.getUsers().size());
     return ofAsync(() -> mapToStrings(context.getUsers().values(), User::getPatronGroupId))
       .thenCompose(r -> r.after(patronGroupRepository::findPatronGroupsByIds))
       .thenApply(r -> r.map(groups -> toMap(groups, PatronGroup::getId)))
@@ -180,6 +190,7 @@ public class ItemsInTransitReportService {
   private CompletableFuture<Result<ItemsInTransitReportContext>> fetchServicePoints(
     ItemsInTransitReportContext context) {
 
+    log.debug("fetchServicePoints:: fetching service points for items and loans");
     Collection<Item> items = context.getItems().values();
     Stream<String> itemInTransitDestinationServicePointIds = items.stream()
       .map(Item::getInTransitDestinationServicePointId);

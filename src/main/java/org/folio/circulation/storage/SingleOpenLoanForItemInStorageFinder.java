@@ -5,11 +5,14 @@ import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.validation.CommonFailures.moreThanOneOpenLoanFailure;
 import static org.folio.circulation.support.results.Result.of;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -21,6 +24,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.support.results.Result;
 
 public class SingleOpenLoanForItemInStorageFinder {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final LoanRepository loanRepository;
   private final UserRepository userRepository;
   private final Boolean allowNoLoanToBeFound;
@@ -34,6 +38,7 @@ public class SingleOpenLoanForItemInStorageFinder {
   }
 
   public CompletableFuture<Result<Loan>> findSingleOpenLoan(Item item) {
+    log.debug("findSingleOpenLoan:: parameters itemId: {}", item::getItemId);
     //Use same error for no loans and more than one loan to maintain compatibility
     final MoreThanOneLoanValidator moreThanOneLoanValidator
       = new MoreThanOneLoanValidator(moreThanOneOpenLoanFailure(item.getBarcode()));

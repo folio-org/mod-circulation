@@ -1,4 +1,4 @@
-package org.folio.circulation.services.actualcostrecord;
+﻿package org.folio.circulation.services.actualcostrecord;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -7,6 +7,7 @@ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.results.AsynchronousResult.fromFutureResult;
 import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -36,14 +37,16 @@ public class ActualCostRecordExpirationService {
   public ActualCostRecordExpirationService(
     CloseLoanWithLostItemService closeLoanWithLostItemService, ItemRepository itemRepository,
     ActualCostRecordRepository actualCostRecordRepository, LoanRepository loanRepository) {
-
+    log.debug("ActualCostRecordExpirationService:: initializing service");
     this.itemRepository = itemRepository;
     this.closeLoanWithLostItemService = closeLoanWithLostItemService;
     this.actualCostRecordRepository = actualCostRecordRepository;
     this.loanRepository = loanRepository;
+    log.info("ActualCostRecordExpirationService:: service initialized successfully");
   }
 
   public CompletableFuture<Result<Void>> expireActualCostRecords() {
+    log.debug("expireActualCostRecords:: starting expired actual cost records expiration process");
     return actualCostRecordRepository.findExpiredActualCostRecords()
       .thenCompose(r -> r.after(this::processExpiredActualCostRecords))
       .whenComplete(this::logResult);
@@ -52,20 +55,44 @@ public class ActualCostRecordExpirationService {
   private CompletableFuture<Result<Void>> processExpiredActualCostRecords(
     Collection<ActualCostRecord> records) {
 
+    log.debug("processExpiredActualCostRecords:: parameters records size: {}",
+      records != null ? records.size() : 0);
     if (records.isEmpty()) {
-      log.info("Found no expired actual cost records to process");
+      log.info("processExpiredActualCostRecords:: found no expired actual cost records to process");
       return emptyAsync();
     }
-
-    log.info("Processing {} expired actual cost records", records.size());
-
+    int recordCount = records.size();
+    log.info("processExpiredActualCostRecords:: processing {} expired actual cost records", recordCount);
+    if (log.isDebugEnabled()) {
+      List<String> recordIds = records.stream()
+        .map(ActualCostRecord::getId)
+        .limit(10)
+        .collect(toList());
+      log.debug("processExpiredActualCostRecords:: first {} record IDs: {}",
+        Math.min(10, recordCount), recordIds);
+    }
     List<ActualCostRecord> expiredRecords = records.stream()
       .map(rec -> rec.withStatus(EXPIRED))
       .collect(toList());
-
+    log.debug("processExpiredActualCostRecords:: marked {} records with EXPIRED status", expiredRecords.size());
     return actualCostRecordRepository.update(expiredRecords)
-      .thenCompose(r -> r.after(this::fetchLoansForExpiredRecords))
-      .thenCompose(r -> r.after(this::closeLoans));
+      .thenCompose(r -> {
+        if (r.succeeded()) {
+          log.info("processExpiredActualCostRecords:: successfully updated {} actual cost records to EXPIRED status",
+            r.value().size());
+        } else {
+          log.warn("processExpiredActualCostRecords:: failed to update actual cost records: {}", r.cause());
+        }
+        return r.after(this::fetchLoansForExpiredRecords);
+      })
+      .thenCompose(r -> {
+        if (r.succeeded()) {
+          log.debug("processExpiredActualCostRecords:: proceeding to close loans");
+        } else {
+          log.warn("processExpiredActualCostRecords:: failed to fetch loans: {}", r.cause());
+        }
+        return r.after(this::closeLoans);
+      });
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchLoansForExpiredRecords(
@@ -79,7 +106,9 @@ public class ActualCostRecordExpirationService {
   }
 
   private CompletableFuture<Result<Void>> closeLoans(MultipleRecords<Loan> expiredLoans) {
+    log.debug("closeLoans:: parameters expiredLoans: {}", multipleRecordsAsString(expiredLoans));
     if (expiredLoans.isEmpty()) {
+      log.info("closeLoans:: no loans to close, returning empty result");
       return emptyAsync();
     }
 
@@ -99,14 +128,15 @@ public class ActualCostRecordExpirationService {
 
   private void logResult(Result<?> result, Throwable throwable) {
     if (throwable != null) {
-      log.error("An exception was thrown while processing expired actual cost records", throwable);
+      log.error("expireActualCostRecords:: an exception was thrown while processing expired actual cost records",
+        throwable);
     } else if (result != null) {
       if (result.failed()) {
-        log.error("Processing expired actual cost records failed: {}", result.cause());
+        log.error("expireActualCostRecords:: processing expired actual cost records failed: {}",
+          result.cause());
       } else {
-        log.info("Finished processing expired actual cost records");
+        log.info("expireActualCostRecords:: successfully finished processing expired actual cost records");
       }
     }
   }
-
 }

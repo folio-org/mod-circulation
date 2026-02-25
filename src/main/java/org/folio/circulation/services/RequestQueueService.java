@@ -4,12 +4,15 @@ import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.ofAsync;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -24,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RequestQueueService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final RequestPolicyRepository requestPolicyRepository;
   private final LoanPolicyRepository loanPolicyRepository;
@@ -38,6 +42,7 @@ public class RequestQueueService {
   public CompletableFuture<Result<Request>> findRequestFulfillableByItem(Item item,
     RequestQueue requestQueue) {
 
+    log.debug("findRequestFulfillableByItem:: parameters itemId: {}", item::getItemId);
     return findRequestFulfillableByItem(item, requestQueue.fulfillableRequests().iterator());
   }
 
@@ -55,12 +60,15 @@ public class RequestQueueService {
   }
 
   public CompletableFuture<Result<Boolean>> isRequestFulfillableByItem(Item item, Request request) {
+    log.debug("isRequestFulfillableByItem:: parameters itemId: {}, requestId: {}, level: {}",
+      item::getItemId, request::getId, request::getRequestLevel);
     switch (request.getRequestLevel()) {
       case ITEM:
         return isItemLevelRequestFulfillableByItem(item, request);
       case TITLE:
         return isTitleLevelRequestFulfillableByItem(item, request);
       default:
+        log.info("isRequestFulfillableByItem:: unknown request level: {}", request::getRequestLevel);
         return ofAsync(false);
     }
   }
@@ -68,18 +76,25 @@ public class RequestQueueService {
   private CompletableFuture<Result<Boolean>> isItemLevelRequestFulfillableByItem(Item item,
     Request request) {
 
+    log.debug("isItemLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
+      item::getItemId, request::getId);
     return ofAsync(StringUtils.equals(item.getItemId(), request.getItemId()));
   }
 
   protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
+    log.debug("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
+      item::getItemId, request::getId);
+
     if (!StringUtils.equals(request.getItemId(), item.getItemId()) &&
       !StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
+      log.info("isTitleLevelRequestFulfillableByItem:: itemId and instanceId mismatch, not fulfillable");
       return ofAsync(false);
     }
 
     if (request.isRecall() && request.isNotYetFilled()) {
+      log.info("isTitleLevelRequestFulfillableByItem:: recall request not yet filled, checking requestable and loanable");
       return isItemRequestableAndLoanable(item, request);
     }
 
@@ -89,12 +104,16 @@ public class RequestQueueService {
   protected CompletableFuture<Result<Boolean>> canRequestBeFulfilledByItem(Item item,
     Request request) {
 
+    log.debug("canRequestBeFulfilledByItem:: parameters itemId: {}, requestId: {}",
+      item::getItemId, request::getId);
     return request.getItemId() == null ^ StringUtils.equals(item.getItemId(), request.getItemId())
       ? isItemRequestableAndLoanable(item, request)
       : ofAsync(false);
   }
 
   protected CompletableFuture<Result<Boolean>> isItemRequestableAndLoanable(Item item, Request request) {
+    log.debug("isItemRequestableAndLoanable:: parameters itemId: {}, requestId: {}",
+      item::getItemId, request::getId);
     return isItemRequestable(item, request)
       .thenCompose(r -> r.after(whenTrue(isItemLoanable(item, request), ofAsync(false))));
   }
@@ -115,6 +134,7 @@ public class RequestQueueService {
   public CompletableFuture<Result<Boolean>> isItemRequestedByAnotherPatron(
     RequestQueue requestQueue, User requester, Item item) {
 
+    log.debug("isItemRequestedByAnotherPatron:: parameters itemId: {}", item::getItemId);
     return findRequestFulfillableByItem(item, requestQueue)
       .thenApply(r -> r.map(request -> !(request == null || request.isFor(requester))));
   }

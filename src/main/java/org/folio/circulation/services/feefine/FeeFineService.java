@@ -39,8 +39,9 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<AccountActionResponse>> refundAccount(RefundAccountCommand refundCommand) {
+    log.debug("refundAccount:: parameters accountId: {}", refundCommand::getAccountId);
     if (!refundCommand.hasPaidOrTransferredAmount()) {
-      log.info("Account has nothing to refund {}", refundCommand.getAccountId());
+      log.info("Account has nothing to refund {}", refundCommand::getAccountId);
       return ofAsync(() -> null);
     }
 
@@ -51,17 +52,20 @@ public class FeeFineService {
       .refundReason(refundCommand.getRefundReason().getValue())
       .build();
 
+    log.info("refundAccount:: initiating refund for account {}", refundCommand::getAccountId);
     return accountRefundClient.post(refundRequest.toJson(), refundCommand.getAccountId())
       .thenApply(r -> r.next(accountActionResponseInterpreter::apply));
   }
 
   public CompletableFuture<Result<AccountActionResponse>> cancelAccount(CancelAccountCommand cancelCommand) {
+    log.debug("cancelAccount:: parameters accountId: {}", cancelCommand::getAccountId);
     final CancelAccountRequest cancelRequest = CancelAccountRequest.builder()
       .servicePointId(cancelCommand.getCurrentServicePointId())
       .userName(cancelCommand.getUserName())
       .cancellationReason(cancelCommand.getCancellationReason().getValue())
       .build();
 
+    log.info("cancelAccount:: initiating cancel for account {}", cancelCommand::getAccountId);
     return accountCancelClient.post(cancelRequest.toJson(), cancelCommand.getAccountId())
       .thenApply(r -> r.next(accountActionResponseInterpreter::apply));
   }
@@ -69,7 +73,7 @@ public class FeeFineService {
   public CompletableFuture<Result<ActualCostRecord>> cancelActualCostFeeFine(
     CancelActualCostFeeRequest request) {
 
-    log.info("cancelActualCostFeeFine:: {}", request);
+    log.info("cancelActualCostFeeFine:: {}", () -> request);
 
     return actualCostFeeFineCancelClient.post(request.toJson())
       .thenApply(r -> r.next(actualCostFeeFineResponseInterpreter::apply))
