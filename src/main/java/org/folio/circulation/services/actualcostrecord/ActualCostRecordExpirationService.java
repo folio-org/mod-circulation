@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.services.actualcostrecord;
+package org.folio.circulation.services.actualcostrecord;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;

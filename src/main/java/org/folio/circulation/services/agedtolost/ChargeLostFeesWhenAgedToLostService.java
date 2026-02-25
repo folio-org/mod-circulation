@@ -1,4 +1,4 @@
-﻿package org.folio.circulation.services.agedtolost;
+package org.folio.circulation.services.agedtolost;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toSet;
