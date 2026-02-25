@@ -7,8 +7,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
@@ -126,7 +124,7 @@ public abstract class SlipsResource extends Resource {
       .thenCompose(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
       .thenCompose(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenCompose(r -> r.after(servicePointRepository::findServicePointsForRequests))
-      .thenApply(flatMapResult(this::mapResultToJson))
+      .thenApplyAsync(r -> r.map(this::mapResultToJson))
       .thenCompose(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
         this::addPrimaryServicePointNameToStaffSlipContext));
   }
@@ -226,16 +224,15 @@ public abstract class SlipsResource extends Resource {
         .orElse(request)));
   }
 
-  private Result<JsonObject> mapResultToJson(MultipleRecords<Request> requests) {
+  private JsonObject mapResultToJson(MultipleRecords<Request> requests) {
     log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
       .map(StaffSlipMapper::createStaffSlipContext)
       .toList();
-    JsonObject jsonRepresentations = new JsonObject()
+
+    return new JsonObject()
       .put(collectionName, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
-
-    return succeeded(jsonRepresentations);
   }
 
   private JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject context,
