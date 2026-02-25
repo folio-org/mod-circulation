@@ -18,6 +18,7 @@ import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
@@ -38,11 +39,13 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.services.StaffSlipsRequestFetchService;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -70,6 +73,11 @@ class StaffSlipsTests extends APITests {
   private static final String ITEM_KEY = "item";
   private static final String REQUEST_KEY = "request";
   private static final String REQUESTER_KEY = "requester";
+
+  @BeforeEach
+  void beforeEach() {
+    StaffSlipsRequestFetchService.clearCustomRequestLimit();
+  }
 
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
@@ -562,6 +570,67 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, slipsType);
     assertResponseContains(response, slipsType, item, pageRequest, james);
+  }
+
+  @Test
+  void searchSlipsLimitIsRespected() {
+    circulationSettingsFixture.enableTlrFeature();
+    circulationSettingsFixture.setPrintHoldRequests(true);
+
+    UUID servicePointId = servicePointsFixture.cd6().getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    int batchSize = 50; // default value used by CqlIndexValuesFinder
+    int searchSlipsLimit = batchSize * 2;
+    int itemLevelRequestCount = searchSlipsLimit + 1;
+    StaffSlipsRequestFetchService.setCustomRequestLimit(searchSlipsLimit);
+
+    for (int i = 0; i < itemLevelRequestCount; i++) {
+      final int currentIndex = i;
+
+      IndividualResource location = locationsFixture.basedUponExampleLocation(
+        builder -> builder
+          .withName("Test location " + currentIndex)
+          .withCode("LOC_" + currentIndex)
+          .withPrimaryServicePoint(servicePointId));
+
+      UserResource requester = usersFixture.steve(b -> b.withBarcode("user_ilr_" + currentIndex));
+      IndividualResource holding = holdingsFixture.createHoldingsRecord(instanceId, location.getId());
+      IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holding.getId(), location.getId());
+
+      requestsFixture.place(new RequestBuilder()
+        .hold()
+        .fulfillToHoldShelf()
+        .withItemId(item.getId())
+        .withHoldingsRecordId(holding.getId())
+        .withInstanceId(instanceId)
+        .withRequestDate(ZonedDateTime.now(UTC))
+        .withRequesterId(requester.getId())
+        .withPickupServicePointId(servicePointId));
+    }
+
+    assertThat(requestsStorageClient.getAll().size(), is(itemLevelRequestCount));
+
+    // place a title-level hold to make sure that no search slips are created for requests WITHOUT
+    // itemId when the number of requests WITH itemId already reached/exceeded the limit
+    IndividualResource titleLevelHold = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.james());
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, searchSlipsLimit, SlipsType.SEARCH_SLIPS);
+
+    // verify that no search slip was built for title-level hold
+    assertTrue(
+      response.getJson()
+        .getJsonArray("searchSlips")
+        .stream()
+        .filter(JsonObject.class::isInstance)
+        .map(JsonObject.class::cast)
+        .noneMatch(slipJson -> titleLevelHold.getId().toString().equals(
+          slipJson.getJsonObject("request").getString("requestID")))
+    );
   }
 
   @Test

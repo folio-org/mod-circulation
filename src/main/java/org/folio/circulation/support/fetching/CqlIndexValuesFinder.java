@@ -96,17 +96,21 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueriesAndQuery(
     List<Result<CqlQuery>> queries, Result<CqlQuery> andQuery) {
 
-    return findByBatchQueries(queries.stream().map(query ->
-      query.combine(andQuery, CqlQuery::and))
-      .collect(Collectors.toList()));
+    return findByBatchQueries(combineQueries(queries, andQuery));
   }
 
   private CompletableFuture<Result<MultipleRecords<T>>> find(List<Result<CqlQuery>> queries,
     Result<CqlQuery> andQuery, int limit) {
 
-    return findByBatchQueries(queries.stream().map(query ->
-        query.combine(andQuery, CqlQuery::and))
-      .collect(Collectors.toList()), limit);
+    return findByBatchQueries(combineQueries(queries, andQuery), limit);
+  }
+
+  private static List<Result<CqlQuery>> combineQueries(List<Result<CqlQuery>> queries,
+    Result<CqlQuery> commonQuery) {
+
+    return queries.stream()
+      .map(query -> query.combine(commonQuery, CqlQuery::and))
+      .toList();
   }
 
   private List<Result<CqlQuery>> buildBatchQueriesByIndexName(MultipleCqlIndexValuesCriteria criteria) {
@@ -144,11 +148,16 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
     List<Result<CqlQuery>> queries, int limit) {
 
+    log.info("findByBatchQueries:: fetching records using {} batch queries with limit of {} records",
+      queries::size, () -> limit);
+
     CompletableFuture<Result<MultipleRecords<T>>> future = ofAsync(MultipleRecords.empty());
     for (Result<CqlQuery> query : queries) {
       future = future.thenCompose(r -> r.after(combinedRecords -> {
-        log.info("findByBatchQueries:: records: {}, query: {}", combinedRecords::size, query.value()::toString);
+        log.debug("findByBatchQueries:: total records fetched: {}", combinedRecords::size);
         if (combinedRecords.size() >= limit) {
+          log.info("findByBatchQueries:: limit of {} records reached, returning {} records", limit,
+            combinedRecords.size());
           return ofAsync(combinedRecords);
         }
         return cqlFinder.findByQuery(query, PageLimit.limit(limit))
