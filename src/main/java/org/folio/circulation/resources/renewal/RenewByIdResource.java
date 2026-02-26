@@ -70,10 +70,7 @@ public class RenewByIdResource extends RenewalResource {
     log.debug("lookupItem:: itemId={}", itemId);
 
     return itemFinder.findItemById(itemId)
-      .thenApply(r -> {
-        log.info("lookupItem:: result failed={}", r::failed);
-        return errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, (Item) null);
-      });
+      .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, (Item) null));
   }
 
   private CompletableFuture<Result<Loan>> lookupLoan(
@@ -88,11 +85,8 @@ public class RenewByIdResource extends RenewalResource {
     log.debug("lookupLoan:: itemId={}", () -> item.getItemId());
 
     return singleOpenLoanFinder.findSingleOpenLoan(item)
-      .thenApply(r -> {
-        log.info("lookupLoan:: result failed={}", r::failed);
-        return errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-          (Loan) null);
-      });
+      .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+        (Loan) null));
   }
 
   private Result<Loan> refuseWhenUserNotFound(Loan loan,
@@ -103,10 +97,8 @@ public class RenewByIdResource extends RenewalResource {
     }
 
     return UserNotFoundValidator.refuseWhenUserNotFound(succeeded(loan))
-      .mapFailure(failure -> {
-        log.warn("refuseWhenUserNotFound:: user not found for loan {}", loan::getId);
-        return errorHandler.handleValidationError(failure, FAILED_TO_FETCH_USER, loan);
-      });
+      .mapFailure(failure -> errorHandler.handleValidationError(failure,
+        FAILED_TO_FETCH_USER, loan));
   }
 
   private Result<Loan> refuseWhenUserDoesNotMatch(Loan loan, RenewByIdRequest idRequest,
