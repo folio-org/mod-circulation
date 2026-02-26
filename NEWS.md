@@ -1,3 +1,6 @@
+## 24.4.17 2026-02-26
+* Renew ECS loan with loan policy used during check-out (CIRC-2565)
+
 ## 24.4.16 2026-02-17
 * Fix request losing retrieval service point name upon check-in (CIRC-2535)
 
