@@ -76,6 +76,8 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   private CompletableFuture<Result<Void>> processEvent(LoanRepository loanRepository,
     LoanRelatedFeeFineClosedEvent event, CloseLoanWithLostItemService closeLoanWithLostItemService) {
 
+    log.debug("processEvent:: loanId={}", event.getLoanId());
+
     return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(closeLoanWithLostItemService::closeLoanAsLostAndPaid));
   }
@@ -84,6 +86,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
     final LoanRelatedFeeFineClosedEvent eventPayload = fromJson(context.body().asJsonObject());
 
     if (eventPayload.getLoanId() == null) {
+      log.warn("createAndValidateRequest:: loanId is missing in event payload");
       return failed(singleValidationError(
         new ValidationError("Loan id is required", "loanId", null)));
     }

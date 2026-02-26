@@ -151,6 +151,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private void renew(RoutingContext routingContext) {
+    log.debug("renew:: body={}", routingContext.body()::asString);
     final WebContext webContext = new WebContext(routingContext);
     final Clients clients = Clients.create(webContext, client);
     final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
@@ -243,6 +244,8 @@ public abstract class RenewalResource extends Resource {
       .noneMatch(request -> request.isFor(loan));
 
     if (loan.wasDueDateChangedByRecall() && loanIsRecalled) {
+      log.info("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: unsetting due date changed " +
+        "by recall for loan {}", loan::getId);
       return renewalContext.withLoan(loan.unsetDueDateChangedByRecall());
     }
     else {
@@ -254,6 +257,9 @@ public abstract class RenewalResource extends Resource {
     RenewalContext renewalContext, Clients clients, ItemRepository itemRepository,
     UserRepository userRepository, LoanRepository loanRepository,
     OverdueFinePolicyRepository overdueFinePolicyRepository) {
+
+    log.debug("processFeesFines:: loanId={}, isRenewalBlockOverrideRequested={}",
+      renewalContext.getLoan()::getId, () -> isRenewalBlockOverrideRequested);
 
     return isRenewalBlockOverrideRequested
       ? processFeesFinesForRenewalBlockOverride(renewalContext, clients,
@@ -521,9 +527,11 @@ public abstract class RenewalResource extends Resource {
   }
 
   public CompletableFuture<Result<RenewalContext>> renewThroughOverride(RenewalContext context) {
+    log.debug("renewThroughOverride:: loanId={}", context.getLoan()::getId);
     final JsonObject overrideBlocks = context.getRenewalRequest().getJsonObject(OVERRIDE_BLOCKS);
     final String comment = getProperty(overrideBlocks, COMMENT);
     if (StringUtils.isBlank(comment)) {
+      log.warn("renewThroughOverride:: override renewal request has no comment");
       return completedFuture(failedValidation("Override renewal request must have a comment",
         COMMENT, null));
     }
@@ -538,6 +546,9 @@ public abstract class RenewalResource extends Resource {
       .filter(Request::isRecall)
       .anyMatch(request -> request.isFor(loan));
 
+    log.info("renewThroughOverride:: loanId={}, loanIsRecalled={}, overrideDueDate={}",
+      loan::getId, () -> loanIsRecalled, () -> overrideDueDate);
+
     return completedFuture(overrideRenewal(loan, ClockUtil.getZonedDateTime(),
       overrideDueDate, comment, loanIsRecalled))
       .thenApply(mapResult(context::withLoan));
@@ -550,45 +561,55 @@ public abstract class RenewalResource extends Resource {
       final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
       if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
+        log.info("overrideRenewal:: loan policy is not loanable/renewable for loanId={}", loan::getId);
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
       if (unableToCalculateProposedDueDate(loan, systemDate)) {
+        log.info("overrideRenewal:: unable to calculate proposed due date for loanId={}", loan::getId);
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
       final Result<ZonedDateTime> newDueDateResult = calculateNewDueDate(overrideDueDate, loan, systemDate);
 
       if (loanPolicy.hasReachedRenewalLimit(loan)) {
+        log.info("overrideRenewal:: loan has reached renewal limit for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (hasRecallRequest) {
+        log.info("overrideRenewal:: loan has recall request for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (loan.isItemLost()) {
+        log.info("overrideRenewal:: item is lost for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (proposedDueDateIsSameOrEarlier(loan, systemDate)) {
+        log.info("overrideRenewal:: proposed due date is same or earlier for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (loan.getLastReminderFeeBilledNumber() != null && loan.getLastReminderFeeBilledNumber()>0) {
+        log.info("overrideRenewal:: loan has reminder fees for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
       return failedValidation(errorForNotMatchingOverrideCases(loanPolicy));
 
     } catch (Exception e) {
+      log.warn("overrideRenewal:: exception during override renewal for loanId={}", loan.getId(), e);
       return failedDueToServerError(e);
     }
   }
 
   private Result<Loan> overrideRenewalForDueDate(Loan loan, ZonedDateTime overrideDueDate, String comment) {
     if (overrideDueDate == null) {
+      log.warn("overrideRenewalForDueDate:: overrideDueDate is null for loanId={}", loan::getId);
       return failedValidation(errorForDueDate());
     }
+    log.info("overrideRenewalForDueDate:: overriding due date for loanId={}, overrideDueDate={}", loan::getId, () -> overrideDueDate);
     return succeeded(overrideRenewLoan(overrideDueDate, loan, comment));
   }
 
@@ -643,6 +664,8 @@ public abstract class RenewalResource extends Resource {
   public Result<RenewalContext> regularRenew(RenewalContext context,
     CirculationErrorHandler errorHandler, ZonedDateTime renewDate) {
 
+    log.debug("regularRenew:: loanId={}", context.getLoan()::getId);
+
     return validateIfItemIsLoanable(context)
       .mapFailure(failure -> errorHandler.handleValidationError(failure,
         RENEWAL_ITEM_IS_NOT_LOANABLE, context))
@@ -662,9 +685,11 @@ public abstract class RenewalResource extends Resource {
 
   private Result<RenewalContext> validateIfItemIsLoanable(RenewalContext context) {
     LoanPolicy loanPolicy = context.getLoan().getLoanPolicy();
-    return loanPolicy.isNotLoanable()
-      ? failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable")))
-      : succeeded(context);
+    if (loanPolicy.isNotLoanable()) {
+      log.info("validateIfItemIsLoanable:: item is not loanable for loanId={}", context.getLoan()::getId);
+      return failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable")));
+    }
+    return succeeded(context);
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
@@ -691,6 +716,8 @@ public abstract class RenewalResource extends Resource {
   private Result<RenewalContext> validateIfRenewIsPossible(RenewalContext context) {
     Loan loan = context.getLoan();
     if (ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW.contains(loan.getItemStatus())) {
+      log.info("validateIfRenewIsPossible:: renewal not possible for loanId={}, itemStatus={}",
+        loan::getId, loan::getItemStatusName);
       final List<ValidationError> errors = new ArrayList<>();
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(), loan.getItemId()));
       return failedValidation(errors);
@@ -702,6 +729,7 @@ public abstract class RenewalResource extends Resource {
     CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(RENEWAL_ITEM_IS_NOT_LOANABLE)) {
+      log.info("renew:: skipping renew because item is not loanable");
       return succeeded(context);
     }
 
@@ -720,10 +748,12 @@ public abstract class RenewalResource extends Resource {
       if (!blockOverrides.getPatronBlockOverride().isRequested() &&
         !blockOverrides.getRenewalBlockOverride().isRequested()) {
 
+        log.info("renew:: performing regular renewal for loanId={}", loan::getId);
         return proposedDueDateResult
           .map(dueDate -> loan.renew(dueDate, loanPolicy.getId()))
           .map(l -> context);
       }
+      log.info("renew:: performing override renewal for loanId={}", loan::getId);
       return proposedDueDateResult
         .map(dueDate -> loan.overrideRenewal(
           dueDate, loanPolicy.getId(), blockOverrides.getComment()))
@@ -739,9 +769,13 @@ public abstract class RenewalResource extends Resource {
       if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
         var failureCause = (ValidationErrorFailure) proposedDueDateResult.cause();
 
+        log.warn("addErrorsIfDueDateResultFailed:: due date calculation failed for loanId={}, errors={}",
+          loan::getId, failureCause::getErrors);
         errors.addAll(failureCause.getErrors());
       }
     } else {
+      log.debug("addErrorsIfDueDateResultFailed:: checking due date for loanId={}, proposedDueDate={}",
+        loan::getId, proposedDueDateResult::value);
       errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
     }
   }
@@ -789,19 +823,23 @@ public abstract class RenewalResource extends Resource {
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
     if (loanPolicy.isNotRenewable()) {
+      log.info("validateIfRenewIsAllowedAndDueDateRequired:: loan is not renewable, loanId={}", loan::getId);
       errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
     }
     if (firstRequestForLoanedItemIsHold(requestQueue, loan)) {
       if (!loanPolicy.isHoldRequestRenewable()) {
+        log.info("validateIfRenewIsAllowedAndDueDateRequired:: hold request is not renewable, loanId={}", loan::getId);
         errors.add(loanPolicyValidationError(loanPolicy, CAN_NOT_RENEW_ITEM_ERROR));
       }
 
       if (loanPolicy.isFixed()) {
         if (loanPolicy.hasAlternateRenewalLoanPeriodForHolds()) {
+          log.info("validateIfRenewIsAllowedAndDueDateRequired:: fixed policy has alternate renewal period for holds, loanId={}", loan::getId);
           errors.add(loanPolicyValidationError(loanPolicy,
             FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS));
         }
         if (loanPolicy.hasRenewalPeriod()) {
+          log.info("validateIfRenewIsAllowedAndDueDateRequired:: fixed policy has alternate renewal period, loanId={}", loan::getId);
           errors.add(loanPolicyValidationError(loanPolicy,
             FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD));
         }

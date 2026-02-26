@@ -42,6 +42,8 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
   }
 
   private void handleFeeFineBalanceChangedEvent(RoutingContext routingContext) {
+    log.debug("handleFeeFineBalanceChangedEvent:: handling event: {}",
+      routingContext.body().asJsonObject());
     final WebContext context = new WebContext(routingContext);
     final var clients = create(context, client);
     final var scheduledNoticeService = FeeFineScheduledNoticeService.using(clients);
@@ -49,8 +51,10 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
     validateEventPayload(fromJson(routingContext.body().asJsonObject()))
       .after(event -> {
         if (ACTUAL_COST_FEE_FINE_TYPE_ID.equals(event.getFeeFineTypeId())) {
+          log.info("handleFeeFineBalanceChangedEvent:: scheduling notice for actual cost fee/fine, loanId={}", event.getLoanId());
           return scheduledNoticeService.scheduleNoticesForLostItemFeeActualCost(event);
         }
+        log.info("handleFeeFineBalanceChangedEvent:: feeFineTypeId {} is not actual cost, skipping notice scheduling", event.getFeeFineTypeId());
         return emptyAsync();
       })
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
@@ -65,10 +69,12 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
     FeeFineBalanceChangedEvent eventPayload) {
 
     if (eventPayload.getLoanId() == null) {
+      log.warn("validateEventPayload:: loanId is missing in event payload");
       return failed(singleValidationError(new ValidationError("Loan id is required",
         "loanId", null)));
     }
     if (eventPayload.getFeeFineId() == null) {
+      log.warn("validateEventPayload:: feeFineId is missing in event payload");
       return failed(singleValidationError(new ValidationError("FeeFine id is required",
         "feeFineId", null)));
     }
