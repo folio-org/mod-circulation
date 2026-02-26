@@ -1,11 +1,9 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.domain.ItemStatus.AVAILABLE;
@@ -29,17 +27,13 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import java.util.stream.Stream;
-import org.apache.commons.collections4.MapUtils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
@@ -64,7 +58,6 @@ import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
-import org.folio.circulation.support.results.SuccessfulResult;
 
 @AllArgsConstructor
 public class ItemRepository {
@@ -398,7 +391,7 @@ public class ItemRepository {
       .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 
-  private CompletableFuture<Result<MultipleRecords<Item>>> fetchFor(
+  public CompletableFuture<Result<MultipleRecords<Item>>> fetchFor(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)

@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,8 +29,15 @@ class CalendarRepositoryTest {
   void testCreateCorrectRawQueryStringParameters() {
     Clients clients = mock(Clients.class);
     CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+    GetManyRecordsClient settingsStorageClient = mock(GetManyRecordsClient.class);
+
     when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
     when(collectionResourceClient.get(any(String.class)))
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
+    when(localeClient.get())
       .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
 
     String servicePointId = UUID.randomUUID().toString();
@@ -53,8 +61,15 @@ class CalendarRepositoryTest {
   void shouldUseCorrectLocalDatesWhenTimeZoneAffectsDateConversion() {
     Clients clients = mock(Clients.class);
     CollectionResourceClient collectionResourceClient = mock(CollectionResourceClient.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+    GetManyRecordsClient settingsStorageClient = mock(GetManyRecordsClient.class);
+
     when(clients.calendarStorageClient()).thenReturn(collectionResourceClient);
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
     when(collectionResourceClient.get(any(String.class))).thenReturn(ofAsync(null));
+    when(localeClient.get())
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(null)));
 
     ZoneId zone = ZoneId.of("America/Toronto");
     String servicePointId = UUID.randomUUID().toString();

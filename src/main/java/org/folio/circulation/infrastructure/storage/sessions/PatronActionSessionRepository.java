@@ -176,13 +176,16 @@ public class PatronActionSessionRepository {
   public CompletableFuture<Result<List<PatronSessionRecord>>> findPatronActionSessions(
     List<ExpiredSession> expiredSessions) {
 
+    log.debug("findPatronActionSessions:: parameters expiredSessions: {}",
+      expiredSessions != null ? expiredSessions.size() : 0);
+
     Set<String> patronIds = expiredSessions.stream()
       .map(ExpiredSession::getPatronId)
       .filter(StringUtils::isNotBlank)
       .collect(toSet());
 
     if (patronIds.isEmpty()) {
-      log.info("List of patron IDs is empty. Doing nothing.");
+      log.info("findPatronActionSessions:: list of patron IDs is empty, returning null");
       return CompletableFuture.completedFuture(succeeded(null));
     }
 

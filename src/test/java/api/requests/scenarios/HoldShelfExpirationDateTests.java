@@ -9,7 +9,6 @@ import static api.support.builders.RequestBuilder.OPEN_IN_TRANSIT;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
 import static api.support.fixtures.CalendarExamples.CASE_CURRENT_DATE_CLOSE;
 import static api.support.fixtures.CalendarExamples.CASE_NEXT_DATE_OPEN;
-import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -202,10 +201,7 @@ class HoldShelfExpirationDateTests extends APITests {
     final int amount = 30;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
 
-    IndividualResource updateTimeZoneConfig = settingsClient.create(
-      timezoneConfigurationFor(tenantTimeZone.getId())
-    );
-    assertThat(updateTimeZoneConfig.getResponse().getStatusCode(), is(201));
+    localeFixture.createLocaleSettingsForTimezone(tenantTimeZone.getId());
 
     final IndividualResource checkInServicePoint = servicePointsFixture.cd1();
     final IndividualResource james = usersFixture.james();
@@ -241,9 +237,7 @@ class HoldShelfExpirationDateTests extends APITests {
     final int amount = 42;
     final ZoneId tenantTimeZone = ZoneId.of("America/New_York");
 
-    IndividualResource updateTimeZoneConfig = settingsClient
-      .create(timezoneConfigurationFor(tenantTimeZone.getId()));
-    assertThat(updateTimeZoneConfig.getResponse().getStatusCode(), is(201));
+    localeFixture.createLocaleSettingsForTimezone(tenantTimeZone.getId());
 
     final IndividualResource checkInServicePoint = servicePointsFixture.cd5();
     final IndividualResource james = usersFixture.james();
