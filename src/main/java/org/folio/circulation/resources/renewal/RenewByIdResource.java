@@ -82,7 +82,7 @@ public class RenewByIdResource extends RenewalResource {
       return completedFuture(succeeded(null));
     }
 
-    log.debug("lookupLoan:: itemId={}", () -> item.getItemId());
+    log.debug("lookupLoan:: itemId={}", item::getItemId);
 
     return singleOpenLoanFinder.findSingleOpenLoan(item)
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
