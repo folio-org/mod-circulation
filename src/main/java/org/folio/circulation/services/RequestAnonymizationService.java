@@ -78,13 +78,13 @@ public class RequestAnonymizationService {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String requestId) {
-    log.debug("fetchRequest:: parameters requestId: {}", requestId);
+    log.info("fetchRequest:: parameters requestId: {}", requestId);
     return requestRepository.getById(requestId);
   }
 
   private Result<Request> validateStatus(Request request, String id) {
     final RequestStatus status = request.getStatus();
-    log.debug("validateStatus:: parameters requestId: {}, status: {}", id, status);
+    log.info("validateStatus:: parameters requestId: {}, status: {}", id, status);
 
     if (ALLOWED_STATUSES.contains(status)) {
       return succeeded(request);
@@ -98,7 +98,7 @@ public class RequestAnonymizationService {
   }
 
   private Request scrubPii(Request req) {
-    log.debug("scrubPii:: parameters requestId: {}", req::getId);
+    log.info("scrubPii:: parameters requestId: {}", req::getId);
     final JsonObject rep = req.asJson();
 
     final boolean hadRequester = rep.containsKey("requester") || rep.containsKey("requesterId");

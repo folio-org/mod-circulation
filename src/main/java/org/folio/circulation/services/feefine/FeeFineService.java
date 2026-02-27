@@ -39,7 +39,7 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<AccountActionResponse>> refundAccount(RefundAccountCommand refundCommand) {
-    log.debug("refundAccount:: parameters accountId: {}", refundCommand::getAccountId);
+    log.info("refundAccount:: parameters accountId: {}", refundCommand::getAccountId);
     if (!refundCommand.hasPaidOrTransferredAmount()) {
       log.info("Account has nothing to refund {}", refundCommand::getAccountId);
       return ofAsync(() -> null);
@@ -58,7 +58,7 @@ public class FeeFineService {
   }
 
   public CompletableFuture<Result<AccountActionResponse>> cancelAccount(CancelAccountCommand cancelCommand) {
-    log.debug("cancelAccount:: parameters accountId: {}", cancelCommand::getAccountId);
+    log.info("cancelAccount:: parameters accountId: {}", cancelCommand::getAccountId);
     final CancelAccountRequest cancelRequest = CancelAccountRequest.builder()
       .servicePointId(cancelCommand.getCurrentServicePointId())
       .userName(cancelCommand.getUserName())

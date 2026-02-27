@@ -50,7 +50,7 @@ public class CirculationSettingsService {
   }
 
   public CompletableFuture<Result<PageLimit>> getScheduledNoticesProcessingLimit() {
-    log.debug("getScheduledNoticesProcessingLimit:: fetching scheduled notices processing limit");
+    log.info("getScheduledNoticesProcessingLimit:: fetching scheduled notices processing limit");
     return getSetting(SETTING_NAME_NOTICES_LIMIT,
       CirculationSettingsService::extractScheduledNoticesProcessingLimit,
       () -> PageLimit.limit(DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT));
@@ -67,21 +67,21 @@ public class CirculationSettingsService {
   }
 
   public CompletableFuture<Result<PrintHoldRequestsConfiguration>> getPrintHoldRequestsEnabled() {
-    log.debug("getPrintHoldRequestsEnabled:: fetching print hold requests setting");
+    log.info("getPrintHoldRequestsEnabled:: fetching print hold requests setting");
     return getSetting(SETTING_NAME_PRINT_HOLD_REQUESTS,
       PrintHoldRequestsConfiguration::from,
       () -> new PrintHoldRequestsConfiguration(false));
   }
 
   public CompletableFuture<Result<LoanAnonymizationConfiguration>> getLoanAnonymizationSettings() {
-    log.debug("getLoanAnonymizationSettings:: fetching loan anonymization settings");
+    log.info("getLoanAnonymizationSettings:: fetching loan anonymization settings");
     return getSetting(SETTING_NAME_LOAN_HISTORY,
       LoanAnonymizationConfiguration::from,
       () -> LoanAnonymizationConfiguration.from(new JsonObject()));
   }
 
   public CompletableFuture<Result<Integer>> getCheckOutSessionTimeout() {
-    log.debug("getCheckOutSessionTimeout:: fetching checkout session timeout setting");
+    log.info("getCheckOutSessionTimeout:: fetching checkout session timeout setting");
     return getSetting(SETTING_NAME_OTHER_SETTINGS,
       CirculationSettingsService::extractCheckOutSessionTimeout,
       () -> DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES);
@@ -94,7 +94,7 @@ public class CirculationSettingsService {
   }
 
   public CompletableFuture<Result<TlrSettingsConfiguration>> getTlrSettings() {
-    log.debug("getTlrSettings:: fetching TLR settings");
+    log.info("getTlrSettings:: fetching TLR settings");
     return circulationSettingsRepository.findByNames(ALL_TLR_SETTINGS_NAMES)
       .thenApply(mapResult(CirculationSettingsService::buildTlrSettings));
   }
@@ -112,7 +112,7 @@ public class CirculationSettingsService {
       .reduce(new JsonObject(), JsonObject::mergeIn);
 
     if (!mergedSettings.isEmpty()) {
-      log.debug("buildTlrSettings:: returning merged TLR settings");
+      log.info("buildTlrSettings:: returning merged TLR settings");
       return TlrSettingsConfiguration.from(mergedSettings);
     }
 
@@ -127,7 +127,7 @@ public class CirculationSettingsService {
   private <T> CompletableFuture<Result<T>> getSetting(String name,
     Function<JsonObject, T> valueMapper, Supplier<T> defaultValueSupplier) {
 
-    log.debug("getSetting:: parameters name: {}", name);
+    log.info("getSetting:: parameters name: {}", name);
     return circulationSettingsRepository.findByName(name)
       .thenApply(mapResult(setting -> setting.map(CirculationSetting::getValue)))
       .thenApply(mapResult(value -> value.map(valueMapper).orElseGet(defaultValueSupplier)));

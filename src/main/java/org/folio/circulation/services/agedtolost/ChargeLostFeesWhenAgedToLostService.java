@@ -111,7 +111,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   public CompletableFuture<Result<Void>> chargeFees(MultipleRecords<Loan> loans) {
-    log.debug("chargeFees:: parameters loans {}", multipleRecordsAsString(loans));
+    log.info("chargeFees:: parameters loans {}", multipleRecordsAsString(loans));
     if (loans.isEmpty()) {
       log.info("chargeFees:: no aged to lost loans to charge lost fees");
       return ofAsync(() -> null);
@@ -155,7 +155,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<Loan>> chargeLostFeesForLoan(LoanToChargeFees loanToChargeFees) {
     Loan loan = loanToChargeFees.getLoan();
 
-    log.debug("chargeLostFeesForLoan:: parameters loanId: {}", loan::getId);
+    log.info("chargeLostFeesForLoan:: parameters loanId: {}", loan::getId);
     // we can close loans that have no fee to charge
     // and billed immediately
     if (loanToChargeFees.shouldCloseLoan()) {
@@ -172,7 +172,7 @@ public class ChargeLostFeesWhenAgedToLostService {
         "No fee/fine owner found for item's permanent location",
         "servicePointId", loanToChargeFees.getPrimaryServicePointId())));
     }
-    log.debug("chargeLostFeesForLoan:: creating actual cost record if necessary for loanId: {}",
+    log.info("chargeLostFeesForLoan:: creating actual cost record if necessary for loanId: {}",
       loan::getId);
 
     return actualCostRecordService.createIfNecessaryForAgedToLostItem(loanToChargeFees)
@@ -184,7 +184,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private Result<List<CreateAccountCommand>> createAccountsForLoan(LoanToChargeFees loanToChargeFees) {
-    log.debug("createAccountsForLoan:: parameters loanId: {}", loanToChargeFees::getLoanId);
+    log.info("createAccountsForLoan:: parameters loanId: {}", loanToChargeFees::getLoanId);
 
     return validateCanCreateAccountForLoan(loanToChargeFees)
       .map(notUsed -> getChargeableLostFeeToTypePairs(loanToChargeFees)
@@ -195,7 +195,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private Stream<Pair<AutomaticallyChargeableFee, FeeFine>> getChargeableLostFeeToTypePairs(
     LoanToChargeFees loanToCharge) {
 
-    log.debug("getChargeableLostFeeToTypePairs:: parameters loanId: {}", loanToCharge::getLoanId);
+    log.info("getChargeableLostFeeToTypePairs:: parameters loanId: {}", loanToCharge::getLoanId);
     final LostItemPolicy policy = loanToCharge.getLostItemPolicy();
 
     val setCostPair = pair(policy.getSetCostFee(), loanToCharge.getLostItemFeeType());
@@ -212,7 +212,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     final AutomaticallyChargeableFee feeToCharge = pair.getKey();
     final FeeFine feeFineType = pair.getValue();
     String loanId = loanToCharge.getLoanId();
-    log.debug("buildCreateAccountCommand:: parameters loanId: {}, fee amount: {}, fee type: {}",
+    log.info("buildCreateAccountCommand:: parameters loanId: {}, fee amount: {}, fee type: {}",
       loanId, feeToCharge.getAmount(), feeFineType != null ? feeFineType.getFeeFineType() : null);
     return CreateAccountCommand.builder()
       .withAmount(feeToCharge.getAmount())
@@ -237,7 +237,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private List<LoanToChargeFees> mapFeeFineTypesToLoans(Collection<FeeFine> feeTypes,
     List<LoanToChargeFees> allLoansToCharge) {
 
-    log.debug("mapFeeFineTypesToLoans:: mapping fee/fine type(s) to {} loans",
+    log.info("mapFeeFineTypesToLoans:: mapping fee/fine type(s) to {} loans",
       () -> collectionAsString(allLoansToCharge));
 
     return allLoansToCharge.stream()
@@ -248,12 +248,12 @@ public class ChargeLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<List<LoanToChargeFees>>> fetchFeeFineOwners(
     List<LoanToChargeFees> allLoansToCharge) {
 
-    log.debug("fetchFeeFineOwners:: parameters loans: {}", () -> collectionAsString(allLoansToCharge));
+    log.info("fetchFeeFineOwners:: parameters loans: {}", () -> collectionAsString(allLoansToCharge));
     final Set<String> primaryServicePointIds = allLoansToCharge.stream()
       .map(LoanToChargeFees::getPrimaryServicePointId)
       .filter(Objects::nonNull)
       .collect(toSet());
-    log.debug("fetchFeeFineOwners:: fetching fee/fine owners for {} service point(s)",
+    log.info("fetchFeeFineOwners:: fetching fee/fine owners for {} service point(s)",
       () -> collectionAsString(primaryServicePointIds));
 
     return feeFineOwnerRepository.findOwnersForServicePoints(primaryServicePointIds)
@@ -263,7 +263,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private List<LoanToChargeFees> mapOwnersToLoans(Collection<FeeFineOwner> owners,
     List<LoanToChargeFees> loansToCharge) {
 
-    log.debug("mapOwnersToLoans:: mapping owners to {} loans",
+    log.info("mapOwnersToLoans:: mapping owners to {} loans",
       () -> collectionAsString(loansToCharge));
     final Map<String, FeeFineOwner> servicePointToOwner = new HashMap<>();
 
@@ -280,7 +280,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   private CompletableFuture<Result<MultipleRecords<Loan>>> fetchItemsAndRelatedRecords(
     MultipleRecords<Loan> loans) {
 
-    log.debug("fetchItemsAndRelatedRecords:: parameters loans: {}", () -> multipleRecordsAsString(loans));
+    log.info("fetchItemsAndRelatedRecords:: parameters loans: {}", () -> multipleRecordsAsString(loans));
 
     return itemRepository.fetchItemsFor(succeeded(loans), Loan::withItem)
       .thenApply(r -> r.next(this::excludeLoansWithNonexistentItems))
@@ -291,13 +291,13 @@ public class ChargeLostFeesWhenAgedToLostService {
   private Result<MultipleRecords<Loan>> excludeLoansWithNonexistentItems(
     MultipleRecords<Loan> loans) {
 
-    log.debug("excludeLoansWithNonexistentItems:: parameters loans: {}", () -> multipleRecordsAsString(loans));
+    log.info("excludeLoansWithNonexistentItems:: parameters loans: {}", () -> multipleRecordsAsString(loans));
 
     return succeeded(loans.filter(loan -> loan.getItem().isFound()));
   }
 
   private Result<CqlQuery> loanFetchQuery() {
-    log.debug("loanFetchQuery:: building CQL query for aged to lost loans to charge");
+    log.info("loanFetchQuery:: building CQL query for aged to lost loans to charge");
     final String billingDateProperty = AGED_TO_LOST_DELAYED_BILLING + "."
       + DATE_LOST_ITEM_SHOULD_BE_BILLED;
     final String lostItemHasBeenBilled = AGED_TO_LOST_DELAYED_BILLING + "."
@@ -335,7 +335,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   private CompletableFuture<Result<Loan>> updateLoanBillingInfo(LoanToChargeFees loanToChargeFees) {
-    log.debug("updateLoanBillingInfo:: parameters loanId: {}", loanToChargeFees::getLoanId);
+    log.info("updateLoanBillingInfo:: parameters loanId: {}", loanToChargeFees::getLoanId);
     final Loan updatedLoan = loanToChargeFees.getLoan()
       .setLostItemHasBeenBilled()
       .removePreviousAction();
@@ -345,7 +345,7 @@ public class ChargeLostFeesWhenAgedToLostService {
 
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(LoanToChargeFees loanToChargeFees) {
     final Loan loan = loanToChargeFees.getLoan();
-    log.debug("closeLoanAsLostAndPaid:: parameters loanId: {}", loan::getId);
+    log.info("closeLoanAsLostAndPaid:: parameters loanId: {}", loan::getId);
     loan.setLostItemHasBeenBilled();
     loan.closeLoanAsLostAndPaid();
 

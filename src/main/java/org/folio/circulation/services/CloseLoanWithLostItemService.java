@@ -57,7 +57,7 @@ public class CloseLoanWithLostItemService {
       log.info("closeLoanAsLostAndPaid:: loan is null, closed, or item is not lost - skipping");
       return emptyAsync();
     }
-    log.debug("closeLoanAsLostAndPaid:: parameters loanId: {}", loan::getId);
+    log.info("closeLoanAsLostAndPaid:: parameters loanId: {}", loan::getId);
 
     return fetchLoanFeeFineData(loan)
       .thenCompose(r -> r.after(this::closeLoanWithLostItemFeesPaidAndPublishEvents));
@@ -66,13 +66,13 @@ public class CloseLoanWithLostItemService {
   private CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaidAndPublishEvents(
     Loan loan) {
 
-    log.debug("closeLoanWithLostItemFeesPaidAndPublishEvents:: loanId: {}", loan::getId);
+    log.info("closeLoanWithLostItemFeesPaidAndPublishEvents:: loanId: {}", loan::getId);
     return closeLoanAsLostAndPaid(loan, loanRepository, itemRepository, eventPublisher)
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
   }
 
   private CompletableFuture<Result<Loan>> fetchLoanFeeFineData(Loan loan) {
-    log.debug("fetchLoanFeeFineData:: parameters loanId: {}", loan::getId);
+    log.info("fetchLoanFeeFineData:: parameters loanId: {}", loan::getId);
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenComposeAsync(r -> r.after(actualCostRecordRepository::findByLoan));
@@ -81,7 +81,7 @@ public class CloseLoanWithLostItemService {
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(Loan loan,
     LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
 
-    log.debug("closeLoanAsLostAndPaid:: loanId: {}", loan::getId);
+    log.info("closeLoanAsLostAndPaid:: loanId: {}", loan::getId);
     if (!shouldCloseLoan(loan)) {
       log.info("closeLoanAsLostAndPaid:: loan {} should not be closed", loan::getId);
       return completedFuture(succeeded(loan));

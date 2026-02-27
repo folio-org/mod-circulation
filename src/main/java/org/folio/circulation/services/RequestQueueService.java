@@ -42,7 +42,7 @@ public class RequestQueueService {
   public CompletableFuture<Result<Request>> findRequestFulfillableByItem(Item item,
     RequestQueue requestQueue) {
 
-    log.debug("findRequestFulfillableByItem:: parameters itemId: {}", item::getItemId);
+    log.info("findRequestFulfillableByItem:: parameters itemId: {}", item::getItemId);
     return findRequestFulfillableByItem(item, requestQueue.fulfillableRequests().iterator());
   }
 
@@ -60,7 +60,7 @@ public class RequestQueueService {
   }
 
   public CompletableFuture<Result<Boolean>> isRequestFulfillableByItem(Item item, Request request) {
-    log.debug("isRequestFulfillableByItem:: parameters itemId: {}, requestId: {}, level: {}",
+    log.info("isRequestFulfillableByItem:: parameters itemId: {}, requestId: {}, level: {}",
       item::getItemId, request::getId, request::getRequestLevel);
     switch (request.getRequestLevel()) {
       case ITEM:
@@ -76,7 +76,7 @@ public class RequestQueueService {
   private CompletableFuture<Result<Boolean>> isItemLevelRequestFulfillableByItem(Item item,
     Request request) {
 
-    log.debug("isItemLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
+    log.info("isItemLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
       item::getItemId, request::getId);
     return ofAsync(StringUtils.equals(item.getItemId(), request.getItemId()));
   }
@@ -84,7 +84,7 @@ public class RequestQueueService {
   protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
-    log.debug("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
+    log.info("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
       item::getItemId, request::getId);
 
     if (!StringUtils.equals(request.getItemId(), item.getItemId()) &&
@@ -104,7 +104,7 @@ public class RequestQueueService {
   protected CompletableFuture<Result<Boolean>> canRequestBeFulfilledByItem(Item item,
     Request request) {
 
-    log.debug("canRequestBeFulfilledByItem:: parameters itemId: {}, requestId: {}",
+    log.info("canRequestBeFulfilledByItem:: parameters itemId: {}, requestId: {}",
       item::getItemId, request::getId);
     return request.getItemId() == null ^ StringUtils.equals(item.getItemId(), request.getItemId())
       ? isItemRequestableAndLoanable(item, request)
@@ -112,7 +112,7 @@ public class RequestQueueService {
   }
 
   protected CompletableFuture<Result<Boolean>> isItemRequestableAndLoanable(Item item, Request request) {
-    log.debug("isItemRequestableAndLoanable:: parameters itemId: {}, requestId: {}",
+    log.info("isItemRequestableAndLoanable:: parameters itemId: {}, requestId: {}",
       item::getItemId, request::getId);
     return isItemRequestable(item, request)
       .thenCompose(r -> r.after(whenTrue(isItemLoanable(item, request), ofAsync(false))));
@@ -134,7 +134,7 @@ public class RequestQueueService {
   public CompletableFuture<Result<Boolean>> isItemRequestedByAnotherPatron(
     RequestQueue requestQueue, User requester, Item item) {
 
-    log.debug("isItemRequestedByAnotherPatron:: parameters itemId: {}", item::getItemId);
+    log.info("isItemRequestedByAnotherPatron:: parameters itemId: {}", item::getItemId);
     return findRequestFulfillableByItem(item, requestQueue)
       .thenApply(r -> r.map(request -> !(request == null || request.isFor(requester))));
   }

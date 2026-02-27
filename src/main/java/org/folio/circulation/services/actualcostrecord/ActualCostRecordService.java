@@ -73,7 +73,7 @@ public class ActualCostRecordService {
     FeeFineOwner owner = referenceDataContext.getFeeFineOwner();
     ItemLossType itemLossType = ItemLossType.DECLARED_LOST;
     ZonedDateTime dateOfLoss = ClockUtil.getZonedDateTime();
-    log.debug("createIfNecessaryForDeclaredLostItem:: loss type: {}, date of loss: {}",
+    log.info("createIfNecessaryForDeclaredLostItem:: loss type: {}, date of loss: {}",
       itemLossType, dateOfLoss);
     FeeFine feeFineType = referenceDataContext.getFeeFines().stream()
       .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
@@ -91,7 +91,7 @@ public class ActualCostRecordService {
     FeeFineOwner owner = loanToChargeFees.getOwner();
     ItemLossType itemLossType = ItemLossType.AGED_TO_LOST;
     ZonedDateTime dateOfLoss = loan.getAgedToLostDateTime();
-    log.debug("createIfNecessaryForAgedToLostItem:: loss type: {}, date of loss: {}",
+    log.info("createIfNecessaryForAgedToLostItem:: loss type: {}, date of loss: {}",
       itemLossType, dateOfLoss);
     Map<String, FeeFine> feeFineTypes = loanToChargeFees.getFeeFineTypes();
     FeeFine feeFineType = feeFineTypes == null ? null : feeFineTypes.get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
@@ -117,7 +117,7 @@ public class ActualCostRecordService {
       .withLoan(loan)
       .withFeeFineOwner(feeFineOwner)
       .withFeeFine(feeFine);
-    log.debug("createActualCostRecordIfNecessary:: created context for loanId: {}, " +
+    log.info("createActualCostRecordIfNecessary:: created context for loanId: {}, " +
       "starting lookup chain", loan::getId);
 
     return lookupPermanentLocation(context)
@@ -138,12 +138,12 @@ public class ActualCostRecordService {
 
     User user = context.getLoan().getUser();
     if (user.getPatronGroup() != null) {
-      log.debug("lookupPatronGroup:: patron group already exists: {} for userId: {}, skipping lookup",
+      log.info("lookupPatronGroup:: patron group already exists: {} for userId: {}, skipping lookup",
         user.getPatronGroup().getGroup(), user.getId());
       return ofAsync(context);
     }
 
-    log.debug("lookupPatronGroup:: patron group not found, fetching from repository for userId: {}",
+    log.info("lookupPatronGroup:: patron group not found, fetching from repository for userId: {}",
       user::getId);
 
     return patronGroupRepository.findGroupForUser(user)

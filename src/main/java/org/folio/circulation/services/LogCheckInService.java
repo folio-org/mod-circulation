@@ -24,7 +24,7 @@ public class LogCheckInService {
   public CompletableFuture<Result<CheckInContext>> logCheckInOperation(
     CheckInContext checkInContext) {
 
-    log.debug("logCheckInOperation:: parameters itemId: {}, servicePointId: {}",
+    log.info("logCheckInOperation:: parameters itemId: {}, servicePointId: {}",
       checkInContext.getItem()::getItemId, checkInContext::getCheckInServicePointId);
     final CheckInRecord checkInRecord = CheckInRecord.builder()
       .withOccurredDateTime(getZonedDateTime())

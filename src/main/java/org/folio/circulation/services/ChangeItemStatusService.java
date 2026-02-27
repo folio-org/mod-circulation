@@ -25,13 +25,13 @@ public class ChangeItemStatusService {
   }
 
   public <T extends ChangeItemStatusRequest> CompletableFuture<Result<Loan>> getOpenLoan(T request) {
-    log.debug("getOpenLoan:: parameters request loanId: {}", request::getLoanId);
+    log.info("getOpenLoan:: parameters request loanId: {}", request::getLoanId);
     return loanRepository.getById(request.getLoanId())
       .thenApply(LoanValidator::refuseWhenLoanIsClosed);
   }
 
   public CompletableFuture<Result<Loan>> updateLoanAndItem(Result<Loan> loanResult) {
-    log.debug("updateLoanAndItem:: updating loan and item in storage");
+    log.info("updateLoanAndItem:: updating loan and item in storage");
     return loanResult.after(storeLoanAndItem::updateLoanAndItemInStorage);
   }
 }

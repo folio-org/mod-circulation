@@ -54,7 +54,7 @@ public class ActualCostRecordExpirationService {
   private CompletableFuture<Result<Void>> processExpiredActualCostRecords(
     Collection<ActualCostRecord> records) {
 
-    log.debug("processExpiredActualCostRecords:: parameters records: {}",
+    log.info("processExpiredActualCostRecords:: parameters records: {}",
       () -> collectionAsString(records));
     if (records.isEmpty()) {
       log.info("processExpiredActualCostRecords:: found no expired actual cost records to process");
@@ -66,7 +66,7 @@ public class ActualCostRecordExpirationService {
     List<ActualCostRecord> expiredRecords = records.stream()
       .map(rec -> rec.withStatus(EXPIRED))
       .collect(toList());
-    log.debug("processExpiredActualCostRecords:: marked {} records with EXPIRED status", expiredRecords.size());
+    log.info("processExpiredActualCostRecords:: marked {} records with EXPIRED status", expiredRecords.size());
     return actualCostRecordRepository.update(expiredRecords)
       .thenCompose(r -> r.after(this::fetchLoansForExpiredRecords))
       .thenCompose(r -> r.after(this::closeLoans));
@@ -83,7 +83,7 @@ public class ActualCostRecordExpirationService {
   }
 
   private CompletableFuture<Result<Void>> closeLoans(MultipleRecords<Loan> expiredLoans) {
-    log.debug("closeLoans:: parameters expiredLoans: {}", () -> multipleRecordsAsString(expiredLoans));
+    log.info("closeLoans:: parameters expiredLoans: {}", () -> multipleRecordsAsString(expiredLoans));
     if (expiredLoans.isEmpty()) {
       log.info("closeLoans:: no loans to close, returning empty result");
       return emptyAsync();

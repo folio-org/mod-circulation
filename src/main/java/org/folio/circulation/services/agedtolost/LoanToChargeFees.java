@@ -80,7 +80,7 @@ public final class LoanToChargeFees {
   }
 
   LoanToChargeFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
-    log.debug("withFeeFineTypes:: parameters feeFines: {}", () -> collectionAsString(allFeeFines));
+    log.info("withFeeFineTypes:: parameters feeFines: {}", () -> collectionAsString(allFeeFines));
     final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
       .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
 
