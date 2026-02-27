@@ -7,7 +7,9 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class JsonHttpResponse implements HttpResponse {
   private final int statusCode;
   private final JsonObject body;
@@ -18,6 +20,7 @@ public class JsonHttpResponse implements HttpResponse {
   }
 
   public static HttpResponse ok(JsonObject body) {
+    System.out.println("building ok response");
     return ok(body, null);
   }
 
@@ -41,7 +44,9 @@ public class JsonHttpResponse implements HttpResponse {
 
   @Override
   public void writeTo(HttpServerResponse response) {
+    log.info(System.currentTimeMillis() + ": writeTo start in thread " + Thread.currentThread().getName());
     String json = Json.encodePrettily(body);
+    log.info(System.currentTimeMillis() + ": response serialized in thread " + Thread.currentThread().getName());
     Buffer buffer = buffer(json, "UTF-8");
 
     response.setStatusCode(statusCode);
@@ -52,7 +57,10 @@ public class JsonHttpResponse implements HttpResponse {
       response.putHeader("location", location);
     }
 
+    log.info(System.currentTimeMillis() + ": start writing buffer in thread " + Thread.currentThread().getName());
     response.write(buffer);
+    log.info(System.currentTimeMillis() + ": finished writing buffer in thread " + Thread.currentThread().getName());
     response.end();
+    log.info(System.currentTimeMillis() + ": end response in thread " + Thread.currentThread().getName());
   }
 }

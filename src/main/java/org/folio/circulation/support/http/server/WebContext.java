@@ -95,7 +95,9 @@ public class WebContext {
   }
 
   public void write(HttpResponse response) {
+    System.out.println("write start, thread: " + Thread.currentThread().getName());
     response.writeTo(routingContext.response());
+    System.out.println("write end, thread: " + Thread.currentThread().getName());
   }
 
   public void writeResultToHttpResponse(Result<HttpResponse> result) {

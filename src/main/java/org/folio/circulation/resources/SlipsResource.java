@@ -126,7 +126,11 @@ public abstract class SlipsResource extends Resource {
       .thenCompose(r -> r.after(servicePointRepository::findServicePointsForRequests))
       .thenApplyAsync(r -> r.map(this::mapResultToJson))
       .thenCompose(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
-        this::addPrimaryServicePointNameToStaffSlipContext));
+        this::addPrimaryServicePointNameToStaffSlipContext))
+      .thenApply(r -> r.map(json -> {
+        log.debug("buildStaffSlips:: slips built, thread: + {}", Thread.currentThread().getName());
+        return json;
+      }));
   }
 
   private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
