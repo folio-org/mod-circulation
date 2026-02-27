@@ -168,7 +168,7 @@ public abstract class ScheduledNoticeHandler {
   protected Result<ScheduledNoticeContext> failWhenLoanIsIncomplete(
     ScheduledNoticeContext context) {
 
-    log.debug("failWhenLoanIsIncomplete:: validating loan completeness for loan {}",
+    log.info("failWhenLoanIsIncomplete:: validating loan completeness for loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
 
     return failWhenUserIsMissing(context, context.getLoan())
@@ -197,9 +197,9 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
-    log.debug("sendNotice:: sending notice for scheduled notice {}", context.getNotice().getId());
+    log.info("sendNotice:: sending notice for scheduled notice {}", context.getNotice().getId());
     if (isNoticeIrrelevant(context)) {
-      log.debug("sendNotice:: notice is irrelevant, skipping send");
+      log.info("sendNotice:: notice is irrelevant, skipping send");
       return ofAsync(() -> context);
     }
 
@@ -219,7 +219,7 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForLoan(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchPatronNoticePolicyIdForLoan:: fetching patron notice policy ID for loan {}",
+    log.info("fetchPatronNoticePolicyIdForLoan:: fetching patron notice policy ID for loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
 
     return fetchPatronNoticePolicyId(context, context.getLoan());
@@ -228,7 +228,7 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForRequest(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchPatronNoticePolicyIdForRequest:: fetching patron notice policy ID for request {}",
+    log.info("fetchPatronNoticePolicyIdForRequest:: fetching patron notice policy ID for request {}",
       context.getRequest() != null ? context.getRequest().getId() : "null");
 
     return fetchPatronNoticePolicyId(context, context.getRequest());
@@ -238,9 +238,9 @@ public abstract class ScheduledNoticeHandler {
   CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyId(
     ScheduledNoticeContext context, T userAndItemRelatedRecord) {
 
-    log.debug("fetchPatronNoticePolicyId:: fetching policy ID for notice {}", context.getNotice().getId());
+    log.info("fetchPatronNoticePolicyId:: fetching policy ID for notice {}", context.getNotice().getId());
     if (isNoticeIrrelevant(context)) {
-      log.debug("fetchPatronNoticePolicyId:: notice is irrelevant, skipping policy fetch");
+      log.info("fetchPatronNoticePolicyId:: notice is irrelevant, skipping policy fetch");
       return ofAsync(() -> context);
     }
 
@@ -253,7 +253,7 @@ public abstract class ScheduledNoticeHandler {
     ScheduledNoticeContext context) {
 
     String templateId = context.getNotice().getConfiguration().getTemplateId();
-    log.debug("fetchTemplate:: fetching template {} for notice {}", templateId, context.getNotice().getId());
+    log.info("fetchTemplate:: fetching template {} for notice {}", templateId, context.getNotice().getId());
 
     var responseInterpreter = new ResponseInterpreter<ScheduledNoticeContext>()
       .on(404, failed(new RecordNotFoundFailure("template", templateId)))

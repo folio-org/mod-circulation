@@ -43,28 +43,28 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
-    log.debug("isNoticeIrrelevant:: checking if notice {} is irrelevant for request {}",
+    log.info("isNoticeIrrelevant:: checking if notice {} is irrelevant for request {}",
       context.getNotice().getId(), context.getRequest() != null ? context.getRequest().getId() : "null");
     return isNoticeNotRelevantYet(context) || isNoticeNoLongerRelevant(context);
   }
 
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
-    log.debug("buildNoticeContextJson:: building notice context JSON for request {}",
+    log.info("buildNoticeContextJson:: building notice context JSON for request {}",
       context.getRequest() != null ? context.getRequest().getId() : "null");
     return createRequestNoticeContext(context.getRequest());
   }
 
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(ScheduledNoticeContext context) {
-    log.debug("updateNotice:: updating scheduled notice {} for request {}",
+    log.info("updateNotice:: updating scheduled notice {} for request {}",
       context.getNotice().getId(), context.getRequest() != null ? context.getRequest().getId() : "null");
     Request request = context.getRequest();
     ScheduledNotice notice = context.getNotice();
     boolean isNoticeNonRecurring = !notice.getConfiguration().isRecurring();
 
     if (isNoticeNotRelevantYet(context)) {
-      log.debug("updateNotice:: notice {} is not relevant yet, returning as-is", context.getNotice().getId());
+      log.info("updateNotice:: notice {} is not relevant yet, returning as-is", context.getNotice().getId());
       return ofAsync(() -> notice);
     }
 
@@ -88,7 +88,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   @Override
   protected NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context) {
-    log.debug("buildNoticeLogContext:: building notice log context for request {}",
+    log.info("buildNoticeLogContext:: building notice log context for request {}",
       context.getRequest() != null ? context.getRequest().getId() : "null");
     return new NoticeLogContext()
       .withUser(context.getRequest().getRequester())
@@ -98,7 +98,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   @Override
   protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
-    log.debug("buildNoticeLogContextItem:: building notice log context item for request {}",
+    log.info("buildNoticeLogContextItem:: building notice log context item for request {}",
       context.getRequest() != null ? context.getRequest().getId() : "null");
     ScheduledNotice notice = context.getNotice();
     Request request = context.getRequest();
@@ -163,14 +163,14 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
   }
 
   protected Result<ScheduledNoticeContext> failWhenRequestHasNoUser(ScheduledNoticeContext context) {
-    log.debug("failWhenRequestHasNoUser:: validating user for request {}",
+    log.info("failWhenRequestHasNoUser:: validating user for request {}",
       context.getRequest() != null ? context.getRequest().getId() : "null");
     return failWhenUserIsMissing(context, context.getRequest())
       .map(v -> context);
   }
 
   protected Result<ScheduledNoticeContext> failWhenRequestHasNoItem(ScheduledNoticeContext context) {
-    log.debug("failWhenRequestHasNoItem:: validating item for request {}",
+    log.info("failWhenRequestHasNoItem:: validating item for request {}",
       context.getRequest() != null ? context.getRequest().getId() : "null");
     return failWhenItemIsMissing(context, context.getRequest())
       .map(v -> context);
@@ -179,7 +179,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchRequestRelatedRecords(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchRequestRelatedRecords:: fetching related records for request {}",
+    log.info("fetchRequestRelatedRecords:: fetching related records for request {}",
       context.getRequest() != null ? context.getRequest().getId() : context.getNotice().getRequestId());
 
     // request is expected to have been fetched before it reaches this handler
@@ -196,7 +196,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
   }
 
   private CompletableFuture<Result<Request>> fetchLatestPatronInfoAddedComment(Request request) {
-    log.debug("fetchLatestPatronInfoAddedComment:: fetching patron info comment for request {}",
+    log.info("fetchLatestPatronInfoAddedComment:: fetching patron info comment for request {}",
       request::getId);
     if (request.getLoan() != null) {
       return loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan())

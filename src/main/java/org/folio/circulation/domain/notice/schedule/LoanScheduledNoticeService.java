@@ -23,7 +23,6 @@ import org.folio.circulation.support.results.Result;
 public class LoanScheduledNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   public static LoanScheduledNoticeService using(Clients clients) {
-    log.debug("using:: creating LoanScheduledNoticeService instance");
     return new LoanScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
       new PatronNoticePolicyRepository(clients));
@@ -40,7 +39,7 @@ public class LoanScheduledNoticeService {
   }
 
   public Result<LoanAndRelatedRecords> scheduleNoticesForLoanDueDate(LoanAndRelatedRecords records) {
-    log.debug("scheduleNoticesForLoanDueDate:: scheduling due date notices for loan {}",
+    log.info("scheduleNoticesForLoanDueDate:: scheduling due date notices for loan {}",
       records.getLoan()::getId);
     Loan loan = records.getLoan();
     scheduleLoanNotices(loan, DUE_DATE, loan.getDueDate());
@@ -49,7 +48,7 @@ public class LoanScheduledNoticeService {
   }
 
   public Result<Void> scheduleAgedToLostNotices(Collection<Loan> loans) {
-    log.debug("scheduleAgedToLostNotices:: scheduling aged to lost notices for {} loans",
+    log.info("scheduleAgedToLostNotices:: scheduling aged to lost notices for {} loans",
       loans::size);
     loans.forEach(loan -> scheduleLoanNotices(loan, AGED_TO_LOST, loan.getAgedToLostDateTime()));
 
@@ -57,7 +56,7 @@ public class LoanScheduledNoticeService {
   }
 
   private Result<Void> scheduleLoanNotices(Loan loan, NoticeEventType eventType, ZonedDateTime eventTime) {
-    log.debug("scheduleLoanNotices:: scheduling loan notices for event type {}, loan {}",
+    log.info("scheduleLoanNotices:: scheduling loan notices for event type {}, loan {}",
       eventType, loan != null ? loan.getId() : "null");
     noticePolicyRepository.lookupPolicy(loan)
       .thenAccept(r -> r.next(policy ->
@@ -79,7 +78,8 @@ public class LoanScheduledNoticeService {
 
   private ScheduledNotice createScheduledNotice(NoticeConfiguration configuration, Loan loan,
     NoticeEventType eventType, ZonedDateTime eventTime) {
-    log.debug("createScheduledNotice:: creating scheduled notice for event type {}, loan {}",
+
+    log.info("createScheduledNotice:: creating scheduled notice for event type {}, loan {}",
       () -> eventType, loan::getId);
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
@@ -92,7 +92,7 @@ public class LoanScheduledNoticeService {
   }
 
   private ZonedDateTime determineNextRunTime(NoticeConfiguration configuration, ZonedDateTime eventTime) {
-    log.debug("determineNextRunTime:: determining next run time for timing {}",
+    log.info("determineNextRunTime:: determining next run time for timing {}",
       configuration::getTiming);
     final NoticeTiming timing = configuration.getTiming();
 
@@ -110,7 +110,7 @@ public class LoanScheduledNoticeService {
   }
 
   private ScheduledNoticeConfig createScheduledNoticeConfig(NoticeConfiguration configuration) {
-    log.debug("createScheduledNoticeConfig:: creating scheduled notice config with template {}",
+    log.info("createScheduledNoticeConfig:: creating scheduled notice config with template {}",
       configuration::getTemplateId);
     return new ScheduledNoticeConfigBuilder()
       .setTemplateId(configuration.getTemplateId())
@@ -122,13 +122,13 @@ public class LoanScheduledNoticeService {
   }
 
   public Result<LoanAndRelatedRecords> rescheduleDueDateNotices(LoanAndRelatedRecords relatedRecords) {
-    log.debug("rescheduleDueDateNotices:: rescheduling due date notices for loan {}",
+    log.info("rescheduleDueDateNotices:: rescheduling due date notices for loan {}",
       relatedRecords.getLoan() != null ? relatedRecords.getLoan().getId() : "null");
     return rescheduleDueDateNotices(relatedRecords.getLoan(), relatedRecords);
   }
 
   public Result<RenewalContext> rescheduleDueDateNotices(RenewalContext renewalContext) {
-    log.debug("rescheduleDueDateNotices:: rescheduling due date notices for renewal context, loan {}",
+    log.info("rescheduleDueDateNotices:: rescheduling due date notices for renewal context, loan {}",
       renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
     return rescheduleDueDateNotices(renewalContext.getLoan(), renewalContext);
   }
@@ -140,7 +140,7 @@ public class LoanScheduledNoticeService {
   private <T> Result<T> rescheduleLoanNotices(Loan loan, T mapTo, NoticeEventType eventType,
     ZonedDateTime eventTime) {
 
-    log.debug("rescheduleLoanNotices:: rescheduling loan notices for event type {}, loan {}",
+    log.info("rescheduleLoanNotices:: rescheduling loan notices for event type {}, loan {}",
       () -> eventType, loan::getId);
     TriggeringEvent triggeringEvent = TriggeringEvent.from(eventType);
 
@@ -149,7 +149,7 @@ public class LoanScheduledNoticeService {
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(), triggeringEvent)
         .thenAccept(r -> r.next(v -> scheduleLoanNotices(loan, eventType, eventTime)));
     } else {
-      log.debug("rescheduleLoanNotices:: loan {} is closed, skipping reschedule", loan.getId());
+      log.info("rescheduleLoanNotices:: loan {} is closed, skipping reschedule", loan.getId());
     }
 
     return succeeded(mapTo);

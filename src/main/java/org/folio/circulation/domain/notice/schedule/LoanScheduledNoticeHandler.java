@@ -55,7 +55,8 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
     ScheduledNoticeContext context) {
-    log.debug("fetchData:: fetching data for scheduled notice {}", context.getNotice().getId());
+
+    log.info("fetchData:: fetching data for scheduled notice {}", context.getNotice().getId());
 
     return ofAsync(() -> context)
       .thenApply(r -> r.next(this::failWhenNoticeHasNoLoanId))
@@ -79,7 +80,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
     TriggeringEvent triggeringEvent = context.getNotice().getTriggeringEvent();
-    log.debug("isNoticeIrrelevant:: checking if notice {} is irrelevant, triggering event: {}",
+    log.info("isNoticeIrrelevant:: checking if notice {} is irrelevant, triggering event: {}",
       context.getNotice().getId(), triggeringEvent);
 
     switch (triggeringEvent) {
@@ -98,7 +99,8 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(
     ScheduledNoticeContext context) {
-    log.debug("updateNotice:: updating scheduled notice {}", context.getNotice().getId());
+
+    log.info("updateNotice:: updating scheduled notice {}", context.getNotice().getId());
 
     Loan loan = context.getLoan();
     ScheduledNotice notice = context.getNotice();
@@ -112,7 +114,8 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
     ZonedDateTime recurringNoticeNextRunTime = noticeConfig
       .getRecurringPeriod().plusDate(notice.getNextRunTime());
 
-    log.debug("updateNotice:: calculated next run time {} for notice {}", recurringNoticeNextRunTime, notice.getId());
+    log.info("updateNotice:: calculated next run time {} for notice {}",
+      recurringNoticeNextRunTime, notice.getId());
 
     if (isBeforeMillis(recurringNoticeNextRunTime, systemTime)) {
       recurringNoticeNextRunTime = noticeConfig.getRecurringPeriod().plusDate(systemTime);
@@ -132,7 +135,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchLoan:: fetching loan {} for scheduled notice", context.getNotice().getLoanId());
+    log.info("fetchLoan:: fetching loan {} for scheduled notice", context.getNotice().getLoanId());
 
     // Also fetches user, item and item-related records (holdings, instance, location, etc.)
     return loanRepository.getById(context.getNotice().getLoanId())
@@ -144,12 +147,13 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLostItemFeesForAgedToLostNotice(
     ScheduledNoticeContext context) {
-    log.debug("fetchLostItemFeesForAgedToLostNotice:: checking for lost item fees, notice {}",
+
+    log.info("fetchLostItemFeesForAgedToLostNotice:: checking for lost item fees, notice {}",
       context.getNotice().getId());
     ScheduledNotice notice = context.getNotice();
 
     if (AGED_TO_LOST != notice.getTriggeringEvent()) {
-      log.debug("fetchLostItemFeesForAgedToLostNotice:: not an aged to lost notice, skipping");
+      log.info("fetchLostItemFeesForAgedToLostNotice:: not an aged to lost notice, skipping");
       return ofAsync(() -> context);
     }
 
@@ -161,7 +165,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   protected boolean dueDateNoticeIsNotRelevant(ScheduledNoticeContext context) {
-    log.debug("dueDateNoticeIsNotRelevant:: checking due date notice relevance for loan {}",
+    log.info("dueDateNoticeIsNotRelevant:: checking due date notice relevance for loan {}",
       context.getLoan().getId());
     Loan loan = context.getLoan();
     ZonedDateTime dueDate = loan.getDueDate();
@@ -192,7 +196,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
   }
 
   private boolean agedToLostNoticeIsNotRelevant(ScheduledNoticeContext context) {
-    log.debug("agedToLostNoticeIsNotRelevant:: checking aged to lost notice relevance for loan {}",
+    log.info("agedToLostNoticeIsNotRelevant:: checking aged to lost notice relevance for loan {}",
       context.getLoan().getId());
     Loan loan = context.getLoan();
     ScheduledNotice notice = context.getNotice();
@@ -232,7 +236,7 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context) {
-    log.debug("buildNoticeLogContext:: building notice log context for loan {}",
+    log.info("buildNoticeLogContext:: building notice log context for loan {}",
       context.getLoan().getId());
     return new NoticeLogContext()
       .withUser(context.getLoan().getUser())
@@ -241,14 +245,14 @@ public class LoanScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
-    log.debug("buildNoticeContextJson:: building notice context JSON for loan {}",
+    log.info("buildNoticeContextJson:: building notice context JSON for loan {}",
       context.getLoan().getId());
     return createLoanNoticeContext(context.getLoan());
   }
 
   @Override
   protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
-    log.debug("buildNoticeLogContextItem:: building notice log context item for loan {}",
+    log.info("buildNoticeLogContextItem:: building notice log context item for loan {}",
       context.getLoan().getId());
     return NoticeLogContextItem.from(context.getLoan())
       .withTemplateId(context.getNotice().getConfiguration().getTemplateId())

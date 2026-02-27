@@ -43,7 +43,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchData:: fetching data for scheduled notice {}", context.getNotice().getId());
+    log.info("fetchData:: fetching data for scheduled notice {}", context.getNotice()::getId);
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
@@ -57,7 +57,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchAction(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchAction:: fetching fee/fine action {}", context.getNotice().getFeeFineActionId());
+    log.info("fetchAction:: fetching fee/fine action {}", context.getNotice()::getFeeFineActionId);
 
     return actionRepository.findById(context.getNotice().getFeeFineActionId())
       .thenApply(mapResult(context::withCurrentAction));
@@ -75,7 +75,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchChargeAction(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchChargeAction:: fetching charge action for account {}", context.getAccount().getId());
+    log.info("fetchChargeAction:: fetching charge action for account {}", context.getAccount()::getId);
 
     return actionRepository.findChargeActionForAccount(context.getAccount())
       .thenApply(mapResult(context::withChargeAction));
@@ -84,7 +84,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchLoan:: fetching loan for account {}", context.getAccount().getId());
+    log.info("fetchLoan:: fetching loan for account {}", context.getAccount()::getId);
 
     if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
@@ -100,7 +100,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(ScheduledNoticeContext context) {
-    log.debug("updateNotice:: updating scheduled notice {}", context.getNotice().getId());
+    log.info("updateNotice:: updating scheduled notice {}", context.getNotice()::getId);
     ScheduledNotice notice = context.getNotice();
 
     return isNoticeIrrelevant(context) || !notice.getConfiguration().isRecurring()
@@ -110,7 +110,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
-    log.debug("isNoticeIrrelevant:: checking if notice is irrelevant");
+    log.info("isNoticeIrrelevant:: checking if notice is irrelevant");
     return context.getAccount().isClosed() &&
       !context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment();
   }

@@ -31,7 +31,8 @@ public abstract class PatronNoticeService {
 
   public CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
     NoticeLogContext noticeLogContext) {
-    log.debug("sendNotice:: sending notice to recipient {}, template {}",
+
+    log.info("sendNotice:: sending notice to recipient {}, template {}",
       patronNotice != null ? patronNotice.getRecipientId() : "null",
       patronNotice != null && patronNotice.getTemplateId() != null ? patronNotice.getTemplateId() : "null");
 

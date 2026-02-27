@@ -33,7 +33,6 @@ public class RequestScheduledNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public static RequestScheduledNoticeService using(Clients clients) {
-    log.debug("using:: creating RequestScheduledNoticeService instance");
     return new RequestScheduledNoticeService(
       ScheduledNoticesRepository.using(clients),
       new PatronNoticePolicyRepository(clients));
@@ -110,14 +109,12 @@ public class RequestScheduledNoticeService {
     log.info("scheduleRequestNoticesBasedOnPolicy:: scheduling notices based on policy for request {}",
       request::getId);
 
-    long noticeCount = noticePolicy.getNoticeConfigurations()
+    noticePolicy.getNoticeConfigurations()
       .stream()
       .map(cfg -> createRequestScheduledNoticeBasedOnNoticeConfig(cfg, request))
       .filter(Optional::isPresent)
-      .peek(opt -> scheduledNoticesRepository.create(opt.get()))
-      .count();
-
-    log.info("scheduleRequestNoticesBasedOnPolicy:: scheduled {} notices for request {}", noticeCount, request.getId());
+      .map(Optional::get)
+      .forEach(scheduledNoticesRepository::create);
 
     return succeeded(noticePolicy);
   }

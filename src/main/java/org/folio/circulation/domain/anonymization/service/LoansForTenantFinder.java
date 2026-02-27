@@ -29,7 +29,7 @@ public class LoansForTenantFinder extends DefaultLoansFinder {
   }
 
   public CompletableFuture<Result<Collection<Loan>>> findLoansToAnonymize() {
-    log.debug("findLoansToAnonymize:: searching for up to {} loans to anonymize", numberOfLoansToCheck);
+    log.info("findLoansToAnonymize:: searching for up to {} loans to anonymize", numberOfLoansToCheck);
     return loanRepository.findLoansToAnonymize(limit(numberOfLoansToCheck))
       .thenCompose(this::fetchAdditionalLoanInfo);
   }

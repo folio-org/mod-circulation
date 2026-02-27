@@ -34,7 +34,7 @@ public class LoanClosePeriodChecker implements AnonymizationChecker {
 
   boolean itemReturnedEarlierThanPeriod(ZonedDateTime returnDate) {
     if (returnDate == null) {
-      log.debug("itemReturnedEarlierThanPeriod:: returnDate is null, cannot check if loan can be anonymized");
+      log.info("itemReturnedEarlierThanPeriod:: returnDate is null, cannot check if loan can be anonymized");
       return false;
     }
 

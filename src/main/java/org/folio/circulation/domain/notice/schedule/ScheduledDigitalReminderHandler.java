@@ -88,13 +88,11 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
     this.feeFineOwnerRepository = new FeeFineOwnerRepository(clients);
     this.accountsStorageClient = clients.accountsStorageClient();
     this.feeFineActionsStorageClient = clients.feeFineActionsStorageClient();
-
-    log.debug("ScheduledDigitalReminderHandler:: initializing scheduled digital reminder handler");
   }
 
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
-    log.debug("handleContext:: handling context for notice {}", context.getNotice().getId());
+    log.info("handleContext:: handling context for notice {}", context.getNotice().getId());
     final ScheduledNotice notice = context.getNotice();
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
@@ -104,7 +102,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNotice>> processNotice(ScheduledNoticeContext context) {
-    log.debug("processNotice:: processing notice {} for loan {}",
+    log.info("processNotice:: processing notice {} for loan {}",
       context.getNotice().getId(), context.getLoan() != null ? context.getLoan().getId() : "null");
     return ofAsync(context)
       .thenCompose(r -> r.after(this::persistAccount))
@@ -117,7 +115,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
-    log.debug("fetchLoan:: fetching loan with overdue fine policy for notice {}", context.getNotice().getId());
+    log.info("fetchLoan:: fetching loan with overdue fine policy for notice {}", context.getNotice().getId());
     // Also fetches user, item and item-related records (holdings, instance, location, etc.)
     return loanRepository.getById(context.getNotice().getLoanId())
       .thenCompose(r -> r.after(loanPolicyRepository::findPolicyForLoan))
@@ -128,7 +126,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   @Override
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(ScheduledNoticeContext context) {
-    log.debug("fetchData:: fetching data for digital reminder notice {}", context.getNotice().getId());
+    log.info("fetchData:: fetching data for digital reminder notice {}", context.getNotice().getId());
     return ofAsync(() -> context)
       .thenApply(r -> r.next(this::failWhenNoticeHasNoLoanId))
       .thenCompose(r -> r.after(this::fetchTemplate))
@@ -139,7 +137,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   private CompletableFuture<Result<Boolean>> isOpenDay(ScheduledNoticeContext noticeContext) {
     String servicePointId = noticeContext.getLoan().getCheckoutServicePointId();
-    log.debug("isOpenDay:: checking if service point {} is open", servicePointId);
+    log.info("isOpenDay:: checking if service point {} is open", servicePointId);
     return getSystemTimeInTenantsZone()
       .thenCompose(tenantTime -> calendarRepository.lookupOpeningDays(
         tenantTime.toLocalDate(), servicePointId))
@@ -147,7 +145,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<ZonedDateTime> getSystemTimeInTenantsZone() {
-    log.debug("getSystemTimeInTenantsZone:: getting system time in tenant timezone");
+    log.info("getSystemTimeInTenantsZone:: getting system time in tenant timezone");
     return settingsRepository.lookupTimeZoneSettings()
       .thenApply(tenantTimeZone -> systemTime.withZoneSameInstant(tenantTimeZone.value()));
   }
@@ -158,7 +156,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   protected Result<ScheduledNoticeContext> failWhenLoanHasNoNextReminderScheduled(ScheduledNoticeContext context) {
-    log.debug("failWhenLoanHasNoNextReminderScheduled:: validating next reminder for loan {}",
+    log.info("failWhenLoanHasNoNextReminderScheduled:: validating next reminder for loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
     RemindersPolicy.ReminderConfig nextReminder = context.getLoan().getNextReminder();
 
@@ -170,10 +168,10 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
    * Sets current reminder as the most recent on the loan.
    */
   private CompletableFuture<Result<ScheduledNoticeContext>> updateLoan(ScheduledNoticeContext context) {
-    log.debug("updateLoan:: updating loan with reminder information for loan {}",
+    log.info("updateLoan:: updating loan with reminder information for loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
     if (isNoticeIrrelevant(context)) {
-      log.debug("updateLoan:: notice is irrelevant, skipping loan update");
+      log.info("updateLoan:: notice is irrelevant, skipping loan update");
       return ofAsync(() -> context);
     }
 
@@ -185,12 +183,12 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> instantiateReminderFeeAccount(ScheduledNoticeContext context) {
-    log.debug("instantiateReminderFeeAccount:: creating reminder fee account for loan {}",
+    log.info("instantiateReminderFeeAccount:: creating reminder fee account for loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
     Loan loan = context.getLoan();
     RemindersPolicy.ReminderConfig reminder = context.getLoan().getNextReminder();
     if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
-      log.debug("instantiateReminderFeeAccount:: skipping fee account (irrelevant={}, zero fee={})",
+      log.info("instantiateReminderFeeAccount:: skipping fee account (irrelevant={}, zero fee={})",
         isNoticeIrrelevant(context), reminder.hasZeroFee());
       return ofAsync(() -> context);
     }
@@ -223,17 +221,17 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<FeeFineOwner>> lookupFeeFineOwner(ScheduledNoticeContext context) {
-    log.debug("lookupFeeFineOwner:: looking up fee/fine owner for service point");
+    log.info("lookupFeeFineOwner:: looking up fee/fine owner for service point");
     return feeFineOwnerRepository
       .findOwnerForServicePoint(context.getLoan().getItem().getLocation().getPrimaryServicePoint().getId());
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> persistAccount(ScheduledNoticeContext context) {
-    log.debug("persistAccount:: persisting reminder fee account for loan {}",
+    log.info("persistAccount:: persisting reminder fee account for loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
     RemindersPolicy.ReminderConfig reminder = context.getLoan().getNextReminder();
     if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
-      log.debug("persistAccount:: skipping fee account (irrelevant={}, zero fee={})",
+      log.info("persistAccount:: skipping fee account (irrelevant={}, zero fee={})",
         isNoticeIrrelevant(context), reminder.hasZeroFee());
       return ofAsync(() -> context);
     }
@@ -242,11 +240,11 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> createFeeFineAction(ScheduledNoticeContext context) {
-    log.debug("createFeeFineAction:: creating fee/fine action for reminder fee, loan {}",
+    log.info("createFeeFineAction:: creating fee/fine action for reminder fee, loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
     RemindersPolicy.ReminderConfig reminder = context.getLoan().getNextReminder();
     if (isNoticeIrrelevant(context) || reminder.hasZeroFee()) {
-      log.debug("createFeeFineAction:: skipping fee account (irrelevant={}, zero fee={})",
+      log.info("createFeeFineAction:: skipping fee account (irrelevant={}, zero fee={})",
         isNoticeIrrelevant(context), reminder.hasZeroFee());
       return ofAsync(() -> context);
     }
@@ -290,7 +288,8 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
 
   protected CompletableFuture<Result<ScheduledNotice>> findNextRuntimeAndBuildNotice(
     ScheduledNoticeContext context, RemindersPolicy.ReminderConfig nextReminder) {
-    log.debug("buildNextNotice:: parameters notice context: {}, reminder config: {}",
+
+    log.info("buildNextNotice:: parameters notice context: {}, reminder config: {}",
       context, nextReminder);
 
     return settingsRepository.lookupTimeZoneSettings()
@@ -320,11 +319,11 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
     Loan loan = context.getLoan();
     if (loan.getNextReminder().hasZeroFee()) {
-      log.debug("buildNoticeContextJson: reminder without fee, notice context: {} ",
+      log.info("buildNoticeContextJson: reminder without fee, notice context: {} ",
         context);
       return createLoanNoticeContext(loan);
     } else {
-      log.debug("buildNoticeContextJson: reminder with reminder fee, notice context: {} ",
+      log.info("buildNoticeContextJson: reminder with reminder fee, notice context: {} ",
         context);
       return createFeeFineChargeNoticeContext(context.getAccount(), loan, context.getChargeAction());
     }

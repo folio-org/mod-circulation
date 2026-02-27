@@ -70,7 +70,7 @@ public class FeeFineScheduledNoticeService {
   public Result<CheckInContext> scheduleOverdueFineNotices(CheckInContext context,
     FeeFineAction action) {
 
-    log.debug("scheduleOverdueFineNotices:: scheduling overdue fine notices for check-in, loan {}, action {}",
+    log.info("scheduleOverdueFineNotices:: scheduling overdue fine notices for check-in, loan {}, action {}",
       context.getLoan() != null ? context.getLoan().getId() : "null", action != null ? action.getId() : "null");
 
     scheduleNotices(context.getLoan(), action, OVERDUE_FINE_RETURNED, context.getSessionId());
@@ -79,7 +79,7 @@ public class FeeFineScheduledNoticeService {
   }
 
   public Result<RenewalContext> scheduleOverdueFineNotices(RenewalContext context) {
-    log.debug("scheduleOverdueFineNotices:: scheduling overdue fine notices for renewal, loan {}",
+    log.info("scheduleOverdueFineNotices:: scheduling overdue fine notices for renewal, loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
     scheduleNotices(context.getLoan(), context.getOverdueFeeFineAction(), OVERDUE_FINE_RENEWED);
 
@@ -89,7 +89,7 @@ public class FeeFineScheduledNoticeService {
   public Result<LostItemFeeRefundContext> scheduleAgedToLostReturnedNotices(
     LostItemFeeRefundContext context, FeeFineAction feeFineAction) {
 
-    log.debug("scheduleAgedToLostReturnedNotices:: scheduling aged to lost returned notices, loan {}, action {}",
+    log.info("scheduleAgedToLostReturnedNotices:: scheduling aged to lost returned notices, loan {}, action {}",
       context.getLoan() != null ? context.getLoan().getId() : "null",
       feeFineAction != null ? feeFineAction.getId() : "null");
 
@@ -101,14 +101,14 @@ public class FeeFineScheduledNoticeService {
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
     Loan loan, FeeFineAction action, NoticeEventType eventType) {
 
-    log.debug("scheduleNotices:: scheduling notices for event type {}, loan {}", eventType,
+    log.info("scheduleNotices:: scheduling notices for event type {}, loan {}", eventType,
       loan != null ? loan.getId() : "null");
     return scheduleNotices(loan, action, eventType, null);
   }
 
   private CompletableFuture<Result<List<ScheduledNotice>>> scheduleNotices(
     Loan loan, FeeFineAction action, NoticeEventType eventType, UUID sessionId) {
-    log.debug("scheduleNotices:: scheduling notices with session, event type {}, loan {}, sessionId {}",
+    log.info("scheduleNotices:: scheduling notices with session, event type {}, loan {}, sessionId {}",
       eventType, loan != null ? loan.getId() : "null", sessionId);
     if (action == null) {
       log.info("scheduleNotices:: action is null, no notices to schedule");
@@ -122,7 +122,7 @@ public class FeeFineScheduledNoticeService {
 
   public CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
     FeeFineBalanceChangedEvent event) {
-    log.debug("scheduleNoticesForLostItemFeeActualCost:: scheduling notices for actual cost, " +
+    log.info("scheduleNoticesForLostItemFeeActualCost:: scheduling notices for actual cost, " +
         "feeFineId {}, loanId {}", event::getFeeFineId, event::getLoanId);
     accountRepository.findById(event.getFeeFineId())
       .thenCompose(r -> r.after(feeFineActionRepository::findChargeActionForAccount))
@@ -134,7 +134,7 @@ public class FeeFineScheduledNoticeService {
   public CompletableFuture<Result<Void>> scheduleNoticesForAgedLostFeeFineCharged(
     Loan loan, Collection<FeeFineAction> actions) {
 
-    log.debug("scheduleNoticesForAgedLostFeeFineCharged:: scheduling notices for {} " +
+    log.info("scheduleNoticesForAgedLostFeeFineCharged:: scheduling notices for {} " +
         "aged lost fee/fine actions, loan {}", actions.size(), loan != null ? loan.getId() : "null");
     actions.forEach(feeFineAction -> scheduleNotices(loan, feeFineAction,
       AGED_TO_LOST_FINE_CHARGED));
@@ -146,7 +146,7 @@ public class FeeFineScheduledNoticeService {
     Loan loan, PatronNoticePolicy noticePolicy, FeeFineAction action, NoticeEventType eventType,
     UUID sessionId) {
 
-    log.debug("scheduleNoticeBasedOnPolicy:: scheduling notice based on policy, event type {}, loan {}",
+    log.info("scheduleNoticeBasedOnPolicy:: scheduling notice based on policy, event type {}, loan {}",
       eventType, loan != null ? loan.getId() : "null");
     List<ScheduledNotice> scheduledNotices = noticePolicy.getNoticeConfigurations().stream()
       .filter(config -> config.getNoticeEventType() == eventType)
@@ -161,7 +161,7 @@ public class FeeFineScheduledNoticeService {
   private ScheduledNotice createScheduledNotice(NoticeConfiguration configuration,
     Loan loan, FeeFineAction action, NoticeEventType eventType, UUID sessionId) {
 
-    log.debug("createScheduledNotice:: creating scheduled notice for event type {}, loan {}, action {}",
+    log.info("createScheduledNotice:: creating scheduled notice for event type {}, loan {}, action {}",
       () -> eventType, loan::getId, action::getId);
 
     return new ScheduledNoticeBuilder()
@@ -177,7 +177,7 @@ public class FeeFineScheduledNoticeService {
   }
 
   private ZonedDateTime determineNextRunTime(NoticeConfiguration configuration, FeeFineAction action) {
-    log.debug("determineNextRunTime:: determining next run time for timing {}",
+    log.info("determineNextRunTime:: determining next run time for timing {}",
       configuration::getTiming);
     ZonedDateTime actionDateTime = action.getDateAction();
 
@@ -187,7 +187,7 @@ public class FeeFineScheduledNoticeService {
   }
 
   private ScheduledNoticeConfig createScheduledNoticeConfig(NoticeConfiguration configuration) {
-    log.debug("createScheduledNoticeConfig:: creating scheduled notice config with template {}",
+    log.info("createScheduledNoticeConfig:: creating scheduled notice config with template {}",
       configuration::getTemplateId);
 
     return new ScheduledNoticeConfigBuilder()

@@ -64,7 +64,7 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   }
 
   private List<EventGroupContext> groupEvents(List<PatronNoticeEvent> events) {
-    log.debug("groupEvents:: grouping {} notice events", events.size());
+    log.info("groupEvents:: grouping {} notice events", events.size());
     return events.stream()
       .collect(groupingBy(NoticeEventGroupDefinition::from))
       .entrySet()
