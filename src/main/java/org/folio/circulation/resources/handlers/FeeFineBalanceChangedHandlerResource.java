@@ -42,7 +42,7 @@ public class FeeFineBalanceChangedHandlerResource extends Resource {
   }
 
   private void handleFeeFineBalanceChangedEvent(RoutingContext routingContext) {
-    log.debug("handleFeeFineBalanceChangedEvent:: handling event: {}",
+    log.info("handleFeeFineBalanceChangedEvent:: handling event: {}",
       routingContext.body().asJsonObject());
     final WebContext context = new WebContext(routingContext);
     final var clients = create(context, client);

@@ -48,7 +48,7 @@ public class RenewByIdResource extends RenewalResource {
       .map(RenewByIdRequest::getItemId)
       .orElse("unknown item ID");
 
-    log.debug("findLoan:: itemId={}", itemId);
+    log.info("findLoan:: itemId={}", itemId);
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, false);
@@ -67,7 +67,7 @@ public class RenewByIdResource extends RenewalResource {
   private CompletableFuture<Result<Item>> lookupItem(ItemByIdInStorageFinder itemFinder,
     String itemId, CirculationErrorHandler errorHandler) {
 
-    log.debug("lookupItem:: itemId={}", itemId);
+    log.info("lookupItem:: itemId={}", itemId);
 
     return itemFinder.findItemById(itemId)
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, (Item) null));
@@ -82,7 +82,7 @@ public class RenewByIdResource extends RenewalResource {
       return completedFuture(succeeded(null));
     }
 
-    log.debug("lookupLoan:: itemId={}", item::getItemId);
+    log.info("lookupLoan:: itemId={}", item::getItemId);
 
     return singleOpenLoanFinder.findSingleOpenLoan(item)
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,

@@ -53,7 +53,7 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
 
   @Override
   public <T> Result<T> failWithValidationErrors(T otherwise) {
-    log.debug("failWithValidationErrors:: errors count: {}", getErrors()::size);
+    log.info("failWithValidationErrors:: errors count: {}", getErrors()::size);
     List<ValidationError> validationErrors = getErrors().keySet().stream()
       .filter(ValidationErrorFailure.class::isInstance)
       .map(ValidationErrorFailure.class::cast)
@@ -79,7 +79,8 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
       return validationFailure;
     }
 
-    log.debug("extendOverridableErrors:: extending error for overridable block type, errorType={}", errorType);
+    log.info("extendOverridableErrors:: extending error for overridable block type, " +
+      "errorType={}", errorType);
     OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
     OkapiPermissions missingOverridePermissions =
       blockType.getMissingOverridePermissions(okapiPermissions);

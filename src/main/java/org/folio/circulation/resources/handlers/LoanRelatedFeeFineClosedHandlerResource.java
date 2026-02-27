@@ -76,7 +76,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   private CompletableFuture<Result<Void>> processEvent(LoanRepository loanRepository,
     LoanRelatedFeeFineClosedEvent event, CloseLoanWithLostItemService closeLoanWithLostItemService) {
 
-    log.debug("processEvent:: loanId={}", event.getLoanId());
+    log.info("processEvent:: loanId={}", event.getLoanId());
 
     return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(closeLoanWithLostItemService::closeLoanAsLostAndPaid));

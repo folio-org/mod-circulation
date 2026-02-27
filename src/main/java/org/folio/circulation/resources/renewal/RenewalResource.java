@@ -258,7 +258,7 @@ public abstract class RenewalResource extends Resource {
     UserRepository userRepository, LoanRepository loanRepository,
     OverdueFinePolicyRepository overdueFinePolicyRepository) {
 
-    log.debug("processFeesFines:: loanId={}, isRenewalBlockOverrideRequested={}",
+    log.info("processFeesFines:: loanId={}, isRenewalBlockOverrideRequested={}",
       renewalContext.getLoan()::getId, () -> isRenewalBlockOverrideRequested);
 
     return isRenewalBlockOverrideRequested
@@ -527,7 +527,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   public CompletableFuture<Result<RenewalContext>> renewThroughOverride(RenewalContext context) {
-    log.debug("renewThroughOverride:: loanId={}", context.getLoan()::getId);
+    log.info("renewThroughOverride:: loanId={}", context.getLoan()::getId);
     final JsonObject overrideBlocks = context.getRenewalRequest().getJsonObject(OVERRIDE_BLOCKS);
     final String comment = getProperty(overrideBlocks, COMMENT);
     if (StringUtils.isBlank(comment)) {
