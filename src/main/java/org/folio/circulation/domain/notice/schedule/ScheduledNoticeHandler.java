@@ -60,7 +60,7 @@ public abstract class ScheduledNoticeHandler {
   public CompletableFuture<Result<List<ScheduledNotice>>> handleContexts(
     Collection<ScheduledNoticeContext> contexts) {
 
-    log.debug("handleContexts:: handling {} notice contexts", contexts != null ? contexts.size() : 0);
+    log.debug("handleContexts:: handling {} notice contexts", contexts.size());
 
     return allOf(contexts, this::handleContext);
   }
@@ -68,18 +68,18 @@ public abstract class ScheduledNoticeHandler {
   public CompletableFuture<Result<List<ScheduledNotice>>> handleNotices(
     Collection<ScheduledNotice> scheduledNotices) {
 
-    log.debug("handleNotices:: handling {} scheduled notices", scheduledNotices != null ? scheduledNotices.size() : 0);
+    log.debug("handleNotices:: handling {} scheduled notices", scheduledNotices.size());
 
     return allOf(scheduledNotices, this::handleNotice);
   }
 
   private CompletableFuture<Result<ScheduledNotice>> handleNotice(ScheduledNotice notice) {
-    log.debug("handleNotice:: processing scheduled notice {}", notice != null ? notice.getId() : "null");
+    log.debug("handleNotice:: processing scheduled notice {}", notice::getId);
     return handleContext(new ScheduledNoticeContext(notice));
   }
 
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
-    log.debug("handleContext:: handling context for notice {}", context.getNotice().getId());
+    log.debug("handleContext:: handling context for notice {}", context.getNotice()::getId);
     final ScheduledNotice notice = context.getNotice();
 
     return ofAsync(context)
@@ -93,7 +93,7 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
     ScheduledNoticeContext context) {
 
-    log.debug("fetchNoticeData:: fetching notice data for notice {}", context.getNotice().getId());
+    log.debug("fetchNoticeData:: fetching notice data for notice {}", context.getNotice()::getId);
 
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchData))
@@ -103,7 +103,7 @@ public abstract class ScheduledNoticeHandler {
   private Result<ScheduledNoticeContext> handleNoticeContextData(ScheduledNoticeContext context,
     Result<ScheduledNoticeContext> result) {
 
-    log.debug("handleNoticeContextData:: handling notice context data for notice {}", context.getNotice().getId());
+    log.debug("handleNoticeContextData:: handling notice context data for notice {}", context.getNotice()::getId);
     if (result.succeeded()) {
       return result;
     }
