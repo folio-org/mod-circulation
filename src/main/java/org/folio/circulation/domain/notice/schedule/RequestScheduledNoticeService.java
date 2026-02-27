@@ -70,7 +70,7 @@ public class RequestScheduledNoticeService {
   }
 
   public Result<RequestAndRelatedRecords> rescheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
-    log.debug("rescheduleRequestNotices:: rescheduling notices for request {}",
+    log.info("rescheduleRequestNotices:: rescheduling notices for request {}",
       relatedRecords.getRequest() != null ? relatedRecords.getRequest().getId() : "null");
     Request request = relatedRecords.getRequest();
     scheduledNoticesRepository.deleteByRequestId(request.getId())
@@ -149,8 +149,8 @@ public class RequestScheduledNoticeService {
   private Optional<ScheduledNotice> createHoldExpirationScheduledNotice(
     Request request, NoticeConfiguration cfg) {
 
-    log.debug("createHoldExpirationScheduledNotice:: creating hold expiration notice for request {}",
-      request != null ? request.getId() : "null");
+    log.info("createHoldExpirationScheduledNotice:: creating hold expiration notice for request {}",
+      request::getId);
 
     return Optional.ofNullable(request.getHoldShelfExpirationDate())
       .map(expirationDate -> determineNextRunTime(expirationDate, cfg))

@@ -197,7 +197,7 @@ public abstract class RequestScheduledNoticeHandler extends ScheduledNoticeHandl
 
   private CompletableFuture<Result<Request>> fetchLatestPatronInfoAddedComment(Request request) {
     log.debug("fetchLatestPatronInfoAddedComment:: fetching patron info comment for request {}",
-      request != null ? request.getId() : "null");
+      request::getId);
     if (request.getLoan() != null) {
       return loanRepository.fetchLatestPatronInfoAddedComment(request.getLoan())
         .thenApply(mapResult(request::withLoan));
