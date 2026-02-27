@@ -62,7 +62,7 @@ public class RequestAnonymizationService {
   }
 
   public CompletableFuture<Result<String>> anonymizeSingle(String requestId) {
-    log.info("anonymizeSingle:: parameters requestId: {}", requestId);
+    log.debug("anonymizeSingle:: ");
     if (!UuidUtil.isUuid(requestId)) {
       return CompletableFuture.completedFuture(ValidationErrorFailure.failedValidation(
         "invalidRequestId", "requestId", requestId)
@@ -78,7 +78,7 @@ public class RequestAnonymizationService {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String requestId) {
-    log.info("fetchRequest:: parameters requestId: {}", requestId);
+    log.debug("fetchRequest:: ");
     return requestRepository.getById(requestId);
   }
 
