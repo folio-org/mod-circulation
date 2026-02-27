@@ -8,6 +8,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -15,6 +16,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordFeeFine;
 import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordIdentifier;
@@ -47,6 +50,7 @@ import lombok.NoArgsConstructor;
 import lombok.With;
 
 public class ActualCostRecordService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ActualCostRecordRepository actualCostRecordRepository;
   private final LocationRepository locationRepository;
   private final IdentifierTypeRepository identifierTypeRepository;
@@ -55,6 +59,7 @@ public class ActualCostRecordService {
   public ActualCostRecordService(ActualCostRecordRepository actualCostRecordRepository,
     LocationRepository locationRepository, IdentifierTypeRepository identifierTypeRepository,
     PatronGroupRepository patronGroupRepository) {
+
     this.actualCostRecordRepository = actualCostRecordRepository;
     this.locationRepository = locationRepository;
     this.identifierTypeRepository = identifierTypeRepository;
@@ -68,6 +73,8 @@ public class ActualCostRecordService {
     FeeFineOwner owner = referenceDataContext.getFeeFineOwner();
     ItemLossType itemLossType = ItemLossType.DECLARED_LOST;
     ZonedDateTime dateOfLoss = ClockUtil.getZonedDateTime();
+    log.info("createIfNecessaryForDeclaredLostItem:: loss type: {}, date of loss: {}",
+      itemLossType, dateOfLoss);
     FeeFine feeFineType = referenceDataContext.getFeeFines().stream()
       .filter(feeFine -> LOST_ITEM_ACTUAL_COST_FEE_TYPE.equals((feeFine.getFeeFineType())))
       .findFirst()
@@ -84,6 +91,8 @@ public class ActualCostRecordService {
     FeeFineOwner owner = loanToChargeFees.getOwner();
     ItemLossType itemLossType = ItemLossType.AGED_TO_LOST;
     ZonedDateTime dateOfLoss = loan.getAgedToLostDateTime();
+    log.info("createIfNecessaryForAgedToLostItem:: loss type: {}, date of loss: {}",
+      itemLossType, dateOfLoss);
     Map<String, FeeFine> feeFineTypes = loanToChargeFees.getFeeFineTypes();
     FeeFine feeFineType = feeFineTypes == null ? null : feeFineTypes.get(LOST_ITEM_ACTUAL_COST_FEE_TYPE);
 
@@ -96,6 +105,9 @@ public class ActualCostRecordService {
     ZonedDateTime dateOfLoss, FeeFine feeFine) {
 
     if (!loan.getLostItemPolicy().hasActualCostFee()) {
+      log.info("createActualCostRecordIfNecessary:: lost item policy does not have actual cost fee, " +
+        "skipping actual cost record creation for loanId: {}", loan::getId);
+
       return completedFuture(succeeded(null));
     }
 
@@ -105,6 +117,8 @@ public class ActualCostRecordService {
       .withLoan(loan)
       .withFeeFineOwner(feeFineOwner)
       .withFeeFine(feeFine);
+    log.info("createActualCostRecordIfNecessary:: created context for loanId: {}, " +
+      "starting lookup chain", loan::getId);
 
     return lookupPermanentLocation(context)
       .thenCompose(r -> r.after(this::lookupIdentifierTypes))
@@ -124,8 +138,13 @@ public class ActualCostRecordService {
 
     User user = context.getLoan().getUser();
     if (user.getPatronGroup() != null) {
+      log.info("lookupPatronGroup:: patron group already exists: {} for userId: {}, skipping lookup",
+        user.getPatronGroup().getGroup(), user.getId());
       return ofAsync(context);
     }
+
+    log.info("lookupPatronGroup:: patron group not found, fetching from repository for userId: {}",
+      user::getId);
 
     return patronGroupRepository.findGroupForUser(user)
       .thenApply(r -> r.map(context.getLoan()::withUser))
@@ -139,7 +158,6 @@ public class ActualCostRecordService {
       .thenApply(r -> r.map(context::withIdentifierTypes))
       .thenApply(r -> r.map(this::buildIdentifiersList));
   }
-
   private ActualCostRecordContext buildIdentifiersList(ActualCostRecordContext context) {
     return context.withIdentifiers(context.getLoan().getItem().getIdentifiers()
       .map(i -> buildActualCostRecordIdentifier(i, context.getIdentifierTypes()))
@@ -174,6 +192,10 @@ public class ActualCostRecordService {
     String effectiveLocationName = ofNullable(item.getLocation())
       .map(Location::getName)
       .orElse(null);
+    ZonedDateTime expirationDate = loan.getLostItemPolicy()
+      .calculateFeeFineChargingPeriodExpirationDateTime(context.getLossDate());
+    log.debug("buildActualCostRecord:: loss type: {}, loss date: {}, expiration date: {}, patron group: {}",
+      context.getLossType(), context.getLossDate(), expirationDate, patronGroup);
 
     return new ActualCostRecord()
       .withStatus(ActualCostRecord.Status.OPEN)

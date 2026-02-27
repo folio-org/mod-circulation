@@ -8,9 +8,12 @@ import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.Account;
 import org.folio.circulation.domain.ActualCostRecord;
@@ -23,6 +26,7 @@ import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyReposito
 import org.folio.circulation.support.results.Result;
 
 public class CloseLoanWithLostItemService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final LoanRepository loanRepository;
 
@@ -50,8 +54,10 @@ public class CloseLoanWithLostItemService {
 
   public CompletableFuture<Result<Void>> closeLoanAsLostAndPaid(Loan loan) {
     if (loan == null || loan.isClosed() || !loan.isItemLost()) {
+      log.info("closeLoanAsLostAndPaid:: loan is null, closed, or item is not lost - skipping");
       return emptyAsync();
     }
+    log.info("closeLoanAsLostAndPaid:: parameters loanId: {}", loan::getId);
 
     return fetchLoanFeeFineData(loan)
       .thenCompose(r -> r.after(this::closeLoanWithLostItemFeesPaidAndPublishEvents));
@@ -60,11 +66,13 @@ public class CloseLoanWithLostItemService {
   private CompletableFuture<Result<Void>> closeLoanWithLostItemFeesPaidAndPublishEvents(
     Loan loan) {
 
+    log.info("closeLoanWithLostItemFeesPaidAndPublishEvents:: loanId: {}", loan::getId);
     return closeLoanAsLostAndPaid(loan, loanRepository, itemRepository, eventPublisher)
       .thenCompose(r -> r.after(eventPublisher::publishClosedLoanEvent));
   }
 
   private CompletableFuture<Result<Loan>> fetchLoanFeeFineData(Loan loan) {
+    log.info("fetchLoanFeeFineData:: parameters loanId: {}", loan::getId);
     return accountRepository.findAccountsForLoan(loan)
       .thenComposeAsync(lostItemPolicyRepository::findLostItemPolicyForLoan)
       .thenComposeAsync(r -> r.after(actualCostRecordRepository::findByLoan));
@@ -73,12 +81,15 @@ public class CloseLoanWithLostItemService {
   private CompletableFuture<Result<Loan>> closeLoanAsLostAndPaid(Loan loan,
     LoanRepository loanRepository, ItemRepository itemRepository, EventPublisher eventPublisher) {
 
+    log.info("closeLoanAsLostAndPaid:: loanId: {}", loan::getId);
     if (!shouldCloseLoan(loan)) {
+      log.info("closeLoanAsLostAndPaid:: loan {} should not be closed", loan::getId);
       return completedFuture(succeeded(loan));
     }
 
     boolean wasLoanOpen = loan.isOpen();
     loan.closeLoanAsLostAndPaid();
+    log.info("closeLoanAsLostAndPaid:: closing loan {} as lost and paid", loan::getId);
 
     return new StoreLoanAndItem(loanRepository, itemRepository).updateLoanAndItemInStorage(loan)
       .thenCompose(r -> r.after(l -> publishLoanClosedEvent(l, wasLoanOpen, eventPublisher)));
@@ -102,6 +113,8 @@ public class CloseLoanWithLostItemService {
     if (allLostFeesClosed(loan)) {
       ActualCostRecord actualCostRecord = loan.getActualCostRecord();
       if (actualCostRecord == null || actualCostRecord.getStatus() == CANCELLED) {
+        log.info("shouldCloseLoan:: all lost fees closed and no open actual cost record for loanId: {}",
+          loan::getId);
         return true;
       }
       if (loan.getAccounts().stream().noneMatch(account ->
@@ -111,10 +124,12 @@ public class CloseLoanWithLostItemService {
 
         return expirationDate != null && getZonedDateTime().isAfter(expirationDate);
       } else {
+        log.info("shouldCloseLoan:: actual cost fee account exists for loanId: {}", loan::getId);
         return true;
       }
     }
 
+    log.info("shouldCloseLoan:: not all lost fees are closed for loanId: {}", loan::getId);
     return false;
   }
 }

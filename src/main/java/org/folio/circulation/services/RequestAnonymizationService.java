@@ -5,10 +5,13 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
+import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestFulfillmentPreference;
 import org.folio.circulation.domain.RequestStatus;
@@ -24,6 +27,7 @@ import org.folio.util.UuidUtil;
 import io.vertx.core.json.JsonObject;
 
 public class RequestAnonymizationService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<RequestStatus> ALLOWED_STATUSES = EnumSet.of(
     RequestStatus.CLOSED_FILLED,
     RequestStatus.CLOSED_CANCELLED,
@@ -58,9 +62,10 @@ public class RequestAnonymizationService {
   }
 
   public CompletableFuture<Result<String>> anonymizeSingle(String requestId) {
+    log.debug("anonymizeSingle:: ");
     if (!UuidUtil.isUuid(requestId)) {
-      return CompletableFuture.completedFuture(
-        ValidationErrorFailure.failedValidation("invalidRequestId", "requestId", requestId)
+      return CompletableFuture.completedFuture(ValidationErrorFailure.failedValidation(
+        "invalidRequestId", "requestId", requestId)
       );
     }
 
@@ -73,22 +78,27 @@ public class RequestAnonymizationService {
   }
 
   private CompletableFuture<Result<Request>> fetchRequest(String requestId) {
+    log.debug("fetchRequest:: ");
     return requestRepository.getById(requestId);
   }
 
   private Result<Request> validateStatus(Request request, String id) {
     final RequestStatus status = request.getStatus();
+    log.info("validateStatus:: parameters requestId: {}, status: {}", id, status);
 
     if (ALLOWED_STATUSES.contains(status)) {
       return succeeded(request);
     }
     if (OPEN_STATUSES.contains(status)) {
+      log.info("validateStatus:: request {} is not closed, status: {}", id, status);
       return failed(new ValidationErrorFailure((new ValidationError("requestNotClosed", "requestId", id))));
     }
+    log.info("validateStatus:: request {} is not eligible for anonymization, status: {}", id, status);
     return failed(new ValidationErrorFailure((new ValidationError("requestNotEligibleForAnonymization", "requestId", id))));
   }
 
   private Request scrubPii(Request req) {
+    log.info("scrubPii:: parameters requestId: {}", req::getId);
     final JsonObject rep = req.asJson();
 
     final boolean hadRequester = rep.containsKey("requester") || rep.containsKey("requesterId");
