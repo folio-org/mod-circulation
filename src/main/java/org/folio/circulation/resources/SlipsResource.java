@@ -225,14 +225,18 @@ public abstract class SlipsResource extends Resource {
   }
 
   private JsonObject mapResultToJson(MultipleRecords<Request> requests) {
+    log.info("mapResultToJson:: start in thread {}", Thread.currentThread().getName());
     log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
       .map(StaffSlipMapper::createStaffSlipContext)
       .toList();
 
-    return new JsonObject()
+    JsonObject json = new JsonObject()
       .put(collectionName, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
+
+    log.info("mapResultToJson:: finish in thread {}", Thread.currentThread().getName());
+    return json;
   }
 
   private JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject context,
