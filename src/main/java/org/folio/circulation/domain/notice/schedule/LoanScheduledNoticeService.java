@@ -141,7 +141,7 @@ public class LoanScheduledNoticeService {
     ZonedDateTime eventTime) {
 
     log.debug("rescheduleLoanNotices:: rescheduling loan notices for event type {}, loan {}",
-      eventType, loan != null ? loan.getId() : "null");
+      () -> eventType, loan::getId);
     TriggeringEvent triggeringEvent = TriggeringEvent.from(eventType);
 
     if (!loan.isClosed()) {

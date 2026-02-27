@@ -45,18 +45,18 @@ public class RequestScheduledNoticeService {
   private RequestScheduledNoticeService(
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronNoticePolicyRepository noticePolicyRepository) {
-    log.debug("RequestScheduledNoticeService:: initializing request scheduled notice service");
+
     this.scheduledNoticesRepository = scheduledNoticesRepository;
     this.noticePolicyRepository = noticePolicyRepository;
   }
 
 
   public Result<RequestAndRelatedRecords> scheduleRequestNotices(RequestAndRelatedRecords relatedRecords) {
-    log.debug("scheduleRequestNotices:: scheduling notices for request {}",
+    log.info("scheduleRequestNotices:: scheduling notices for request {}",
       relatedRecords.getRequest() != null ? relatedRecords.getRequest().getId() : "null");
     Request request = relatedRecords.getRequest();
     if (request.isClosed()) {
-      log.debug("scheduleRequestNotices:: request is closed, skipping notice scheduling");
+      log.info("scheduleRequestNotices:: request is closed, skipping notice scheduling");
       return succeeded(relatedRecords);
     }
 
@@ -80,10 +80,10 @@ public class RequestScheduledNoticeService {
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> rescheduleRequestNotices(LoanAndRelatedRecords relatedRecords) {
-    log.debug("rescheduleRequestNotices:: rescheduling notices for loan related records");
+    log.info("rescheduleRequestNotices:: rescheduling notices for loan related records");
     Request request = relatedRecords.getClosedFilledRequest();
     if (request == null) {
-      log.debug("rescheduleRequestNotices:: no closed filled request, skipping reschedule");
+      log.info("rescheduleRequestNotices:: no closed filled request, skipping reschedule");
       return completedFuture(succeeded(relatedRecords));
     }
     scheduledNoticesRepository.deleteByRequestId(request.getId())
@@ -93,7 +93,7 @@ public class RequestScheduledNoticeService {
   }
 
   public Result<CheckInContext> rescheduleRequestNotices(CheckInContext context) {
-    log.debug("rescheduleRequestNotices:: rescheduling notices for check-in context");
+    log.info("rescheduleRequestNotices:: rescheduling notices for check-in context");
     Optional.ofNullable(context.getHighestPriorityFulfillableRequest())
       .ifPresent(this::rescheduleRequestNotices);
 
@@ -107,7 +107,7 @@ public class RequestScheduledNoticeService {
 
   private Result<PatronNoticePolicy> scheduleRequestNoticesBasedOnPolicy(
     Request request, PatronNoticePolicy noticePolicy) {
-    log.debug("scheduleRequestNoticesBasedOnPolicy:: scheduling notices based on policy for request {}",
+    log.info("scheduleRequestNoticesBasedOnPolicy:: scheduling notices based on policy for request {}",
       request::getId);
 
     long noticeCount = noticePolicy.getNoticeConfigurations()
@@ -124,7 +124,7 @@ public class RequestScheduledNoticeService {
 
   private Optional<ScheduledNotice> createRequestScheduledNoticeBasedOnNoticeConfig(
     NoticeConfiguration cfg, Request request) {
-    log.debug("createRequestScheduledNoticeBasedOnNoticeConfig:: creating notice for event type {}, request {}",
+    log.info("createRequestScheduledNoticeBasedOnNoticeConfig:: creating notice for event type {}, request {}",
       cfg::getNoticeEventType, request::getId);
     NoticeEventType eventType = cfg.getNoticeEventType();
 
@@ -139,7 +139,7 @@ public class RequestScheduledNoticeService {
 
   private Optional<ScheduledNotice> createRequestExpirationScheduledNotice(
     Request request, NoticeConfiguration cfg, TriggeringEvent triggeringEvent) {
-    log.debug("createRequestExpirationScheduledNotice:: creating request expiration notice, triggering event: {}", triggeringEvent);
+    log.info("createRequestExpirationScheduledNotice:: creating request expiration notice, triggering event: {}", triggeringEvent);
 
     return Optional.ofNullable(request.getRequestExpirationDate())
       .map(expirationDate -> determineNextRunTime(expirationDate, cfg))
@@ -158,8 +158,8 @@ public class RequestScheduledNoticeService {
   }
 
   private ZonedDateTime determineNextRunTime(ZonedDateTime expirationDate, NoticeConfiguration cfg) {
-    log.debug("determineNextRunTime:: determining next run time for timing {}",
-      cfg != null ? cfg.getTiming() : "null");
+    log.info("determineNextRunTime:: determining next run time for timing {}",
+      cfg::getTiming);
     return cfg.getTiming() == UPON_AT
       ? expirationDate
       : cfg.getTimingPeriod().minusDate(expirationDate);
@@ -168,7 +168,7 @@ public class RequestScheduledNoticeService {
   private ScheduledNotice createScheduledNotice(Request request,
     ZonedDateTime nextRunTime, NoticeConfiguration cfg, TriggeringEvent triggeringEvent) {
 
-    log.debug("createScheduledNotice:: creating scheduled notice for triggering event {}, next run time: {}",
+    log.info("createScheduledNotice:: creating scheduled notice for triggering event {}, next run time: {}",
       triggeringEvent, nextRunTime);
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
@@ -181,8 +181,8 @@ public class RequestScheduledNoticeService {
   }
 
   private ScheduledNoticeConfig createScheduledNoticeConfig(NoticeConfiguration configuration) {
-    log.debug("createScheduledNoticeConfig:: creating config with template {}",
-      configuration != null ? configuration.getTemplateId() : "null");
+    log.info("createScheduledNoticeConfig:: creating config with template {}",
+      configuration::getTemplateId);
     return new ScheduledNoticeConfigBuilder()
       .setTemplateId(configuration.getTemplateId())
       .setTiming(configuration.getTiming())
@@ -193,8 +193,8 @@ public class RequestScheduledNoticeService {
   }
 
   private Result<Request> scheduleNoticesForRequestWithItemId(Request request) {
-    log.debug("scheduleNoticesForRequestWithItemId:: scheduling notices for request {} with item ID",
-      request != null ? request.getId() : "null");
+    log.info("scheduleNoticesForRequestWithItemId:: scheduling notices for request {} with item ID",
+      request::getId);
     if (!request.isClosed()) {
       noticePolicyRepository.lookupPolicy(request)
         .thenApply(r -> r.next(policy -> scheduleRequestNoticesBasedOnPolicy(request, policy)));
@@ -204,8 +204,8 @@ public class RequestScheduledNoticeService {
   }
 
   private Result<Request> scheduleNoticesForRequestWithoutItemId(Request request) {
-    log.debug("scheduleNoticesForRequestWithoutItemId:: scheduling notices for request {} without item ID",
-      request != null ? request.getId() : "null");
+    log.info("scheduleNoticesForRequestWithoutItemId:: scheduling notices for request {} " +
+        "without item ID", request::getId);
     if (request.isTitleLevel()) {
       scheduleRequestNoticesBasedOnTlrSettings(request);
     }
@@ -214,8 +214,8 @@ public class RequestScheduledNoticeService {
   }
 
   private Result<TlrSettingsConfiguration> scheduleRequestNoticesBasedOnTlrSettings(Request request) {
-    log.debug("scheduleRequestNoticesBasedOnTlrSettings:: scheduling notices based on TLR settings for request {}",
-      request != null ? request.getId() : "null");
+    log.info("scheduleRequestNoticesBasedOnTlrSettings:: scheduling notices based on TLR settings for request {}",
+      request::getId);
     TlrSettingsConfiguration tlrSettingsConfiguration = request.getTlrSettingsConfiguration();
     UUID expirationTemplateId = tlrSettingsConfiguration.getExpirationPatronNoticeTemplateId();
     if (expirationTemplateId != null) {
