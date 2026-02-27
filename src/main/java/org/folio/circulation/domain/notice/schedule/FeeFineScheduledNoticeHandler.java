@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import static java.util.Collections.singletonList;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeAndActionNoticeContext;
 import static org.folio.circulation.domain.notice.TemplateContextUtil.createFeeFineChargeNoticeContext;
@@ -24,6 +29,7 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final FeeFineActionRepository actionRepository;
   private final LoanPolicyRepository loanPolicyRepository;
 
@@ -37,6 +43,8 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
     ScheduledNoticeContext context) {
 
+    log.info("fetchData:: fetching data for scheduled notice {}", context.getNotice()::getId);
+
     return ofAsync(() -> context)
       .thenCompose(r -> r.after(this::fetchTemplate))
       .thenCompose(r -> r.after(this::fetchAction))
@@ -49,12 +57,16 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchAction(
     ScheduledNoticeContext context) {
 
+    log.info("fetchAction:: fetching fee/fine action {}", context.getNotice()::getFeeFineActionId);
+
     return actionRepository.findById(context.getNotice().getFeeFineActionId())
       .thenApply(mapResult(context::withCurrentAction));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchAccount(
     ScheduledNoticeContext context) {
+
+    log.debug("fetchAccount:: fetching account for action");
 
     return accountRepository.findAccountForAction(context.getCurrentAction())
       .thenApply(mapResult(context::withAccount));
@@ -63,12 +75,16 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchChargeAction(
     ScheduledNoticeContext context) {
 
+    log.info("fetchChargeAction:: fetching charge action for account {}", context.getAccount()::getId);
+
     return actionRepository.findChargeActionForAccount(context.getAccount())
       .thenApply(mapResult(context::withChargeAction));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> fetchLoan(
     ScheduledNoticeContext context) {
+
+    log.info("fetchLoan:: fetching loan for account {}", context.getAccount()::getId);
 
     if (isNoticeIrrelevant(context)) {
       return ofAsync(() -> context);
@@ -84,6 +100,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected CompletableFuture<Result<ScheduledNotice>> updateNotice(ScheduledNoticeContext context) {
+    log.info("updateNotice:: updating scheduled notice {}", context.getNotice()::getId);
     ScheduledNotice notice = context.getNotice();
 
     return isNoticeIrrelevant(context) || !notice.getConfiguration().isRecurring()
@@ -93,12 +110,14 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
+    log.info("isNoticeIrrelevant:: checking if notice is irrelevant");
     return context.getAccount().isClosed() &&
       !context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment();
   }
 
   @Override
   protected NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context) {
+    log.debug("buildNoticeLogContext:: building notice log context");
     return new NoticeLogContext()
       .withUser(context.getLoan().getUser())
       .withAccountId(context.getAccount().getId())
@@ -118,6 +137,7 @@ public class FeeFineScheduledNoticeHandler extends ScheduledNoticeHandler {
 
   @Override
   protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
+    log.debug("buildNoticeContextJson:: building notice context JSON");
     return context.getNotice().getTriggeringEvent().isAutomaticFeeFineAdjustment()
       ? createFeeFineChargeAndActionNoticeContext(context.getAccount(),
       context.getLoan(), context.getCurrentAction(), context.getChargeAction())
