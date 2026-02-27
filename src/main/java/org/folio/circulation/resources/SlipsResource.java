@@ -124,7 +124,7 @@ public abstract class SlipsResource extends Resource {
       .thenCompose(r -> r.after(departmentRepository::findDepartmentsForRequestUsers))
       .thenCompose(r -> r.after(addressTypeRepository::findAddressTypesForRequests))
       .thenCompose(r -> r.after(servicePointRepository::findServicePointsForRequests))
-      .thenApplyAsync(r -> r.map(this::mapResultToJson))
+      .thenApply(r -> r.map(this::mapResultToJson))
       .thenCompose(r -> r.combineAfter(() -> servicePointRepository.getServicePointById(servicePointId),
         this::addPrimaryServicePointNameToStaffSlipContext))
       .thenApply(r -> r.map(json -> {
