@@ -38,7 +38,7 @@ public class SingleOpenLoanForItemInStorageFinder {
   }
 
   public CompletableFuture<Result<Loan>> findSingleOpenLoan(Item item) {
-    log.debug("findSingleOpenLoan:: parameters itemId: {}", item::getItemId);
+    log.info("findSingleOpenLoan:: parameters itemId: {}", item::getItemId);
     //Use same error for no loans and more than one loan to maintain compatibility
     final MoreThanOneLoanValidator moreThanOneLoanValidator
       = new MoreThanOneLoanValidator(moreThanOneOpenLoanFailure(item.getBarcode()));
