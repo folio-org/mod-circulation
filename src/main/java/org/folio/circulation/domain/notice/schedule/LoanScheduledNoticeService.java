@@ -80,7 +80,7 @@ public class LoanScheduledNoticeService {
   private ScheduledNotice createScheduledNotice(NoticeConfiguration configuration, Loan loan,
     NoticeEventType eventType, ZonedDateTime eventTime) {
     log.debug("createScheduledNotice:: creating scheduled notice for event type {}, loan {}",
-      eventType, loan != null ? loan.getId() : "null");
+      () -> eventType, loan::getId);
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
       .setLoanId(loan.getId())
@@ -93,7 +93,7 @@ public class LoanScheduledNoticeService {
 
   private ZonedDateTime determineNextRunTime(NoticeConfiguration configuration, ZonedDateTime eventTime) {
     log.debug("determineNextRunTime:: determining next run time for timing {}",
-      configuration != null ? configuration.getTiming() : "null");
+      configuration::getTiming);
     final NoticeTiming timing = configuration.getTiming();
 
     switch (timing) {
@@ -111,7 +111,7 @@ public class LoanScheduledNoticeService {
 
   private ScheduledNoticeConfig createScheduledNoticeConfig(NoticeConfiguration configuration) {
     log.debug("createScheduledNoticeConfig:: creating scheduled notice config with template {}",
-      configuration != null ? configuration.getTemplateId() : "null");
+      configuration::getTemplateId);
     return new ScheduledNoticeConfigBuilder()
       .setTemplateId(configuration.getTemplateId())
       .setTiming(configuration.getTiming())
