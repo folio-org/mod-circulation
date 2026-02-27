@@ -65,10 +65,10 @@ public class AnonymizationCheckersService {
   }
 
   public Map<String, Set<String>> segregateLoans(Collection<Loan> loans) {
-    log.debug("segregateLoans:: segregating {} loans", loans != null ? loans.size() : 0);
+    log.debug("segregateLoans:: segregating {} loans", loans.size());
     Map<String, Set<String>> result = loans.stream()
       .collect(Collectors.groupingBy(applyCheckersForLoanAndLoanHistoryConfig(),
-        Collectors.mapping(Loan::getId, Collectors.toSet())));;
+        Collectors.mapping(Loan::getId, Collectors.toSet())));
     log.info("segregateLoans:: result: segregated into {} categories", result.size());
     return result;
   }

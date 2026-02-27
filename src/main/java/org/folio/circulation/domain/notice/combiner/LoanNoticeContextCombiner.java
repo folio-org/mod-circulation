@@ -23,7 +23,7 @@ public class LoanNoticeContextCombiner implements NoticeContextCombiner {
   @Override
   public JsonObject buildCombinedNoticeContext(Collection<PatronNoticeEvent> events) {
     log.debug("buildCombinedNoticeContext:: building combined notice context for {} events",
-      events != null ? events.size() : 0);
+      events.size());
 
     return events.stream()
       .map(PatronNoticeEvent::getNoticeContext)
@@ -39,7 +39,7 @@ public class LoanNoticeContextCombiner implements NoticeContextCombiner {
   @Override
   public NoticeLogContext buildCombinedNoticeLogContext(Collection<PatronNoticeEvent> events) {
     log.debug("buildCombinedNoticeLogContext:: building combined log context for {} events",
-      events != null ? events.size() : 0);
+      events.size());
     return events.stream()
       .map(PatronNoticeEvent::getNoticeLogContext)
       .filter(Objects::nonNull)

@@ -160,7 +160,7 @@ public class FeeFineScheduledNoticeService {
     Loan loan, FeeFineAction action, NoticeEventType eventType, UUID sessionId) {
 
     log.debug("createScheduledNotice:: creating scheduled notice for event type {}, loan {}, action {}",
-      eventType, loan != null ? loan.getId() : "null", action != null ? action.getId() : "null");
+      () -> eventType, loan::getId, action::getId);
 
     return new ScheduledNoticeBuilder()
       .setId(UUID.randomUUID().toString())
@@ -176,7 +176,7 @@ public class FeeFineScheduledNoticeService {
 
   private ZonedDateTime determineNextRunTime(NoticeConfiguration configuration, FeeFineAction action) {
     log.debug("determineNextRunTime:: determining next run time for timing {}",
-      configuration != null ? configuration.getTiming() : "null");
+      configuration::getTiming);
     ZonedDateTime actionDateTime = action.getDateAction();
 
     return configuration.getTiming() == NoticeTiming.AFTER
@@ -186,7 +186,7 @@ public class FeeFineScheduledNoticeService {
 
   private ScheduledNoticeConfig createScheduledNoticeConfig(NoticeConfiguration configuration) {
     log.debug("createScheduledNoticeConfig:: creating scheduled notice config with template {}",
-      configuration != null ? configuration.getTemplateId() : "null");
+      configuration::getTemplateId);
 
     return new ScheduledNoticeConfigBuilder()
       .setTemplateId(configuration.getTemplateId())

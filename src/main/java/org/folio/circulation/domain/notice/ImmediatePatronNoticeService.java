@@ -50,7 +50,7 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvents(Collection<PatronNoticeEvent> events) {
-    log.debug("acceptNoticeEvents:: accepting {} notice events", events != null ? events.size() : 0);
+    log.debug("acceptNoticeEvents:: accepting {} notice events", events.size());
     return allOf(events, this::fetchNoticePolicyId)
       .thenApply(mapResult(this::groupEvents))
       .thenCompose(r -> r.after(this::handleEventGroups));
