@@ -34,7 +34,7 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
   @Override
   public CompletableFuture<Result<LoanAnonymizationRecords>> anonymizeLoans(
     Supplier<CompletableFuture<Result<Collection<Loan>>>> loansToCheck) {
-    log.debug("anonymizeLoans:: attempting to anonymize loans");
+    log.info("anonymizeLoans:: attempting to anonymize loans");
     if (anonymizationCheckersService.neverAnonymizeLoans()) {
       log.info("anonymizeLoans:: loan anonymization is disabled");
       return completedFuture(Result.of(LoanAnonymizationRecords::new));
@@ -50,7 +50,7 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
   private CompletableFuture<Result<LoanAnonymizationRecords>> segregateLoanRecords(
     Result<LoanAnonymizationRecords> anonymizationRecords) {
 
-    log.debug("segregateLoanRecords:: segregating loan records for anonymization");
+    log.info("segregateLoanRecords:: segregating loan records for anonymization");
     return completedFuture(anonymizationRecords.map(records -> {
       log.info("segregateLoanRecords:: anonymized loans: {}, notAnonymizedLoans: {}",
         records.getAnonymizedLoans()::size, records.getNotAnonymizedLoans()::size);
