@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.notice;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import static org.folio.HttpStatus.HTTP_OK;
 
 import io.vertx.core.json.JsonObject;
@@ -14,6 +19,7 @@ import org.folio.circulation.support.logging.PatronNoticeLogHelper;
 import org.folio.circulation.support.results.Result;
 
 public abstract class PatronNoticeService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final CollectionResourceClient patronNoticeClient;
   private final EventPublisher eventPublisher;
@@ -26,6 +32,11 @@ public abstract class PatronNoticeService {
   public CompletableFuture<Result<Void>> sendNotice(PatronNotice patronNotice,
     NoticeLogContext noticeLogContext) {
 
+    log.info("sendNotice:: sending notice to recipient {}, template {}",
+      patronNotice != null ? patronNotice.getRecipientId() : "null",
+      patronNotice != null && patronNotice.getTemplateId() != null ? patronNotice.getTemplateId() : "null");
+
+    log.debug("sendNotice:: posting notice to patron notice client");
     return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))
       .thenApply(r ->  new ResponseInterpreter<Response>().on(200, r).flatMap(r))
       .whenComplete((r, t) -> logResult(patronNotice, noticeLogContext, r, t))
