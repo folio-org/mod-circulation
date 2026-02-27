@@ -142,7 +142,7 @@ public abstract class ScheduledNoticeHandler {
     ScheduledNotice notice) {
 
     log.warn("publishErrorEvent:: publishing error event for notice {}, failure: {}",
-      notice != null ? notice.getId() : "null", failure);
+      notice::getId, () -> failure);
 
     eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), failure);
 
@@ -152,7 +152,7 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNotice>> deleteNotice(ScheduledNotice notice,
     String reason) {
 
-    log.info("deleteNotice:: deleting scheduled notice {}. Reason: {}", notice.getId(), reason);
+    log.info("deleteNotice:: deleting scheduled notice {}. Reason: {}", notice::getId, () -> reason);
 
     return scheduledNoticesRepository.delete(notice);
   }

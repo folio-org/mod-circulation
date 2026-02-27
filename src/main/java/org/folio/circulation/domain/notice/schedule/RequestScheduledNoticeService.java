@@ -108,7 +108,7 @@ public class RequestScheduledNoticeService {
   private Result<PatronNoticePolicy> scheduleRequestNoticesBasedOnPolicy(
     Request request, PatronNoticePolicy noticePolicy) {
     log.debug("scheduleRequestNoticesBasedOnPolicy:: scheduling notices based on policy for request {}",
-      request != null ? request.getId() : "null");
+      request::getId);
 
     long noticeCount = noticePolicy.getNoticeConfigurations()
       .stream()
@@ -125,7 +125,7 @@ public class RequestScheduledNoticeService {
   private Optional<ScheduledNotice> createRequestScheduledNoticeBasedOnNoticeConfig(
     NoticeConfiguration cfg, Request request) {
     log.debug("createRequestScheduledNoticeBasedOnNoticeConfig:: creating notice for event type {}, request {}",
-      cfg.getNoticeEventType(), request != null ? request.getId() : "null");
+      cfg::getNoticeEventType, request::getId);
     NoticeEventType eventType = cfg.getNoticeEventType();
 
     if (eventType == NoticeEventType.REQUEST_EXPIRATION) {

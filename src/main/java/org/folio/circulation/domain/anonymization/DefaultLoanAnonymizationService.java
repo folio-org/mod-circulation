@@ -14,6 +14,8 @@ import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersS
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
+import org.folio.circulation.support.utils.LogUtil;
+
 public class DefaultLoanAnonymizationService implements LoanAnonymizationService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
@@ -50,6 +52,8 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
 
     log.debug("segregateLoanRecords:: segregating loan records for anonymization");
     return completedFuture(anonymizationRecords.map(records -> {
+      log.info("segregateLoanRecords:: anonymized loans: {}, notAnonymizedLoans: {}",
+        records.getAnonymizedLoans()::size, records.getNotAnonymizedLoans()::size);
       Map<String, Set<String>> segregatedLoans = anonymizationCheckersService
           .segregateLoans(records.getLoansFound());
 

@@ -36,7 +36,7 @@ public class ReminderFeeScheduledNoticeService {
    */
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
     log.debug("scheduleFirstReminder:: scheduling first reminder for loan {}",
-      records.getLoan() != null ? records.getLoan().getId() : "null");
+      records.getLoan()::getId);
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       scheduleFirstReminder(loan, records.getTimeZone());
@@ -49,7 +49,7 @@ public class ReminderFeeScheduledNoticeService {
 
   private Result<Void> scheduleFirstReminder(Loan loan, ZoneId timeZone) {
     log.debug("scheduleFirstReminder:: scheduling first reminder for loan {} in timezone {}",
-      loan != null ? loan.getId() : "null", timeZone);
+      loan::getId, () -> timeZone);
     ReminderConfig firstReminder = loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
     instantiateFirstScheduledNotice(loan, timeZone, firstReminder).thenAccept(
       r -> r.after(scheduledNoticesRepository::create));
@@ -63,7 +63,7 @@ public class ReminderFeeScheduledNoticeService {
    */
   public Result<LoanAndRelatedRecords> rescheduleFirstReminder(LoanAndRelatedRecords relatedRecords) {
     log.debug("rescheduleFirstReminder:: rescheduling first reminder for loan {}",
-      relatedRecords.getLoan() != null ? relatedRecords.getLoan().getId() : "null");
+      relatedRecords.getLoan()::getId);
     return rescheduleFirstReminder(relatedRecords.getLoan(), relatedRecords.getTimeZone(), relatedRecords);
   }
 
@@ -74,16 +74,15 @@ public class ReminderFeeScheduledNoticeService {
    */
   public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
     log.debug("rescheduleFirstReminder:: rescheduling first reminder after renewal for loan {}",
-      renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
+      renewalContext.getLoan()::getId);
     return rescheduleFirstReminder(renewalContext.getLoan(), renewalContext.getTimeZone(), renewalContext);
   }
 
   private <T> Result<T> rescheduleFirstReminder(Loan loan, ZoneId timeZone, T mapTo) {
-    log.debug("rescheduleFirstReminder:: processing reminder reschedule for loan {}",
-      loan != null ? loan.getId() : "null");
+    log.debug("rescheduleFirstReminder:: processing reminder reschedule for loan {}", loan::getId);
     OverdueFinePolicy policy = loan.getOverdueFinePolicy();
     if (policy.isReminderFeesPolicy()) {
-      log.info("rescheduleFirstReminder:: deleting existing reminder notices for loan {}", loan.getId());
+      log.info("rescheduleFirstReminder:: deleting existing reminder notices for loan {}", loan::getId);
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(),
           TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
         .thenAccept(r -> r.next(deleted -> scheduleFirstReminder(loan, timeZone)));
@@ -98,12 +97,12 @@ public class ReminderFeeScheduledNoticeService {
     Loan loan, ZoneId timeZone, ReminderConfig reminderConfig) {
 
     log.debug("instantiateFirstScheduledNotice:: creating first scheduled notice for loan {} in timezone {}",
-      loan != null ? loan.getId() : "null", timeZone);
+      loan::getId, () -> timeZone);
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
         loan.getCheckoutServicePointId(), calendarRepository)
       .thenApply(r -> {
         if (r.succeeded()) {
-          log.info("instantiateFirstScheduledNotice:: scheduled notice created for loan {}", loan.getId());
+          log.info("instantiateFirstScheduledNotice:: scheduled notice created for loan {}", loan::getId);
         }
         return r.map(nextDueTime -> new ScheduledNotice(UUID.randomUUID().toString(),
           loan.getId(), null, loan.getUserId(), null, null,
@@ -114,7 +113,7 @@ public class ReminderFeeScheduledNoticeService {
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
     log.debug("instantiateNoticeConfig:: creating notice config with template {}",
-      reminderConfig != null ? reminderConfig.getNoticeTemplateId() : "null");
+      reminderConfig::getNoticeTemplateId);
     return new ScheduledNoticeConfig(NoticeTiming.AFTER, null,
       reminderConfig.getNoticeTemplateId(), reminderConfig.getNoticeFormat(), true);
   }

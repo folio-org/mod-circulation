@@ -41,7 +41,7 @@ public class LoanScheduledNoticeService {
 
   public Result<LoanAndRelatedRecords> scheduleNoticesForLoanDueDate(LoanAndRelatedRecords records) {
     log.debug("scheduleNoticesForLoanDueDate:: scheduling due date notices for loan {}",
-      records.getLoan() != null ? records.getLoan().getId() : "null");
+      records.getLoan()::getId);
     Loan loan = records.getLoan();
     scheduleLoanNotices(loan, DUE_DATE, loan.getDueDate());
 
@@ -50,7 +50,7 @@ public class LoanScheduledNoticeService {
 
   public Result<Void> scheduleAgedToLostNotices(Collection<Loan> loans) {
     log.debug("scheduleAgedToLostNotices:: scheduling aged to lost notices for {} loans",
-      loans != null ? loans.size() : 0);
+      loans::size);
     loans.forEach(loan -> scheduleLoanNotices(loan, AGED_TO_LOST, loan.getAgedToLostDateTime()));
 
     return succeeded(null);
