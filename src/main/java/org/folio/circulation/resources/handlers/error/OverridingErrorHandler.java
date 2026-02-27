@@ -17,10 +17,13 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -34,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class OverridingErrorHandler extends DeferFailureErrorHandler {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Map<CirculationErrorType, OverridableBlockType> OVERRIDABLE_ERROR_TYPES =
     Map.ofEntries(
       entry(USER_IS_BLOCKED_MANUALLY, PATRON_BLOCK),
@@ -49,6 +53,7 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
 
   @Override
   public <T> Result<T> failWithValidationErrors(T otherwise) {
+    log.info("failWithValidationErrors:: errors count: {}", getErrors()::size);
     List<ValidationError> validationErrors = getErrors().keySet().stream()
       .filter(ValidationErrorFailure.class::isInstance)
       .map(ValidationErrorFailure.class::cast)
@@ -58,9 +63,13 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
       .distinct() // to filter out duplicate InsufficientOverridePermission errors
       .collect(toList());
 
-    return validationErrors.isEmpty()
-      ? succeeded(otherwise)
-      : failed(new ValidationErrorFailure(validationErrors));
+    if (validationErrors.isEmpty()) {
+      log.info("failWithValidationErrors:: no validation errors, returning otherwise");
+      return succeeded(otherwise);
+    }
+
+    log.info("failWithValidationErrors:: returning {} validation error(s)", validationErrors.size());
+    return failed(new ValidationErrorFailure(validationErrors));
   }
 
   private ValidationErrorFailure extendOverridableErrors(ValidationErrorFailure validationFailure) {
@@ -70,6 +79,8 @@ public class OverridingErrorHandler extends DeferFailureErrorHandler {
       return validationFailure;
     }
 
+    log.info("extendOverridableErrors:: extending error for overridable block type, " +
+      "errorType={}", errorType);
     OverridableBlockType blockType = OVERRIDABLE_ERROR_TYPES.get(errorType);
     OkapiPermissions missingOverridePermissions =
       blockType.getMissingOverridePermissions(okapiPermissions);
