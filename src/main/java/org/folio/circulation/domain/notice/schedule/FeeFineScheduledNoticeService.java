@@ -122,8 +122,8 @@ public class FeeFineScheduledNoticeService {
 
   public CompletableFuture<Result<Void>> scheduleNoticesForLostItemFeeActualCost(
     FeeFineBalanceChangedEvent event) {
-    log.debug("scheduleNoticesForLostItemFeeActualCost:: scheduling notices for actual cost, feeFineId {}, loanId {}",
-      event != null ? event.getFeeFineId() : "null", event != null ? event.getLoanId() : "null");
+    log.debug("scheduleNoticesForLostItemFeeActualCost:: scheduling notices for actual cost, " +
+        "feeFineId {}, loanId {}", event::getFeeFineId, event::getLoanId);
     accountRepository.findById(event.getFeeFineId())
       .thenCompose(r -> r.after(feeFineActionRepository::findChargeActionForAccount))
       .thenCombine(loanRepository.getById(event.getLoanId()), (a, l) -> a.combine(l,
@@ -134,8 +134,8 @@ public class FeeFineScheduledNoticeService {
   public CompletableFuture<Result<Void>> scheduleNoticesForAgedLostFeeFineCharged(
     Loan loan, Collection<FeeFineAction> actions) {
 
-    log.debug("scheduleNoticesForAgedLostFeeFineCharged:: scheduling notices for {} aged lost fee/fine actions, loan {}",
-      actions != null ? actions.size() : 0, loan != null ? loan.getId() : "null");
+    log.debug("scheduleNoticesForAgedLostFeeFineCharged:: scheduling notices for {} " +
+        "aged lost fee/fine actions, loan {}", actions.size(), loan != null ? loan.getId() : "null");
     actions.forEach(feeFineAction -> scheduleNotices(loan, feeFineAction,
       AGED_TO_LOST_FINE_CHARGED));
 
