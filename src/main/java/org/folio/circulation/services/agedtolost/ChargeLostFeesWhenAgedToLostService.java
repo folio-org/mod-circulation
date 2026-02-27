@@ -111,7 +111,7 @@ public class ChargeLostFeesWhenAgedToLostService {
   }
 
   public CompletableFuture<Result<Void>> chargeFees(MultipleRecords<Loan> loans) {
-    log.info("chargeFees:: parameters loans {}", multipleRecordsAsString(loans));
+    log.info("chargeFees:: parameters loans {}", () -> multipleRecordsAsString(loans));
     if (loans.isEmpty()) {
       log.info("chargeFees:: no aged to lost loans to charge lost fees");
       return ofAsync(() -> null);
@@ -270,7 +270,7 @@ public class ChargeLostFeesWhenAgedToLostService {
     owners.forEach(owner -> owner.getServicePoints()
       .forEach(servicePoint -> servicePointToOwner.put(servicePoint, owner)));
     log.debug("mapOwnersToLoans:: created service point to owner mapping with {} entries",
-      mapAsString(servicePointToOwner));
+      () -> mapAsString(servicePointToOwner));
 
     return loansToCharge.stream()
       .map(loanToChargeFees -> loanToChargeFees.withOwner(servicePointToOwner))
