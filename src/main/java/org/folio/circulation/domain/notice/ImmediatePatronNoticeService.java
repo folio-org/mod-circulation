@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.notice;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -29,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.With;
 
 public class ImmediatePatronNoticeService extends PatronNoticeService {
-
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final PatronNoticePolicyRepository noticePolicyRepository;
   private final NoticeContextCombiner noticeContextCombiner;
 
@@ -40,10 +45,12 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event) {
+    log.debug("acceptNoticeEvent:: accepting single notice event");
     return acceptNoticeEvents(singletonList(event));
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvents(Collection<PatronNoticeEvent> events) {
+    log.debug("acceptNoticeEvents:: accepting {} notice events", events.size());
     return allOf(events, this::fetchNoticePolicyId)
       .thenApply(mapResult(this::groupEvents))
       .thenCompose(r -> r.after(this::handleEventGroups));
@@ -57,6 +64,7 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   }
 
   private List<EventGroupContext> groupEvents(List<PatronNoticeEvent> events) {
+    log.info("groupEvents:: grouping {} notice events", events.size());
     return events.stream()
       .collect(groupingBy(NoticeEventGroupDefinition::from))
       .entrySet()
@@ -120,6 +128,8 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   @AllArgsConstructor
   @RequiredArgsConstructor
   private static class EventGroupContext {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
     private final NoticeEventGroupDefinition groupDefinition;
     private final List<PatronNoticeEvent> events;
     private JsonObject combinedNoticeContext;
@@ -143,6 +153,8 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   @RequiredArgsConstructor
   @Getter
   private static class NoticeEventGroupDefinition {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
     private final String recipientId;
     private final String noticePolicyId;
     private final NoticeEventType eventType;

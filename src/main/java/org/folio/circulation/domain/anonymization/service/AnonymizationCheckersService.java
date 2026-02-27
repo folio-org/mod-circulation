@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.anonymization.service;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import static org.folio.circulation.domain.anonymization.LoanAnonymizationRecords.CAN_BE_ANONYMIZED_KEY;
 
 import java.util.Collection;
@@ -23,6 +28,7 @@ import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfig
 import org.folio.circulation.support.utils.ClockUtil;
 
 public class AnonymizationCheckersService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final LoanAnonymizationConfiguration config;
   private final Clock clock;
 
@@ -47,18 +53,24 @@ public class AnonymizationCheckersService {
 
   public boolean neverAnonymizeLoans() {
     // Without config, this cannot be determined
+    log.debug("neverAnonymizeLoans:: checking if loans should never be anonymized");
     if (config == null) {
       return false;
     }
 
-    return config.getLoanClosingType() == ClosingType.NEVER &&
+    boolean result = config.getLoanClosingType() == ClosingType.NEVER &&
       !config.treatLoansWithFeesAndFinesDifferently();
+    log.info("neverAnonymizeLoans:: result: {}", result);
+    return result;
   }
 
   public Map<String, Set<String>> segregateLoans(Collection<Loan> loans) {
-    return loans.stream()
+    log.info("segregateLoans:: segregating {} loans", loans.size());
+    Map<String, Set<String>> result = loans.stream()
       .collect(Collectors.groupingBy(applyCheckersForLoanAndLoanHistoryConfig(),
         Collectors.mapping(Loan::getId, Collectors.toSet())));
+    log.info("segregateLoans:: result: segregated into {} categories", result.size());
+    return result;
   }
 
   private Function<Loan, String> applyCheckersForLoanAndLoanHistoryConfig() {
