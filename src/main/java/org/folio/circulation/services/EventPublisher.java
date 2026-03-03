@@ -201,7 +201,9 @@ public class EventPublisher {
       renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
     var loan = renewalContext.getLoan();
 
-    publishDueDateChangedEvent(loan, loan.getUser(), true);
+    publishDueDateChangedEvent(loan, loan.getUser(), false);
+    runAsync(() -> publishRenewedEvent(loan.copy().withUser(loan.getUser()),
+      renewalContext.getLoggedInUserId()));
 
     return completedFuture(succeeded(renewalContext));
   }
@@ -324,6 +326,20 @@ public class EventPublisher {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);
         return LoanLogContext.from(loan)
           .withDescription(logDescription)
+          .asJson();
+      }))
+      .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
+  }
+
+  private CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
+    logger.info("publishRenewedEvent:: parameters loanId: {}, updatedByUserId: {}",
+      loan::getId, () -> updatedByUserId);
+    return getTenantTimeZone()
+      .thenApply(zoneResult -> zoneResult.map(zoneId -> {
+        var logDescription = getLoanDueDateChangeLog(loan, zoneId);
+        return LoanLogContext.from(loan)
+          .withDescription(logDescription)
+          .withUpdatedByUserId(updatedByUserId)
           .asJson();
       }))
       .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
