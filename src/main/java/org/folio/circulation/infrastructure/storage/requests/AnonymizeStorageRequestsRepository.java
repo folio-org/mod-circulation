@@ -1,7 +1,6 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.stream.Collectors.toList;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import static org.folio.circulation.support.json.JsonStringArrayPropertyFetcher.toStream;
@@ -38,12 +37,6 @@ public class AnonymizeStorageRequestsRepository {
     return new ResponseInterpreter<RequestAnonymizationRecords>()
       .on(201, Result.of(() -> records))
       .otherwise(forwardOnFailure());
-  }
-
-  private static JsonObject createRequestPayload(RequestAnonymizationRecords records) {
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.put("requestIds", new JsonArray(records.getAnonymizedRequestIds()));
-    return jsonObject;
   }
 
   public CompletableFuture<Result<RequestAnonymizationRecords>>
