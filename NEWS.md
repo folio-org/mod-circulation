@@ -1,3 +1,6 @@
+## 24.4.18 2026-03-09
+* Fix high memory consumption by Search Slips API (CIRC-2552)
+
 ## 24.4.17 2026-02-26
 * Renew ECS loan with loan policy used during check-out (CIRC-2565)
 
