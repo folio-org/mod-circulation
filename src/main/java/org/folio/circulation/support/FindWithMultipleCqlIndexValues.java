@@ -17,4 +17,7 @@ public interface FindWithMultipleCqlIndexValues<T> {
 
   CompletableFuture<Result<MultipleRecords<T>>> find(
       MultipleCqlIndexValuesCriteria criteria);
+
+  CompletableFuture<Result<MultipleRecords<T>>> find(
+    MultipleCqlIndexValuesCriteria criteria, int limit);
 }
