@@ -64,6 +64,33 @@ class EventPublisherTest {
   void renewalCirculationLogSourceShouldBeRenewalStaffNotCheckoutStaff() throws Exception {
     String checkoutStaffId = UUID.randomUUID().toString();
     String renewalStaffId = UUID.randomUUID().toString();
+
+    RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId);
+    eventPublisher.publishDueDateChangedEvent(renewalContext).get();
+    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
+
+    String updatedByUserId = captureLogPayloadByAction("Renewed");
+
+    assertThat(updatedByUserId, is(renewalStaffId));
+    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+  }
+
+  @Test
+  void dueDateChangedCirculationLogSourceShouldBeRenewalStaffNotCheckoutStaff() throws Exception {
+    String checkoutStaffId = UUID.randomUUID().toString();
+    String renewalStaffId = UUID.randomUUID().toString();
+
+    RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId);
+    eventPublisher.publishDueDateChangedEvent(renewalContext).get();
+    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
+
+    String updatedByUserId = captureLogPayloadByAction("Changed due date");
+
+    assertThat(updatedByUserId, is(renewalStaffId));
+    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+  }
+
+  private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {
     ZonedDateTime previousDueDate = ZonedDateTime.now().minusDays(7);
     ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(7);
 
@@ -78,23 +105,21 @@ class EventPublisherTest {
         .put("updatedByUserId", checkoutStaffId)));
     loan.setPreviousDueDate(previousDueDate);
 
-    RenewalContext renewalContext = RenewalContext.create(loan, new JsonObject(), renewalStaffId);
-    eventPublisher.publishDueDateChangedEvent(renewalContext).get();
-    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
+    return RenewalContext.create(loan, new JsonObject(), renewalStaffId);
+  }
 
+  private String captureLogPayloadByAction(String action) {
     ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
     verify(pubSubPublishingService, atLeastOnce())
       .publishEvent(eq(LOG_RECORD.name()), payloadCaptor.capture());
 
-    JsonObject renewalLogPayload = payloadCaptor.getAllValues().stream()
+    return payloadCaptor.getAllValues().stream()
       .map(JsonObject::new)
-      .filter(json -> "Renewed".equals(
+      .filter(json -> action.equals(
         json.getJsonObject("payload", new JsonObject()).getString("action")))
       .findFirst()
-      .orElseThrow(() -> new AssertionError("No renewal LOG_RECORD event was published"));
-    String updatedByUserId = renewalLogPayload.getJsonObject("payload").getString("updatedByUserId");
-
-    assertThat(updatedByUserId, is(renewalStaffId));
-    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+      .orElseThrow(() -> new AssertionError("No '" + action + "' LOG_RECORD event was published"))
+      .getJsonObject("payload")
+      .getString("updatedByUserId");
   }
 }

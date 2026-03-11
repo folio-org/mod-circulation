@@ -232,10 +232,12 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
-      runAsync(() -> publishDueDateLogEvent(loan));
       if (renewalContext != null) {
+        runAsync(() -> publishDueDateLogEvent(loan, renewalContext.getLoggedInUserId()));
         runAsync(() -> publishRenewedEvent(loan.copy().withUser(user),
           renewalContext.getLoggedInUserId()));
+      } else {
+        runAsync(() -> publishDueDateLogEvent(loan));
       }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
@@ -347,6 +349,7 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withUpdatedByUserId(updatedByUserId)
+      .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
       .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
