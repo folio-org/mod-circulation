@@ -7,6 +7,7 @@
 * Upgrade wiremock from 2.35.0 to 3.13.2 fixing CVE-2023-41329 ([CIRC-2543](https://folio-org.atlassian.net/browse/CIRC-2543))
 * Fix request losing retrieval service point name upon check-in ([CIRC-2535](https://folio-org.atlassian.net/browse/CIRC-2535))
 * Fix circulation log showing incorrect source for loan renewals ([CIRC-2550](https://folio-org.atlassian.net/browse/CIRC-2550))
+* Set limit for Pick slips to prevent excessive memory consumption([CIRC-2568](https://folio-org.atlassian.net/browse/CIRC-2568))
 
 ## 24.4.0 2025-03-12
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
