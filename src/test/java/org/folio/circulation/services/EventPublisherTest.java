@@ -1,6 +1,5 @@
 package org.folio.circulation.services;
 
-import static java.util.concurrent.ForkJoinPool.commonPool;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -14,8 +13,9 @@ import static org.mockito.Mockito.when;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
@@ -67,12 +67,21 @@ class EventPublisherTest {
 
     RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId);
     eventPublisher.publishDueDateChangedEvent(renewalContext).get();
-    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
 
-    String updatedByUserId = captureLogPayloadByAction("Renewed");
+    Awaitility.await()
+      .atMost(Durations.FIVE_SECONDS)
+      .pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
+      .untilAsserted(() -> {
+        String renewedUserId = captureLogPayloadByAction("Renewed");
 
-    assertThat(updatedByUserId, is(renewalStaffId));
-    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+        assertThat(renewedUserId, is(renewalStaffId));
+        assertThat(renewedUserId, is(not(checkoutStaffId)));
+
+        String dueDateChangedUserId = captureLogPayloadByAction("Changed due date");
+
+        assertThat(dueDateChangedUserId, is(renewalStaffId));
+        assertThat(dueDateChangedUserId, is(not(checkoutStaffId)));
+      });
   }
 
   @Test
@@ -82,12 +91,16 @@ class EventPublisherTest {
 
     RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId);
     eventPublisher.publishDueDateChangedEvent(renewalContext).get();
-    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
 
-    String updatedByUserId = captureLogPayloadByAction("Changed due date");
+    Awaitility.await()
+      .atMost(Durations.FIVE_SECONDS)
+      .pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
+      .untilAsserted(() -> {
+        String updatedByUserId = captureLogPayloadByAction("Changed due date");
 
-    assertThat(updatedByUserId, is(renewalStaffId));
-    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+        assertThat(updatedByUserId, is(renewalStaffId));
+        assertThat(updatedByUserId, is(not(checkoutStaffId)));
+      });
   }
 
   private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {
