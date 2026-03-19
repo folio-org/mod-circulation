@@ -1,6 +1,5 @@
 package org.folio.circulation.services;
 
-import static java.util.concurrent.ForkJoinPool.commonPool;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -14,15 +13,12 @@ import static org.mockito.Mockito.when;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.resources.context.RenewalContext;
-import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.CollectionResourceClient;
-import org.folio.circulation.support.GetManyRecordsClient;
-import org.folio.circulation.support.ServerErrorFailure;
-import org.folio.circulation.support.results.Result;
+
+import org.awaitility.Awaitility;
+import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,29 +31,16 @@ import io.vertx.core.json.JsonObject;
 @ExtendWith(MockitoExtension.class)
 class EventPublisherTest {
 
-  @Mock
-  private Clients clients;
-  @Mock
-  private PubSubPublishingService pubSubPublishingService;
-  @Mock
-  private CollectionResourceClient localeClient;
-  @Mock
-  private GetManyRecordsClient settingsStorageClient;
+  @Mock private PubSubPublishingService pubSubPublishingService;
 
   private EventPublisher eventPublisher;
 
   @BeforeEach
   void setUp() {
-    when(clients.pubSubPublishingService()).thenReturn(pubSubPublishingService);
-    when(clients.localeClient()).thenReturn(localeClient);
-    when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
     when(pubSubPublishingService.publishEvent(anyString(), anyString()))
       .thenReturn(CompletableFuture.completedFuture(true));
-    when(localeClient.get())
-      .thenReturn(CompletableFuture.completedFuture(
-        Result.failed(new ServerErrorFailure("locale not available"))));
 
-    eventPublisher = new EventPublisher(clients);
+    eventPublisher = new EventPublisher(pubSubPublishingService);
   }
 
   @Test
@@ -67,12 +50,20 @@ class EventPublisherTest {
 
     RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId);
     eventPublisher.publishDueDateChangedEvent(renewalContext).get();
-    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
+    Awaitility.await()
+      .atMost(Durations.FIVE_SECONDS)
+      .pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
+      .untilAsserted(() -> {
+        String renewedUserId = captureLogPayloadByAction("Renewed");
 
-    String updatedByUserId = captureLogPayloadByAction("Renewed");
+        assertThat(renewedUserId, is(renewalStaffId));
+        assertThat(renewedUserId, is(not(checkoutStaffId)));
 
-    assertThat(updatedByUserId, is(renewalStaffId));
-    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+        String dueDateChangedUserId = captureLogPayloadByAction("Changed due date");
+
+        assertThat(dueDateChangedUserId, is(renewalStaffId));
+        assertThat(dueDateChangedUserId, is(not(checkoutStaffId)));
+      });
   }
 
   @Test
@@ -82,12 +73,16 @@ class EventPublisherTest {
 
     RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId);
     eventPublisher.publishDueDateChangedEvent(renewalContext).get();
-    commonPool().awaitQuiescence(5, TimeUnit.SECONDS);
 
-    String updatedByUserId = captureLogPayloadByAction("Changed due date");
+    Awaitility.await()
+      .atMost(Durations.FIVE_SECONDS)
+      .pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
+      .untilAsserted(() -> {
+        String updatedByUserId = captureLogPayloadByAction("Changed due date");
 
-    assertThat(updatedByUserId, is(renewalStaffId));
-    assertThat(updatedByUserId, is(not(checkoutStaffId)));
+        assertThat(updatedByUserId, is(renewalStaffId));
+        assertThat(updatedByUserId, is(not(checkoutStaffId)));
+      });
   }
 
   private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {

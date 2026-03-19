@@ -16,6 +16,7 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
+import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -346,10 +347,17 @@ public class EventPublisher {
       .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
-  public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
+  public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan, String updatedByUserId) {
     return publishLogRecord(LoanLogContext.from(loan)
       .withUpdatedByUserId(updatedByUserId)
       .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
+      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withUpdatedByUserId(updatedByUserId)
+      .withAction(LogContextActionResolver.resolveAction(RENEWED.getValue()))
       .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
