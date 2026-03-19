@@ -1,3 +1,6 @@
+## 24.4.19 2026-03-19
+* Fix circulation log showing incorrect source for loan renewals (CIRC-2550)
+
 ## 24.4.18 2026-03-09
 * Fix high memory consumption by Search Slips API (CIRC-2552)
 
