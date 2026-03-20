@@ -16,6 +16,7 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
+import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -219,10 +220,12 @@ public class EventPublisher {
     if (records.getRecalledLoanPreviousDueDate() != null) {
       loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
     }
-    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
+    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), null);
   }
 
-  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
+  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user,
+    RenewalContext renewalContext) {
+
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
@@ -230,9 +233,12 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
-      runAsync(() -> publishDueDateLogEvent(loan));
-      if (renewalContext) {
-        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
+      if (renewalContext != null) {
+        runAsync(() -> publishDueDateLogEvent(loan, renewalContext.getLoggedInUserId()));
+        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user),
+          renewalContext.getLoggedInUserId()));
+      } else {
+        runAsync(() -> publishDueDateLogEvent(loan));
       }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
@@ -250,7 +256,7 @@ public class EventPublisher {
 
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
-      publishDueDateChangedEvent(loan, loan.getUser(), false);
+      publishDueDateChangedEvent(loan, loan.getUser(), null);
     }
 
     return completedFuture(succeeded(loanAndRelatedRecords));
@@ -261,7 +267,7 @@ public class EventPublisher {
 
     var loan = renewalContext.getLoan();
 
-    publishDueDateChangedEvent(loan, loan.getUser(), true);
+    publishDueDateChangedEvent(loan, loan.getUser(), renewalContext);
 
     return completedFuture(succeeded(renewalContext));
   }
@@ -341,8 +347,17 @@ public class EventPublisher {
       .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
-  public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
+  public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan, String updatedByUserId) {
     return publishLogRecord(LoanLogContext.from(loan)
+      .withUpdatedByUserId(updatedByUserId)
+      .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
+      .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
+    return publishLogRecord(LoanLogContext.from(loan)
+      .withUpdatedByUserId(updatedByUserId)
+      .withAction(LogContextActionResolver.resolveAction(RENEWED.getValue()))
       .withDescription(getLoanDueDateChangeLogMessage(loan)).asJson(), LOAN);
   }
 
