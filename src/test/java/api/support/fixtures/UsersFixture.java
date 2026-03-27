@@ -126,6 +126,11 @@ public class UsersFixture {
       .withId(APITestContext.getUserId()));
   }
 
+  public UserResource from(UserBuilder userBuilder) {
+    return createIfAbsent(userBuilder
+      .inGroupFor(patronGroupsFixture.staff()));
+  }
+
   private UserResource createIfAbsent(UserBuilder userBuilder) {
     return new UserResource(userRecordCreator.createIfAbsent(userBuilder));
   }
