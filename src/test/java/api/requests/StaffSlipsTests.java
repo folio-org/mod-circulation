@@ -629,6 +629,39 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
+  void pickSlipsLimitIsRespected() {
+    settingsFixture.enableTlrFeature();
+
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+
+    int batchSize = 50; // default value used by CqlIndexValuesFinder
+    int pickSlipsLimit = batchSize * 2;
+    int requestCount = pickSlipsLimit + 1;
+    StaffSlipsRequestFetchService.setCustomRequestLimit(pickSlipsLimit);
+
+    UUID instanceId = UUID.randomUUID();
+    for (int i = 0; i < requestCount; i++) {
+      final int currentIndex = i;
+      UserResource requester = usersFixture.steve(
+        b -> b.withBarcode("user_page_" + currentIndex).withUsername("user_page_" + currentIndex));
+      itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId)
+          .withBarcode("item_page_" + currentIndex));
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester, servicePointId);
+    }
+
+    assertThat(requestsStorageClient.getAll().size(), is(requestCount));
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, pickSlipsLimit, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
   void responseContainsSearchSlipsForTLR() {
     configurationsFixture.configurePrintHoldRequests(true);
     settingsFixture.enableTlrFeature();

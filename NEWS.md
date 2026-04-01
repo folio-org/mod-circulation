@@ -1,3 +1,6 @@
+## 24.4.20 2026-04-01
+* Set limit for Pick slips to prevent excessive memory consumption(CIRC-2568)
+
 ## 24.4.19 2026-03-19
 * Fix circulation log showing incorrect source for loan renewals (CIRC-2550)
 
