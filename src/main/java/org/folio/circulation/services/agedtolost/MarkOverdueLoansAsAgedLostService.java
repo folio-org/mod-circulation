@@ -10,6 +10,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.folio.circulation.support.http.client.CqlQuery.notEqual;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
+import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsString;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -57,15 +58,16 @@ public class MarkOverdueLoansAsAgedLostService {
   }
 
   public CompletableFuture<Result<Void>> processAgeToLost() {
-    log.info("Running mark overdue loans as aged to lost process...");
+    log.info("processAgeToLost:: running mark overdue loans as aged to lost process...");
 
     return loanFetchQuery()
       .after(query -> loanPageableFetcher.processPages(query, this::processAgeToLost));
   }
 
   public CompletableFuture<Result<Void>> processAgeToLost(MultipleRecords<Loan> loans) {
+    log.debug("processAgeToLost:: parameters loans count: {}", () -> multipleRecordsAsString(loans));
     if (loans.isEmpty()) {
-      log.info("No overdue loans to age to lost found");
+      log.info("processAgeToLost:: no overdue loans to age to lost found");
       return ofAsync(() -> null);
     }
 
@@ -82,6 +84,7 @@ public class MarkOverdueLoansAsAgedLostService {
   private CompletableFuture<Result<List<Loan>>> publishAgedToLostEvents(
     Result<List<Loan>> allLoansResult) {
 
+    log.debug("publishAgedToLostEvents:: publishing aged to lost events");
     return allLoansResult.after(allLoans -> allOf(allLoans, eventPublisher::publishAgedToLostEvents))
       .thenApply(r -> r.next(ignored -> allLoansResult));
   }
@@ -100,7 +103,7 @@ public class MarkOverdueLoansAsAgedLostService {
     final ZonedDateTime whenToBill = lostItemPolicy
       .calculateDateTimeWhenPatronBilledForAgedToLost(isRecalled, ageToLostDate);
 
-    log.info("Billing date for loan [{}] is [{}], is recalled [{}]", loan.getId(),
+    log.info("ageItemToLost:: billing date for loan [{}] is [{}], is recalled [{}]", loan.getId(),
       whenToBill, isRecalled);
 
     loan.setAgedToLostDelayedBilling(false, whenToBill);
@@ -110,6 +113,7 @@ public class MarkOverdueLoansAsAgedLostService {
   private CompletableFuture<Result<List<Loan>>> updateLoansAndItemsInStorage(
     Result<MultipleRecords<Loan>> loanRecordsResult) {
 
+    log.debug("updateLoansAndItemsInStorage:: updating loans and items in storage");
     return loanRecordsResult
       .map(MultipleRecords::getRecords)
       .after(loans -> allOf(loans, storeLoanAndItem::updateLoanAndItemInStorage));
@@ -120,8 +124,8 @@ public class MarkOverdueLoansAsAgedLostService {
 
     return loansResult.map(loans -> {
       final var loansToAgeToLost = loans.filter(this::shouldAgeLoanToLost);
-      log.info("{} out of {} loans is going to be aged to lost", loansToAgeToLost.size(),
-        loans.size());
+      log.info("getLoansThatHaveToBeAgedToLost:: {} out of {} loans is going to be aged to lost",
+        loansToAgeToLost.size(), loans.size());
 
       return loansToAgeToLost;
     });
@@ -132,13 +136,14 @@ public class MarkOverdueLoansAsAgedLostService {
     final boolean shouldAgeToLost = loan.getLostItemPolicy().canAgeLoanToLost(
       isRecalled, loan.getDueDate());
 
-    log.info("Loan [{}] - will be aged to lost - [{}], is recalled [{}]", loan.getId(),
+    log.info("shouldAgeLoanToLost:: loan [{}] - will be aged to lost - [{}], is recalled [{}]", loan.getId(),
       shouldAgeToLost, isRecalled);
 
     return shouldAgeToLost;
   }
 
   private Result<CqlQuery> loanFetchQuery() {
+    log.debug("loanFetchQuery:: building loan fetch query");
     final Result<CqlQuery> statusQuery = exactMatch("status.name", "Open");
     final Result<CqlQuery> dueDateQuery = lessThan("dueDate", formatDateTime(ClockUtil.getZonedDateTime()));
     final Result<CqlQuery> claimedReturnedQuery = notEqual("itemStatus", CLAIMED_RETURNED.getValue());
@@ -153,6 +158,7 @@ public class MarkOverdueLoansAsAgedLostService {
   }
 
   private CompletableFuture<Result<Void>> scheduleAgedToLostNotices(Result<List<Loan>> result) {
+    log.debug("scheduleAgedToLostNotices:: scheduling aged to lost notices");
     return result.after(userRepository::findUsersForLoans)
       .thenApply(r -> r.next(loanScheduledNoticeService::scheduleAgedToLostNotices));
   }
@@ -163,7 +169,7 @@ public class MarkOverdueLoansAsAgedLostService {
     return recordsResult.map(records -> records
       .filter(loan -> {
         if (loan.getItem() == null || loan.getItem().isNotFound()) {
-          log.warn("No item [{}] exists for loan [{}]", loan.getItemId(), loan.getId());
+          log.warn("excludeLoansThatHaveNoItem:: no item [{}] exists for loan [{}]", loan.getItemId(), loan.getId());
         }
 
         return loan.getItem() != null && loan.getItem().isFound();

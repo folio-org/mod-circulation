@@ -5,13 +5,20 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerP
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ServicePoint;
 
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 
 public class ServicePointMapper {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public ServicePoint toDomain(JsonObject representation) {
+    log.debug("toDomain:: parameters servicePointId: {}", () -> getProperty(representation, "id"));
     final var timePeriodMapper = new TimePeriodMapper();
 
     return new ServicePoint(getProperty(representation, "id"),

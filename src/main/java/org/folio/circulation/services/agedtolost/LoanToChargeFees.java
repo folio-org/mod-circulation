@@ -3,6 +3,7 @@ package org.folio.circulation.services.agedtolost;
 import static java.util.function.Function.identity;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_FEE_TYPE;
 import static org.folio.circulation.domain.FeeFine.LOST_ITEM_PROCESSING_FEE_TYPE;
+import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -57,7 +58,7 @@ public final class LoanToChargeFees {
       .map(Location::getPrimaryServicePointId)
       .map(UUID::toString)
       .orElseGet(() -> {
-        log.error("Failed to get servicePointId for loan {}", loan.getId());
+        log.error("Failed to get servicePointId for loan {}", loan::getId);
         return null;
       });
   }
@@ -79,6 +80,7 @@ public final class LoanToChargeFees {
   }
 
   LoanToChargeFees withFeeFineTypes(Collection<FeeFine> allFeeFines) {
+    log.info("withFeeFineTypes:: parameters feeFines: {}", () -> collectionAsString(allFeeFines));
     final Map<String, FeeFine> feeFineTypeToFeeFineMap = allFeeFines.stream()
       .collect(Collectors.toMap(FeeFine::getFeeFineType, identity()));
 

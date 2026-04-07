@@ -158,6 +158,11 @@ public class ResourceClient {
       InterfaceUrls.settingsStorageUrl(), "items");
   }
 
+  public static ResourceClient forLocale() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.localeUrl(), "locale");
+  }
+
   public static ResourceClient forLoansStorage() {
     return new ResourceClient(InterfaceUrls::loansStorageUrl,
         "loans");

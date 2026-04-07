@@ -5,9 +5,12 @@ import static org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher.
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getArrayProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Contributor;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Publication;
@@ -16,7 +19,10 @@ import io.vertx.core.json.JsonObject;
 import org.folio.circulation.domain.SeriesStatement;
 
 public class InstanceMapper {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public Instance toDomain(JsonObject representation) {
+    log.debug("toDomain:: parameters instanceId: {}", () -> getProperty(representation, "id"));
     return new Instance(getProperty(representation, "id"),
       getProperty(representation, "hrid"),
       getProperty(representation, "title"),

@@ -16,8 +16,6 @@ import static api.support.fixtures.CalendarExamples.getCurrentAndNextFakeOpening
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
 import static api.support.fixtures.LibraryHoursExamples.CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID;
-import static api.support.fixtures.SettingsFixture.newYorkTimezoneConfiguration;
-import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.ValidationErrorMatchers.hasCode;
@@ -76,7 +74,7 @@ class CheckOutCalculateDueDateTests extends APITests {
 
   @Test
   void testRespectSelectedTimezoneForDueDateCalculations() {
-    settingsClient.create(newYorkTimezoneConfiguration());
+    localeFixture.createNewYorkLocaleSettings();
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();
@@ -100,7 +98,7 @@ class CheckOutCalculateDueDateTests extends APITests {
 
   @Test
   void testRespectUtcTimezoneForDueDateCalculations() {
-    settingsClient.create(utcTimezoneConfiguration());
+    localeFixture.createUtcLocaleSettings();
 
     final IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource steve = usersFixture.steve();

@@ -1,7 +1,5 @@
 package org.folio.circulation.services;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.ObjectUtils.allNull;
 import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
@@ -10,23 +8,18 @@ import static org.folio.circulation.support.fetching.RecordFetching.findWithMult
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.PageLimit.maximumLimit;
 import static org.folio.circulation.support.results.Result.ofAsync;
-import static org.folio.circulation.support.results.Result.succeeded;
-import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Holdings;
 import org.folio.circulation.domain.Instance;
-import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
@@ -38,72 +31,62 @@ import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository
 import org.folio.circulation.resources.context.StaffSlipsContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
+import org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
 
-public class RequestFetchService {
+public class StaffSlipsRequestFetchService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final String ITEM_ID_KEY = "itemId";
+  private static Integer customRequestLimit;
+  private static final String ITEM_EFFECTIVE_LOCATION_ID_KEY = "item.itemEffectiveLocationId";
   private static final String STATUS_KEY = "status";
   private static final String REQUESTS_KEY = "requests";
   private static final String REQUEST_TYPE_KEY = "requestType";
   private static final String REQUEST_LEVEL_KEY = "requestLevel";
 
+
   private final RequestType requestType;
+  private final int limit;
   private final InstanceRepository instanceRepository;
   private final HoldingsRepository holdingsRepository;
   private final CollectionResourceClient requestStorageClient;
 
-  public RequestFetchService(Clients clients, RequestType requestType) {
+
+  public StaffSlipsRequestFetchService(Clients clients, RequestType requestType, int limit) {
     this.requestType = requestType;
+    this.limit = limit;
     this.instanceRepository = new InstanceRepository(clients);
     this.holdingsRepository = new HoldingsRepository(clients.holdingsStorage());
     this.requestStorageClient = clients.requestsStorage();
   }
 
   public CompletableFuture<Result<StaffSlipsContext>> fetchRequests(StaffSlipsContext context) {
+    log.info("fetchRequests:: fetching {} requests with limit {}", requestType, getRequestLimit());
     return fetchRequestsWithItems(context)
       .thenCompose(r -> r.after(this::fetchRequestsWithoutItems));
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchRequestsWithItems(
-    StaffSlipsContext context) {
+    StaffSlipsContext context){
 
-    Collection<Item> items = context.getItems();
-    if (items == null || items.isEmpty()) {
-      log.info("fetchOpenPageRequestsForItems:: no items fetched");
-
-      return ofAsync(context.withRequests(MultipleRecords.empty()));
-    }
-    Set<String> itemIds = items.stream()
-      .map(Item::getItemId)
-      .filter(StringUtils::isNoneBlank)
-      .collect(toSet());
-
-    if (itemIds.isEmpty()) {
-      log.info("fetchOpenPageRequestsForItems:: itemIds is empty");
-
+    Set<String> locationIds = context.getLocations().toKeys(Location::getId);
+    if (locationIds.isEmpty()) {
+      log.info("fetchRequestsWithItems:: no locations to search requests for");
       return ofAsync(context.withRequests(MultipleRecords.empty()));
     }
 
-    var query = exactMatch(REQUEST_TYPE_KEY, requestType.getValue())
+    Result<CqlQuery> query = exactMatch(REQUEST_TYPE_KEY, requestType.getValue())
       .combine(exactMatch(STATUS_KEY, RequestStatus.OPEN_NOT_YET_FILLED.getValue()), CqlQuery::and);
+    MultipleCqlIndexValuesCriteria criteria = byIndex(ITEM_EFFECTIVE_LOCATION_ID_KEY, locationIds)
+      .withQuery(query);
+
+    log.info("fetchRequestsWithItems:: fetching requests by item location with limit {}", getRequestLimit());
+    log.debug("fetchRequestsWithItems:: locationIds: {}", locationIds);
 
     return findWithMultipleCqlIndexValues(requestStorageClient, REQUESTS_KEY, Request::from)
-      .find(byIndex(ITEM_ID_KEY, itemIds).withQuery(query))
-      .thenApply(flatMapResult(requests -> matchItemsToRequests(requests, items)))
-      .thenApply(r -> r.map(context::withRequests));
-  }
-
-  private Result<MultipleRecords<Request>> matchItemsToRequests(
-    MultipleRecords<Request> requests, Collection<Item> items) {
-
-    Map<String, Item> itemMap = items.stream()
-      .collect(toMap(Item::getItemId, identity(), (a, b) -> a));
-
-    return succeeded(requests.mapRecords(request -> request.withItem(
-      itemMap.getOrDefault(request.getItemId(), null))));
+      .find(criteria, getRequestLimit())
+      .thenApply(mapResult(context::withRequests));
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchRequestsWithoutItems(
@@ -111,6 +94,12 @@ public class RequestFetchService {
 
     log.info("fetchRequestsWithoutItems:: requestType={}", requestType);
     if (requestType != RequestType.HOLD) {
+      return ofAsync(context);
+    }
+
+    if (context.getRequests().size() >= getRequestLimit()) {
+      log.info("fetchRequestsWithoutItems:: request limit is {} but context already has {} requests, " +
+        "skipping fetching requests without items", getRequestLimit(), context.getRequests().size());
       return ofAsync(context);
     }
 
@@ -198,6 +187,18 @@ public class RequestFetchService {
 
     Map<String, Instance> instancesById = instances.getRecordsMap(Instance::getId);
     return requests.mapRecords(r -> r.withInstance(instancesById.get(r.getInstanceId())));
+  }
+
+  private int getRequestLimit() {
+    return customRequestLimit != null ? customRequestLimit : limit;
+  }
+
+  public static void setCustomRequestLimit(int limit) {
+    customRequestLimit = limit;
+  }
+
+  public static void clearCustomRequestLimit() {
+    customRequestLimit = null;
   }
 
 }
