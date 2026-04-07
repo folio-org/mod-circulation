@@ -127,6 +127,8 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
     List<Result<CqlQuery>> queries) {
 
+    log.debug("findByBatchQueries:: fetching records using {} batch queries", queries::size);
+
     // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<Result<MultipleRecords<T>>>> results = queries.stream()
       .map(query -> cqlFinder.findByQuery(query, maximumLimit()))
