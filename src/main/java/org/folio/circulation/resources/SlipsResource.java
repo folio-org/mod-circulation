@@ -15,6 +15,7 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -235,12 +236,39 @@ public abstract class SlipsResource extends Resource {
     log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
     List<JsonObject> representations = requests.getRecords().stream()
       .map(StaffSlipMapper::createStaffSlipContext)
+      .sorted(new ByLocationThenShelvingOrderAlternativelyTitle())
       .toList();
     JsonObject jsonRepresentations = new JsonObject()
       .put(collectionName, representations)
       .put(TOTAL_RECORDS_KEY, representations.size());
 
     return succeeded(jsonRepresentations);
+  }
+
+  public static class ByLocationThenShelvingOrderAlternativelyTitle implements Comparator<JsonObject> {
+    @Override
+    public int compare(JsonObject firstSlip, JsonObject secondSlip) {
+      JsonObject item1 = firstSlip.getJsonObject("item");
+      JsonObject item2 = secondSlip.getJsonObject("item");
+      if (item1.getString("effectiveLocationSpecific","No effective location specific")
+          .equals(item2.getString("effectiveLocationSpecific", "No effective location specific"))) {
+        if (item1.getString("shelvingOrder") == null && item2.getString("shelvingOrder") == null) {
+          return item1.getString("title").compareTo(item2.getString("title"));
+        } else {
+          if (item1.getString("shelvingOrder") == null) {
+            return 1;
+          } else if (item2.getString("shelvingOrder") == null) {
+            return -1;
+          } else {
+            return firstSlip.getJsonObject("item").getString("shelvingOrder")
+                .compareTo(secondSlip.getJsonObject("item").getString("shelvingOrder"));
+          }
+        }
+      } else {
+        return firstSlip.getJsonObject("item").getString("effectiveLocationSpecific")
+            .compareTo(secondSlip.getJsonObject("item").getString("effectiveLocationSpecific"));
+      }
+    }
   }
 
   private JsonObject addPrimaryServicePointNameToStaffSlipContext(JsonObject context,
