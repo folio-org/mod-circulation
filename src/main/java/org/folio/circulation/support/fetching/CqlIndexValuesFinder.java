@@ -67,6 +67,7 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
     MultipleCqlIndexValuesCriteria criteria) {
 
     if (criteria.getValues().isEmpty()) {
+      log.info("find:: search criteria is empty");
       return completedFuture(of(MultipleRecords::empty));
     }
 
@@ -87,6 +88,7 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
     MultipleCqlIndexValuesCriteria criteria, int limit) {
 
     if (criteria.getValues().isEmpty()) {
+      log.info("find:: search criteria is empty");
       return completedFuture(of(MultipleRecords::empty));
     }
 
