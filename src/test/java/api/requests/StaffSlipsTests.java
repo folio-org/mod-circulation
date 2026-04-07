@@ -263,7 +263,7 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, slipsType);
 
-    JsonObject slip = getPickSlipsList(response, slipsType).get(0);
+    JsonObject slip = getPickSlipsList(response, slipsType).getFirst();
     JsonObject itemContext = slip.getJsonObject(ITEM_KEY);
     assertNotNull(slip.getString("currentDateTime"));
 
@@ -664,6 +664,133 @@ class StaffSlipsTests extends APITests {
     Response response = SlipsType.PICK_SLIPS.get(servicePointId);
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, pickSlipsLimit, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void pickSlipsWillBeSortedByLocationShelvingOrderOrTitle() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    UUID circDesk1 = servicePointsFixture.cd1().getId();
+
+    // Second floor, shelving order 456
+    val secondFloorCd1 = locationsFixture.secondFloorEconomics();
+    val temeraire1SecondFloorCd1 = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumber("456").withCallNumberPrefix(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("919191"));
+
+    // Second floor, shelving order 123
+    val temeraire2SecondFloorCd1 = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumber("123").withCallNumberPrefix(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    // Third floor, no shelving order, small angry planet.
+    val thirdFloorCd1 = locationsFixture.thirdFloor();
+    val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(thirdFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    // Third floor, no shelving order, dunkirk
+    val dunkirk2ThirdFloorCd1 = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(thirdFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        instanceBuilder -> instanceBuilder.withId(UUID.randomUUID()),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("81818181"));
+
+    // Second floor, np shelving order, dunkirk
+    val dunkirkSecondFloorCd1 = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        instanceBuilder -> instanceBuilder.withId(UUID.randomUUID()),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+    val steve = usersFixture.steve();
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(temeraire1SecondFloorCd1)
+        .by(james));
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(temeraire2SecondFloorCd1)
+        .by(charlotte));
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(planetThirdFloorCd1)
+        .by(charlotte));
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(dunkirkSecondFloorCd1)
+        .by(steve));
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(dunkirk2ThirdFloorCd1)
+        .by(charlotte));
+
+    val response = SlipsType.PICK_SLIPS.get(circDesk1);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    JsonArray pickSlips = response.getJson().getJsonArray("pickSlips");
+
+    JsonObject item = pickSlips.getJsonObject(0).getJsonObject("item");
+    String sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / 123 / Temeraire"));
+    item = pickSlips.getJsonObject(1).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / 456 / Temeraire"));
+    item = pickSlips.getJsonObject(2).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / null / Dunkirk"));
+
+    item = pickSlips.getJsonObject(3).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("3rd Floor / null / Dunkirk"));
+    item = pickSlips.getJsonObject(4).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("3rd Floor / null / The Long Way to a Small, Angry Planet"));
   }
 
   @Test
