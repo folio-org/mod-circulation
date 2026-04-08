@@ -121,6 +121,41 @@ class FeeFineFacadeTest {
     assertThat(((ServerErrorFailure) result.cause()).getReason(), is(expectedError));
   }
 
+  @Test
+  void shouldUseEmptyUserNameWhenUserIsNullDuringRefund() throws Exception {
+    final String expectedError = "Fee fine account failed to be refunded";
+
+    when(accountRefundClient.post(any(JsonObject.class), anyString()))
+      .thenAnswer(postRespondWithRequestAndFail(expectedError));
+
+    final Result<AccountActionResponse> result = feeFineFacade
+      .refundAccountIfNeeded(refundCommand(), null)
+      .get(5, TimeUnit.SECONDS);
+
+    assertThat(result, notNullValue());
+    assertThat(result.failed(), is(true));
+  }
+
+  @Test
+  void shouldUseUsernameAsFallbackWhenUserHasNoLastNameDuringRefund() throws Exception {
+    final String expectedError = "Fee fine account failed to be refunded";
+
+    when(accountRefundClient.post(any(JsonObject.class), anyString()))
+      .thenAnswer(postRespondWithRequestAndFail(expectedError));
+
+    // Shadow/cloned user with no personal block (no lastName)
+    User shadowUser = User.from(new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("username", "shadow-user"));
+
+    final Result<AccountActionResponse> result = feeFineFacade
+      .refundAccountIfNeeded(refundCommand(), shadowUser)
+      .get(5, TimeUnit.SECONDS);
+
+    assertThat(result, notNullValue());
+    assertThat(result.failed(), is(true));
+  }
+
   private CreateAccountCommand.CreateAccountCommandBuilder createCommandBuilder() {
     final Item item = Item.from(new JsonObject())
       .withLocation(new Location(null, "Main library", null, null, emptyList(),

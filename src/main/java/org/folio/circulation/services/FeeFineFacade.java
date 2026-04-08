@@ -102,7 +102,7 @@ public class FeeFineFacade {
       .account(account)
       .currentServicePointId(command.getServicePointId())
       .refundReason(command.getRefundReason())
-      .userName(user.getPersonalName())
+      .userName(getPersonalNameSafe(user))
       .build();
 
     return feeFineService.refundAccount(refundCommand);
@@ -128,10 +128,24 @@ public class FeeFineFacade {
       .accountId(account.getId())
       .currentServicePointId(command.getServicePointId())
       .cancellationReason(command.getCancelReason())
-      .userName(user.getPersonalName())
+      .userName(getPersonalNameSafe(user))
       .build();
 
     return feeFineService.cancelAccount(cancelCommand);
+  }
+
+  private static String getPersonalNameSafe(User user) {
+    if (user == null) {
+      log.warn("getPersonalNameSafe:: user is null, using empty string as userName");
+      return "";
+    }
+    String personalName = user.getPersonalName();
+    if (personalName == null) {
+      log.warn("getPersonalNameSafe:: user {} has no resolvable personal name, " +
+        "falling back to empty string", user.getId());
+      return "";
+    }
+    return personalName;
   }
 
   private CompletableFuture<Result<StoredFeeFineActionBuilder>> populateCreatedBy(

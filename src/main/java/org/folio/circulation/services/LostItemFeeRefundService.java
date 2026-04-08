@@ -184,7 +184,16 @@ public class LostItemFeeRefundService {
     LostItemFeeRefundContext context, RefundAndCancelAccountCommand command) {
 
     return userRepository.getUser(command.getStaffUserId())
-      .thenCompose(r -> r.after(user -> processAccount(context, command, user)));
+      .thenCompose(r -> r.after(user -> {
+        if (user == null) {
+          log.warn("refundAndCloseAccount:: staff user not found for userId: {}, " +
+            "proceeding with null user", command.getStaffUserId());
+        } else if (user.getPersonalName() == null) {
+          log.warn("refundAndCloseAccount:: staff user {} has no resolvable personal name, " +
+            "falling back to username", command.getStaffUserId());
+        }
+        return processAccount(context, command, user);
+      }));
   }
 
   private CompletableFuture<Result<AccountActionResponse>> processAccount(
