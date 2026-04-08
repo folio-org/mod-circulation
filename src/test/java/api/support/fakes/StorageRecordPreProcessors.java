@@ -89,6 +89,7 @@ public final class StorageRecordPreProcessors {
       }
     });
     newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
+
     return newItem;
   }
 
