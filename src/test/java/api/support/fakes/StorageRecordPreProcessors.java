@@ -89,10 +89,6 @@ public final class StorageRecordPreProcessors {
       }
     });
     newItem.put("effectiveCallNumberComponents", effectiveCallNumberComponents);
-    // simplified mock of shelving order
-    if (effectiveCallNumberComponents.containsKey("callNumber")) {
-      newItem.put("effectiveShelvingOrder", effectiveCallNumberComponents.getString("callNumber"));
-    }
     return newItem;
   }
 
