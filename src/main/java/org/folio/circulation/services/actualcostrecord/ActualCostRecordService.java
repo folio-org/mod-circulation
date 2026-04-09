@@ -197,6 +197,13 @@ public class ActualCostRecordService {
     log.debug("buildActualCostRecord:: loss type: {}, loss date: {}, expiration date: {}, patron group: {}",
       context.getLossType(), context.getLossDate(), expirationDate, patronGroup);
 
+    String lastName = user.getLastName();
+    if (lastName == null) {
+      log.warn("buildActualCostRecord:: user {} has no lastName (possible shadow/cloned user); " +
+        "falling back to empty string to satisfy downstream @NotNull constraint", user.getId());
+      lastName = "qwerty";
+    }
+
     return new ActualCostRecord()
       .withStatus(ActualCostRecord.Status.OPEN)
       .withLossType(context.getLossType())
@@ -207,7 +214,7 @@ public class ActualCostRecordService {
         .withId(loan.getUserId())
         .withBarcode(user.getBarcode())
         .withFirstName(user.getFirstName())
-        .withLastName(user.getLastName())
+        .withLastName(lastName)
         .withMiddleName(user.getMiddleName())
         .withPatronGroupId(user.getPatronGroupId())
         .withPatronGroup(patronGroup))
