@@ -199,9 +199,9 @@ public class ActualCostRecordService {
 
     String lastName = user.getLastName();
     if (lastName == null) {
-      log.warn("buildActualCostRecord:: user {} has no lastName (possible shadow/cloned user); " +
-        "falling back to empty string to satisfy downstream @NotNull constraint", user.getId());
-      lastName = "qwerty";
+      log.info("buildActualCostRecord:: user {} has no lastName (shadow user) " +
+        user.getId());
+      lastName = "shadow";
     }
 
     return new ActualCostRecord()
