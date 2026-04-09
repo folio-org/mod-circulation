@@ -67,6 +67,7 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
     MultipleCqlIndexValuesCriteria criteria) {
 
     if (criteria.getValues().isEmpty()) {
+      log.info("find:: search criteria is empty");
       return completedFuture(of(MultipleRecords::empty));
     }
 
@@ -87,6 +88,7 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
     MultipleCqlIndexValuesCriteria criteria, int limit) {
 
     if (criteria.getValues().isEmpty()) {
+      log.info("find:: search criteria is empty");
       return completedFuture(of(MultipleRecords::empty));
     }
 
@@ -126,6 +128,8 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
 
   private CompletableFuture<Result<MultipleRecords<T>>> findByBatchQueries(
     List<Result<CqlQuery>> queries) {
+
+    log.debug("findByBatchQueries:: fetching records using {} batch queries", queries::size);
 
     // NOTE: query limit is max value to ensure all records are returned
     List<CompletableFuture<Result<MultipleRecords<T>>>> results = queries.stream()
