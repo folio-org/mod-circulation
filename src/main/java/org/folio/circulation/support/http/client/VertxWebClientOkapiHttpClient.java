@@ -73,6 +73,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   public CompletableFuture<Result<Response>> post(String url,
     JsonObject body, Duration timeout) {
 
+    log.debug("post:: url={}", url);
+
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
@@ -91,6 +93,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   @Override
   public CompletableFuture<Result<Response>> get(String url,
     Duration timeout, QueryParameter... queryParameters) {
+
+    log.debug("get:: url={}", url);
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
@@ -138,6 +142,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   public CompletableFuture<Result<Response>> put(String url, JsonObject body,
     Duration timeout) {
 
+    log.debug("put:: url={}", url);
+
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
@@ -170,6 +176,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   @Override
   public CompletableFuture<Result<Response>> delete(String url,
     Duration timeout, QueryParameter... queryParameters) {
+
+    log.debug("delete:: url={}", url);
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();

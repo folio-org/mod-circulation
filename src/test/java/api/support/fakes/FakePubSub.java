@@ -75,10 +75,11 @@ public class FakePubSub {
         .end();
     }
     else {
-      if (requestBodyList != null) {
-        requestBodyList.add(routingContext.body().asJsonObject());
+      JsonObject requestBody = routingContext.body().asJsonObject();
+      if (requestBodyList != null && requestBodyList.stream().noneMatch(requestBody::equals)) {
+        requestBodyList.add(requestBody);
       }
-      String json = routingContext.body().asJsonObject().encodePrettily();
+      String json = requestBody.encodePrettily();
       Buffer buffer = Buffer.buffer(json, "UTF-8");
       routingContext.response()
         .setStatusCode(HTTP_CREATED.toInt())
