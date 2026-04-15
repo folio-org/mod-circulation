@@ -65,6 +65,7 @@ import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.LocaleFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.MaterialTypesFixture;
@@ -308,6 +309,7 @@ public abstract class APITests {
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
+  protected final LocaleFixture localeFixture = new LocaleFixture();
   protected final CirculationSettingsFixture circulationSettingsFixture = new CirculationSettingsFixture();
   protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
 

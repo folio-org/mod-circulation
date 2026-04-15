@@ -1,5 +1,4 @@
 package org.folio.circulation.domain.notice.schedule;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
@@ -21,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 public class ReminderFeeScheduledNoticeService {
-
-  protected static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ScheduledNoticesRepository scheduledNoticesRepository;
   private final CalendarRepository calendarRepository;
 
@@ -37,21 +35,21 @@ public class ReminderFeeScheduledNoticeService {
    * @return the (unmodified) objects handed back to the check-out chain of procedures
    */
   public Result<LoanAndRelatedRecords> scheduleFirstReminder(LoanAndRelatedRecords records) {
-    log.debug("scheduleFirstReminder:: parameters loanAndRelatedRecords: {}",
-      records);
+    log.debug("scheduleFirstReminder:: scheduling first reminder for loan {}",
+      records.getLoan()::getId);
     Loan loan = records.getLoan();
     if (loan.getOverdueFinePolicy().isReminderFeesPolicy()) {
       scheduleFirstReminder(loan, records.getTimeZone());
     } else {
-      log.debug("scheduleFirstReminder:: The current item, barcode {}, is not subject to a reminder fees policy.", loan.getItem().getBarcode());
+      log.info("scheduleFirstReminder:: item with barcode {} is not subject to reminder fees policy, skipping",
+        loan.getItem() != null ? loan.getItem().getBarcode() : "null");
     }
     return succeeded(records);
   }
 
   private Result<Void> scheduleFirstReminder(Loan loan, ZoneId timeZone) {
-    log.debug("scheduleFirstReminder:: parameters loan: {}, timeZone: {}",
-      loan, timeZone);
-
+    log.debug("scheduleFirstReminder:: scheduling first reminder for loan {} in timezone {}",
+      loan::getId, () -> timeZone);
     ReminderConfig firstReminder = loan.getOverdueFinePolicy().getRemindersPolicy().getFirstReminder();
     instantiateFirstScheduledNotice(loan, timeZone, firstReminder).thenAccept(
       r -> r.after(scheduledNoticesRepository::create));
@@ -64,6 +62,8 @@ public class ReminderFeeScheduledNoticeService {
    * @return the due date change context back to the manual due date change or recall process
    */
   public Result<LoanAndRelatedRecords> rescheduleFirstReminder(LoanAndRelatedRecords relatedRecords) {
+    log.debug("rescheduleFirstReminder:: rescheduling first reminder for loan {}",
+      relatedRecords.getLoan()::getId);
     return rescheduleFirstReminder(relatedRecords.getLoan(), relatedRecords.getTimeZone(), relatedRecords);
   }
 
@@ -73,18 +73,22 @@ public class ReminderFeeScheduledNoticeService {
    * @return the renewal context back to the renewal process
    */
   public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
+    log.debug("rescheduleFirstReminder:: rescheduling first reminder after renewal for loan {}",
+      renewalContext.getLoan()::getId);
     return rescheduleFirstReminder(renewalContext.getLoan(), renewalContext.getTimeZone(), renewalContext);
   }
 
   private <T> Result<T> rescheduleFirstReminder(Loan loan, ZoneId timeZone, T mapTo) {
+    log.debug("rescheduleFirstReminder:: processing reminder reschedule for loan {}", loan::getId);
     OverdueFinePolicy policy = loan.getOverdueFinePolicy();
     if (policy.isReminderFeesPolicy()) {
+      log.info("rescheduleFirstReminder:: deleting existing reminder notices for loan {}", loan::getId);
       scheduledNoticesRepository.deleteByLoanIdAndTriggeringEvent(loan.getId(),
           TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE)
         .thenAccept(r -> r.next(deleted -> scheduleFirstReminder(loan, timeZone)));
     } else {
-      log.debug("rescheduleFirstReminder:: Reschedule reminder on due date change: The current item, barcode {}, is not subject to a reminder fees policy.",
-        loan.getItem().getBarcode());
+      log.info("rescheduleFirstReminder:: item with barcode {} is not subject to reminder fees policy, skipping reschedule",
+        loan.getItem() != null ? loan.getItem().getBarcode() : "null");
     }
     return succeeded(mapTo);
   }
@@ -92,19 +96,24 @@ public class ReminderFeeScheduledNoticeService {
   private CompletableFuture<Result<ScheduledNotice>> instantiateFirstScheduledNotice(
     Loan loan, ZoneId timeZone, ReminderConfig reminderConfig) {
 
-    log.debug("instantiateFirstScheduledNotice:: parameters loanAndRelatedRecords: {}, " +
-      " timeZone: {}, reminderConfig: {}", loan, timeZone, reminderConfig);
-
+    log.debug("instantiateFirstScheduledNotice:: creating first scheduled notice for loan {} in timezone {}",
+      loan::getId, () -> timeZone);
     return reminderConfig.nextNoticeDueOn(loan.getDueDate(), timeZone,
         loan.getCheckoutServicePointId(), calendarRepository)
-      .thenApply(r -> r.map(nextDueTime -> new ScheduledNotice(UUID.randomUUID().toString(),
-        loan.getId(), null, loan.getUserId(), null, null,
-        TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime,
-        instantiateNoticeConfig(reminderConfig))));
+      .thenApply(r -> {
+        if (r.succeeded()) {
+          log.info("instantiateFirstScheduledNotice:: scheduled notice created for loan {}", loan::getId);
+        }
+        return r.map(nextDueTime -> new ScheduledNotice(UUID.randomUUID().toString(),
+          loan.getId(), null, loan.getUserId(), null, null,
+          TriggeringEvent.DUE_DATE_WITH_REMINDER_FEE, nextDueTime,
+          instantiateNoticeConfig(reminderConfig)));
+      });
   }
 
   private ScheduledNoticeConfig instantiateNoticeConfig(ReminderConfig reminderConfig) {
-    log.debug("instantiateNoticeConfig:: parameters: {}", reminderConfig);
+    log.debug("instantiateNoticeConfig:: creating notice config with template {}",
+      reminderConfig::getNoticeTemplateId);
     return new ScheduledNoticeConfig(NoticeTiming.AFTER, null,
       reminderConfig.getNoticeTemplateId(), reminderConfig.getNoticeFormat(), true);
   }

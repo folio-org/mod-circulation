@@ -67,6 +67,8 @@ public class PatronActionSessionService {
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
     LoanAndRelatedRecords records) {
 
+    log.info("saveCheckOutSessionRecord:: saving check-out session record for patron {}", records.getUserId());
+
     UUID patronId = UUID.fromString(records.getUserId());
     UUID loanId = UUID.fromString(records.getLoan().getId());
 
@@ -78,6 +80,7 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<CheckInContext>> saveCheckInSessionRecord(CheckInContext context) {
+    log.info("saveCheckInSessionRecord:: attempting to save check-in session record");
     Loan loan = context.getLoan();
     if (loan == null) {
       log.info("CheckInSessionRecord is not saved, context doesn't have a valid loan.");
@@ -93,12 +96,14 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<Void>> endSessions(String patronId, PatronActionType actionType) {
+    log.info("endSessions:: ending {} sessions for patron {}", actionType, patronId);
     return safelyInitialise(() -> findSessions(patronId, actionType))
       .thenCompose(r -> r.after(this::processSessions))
       .thenApply(this::handleResult);
   }
 
   public CompletableFuture<Result<Void>> endExpiredSessions(List<ExpiredSession> expiredSessions) {
+    log.info("endExpiredSessions:: ending {} expired sessions", expiredSessions != null ? expiredSessions.size() : 0);
     return ofAsync(() -> expiredSessions)
       .thenCompose(r -> r.after(this::findSessions))
       .thenCompose(r -> r.after(this::groupAndProcessSessions))
@@ -108,6 +113,8 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(String patronId,
     PatronActionType actionType) {
 
+    log.info("findSessions:: finding {} sessions for patron {}", actionType, patronId);
+
     return patronActionSessionRepository.findPatronActionSessions(patronId, actionType,
       DEFAULT_SESSION_SIZE_PAGE_LIMIT);
   }
@@ -115,11 +122,15 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(
     List<ExpiredSession> expiredSessions) {
 
+    log.info("findSessions:: finding sessions for {} expired session records", expiredSessions != null ? expiredSessions.size() : 0);
+
     return patronActionSessionRepository.findPatronActionSessions(expiredSessions);
   }
 
   private CompletableFuture<Result<List<PatronSessionRecord>>> processSessions(
     List<PatronSessionRecord> sessions) {
+
+    log.info("processSessions:: processing {} sessions", sessions != null ? sessions.size() : 0);
 
     return ofAsync(() -> sessions)
       .thenApply(mapResult(this::discardInvalidSessions))
@@ -128,6 +139,7 @@ public class PatronActionSessionService {
   }
 
   private List<PatronSessionRecord> discardInvalidSessions(List<PatronSessionRecord> sessions) {
+    log.info("discardInvalidSessions:: validating {} sessions", sessions.size());
     List<PatronSessionRecord> validSessions = new ArrayList<>();
 
     for (PatronSessionRecord session : sessions) {
@@ -164,6 +176,8 @@ public class PatronActionSessionService {
 
   private CompletableFuture<Result<Void>> groupAndProcessSessions(
     List<PatronSessionRecord> sessions) {
+
+    log.info("groupAndProcessSessions:: grouping and processing {} sessions", sessions.size());
 
     var groupedSessions = sessions.stream()
       .collect(groupingBy(PatronSessionRecord::getPatronId))
@@ -202,6 +216,8 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<List<PatronSessionRecord>>> deleteSessions(
     List<PatronSessionRecord> sessions) {
 
+    log.info("deleteSessions:: deleting {} sessions", sessions != null ? sessions.size() : 0);
+
     return sessions == null || sessions.isEmpty()
       ? ofAsync(() -> sessions)
       : allOf(sessions, patronActionSessionRepository::delete);
@@ -216,6 +232,7 @@ public class PatronActionSessionService {
   }
 
   private CompletableFuture<Result<PatronNoticeEvent>> buildNoticeEvents(PatronSessionRecord session) {
+    log.info("buildNoticeEvents:: building notice event for session {}", session.getId());
     Loan loan = session.getLoan();
 
     return getRecipientId(loan)

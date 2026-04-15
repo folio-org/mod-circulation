@@ -1,7 +1,5 @@
 package api.loans;
 
-import static api.support.fixtures.SettingsFixture.timezoneConfigurationFor;
-import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
@@ -128,7 +126,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void beforeRecurringNoticesAreRescheduled() {
-    settingsClient.create(utcTimezoneConfiguration());
+    localeFixture.createUtcLocaleSettings();
 
     Period beforePeriod = Period.weeks(1);
     Period recurringPeriod = Period.days(1);
@@ -691,7 +689,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime systemTime = ZonedDateTime.of(2020, 6, 25, 0, 0, 0, 0, ZoneId.of(timeZoneId))
       .plusMinutes(plusMinutes);
     mockClockManagerToReturnFixedDateTime(systemTime);
-    settingsClient.create(timezoneConfigurationFor(timeZoneId));
+    localeFixture.createLocaleSettingsForTimezone(timeZoneId);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)

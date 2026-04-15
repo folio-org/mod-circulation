@@ -18,6 +18,7 @@ import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
@@ -38,11 +39,13 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.services.StaffSlipsRequestFetchService;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -70,6 +73,11 @@ class StaffSlipsTests extends APITests {
   private static final String ITEM_KEY = "item";
   private static final String REQUEST_KEY = "request";
   private static final String REQUESTER_KEY = "requester";
+
+  @BeforeEach
+  void beforeEach() {
+    StaffSlipsRequestFetchService.clearCustomRequestLimit();
+  }
 
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
@@ -255,7 +263,7 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, slipsType);
 
-    JsonObject slip = getPickSlipsList(response, slipsType).get(0);
+    JsonObject slip = getPickSlipsList(response, slipsType).getFirst();
     JsonObject itemContext = slip.getJsonObject(ITEM_KEY);
     assertNotNull(slip.getString("currentDateTime"));
 
@@ -562,6 +570,226 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, slipsType);
     assertResponseContains(response, slipsType, item, pageRequest, james);
+  }
+
+  @Test
+  void searchSlipsLimitIsRespected() {
+    circulationSettingsFixture.enableTlrFeature();
+    circulationSettingsFixture.setPrintHoldRequests(true);
+
+    UUID servicePointId = servicePointsFixture.cd6().getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    int batchSize = 50; // default value used by CqlIndexValuesFinder
+    int searchSlipsLimit = batchSize * 2;
+    int itemLevelRequestCount = searchSlipsLimit + 1;
+    StaffSlipsRequestFetchService.setCustomRequestLimit(searchSlipsLimit);
+
+    for (int i = 0; i < itemLevelRequestCount; i++) {
+      final int currentIndex = i;
+
+      IndividualResource location = locationsFixture.basedUponExampleLocation(
+        builder -> builder
+          .withName("Test location " + currentIndex)
+          .withCode("LOC_" + currentIndex)
+          .withPrimaryServicePoint(servicePointId));
+
+      UserResource requester = usersFixture.steve(b -> b.withBarcode("user_ilr_" + currentIndex));
+      IndividualResource holding = holdingsFixture.createHoldingsRecord(instanceId, location.getId());
+      IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holding.getId(), location.getId());
+
+      requestsFixture.place(new RequestBuilder()
+        .hold()
+        .fulfillToHoldShelf()
+        .withItemId(item.getId())
+        .withHoldingsRecordId(holding.getId())
+        .withInstanceId(instanceId)
+        .withRequestDate(ZonedDateTime.now(UTC))
+        .withRequesterId(requester.getId())
+        .withPickupServicePointId(servicePointId));
+    }
+
+    assertThat(requestsStorageClient.getAll().size(), is(itemLevelRequestCount));
+
+    // place a title-level hold to make sure that no search slips are created for requests WITHOUT
+    // itemId when the number of requests WITH itemId already reached/exceeded the limit
+    IndividualResource titleLevelHold = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.james());
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, searchSlipsLimit, SlipsType.SEARCH_SLIPS);
+
+    // verify that no search slip was built for title-level hold
+    assertTrue(
+      response.getJson()
+        .getJsonArray("searchSlips")
+        .stream()
+        .filter(JsonObject.class::isInstance)
+        .map(JsonObject.class::cast)
+        .noneMatch(slipJson -> titleLevelHold.getId().toString().equals(
+          slipJson.getJsonObject("request").getString("requestID")))
+    );
+  }
+
+  @Test
+  void pickSlipsLimitIsRespected() {
+    circulationSettingsFixture.enableTlrFeature();
+
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+
+    int batchSize = 50; // default value used by CqlIndexValuesFinder
+    int pickSlipsLimit = batchSize * 2;
+    int requestCount = pickSlipsLimit + 1;
+    StaffSlipsRequestFetchService.setCustomRequestLimit(pickSlipsLimit);
+
+    UUID instanceId = UUID.randomUUID();
+    for (int i = 0; i < requestCount; i++) {
+      final int currentIndex = i;
+      UserResource requester = usersFixture.steve(
+        b -> b.withBarcode("user_page_" + currentIndex).withUsername("user_page_" + currentIndex));
+      itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId)
+          .withBarcode("item_page_" + currentIndex));
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester, servicePointId);
+    }
+
+    assertThat(requestsStorageClient.getAll().size(), is(requestCount));
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, pickSlipsLimit, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void pickSlipsWillBeSortedByLocationShelvingOrderOrTitle() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    UUID circDesk1 = servicePointsFixture.cd1().getId();
+
+    // Second floor, shelving order 456
+    val secondFloorCd1 = locationsFixture.secondFloorEconomics();
+    val temeraire1SecondFloorCd1 = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumber("456").withCallNumberPrefix(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("919191"));
+
+    // Second floor, shelving order 123
+    val temeraire2SecondFloorCd1 = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumber("123").withCallNumberPrefix(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    // Third floor, no shelving order, small angry planet.
+    val thirdFloorCd1 = locationsFixture.thirdFloor();
+    val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(thirdFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    // Third floor, no shelving order, dunkirk
+    val dunkirk2ThirdFloorCd1 = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(thirdFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        instanceBuilder -> instanceBuilder.withId(UUID.randomUUID()),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("81818181"));
+
+    // Second floor, np shelving order, dunkirk
+    val dunkirkSecondFloorCd1 = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        instanceBuilder -> instanceBuilder.withId(UUID.randomUUID()),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+    val steve = usersFixture.steve();
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(temeraire1SecondFloorCd1)
+        .by(james));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(temeraire2SecondFloorCd1)
+        .by(charlotte));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(planetThirdFloorCd1)
+        .by(charlotte));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(dunkirkSecondFloorCd1)
+        .by(steve));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(dunkirk2ThirdFloorCd1)
+        .by(charlotte));
+
+    val response = SlipsType.PICK_SLIPS.get(circDesk1);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    JsonArray pickSlips = response.getJson().getJsonArray("pickSlips");
+
+    JsonObject item = pickSlips.getJsonObject(0).getJsonObject("item");
+    String sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / 123 / Temeraire"));
+
+    item = pickSlips.getJsonObject(1).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / 456 / Temeraire"));
+
+    item = pickSlips.getJsonObject(2).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / null / Dunkirk"));
+
+    item = pickSlips.getJsonObject(3).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("3rd Floor / null / Dunkirk"));
+
+    item = pickSlips.getJsonObject(4).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("3rd Floor / null / The Long Way to a Small, Angry Planet"));
   }
 
   @Test

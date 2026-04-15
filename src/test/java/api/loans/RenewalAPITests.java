@@ -22,8 +22,6 @@ import static api.support.fixtures.CalendarExamples.MONDAY_DATE;
 import static api.support.fixtures.CalendarExamples.START_TIME_FIRST_PERIOD;
 import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.WEDNESDAY_DATE;
-import static api.support.fixtures.SettingsFixture.newYorkTimezoneConfiguration;
-import static api.support.fixtures.SettingsFixture.utcTimezoneConfiguration;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventActionMatchers.ITEM_RENEWED;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
@@ -197,7 +195,7 @@ public abstract class RenewalAPITests extends APITests {
 
   @Test
   void canRenewRollingLoanFromCurrentDueDate() {
-    settingsClient.create(utcTimezoneConfiguration());
+    localeFixture.createUtcLocaleSettings();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     final IndividualResource jessica = usersFixture.jessica();
@@ -1142,9 +1140,7 @@ public abstract class RenewalAPITests extends APITests {
   void testRespectSelectedTimezoneForDueDateCalculations() {
     String expectedTimeZone = "America/New_York";
 
-    Response response = settingsClient.create(newYorkTimezoneConfiguration())
-      .getResponse();
-    assertThat(response.getBody(), containsString(expectedTimeZone));
+    localeFixture.createNewYorkLocaleSettings();
 
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
     IndividualResource jessica = usersFixture.jessica();
@@ -1182,7 +1178,6 @@ public abstract class RenewalAPITests extends APITests {
       .of(CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY, START_TIME_FIRST_PERIOD,
         ZoneId.of(expectedTimeZone));
 
-    assertThat(response.getBody(), containsString(expectedTimeZone));
 
     assertThat("due date should be " + formatDateTime(expectedDate),
       renewedLoan.getString("dueDate"), isEquivalentTo(expectedDate));

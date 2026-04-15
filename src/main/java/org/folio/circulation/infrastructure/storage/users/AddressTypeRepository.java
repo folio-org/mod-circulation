@@ -74,6 +74,7 @@ public class AddressTypeRepository {
    * @return The User object with a mutated address array if any.
    */
   public CompletableFuture<Result<User>> setAddressTypeNamesOnUserAddresses(Result<User> user) {
+    log.debug("setAddressTypeNamesOnUserAddresses:: processing user addresses");
     JsonArray addresses = user.value().getAddresses();
     List<String> addressTypeIds = IntStream.range(0, addresses.size())
         .mapToObj(index -> addresses.getJsonObject(index).getString("addressTypeId"))

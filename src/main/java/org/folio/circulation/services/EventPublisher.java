@@ -94,6 +94,8 @@ public class EventPublisher {
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
     LoanAndRelatedRecords loanAndRelatedRecords, UserRepository userRepository) {
 
+    logger.info("publishItemCheckedOutEvent:: parameters loanId: {}",
+      loanAndRelatedRecords.getLoan() != null ? loanAndRelatedRecords.getLoan().getId() : "null");
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
 
@@ -128,6 +130,8 @@ public class EventPublisher {
   public CompletableFuture<Result<CheckInContext>> publishItemCheckedInEvents(
     CheckInContext context, UserRepository userRepository, LoanRepository loanRepository) {
 
+    logger.info("publishItemCheckedInEvents:: parameters loanId: {}",
+      context.getLoan() != null ? context.getLoan().getId() : "null");
     runAsync(() -> userRepository.getUser(context.getLoggedInUserId())
       .thenCompose(r1 -> r1.after(loggedInUser -> getUserForLastLoan(context, userRepository, loanRepository)
         .thenCompose(r -> r.after(userFromLastLoan -> pubSubPublishingService.publishEvent(LOG_RECORD.name(),
@@ -150,14 +154,18 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishDeclaredLostEvent(Loan loan) {
+    logger.info("publishDeclaredLostEvent:: parameters loanId: {}", loan::getId);
     return publishStatusChangeEvent(ITEM_DECLARED_LOST, loan);
   }
 
   public CompletableFuture<Result<Loan>> publishItemClaimedReturnedEvent(Loan loan) {
+    logger.info("publishItemClaimedReturnedEvent:: parameters loanId: {}", loan::getId);
     return publishStatusChangeEvent(ITEM_CLAIMED_RETURNED, loan);
   }
 
   public CompletableFuture<Result<Loan>> publishLoanClosedEvent(Loan loan) {
+    logger.info("publishLoanClosedEvent:: parameters loanId: {}",
+      loan != null ? loan.getId() : "null");
     String eventName = LOAN_CLOSED.name();
 
     if (loan == null) {
@@ -176,9 +184,11 @@ public class EventPublisher {
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishDueDateChangedEvent(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    logger.info("publishDueDateChangedEvent:: parameters loanId: {}",
+      loanAndRelatedRecords.getLoan() != null ? loanAndRelatedRecords.getLoan().getId() : "null");
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
-      publishDueDateChangedEvent(loan, loan.getUser(), false);
+      publishDueDateChangedEvent(loan, loan.getUser(), null);
     }
 
     return completedFuture(succeeded(loanAndRelatedRecords));
@@ -187,9 +197,11 @@ public class EventPublisher {
   public CompletableFuture<Result<RenewalContext>> publishDueDateChangedEvent(
     RenewalContext renewalContext) {
 
+    logger.info("publishDueDateChangedEvent:: parameters loanId: {}",
+      renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
     var loan = renewalContext.getLoan();
 
-    publishDueDateChangedEvent(loan, loan.getUser(), true);
+    publishDueDateChangedEvent(loan, loan.getUser(), renewalContext);
 
     return completedFuture(succeeded(renewalContext));
   }
@@ -197,6 +209,8 @@ public class EventPublisher {
   public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(
     RequestAndRelatedRecords requestAndRelatedRecords, LoanRepository loanRepository) {
 
+    logger.info("publishDueDateChangedEvent:: parameters requestId: {}",
+      requestAndRelatedRecords.getRequest()::getId);
     return loanRepository.findOpenLoanForRequest(requestAndRelatedRecords.getRequest())
       .thenCompose(r -> r.after(loan -> {
         if (loan != null) {
@@ -209,6 +223,8 @@ public class EventPublisher {
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishInfoAddedEvent(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
+    logger.info("publishInfoAddedEvent:: parameters loanId: {}",
+      loanAndRelatedRecords.getLoan() != null ? loanAndRelatedRecords.getLoan().getId() : "null");
     if (loanAndRelatedRecords.getLoan() != null) {
       Loan loan = loanAndRelatedRecords.getLoan();
       JsonObject payloadJsonObject = new JsonObject();
@@ -223,6 +239,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishInfoAddedLogEvent(Loan loan) {
+    logger.info("publishInfoAddedLogEvent:: parameters loanId: {}", loan::getId);
     var loanLogContext = LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDescription(loan.getActionComment())
@@ -231,6 +248,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishAgedToLostEvents(Loan loan) {
+    logger.info("publishAgedToLostEvents:: parameters loanId: {}", loan::getId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var zonedDateTime = loan.getAgedToLostDateTime().withZoneSameInstant(zoneId);
@@ -244,6 +262,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishClosedLoanEvent(Loan loan) {
+    logger.info("publishClosedLoanEvent:: parameters loanId: {}", loan::getId);
     if (!CHECKED_IN.getValue().equalsIgnoreCase(loan.getAction())) {
       return publishLogRecord(LoanLogContext.from(loan)
         .withServicePointId(loan.getCheckoutServicePointId()).asJson(), LOAN);
@@ -252,6 +271,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishMarkedAsMissingLoanEvent(Loan loan) {
+    logger.info("publishMarkedAsMissingLoanEvent:: parameters loanId: {}", loan::getId);
     var loanLogContext = LoanLogContext.from(loan)
       .withDescription(getLoanActionCommentLog(loan))
       .asJson();
@@ -260,15 +280,19 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<LoanAnonymizationRecords>> publishAnonymizeEvents(LoanAnonymizationRecords records) {
+    logger.info("publishAnonymizeEvents:: parameters anonymized loans count: {}",
+      records.getAnonymizedLoans()::size);
     return allOf(records.getAnonymizedLoans(), this::publishAnonymizeEvent)
       .thenApply(r -> succeeded(records));
   }
 
   public CompletableFuture<Result<Void>> publishAnonymizeEvent(Loan loan) {
+    logger.info("publishAnonymizeEvent:: parameters loanId: {}", loan::getId);
     return publishLogRecord(LoanLogContext.from(loan).withAction("Anonymize").asJson(), LOAN);
   }
 
   public CompletableFuture<Result<Void>> publishRecallRequestedEvent(Loan loan) {
+    logger.info("publishRecallRequestedEvent:: parameters loanId: {}", loan::getId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);
@@ -281,23 +305,34 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan) {
+    logger.info("publishDueDateLogEvent:: parameters loanId: {}", loan::getId);
+    return publishDueDateLogEvent(loan, loan.getUpdatedByUserId());
+  }
+
+  private CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan, String updatedByUserId) {
+    logger.info("publishDueDateLogEvent:: parameters loanId: {}, updatedByUserId: {}",
+      loan::getId, () -> updatedByUserId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);
         return LoanLogContext.from(loan)
           .withAction(LogContextActionResolver.resolveAction(DUE_DATE_CHANGED.getValue()))
           .withDescription(logDescription)
+          .withUpdatedByUserId(updatedByUserId)
           .asJson();
       }))
       .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
   }
 
-  public CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan) {
+  private CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
+    logger.info("publishRenewedEvent:: parameters loanId: {}, updatedByUserId: {}",
+      loan::getId, () -> updatedByUserId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);
         return LoanLogContext.from(loan)
           .withDescription(logDescription)
+          .withUpdatedByUserId(updatedByUserId)
           .asJson();
       }))
       .thenCompose(loanLogContext -> loanLogContext.after(ctx -> publishLogRecord(ctx, LOAN)));
@@ -306,6 +341,8 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
     Result<?> previousStepResult, Throwable throwable) {
 
+    logger.info("publishNoticeLogEvent:: parameters throwable: {}",
+      throwable != null ? throwable.getClass().getSimpleName() : "null");
     return throwable != null
       ? publishNoticeErrorLogEvent(noticeLogContext, throwable)
       : publishNoticeLogEvent(noticeLogContext, previousStepResult);
@@ -314,22 +351,28 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
     Result<?> previousStepResult) {
 
+    logger.info("publishNoticeLogEvent:: parameters previousStepResult succeeded: {}",
+      previousStepResult::succeeded);
     return previousStepResult.succeeded()
       ? publishNoticeLogEvent(noticeLogContext)
       : publishNoticeErrorLogEvent(noticeLogContext, previousStepResult.cause());
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext) {
+    logger.info("publishNoticeLogEvent:: delegating to NOTICE event type");
     return publishNoticeLogEvent(noticeLogContext, NOTICE);
   }
 
   public CompletableFuture<Result<Void>> publishNoticeLogEvent(NoticeLogContext noticeLogContext,
     LogEventType eventType) {
 
+    logger.info("publishNoticeLogEvent:: parameters eventType: {}", eventType);
     return publishLogRecord(noticeLogContext.withDate(getZonedDateTime()).asJson(), eventType);
   }
 
   public CompletableFuture<Result<Loan>> publishUsageAtLocationEvent(Loan loan, LogEventType eventType) {
+    logger.info("publishUsageAtLocationEvent:: parameters loanId: {}, eventType: {}",
+      loan::getId, () -> eventType);
     return publishLogRecord((LoanLogContext.from(loan))
       .withDescription(LogContextActionResolver.resolveAction(loan.getAction())).asJson(), eventType)
       .thenApply(r -> succeeded(loan));
@@ -338,22 +381,27 @@ public class EventPublisher {
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
     NoticeLogContext noticeLogContext, HttpFailure error) {
 
+    logger.info("publishNoticeErrorLogEvent:: parameters error: {}", error);
     return publishNoticeErrorLogEvent(noticeLogContext, error.toString());
   }
 
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
     NoticeLogContext noticeLogContext, Throwable throwable) {
 
+    logger.info("publishNoticeErrorLogEvent:: parameters throwable: {}",
+      throwable.getClass().getSimpleName());
     return publishNoticeErrorLogEvent(noticeLogContext, throwable.getClass().getSimpleName());
   }
 
   public CompletableFuture<Result<Void>> publishNoticeErrorLogEvent(
     NoticeLogContext noticeLogContext, String errorMessage) {
 
+    logger.info("publishNoticeErrorLogEvent:: parameters errorMessage: {}", errorMessage);
     return publishNoticeLogEvent(noticeLogContext.withErrorMessage(errorMessage), NOTICE_ERROR);
   }
 
   public CompletableFuture<Result<Void>> publishLogRecord(JsonObject context, LogEventType payloadType) {
+    logger.info("publishLogRecord:: parameters payloadType: {}", payloadType);
     JsonObject eventJson = new JsonObject();
     write(eventJson, LOG_EVENT_TYPE.value(), payloadType.value());
     write(eventJson, PAYLOAD.value(), context);
@@ -363,6 +411,8 @@ public class EventPublisher {
   }
 
   public RequestAndRelatedRecords publishLogRecordAsync(RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest, LogEventType logEventType) {
+    logger.info("publishLogRecordAsync:: parameters requestId: {}, logEventType: {}",
+      originalRequest != null ? originalRequest.getId() : "null", logEventType);
     runAsync(() -> publishLogRecord(mapToRequestLogEventJson(originalRequest, fetchRequestAndUpdateMetadata(requestAndRelatedRecords)), logEventType));
     return requestAndRelatedRecords;
   }
@@ -426,10 +476,12 @@ public class EventPublisher {
     if (records.getRecalledLoanPreviousDueDate() != null) {
       loan.setPreviousDueDate(records.getRecalledLoanPreviousDueDate());
     }
-    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), false);
+    return publishDueDateChangedEvent(loan, records.getRequest().getRequester(), null);
   }
 
-  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user, boolean renewalContext) {
+  private CompletableFuture<Result<Loan>> publishDueDateChangedEvent(Loan loan, User user,
+    RenewalContext renewalContext) {
+
     if (loan != null) {
       JsonObject payloadJsonObject = new JsonObject();
       write(payloadJsonObject, USER_ID_FIELD, loan.getUserId());
@@ -437,9 +489,12 @@ public class EventPublisher {
       write(payloadJsonObject, DUE_DATE_FIELD, loan.getDueDate());
       write(payloadJsonObject, DUE_DATE_CHANGED_BY_RECALL_FIELD, loan.wasDueDateChangedByRecall());
 
-      runAsync(() -> publishDueDateLogEvent(loan));
-      if (renewalContext) {
-        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user)));
+      if (renewalContext != null) {
+        runAsync(() -> publishDueDateLogEvent(loan, renewalContext.getLoggedInUserId()));
+        runAsync(() -> publishRenewedEvent(loan.copy().withUser(user),
+          renewalContext.getLoggedInUserId()));
+      } else {
+        runAsync(() -> publishDueDateLogEvent(loan));
       }
 
       return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
@@ -453,6 +508,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishRequestAnonymizedLog(Request req) {
+    logger.info("publishRequestAnonymizedLog:: parameters requestId: {}", req::getId);
     final Item item = req.getItem();
     final JsonObject linkToIds = new JsonObject()
     .put("requestId", req.getId());

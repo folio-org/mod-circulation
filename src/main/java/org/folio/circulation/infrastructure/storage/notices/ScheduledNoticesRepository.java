@@ -25,6 +25,7 @@ import static org.folio.circulation.support.logging.PatronNoticeLogHelper.logRes
 import static org.folio.circulation.support.results.ResultBinding.flatMapResult;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -33,6 +34,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
@@ -48,6 +51,7 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class ScheduledNoticesRepository {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final List<String> UPON_AT_AND_AFTER_TIMING =
     Arrays.asList(UPON_AT.getRepresentation(), AFTER.getRepresentation());
 
@@ -125,12 +129,17 @@ public class ScheduledNoticesRepository {
   public CompletableFuture<Result<Response>> deleteByLoanIdAndTriggeringEvent(
     String loanId, TriggeringEvent triggeringEvent) {
 
+    log.debug("deleteByLoanIdAndTriggeringEvent:: parameters loanId: {}, triggeringEvent: {}",
+      loanId, triggeringEvent);
+
     return exactMatch("loanId", loanId)
       .combine(exactMatch("triggeringEvent", triggeringEvent.getRepresentation()), CqlQuery::and)
       .after(this::deleteMany);
   }
 
   public CompletableFuture<Result<Response>> deleteOverdueNotices(String loanId) {
+
+    log.debug("deleteOverdueNotices:: parameters loanId: {}", loanId);
 
     return exactMatch(LOAN_ID, loanId)
       .combine(exactMatch(TRIGGERING_EVENT, DUE_DATE.getRepresentation()), CqlQuery::and)
@@ -139,10 +148,12 @@ public class ScheduledNoticesRepository {
   }
 
   public CompletableFuture<Result<Response>> deleteByRequestId(String requestId) {
+    log.debug("deleteByRequestId:: parameters requestId: {}", requestId);
     return exactMatch("requestId", requestId).after(this::deleteMany);
   }
 
   private CompletableFuture<Result<Response>> deleteMany(CqlQuery cqlQuery) {
+    log.debug("deleteMany:: parameters cqlQuery: {}", cqlQuery);
     final ResponseInterpreter<Response> interpreter = new ResponseInterpreter<Response>()
       .flatMapOn(204, Result::succeeded)
       .otherwise(forwardOnFailure());

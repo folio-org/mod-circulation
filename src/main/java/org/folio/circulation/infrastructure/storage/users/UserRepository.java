@@ -130,10 +130,9 @@ public class UserRepository {
       .thenApply(userResult ->
         userResult.map(user -> {
           if (isNull(user)) {
-            log.info("No user found for loan {}", loan.getId());
+            log.info("findUserForLoan:: no user found for loan {}", loan.getId());
           } else {
-            log.info("User with username {} found for loan {}",
-              user.getUsername(), loan.getId());
+            log.info("findUserForLoan:: user found for loan {}", loan.getId());
           }
           return loan.withUser(user);
         })));
@@ -202,7 +201,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getProxyUserByBarcode(String barcode) {
-    log.debug("getProxyUserByBarcode:: parameters barcode: {}", barcode);
+    log.debug("getProxyUserByBarcode:: retrieving proxy user by barcode");
     //Not proxying, so no need to get proxy user
     if (StringUtils.isBlank(barcode)) {
       log.info("getProxyUserByBarcode:: barcode is blank");
@@ -214,7 +213,7 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUserByBarcode(String barcode) {
-    log.debug("getUserByBarcode:: parameters barcode: {}", barcode);
+    log.debug("getUserByBarcode:: retrieving user by barcode");
     return getUserByBarcode(barcode, "userBarcode");
   }
 
