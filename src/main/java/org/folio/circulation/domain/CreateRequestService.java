@@ -42,6 +42,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
+import org.folio.circulation.resources.HoldNoticeSender;
 import org.folio.circulation.resources.RequestBlockValidators;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
@@ -59,19 +60,22 @@ public class CreateRequestService {
   private final UpdateUponRequest updateUponRequest;
   private final RequestLoanValidator requestLoanValidator;
   private final RequestNoticeSender requestNoticeSender;
+  private final HoldNoticeSender holdNoticeSender;
   private final RequestBlockValidators requestBlockValidators;
   private final EventPublisher eventPublisher;
   private final CirculationErrorHandler errorHandler;
 
   public CreateRequestService(RequestRelatedRepositories repositories,
     UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, RequestBlockValidators requestBlockValidators,
-    EventPublisher eventPublisher, CirculationErrorHandler errorHandler) {
+    RequestNoticeSender requestNoticeSender, HoldNoticeSender holdNoticeSender,
+    RequestBlockValidators requestBlockValidators, EventPublisher eventPublisher,
+    CirculationErrorHandler errorHandler) {
 
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
     this.requestLoanValidator = requestLoanValidator;
     this.requestNoticeSender = requestNoticeSender;
+    this.holdNoticeSender = holdNoticeSender;
     this.requestBlockValidators = requestBlockValidators;
     this.eventPublisher = eventPublisher;
     this.errorHandler = errorHandler;
@@ -113,7 +117,9 @@ public class CreateRequestService {
       .thenApplyAsync(r -> {
         r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
-      }).thenApply(r -> logResult(r, "createRequest"));
+      })
+      .thenComposeAsync(r -> r.after(this::sendHoldNoticeIfNeeded))
+      .thenApply(r -> logResult(r, "createRequest"));
   }
 
   private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenPageableItemExists(
@@ -295,4 +301,7 @@ public class CreateRequestService {
       : REQUEST_CREATED;
   }
 
+  private CompletableFuture<Result<RequestAndRelatedRecords>> sendHoldNoticeIfNeeded(RequestAndRelatedRecords records) {
+    return holdNoticeSender.sendHoldNoticeIfNeeded(records.getRequest()).thenApply(v -> Result.succeeded(records));
+  }
 }
