@@ -76,8 +76,8 @@ public class LogHelper {
     String requestId = request.getHeader(RestVerticle.OKAPI_REQUESTID_HEADER);
     String userId = request.getHeader(RestVerticle.OKAPI_USERID_HEADER);
 
-    log.debug("populateLoggingContext:: populating context: tenantId={}, requestId={}, userId={}",
-      tenantId, requestId, userId);
+    log.debug("populateLoggingContext:: populating context: tenantId={}, requestId={}",
+      tenantId, requestId);
 
     FolioLoggingContext.put("tenantId", tenantId);
     FolioLoggingContext.put("requestId", requestId);
