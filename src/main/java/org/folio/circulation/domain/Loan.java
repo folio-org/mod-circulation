@@ -95,7 +95,6 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  @ToString.Include
   private final JsonObject representation;
   @Getter
   private final Item item;
@@ -330,6 +329,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getNestedStringProperty(representation, STATUS, "name");
   }
 
+  @ToString.Include(name = "id")
   public String getId() {
     return getProperty(representation, "id");
   }

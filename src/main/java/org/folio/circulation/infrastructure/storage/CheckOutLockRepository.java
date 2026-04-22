@@ -1,8 +1,11 @@
 package org.folio.circulation.infrastructure.storage;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+
+import java.lang.invoke.MethodHandles;
+import java.util.concurrent.CompletableFuture;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckOutLock;
@@ -13,11 +16,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
-import java.lang.invoke.MethodHandles;
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 
 public class CheckOutLockRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -51,7 +52,7 @@ public class CheckOutLockRepository {
   }
 
   public CompletableFuture<Result<CheckOutLock>> create(LoanAndRelatedRecords records) {
-    log.debug("create:: trying to create lock for userId {} ", records.getUserId());
+    log.debug("create:: trying to create checkout lock");
     final ResponseInterpreter<CheckOutLock> interpreter =
       new ResponseInterpreter<CheckOutLock>()
         .flatMapOn(201, mapUsingJson(CheckOutLock::from))
@@ -63,7 +64,7 @@ public class CheckOutLockRepository {
   }
 
   public CompletableFuture<Result<Response>> deleteCheckoutLockById(String checkOutLockId) {
-    log.debug("deleteCheckoutLockById:: deleting the lock for userId {} ", checkOutLockId);
+    log.debug("deleteCheckoutLockById:: deleting checkout lock");
     return checkOutLockClient.delete(checkOutLockId);
   }
 

@@ -80,7 +80,6 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUser(String userId) {
-    log.debug("getUser:: parameters userId: {}", userId);
     if(isNull(userId)) {
       log.info("getUser:: userId is null");
       return ofAsync(() -> null);
@@ -95,7 +94,6 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUserWithPatronGroup(String userId) {
-    log.debug("getUserWithPatronGroup:: parameters userId: {}", userId);
     if(isNull(userId)) {
       log.info("getUserWithPatronGroup:: userId is null");
       return ofAsync(() -> null);
@@ -187,7 +185,6 @@ public class UserRepository {
   }
 
   public CompletableFuture<Result<User>> getUserFailOnNotFound(String userId) {
-    log.debug("getUserFailOnNotFound:: parameters userId: {}", userId);
     if(isNull(userId)) {
       log.info("getUserFailOnNotFound:: userId is null");
       return completedFuture(failedValidation("user is not found", "userId", userId));

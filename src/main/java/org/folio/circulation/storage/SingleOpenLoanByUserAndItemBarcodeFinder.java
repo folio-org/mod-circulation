@@ -36,7 +36,7 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
   }
 
   public CompletableFuture<Result<Loan>> findLoan(String itemBarcode, String userBarcode) {
-    log.debug("findLoan:: parameters itemBarcode: {}, userBarcode: {}", itemBarcode, userBarcode);
+    log.debug("findLoan:: parameters itemBarcode: {}", itemBarcode);
     final ItemByBarcodeInStorageFinder itemFinder = new ItemByBarcodeInStorageFinder(
       this.itemRepository);
 

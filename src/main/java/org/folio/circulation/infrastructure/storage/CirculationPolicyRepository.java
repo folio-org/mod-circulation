@@ -100,7 +100,7 @@ public abstract class CirculationPolicyRepository<T> {
     }
 
     if (user.getPatronGroupId() == null) {
-      log.error("PatronGroupId is null for user {}", user.getId());
+      log.error("lookupPolicyId:: patronGroupId is null");
       return completedFuture(failedDueToServerError("Unable to apply circulation rules to a user with null value as patronGroupId"));
     }
 

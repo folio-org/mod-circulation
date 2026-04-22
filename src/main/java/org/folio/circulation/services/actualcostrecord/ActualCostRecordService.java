@@ -138,13 +138,12 @@ public class ActualCostRecordService {
 
     User user = context.getLoan().getUser();
     if (user.getPatronGroup() != null) {
-      log.info("lookupPatronGroup:: patron group already exists: {} for userId: {}, skipping lookup",
-        user.getPatronGroup().getGroup(), user.getId());
+      log.info("lookupPatronGroup:: patron group already exists: {}, skipping lookup",
+        user.getPatronGroup().getGroup());
       return ofAsync(context);
     }
 
-    log.info("lookupPatronGroup:: patron group not found, fetching from repository for userId: {}",
-      user::getId);
+    log.info("lookupPatronGroup:: patron group not found, fetching from repository");
 
     return patronGroupRepository.findGroupForUser(user)
       .thenApply(r -> r.map(context.getLoan()::withUser))

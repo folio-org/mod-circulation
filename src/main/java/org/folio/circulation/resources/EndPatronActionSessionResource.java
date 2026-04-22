@@ -60,8 +60,7 @@ public class EndPatronActionSessionResource extends Resource {
         String patronId = endSessionRequest.getPatronId();
         PatronActionType actionType = endSessionRequest.getActionType();
         patronActionSessionService.endSessions(patronId, actionType);
-        log.info("process:: session ended successfully: patronId: {}, actionType: {}",
-          patronId, actionType);
+        log.info("process:: session ended successfully: actionType={}", actionType);
         noContent().writeTo(routingContext.response());
       }
     }

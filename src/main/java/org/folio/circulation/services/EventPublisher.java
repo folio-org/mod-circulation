@@ -39,9 +39,17 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.*;
+import org.folio.circulation.domain.CheckInContext;
+import org.folio.circulation.domain.EventType;
+import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.RequestAndRelatedRecords;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.anonymization.LoanAnonymizationRecords;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.Period;
@@ -57,6 +65,7 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
+
 import io.vertx.core.json.JsonObject;
 
 public class EventPublisher {
@@ -310,8 +319,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan, String updatedByUserId) {
-    logger.info("publishDueDateLogEvent:: parameters loanId: {}, updatedByUserId: {}",
-      loan::getId, () -> updatedByUserId);
+    logger.info("publishDueDateLogEvent:: parameters loanId: {}", loan::getId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);
@@ -325,8 +333,7 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
-    logger.info("publishRenewedEvent:: parameters loanId: {}, updatedByUserId: {}",
-      loan::getId, () -> updatedByUserId);
+    logger.info("publishRenewedEvent:: parameters loanId: {}", loan::getId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);

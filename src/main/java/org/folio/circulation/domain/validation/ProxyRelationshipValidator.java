@@ -105,9 +105,6 @@ public class ProxyRelationshipValidator {
   }
 
   private Result<CqlQuery> proxyRelationshipQuery(String proxyUserId, String sponsorUserId) {
-    log.debug("proxyRelationshipQuery:: parameters proxyUserId: {}, sponsorUserId: {}", proxyUserId,
-      sponsorUserId);
-
     final Result<CqlQuery> proxyUserIdQuery = exactMatch("proxyUserId", proxyUserId);
     final Result<CqlQuery> userIdQuery = exactMatch("userId", sponsorUserId);
 

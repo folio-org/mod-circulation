@@ -130,7 +130,7 @@ public class RequestServiceUtility {
     User requester = request.getRequester();
 
     if (requester == null) {
-      log.error("refuseWhenInvalidUserAndPatronGroup:: user {} is null", request.getUserId());
+      log.error("refuseWhenInvalidUserAndPatronGroup:: user is null");
       return failedValidation("A valid user and patron group are required. User is null", "userId",
         request.getUserId());
     } else if (requester.getPatronGroupId() == null) {

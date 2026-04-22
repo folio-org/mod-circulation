@@ -47,12 +47,12 @@ public class PubSubPublishingService {
     vertxContext.runOnContext(v -> PubSubClientUtils.sendEventMessage(event, params)
       .whenComplete((result, throwable) -> {
         if (Boolean.TRUE.equals(result)) {
-          logger.info("Event published successfully. ID: {}, type: {}, payload: {}",
-            event.getId(), event.getEventType(), event.getEventPayload());
+          logger.info("Event published successfully. ID: {}, type: {}",
+            event.getId(), event.getEventType());
           publishResult.complete(true);
         } else {
-          logger.error("Failed to publish event. ID: {}, type: {}, payload: {}, cause: {}",
-            event.getId(), event.getEventType(), event.getEventPayload(), throwable);
+          logger.error("Failed to publish event. ID: {}, type: {}, cause: {}",
+            event.getId(), event.getEventType(), throwable);
           if (throwable == null) {
             publishResult.complete(false);
           } else {
