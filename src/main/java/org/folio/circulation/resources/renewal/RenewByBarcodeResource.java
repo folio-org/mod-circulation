@@ -31,7 +31,8 @@ public class RenewByBarcodeResource extends RenewalResource {
     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
     CirculationErrorHandler errorHandler) {
 
-    log.info("findLoan:: itemBarcode={}", () -> request.getString(RenewByBarcodeRequest.ITEM_BARCODE));
+    log.info("findLoan:: itemBarcode={}, userBarcode={}", () -> request.getString(
+      RenewByBarcodeRequest.ITEM_BARCODE), () -> request.getString(RenewByBarcodeRequest.USER_BARCODE));
 
     final SingleOpenLoanByUserAndItemBarcodeFinder finder
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,

@@ -584,7 +584,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
-    log.debug("declareItemLost:: parameters dateTime: {}", () -> dateTime);
+    log.debug("declareItemLost:: parameters dateTime: {}", dateTime);
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
@@ -736,8 +736,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
-    log.debug("claimItemReturned:: parameters claimedReturnedDate: {}",
-      () -> claimedReturnedDate);
+    log.debug("claimItemReturned:: parameters claimedReturnedDate: {}", claimedReturnedDate);
     changeAction(CLAIMED_RETURNED);
     if (StringUtils.isNotBlank(comment)) {
       changeActionComment(comment);
