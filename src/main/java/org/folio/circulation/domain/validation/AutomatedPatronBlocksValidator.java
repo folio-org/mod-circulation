@@ -83,6 +83,8 @@ public class AutomatedPatronBlocksValidator {
   private <T> CompletableFuture<Result<T>> refuse(String userId,
     Predicate<AutomatedPatronBlock> actionPredicate, T mapTo) {
 
+    log.debug("refuse:: parameters userId: {}, actionPredicate, mapTo", userId);
+
     return ofAsync(() -> userId)
       .thenComposeAsync(r -> r.after(automatedPatronBlocksRepository::findByUserId))
       .thenComposeAsync(r -> r.after(blocks -> getActionBlock(blocks, actionPredicate)))

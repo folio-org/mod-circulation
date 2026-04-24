@@ -52,7 +52,7 @@ public class CheckOutLockRepository {
   }
 
   public CompletableFuture<Result<CheckOutLock>> create(LoanAndRelatedRecords records) {
-    log.debug("create:: trying to create checkout lock");
+    log.debug("create:: trying to create lock for userId {} ", records.getUserId());
     final ResponseInterpreter<CheckOutLock> interpreter =
       new ResponseInterpreter<CheckOutLock>()
         .flatMapOn(201, mapUsingJson(CheckOutLock::from))
@@ -64,7 +64,7 @@ public class CheckOutLockRepository {
   }
 
   public CompletableFuture<Result<Response>> deleteCheckoutLockById(String checkOutLockId) {
-    log.debug("deleteCheckoutLockById:: deleting checkout lock");
+    log.debug("deleteCheckoutLockById:: deleting the lock for userId {} ", checkOutLockId);
     return checkOutLockClient.delete(checkOutLockId);
   }
 

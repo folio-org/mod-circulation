@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.ImmediatePatronNoticeService;
 import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
@@ -68,7 +69,7 @@ public class PatronActionSessionService {
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
     LoanAndRelatedRecords records) {
 
-    log.info("saveCheckOutSessionRecord:: saving check-out session record");
+    log.info("saveCheckOutSessionRecord:: saving check-out session record for patron {}", records.getUserId());
 
     UUID patronId = UUID.fromString(records.getUserId());
     UUID loanId = UUID.fromString(records.getLoan().getId());
@@ -97,7 +98,7 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<Void>> endSessions(String patronId, PatronActionType actionType) {
-    log.info("endSessions:: ending {} sessions", actionType);
+    log.info("endSessions:: ending {} sessions for patron {}", actionType, patronId);
     return safelyInitialise(() -> findSessions(patronId, actionType))
       .thenCompose(r -> r.after(this::processSessions))
       .thenApply(this::handleResult);
@@ -114,7 +115,7 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(String patronId,
     PatronActionType actionType) {
 
-    log.info("findSessions:: finding {} sessions", actionType);
+    log.info("findSessions:: finding {} sessions for patron {}", actionType, patronId);
 
     return patronActionSessionRepository.findPatronActionSessions(patronId, actionType,
       DEFAULT_SESSION_SIZE_PAGE_LIMIT);
@@ -197,8 +198,11 @@ public class PatronActionSessionService {
       return ofAsync(() -> null);
     }
 
-    log.info("Attempting to send a notice for a group of {} action sessions",
-      sessions.size());
+    //The user is the same for all sessions
+    User user = sessions.getFirst().getLoan().getUser();
+
+    log.info("Attempting to send a notice for a group of {} action sessions to user {}",
+      sessions.size(), user.getId());
 
     return allOf(sessions, this::buildNoticeEvents)
       .thenApply(result -> result.map(patronNoticeService::acceptNoticeEvents))
@@ -253,11 +257,11 @@ public class PatronActionSessionService {
     return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(loan)
       .thenApply(result -> result.map(sentNoProxy -> {
         if (Boolean.TRUE.equals(sentNoProxy)) {
-          log.info("getRecipientId:: notice recipient is proxy user");
+          log.info("getRecipientId:: notice recipient is proxy user: {}", loan.getProxyUserId());
           return loan.getProxyUserId();
         }
 
-        log.info("getRecipientId:: notice recipient is user");
+        log.info("getRecipientId:: notice recipient is user: {}", loan.getProxyUserId());
         return loan.getUserId();
       }));
   }

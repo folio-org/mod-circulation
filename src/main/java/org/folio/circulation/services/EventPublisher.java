@@ -319,7 +319,8 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Void>> publishDueDateLogEvent(Loan loan, String updatedByUserId) {
-    logger.info("publishDueDateLogEvent:: parameters loanId: {}", loan::getId);
+    logger.info("publishDueDateLogEvent:: parameters loanId: {}, updatedByUserId: {}",
+      loan::getId, () -> updatedByUserId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);
@@ -333,7 +334,8 @@ public class EventPublisher {
   }
 
   private CompletableFuture<Result<Void>> publishRenewedEvent(Loan loan, String updatedByUserId) {
-    logger.info("publishRenewedEvent:: parameters loanId: {}", loan::getId);
+    logger.info("publishRenewedEvent:: parameters loanId: {}, updatedByUserId: {}",
+      loan::getId, () -> updatedByUserId);
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var logDescription = getLoanDueDateChangeLog(loan, zoneId);

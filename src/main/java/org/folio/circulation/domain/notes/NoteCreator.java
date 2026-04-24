@@ -18,7 +18,7 @@ public class NoteCreator {
   }
 
   public CompletableFuture<Result<Note>> createGeneralUserNote(String userId, String message) {
-    log.debug("createGeneralUserNote:: creating general user note");
+    log.info("createGeneralUserNote:: creating general user note for userId {}", userId);
     final GeneralNoteTypeValidator validator = new GeneralNoteTypeValidator();
 
     return notesRepository.findGeneralNoteType()

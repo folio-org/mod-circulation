@@ -311,7 +311,7 @@ public class RequestNoticeSender {
 
   private CompletableFuture<Result<User>> fetchRequester(Request request) {
     String requesterId = request.getRequesterId();
-    log.debug("fetchRequester:: fetching requester");
+    log.info("fetchRequester:: requesterId: {}", requesterId);
 
     return userRepository.getUserWithPatronGroup(requesterId)
       .thenApply(r -> r.failWhen(this::isNull,

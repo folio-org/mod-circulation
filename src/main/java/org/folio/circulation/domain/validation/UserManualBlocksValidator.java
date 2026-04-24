@@ -86,6 +86,9 @@ public class UserManualBlocksValidator {
   private CompletableFuture<Result<MultipleRecords<UserManualBlock>>> failIfPatronIsBlocked(
     Predicate<UserManualBlock> isUserBlocked, String userId, String message) {
 
+    log.debug("failIfPatronIsBlocked:: parameters isUserBlocked, userId: {}, message: {}", userId,
+      message);
+
     return userManualBlocksFetcher.findByQuery(exactMatch("userId", userId))
       .thenApply(userManualBlockResult -> userManualBlockResult
         .failWhen(userManualBlockMultipleRecords -> of(() ->
@@ -95,6 +98,9 @@ public class UserManualBlocksValidator {
 
   private HttpFailure createUserBlockedValidationError(
     MultipleRecords<UserManualBlock> userManualBlocks, String message) {
+
+    log.debug("createUserBlockedValidationError:: parameters isUserBlocked, userId: {}, message: {}",
+      () -> multipleRecordsAsString(userManualBlocks), () -> message);
 
     final String reason = userManualBlocks.getRecords().stream()
       .map(UserManualBlock::getDesc).collect(Collectors.joining(";"));

@@ -346,6 +346,7 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<User>> getUser(String userId) {
+    log.debug("getUser:: parameters userId: {}", userId);
     return userRepository.getUser(userId);
   }
 

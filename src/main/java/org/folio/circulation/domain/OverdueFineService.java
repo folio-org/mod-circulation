@@ -84,6 +84,8 @@ public class OverdueFineService {
   public CompletableFuture<Result<FeeFineAction>> createOverdueFineIfNecessary(
     CheckInContext context, String userId) {
 
+    log.debug("createOverdueFineIfNecessary:: parameters context: {}, userId: {}",
+      () -> context, () -> userId);
     if (!shouldChargeOverdueFineOnCheckIn(context)) {
       log.info("createOverdueFineIfNecessary:: loan on check in should not be charged");
       return completedFuture(succeeded(null));
