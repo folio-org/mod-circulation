@@ -255,7 +255,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeActionComment(String comment) {
-    log.debug("changeActionComment:: parameters comment: {}", comment);
     representation.put(ACTION_COMMENT, comment);
   }
 
@@ -585,7 +584,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
-    log.debug("declareItemLost:: parameters comment: {}, dateTime: {}", () -> comment, () -> dateTime);
+    log.debug("declareItemLost:: parameters dateTime: {}", () -> dateTime);
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
@@ -737,8 +736,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
-    log.debug("claimItemReturned:: parameters comment: {}, claimedReturnedDate: {}",
-      () -> comment, () -> claimedReturnedDate);
+    log.debug("claimItemReturned:: parameters claimedReturnedDate: {}",
+      () -> claimedReturnedDate);
     changeAction(CLAIMED_RETURNED);
     if (StringUtils.isNotBlank(comment)) {
       changeActionComment(comment);
@@ -764,7 +763,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action, String comment) {
-    log.debug("closeLoan:: parameters action: {}, comment: {}", action, comment);
+    log.debug("closeLoan:: parameters action: {}", action);
     changeStatus(LoanStatus.CLOSED);
 
     changeAction(action);
@@ -774,7 +773,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan markItemMissing(String comment) {
-    log.debug("markItemMissing:: parameters comment: {}", comment);
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
     return closeLoan(MISSING, comment);

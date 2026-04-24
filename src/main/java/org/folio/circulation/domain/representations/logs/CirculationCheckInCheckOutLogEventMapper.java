@@ -59,7 +59,6 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(checkInContext));
 
     String result = logEventPayload.encode();
-    log.info("mapToCheckInLogEventContent:: result {}", result);
     return result;
   }
 
@@ -91,7 +90,6 @@ public class CirculationCheckInCheckOutLogEventMapper {
     logEventPayload.put(PAYLOAD,payload);
 
     String result = logEventPayload.encode();
-    log.info("mapToCheckOutLogEventContent:: result {}", result);
     return result;
   }
 

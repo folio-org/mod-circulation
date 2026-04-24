@@ -48,8 +48,6 @@ public class ProxyRelationship {
   }
 
   private boolean getActive(JsonObject representation) {
-    log.debug("getActive:: parameters representation: {}", () -> representation);
-
     if(representation.containsKey(STATUS_PROPERTY_NAME)) {
       return convertStatusToActive(
         representation.getString(STATUS_PROPERTY_NAME));
@@ -61,8 +59,6 @@ public class ProxyRelationship {
   }
 
   private ZonedDateTime getExpirationDate(JsonObject representation) {
-    log.debug("getExpirationDate:: parameters representation: {}", () -> representation);
-
     if(representation.containsKey(EXPIRATION_DATE_PROPERTY_NAME) ) {
       return getDateTimeProperty(representation,
         EXPIRATION_DATE_PROPERTY_NAME);

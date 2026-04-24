@@ -48,7 +48,7 @@ public class PrintEventRequest {
     final var printEventDate = getProperty(representation, PRINT_DATE_FIELD);
 
     if (requestIds.isEmpty() || null == requesterId || null == requesterName || null == printEventDate || !containsOnlyKnownFields(representation)) {
-      log.info("from:: Print Event Request JSON is invalid: requestIds={}, printEventDate={}", requestIds, printEventDate);
+      log.info("from:: Print Event Request JSON is invalid: requestIds={}, requesterId={}, printEventDate={}", requestIds, requesterId, printEventDate);
       return null;
     }
     return new PrintEventRequest(representation, requestIds, requesterId, requesterName, printEventDate);

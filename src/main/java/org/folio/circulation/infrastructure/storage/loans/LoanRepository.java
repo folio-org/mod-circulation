@@ -228,7 +228,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     String latestPatronInfoAddedComment = null;
     if (loanHistory != null) {
       latestPatronInfoAddedComment = loanHistory.getLoan().getActionComment();
-      log.debug("mapToLatestPatronInfoAddedComment:: loan history contains patron info: {}", latestPatronInfoAddedComment);
     }
     return latestPatronInfoAddedComment;
   }

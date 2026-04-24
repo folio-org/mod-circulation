@@ -1,11 +1,8 @@
 package org.folio.circulation.infrastructure.storage;
 
-import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
-import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
-
-import java.lang.invoke.MethodHandles;
-import java.util.concurrent.CompletableFuture;
-
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckOutLock;
@@ -16,9 +13,11 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
+import java.lang.invoke.MethodHandles;
+import java.util.concurrent.CompletableFuture;
+
+import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
+import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 
 public class CheckOutLockRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());

@@ -1,10 +1,12 @@
 package org.folio.circulation.domain.notes;
 
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.folio.circulation.domain.NoteLink;
 import org.folio.circulation.infrastructure.storage.notes.NotesRepository;
 import org.folio.circulation.support.results.Result;
