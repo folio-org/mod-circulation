@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import io.vertx.core.json.JsonArray;
 import org.folio.circulation.support.utils.ClockUtil;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 import lombok.val;
@@ -33,7 +33,6 @@ public class User {
   private final PatronGroup patronGroup;
   private final Collection<Department> departments;
 
-  @ToString.Include
   private final JsonObject representation;
 
   public User(JsonObject representation) {
@@ -87,6 +86,7 @@ public class User {
     return getProperty(representation, "barcode");
   }
 
+  @ToString.Include(name = "id")
   public String getId() {
     return getProperty(representation, "id");
   }
