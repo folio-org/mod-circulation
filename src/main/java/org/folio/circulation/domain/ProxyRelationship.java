@@ -6,17 +6,13 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDa
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 
-import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.utils.ClockUtil;
 
 import io.vertx.core.json.JsonObject;
 
 public class ProxyRelationship {
-  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private static final String NOTIFICATIONS_SENT_TO_PROPERTY_NAME = "notificationsTo";
   private static final String EXPIRATION_DATE_PROPERTY_NAME = "expirationDate";

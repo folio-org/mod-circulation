@@ -58,8 +58,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(checkInContext));
 
-    String result = logEventPayload.encode();
-    return result;
+    return logEventPayload.encode();
   }
 
   /**
@@ -89,8 +88,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
     logEventPayload.put(PAYLOAD,payload);
 
-    String result = logEventPayload.encode();
-    return result;
+    return logEventPayload.encode();
   }
 
   private static void populateLoanAndItemInCheckoutEvent(LoanAndRelatedRecords loanAndRelatedRecords, User loggedInUser, JsonObject data) {
