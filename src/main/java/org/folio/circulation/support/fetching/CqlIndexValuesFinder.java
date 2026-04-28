@@ -15,8 +15,11 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,8 +69,8 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   public CompletableFuture<Result<MultipleRecords<T>>> find(
     MultipleCqlIndexValuesCriteria criteria) {
 
-    if (criteria.getValues().isEmpty()) {
-      log.info("find:: search criteria is empty");
+    if (hasNoValidValues(criteria)) {
+      log.info("find:: search criteria is empty or contains only blank values");
       return completedFuture(of(MultipleRecords::empty));
     }
 
@@ -87,8 +90,8 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
   public CompletableFuture<Result<MultipleRecords<T>>> find(
     MultipleCqlIndexValuesCriteria criteria, int limit) {
 
-    if (criteria.getValues().isEmpty()) {
-      log.info("find:: search criteria is empty");
+    if (hasNoValidValues(criteria)) {
+      log.info("find:: search criteria is empty or contains only blank values");
       return completedFuture(of(MultipleRecords::empty));
     }
 
@@ -113,6 +116,12 @@ public class CqlIndexValuesFinder<T> implements FindWithMultipleCqlIndexValues<T
     return queries.stream()
       .map(query -> query.combine(commonQuery, CqlQuery::and))
       .toList();
+  }
+
+  private static boolean hasNoValidValues(MultipleCqlIndexValuesCriteria criteria) {
+    return criteria.getValues().stream()
+      .filter(Objects::nonNull)
+      .noneMatch(StringUtils::isNotBlank);
   }
 
   private List<Result<CqlQuery>> buildBatchQueriesByIndexName(MultipleCqlIndexValuesCriteria criteria) {
