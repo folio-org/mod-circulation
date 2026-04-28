@@ -120,9 +120,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    log.debug("updateLoan:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
     Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan " + loan.getId() + " prior to update:  " + loan.asJson().toString());
+    log.debug("updateLoan:: loan id: {}", loan.getId());
     return updateLoan(loanAndRelatedRecords.getLoan())
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
@@ -229,7 +228,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     String latestPatronInfoAddedComment = null;
     if (loanHistory != null) {
       latestPatronInfoAddedComment = loanHistory.getLoan().getActionComment();
-      log.debug("mapToLatestPatronInfoAddedComment:: loan history contains patron info: {}", latestPatronInfoAddedComment);
     }
     return latestPatronInfoAddedComment;
   }

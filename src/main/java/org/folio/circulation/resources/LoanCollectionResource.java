@@ -427,7 +427,7 @@ public class LoanCollectionResource extends CollectionResource {
 
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson());
+    log.debug("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: checking loan: {}", loan.getId());
     if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
       log.info("Loan {} registers as having due date change flag set to true and no open recalls in queue.", loan.getId());
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
