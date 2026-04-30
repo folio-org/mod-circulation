@@ -115,8 +115,7 @@ public class AddInfoResource extends Resource {
   private LoanAndRelatedRecords addPatronOrStaffInfo(LoanAndRelatedRecords loanAndRelatedRecords,
     String action, String actionComment) {
 
-    log.debug("addPatronOrStaffInfo:: parameters loanAndRelatedRecords: {}, action: {}, " +
-      "actionComment: {}", () -> loanAndRelatedRecords, () -> action, () -> actionComment);
+    log.debug("addPatronOrStaffInfo:: parameters action: {}", action);
     loanAndRelatedRecords.getLoan().changeAction(action);
     loanAndRelatedRecords.getLoan().changeActionComment(actionComment);
 

@@ -95,7 +95,6 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-  @ToString.Include
   private final JsonObject representation;
   @Getter
   private final Item item;
@@ -256,7 +255,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public void changeActionComment(String comment) {
-    log.debug("changeActionComment:: parameters comment: {}", comment);
     representation.put(ACTION_COMMENT, comment);
   }
 
@@ -330,6 +328,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getNestedStringProperty(representation, STATUS, "name");
   }
 
+  @ToString.Include(name = "id")
   public String getId() {
     return getProperty(representation, "id");
   }
@@ -585,7 +584,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
 
   public Loan declareItemLost(String comment, ZonedDateTime dateTime) {
-    log.debug("declareItemLost:: parameters comment: {}, dateTime: {}", () -> comment, () -> dateTime);
+    log.debug("declareItemLost:: parameters dateTime: {}", dateTime);
     changeAction(DECLARED_LOST);
     changeActionComment(comment);
     changeItemStatusForItemAndLoan(ItemStatus.DECLARED_LOST);
@@ -737,8 +736,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan claimItemReturned(String comment, ZonedDateTime claimedReturnedDate) {
-    log.debug("claimItemReturned:: parameters comment: {}, claimedReturnedDate: {}",
-      () -> comment, () -> claimedReturnedDate);
+    log.debug("claimItemReturned:: parameters claimedReturnedDate: {}", claimedReturnedDate);
     changeAction(CLAIMED_RETURNED);
     if (StringUtils.isNotBlank(comment)) {
       changeActionComment(comment);
@@ -764,7 +762,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan closeLoan(LoanAction action, String comment) {
-    log.debug("closeLoan:: parameters action: {}, comment: {}", action, comment);
+    log.debug("closeLoan:: parameters action: {}", action);
     changeStatus(LoanStatus.CLOSED);
 
     changeAction(action);
@@ -774,7 +772,6 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public Loan markItemMissing(String comment) {
-    log.debug("markItemMissing:: parameters comment: {}", comment);
     changeItemStatusForItemAndLoan(ItemStatus.MISSING);
 
     return closeLoan(MISSING, comment);
