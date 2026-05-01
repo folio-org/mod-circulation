@@ -21,9 +21,6 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.storage.RequestBatch;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 public class AnonymizeStorageRequestsRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -45,7 +42,7 @@ public class AnonymizeStorageRequestsRepository {
       });
 
     return new ResponseInterpreter<RequestAnonymizationRecords>()
-      .on(HTTP_CREATED.toInt(), Result.of(() -> records))
+      .flatMapOn(HTTP_CREATED.toInt(), mapper)
       .otherwise(forwardOnFailure());
   }
 
