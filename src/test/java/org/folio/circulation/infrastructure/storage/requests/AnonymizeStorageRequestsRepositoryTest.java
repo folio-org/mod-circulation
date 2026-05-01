@@ -101,4 +101,31 @@ class AnonymizeStorageRequestsRepositoryTest {
     assertTrue(result.succeeded());
     verify(client).post(any(JsonObject.class));
   }
+
+  @Test
+  void shouldParseAnonymizedRequestsFromResponse() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient client = mock(CollectionResourceClient.class);
+    when(clients.requestsBatchStorage()).thenReturn(client);
+
+    JsonObject responseBody = new JsonObject()
+      .put("anonymizedRequests", new JsonArray().add("request-1").add("request-2"));
+    Response response = mock(Response.class);
+    when(response.getStatusCode()).thenReturn(201);
+    when(response.getJson()).thenReturn(responseBody);
+    when(client.post(any(JsonObject.class)))
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(response)));
+
+    AnonymizeStorageRequestsRepository repository =
+      new AnonymizeStorageRequestsRepository(clients);
+
+    RequestAnonymizationRecords records = new RequestAnonymizationRecords()
+      .withAnonymizedRequests(Arrays.asList("request-1", "request-2"));
+
+    Result<RequestAnonymizationRecords> result =
+      repository.postAnonymizeStorageRequests(records).join();
+
+    assertTrue(result.succeeded());
+    assertNotNull(result.value());
+  }
 }
