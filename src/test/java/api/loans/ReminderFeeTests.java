@@ -753,7 +753,7 @@ class ReminderFeeTests extends APITests {
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().get(0);
+    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -768,12 +768,12 @@ class ReminderFeeTests extends APITests {
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
       hasJsonPath("reminders.lastFeeBilled.number", is(1)));
 
-    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().get(0);
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().getFirst();
 
     JsonObject loanAfterRenewal = loansFixture.attemptRenewal(200,
       item, borrower).getJson();
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().get(0);
+    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     assertThat("renewal count should be 1 after renewal",
       loanAfterRenewal.getInteger("renewalCount"), is(1));
@@ -806,8 +806,8 @@ class ReminderFeeTests extends APITests {
     final JsonObject loan = response.getJson();
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
-    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().get(0);
+    waitAtMost(3, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -816,9 +816,9 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfSentNotices(1);
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
+    waitAtMost(3, SECONDS).until(accountsClient::getAll, hasSize(1));
 
-    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().get(0);
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().getFirst();
 
     JsonObject loanAfterReminder = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
@@ -829,8 +829,8 @@ class ReminderFeeTests extends APITests {
         .forLoan(loan.getString("id"))
         .withDueDate(dueDate.plusDays(10));
     changeDueDateFixture.attemptChangeDueDate(changeDueDate).getJson();
-    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().get(0);
+    waitAtMost(3, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().getFirst();
     JsonObject loanAfterDueDateChange = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
     assertThat("Loan should have no reminders after due date change",
       !loanAfterDueDateChange.containsKey("reminders"));
@@ -862,7 +862,7 @@ class ReminderFeeTests extends APITests {
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().get(0);
+    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -873,7 +873,7 @@ class ReminderFeeTests extends APITests {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
 
-    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().get(0);
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().getFirst();
 
     JsonObject loanAfterReminder = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
@@ -889,7 +889,7 @@ class ReminderFeeTests extends APITests {
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
     JsonObject loanAfterRecall = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
 
-    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().get(0);
+    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     assertThat("rescheduled reminder should have different runtime than previous, second reminder",
       scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),

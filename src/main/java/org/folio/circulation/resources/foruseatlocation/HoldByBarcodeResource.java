@@ -1,9 +1,16 @@
 package org.folio.circulation.resources.foruseatlocation;
 
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
+import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_HELD;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.forUseAtLocationIsNotEnabledFailure;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.loanIsNotForUseAtLocationFailure;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.noOpenLoanFailure;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+
+import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
+import java.util.concurrent.CompletableFuture;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
@@ -35,16 +42,10 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
-import java.lang.invoke.MethodHandles;
-import java.time.ZonedDateTime;
-import java.util.concurrent.CompletableFuture;
-
-import static org.folio.circulation.domain.policy.library.ClosedLibraryStrategyUtils.determineClosedLibraryStrategyForHoldShelfExpirationDate;
-import static org.folio.circulation.domain.representations.LoanProperties.*;
-import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.forUseAtLocationIsNotEnabledFailure;
-import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.loanIsNotForUseAtLocationFailure;
-import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.noOpenLoanFailure;
-import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class HoldByBarcodeResource extends Resource {
   private static final String rootPath = "/circulation/hold-by-barcode-for-use-at-location";
@@ -161,7 +162,7 @@ public class HoldByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<HoldByBarcodeRequest>> updateLoan(HoldByBarcodeRequest request, LoanRepository loanRepository) {
-    log.debug("updateLoan:: loan parameter: {}", request.getLoan().asJson());
+    log.debug("updateLoan:: loan id: {}", request.getLoan().getId());
     return loanRepository.updateLoan(request.getLoan())
       .thenApply(loanResult -> loanResult.map(request::withLoan));
   }

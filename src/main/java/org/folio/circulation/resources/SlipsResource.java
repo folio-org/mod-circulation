@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.Collections.emptyList;
+import static java.util.Comparator.comparing;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -226,9 +227,18 @@ public abstract class SlipsResource extends Resource {
 
   private JsonObject mapResultToJson(MultipleRecords<Request> requests) {
     log.debug("mapResultToJson:: parameters requests: {}", () -> multipleRecordsAsString(requests));
+    JsonObject na = new JsonObject();
     List<JsonObject> representations = requests.getRecords().stream()
       .map(StaffSlipMapper::createStaffSlipContext)
-      .toList();
+      .sorted(comparing((JsonObject json) ->
+          (json.getJsonObject("item", na).getString("effectiveLocationSpecific") == null
+              ? "_" : json.getJsonObject("item", na).getString("effectiveLocationSpecific")))
+          .thenComparing(json ->
+              (json.getJsonObject("item", na).getString("shelvingOrder") == null)
+                  ? "_" :  json.getJsonObject("item", na).getString("shelvingOrder"))
+          .thenComparing(json -> (json.getJsonObject("item", na).getString("title") == null)
+              ?  "_" : json.getJsonObject("item", na).getString("title")))
+        .toList();
 
     return new JsonObject()
       .put(collectionName, representations)

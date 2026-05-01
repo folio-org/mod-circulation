@@ -345,8 +345,6 @@ public class CheckOutByBarcodeResource extends Resource {
     UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
     CirculationErrorHandler errorHandler) {
 
-    log.debug("lookupUser:: parameters barcode: {}", barcode);
-
     return userRepository.getUserByBarcode(barcode)
       .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withRequestingUser))
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, loanResult));
@@ -355,8 +353,6 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupProxyUser(String barcode,
     UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
     CirculationErrorHandler errorHandler) {
-
-    log.debug("lookupProxyUser:: parameters barcode: {}", barcode);
 
     return userRepository.getProxyUserByBarcode(barcode)
       .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withProxyingUser))

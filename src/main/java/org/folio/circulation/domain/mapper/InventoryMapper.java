@@ -71,6 +71,8 @@ public class InventoryMapper {
         .put("callNumberSuffix", callNumberComponents.getSuffix());
     }
 
+    itemContext.put("shelvingOrder", item.getShelvingOrder());
+
     log.debug("createItemContext:: result {}", itemContext);
     return itemContext;
   }
