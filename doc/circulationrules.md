@@ -251,7 +251,7 @@ m book: l loan-policy-e r request-policy-e n notice-policy-e o overdue i lost-it
 ```
 
 We assign priority numbers to the criterium types:
-t=7, a=6, b=5, c=4, s=3, m=2, g=1.
+t=7, s=6, c=5, b=4, a=3, m=2, g=1.
 
 A loan for material type `book` and loan type `rare` and patron group `visitor` matches
 all five rules and each rule has this priority:
