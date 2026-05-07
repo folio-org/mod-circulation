@@ -135,6 +135,74 @@ class FindMultipleRecordsByIdTests {
     verify(queryFinder, times(0)).findByQuery(any(), any());
   }
 
+  @Test
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForOnlyNullIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder);
+
+    final Collection<String> nullIds = new ArrayList<>();
+    nullIds.add(null);
+    nullIds.add(null);
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIds(nullIds);
+
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
+
+    assertThat("Should assume no records are found when all ids are null",
+        result.isEmpty(), is(true));
+
+    verify(queryFinder, times(0)).findByQuery(any(), any());
+  }
+
+  @Test
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForOnlyBlankIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder);
+
+    final Collection<String> blankIds = new ArrayList<>();
+    blankIds.add("");
+    blankIds.add("   ");
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIds(blankIds);
+
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
+
+    assertThat("Should assume no records are found when all ids are blank",
+        result.isEmpty(), is(true));
+
+    verify(queryFinder, times(0)).findByQuery(any(), any());
+  }
+
+  @Test
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForBlankItemIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder);
+
+    final Collection<String> blankIds = new ArrayList<>();
+    blankIds.add("");
+    blankIds.add(null);
+
+    final Result<CqlQuery> openStatusQuery = exactMatch("status", "Open");
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIdIndexAndQuery(blankIds, "itemId", openStatusQuery);
+
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
+
+    assertThat("Should assume no records are found when all item ids are blank or null",
+        result.isEmpty(), is(true));
+
+    verify(queryFinder, times(0)).findByQuery(any(), any());
+  }
+
   private Collection<String> generateIds(int size) {
     return Stream.generate(UUID::randomUUID)
       .map(UUID::toString)
