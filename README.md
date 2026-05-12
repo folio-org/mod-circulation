@@ -100,8 +100,8 @@ be configured using the following environment variables:
 | ENV                | folio             |
 | OKAPI_URL          | http://okapi:9130 |
 
-If a variable is not present, its default values is used as a fallback. If this configuration is
-invalid, the module will start, but Kafka integration will not work.
+If a variable is not present, its default values is used as a fallback. If the Kafka configuration is
+invalid, the module will fail on startup.
 
 Module supports so-called floating collections but the feature is disabled by default if the environment variable is
 not present. Floating collections support can be switched on by setting the environment variable
