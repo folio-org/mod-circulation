@@ -821,6 +821,7 @@ public abstract class RenewalResource extends Resource {
 
     final List<ValidationError> errors = new ArrayList<>();
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
+    log.info("validateIfRenewIsAllowedAndDueDateRequired:: loanPolicy: {}", loanPolicy);
 
     if (loanPolicy.isNotRenewable()) {
       log.info("validateIfRenewIsAllowedAndDueDateRequired:: loan is not renewable, loanId={}", loan::getId);
@@ -850,12 +851,17 @@ public abstract class RenewalResource extends Resource {
   }
 
   private static boolean firstRequestForLoanedItemIsHold(RequestQueue requestQueue, Loan loan) {
-    return requestQueue.getRequests()
+    log.info("firstRequestForLoanedItemIsHold:: requestQueue={}", requestQueue);
+    log.info("firstRequestForLoanedItemIsHold:: loan={}", loan);
+
+    var result = requestQueue.getRequests()
       .stream()
       .filter(r -> r.isFor(loan) || (r.isTitleLevel() && r.isHold() && !r.hasItemId()))
       .findFirst()
       .filter(Request::isHold)
       .isPresent();
+    log.info("firstRequestForLoanedItemIsHold:: result: {}", result);
+    return result;
   }
 
 }
