@@ -123,7 +123,7 @@ public class RequestRepository {
   }
 
   CompletableFuture<Result<MultipleRecords<Request>>> findBy(CqlQuery query, PageLimit pageLimit) {
-    log.debug("findBy:: parameters query: {}, pageLimit: {}", query, pageLimit);
+    log.info("findBy:: parameters query: {}, pageLimit: {}", query, pageLimit);
     return findByWithoutItems(query, pageLimit)
       .thenCompose(r -> r.after(this::fetchAdditionalFields));
   }
@@ -145,7 +145,7 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findByWithoutItems(
     CqlQuery query, PageLimit pageLimit) {
 
-    log.debug("findByWithoutItems:: parameters query: {}, pageLimit: {}", query, pageLimit);
+    log.info("findByWithoutItems:: parameters query: {}, pageLimit: {}", query, pageLimit);
 
     return requestsStorageClient.getMany(query, pageLimit)
       .thenApply(result -> result.next(this::mapResponseToRequests));

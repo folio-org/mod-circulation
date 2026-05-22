@@ -71,7 +71,7 @@ public class RequestQueueRepository {
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext context) {
-    log.debug("get:: parameters renewalContext: {}", context);
+    log.info("get:: parameters renewalContext: {}", context);
     return getQueue(
       context.getTlrSettings(),
       context.getLoan().getItem().getInstanceId(),
