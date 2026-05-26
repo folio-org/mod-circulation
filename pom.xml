@@ -26,8 +26,8 @@
     <antlr4.version>4.11.1</antlr4.version>
     <drools.version>10.0.0</drools.version>
     <rmb.version>36.0.0</rmb.version>
-    <vertx.version>5.0.6</vertx.version>
-    <folio.kafka.wrapper.version>4.0.0</folio.kafka.wrapper.version>
+    <vertx.version>5.0.12</vertx.version>
+    <folio.kafka.wrapper.version>4.1.0-SNAPSHOT</folio.kafka.wrapper.version>
     <log4j2.version>2.24.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -265,6 +265,11 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>kafka</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>4.2.0</version>
     </dependency>
   </dependencies>
 
