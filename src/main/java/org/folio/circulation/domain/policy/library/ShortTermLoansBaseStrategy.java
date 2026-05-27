@@ -27,7 +27,7 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
   @Override
   public Result<ZonedDateTime> calculateDueDate(ZonedDateTime requestedDate, AdjacentOpeningDays openingDays) {
     Objects.requireNonNull(openingDays);
-    log.debug("calculateDueDate:: parameters requestedDate: {}, openingDays: {}",
+    log.info("calculateDueDate:: parameters requestedDate: {}, openingDays: {}",
       requestedDate, openingDays);
     log.info("----- ShortTermLoansBaseStrategy -----");
     LibraryTimetable libraryTimetable =
