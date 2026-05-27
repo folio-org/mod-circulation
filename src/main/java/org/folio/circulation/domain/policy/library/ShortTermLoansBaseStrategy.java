@@ -33,8 +33,6 @@ public abstract class ShortTermLoansBaseStrategy implements ClosedLibraryStrateg
     LibraryTimetable libraryTimetable =
       LibraryTimetableConverter.convertToLibraryTimetable(openingDays, zone);
 
-    log.info("libraryTimetable head:{}",libraryTimetable.getHead().getStartTime());
-
     LibraryInterval requestedInterval = libraryTimetable.findInterval(requestedDate);
     if (requestedInterval == null) {
       log.error("calculateDueDate:: requestedInterval is null");
