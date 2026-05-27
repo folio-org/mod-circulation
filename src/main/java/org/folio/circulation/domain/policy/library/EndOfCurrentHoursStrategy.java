@@ -32,7 +32,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
   protected Result<ZonedDateTime> calculateIfClosed(LibraryTimetable libraryTimetable,
     LibraryInterval requestedInterval) {
 
-    log.debug("calculateIfClosed:: parameters libraryTimetable: {}, requestedInterval: {}",
+    log.info("calculateIfClosed:: parameters libraryTimetable: {}, requestedInterval: {}",
       libraryTimetable, requestedInterval);
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
