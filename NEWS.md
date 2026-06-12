@@ -1,3 +1,6 @@
+## 24.4.21 2026-06-12
+* Revert CIRC-2416 changes for pick slips (CIRC-2621)
+
 ## 24.4.20 2026-04-01
 * Set limit for Pick slips to prevent excessive memory consumption(CIRC-2568)
 
