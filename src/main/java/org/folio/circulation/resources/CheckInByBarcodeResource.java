@@ -32,6 +32,7 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
@@ -60,8 +61,10 @@ public class CheckInByBarcodeResource extends Resource {
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
 
+    JsonObject requestJson = routingContext.body().asJsonObject();
+    log.info("checkIn:: request={}", requestJson.encodePrettily());
     final Result<CheckInByBarcodeRequest> checkInRequestResult
-      = CheckInByBarcodeRequest.from(routingContext.body().asJsonObject());
+      = CheckInByBarcodeRequest.from(requestJson);
 
     final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
