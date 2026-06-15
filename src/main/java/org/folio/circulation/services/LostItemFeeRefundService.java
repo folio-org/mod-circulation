@@ -51,6 +51,7 @@ import org.folio.circulation.services.feefine.AccountActionResponse;
 import org.folio.circulation.services.support.RefundAndCancelAccountCommand;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.DateTimeUtil;
@@ -102,8 +103,13 @@ public class LostItemFeeRefundService {
   public CompletableFuture<Result<RenewalContext>> refundLostItemFees(
     RenewalContext renewalContext, String currentServicePointId) {
 
-    return refundLostItemFees(forRenewal(renewalContext, currentServicePointId))
-      .thenApply(r -> r.map(context -> renewalContext.withLoan(context.getLoan())));
+    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(log,
+      renewalContext, System.currentTimeMillis(), "step={}", "lost-item-fee-refund-start");
+
+    return refundLostItemFees(forRenewal(updatedContext, currentServicePointId))
+      .thenApply(r -> r.map(context -> updatedContext.withLoan(context.getLoan())))
+      .thenApply(result -> logRenewalCompletion(result, updatedContext,
+        "lost-item-fee-refund-complete"));
   }
 
   /**
@@ -374,5 +380,23 @@ public class LostItemFeeRefundService {
     return failed(singleValidationError(
       "Item is lost however there is no aged to lost nor declared lost loan found",
       "itemId", itemId));
+  }
+
+  private Result<RenewalContext> logRenewalCompletion(Result<RenewalContext> result,
+    RenewalContext context, String stepName) {
+
+    long currentMillis = System.currentTimeMillis();
+
+    if (result.succeeded()) {
+      return result.map(updatedContext -> RenewalPerformanceLogger.logAndAdvance(log,
+        updatedContext, currentMillis, "step={}", stepName));
+    }
+
+    RenewalPerformanceLogger.log(log, context.getPerformanceAnalysisId(),
+      context.getLastPerformanceTimestampMillis(), currentMillis,
+      context.getLoan() != null ? context.getLoan().getId() : null,
+      "step={} outcome={}", stepName, "failure");
+
+    return result;
   }
 }

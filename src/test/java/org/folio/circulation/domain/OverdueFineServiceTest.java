@@ -7,8 +7,10 @@ import static org.folio.circulation.resources.context.RenewalContext.create;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -42,6 +44,7 @@ import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.feefine.FeeFineService;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
@@ -152,6 +155,46 @@ class OverdueFineServiceTest {
 
     verifyNoInteractions(accountRepository);
     verifyNoInteractions(feeFineActionRepository);
+  }
+
+  @Test
+  void shouldPreserveAndAdvanceRenewalPerformanceStateWhenSkippingOverdueFine()
+    throws ExecutionException, InterruptedException {
+
+    Loan loan = createLoan(1.0, "day", 1.0, "day", 10.0, 10.0, false)
+      .changeDueDate(ClockUtil.getZonedDateTime().plusDays(1));
+    long previousTimestamp = 1L;
+    String analysisId = "analysis-id";
+    RenewalContext context = RenewalContext.create(loan, new JsonObject(), LOGGED_IN_USER_ID,
+      analysisId, previousTimestamp);
+
+    RenewalContext updatedContext = overdueFineService.createOverdueFineIfNecessary(context)
+      .get()
+      .value();
+
+    assertEquals(analysisId, updatedContext.getPerformanceAnalysisId());
+    assertTrue(updatedContext.getLastPerformanceTimestampMillis() > previousTimestamp);
+  }
+
+  @Test
+  void shouldNotDeleteOverdueNoticesWhenNoFeeFineActionIsCreated()
+    throws ExecutionException, InterruptedException {
+
+    Loan loan = createLoan(1.0, "day", 1.0, "day", 10.0, 10.0, false);
+
+    when(overdueFinePolicyRepository.findOverdueFinePolicyForLoan(any()))
+      .thenReturn(completedFuture(succeeded(loan)));
+    when(overduePeriodCalculatorService.getMinutes(any(), any(), any()))
+      .thenReturn(completedFuture(succeeded(5)));
+    when(itemRepository.fetchItemRelatedRecords(any()))
+      .thenReturn(completedFuture(succeeded(null)));
+    when(feeFineRepository.getFeeFine(FEE_FINE_TYPE, true))
+      .thenReturn(completedFuture(succeeded(createFeeFine())));
+
+    RenewalContext context = createRenewalContext(loan);
+    overdueFineService.createOverdueFineIfNecessary(context).get();
+
+    verify(scheduledNoticesRepository, never()).deleteOverdueNotices(any());
   }
 
   @ParameterizedTest

@@ -11,6 +11,7 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -39,10 +40,14 @@ public class RenewByIdResource extends RenewalResource {
   @Override
   protected CompletableFuture<Result<Loan>> findLoan(JsonObject request,
     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
-    CirculationErrorHandler errorHandler) {
+    CirculationErrorHandler errorHandler, String performanceAnalysisId,
+    AtomicLong lastPerformanceTimestampMillis) {
 
     final Result<RenewByIdRequest> requestResult
       = RenewByIdRequest.from(request);
+
+    logPerformanceStep(log, requestResult, performanceAnalysisId,
+      lastPerformanceTimestampMillis, "renew-by-id-request-validated", "renew-by-id");
 
     final String itemId = requestResult
       .map(RenewByIdRequest::getItemId)
@@ -57,11 +62,22 @@ public class RenewByIdResource extends RenewalResource {
       itemRepository, noItemFoundForIdFailure(itemId));
 
     return completedFuture(requestResult)
-      .thenCompose(r -> lookupItem(itemFinder, itemId, errorHandler))
-      .thenCompose(r -> r.after(item -> lookupLoan(singleOpenLoanFinder, item, errorHandler)))
-      .thenApply(r -> r.next(loan -> refuseWhenUserNotFound(loan, errorHandler)))
+      .thenCompose(r -> lookupItem(itemFinder, itemId, errorHandler)
+        .thenApply(itemResult -> logPerformanceStep(log, itemResult, performanceAnalysisId,
+          lastPerformanceTimestampMillis, "renew-by-id-item-lookup-complete", "renew-by-id")))
+      .thenCompose(r -> r.after(item -> lookupLoan(singleOpenLoanFinder, item, errorHandler)
+        .thenApply(loanResult -> logPerformanceStep(log, loanResult, performanceAnalysisId,
+          lastPerformanceTimestampMillis, "renew-by-id-open-loan-lookup-complete",
+          "renew-by-id"))))
+      .thenApply(r -> r.next(loan -> logPerformanceStep(log,
+        refuseWhenUserNotFound(loan, errorHandler), performanceAnalysisId,
+        lastPerformanceTimestampMillis, "renew-by-id-user-not-found-validation-complete",
+        "renew-by-id")))
       .thenApply(r -> r.next(loan -> refuseWhenUserDoesNotMatch(loan, requestResult.value(),
-        errorHandler)));
+        errorHandler)))
+      .thenApply(r -> logPerformanceStep(log, r, performanceAnalysisId,
+        lastPerformanceTimestampMillis, "renew-by-id-user-match-validation-complete",
+        "renew-by-id"));
   }
 
   private CompletableFuture<Result<Item>> lookupItem(ItemByIdInStorageFinder itemFinder,

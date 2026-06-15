@@ -56,6 +56,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
@@ -197,13 +198,19 @@ public class EventPublisher {
   public CompletableFuture<Result<RenewalContext>> publishDueDateChangedEvent(
     RenewalContext renewalContext) {
 
+    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(logger,
+      renewalContext, System.currentTimeMillis(), "step={}", "due-date-event-publish-start");
+
     logger.info("publishDueDateChangedEvent:: parameters loanId: {}",
-      renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
-    var loan = renewalContext.getLoan();
+      updatedContext.getLoan() != null ? updatedContext.getLoan().getId() : "null");
+    var loan = updatedContext.getLoan();
 
-    publishDueDateChangedEvent(loan, loan.getUser(), renewalContext);
+    // Completion here measures dispatch into the async publisher flow, not downstream publish completion.
+    publishDueDateChangedEvent(loan, loan.getUser(), updatedContext);
 
-    return completedFuture(succeeded(renewalContext));
+    return completedFuture(succeeded(RenewalPerformanceLogger.logAndAdvance(logger,
+      updatedContext, System.currentTimeMillis(), "step={}",
+      "due-date-event-publish-complete")));
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> publishDueDateChangedEvent(

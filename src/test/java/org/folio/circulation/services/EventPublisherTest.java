@@ -2,6 +2,7 @@ package org.folio.circulation.services;
 
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -101,6 +102,28 @@ class EventPublisherTest {
         assertThat(updatedByUserId, is(renewalStaffId));
         assertThat(updatedByUserId, is(not(checkoutStaffId)));
       });
+  }
+
+  @Test
+  void shouldPreserveAndAdvanceRenewalPerformanceStateWhenPublishingDueDateChangedEvent()
+    throws Exception {
+
+    String checkoutStaffId = UUID.randomUUID().toString();
+    String renewalStaffId = UUID.randomUUID().toString();
+    long previousTimestamp = 10L;
+    String analysisId = "analysis-id";
+
+    RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId)
+      .withPerformanceAnalysisId(analysisId)
+      .withLastPerformanceTimestampMillis(previousTimestamp);
+
+    RenewalContext updatedContext = eventPublisher.publishDueDateChangedEvent(renewalContext)
+      .get()
+      .value();
+
+    assertThat(updatedContext.getPerformanceAnalysisId(), is(analysisId));
+    assertThat(updatedContext.getLastPerformanceTimestampMillis(),
+      is(greaterThan(previousTimestamp)));
   }
 
   private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {
