@@ -164,6 +164,8 @@ class HoldShelfExpirationDateTests extends APITests {
   void requestWithShelfExpirationDateForSpExpiryInDaysWeeksMonths(
     String servicePoint, ChronoUnit interval, int amount) {
 
+    setDefaultClock();
+
     final IndividualResource checkInServicePoint;
     try {
       Method m = servicePointsFixture.getClass().getMethod(servicePoint);
