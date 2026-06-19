@@ -35,6 +35,7 @@ public class ClockUtil {
       throw new IllegalArgumentException("clock cannot be null");
     }
 
+    System.out.println("qqq setClock: " + clock.toString());
     ClockUtil.clock = clock;
   }
 
@@ -42,6 +43,7 @@ public class ClockUtil {
    * Set the clock assigned to the clock manager to the system clock.
    */
   public static void setDefaultClock() {
+    System.out.println("qqq setDefaultClock()");
     clock = Clock.systemUTC();
   }
 
