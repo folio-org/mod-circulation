@@ -53,14 +53,9 @@ class HoldShelfExpirationDateTests extends APITests {
 
   @BeforeEach
   void setUp() {
-    // reset the clock before each test (just in case)
-    setClock(Clock .fixed(getInstant(), UTC));
-  }
-
-  @AfterEach
-  void afterEach() {
-    // The clock must be reset after each test.
-    setDefaultClock();
+    // use a fixed clock
+    setClock(Clock.fixed(Clock.systemUTC().instant(), UTC));
+    // @AfterEach APITests.baseTearDown resets it to the default clock
   }
 
   @ParameterizedTest
