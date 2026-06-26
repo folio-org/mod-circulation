@@ -5,8 +5,10 @@ import static api.support.http.ResourceClient.forAccounts;
 import static api.support.http.ResourceClient.forFeeFineActions;
 import static java.lang.String.format;
 
+import java.util.Collection;
 import java.util.UUID;
 
+import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 
 import api.support.builders.AccountBuilder;
@@ -161,6 +163,12 @@ public final class FeeFineAccountFixture {
       .withComments(format("STAFF : %s \n PATRON : %s", infoForStaff, infoForPatron)));
 
     return account;
+  }
+
+  public Collection<JsonObject> getAccounts(UUID loanId) {
+    return accountsClient.getMany(CqlQuery.exactMatch("loanId", loanId.toString()))
+      .stream()
+      .toList();
   }
 
   private JsonObject getLostItemFeeAccount(UUID loanId) {

@@ -16,6 +16,7 @@ public class Location {
   String discoveryDisplayName;
   @NonNull Collection<UUID> servicePointIds;
   UUID primaryServicePointId;
+  Boolean isFloatingCollection;
   @NonNull Institution institution;
   @NonNull Campus campus;
   @NonNull Library library;
@@ -27,6 +28,7 @@ public class Location {
 
   public static Location unknown(String id) {
     return new Location(id, null, null, null, List.of(), null,
+      false,
       Institution.unknown(null), Campus.unknown(null), Library.unknown(null),
       ServicePoint.unknown());
   }
@@ -85,23 +87,31 @@ public class Location {
     return primaryServicePoint;
   }
 
+  public boolean isFloatingCollection() {
+    return isFloatingCollection;
+  }
+
   public Location withInstitution(Institution institution) {
     return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
+      isFloatingCollection,
       institution, campus, library, primaryServicePoint);
   }
 
   public Location withCampus(Campus campus) {
     return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
+      isFloatingCollection,
       institution, campus, library, primaryServicePoint);
   }
 
   public Location withLibrary(Library library) {
     return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
+      isFloatingCollection,
       institution, campus, library, primaryServicePoint);
   }
 
   public Location withPrimaryServicePoint(ServicePoint servicePoint) {
     return new Location(id, name, code, discoveryDisplayName, servicePointIds, primaryServicePointId,
+      isFloatingCollection,
       institution, campus, library, servicePoint);
   }
 

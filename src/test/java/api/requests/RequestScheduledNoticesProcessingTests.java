@@ -48,19 +48,18 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.Matcher;
-import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
 import api.support.TlrFeatureStatus;
@@ -79,7 +78,7 @@ import api.support.http.UserResource;
 import api.support.matchers.UUIDMatcher;
 import io.vertx.core.json.JsonObject;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 class RequestScheduledNoticesProcessingTests extends APITests {
   private static final UUID TEMPLATE_ID = UUID.randomUUID();
   private static final UUID EXPIRATION_TEMPLATE_ID_FROM_NOTICE_POLICY = UUID.randomUUID();

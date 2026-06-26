@@ -50,8 +50,8 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
   private void handleFeeFineClosedEvent(RoutingContext routingContext) {
     final WebContext context = new WebContext(routingContext);
-    final var eventPublisher = new EventPublisher(routingContext);
     final var clients = create(context, client);
+    final var eventPublisher = new EventPublisher(context, clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -59,7 +59,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       itemRepository, new AccountRepository(clients), new LostItemPolicyRepository(clients),
       eventPublisher, new ActualCostRecordRepository(clients));
 
-    log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.getBodyAsString());
+    log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.body().asString());
 
     createAndValidateRequest(routingContext)
       .after(request -> processEvent(loanRepository, request, closeLoanWithLostItemService))
@@ -67,7 +67,7 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
         log.error("Cannot handle event [{}], error occurred {}",
-          routingContext.getBodyAsString(), failure);
+          routingContext.body().asString(), failure);
 
         context.write(noContent());
       }));
@@ -76,14 +76,17 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
   private CompletableFuture<Result<Void>> processEvent(LoanRepository loanRepository,
     LoanRelatedFeeFineClosedEvent event, CloseLoanWithLostItemService closeLoanWithLostItemService) {
 
+    log.info("processEvent:: loanId={}", event.getLoanId());
+
     return loanRepository.getById(event.getLoanId())
       .thenCompose(r -> r.after(closeLoanWithLostItemService::closeLoanAsLostAndPaid));
   }
 
   private Result<LoanRelatedFeeFineClosedEvent> createAndValidateRequest(RoutingContext context) {
-    final LoanRelatedFeeFineClosedEvent eventPayload = fromJson(context.getBodyAsJson());
+    final LoanRelatedFeeFineClosedEvent eventPayload = fromJson(context.body().asJsonObject());
 
     if (eventPayload.getLoanId() == null) {
+      log.warn("createAndValidateRequest:: loanId is missing in event payload");
       return failed(singleValidationError(
         new ValidationError("Loan id is required", "loanId", null)));
     }

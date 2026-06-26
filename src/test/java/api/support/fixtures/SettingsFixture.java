@@ -1,13 +1,13 @@
 package api.support.fixtures;
 
+import java.util.List;
+import java.util.UUID;
+
 import api.support.builders.SettingsBuilder;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
 
-import java.util.UUID;
-
 public class SettingsFixture {
-
   private final ResourceClient settingsClient;
 
   public SettingsFixture() {
@@ -27,4 +27,9 @@ public class SettingsFixture {
         .encodePrettily()
     );
   }
+
+  public List<JsonObject> getAll() {
+    return settingsClient.getAll();
+  }
+
 }

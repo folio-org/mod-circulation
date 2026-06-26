@@ -1,6 +1,7 @@
 package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_RETURNED;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
@@ -10,8 +11,10 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanCheckInService;
 import org.folio.circulation.domain.OverdueFineService;
@@ -27,6 +30,7 @@ import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
@@ -57,6 +61,7 @@ class CheckInProcessAdapter {
   private final UpdateRequestQueue requestQueueUpdate;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
+  private final LocationRepository locationRepository;
   private final UserRepository userRepository;
   private final AddressTypeRepository addressTypeRepository;
   private final LogCheckInService logCheckInService;
@@ -75,6 +80,7 @@ class CheckInProcessAdapter {
     RequestQueueRepository requestQueueRepository,
     UpdateItem updateItem, UpdateRequestQueue requestQueueUpdate,
     LoanRepository loanRepository, ServicePointRepository servicePointRepository,
+    LocationRepository locationRepository,
     UserRepository userRepository,
     AddressTypeRepository addressTypeRepository,
     LogCheckInService logCheckInService,
@@ -93,6 +99,7 @@ class CheckInProcessAdapter {
     this.requestQueueUpdate = requestQueueUpdate;
     this.loanRepository = loanRepository;
     this.servicePointRepository = servicePointRepository;
+    this.locationRepository = locationRepository;
     this.userRepository = userRepository;
     this.addressTypeRepository = addressTypeRepository;
     this.logCheckInService = logCheckInService;
@@ -134,6 +141,7 @@ class CheckInProcessAdapter {
         requestQueueRepository),
       loanRepository,
       new ServicePointRepository(clients),
+      LocationRepository.using(clients),
       userRepository,
       new AddressTypeRepository(clients),
       new LogCheckInService(clients),
@@ -142,7 +150,7 @@ class CheckInProcessAdapter {
       new LostItemFeeRefundService(clients, itemRepository,
         userRepository, loanRepository),
       requestQueueService,
-      new EventPublisher(clients.pubSubPublishingService()),
+      new EventPublisher(clients),
       new DepartmentRepository(clients));
   }
 
@@ -173,7 +181,8 @@ class CheckInProcessAdapter {
       return requestQueueRepository.getByItemId(context.getItem().getItemId());
     }
     else {
-      return requestQueueRepository.getByInstanceId(context.getItem().getInstanceId());
+      return requestQueueRepository.getByInstanceIdAndItemId(context.getItem().getInstanceId(),
+        context.getItem().getItemId());
     }
   }
 
@@ -267,6 +276,16 @@ class CheckInProcessAdapter {
         checkInContext.getCheckInRequest()));
   }
 
+  CheckInContext markReturnedIfForUseAtLocation(CheckInContext checkInContext) {
+    log.debug("markReturnedIfForUseAtLocation:: parameters checkInContext: {}", checkInContext);
+
+    Loan loan = checkInContext.getLoan();
+    if (Environment.getForUseAtLocationEnabled() && loan != null && loan.isForUseAtLocation()) {
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_RETURNED);
+    }
+    return checkInContext;
+  }
+
   public CompletableFuture<Result<CheckInContext>> logCheckInOperation(
     CheckInContext checkInContext) {
 
@@ -296,4 +315,19 @@ class CheckInProcessAdapter {
     return requestQueueService.findRequestFulfillableByItem(context.getItem(), context.getRequestQueue())
       .thenApply(r -> r.map(context::withHighestPriorityFulfillableRequest));
   }
+
+  CompletableFuture<Result<Item>> findFloatingDestination(CheckInContext context) {
+    Item item = context.getItem();
+    if (CheckInByBarcodeResource.isFloatingEnabled() && item.getLocation().isFloatingCollection()) {
+      return locationRepository.fetchLocationsForServicePoint(context.getCheckInServicePointId().toString())
+        .thenApply(rLocations -> rLocations.map(locations -> locations.stream()
+          .filter(Location::isFloatingCollection).findFirst()
+          .map(item::withFloatDestinationLocation).orElse(item)))
+        .thenCompose(it -> locationRepository.getFloatDestinationLocation(it.value()))
+        .thenApply(location -> Result.succeeded(item.withFloatDestinationLocation(location.value())));
+    } else {
+      return Result.ofAsync(item);
+    }
+  }
+
 }

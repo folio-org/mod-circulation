@@ -20,7 +20,8 @@ public class HoldingsFixture {
   public IndividualResource createHoldingsRecord(UUID instanceId, UUID permanentLocationId) {
     HoldingBuilder holdingsBuilder = new HoldingBuilder()
       .forInstance(instanceId)
-      .withPermanentLocation(permanentLocationId);
+      .withPermanentLocation(permanentLocationId)
+      .withEffectiveLocationId(permanentLocationId);
 
     return holdingsClient.create(holdingsBuilder);
   }

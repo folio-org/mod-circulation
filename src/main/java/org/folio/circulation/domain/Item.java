@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
@@ -41,6 +42,9 @@ public class Item {
   @Getter
   private final String shelvingOrder;
   @NonNull private final Location permanentLocation;
+
+  @Getter
+  private final Location floatDestinationLocation;
   private final ServicePoint inTransitDestinationServicePoint;
 
   private boolean changed;
@@ -57,7 +61,7 @@ public class Item {
   }
   public Item(String id, JsonObject itemRepresentation, Location effectiveLocation,
     LastCheckIn lastCheckIn, CallNumberComponents callNumberComponents,
-    String shelvingOrder, Location permanentLocation,
+    String shelvingOrder, Location permanentLocation, Location floatDestinationLocation,
     ServicePoint inTransitDestinationServicePoint, boolean changed,
     Holdings holdings, Instance instance, MaterialType materialType,
     LoanType loanType, ItemDescription description) {
@@ -69,6 +73,7 @@ public class Item {
     this.callNumberComponents = callNumberComponents;
     this.shelvingOrder = shelvingOrder;
     this.permanentLocation = permanentLocation;
+    this.floatDestinationLocation = floatDestinationLocation;
     this.inTransitDestinationServicePoint = inTransitDestinationServicePoint;
     this.changed = changed;
     this.holdings = holdings;
@@ -142,6 +147,10 @@ public class Item {
     return instance.getIdentifiers().stream();
   }
 
+  public String getInstanceHrid() {
+    return instance.getHrid();
+  }
+
   public String getBarcode() {
     return description.getBarcode();
   }
@@ -160,6 +169,10 @@ public class Item {
 
   public Stream<Publication> getPublication() {
     return instance.getPublication().stream();
+  }
+
+  public Collection<String> getDatesOfPublication() {
+    return getPublication().map(Publication::getDateOfPublication).toList();
   }
 
   public String getCallNumber() {
@@ -243,6 +256,10 @@ public class Item {
     return description.getChronology();
   }
 
+  public String getDisplaySummary() {
+    return description.getDisplaySummary();
+  }
+
   public String getNumberOfPieces() {
     return description.getNumberOfPieces();
   }
@@ -253,6 +270,26 @@ public class Item {
 
   public Collection<String> getYearCaption() {
     return description.getYearCaption();
+  }
+
+  public String getAccessionNumber() {
+    return description.getAccessionNumber();
+  }
+
+  public Collection<String> getEditions() {
+    return instance.getEditions();
+  }
+
+  public Collection<String> getPhysicalDescriptions() {
+    return instance.getPhysicalDescriptions();
+  }
+
+  public Collection<String> getAdministrativeNotes() {
+    return description.getAdministrativeNotes();
+  }
+
+  public Collection<String> getSeriesStatementValues() {
+    return instance.getSeriesStatementValues().toList();
   }
 
   private ServicePoint getPrimaryServicePoint() {
@@ -344,59 +381,86 @@ public class Item {
     return firstNonBlank(permanentLocation.getId(), holdings.getPermanentLocationId());
   }
 
+  public String getFloatDestinationLocationId() {
+    return floatDestinationLocation != null ? floatDestinationLocation.getId() : null;
+  }
+
+  public boolean canFloatThroughCheckInServicePoint() {
+    return CheckInByBarcodeResource.isFloatingEnabled() && getLocation() != null
+      && getLocation().isFloatingCollection()
+      && getFloatDestinationLocation() != null
+      && getFloatDestinationLocation().getId()  != null;
+  }
+
   public Item withLocation(Location newLocation) {
     return new Item(this.id, this.itemRepresentation, newLocation,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, this.loanType, description);
   }
 
   public Item withMaterialType(@NonNull MaterialType materialType) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, materialType, this.loanType, this.description);
   }
 
   public Item withHoldings(@NonNull Holdings holdings) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInstance(@NonNull Instance instance) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withLoanType(@NonNull LoanType loanType) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, loanType, this.description);
   }
 
   public Item withLastCheckIn(@NonNull LastCheckIn lastCheckIn) {
     return new Item(this.id, this.itemRepresentation, this.location,
       lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      this.permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withPermanentLocation(Location permanentLocation) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      permanentLocation, this.inTransitDestinationServicePoint, this.changed,
+      permanentLocation, this.floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
+      this.holdings, this.instance, this.materialType, this.loanType, this.description);
+  }
+
+  public Item withFloatDestinationLocation(Location floatDestinationLocation) {
+    return new Item(this.id, this.itemRepresentation, this.location,
+      this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
+      this.permanentLocation, floatDestinationLocation,
+      this.inTransitDestinationServicePoint, this.changed,
       this.holdings, this.instance, this.materialType, this.loanType, this.description);
   }
 
   public Item withInTransitDestinationServicePoint(ServicePoint servicePoint) {
     return new Item(this.id, this.itemRepresentation, this.location,
       this.lastCheckIn, this.callNumberComponents, this.shelvingOrder,
-      this.permanentLocation, servicePoint, this.changed, this.holdings,
+      this.permanentLocation, this.floatDestinationLocation,
+      servicePoint, this.changed, this.holdings,
       this.instance, this.materialType, this.loanType, this.description);
   }
 
@@ -410,5 +474,24 @@ public class Item {
 
   public String getDcbItemTitle() {
     return getProperty(itemRepresentation, "instanceTitle");
+  }
+
+  public String getTenantId() {
+    return getProperty(itemRepresentation, "tenantId");
+  }
+
+  public Item changeTenantId(String tenantId) {
+    if (itemRepresentation != null) {
+      write(itemRepresentation, "tenantId", tenantId);
+    }
+    return this;
+  }
+
+  public boolean isAtLocation(String locationCode) {
+    return locationCode != null && getLocation() != null && (
+      locationCode.equals(getLocation().getCode()) ||
+      locationCode.equals(getLocation().getLibrary().getCode()) ||
+      locationCode.equals(getLocation().getCampus().getCode()) ||
+      locationCode.equals(getLocation().getInstitution().getCode()));
   }
 }

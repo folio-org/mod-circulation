@@ -9,9 +9,10 @@ public class Campus {
   }
 
   public static Campus unknown(String id) {
-    return new Campus(id, null);
+    return new Campus(id, null, null);
   }
 
   String id;
   String name;
+  String code;
 }

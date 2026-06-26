@@ -11,6 +11,7 @@ import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -22,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.support.results.Result;
-import org.folio.circulation.support.utils.LogUtil;
 
 public class OverduePeriodCalculatorService {
   private static final int ZERO_MINUTES = 0;
@@ -38,7 +38,7 @@ public class OverduePeriodCalculatorService {
     this.loanPolicyRepository = loanPolicyRepository;
   }
 
-  public CompletableFuture<Result<Integer>> getMinutes(Loan loan, ZonedDateTime systemTime) {
+  public CompletableFuture<Result<Integer>> getMinutes(Loan loan, ZonedDateTime systemTime, ZoneId zoneId) {
     log.debug("getMinutes:: parameters loan: {}, systemTime: {}", () -> loan, () -> systemTime);
     final Boolean shouldCountClosedPeriods = loan.getOverdueFinePolicy().getCountPeriodsWhenServicePointIsClosed();
 
@@ -48,7 +48,7 @@ public class OverduePeriodCalculatorService {
       return completedFuture(loan)
         .thenComposeAsync(loanPolicyRepository::lookupPolicy)
         .thenApply(r -> r.map(loan::withLoanPolicy))
-        .thenCompose(r -> r.after(l -> getOverdueMinutes(l, systemTime, shouldCountClosedPeriods)
+        .thenCompose(r -> r.after(l -> getOverdueMinutes(l, systemTime, shouldCountClosedPeriods, zoneId)
             .thenApply(flatMapResult(om -> adjustOverdueWithGracePeriod(l, om)))));
     }
 
@@ -60,11 +60,11 @@ public class OverduePeriodCalculatorService {
   }
 
   CompletableFuture<Result<Integer>> getOverdueMinutes(Loan loan, ZonedDateTime systemTime,
-    boolean shouldCountClosedPeriods) {
+    boolean shouldCountClosedPeriods, ZoneId zoneId) {
 
     return shouldCountClosedPeriods || getItemLocationPrimaryServicePoint(loan) == null
       ? minutesOverdueIncludingClosedPeriods(loan, systemTime)
-      : minutesOverdueExcludingClosedPeriods(loan, systemTime);
+      : minutesOverdueExcludingClosedPeriods(loan, systemTime, zoneId);
   }
 
   private CompletableFuture<Result<Integer>> minutesOverdueIncludingClosedPeriods(Loan loan,
@@ -78,7 +78,7 @@ public class OverduePeriodCalculatorService {
   }
 
   private CompletableFuture<Result<Integer>> minutesOverdueExcludingClosedPeriods(Loan loan,
-    ZonedDateTime returnDate) {
+    ZonedDateTime returnDate, ZoneId zoneId) {
 
     log.debug("minutesOverdueExcludingClosedPeriods:: parameters loan: {}, returnDate: {}",
       () -> loan, () -> returnDate);
@@ -86,7 +86,7 @@ public class OverduePeriodCalculatorService {
     String itemLocationPrimaryServicePoint = getItemLocationPrimaryServicePoint(loan).toString();
 
     return calendarRepository
-      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate)
+      .fetchOpeningDaysBetweenDates(itemLocationPrimaryServicePoint, dueDate, returnDate, zoneId)
       .thenApply(r -> r.next(openingDays -> getOpeningDaysDurationMinutes(
         openingDays, dueDate, returnDate)));
   }

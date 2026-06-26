@@ -34,11 +34,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.HttpURLConnection;
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
@@ -52,7 +55,6 @@ import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
@@ -70,7 +72,8 @@ class LoanAPITests extends APITests {
       item -> item
         .withEnumeration("v.70:no.1-6")
         .withChronology("1987:Jan.-June")
-        .withVolume("testVolume"));
+        .withVolume("testVolume")
+        .withDisplaySummary("testDisplaySummary"));
 
     UUID itemId = smallAngryPlanet.getId();
 
@@ -142,6 +145,9 @@ class LoanAPITests extends APITests {
     assertThat("has item volume",
       loan.getJsonObject("item").getString("volume"), is("testVolume"));
 
+    assertThat("has item displaySummary",
+      loan.getJsonObject("item").getString("displaySummary"), is("testDisplaySummary"));
+
     JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
 
     assertThat("item has a single contributor",
@@ -192,7 +198,84 @@ class LoanAPITests extends APITests {
     assertThat("has item volume",
       item.getString("volume"), is("testVolume"));
 
+    assertThat("isDcb should be false",
+      loan.getString("isDcb"), is("false"));
+
     loanHasExpectedProperties(loan, user);
+  }
+  @Test
+  void createLoanForDcbItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "virtual Title";
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle);
+
+    loansFixture.createLoan(circulationItem, usersFixture.jessica());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("isDcb should be true",
+      loan.getString("isDcb"), is("true"));
+  }
+
+  @Test
+  void createLoanForDcbUser() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "title";
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItemForDcb(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle, false);
+
+    loansFixture.createLoan(circulationItem, usersFixture.groot());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("isDcb should be true",
+      loan.getString("isDcb"), is("true"));
+  }
+
+  @Test
+  void createLoanForDcbUserAndDcbItem() {
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    var instanceTitle = "virtual Title";
+
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      "100002222", holdings.getId(), locationsResource.getId(), instanceTitle);
+
+    loansFixture.createLoan(circulationItem, usersFixture.groot());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("isDcb should be true",
+      loan.getString("isDcb"), is("true"));
+  }
+
+  @Test
+  void canGetLoansWithAdditionalFieldsRequiredForDueDateSlip() {
+    loansFixture.createLoan(itemsFixture.basedUponSmallAngryPlanet(), usersFixture.KimJames());
+    JsonObject loan = loansFixture.getLoans().getFirst();
+
+    assertThat("Borrower has preferredFirstName",
+      loan.getJsonObject("borrower").containsKey("preferredFirstName"), is(true));
+
+    assertThat("Borrower has patronGroup",
+      loan.getJsonObject("borrower").containsKey("patronGroup"), is(true));
+
+    assertThat("Item has primaryContributor",
+      loan.getJsonObject("item").containsKey("primaryContributor"), is(true));
+
+    assertThat("Item has editions",
+      loan.getJsonObject("item").containsKey("editions"), is(true));
+
+    assertThat("Item has publication years",
+      loan.getJsonObject("item").containsKey("datesOfPublication"), is(true));
+
+    assertThat("Item has series statement",
+      loan.getJsonObject("item").containsKey("seriesStatements"), is(true));
   }
 
   @Test
@@ -270,7 +353,7 @@ class LoanAPITests extends APITests {
 
   @Test
   void canGetMultipleFeesFinesForMultipleLoans() {
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    localeFixture.createUtcLocaleSettings();
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource item2 = itemsFixture.basedUponNod();
 
@@ -997,7 +1080,7 @@ class LoanAPITests extends APITests {
   @Test
   void canGetLoanPolicyPropertiesForMultipleLoans() {
 
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    localeFixture.createUtcLocaleSettings();
     IndividualResource item1 = itemsFixture.basedUponSmallAngryPlanet();
     final ItemResource item2 = itemsFixture.basedUponNod();
 
@@ -1663,6 +1746,84 @@ class LoanAPITests extends APITests {
   void canGetPagedLoansWhenIdQueryWouldExceedQueryStringLengthLimit() {
     createLoans(100);
     queryLoans(100);
+  }
+
+  @Test
+  void canGetMultiplePagesOfLoans() {
+    var numberOfItems = 200;
+    var itemAdditionalProperties = IntStream.range(0, numberOfItems)
+      .boxed()
+      .map(num -> (Function<ItemBuilder, ItemBuilder>) itemBuilder -> itemBuilder
+        .withEnumeration(format("testEnumeration-%d", num))
+        .withChronology(format("testChronology-%d", num))
+        .withVolume(format("testVolume-%d", num))
+        .withDisplaySummary(format("testDisplaySummary-%d", num))
+        .withCopyNumber(format("testCopyNumber-%d", num)))
+      .toList();
+    List<ItemResource> items = itemsFixture.createMultipleItemsOnePerInstance(numberOfItems,
+      itemAdditionalProperties);
+    items.forEach(checkOutFixture::checkOutByBarcode);
+    var loans = loansFixture.getLoans(limit(numberOfItems));
+
+    loans.forEach(loan -> {
+      var item = itemsFixture.getById(UUID.fromString(loan.getJsonObject("item").getString("id")));
+      assertThat("ID is taken from item", loan.getJsonObject("item").containsKey("id"), is(true));
+
+      assertThat("title is taken from item",
+        loan.getJsonObject("item").getString("title"),
+        is("The Long Way to a Small, Angry Planet"));
+
+      assertThat("barcode is taken from item",
+        loan.getJsonObject("item").getString("barcode"),
+        is(item.getBarcode()));
+
+      assertThat("call number is 123456", loan.getJsonObject("item")
+        .getString("callNumber"), is("123456"));
+
+      assertThat(loan.getJsonObject("item").encode() + " contains 'materialType'",
+        loan.getJsonObject("item").containsKey("materialType"), is(true));
+
+      assertThat("materialType is book", loan.getJsonObject("item")
+        .getJsonObject("materialType").getString("name"), is("Book"));
+
+      assertThat("item has contributors",
+        loan.getJsonObject("item").containsKey("contributors"), is(true));
+
+      JsonArray contributors = loan.getJsonObject("item").getJsonArray("contributors");
+      assertThat("item has a single contributor", contributors.size(), is(1));
+
+      assertThat("Becky Chambers is a contributor",
+        contributors.getJsonObject(0).getString("name"), is("Chambers, Becky"));
+
+      assertThat("has item status",
+        loan.getJsonObject("item").containsKey("status"), is(true));
+
+      assertThat("status is taken from item",
+        loan.getJsonObject("item").getJsonObject("status").getString("name"),
+        is("Checked out"));
+
+      assertThat("has item location",
+        loan.getJsonObject("item").containsKey("location"), is(true));
+
+      assertThat("has item enumeration", loan.getJsonObject("item").getString("enumeration"),
+        is(item.getJson().getString("enumeration")));
+
+      assertThat("has item chronology", loan.getJsonObject("item").getString("chronology"),
+        is(item.getJson().getString("chronology")));
+
+      assertThat("has item volume", loan.getJsonObject("item").getString("volume"),
+        is(item.getJson().getString("volume")));
+
+      assertThat("has item display summary", loan.getJsonObject("item").getString("displaySummary"),
+        is(item.getJson().getString("displaySummary")));
+
+      assertThat("has item copy number", loan.getJsonObject("item").getString("copyNumber"),
+        is(item.getJson().getString("copyNumber")));
+
+      assertThat("location is taken from holding",
+        loan.getJsonObject("item").getJsonObject("location").getString("name"),
+        is("3rd Floor"));
+    });
   }
 
   private void createLoans(int total) {

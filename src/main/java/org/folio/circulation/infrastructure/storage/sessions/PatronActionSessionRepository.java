@@ -34,7 +34,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -177,18 +176,21 @@ public class PatronActionSessionRepository {
   public CompletableFuture<Result<List<PatronSessionRecord>>> findPatronActionSessions(
     List<ExpiredSession> expiredSessions) {
 
+    log.debug("findPatronActionSessions:: parameters expiredSessions: {}",
+      expiredSessions != null ? expiredSessions.size() : 0);
+
     Set<String> patronIds = expiredSessions.stream()
       .map(ExpiredSession::getPatronId)
       .filter(StringUtils::isNotBlank)
       .collect(toSet());
 
     if (patronIds.isEmpty()) {
-      log.info("List of patron IDs is empty. Doing nothing.");
+      log.info("findPatronActionSessions:: list of patron IDs is empty, returning null");
       return CompletableFuture.completedFuture(succeeded(null));
     }
 
     Result<CqlQuery> actionTypeQuery = createActionTypeCqlQuery(
-      expiredSessions.get(0).getActionType());
+      expiredSessions.getFirst().getActionType());
 
     return findWithMultipleCqlIndexValues(patronActionSessionsStorageClient,
       PATRON_ACTION_SESSIONS, PatronSessionRecord::from)
@@ -269,7 +271,7 @@ public class PatronActionSessionRepository {
     List<String> loanIds = sessionRecords.getRecords().stream()
       .map(PatronSessionRecord::getLoanId)
       .map(UUID::toString)
-      .collect(Collectors.toList());
+      .toList();
 
     return loanRepository.findByIds(loanIds)
       .thenCompose(r -> r.after(this::fetchCampusesForLoanItems))
@@ -358,6 +360,6 @@ public class PatronActionSessionRepository {
       .filter(Item::isFound)
       .map(Item::getLocation)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
   }
 }

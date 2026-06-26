@@ -13,7 +13,8 @@ public class InstanceExamples {
       booksInstanceTypeId)
       .withContributor("Chambers, Becky", personalContributorNameTypeId, true)
       .withSingleEdition("First American Edition")
-      .withSinglePublication("Alfred A. Knopf", "New York", "2016");
+      .withSinglePublication("Alfred A. Knopf", "New York", "2016")
+      .addSeriesStatement(UUID.randomUUID(),"Small, Angry Planet not part of any series");
   }
 
   public static InstanceBuilder basedUponNod(

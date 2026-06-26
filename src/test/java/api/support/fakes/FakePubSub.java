@@ -46,7 +46,7 @@ public class FakePubSub {
           routingContext.response().end();
         }
         else {
-          publishedEvents.add(routingContext.getBodyAsJson());
+          publishedEvents.add(routingContext.body().asJsonObject());
           routingContext.response()
             .setStatusCode(HTTP_NO_CONTENT.toInt())
             .end();
@@ -75,10 +75,11 @@ public class FakePubSub {
         .end();
     }
     else {
-      if (requestBodyList != null) {
-        requestBodyList.add(routingContext.getBodyAsJson());
+      JsonObject requestBody = routingContext.body().asJsonObject();
+      if (requestBodyList != null && requestBodyList.stream().noneMatch(requestBody::equals)) {
+        requestBodyList.add(requestBody);
       }
-      String json = routingContext.getBodyAsJson().encodePrettily();
+      String json = requestBody.encodePrettily();
       Buffer buffer = Buffer.buffer(json, "UTF-8");
       routingContext.response()
         .setStatusCode(HTTP_CREATED.toInt())
@@ -96,7 +97,7 @@ public class FakePubSub {
         .end();
     }
     else {
-      deletedEventTypes.add(Arrays.asList(routingContext.normalisedPath().split("/")).get(3));
+      deletedEventTypes.add(Arrays.asList(routingContext.normalizedPath().split("/")).get(3));
 
       routingContext.response()
         .setStatusCode(HTTP_NO_CONTENT.toInt())

@@ -39,11 +39,11 @@ public class CalendarRepository {
     "%s/all-openings?startDate=%s&endDate=%s&includeClosed=false&limit=%d";
 
   private final CollectionResourceClient calendarClient;
-  private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
 
   public CalendarRepository(Clients clients) {
     this.calendarClient = clients.calendarStorageClient();
-    this.configurationRepository = new ConfigurationRepository(clients);
+    this.settingsRepository = new SettingsRepository(clients);
   }
 
   public CompletableFuture<Result<AdjacentOpeningDays>> lookupOpeningDays(
@@ -64,18 +64,18 @@ public class CalendarRepository {
   }
 
   public CompletableFuture<Result<Collection<OpeningDay>>> fetchOpeningDaysBetweenDates(
-    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate) {
+    String servicePointId, ZonedDateTime startDate, ZonedDateTime endDate, ZoneId zoneId) {
     String path = String.format(
       ALL_DATES_PATH,
       servicePointId,
-      startDate.toLocalDate(),
-      endDate.toLocalDate(),
+      startDate.withZoneSameInstant(zoneId).toLocalDate(),
+      endDate.withZoneSameInstant(zoneId).toLocalDate(),
       Integer.MAX_VALUE
     );
 
     return calendarClient.get(path)
       .thenCombineAsync(
-        configurationRepository.findTimeZoneConfiguration(),
+        settingsRepository.lookupTimeZoneSettings(),
         Result.combined(CalendarRepository::getOpeningDaysFromOpeningDayCollection)
       );
   }

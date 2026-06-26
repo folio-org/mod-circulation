@@ -158,6 +158,11 @@ public class ResourceClient {
       InterfaceUrls.settingsStorageUrl(), "items");
   }
 
+  public static ResourceClient forLocale() {
+    return new ResourceClient(subPath ->
+      InterfaceUrls.localeUrl(), "locale");
+  }
+
   public static ResourceClient forLoansStorage() {
     return new ResourceClient(InterfaceUrls::loansStorageUrl,
         "loans");
@@ -272,6 +277,18 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::actualCostRecordsStorageUrl, "actualCostRecords");
   }
 
+  public static ResourceClient forSearchClient() {
+    return new ResourceClient(InterfaceUrls::searchUrl, "instances");
+  }
+
+  public static ResourceClient forCirculationSettings() {
+    return new ResourceClient(InterfaceUrls::circulationSettingsUrl, "circulationSettings");
+  }
+
+  public static ResourceClient forPrintEvents() {
+    return new ResourceClient(InterfaceUrls::printEventsUrl, " ");
+  }
+
   private ResourceClient(UrlMaker urlMaker, String collectionArrayPropertyName) {
     this.urlMaker = urlMaker;
     this.collectionArrayPropertyName = collectionArrayPropertyName;
@@ -302,7 +319,7 @@ public class ResourceClient {
 
   public IndividualResource create(JsonObject representation) {
 
-    return  new IndividualResource(restAssuredClient.post(representation,
+    return new IndividualResource(restAssuredClient.post(representation,
       rootUrl(), 201, "create-record"));
   }
 

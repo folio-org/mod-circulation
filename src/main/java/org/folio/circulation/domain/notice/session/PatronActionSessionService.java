@@ -18,8 +18,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
@@ -32,12 +30,12 @@ import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.notice.PatronNoticeEventBuilder;
 import org.folio.circulation.domain.notice.combiner.LoanNoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
-
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -54,6 +52,7 @@ public class PatronActionSessionService {
 
   private final PatronActionSessionRepository patronActionSessionRepository;
   private final ImmediatePatronNoticeService patronNoticeService;
+  private final ProxyRelationshipValidator proxyRelationshipValidator;
   protected final EventPublisher eventPublisher;
 
   public static PatronActionSessionService using(Clients clients,
@@ -61,11 +60,14 @@ public class PatronActionSessionService {
 
     return new PatronActionSessionService(patronActionSessionRepository,
       new ImmediatePatronNoticeService(clients, new LoanNoticeContextCombiner()),
-      new EventPublisher(clients.pubSubPublishingService()));
+      new ProxyRelationshipValidator(clients),
+      new EventPublisher(clients));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> saveCheckOutSessionRecord(
     LoanAndRelatedRecords records) {
+
+    log.info("saveCheckOutSessionRecord:: saving check-out session record for patron {}", records.getUserId());
 
     UUID patronId = UUID.fromString(records.getUserId());
     UUID loanId = UUID.fromString(records.getLoan().getId());
@@ -78,6 +80,7 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<CheckInContext>> saveCheckInSessionRecord(CheckInContext context) {
+    log.info("saveCheckInSessionRecord:: attempting to save check-in session record");
     Loan loan = context.getLoan();
     if (loan == null) {
       log.info("CheckInSessionRecord is not saved, context doesn't have a valid loan.");
@@ -93,12 +96,14 @@ public class PatronActionSessionService {
   }
 
   public CompletableFuture<Result<Void>> endSessions(String patronId, PatronActionType actionType) {
+    log.info("endSessions:: ending {} sessions for patron {}", actionType, patronId);
     return safelyInitialise(() -> findSessions(patronId, actionType))
       .thenCompose(r -> r.after(this::processSessions))
       .thenApply(this::handleResult);
   }
 
   public CompletableFuture<Result<Void>> endExpiredSessions(List<ExpiredSession> expiredSessions) {
+    log.info("endExpiredSessions:: ending {} expired sessions", expiredSessions != null ? expiredSessions.size() : 0);
     return ofAsync(() -> expiredSessions)
       .thenCompose(r -> r.after(this::findSessions))
       .thenCompose(r -> r.after(this::groupAndProcessSessions))
@@ -108,6 +113,8 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(String patronId,
     PatronActionType actionType) {
 
+    log.info("findSessions:: finding {} sessions for patron {}", actionType, patronId);
+
     return patronActionSessionRepository.findPatronActionSessions(patronId, actionType,
       DEFAULT_SESSION_SIZE_PAGE_LIMIT);
   }
@@ -115,11 +122,15 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<List<PatronSessionRecord>>> findSessions(
     List<ExpiredSession> expiredSessions) {
 
+    log.info("findSessions:: finding sessions for {} expired session records", expiredSessions != null ? expiredSessions.size() : 0);
+
     return patronActionSessionRepository.findPatronActionSessions(expiredSessions);
   }
 
   private CompletableFuture<Result<List<PatronSessionRecord>>> processSessions(
     List<PatronSessionRecord> sessions) {
+
+    log.info("processSessions:: processing {} sessions", sessions != null ? sessions.size() : 0);
 
     return ofAsync(() -> sessions)
       .thenApply(mapResult(this::discardInvalidSessions))
@@ -128,6 +139,7 @@ public class PatronActionSessionService {
   }
 
   private List<PatronSessionRecord> discardInvalidSessions(List<PatronSessionRecord> sessions) {
+    log.info("discardInvalidSessions:: validating {} sessions", sessions.size());
     List<PatronSessionRecord> validSessions = new ArrayList<>();
 
     for (PatronSessionRecord session : sessions) {
@@ -165,6 +177,8 @@ public class PatronActionSessionService {
   private CompletableFuture<Result<Void>> groupAndProcessSessions(
     List<PatronSessionRecord> sessions) {
 
+    log.info("groupAndProcessSessions:: grouping and processing {} sessions", sessions.size());
+
     var groupedSessions = sessions.stream()
       .collect(groupingBy(PatronSessionRecord::getPatronId))
       .values();
@@ -183,12 +197,13 @@ public class PatronActionSessionService {
     }
 
     //The user is the same for all sessions
-    User user = sessions.get(0).getLoan().getUser();
+    User user = sessions.getFirst().getLoan().getUser();
 
     log.info("Attempting to send a notice for a group of {} action sessions to user {}",
       sessions.size(), user.getId());
 
-    return patronNoticeService.acceptNoticeEvents(buildNoticeEvents(sessions))
+    return allOf(sessions, this::buildNoticeEvents)
+      .thenApply(result -> result.map(patronNoticeService::acceptNoticeEvents))
       .thenApply(mapResult(v -> sessions));
   }
 
@@ -200,6 +215,8 @@ public class PatronActionSessionService {
 
   private CompletableFuture<Result<List<PatronSessionRecord>>> deleteSessions(
     List<PatronSessionRecord> sessions) {
+
+    log.info("deleteSessions:: deleting {} sessions", sessions != null ? sessions.size() : 0);
 
     return sessions == null || sessions.isEmpty()
       ? ofAsync(() -> sessions)
@@ -214,22 +231,36 @@ public class PatronActionSessionService {
     return succeeded(null);
   }
 
-  private static List<PatronNoticeEvent> buildNoticeEvents(List<PatronSessionRecord> sessions) {
-    return sessions.stream()
-      .map(PatronActionSessionService::buildPatronNoticeEvent)
-      .collect(Collectors.toList());
-  }
-
-  private static PatronNoticeEvent buildPatronNoticeEvent(PatronSessionRecord session) {
+  private CompletableFuture<Result<PatronNoticeEvent>> buildNoticeEvents(PatronSessionRecord session) {
+    log.info("buildNoticeEvents:: building notice event for session {}", session.getId());
     Loan loan = session.getLoan();
 
-    return new PatronNoticeEventBuilder()
-      .withItem(loan.getItem())
-      .withUser(loan.getUser())
-      .withEventType(actionToEventMap.get(session.getActionType()))
-      .withNoticeContext(createLoanNoticeContextWithoutUser(loan))
-      .withNoticeLogContext(NoticeLogContext.from(loan))
-      .build();
+    return getRecipientId(loan)
+      .thenApply(result -> result.map(recipientId -> {
+        if (recipientId == null) {
+          log.warn("No recipient ID found for loan: {}", loan.getId());
+        }
+        return new PatronNoticeEventBuilder()
+          .withItem(loan.getItem())
+          .withUser(loan.getUser())
+          .withRecipientId(recipientId)
+          .withEventType(actionToEventMap.get(session.getActionType()))
+          .withNoticeContext(createLoanNoticeContextWithoutUser(loan))
+          .withNoticeLogContext(NoticeLogContext.from(loan))
+          .build();
+      }));
   }
 
+  private CompletableFuture<Result<String>> getRecipientId(Loan loan) {
+    return proxyRelationshipValidator.hasActiveProxyRelationshipWithNotificationsSentToProxy(loan)
+      .thenApply(result -> result.map(sentNoProxy -> {
+        if (Boolean.TRUE.equals(sentNoProxy)) {
+          log.info("getRecipientId:: notice recipient is proxy user: {}", loan.getProxyUserId());
+          return loan.getProxyUserId();
+        }
+
+        log.info("getRecipientId:: notice recipient is user: {}", loan.getProxyUserId());
+        return loan.getUserId();
+      }));
+  }
 }

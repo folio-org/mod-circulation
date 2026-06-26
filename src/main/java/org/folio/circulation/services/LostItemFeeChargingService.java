@@ -24,13 +24,10 @@ import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.FeeFine;
 import org.folio.circulation.domain.FeeFineOwner;
 import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.policy.lostitem.LostItemPolicy;
 import org.folio.circulation.domain.policy.lostitem.itemfee.AutomaticallyChargeableFee;
-import org.folio.circulation.domain.representations.DeclareItemLostRequest;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.IdentifierTypeRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -68,7 +65,7 @@ public class LostItemFeeChargingService {
     this.storeLoanAndItem = storeLoanAndItem;
     this.locationRepository = LocationRepository.using(clients,
       new ServicePointRepository(clients));
-    this.eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    this.eventPublisher = new EventPublisher(clients);
     this.refundService = refundService;
     this.actualCostRecordService = new ActualCostRecordService(
       new ActualCostRecordRepository(clients), locationRepository,

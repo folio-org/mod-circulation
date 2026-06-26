@@ -50,7 +50,7 @@ public class LoanAnonymizationResource extends Resource {
       loanRepository, accountRepository);
 
     final var anonymizeStorageLoansRepository = new AnonymizeStorageLoansRepository(clients);
-    final var eventPublisher = new EventPublisher(clients.pubSubPublishingService());
+    final var eventPublisher = new EventPublisher(clients);
 
     final var loanAnonymizationService = new DefaultLoanAnonymizationService(
       new AnonymizationCheckersService(), anonymizeStorageLoansRepository, eventPublisher);

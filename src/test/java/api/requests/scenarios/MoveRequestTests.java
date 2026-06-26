@@ -3,7 +3,6 @@ package api.requests.scenarios;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.PAGED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
-import static api.support.fixtures.ConfigurationExample.timezoneConfigurationFor;
 import static api.support.matchers.EventMatchers.isValidLoanDueDateChangedEvent;
 import static api.support.matchers.ItemStatusCodeMatcher.hasItemStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
@@ -73,7 +72,7 @@ import lombok.val;
 class MoveRequestTests extends APITests {
 
   @AfterEach
-  public void afterEach() {
+  void afterEach() {
     // The clock must be reset after each test.
     setDefaultClock();
   }
@@ -184,7 +183,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void itemShouldRemainPagedIfHoldCreatedAfterRequestHasBeenMovedToAnotherItem() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -208,7 +207,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMovePageTlrToAvailableItem() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
     val pageIlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
@@ -227,7 +226,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMovePageTlrToRecall() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     val firstItem = itemsFixture.basedUponSmallAngryPlanet("89809");
     val pageTlrForFirstItem = requestsFixture.placeTitleLevelPageRequest(firstItem.getInstanceId(),
       usersFixture.james());
@@ -249,7 +248,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveRecallTlrToAnotherItem() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -269,7 +268,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void canMoveRecallTlrToPage() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -289,7 +288,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void whenRequestIsMovedItemShouldBecomeAvailableIfThereAreNoRequestsInTheQueueForThisItemIfTlrIsEnabled() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -308,7 +307,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void whenRequestIsMovedPositionsShouldBeConsistentWhenTlrIsEnabled() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(3);
 
@@ -369,7 +368,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveRequestToAnItemFromDifferentInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val nod = itemsFixture.basedUponNod();
     val uprooted = itemsFixture.basedUponUprooted();
@@ -387,7 +386,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveToOrFromHoldTlr() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -416,7 +415,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveTlrToTheSameItem() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val item = itemsFixture.basedUponNod();
     val jessica = usersFixture.jessica();
@@ -435,7 +434,7 @@ class MoveRequestTests extends APITests {
 
   @Test
   void cannotMoveTlrWhenFeatureIsDisabled() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     val items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     val firstItem = items.get(0);
@@ -446,7 +445,7 @@ class MoveRequestTests extends APITests {
     val firstItemHoldTlr = requestsFixture.placeTitleLevelHoldShelfRequest(firstItem.getInstanceId(),
       usersFixture.james());
 
-    configurationsFixture.disableTlrFeature();
+    circulationSettingsFixture.disableTlrFeature();
 
     Response response = requestsFixture.attemptMove(new MoveRequestBuilder(firstItemHoldTlr.getId(),
       secondItem.getId()));
@@ -1232,7 +1231,7 @@ class MoveRequestTests extends APITests {
     val steve = usersFixture.steve();
     val jessica = usersFixture.jessica();
 
-    configClient.create(timezoneConfigurationFor(stockholmTimeZone));
+    localeFixture.createLocaleSettingsForTimezone(stockholmTimeZone);
 
     final LoanPolicyBuilder canCirculateRollingPolicy = new LoanPolicyBuilder()
       .withName("Can Circulate Rolling With Recalls")

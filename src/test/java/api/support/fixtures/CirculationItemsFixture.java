@@ -21,9 +21,32 @@ public class CirculationItemsFixture {
   }
 
   public IndividualResource createCirculationItem(String barcode, UUID holdingId, UUID locationId, String instanceTitle) {
-    CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder().withBarcode(barcode).withHoldingId(holdingId)
-      .withLoanType(loanTypesFixture.canCirculate().getId()).withMaterialType(materialTypesFixture.book().getId())
-      .withLocationId(locationId).withInstanceTitle(instanceTitle);
+    return createCirculationItem(UUID.randomUUID(), barcode, holdingId, locationId, instanceTitle);
+  }
+
+  public IndividualResource createCirculationItem(UUID itemId, String barcode, UUID holdingId, UUID locationId, String instanceTitle) {
+    CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder()
+      .withItemId(itemId)
+      .withBarcode(barcode)
+      .withHoldingId(holdingId)
+      .withLoanType(loanTypesFixture.canCirculate().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withLocationId(locationId)
+      .withInstanceTitle(instanceTitle);
+    return circulationItemClient.create(circulationItemsBuilder);
+  }
+
+  public IndividualResource createCirculationItemForDcb(String barcode, UUID holdingId, UUID locationId,
+                                                        String instanceTitle, boolean isDcb) {
+    CirculationItemsBuilder circulationItemsBuilder = new CirculationItemsBuilder()
+      .withBarcode(barcode)
+      .withHoldingId(holdingId)
+      .withLoanType(loanTypesFixture.canCirculate().getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withLocationId(locationId)
+      .withInstanceTitle(instanceTitle)
+      .withDcb(isDcb);
+
     return circulationItemClient.create(circulationItemsBuilder);
   }
 

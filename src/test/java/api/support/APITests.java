@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Clock;
 import java.time.ZonedDateTime;
@@ -24,6 +25,16 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.Environment;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
+
+import api.support.fakes.FakeModNotify;
+import api.support.fakes.FakePubSub;
+import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.AddInfoFixture;
 import api.support.fixtures.AddressTypesFixture;
 import api.support.fixtures.AgeToLostFixture;
@@ -35,8 +46,8 @@ import api.support.fixtures.CheckOutFixture;
 import api.support.fixtures.CheckOutLockFixture;
 import api.support.fixtures.CirculationItemsFixture;
 import api.support.fixtures.CirculationRulesFixture;
+import api.support.fixtures.CirculationSettingsFixture;
 import api.support.fixtures.ClaimItemReturnedFixture;
-import api.support.fixtures.ConfigurationsFixture;
 import api.support.fixtures.DeclareLostFixtures;
 import api.support.fixtures.DepartmentFixture;
 import api.support.fixtures.EndPatronSessionClient;
@@ -45,6 +56,8 @@ import api.support.fixtures.ExpiredSessionProcessingClient;
 import api.support.fixtures.FeeFineAccountFixture;
 import api.support.fixtures.FeeFineOwnerFixture;
 import api.support.fixtures.FeeFineTypeFixture;
+import api.support.fixtures.ForUseAtLocationHoldFixture;
+import api.support.fixtures.ForUseAtLocationPickupFixture;
 import api.support.fixtures.HoldingsFixture;
 import api.support.fixtures.IdentifierTypesFixture;
 import api.support.fixtures.InstancesFixture;
@@ -52,6 +65,7 @@ import api.support.fixtures.ItemsFixture;
 import api.support.fixtures.LoanPoliciesFixture;
 import api.support.fixtures.LoanTypesFixture;
 import api.support.fixtures.LoansFixture;
+import api.support.fixtures.LocaleFixture;
 import api.support.fixtures.LocationsFixture;
 import api.support.fixtures.LostItemFeePoliciesFixture;
 import api.support.fixtures.MaterialTypesFixture;
@@ -64,22 +78,13 @@ import api.support.fixtures.RequestPoliciesFixture;
 import api.support.fixtures.RequestQueueFixture;
 import api.support.fixtures.RequestsFixture;
 import api.support.fixtures.ScheduledNoticeProcessingClient;
+import api.support.fixtures.SearchInstanceFixture;
 import api.support.fixtures.ServicePointsFixture;
 import api.support.fixtures.SettingsFixture;
 import api.support.fixtures.TemplateFixture;
 import api.support.fixtures.TenantActivationFixture;
 import api.support.fixtures.UserManualBlocksFixture;
 import api.support.fixtures.UsersFixture;
-import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
-
-import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
-import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
@@ -97,7 +102,7 @@ public abstract class APITests {
   protected static KafkaProducer<String, JsonObject> kafkaProducer;
   protected static KafkaAdminClient kafkaAdminClient;
   private static final KafkaContainer kafkaContainer
-    = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.2.0"));
+    = new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.2.0"));
 
   protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
@@ -112,6 +117,7 @@ public abstract class APITests {
   protected final ResourceClient locationsClient = ResourceClient.forLocations();
 
   protected final ResourceClient configClient = ResourceClient.forConfiguration();
+  protected final ResourceClient settingsClient = ResourceClient.forSettingsStorage();
 
   private final ResourceClient patronGroupsClient
     = ResourceClient.forPatronGroups();
@@ -194,6 +200,12 @@ public abstract class APITests {
   protected final ResourceClient actualCostRecordsClient =
     ResourceClient.forActualCostRecordsStorage();
 
+  protected final ResourceClient circulationSettingsClient =
+    ResourceClient.forCirculationSettings();
+
+  protected final ResourceClient printEventsClient =
+    ResourceClient.forPrintEvents();
+
   protected final ServicePointsFixture servicePointsFixture
     = new ServicePointsFixture(servicePointsClient);
 
@@ -231,9 +243,6 @@ public abstract class APITests {
 
   protected final AddressTypesFixture addressTypesFixture
     = new AddressTypesFixture(ResourceClient.forAddressTypes());
-
-  protected final ConfigurationsFixture configurationsFixture =
-    new ConfigurationsFixture(configClient);
 
   protected final PatronGroupsFixture patronGroupsFixture
     = new PatronGroupsFixture(patronGroupsClient);
@@ -300,6 +309,12 @@ public abstract class APITests {
   protected final DepartmentFixture departmentFixture = new DepartmentFixture();
   protected final CheckOutLockFixture checkOutLockFixture = new CheckOutLockFixture();
   protected final SettingsFixture settingsFixture = new SettingsFixture();
+  protected final LocaleFixture localeFixture = new LocaleFixture();
+  protected final CirculationSettingsFixture circulationSettingsFixture = new CirculationSettingsFixture();
+  protected final SearchInstanceFixture searchFixture = new SearchInstanceFixture();
+
+  protected final ForUseAtLocationHoldFixture holdForUseAtLocationFixture = new ForUseAtLocationHoldFixture();
+  protected final ForUseAtLocationPickupFixture pickupForUseAtLocationFixture = new ForUseAtLocationPickupFixture();
 
   protected APITests() {
     this(true, false);
@@ -318,13 +333,14 @@ public abstract class APITests {
       return;
     }
 
+    setSystemProperties();
     runKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
         undeployVerticles();
       } catch (Exception ex) {
-        Assert.fail("Failed to undeploy verticle: " + ex);
+        fail("Failed to undeploy verticle: " + ex);
       }
     }));
     okapiAlreadyDeployed = true;
@@ -346,6 +362,8 @@ public abstract class APITests {
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
     FakeStorageModule.cleanUpRequestMappings();
+
+    Environment.MOCK_ENV.clear();
   }
 
   @AfterEach
@@ -353,6 +371,7 @@ public abstract class APITests {
   public final void baseTearDown() {
     forTenantStorage().deleteAll();
     scheduledNoticesClient.deleteAll();
+    FakeStorageModule.cleanupDelayData();
 
     mockClockManagerToReturnDefaultDateTime();
   }
@@ -446,13 +465,13 @@ public abstract class APITests {
 
   protected void reconfigureTlrFeature(TlrFeatureStatus tlrFeatureStatus) {
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      configurationsFixture.enableTlrFeature();
+      circulationSettingsFixture.enableTlrFeature();
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      configurationsFixture.disableTlrFeature();
+      circulationSettingsFixture.disableTlrFeature();
     }
     else {
-      configurationsFixture.deleteTlrFeatureConfig();
+      circulationSettingsFixture.deleteTlrFeatureSettings();
     }
   }
 
@@ -468,19 +487,25 @@ public abstract class APITests {
     UUID cancellationTemplateId, UUID expirationTemplateId) {
 
     if (tlrFeatureStatus == TlrFeatureStatus.ENABLED) {
-      configurationsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
+      circulationSettingsFixture.configureTlrFeature(true, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else if (tlrFeatureStatus == TlrFeatureStatus.DISABLED) {
-      configurationsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
+      circulationSettingsFixture.configureTlrFeature(false, tlrHoldShouldFollowCirculationRules,
         confirmationTemplateId, cancellationTemplateId, expirationTemplateId);
     }
     else {
-      configurationsFixture.deleteTlrFeatureConfig();
+      circulationSettingsFixture.deleteTlrFeatureSettings();
     }
   }
 
   public static String randomId() {
     return UUID.randomUUID().toString();
+  }
+
+  private static void setSystemProperties() {
+    // Set Kafka consumer to read messages from the beginning of the topic if no offset is present.
+    // Helps avoid race condition between consumer and producer in tests.
+    System.setProperty("kafka.consumer.auto.offset.reset", "earliest");
   }
 }

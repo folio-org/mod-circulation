@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.base.definitions.rule.impl.RuleImpl;
 import org.drools.core.event.DefaultAgendaEventListener;
 import org.folio.circulation.domain.Location;
 import org.kie.api.KieServices;
@@ -77,7 +77,7 @@ public class Drools {
     kieSession.insert(new PatronGroup(patronGroupId));
     kieSession.insert(new ItemLocation(locationId));
     if (location != null) {
-      log.info("createSession:: location is not null");
+      log.debug("createSession:: location is not null");
       kieSession.insert(new Institution(location.getInstitutionId()));
       kieSession.insert(new Campus(location.getCampusId()));
       kieSession.insert(new Library(location.getLibraryId()));

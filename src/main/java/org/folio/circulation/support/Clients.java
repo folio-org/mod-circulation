@@ -1,10 +1,14 @@
 package org.folio.circulation.support;
 
+import static org.folio.circulation.support.http.client.NamedQueryParameter.namedParameter;
+
 import java.net.MalformedURLException;
 
 import org.folio.circulation.rules.CirculationRulesProcessor;
 import org.folio.circulation.services.PubSubPublishingService;
+import org.folio.circulation.support.http.client.IncludeRoutingServicePoints;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
+import org.folio.circulation.support.http.client.QueryParameter;
 import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
@@ -25,6 +29,10 @@ public class Clients {
   private final CollectionResourceClient institutionsStorageClient;
   private final CollectionResourceClient campusesStorageClient;
   private final CollectionResourceClient librariesStorageClient;
+  private final CollectionResourceClient shadowLocationsStorageClient;
+  private final CollectionResourceClient shadowInstitutionsStorageClient;
+  private final CollectionResourceClient shadowCampusesStorageClient;
+  private final CollectionResourceClient shadowLibrariesStorageClient;
   private final CollectionResourceClient materialTypesStorageClient;
   private final CollectionResourceClient loanTypesStorageClient;
   private final GetManyRecordsClient proxiesForClient;
@@ -40,6 +48,7 @@ public class Clients {
   private final CollectionResourceClient circulationRulesStorageClient;
   private final CollectionResourceClient requestPoliciesStorageClient;
   private final CollectionResourceClient servicePointsStorageClient;
+  private final CollectionResourceClient routingServicePointsStorageClient;
   private final CollectionResourceClient calendarStorageClient;
   private final CollectionResourceClient patronGroupsStorageClient;
   private final CollectionResourceClient patronNoticePolicesStorageClient;
@@ -68,10 +77,19 @@ public class Clients {
   private final CollectionResourceClient departmentClient;
   private final CollectionResourceClient checkOutLockStorageClient;
   private final CollectionResourceClient circulationItemClient;
+  private final CollectionResourceClient searchClient;
   private final GetManyRecordsClient settingsStorageClient;
+  private final CollectionResourceClient localeClient;
+  private final CollectionResourceClient circulationSettingsStorageClient;
+  private final CollectionResourceClient printEventsStorageClient;
+
 
   public static Clients create(WebContext context, HttpClient httpClient) {
     return new Clients(context.createHttpClient(httpClient), context);
+  }
+
+  public static Clients create(WebContext context, HttpClient httpClient, String tenantId) {
+    return new Clients(context.createHttpClient(httpClient, tenantId), context);
   }
 
   private Clients(OkapiHttpClient client, WebContext context) {
@@ -94,6 +112,10 @@ public class Clients {
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
+      shadowLocationsStorageClient = createShadowLocationsStorageClient(client, context);
+      shadowInstitutionsStorageClient = createShadowInstitutionsStorageClient(client, context);
+      shadowCampusesStorageClient = createShadowCampusesStorageClient(client, context);
+      shadowLibrariesStorageClient = createShadowLibrariesStorageClient(client, context);
       materialTypesStorageClient = createMaterialTypesStorageClient(client, context);
       loanTypesStorageClient = createLoanTypesStorageClient(client, context);
       proxiesForClient = createProxyUsersStorageClient(client, context);
@@ -107,6 +129,8 @@ public class Clients {
       requestPoliciesStorageClient = createRequestPoliciesStorageClient(client, context);
       fixedDueDateSchedulesStorageClient = createFixedDueDateSchedulesStorageClient(client, context);
       servicePointsStorageClient = createServicePointsStorageClient(client, context);
+      routingServicePointsStorageClient = createServicePointsStorageWithCustomParam(client,
+        context, IncludeRoutingServicePoints.enabled());
       patronGroupsStorageClient = createPatronGroupsStorageClient(client, context);
       calendarStorageClient = createCalendarStorageClient(client, context);
       patronNoticePolicesStorageClient = createPatronNoticePolicesStorageClient(client, context);
@@ -135,7 +159,12 @@ public class Clients {
       departmentClient = createDepartmentClient(client, context);
       checkOutLockStorageClient = createCheckoutLockClient(client, context);
       settingsStorageClient = createSettingsStorageClient(client, context);
+      localeClient = createLocaleClient(client, context);
       circulationItemClient = createCirculationItemClient(client, context);
+      searchClient = createSearchClient(client, context);
+      circulationSettingsStorageClient = createCirculationSettingsStorageClient(client, context);
+      printEventsStorageClient = createPrintEventsStorageClient(client, context);
+
     }
     catch(MalformedURLException e) {
       throw new InvalidOkapiLocationException(context.getOkapiLocation(), e);
@@ -210,6 +239,22 @@ public class Clients {
     return librariesStorageClient;
   }
 
+  public CollectionResourceClient shadowLocationsStorage() {
+    return shadowLocationsStorageClient;
+  }
+
+  public CollectionResourceClient shadowInstitutionsStorage() {
+    return shadowInstitutionsStorageClient;
+  }
+
+  public CollectionResourceClient shadowCampusesStorage() {
+    return shadowCampusesStorageClient;
+  }
+
+  public CollectionResourceClient shadowLibrariesStorage() {
+    return shadowLibrariesStorageClient;
+  }
+
   public CollectionResourceClient materialTypesStorage() {
     return materialTypesStorageClient;
   }
@@ -236,6 +281,10 @@ public class Clients {
 
   public CollectionResourceClient servicePointsStorage() {
     return servicePointsStorageClient;
+  }
+
+  public CollectionResourceClient routingServicePointsStorage() {
+    return routingServicePointsStorageClient;
   }
 
   public CollectionResourceClient patronGroupsStorage() {
@@ -370,8 +419,24 @@ public class Clients {
     return settingsStorageClient;
   }
 
+  public CollectionResourceClient localeClient() {
+    return localeClient;
+  }
+
   public CollectionResourceClient circulationItemClient() {
     return circulationItemClient;
+  }
+
+  public CollectionResourceClient searchClient() {
+    return searchClient;
+  }
+
+  public CollectionResourceClient circulationSettingsStorageClient() {
+    return circulationSettingsStorageClient;
+  }
+
+  public CollectionResourceClient printEventsStorageClient() {
+    return printEventsStorageClient;
   }
 
   private static CollectionResourceClient getCollectionResourceClient(
@@ -380,6 +445,14 @@ public class Clients {
     throws MalformedURLException {
 
     return new CollectionResourceClient(client, context.getOkapiBasedUrl(path));
+  }
+
+  private static CollectionResourceClient getCollectionResourceClientWithCustomParam(
+    OkapiHttpClient client, WebContext context, String path, QueryParameter customParam)
+    throws MalformedURLException {
+
+    return new CustomParamCollectionResourceClient(client, context.getOkapiBasedUrl(path),
+      customParam);
   }
 
   public CollectionResourceClient noticeTemplatesClient() {
@@ -547,6 +620,38 @@ public class Clients {
       "/location-units/libraries");
   }
 
+  private static CollectionResourceClient createShadowLocationsStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(
+      client, context, "/locations", namedParameter("includeShadowLocations", "true"));
+  }
+
+  private static CollectionResourceClient createShadowInstitutionsStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context,
+      "/location-units/institutions", namedParameter("includeShadow", "true"));
+  }
+
+  private static CollectionResourceClient createShadowCampusesStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context,
+      "/location-units/campuses", namedParameter("includeShadow", "true"));
+  }
+
+  private static CollectionResourceClient createShadowLibrariesStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context,
+      "/location-units/libraries", namedParameter("includeShadow", "true"));
+  }
+
   private GetManyRecordsClient createProxyUsersStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
@@ -622,6 +727,14 @@ public class Clients {
       throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/service-points");
+  }
+
+  private CollectionResourceClient createServicePointsStorageWithCustomParam(
+    OkapiHttpClient client, WebContext context, QueryParameter customParam)
+      throws MalformedURLException {
+
+    return getCollectionResourceClientWithCustomParam(client, context, "/service-points",
+      customParam);
   }
 
   private CollectionResourceClient createPatronGroupsStorageClient(
@@ -801,12 +914,39 @@ public class Clients {
     return  getCollectionResourceClient(client, context, "/circulation-item");
   }
 
+  private CollectionResourceClient createSearchClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return  getCollectionResourceClient(client, context, "/search/instances");
+  }
+
+  private CollectionResourceClient createCirculationSettingsStorageClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return  getCollectionResourceClient(client, context,
+      "/circulation-settings-storage/circulation-settings");
+  }
+
+  private CollectionResourceClient createPrintEventsStorageClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return  getCollectionResourceClient(client, context,
+      "/print-events-storage/print-events-entry");
+  }
+
   private GetManyRecordsClient createSettingsStorageClient(
     OkapiHttpClient client, WebContext context)
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context,
       "/settings/entries");
+  }
+
+  private CollectionResourceClient createLocaleClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/locale");
   }
 
 }

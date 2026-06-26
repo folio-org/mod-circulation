@@ -1,7 +1,6 @@
 package org.folio.circulation.rules;
 
 import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.User;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,11 +19,11 @@ public class CirculationRuleCriteria {
   @EqualsAndHashCode.Exclude
   private Item item;
 
-  public CirculationRuleCriteria(@NonNull Item item, @NonNull User user) {
+  public CirculationRuleCriteria(@NonNull Item item, @NonNull String patronGroupId) {
     this.materialTypeId = item.getMaterialTypeId();
     this.loanTypeId = item.getLoanTypeId();
     this.locationId = item.getEffectiveLocationId();
-    this.patronGroupId = user.getPatronGroupId();
+    this.patronGroupId = patronGroupId;
     this.item = item;
   }
 }

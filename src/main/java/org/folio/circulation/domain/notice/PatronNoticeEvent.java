@@ -19,4 +19,5 @@ public class PatronNoticeEvent {
   private final JsonObject noticeContext;
   private final NoticeLogContext noticeLogContext;
   private final String patronNoticePolicyId;
+  private final String recipientId;
 }

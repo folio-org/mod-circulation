@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.folio.circulation.rules.ExecutableRules.MATCH_FAIL_MSG_REGEX;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -15,6 +16,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
@@ -30,13 +32,14 @@ import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.policy.RequestPolicy;
 import org.folio.circulation.rules.CirculationRuleCriteria;
-import org.folio.circulation.support.CirculationRulesClient;
+import org.folio.circulation.rules.CirculationRuleMatch;
+import org.folio.circulation.rules.CirculationRulesProcessor;
+import org.folio.circulation.rules.RulesExecutionParameters;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
-import org.folio.circulation.support.ForwardOnFailure;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -44,12 +47,12 @@ import io.vertx.core.json.JsonObject;
 public class RequestPolicyRepository {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final CirculationRulesClient circulationRequestRulesClient;
+  private final CirculationRulesProcessor circulationRulesProcessor;
   private final CollectionResourceClient requestPoliciesStorageClient;
 
   public RequestPolicyRepository(Clients clients) {
-    this.circulationRequestRulesClient = clients.circulationRequestRules();
     this.requestPoliciesStorageClient = clients.requestPoliciesStorage();
+    this.circulationRulesProcessor = clients.circulationRulesProcessor();
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> lookupRequestPolicy(
@@ -74,18 +77,18 @@ public class RequestPolicyRepository {
   public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(Item item, User user) {
     log.debug("lookupRequestPolicy:: parameters item: {}, user: {}", item, user);
     return lookupRequestPolicyId(item, user)
-      .thenComposeAsync(r -> r.after(this::lookupRequestPolicy))
+      .thenComposeAsync(r -> r.after(this::lookupRequestPolicyById))
       .thenApply(result -> result.map(RequestPolicy::from));
   }
 
   public CompletableFuture<Result<Map<RequestPolicy, Set<Item>>>> lookupRequestPolicies(
-    Collection<Item> items, User user) {
+    Collection<Item> items, String patronGroupId) {
 
-    log.debug("lookupRequestPolicies:: parameters items: {}, user: {}",
-      items::size, () -> asJson(user));
+    log.debug("lookupRequestPolicies:: parameters items: {}, patronGroupId: {}",
+      items::size, () -> asJson(patronGroupId));
 
     Map<CirculationRuleCriteria, Set<Item>> criteriaMap = items.stream()
-      .map(item -> new CirculationRuleCriteria(item, user))
+      .map(item -> new CirculationRuleCriteria(item, patronGroupId))
       .collect(toMap(identity(), criteria -> Set.of(criteria.getItem()), itemsMergeOperator()));
 
     return allOf(criteriaMap.entrySet(), entry -> lookupRequestPolicyId(entry.getKey())
@@ -95,12 +98,21 @@ public class RequestPolicyRepository {
       .thenCompose(r -> r.after(this::lookupRequestPolicies));
   }
 
+  public CompletableFuture<Result<RequestPolicy>> lookupRequestPolicy(String patronGroupId) {
+    // Circulation rules need to be executed with the patron group parameter only.
+    // All the item-related parameters should be random UUIDs.
+    return lookupRequestPolicyId(UUID.randomUUID().toString(), patronGroupId,
+      UUID.randomUUID().toString(), UUID.randomUUID().toString())
+      .thenCompose(r -> r.after(this::lookupRequestPolicyById))
+      .thenApply(result -> result.map(RequestPolicy::from));
+  }
+
   private BinaryOperator<Set<Item>> itemsMergeOperator() {
     return (items1, items2) -> Stream.concat(items1.stream(), items2.stream())
       .collect(Collectors.toSet());
   }
 
-  private CompletableFuture<Result<JsonObject>> lookupRequestPolicy(
+  private CompletableFuture<Result<JsonObject>> lookupRequestPolicyById(
     String requestPolicyId) {
 
     log.debug("lookupRequestPolicy:: parameters requestPolicyId: {}", requestPolicyId);
@@ -158,24 +170,26 @@ public class RequestPolicyRepository {
     log.debug("lookupRequestPolicyId:: parameters materialTypeId: {}, patronGroupId: {}," +
       "loanTypeId: {}, locationId: {}", materialTypeId, patronGroupId, loanTypeId, locationId);
 
-    return circulationRequestRulesClient.applyRules(loanTypeId, locationId,
-        materialTypeId, patronGroupId)
-      .thenComposeAsync(r -> r.after(this::processRulesResponse));
+    var params = new RulesExecutionParameters(loanTypeId, locationId, materialTypeId, patronGroupId, null);
+    return circulationRulesProcessor.getRequestPolicyAndMatch(params)
+      .thenCompose(this::processRulesResponse);
   }
 
-  private CompletableFuture<Result<String>> processRulesResponse(Response response) {
-    log.debug("processRulesResponse:: parameters response: {}", response);
+  private CompletableFuture<Result<String>> processRulesResponse(Result<CirculationRuleMatch> response) {
+    log.debug("processRulesResponse:: parameters response successful: {}", response.succeeded());
     final CompletableFuture<Result<String>> future = new CompletableFuture<>();
 
-    if (response.getStatusCode() == 404) {
-      log.info("processRulesResponse:: no matching request rules found");
-      future.complete(failedDueToServerError("Unable to find matching request rules"));
-    } else if (response.getStatusCode() != 200) {
-      log.info("processRulesResponse:: failed to apply request rules");
-      future.complete(failed(new ForwardOnFailure(response)));
-    } else {
+    if (response.succeeded()) {
       log.info("processRulesResponse:: successfully applied request rules");
-      future.complete(succeeded(response.getJson().getString("requestPolicyId")));
+      future.complete(succeeded(response.value().getPolicyId()));
+    } else {
+      if (response.cause() instanceof ServerErrorFailure e && e.getReason().matches(MATCH_FAIL_MSG_REGEX)) {
+        log.info("processRulesResponse:: no matching request rules found");
+        future.complete(failedDueToServerError("Unable to find matching request rules"));
+      } else {
+        log.info("processRulesResponse:: failed to apply request rules");
+        future.complete(failed(response.cause()));
+      }
     }
 
     return future;

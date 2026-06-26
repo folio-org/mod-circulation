@@ -88,6 +88,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   private static final String ID = "id";
   private static final String USER_ID = "userId";
 
+  private static final String IS_DCB = "isDcb";
+
   public LoanRepository(Clients clients, ItemRepository itemRepository,
     UserRepository userRepository) {
 
@@ -118,9 +120,8 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<LoanAndRelatedRecords>> updateLoan(
     LoanAndRelatedRecords loanAndRelatedRecords) {
 
-    log.debug("updateLoan:: parameters loanAndRelatedRecords: {}", loanAndRelatedRecords);
     Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan " + loan.getId() + " prior to update:  " + loan.asJson().toString());
+    log.debug("updateLoan:: loan id: {}", loan.getId());
     return updateLoan(loanAndRelatedRecords.getLoan())
       .thenApply(mapResult(loanAndRelatedRecords::withLoan));
   }
@@ -187,6 +188,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public CompletableFuture<Result<Loan>> getById(String id) {
     return fetchLoan(id)
       .thenComposeAsync(this::fetchItem)
+      .thenCompose(CompletableFuture::completedFuture)
       .thenComposeAsync(this::fetchUser)
       .exceptionally(CommonFailures::failedDueToServerError);
   }
@@ -226,7 +228,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     String latestPatronInfoAddedComment = null;
     if (loanHistory != null) {
       latestPatronInfoAddedComment = loanHistory.getLoan().getActionComment();
-      log.debug("mapToLatestPatronInfoAddedComment:: loan history contains patron info: {}", latestPatronInfoAddedComment);
     }
     return latestPatronInfoAddedComment;
   }
@@ -294,6 +295,14 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     return MultipleRecords.from(response, Loan::from, RECORDS_PROPERTY_NAME);
   }
 
+  private static void addIsDcbProperty(Loan loan, Item item, JsonObject storageLoan) {
+    write(storageLoan, IS_DCB, isDcbLoan(loan, item));
+  }
+
+  private static boolean isDcbLoan(Loan loan, Item item) {
+      return item.isDcbItem() || (nonNull(loan.getUser()) && loan.getUser().isDcbUser());
+  }
+
   private static JsonObject mapToStorageRepresentation(Loan loan, Item item) {
     log.debug("mapToStorageRepresentation:: parameters loan: {}, item: {}", loan, item);
     JsonObject storageLoan = loan.asJson();
@@ -307,7 +316,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     removeProperty(storageLoan, FEESANDFINES);
     removeProperty(storageLoan, OVERDUE_FINE_POLICY);
     removeProperty(storageLoan, LOST_ITEM_POLICY);
-
+    addIsDcbProperty(loan, item, storageLoan);
     updatePolicy(storageLoan, loan.getLoanPolicy(), "loanPolicyId");
     updatePolicy(storageLoan, loan.getOverdueFinePolicy(), "overdueFinePolicyId");
     updatePolicy(storageLoan, loan.getLostItemPolicy(), "lostItemPolicyId");

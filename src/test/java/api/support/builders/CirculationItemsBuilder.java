@@ -170,4 +170,17 @@ public class CirculationItemsBuilder extends JsonBuilder implements Builder {
       instanceTitle);
   }
 
+  public CirculationItemsBuilder withDcb(boolean isDcb) {
+    return new CirculationItemsBuilder(
+      this.itemId,
+      this.barcode,
+      this.holdingId,
+      this.locationId,
+      this.materialTypeId,
+      this.loanTypeId,
+      isDcb,
+      this.lendingLibraryCode,
+      this.instanceTitle);
+  }
+
 }

@@ -1,7 +1,22 @@
 package org.folio.circulation.infrastructure.storage;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -9,16 +24,9 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import lombok.SneakyThrows;
 
 class SettingsRepositoryTest {
 
@@ -56,6 +64,73 @@ class SettingsRepositoryTest {
       .thenReturn(CompletableFuture.completedFuture(Result.failed(new ServerErrorFailure("Unable to call mod settings"))));
     var res = settingsRepository.lookUpCheckOutLockSettings().get().value();
     assertFalse(res.isCheckOutLockFeatureEnabled());
+  }
+
+  @Test
+  @SneakyThrows
+  void fetchTenantLocaleSettingsFallsBackToDefaultWhenLocaleEndpointFails() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(localeClient.get()).thenReturn(ofAsync(new Response(404, "", "application/json")));
+
+    ZoneId actualResult = new SettingsRepository(clients)
+      .lookupTimeZoneSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+
+    assertEquals(ZoneOffset.UTC, actualResult);
+    verify(localeClient).get();
+  }
+
+  @Test
+  @SneakyThrows
+  void fetchTimezoneFromLocaleEndpoint() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+
+    JsonObject mockLocaleResponse = new JsonObject()
+      .put("locale", "en-US")
+      .put("timezone", "America/New_York")
+      .put("currency", "USD");
+
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(localeClient.get())
+      .thenReturn(ofAsync(new Response(200, mockLocaleResponse.encode(), "application/json")));
+
+    ZoneId actualResult = new SettingsRepository(clients)
+      .lookupTimeZoneSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+
+    assertEquals(ZoneId.of("America/New_York"), actualResult);
+    verify(localeClient).get();
+  }
+
+  @Test
+  @SneakyThrows
+  void fetchTimezoneFromLocaleEndpointWithNumberingSystem() {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient localeClient = mock(CollectionResourceClient.class);
+
+    JsonObject mockLocaleResponse = new JsonObject()
+      .put("locale", "ar-SA")
+      .put("timezone", "Europe/Berlin")
+      .put("currency", "SAR")
+      .put("numberingSystem", "arab");
+
+    when(clients.localeClient()).thenReturn(localeClient);
+    when(localeClient.get())
+      .thenReturn(ofAsync(new Response(200, mockLocaleResponse.encode(), "application/json")));
+
+    ZoneId actualResult = new SettingsRepository(clients)
+      .lookupTimeZoneSettings()
+      .get(30, TimeUnit.SECONDS)
+      .value();
+
+    assertEquals(ZoneId.of("Europe/Berlin"), actualResult);
+    verify(localeClient).get();
   }
 
   private JsonObject createCheckoutLockJsonResponse(boolean checkoutFeatureFlag) {

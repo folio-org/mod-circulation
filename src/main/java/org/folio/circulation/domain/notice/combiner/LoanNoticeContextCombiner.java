@@ -1,34 +1,45 @@
 package org.folio.circulation.domain.notice.combiner;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import static java.util.stream.Collectors.collectingAndThen;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.createUserContext;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.folio.circulation.domain.mapper.UserMapper;
 import org.folio.circulation.domain.notice.PatronNoticeEvent;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 
 import io.vertx.core.json.JsonObject;
 
 public class LoanNoticeContextCombiner implements NoticeContextCombiner {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   @Override
   public JsonObject buildCombinedNoticeContext(Collection<PatronNoticeEvent> events) {
+    log.info("buildCombinedNoticeContext:: building combined notice context for {} events",
+      events.size());
+
     return events.stream()
       .map(PatronNoticeEvent::getNoticeContext)
       .filter(Objects::nonNull)
       .collect(collectingAndThen(
         Collectors.toList(),
         contexts -> new JsonObject()
-          .put("user", createUserContext(events.iterator().next().getUser()).asJson())
+          .put("user", UserMapper.createUserContext(events.iterator().next().getUser()))
           .put("loans", contexts)
       ));
   }
 
   @Override
   public NoticeLogContext buildCombinedNoticeLogContext(Collection<PatronNoticeEvent> events) {
+    log.info("buildCombinedNoticeLogContext:: building combined log context for {} events",
+      events.size());
     return events.stream()
       .map(PatronNoticeEvent::getNoticeLogContext)
       .filter(Objects::nonNull)

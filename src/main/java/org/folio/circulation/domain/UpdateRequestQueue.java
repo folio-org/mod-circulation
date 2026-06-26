@@ -12,16 +12,16 @@ import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
@@ -35,22 +35,23 @@ public class UpdateRequestQueue {
   private final RequestQueueRepository requestQueueRepository;
   private final RequestRepository requestRepository;
   private final ServicePointRepository servicePointRepository;
-  private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
   private final RequestQueueService requestQueueService;
   private final CalendarRepository calendarRepository;
+  private static final String NOT_DEFINED_INTERVAL = "";
 
   public UpdateRequestQueue(
     RequestQueueRepository requestQueueRepository,
     RequestRepository requestRepository,
     ServicePointRepository servicePointRepository,
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     RequestQueueService requestQueueService,
     CalendarRepository calendarRepository) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
     this.servicePointRepository = servicePointRepository;
-    this.configurationRepository = configurationRepository;
+    this.settingsRepository = settingsRepository;
     this.requestQueueService = requestQueueService;
     this.calendarRepository = calendarRepository;
   }
@@ -60,7 +61,7 @@ public class UpdateRequestQueue {
     RequestQueueRepository requestQueueRepository) {
 
     return new UpdateRequestQueue(requestQueueRepository,
-      requestRepository, new ServicePointRepository(clients), new ConfigurationRepository(clients),
+      requestRepository, new ServicePointRepository(clients), new SettingsRepository(clients),
       RequestQueueService.using(clients), new CalendarRepository(clients));
   }
 
@@ -161,14 +162,15 @@ public class UpdateRequestQueue {
       String pickupServicePointId = request.getPickupServicePointId();
 
       return servicePointRepository.getServicePointById(pickupServicePointId)
-        .thenCombineAsync(configurationRepository.findTimeZoneConfiguration(),
+        .thenCombineAsync(settingsRepository.lookupTimeZoneSettings(),
           Result.combined((servicePoint, tenantTimeZone) ->
             populateHoldShelfExpirationDate(
               request.withPickupServicePoint(servicePoint),
               tenantTimeZone
-            ).map(calculatedRequest-> setHoldShelfExpirationDateWithExpirationDateManagement(tenantTimeZone, calculatedRequest,
-              requestQueue, originalRequest)))
-        );
+            ).map(calculatedRequest -> new RequestWithTimeZone(calculatedRequest, tenantTimeZone))))
+        .thenCompose(r -> r.after(requestWithTimeZone ->
+          setHoldShelfExpirationDateWithExpirationDateManagement(
+            requestWithTimeZone.tenantTimeZone, requestWithTimeZone.request, requestQueue, originalRequest)));
     } else {
       Request updatedRequest = Request.from(request.asJson());
       requestQueue.update(originalRequest, updatedRequest);
@@ -178,14 +180,22 @@ public class UpdateRequestQueue {
     }
   }
 
-  private RequestQueue setHoldShelfExpirationDateWithExpirationDateManagement(
+  private CompletableFuture<Result<RequestQueue>> setHoldShelfExpirationDateWithExpirationDateManagement(
     ZoneId tenantTimeZone, Request calculatedRequest, RequestQueue requestQueue,
     Request originalRequest) {
 
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
       .getHoldShelfClosedLibraryDateManagement();
-    String intervalId = calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod()
-      .getIntervalId().toUpperCase();
+
+    String intervalId = Optional.of(calculatedRequest)
+      .map(Request::getPickupServicePoint)
+      .map(ServicePoint::getHoldShelfExpiryPeriod)
+      .map(TimePeriod::getIntervalId)
+      .map(String::toUpperCase)
+      .orElse(NOT_DEFINED_INTERVAL);
+
+    log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: interval: {}", intervalId);
+
     log.info("setHoldShelfExpirationDateWithExpirationDateManagement expDate before:{}",
       calculatedRequest.getHoldShelfExpirationDate());
     // Old data where strategy is not set so default value but TimePeriod has MINUTES / HOURS
@@ -197,17 +207,16 @@ public class UpdateRequestQueue {
 
     ClosedLibraryStrategy closedLibraryStrategy = determineClosedLibraryStrategyForHoldShelfExpirationDate
       (finalExpirationDateManagement, calculatedRequest.getHoldShelfExpirationDate(), tenantTimeZone, calculatedRequest.getPickupServicePoint().getHoldShelfExpiryPeriod());
-    calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
+    return calendarRepository.lookupOpeningDays(calculatedRequest.getHoldShelfExpirationDate().withZoneSameInstant(tenantTimeZone).toLocalDate(), calculatedRequest.getPickupServicePoint().getId())
       .thenApply(adjacentOpeningDaysResult -> closedLibraryStrategy.calculateDueDate(calculatedRequest.getHoldShelfExpirationDate(), adjacentOpeningDaysResult.value()))
-      .thenApply(calculatedDate -> {
-        log.info("calculatedDate after :{}",calculatedDate.value());
-        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate.value());
-        requestQueue.update(originalRequest,calculatedRequest);
+      .thenCompose(calculatedDateResult -> calculatedDateResult.after(calculatedDate -> {
+        log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: calculatedDate after: {}", calculatedDate);
+        calculatedRequest.changeHoldShelfExpirationDate(calculatedDate);
+        requestQueue.update(originalRequest, calculatedRequest);
 
         return requestRepository.update(calculatedRequest)
           .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
-      });
-    return requestQueue;
+      }));
   }
 
   private boolean isShortTerm(String intervalId) {
@@ -384,7 +393,7 @@ public class UpdateRequestQueue {
     List<Request> requests = queue.getRequests()
       .stream()
       .sorted(comparingInt(Request::getPosition))
-      .collect(Collectors.toList());
+      .toList();
 
     return new RequestQueue(requests);
   }
@@ -403,4 +412,9 @@ public class UpdateRequestQueue {
 
     return holdShelfExpirationDate;
   }
+
+  /**
+   * Simple record to hold a {@link Request} and its associated tenant {@link ZoneId}.
+   */
+  private record RequestWithTimeZone(Request request, ZoneId tenantTimeZone) {}
 }

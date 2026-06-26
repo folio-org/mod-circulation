@@ -251,7 +251,7 @@ class InstanceRequestItemsComparerTests {
 
     if (withServicePointId != null) {
       location = new Location(null, null, null, null,
-        List.of(withServicePointId), null,
+        List.of(withServicePointId), null, false,
         Institution.unknown(null), Campus.unknown(null),
         Library.unknown(null), ServicePoint.unknown(null));
     }

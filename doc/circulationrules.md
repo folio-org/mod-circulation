@@ -35,7 +35,7 @@ Example circulation rules file:
 
 How does this short example work?
 
-The `fallback-policy` line defines a default policy for each of the 4 policy types.
+The `fallback-policy` line defines a default policy for each of the five policy types.
 An `l` indicates a loan policy, `r` a request policy, `n` a notice policy, `o` 
 an overdue fine policy' and `i` a lost item fee policy.
 
@@ -328,7 +328,7 @@ The line with loanpolicy-d has higher priority because it is last (it has a high
 
 ## Fallback policy
 
-There always must be a line with a set of three fallback policies, one for
+There always must be a line with a set of five fallback policies, one for
 each type like `fallback-policy: l no-circulation r no-request n no-notice o overdue i lost-item`.
 It must be after the priority line and before the first rule.
 

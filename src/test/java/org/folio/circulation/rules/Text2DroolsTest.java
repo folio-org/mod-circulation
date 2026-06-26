@@ -688,6 +688,7 @@ class Text2DroolsTest {
 
   private Location createLocation(String institutionId, String libraryId, String campusId) {
     return new Location(null, null, null, null, emptyList(), null,
+      false,
       Institution.unknown(institutionId), Campus.unknown(campusId), Library.unknown(libraryId),
       ServicePoint.unknown());
   }

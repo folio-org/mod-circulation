@@ -17,12 +17,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.session.ExpiredSession;
 import org.folio.circulation.domain.notice.session.PatronActionSessionService;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronExpiredSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.server.NoContentResponse;
@@ -55,8 +55,8 @@ public class ExpiredSessionProcessingResource extends Resource {
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
 
-    final ConfigurationRepository configurationRepository
-      = new ConfigurationRepository(clients);
+    final CirculationSettingsService circulationSettingsService
+      = new CirculationSettingsService(clients);
 
     final var userRepository = new UserRepository(clients);
     final var itemRepository = new ItemRepository(clients);
@@ -68,7 +68,7 @@ public class ExpiredSessionProcessingResource extends Resource {
     final PatronExpiredSessionRepository patronExpiredSessionRepository
       = PatronExpiredSessionRepository.using(clients);
 
-    safelyInitialise(configurationRepository::lookupSessionTimeout)
+    safelyInitialise(circulationSettingsService::getCheckOutSessionTimeout)
       .thenCompose(r -> r.after(this::defineExpiredTime))
       .thenCompose(r -> r.after(inactivityTime ->
         patronExpiredSessionRepository.findPatronExpiredSessions(ALL, inactivityTime)))

@@ -1,0 +1,66 @@
+#%RAML 1.0
+title: Circulation
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: http://localhost:9130
+
+documentation:
+  - title: Request Anonymization API
+    content: <b>Request Anonymization API</b>
+
+types:
+  anonymize-request-response: !include schema/anonymize-single-request-response.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  validate: !include raml-util/traits/validation.raml
+
+/request-anonymization:
+  /{requestId}:
+    uriParameters:
+      requestId:
+        type: string
+        description: Request UUID to anonymize
+        example: 9fd9b9d8-1b1a-4a7a-9f54-5e7c5f5e0b2e
+        pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+    post:
+      is: [ validate ]
+      description: Anonymize a single closed request by its requestId.
+      responses:
+        200:
+          description: The request has been successfully anonymized.
+          body:
+            application/json:
+              type: anonymize-request-response
+              example:
+                requestId: 9fd9b9d8-1b1a-4a7a-9f54-5e7c5f5e0b2e
+                anonymized: true
+
+        404:
+          description: Request with the given requestId was not found.
+          body:
+            application/json:
+              type: errors
+              example:
+                errors:
+                  - message: Request not found
+
+        422:
+          description: Validation error — request is not closed or another rule prevents anonymization.
+          body:
+            application/json:
+              type: errors
+              example:
+                errors:
+                  - message: requestNotClosed
+
+        500:
+          description: Internal server error.
+          body:
+            application/json:
+              type: errors
+              example:
+                errors:
+                  - message: Internal server error
+
+

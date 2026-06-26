@@ -238,7 +238,7 @@ public class ValidationErrorMatchers {
 
   public static Matcher<JsonObject> isInsufficientPermissionsToOverridePatronBlockError() {
     return isInsufficientPermissionsError("patronBlock",
-      List.of("circulation.override-patron-block"));
+      List.of("circulation.override-patron-block.post"));
   }
 
 }

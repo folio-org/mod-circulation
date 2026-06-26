@@ -145,6 +145,11 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/check-out-by-barcode");
   }
 
+  public static URL checkOutByBarcodeDryRunUrl() {
+    return circulationModuleUrl("/circulation/check-out-by-barcode-dry-run");
+  }
+
+
   public static URL checkInByBarcodeUrl() {
     return circulationModuleUrl("/circulation/check-in-by-barcode");
   }
@@ -155,6 +160,14 @@ public class InterfaceUrls {
 
   public static URL renewByIdUrl() {
     return circulationModuleUrl("/circulation/renew-by-id");
+  }
+
+  public static URL holdForUseAtLocationUrl() {
+    return circulationModuleUrl("/circulation/hold-by-barcode-for-use-at-location");
+  }
+
+  public static URL pickupForUseAtLocationUrl() {
+    return circulationModuleUrl("/circulation/pickup-by-barcode-for-use-at-location");
   }
 
   public static URL loansUrl() {
@@ -172,6 +185,11 @@ public class InterfaceUrls {
   public static URL circulationAnonymizeLoansInTenantURL() {
     return circulationModuleUrl("/circulation/scheduled-anonymize-processing/");
   }
+
+  public static URL circulationAnonymizeRequestInTenantURL() {
+    return circulationModuleUrl("/circulation/scheduled-request-anonymize-processing/");
+  }
+
 
   public static URL declareLoanItemLostURL(String loanId) {
     return circulationModuleUrl(String.format("/circulation/loans/%s/declare-item-lost", loanId));
@@ -332,6 +350,29 @@ public class InterfaceUrls {
 
   public static URL settingsStorageUrl() {
     return APITestContext.viaOkapiModuleUrl("/settings/entries");
+  }
+
+  public static URL localeUrl() {
+    return APITestContext.viaOkapiModuleUrl("/locale");
+  }
+
+  public static URL searchUrl(String subPath) {
+    return APITestContext.viaOkapiModuleUrl("/search/instances" + subPath);
+  }
+
+  public static URL itemsByInstanceUrl(String subPath) {
+    return circulationModuleUrl("/circulation/items-by-instance?" + subPath);
+  }
+  public static URL circulationSettingsUrl(String subPath) {
+    return circulationModuleUrl("/circulation/settings" + subPath);
+  }
+
+  public static URL printEventsUrl(String subPath) {
+    return circulationModuleUrl("/circulation" + subPath);
+  }
+
+  public static URL circulationRequestAnonymizationUrl(String requestId) {
+    return circulationModuleUrl("/request-anonymization/" + requestId);
   }
 
 }

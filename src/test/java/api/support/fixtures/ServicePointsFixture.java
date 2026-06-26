@@ -2,6 +2,7 @@ package api.support.fixtures;
 
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk1;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk10;
+import static api.support.fixtures.ServicePointExamples.basedUponCircDesk11;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk2;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk3;
 import static api.support.fixtures.ServicePointExamples.basedUponCircDesk4;
@@ -81,6 +82,11 @@ public class ServicePointsFixture {
     return create(basedUponCircDesk10());
   }
 
+  public IndividualResource cd11() {
+
+    return create(basedUponCircDesk11());
+  }
+
   public IndividualResource create(ServicePointBuilder builder) {
 
     return servicePointRecordCreator.createIfAbsent(builder);
@@ -88,5 +94,9 @@ public class ServicePointsFixture {
 
   public Collection<IndividualResource> getAllServicePoints() {
     return servicePointRecordCreator.getIdentityMap().values();
+  }
+
+  public void update(String servicePointCode, ServicePointBuilder builder) {
+    servicePointRecordCreator.update(servicePointCode, builder.create());
   }
 }

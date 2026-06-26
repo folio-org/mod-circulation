@@ -1,10 +1,5 @@
 package api;
 
-import io.restassured.RestAssured;
-
-import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
-import static org.testcontainers.Testcontainers.exposeHostPorts;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
@@ -12,13 +7,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.testcontainers.Testcontainers.exposeHostPorts;
 
-import com.github.tomakehurst.wiremock.client.MappingBuilder;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 import java.nio.file.Path;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -29,6 +23,13 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.stubbing.StubMapping;
+
+import io.restassured.RestAssured;
 
 /**
  * Integration test executed in the "mvn verify" phase.
@@ -55,7 +56,7 @@ class DroolsIT {
   @RegisterExtension
   private static WireMockExtension OKAPI = WireMockExtension.newInstance()
   .options(WireMockConfiguration.wireMockConfig().dynamicPort()
-      .extensions(new ResponseTemplateTransformer(true))).build();
+      .globalTemplating(true)).build();
 
   @Container
   private static final GenericContainer<?> MOD_CIRCULATION =
@@ -99,7 +100,7 @@ class DroolsIT {
     stub("/holdings-storage/holdings/.*", "{'instanceId':'a02b6833-1fd6-441a-bfda-5249d2d56f66'}");
     stub("/instance-storage/instances/.*", "{}");
     stub("/loan-storage/loans\\?.*", "{'loans':[]}");
-    stub("/configurations/entries\\?.*", "{'configs':[]}");
+    stub("/circulation-settings-storage/.*", "{'circulationSettings':[]}");
     stub("/request-storage/requests\\?.*", "{'requests':[]}");
     stub("/locations/.*", "{'id':'24be82a3-f7f0-490d-9598-473faa0f47ac', "
         + "'primaryServicePoint':'54ca624a-d37f-4e16-b274-7284ce2ecbd8'}");
@@ -125,6 +126,7 @@ class DroolsIT {
     stubFor(post("/pubsub/publish").willReturn(noContent()));
     stubFor(post("/patron-action-session-storage/patron-action-sessions")
         .willReturn(aResponse().withStatus(201).withBody("{{{request.body}}}")));
+    stub("/settings/entries.*", "{}");
     given().
       header("X-Okapi-Url", OKAPI_URL).
       header("X-Okapi-Tenant", "diku").

@@ -104,6 +104,96 @@ class RequestRepresentationTests {
       callNumberComponents.getString("suffix"), is(CALL_NUMBER_SUFFIX_VALUE));
   }
 
+  @Test
+  void testExtendedRepresentationForAnonymization() {
+    RequestRepresentation requestRepresentation = new RequestRepresentation();
+    Request request = createMockRequest();
+    JsonObject extendedRepresentation = requestRepresentation.extendedRepresentation(request);
+    JsonObject json = request.asJson().put("requesterId", (String) null);
+
+    request = Request.from(json)
+      .withInstance(request.getInstance())
+      .withPickupServicePoint(request.getPickupServicePoint())
+      .withItem(request.getItem());
+
+    JsonObject out = requestRepresentation.extendedRepresentation(request);
+
+    assertThat("Anonymized: requester must be omitted",
+      out.containsKey("requester"), is(false));
+
+    assertThat("Anonymized: deliveryAddress must be omitted",
+      out.containsKey("deliveryAddress"), is(false));
+
+    JsonObject instance = out.getJsonObject(INSTANCE);
+
+    assertTrue(instance.containsKey(EDITIONS));
+    assertTrue(instance.containsKey(PUBLICATION));
+    assertTrue(instance.containsKey(IDENTIFIERS));
+    assertEquals("First American Edition", instance.getJsonArray(EDITIONS).getString(0));
+
+    JsonObject publication = instance.getJsonArray(PUBLICATION).getJsonObject(0);
+    assertEquals("fake publisher", publication.getString("publisher"));
+    assertEquals("fake place", publication.getString("place"));
+    assertEquals("2016", publication.getString("dateOfPublication"));
+
+    JsonObject identifier = instance.getJsonArray(IDENTIFIERS).getJsonObject(0);
+    assertEquals(IDENTIFIER_VALUE, identifier.getString("value"));
+    assertEquals(IDENTIFIER_ID.toString(), identifier.getString("identifierTypeId"));
+  }
+
+  @Test
+  void nonAnonymizedWithRequesterExpandedIncludesRequesterAndDeliveryAddress() {
+    var rep = new RequestRepresentation();
+    var request = createMockRequest();
+
+    JsonObject json = request.asJson();
+    assertThat("requesterId should be present for non-anonymized",
+      json.containsKey("requesterId"), is(true));
+
+    JsonObject out = rep.extendedRepresentation(request);
+
+    assertThat("Non-anonymized: requester should be present",
+      out.containsKey("requester"), is(true));
+
+    assertThat("Non-anonymized: deliveryAddress should be present",
+      out.containsKey("deliveryAddress"), is(true));
+  }
+
+  @Test
+  void proxyPresentAddsProxySummary() {
+    var rep = new RequestRepresentation();
+    var request = createMockRequest();
+
+    var proxy = new User(new api.support.builders.UserBuilder()
+      .withName("Proxy", "Person").withBarcode("P-001").create());
+    request = request.withProxy(proxy);
+
+    JsonObject out = rep.extendedRepresentation(request);
+
+    assertThat("Proxy summary should be present when proxy exists",
+      out.containsKey("proxy"), is(true));
+    var pj = out.getJsonObject("proxy");
+    assertThat("Proxy firstName", pj.getString("firstName"), is("Person"));
+    assertThat("Proxy lastName",  pj.getString("lastName"),  is("Proxy"));
+  }
+
+  @Test
+  void proxyMissingRemovesStaleProxyKeyIfPresentInBaseJson() {
+    var rep = new RequestRepresentation();
+    var request = createMockRequest();
+
+    JsonObject base = request.asJson().put("proxy", new JsonObject().put("firstName", "Stale"));
+    request = Request.from(base)
+      .withInstance(request.getInstance())
+      .withPickupServicePoint(request.getPickupServicePoint())
+      .withItem(request.getItem());
+
+    JsonObject out = rep.extendedRepresentation(request);
+
+    assertThat("Stale proxy key should be removed when no proxy is present",
+      out.containsKey("proxy"), is(false));
+  }
+
   private Request createMockRequest() {
     final UserBuilder userBuilder = new UserBuilder()
       .withName("Test", "User")
@@ -127,11 +217,13 @@ class RequestRepresentationTests {
       = new ServicePoint(SERVICE_POINT_ID.toString(), SERVICE_POINT_NAME_VALUE, "cd1", true,
       "Circulation Desk", null, null, null, null);
 
-    Instance instance = new Instance(UUID.randomUUID().toString(), null,
+    Instance instance = new Instance(UUID.randomUUID().toString(), "1234", null,
       List.of(new Identifier(IDENTIFIER_ID.toString(), IDENTIFIER_VALUE)),
       emptyList(),
       List.of(new Publication("fake publisher", "fake place", "2016", null)),
-      List.of("First American Edition"));
+      List.of("First American Edition"),
+      List.of("Hardback"),
+      emptyList());
 
     JsonObject itemJson = new JsonObject()
       .put("effectiveCallNumberComponents", new JsonObject()
@@ -162,4 +254,5 @@ class RequestRepresentationTests {
       .withPickupServicePoint(servicePoint)
       .withItem(item);
   }
+
 }

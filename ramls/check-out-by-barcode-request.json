@@ -29,6 +29,11 @@
       "description": "Blocks to override",
       "type": "object",
       "$ref": "override-blocks.json"
+    },
+    "forceLoanPolicyId": {
+      "description": "Force loan policy",
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     }
   },
   "required": [

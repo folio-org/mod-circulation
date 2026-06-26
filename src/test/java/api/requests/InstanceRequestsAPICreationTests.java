@@ -1093,6 +1093,39 @@ class InstanceRequestsAPICreationTests extends APITests {
       is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
   }
 
+  @Test
+  void shouldReturn422StatusIfNoAvailableItemsAndRequesterAlreadyHasOpenRequestForThisInstance() {
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    ZonedDateTime instanceRequestDate = ZonedDateTime.of(2024, 6, 7, 10, 22, 54, 0, UTC);
+    ZonedDateTime instanceRequestDateRequestExpirationDate = instanceRequestDate.plusDays(30);
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+    IndividualResource locationsResource = locationsFixture.mainFloor();
+
+    itemsFixture.basedUponDunkirkWithCustomHoldingAndLocation(holdings.getId(),
+      locationsResource.getId());
+    reconfigureTlrFeature(TlrFeatureStatus.ENABLED, true, null, null, null);
+
+    IndividualResource instanceRequester = usersFixture.charlotte();
+    JsonObject requestBody = createInstanceRequestObject(instance.getId(),
+      instanceRequester.getId(), pickupServicePointId, instanceRequestDate,
+      instanceRequestDateRequestExpirationDate);
+
+    Response postResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    assertEquals(201, postResponse.getStatusCode());
+
+    Response secondPostResponse = requestsFixture.attemptToPlaceForInstance(requestBody);
+    assertEquals(422, secondPostResponse.getStatusCode());
+    assertThat(secondPostResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot create page TLR for this instance ID - no pageable available items found"),
+      hasParameter("instanceId", instance.getId().toString()))));
+    assertThat(secondPostResponse.getJson(), hasErrorWith(allOf(
+      hasMessage("This requester already has an open request for this instance"),
+      hasParameter("requesterId", instanceRequester.getId().toString()),
+      hasParameter("instanceId", instance.getId().toString()))));
+  }
+
   private void validateInstanceRequestResponse(JsonObject representation,
     UUID pickupServicePointId, UUID instanceId, UUID itemId,
     RequestType expectedRequestType) {

@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledDigitalReminderHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -37,7 +37,7 @@ public class ScheduledDigitalRemindersProcessingResource extends ScheduledNotice
   }
 
   @Override
-  protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(ConfigurationRepository configurationRepository, ScheduledNoticesRepository scheduledNoticesRepository, PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
+  protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(SettingsRepository settingsRepository, ScheduledNoticesRepository scheduledNoticesRepository, PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
     return CqlQuery.lessThanOrEqualTo("nextRunTime", formatDateTime(ClockUtil.getZonedDateTime().withZoneSameInstant(ZoneOffset.UTC)))
       .combine(exactMatch("noticeConfig.sendInRealTime", "true"), CqlQuery::and)
       .combine(exactMatch("triggeringEvent", DUE_DATE_WITH_REMINDER_FEE.getRepresentation()), CqlQuery::and)

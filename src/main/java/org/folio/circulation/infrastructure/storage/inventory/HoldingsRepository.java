@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.fetching.MultipleCqlIndexValuesCriteria.byIndex;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithCqlQuery;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
@@ -19,6 +20,7 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class HoldingsRepository {
+  private static final String HOLDINGS_RECORDS = "holdingsRecords";
   private final CollectionResourceClient holdingsClient;
 
   public HoldingsRepository(CollectionResourceClient holdingsClient) {
@@ -42,9 +44,16 @@ public class HoldingsRepository {
     final var mapper = new HoldingsMapper();
 
     final var holdingsRecordFetcher = findWithCqlQuery(
-      holdingsClient, "holdingsRecords", mapper::toDomain);
+      holdingsClient, HOLDINGS_RECORDS, mapper::toDomain);
 
     return holdingsRecordFetcher.findByQuery(exactMatch("instanceId", instanceId));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByInstances(
+    Collection<String> instanceIds) {
+
+    return findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_RECORDS, new HoldingsMapper()::toDomain)
+      .find(byIndex("instanceId", instanceIds));
   }
 
   CompletableFuture<Result<MultipleRecords<Holdings>>> fetchByIds(
@@ -52,7 +61,7 @@ public class HoldingsRepository {
 
     final var mapper = new HoldingsMapper();
 
-    return findWithMultipleCqlIndexValues(holdingsClient, "holdingsRecords",
+    return findWithMultipleCqlIndexValues(holdingsClient, HOLDINGS_RECORDS,
         mapper::toDomain)
       .findByIds(holdingsRecordIds);
   }

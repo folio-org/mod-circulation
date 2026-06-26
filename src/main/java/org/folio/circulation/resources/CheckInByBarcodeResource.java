@@ -8,6 +8,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -15,13 +16,14 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.representations.CheckInByBarcodeRequest;
 import org.folio.circulation.domain.representations.CheckInByBarcodeResponse;
 import org.folio.circulation.domain.validation.CheckInValidators;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -59,9 +61,9 @@ public class CheckInByBarcodeResource extends Resource {
       itemRepository, userRepository, loanRepository);
 
     final Result<CheckInByBarcodeRequest> checkInRequestResult
-      = CheckInByBarcodeRequest.from(routingContext.getBodyAsJson());
+      = CheckInByBarcodeRequest.from(routingContext.body().asJsonObject());
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients,
@@ -76,8 +78,8 @@ public class CheckInByBarcodeResource extends Resource {
         PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final RequestNoticeSender requestNoticeSender = RequestNoticeSender.using(clients);
-
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final SettingsRepository settingsRepository = new SettingsRepository(clients);
+    final CirculationSettingsService circulationSettingsService = new CirculationSettingsService(clients);
 
     refuseWhenLoggedInUserNotPresent(context)
       .next(notUsed -> checkInRequestResult)
@@ -87,9 +89,9 @@ public class CheckInByBarcodeResource extends Resource {
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         CheckInContext::withTlrSettings))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         CheckInContext::withTimeZone))
       .thenComposeAsync(findItemResult -> findItemResult.combineAfter(
         processAdapter::getRequestQueue, CheckInContext::withRequestQueue))
@@ -102,9 +104,13 @@ public class CheckInByBarcodeResource extends Resource {
         processAdapter::findSingleOpenLoan, CheckInContext::withLoan))
       .thenComposeAsync(findLoanResult -> findLoanResult.combineAfter(
         processAdapter::checkInLoan, CheckInContext::withLoan))
+      .thenApply(r -> r.map(processAdapter::markReturnedIfForUseAtLocation))
       .thenComposeAsync(checkInLoan -> checkInLoan.combineAfter(
         processAdapter::updateRequestQueue, CheckInContext::withRequestQueue))
         .thenComposeAsync(r -> r.after(processAdapter::findFulfillableRequest))
+      .thenComposeAsync(checkInContextResult ->
+        checkInContextResult.combineAfter(processAdapter::findFloatingDestination,
+          CheckInContext::withItemAndUpdatedLoan))
       .thenComposeAsync(updateRequestQueueResult -> updateRequestQueueResult.combineAfter(
         processAdapter::updateItem, CheckInContext::withItemAndUpdatedLoan))
       .thenApply(handleItemStatus -> handleItemStatus.next(
@@ -144,4 +150,8 @@ public class CheckInByBarcodeResource extends Resource {
 
     return singleValidationError(message, ITEM_BARCODE, item.getBarcode());
   }
+  public static boolean isFloatingEnabled() {
+    return Environment.getEnableFloatingCollections();
+  }
+
 }

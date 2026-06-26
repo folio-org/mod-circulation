@@ -7,8 +7,10 @@ import static org.folio.circulation.domain.LoanAction.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.LoanAction.CLOSED_LOAN;
 import static org.folio.circulation.domain.LoanAction.DECLARED_LOST;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
+import static org.folio.circulation.domain.LoanAction.HELD_FOR_USE_AT_LOCATION;
 import static org.folio.circulation.domain.LoanAction.ITEM_AGED_TO_LOST;
 import static org.folio.circulation.domain.LoanAction.MISSING;
+import static org.folio.circulation.domain.LoanAction.PICKED_UP_FOR_USE_AT_LOCATION;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
 import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
@@ -39,6 +41,8 @@ public class LogContextActionResolver {
     loanLogActions.put(DUE_DATE_CHANGED.getValue(), "Changed due date");
     loanLogActions.put(PATRON_INFO_ADDED.getValue(), "Patron info added");
     loanLogActions.put(STAFF_INFO_ADDED.getValue(), "Staff info added");
+    loanLogActions.put(HELD_FOR_USE_AT_LOCATION.getValue(),"Held for use at location");
+    loanLogActions.put(PICKED_UP_FOR_USE_AT_LOCATION.getValue(), "Picked up for use at location");
   }
 
   public static String resolveAction(String action) {

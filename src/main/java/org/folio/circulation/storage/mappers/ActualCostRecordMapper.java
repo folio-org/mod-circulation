@@ -9,8 +9,11 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectPr
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ActualCostRecord;
 import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordFeeFine;
 import org.folio.circulation.domain.ActualCostRecord.ActualCostRecordIdentifier;
@@ -25,11 +28,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class ActualCostRecordMapper {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private ActualCostRecordMapper() {
   }
 
   public static JsonObject toJson(ActualCostRecord actualCostRecord) {
+    log.debug("toJson:: parameters actualCostRecordId: {}", actualCostRecord::getId);
     JsonObject json = new JsonObject();
     write(json, "id", actualCostRecord.getId());
     write(json, "lossType", actualCostRecord.getLossType().getValue());
@@ -75,6 +80,7 @@ public class ActualCostRecordMapper {
       write(itemJson, "volume", item.getVolume());
       write(itemJson, "enumeration", item.getEnumeration());
       write(itemJson, "chronology", item.getChronology());
+      write(itemJson, "displaySummary", item.getDisplaySummary());
       write(itemJson, "copyNumber", item.getCopyNumber());
       write(itemJson, "effectiveCallNumberComponents",
         createCallNumberComponents(item.getEffectiveCallNumberComponents()));
@@ -116,6 +122,7 @@ public class ActualCostRecordMapper {
       return null;
     }
 
+    log.debug("toDomain:: parameters actualCostRecordId: {}", () -> getProperty(representation, "id"));
     JsonObject user = getObjectProperty(representation, "user");
     JsonObject loan = getObjectProperty(representation, "loan");
     JsonObject item = getObjectProperty(representation, "item");
@@ -152,6 +159,7 @@ public class ActualCostRecordMapper {
         .withVolume(getProperty(item, "volume"))
         .withEnumeration(getProperty(item, "enumeration"))
         .withChronology(getProperty(item, "chronology"))
+        .withDisplaySummary(getProperty(item, "displaySummary"))
         .withCopyNumber(getProperty(item, "copyNumber"))
         .withEffectiveCallNumberComponents(CallNumberComponents.fromItemJson(item)),
       new ActualCostRecordInstance()

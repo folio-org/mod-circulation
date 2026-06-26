@@ -76,6 +76,10 @@ public class WebContext {
   }
 
   public OkapiHttpClient createHttpClient(HttpClient httpClient) {
+    return createHttpClient(httpClient, getTenantId());
+  }
+
+  public OkapiHttpClient createHttpClient(HttpClient httpClient, String tenantId) {
     URL okapiUrl;
 
     try {
@@ -86,7 +90,7 @@ public class WebContext {
     }
 
     return VertxWebClientOkapiHttpClient.createClientUsing(httpClient,
-      okapiUrl, getTenantId(), getOkapiToken(), getUserId(),
+      okapiUrl, tenantId, getOkapiToken(), getUserId(),
       getRequestId());
   }
 
@@ -100,6 +104,6 @@ public class WebContext {
 
   public Map<String, String> getHeaders() {
     return routingContext.request().headers().entries().stream()
-      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue));
+      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue, (a, b) -> b));
   }
 }

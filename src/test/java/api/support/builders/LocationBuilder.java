@@ -22,9 +22,10 @@ public class LocationBuilder extends JsonBuilder implements Builder {
   private final UUID primaryServicePointId;
   private final Set<UUID> otherServicePointIds;
   private final String effectiveLocationPrimaryServicePointName;
+  private final Boolean isFloatingCollection;
 
   public LocationBuilder() {
-    this(null, null, null, null, null, null, null, new HashSet<>(), null);
+    this(null, null, null, null, null, null, null, new HashSet<>(), null, false);
   }
 
   private LocationBuilder(
@@ -36,7 +37,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     UUID libraryId,
     UUID primaryServicePointId,
     Set<UUID> otherServicePointIds,
-    String effectiveLocationPrimaryServicePointName) {
+    String effectiveLocationPrimaryServicePointName,
+    boolean isFloatingCollection) {
 
     if (otherServicePointIds == null) {
       otherServicePointIds = new HashSet<>();
@@ -51,6 +53,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
     this.primaryServicePointId = primaryServicePointId;
     this.otherServicePointIds = otherServicePointIds;
     this.effectiveLocationPrimaryServicePointName = effectiveLocationPrimaryServicePointName;
+    this.isFloatingCollection = isFloatingCollection;
   }
 
   @Override
@@ -75,6 +78,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       write(representation, "servicePointIds", mappedServicePointIds);
       write(representation, "effectiveLocationPrimaryServicePointName", effectiveLocationPrimaryServicePointName);
     }
+    write(representation, "isFloatingCollection", isFloatingCollection);
 
     return representation;
   }
@@ -89,7 +93,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       this.primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 
   public LocationBuilder withCode(String code) {
@@ -102,7 +107,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       this.primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 
   public LocationBuilder forInstitution(UUID institutionId) {
@@ -115,7 +121,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       this.primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 
   public LocationBuilder forCampus(UUID campusId) {
@@ -128,7 +135,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       this.primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 
   public LocationBuilder forLibrary(UUID libraryId) {
@@ -141,7 +149,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       libraryId,
       this.primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 
   public LocationBuilder withPrimaryServicePoint(UUID primaryServicePointId) {
@@ -154,7 +163,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName)
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection)
       .servedBy(primaryServicePointId);
   }
 
@@ -168,7 +178,8 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       this.primaryServicePointId,
       this.otherServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 
   public LocationBuilder withEffectiveLocationPrimaryServicePointName(String effectiveLocationPrimaryServicePointName) {
@@ -181,8 +192,24 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       primaryServicePointId,
       this.otherServicePointIds,
-      effectiveLocationPrimaryServicePointName)
+      effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection)
       .servedBy(primaryServicePointId);
+  }
+
+  public LocationBuilder isFloatingCollection(boolean isFloatingCollection) {
+    return new LocationBuilder(
+      this.name,
+      this.code,
+      this.discoveryDisplayName,
+      this.institutionId,
+      this.campusId,
+      this.libraryId,
+      primaryServicePointId,
+      this.otherServicePointIds,
+      this.effectiveLocationPrimaryServicePointName,
+      isFloatingCollection
+    );
   }
 
   public LocationBuilder servedBy(UUID servicePointId) {
@@ -207,6 +234,7 @@ public class LocationBuilder extends JsonBuilder implements Builder {
       this.libraryId,
       this.primaryServicePointId,
       newServicePointIds,
-      this.effectiveLocationPrimaryServicePointName);
+      this.effectiveLocationPrimaryServicePointName,
+      this.isFloatingCollection);
   }
 }

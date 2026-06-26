@@ -13,17 +13,21 @@ import lombok.Value;
 @ToString(onlyExplicitlyIncluded = true)
 public class Instance {
   public static Instance unknown() {
-    return new Instance(null, null, emptyList(), emptyList(), emptyList(), emptyList());
+    return new Instance(null, null,null, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList());
   }
 
   @ToString.Include
   String id;
+  @ToString.Include
+  String hrid;
   @ToString.Include
   String title;
   @NonNull Collection<Identifier> identifiers;
   @NonNull Collection<Contributor> contributors;
   @NonNull Collection<Publication> publication;
   @NonNull Collection<String> editions;
+  @NonNull Collection<String> physicalDescriptions;
+  @NonNull Collection<SeriesStatement> series;
 
   public Stream<String> getContributorNames() {
     return contributors.stream()
@@ -36,6 +40,11 @@ public class Instance {
       .findFirst()
       .map(Contributor::getName)
       .orElse(null);
+  }
+
+  public Stream<String> getSeriesStatementValues() {
+    return series.stream()
+      .map(SeriesStatement::getValue);
   }
 
   // TODO: replace this stub with proper implementation

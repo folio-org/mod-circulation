@@ -22,12 +22,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
@@ -57,6 +60,8 @@ import lombok.RequiredArgsConstructor;
 public class FakeStorageModule extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final Set<String> queries = Collections.synchronizedSet(new HashSet<>());
+  private static final AtomicLong fakeStorageDelay = new AtomicLong(0);
+  private static final AtomicReference<String[]> requestDelayedPaths = new AtomicReference<>(new String[0]);
   private final String rootPath;
   private final String collectionPropertyName;
   private final boolean hasCollectionDelete;
@@ -78,6 +83,26 @@ public class FakeStorageModule extends AbstractVerticle {
 
   public static Stream<String> getQueries() {
     return queries.stream();
+  }
+
+  /**
+   * Set artificial delay (in milliseconds) for fake storage operations (PUT by id only).
+   * Used in tests to simulate network/database latency and expose race conditions.
+   *
+   * @param delayMs delay in milliseconds, or 0 to disable delay
+   */
+  public static void setFakeStorageDelay(long delayMs) {
+    fakeStorageDelay.set(delayMs);
+  }
+
+  /**
+   * Sets the list of paths that should be delayed for request storage operations.
+   * Clears the existing delayed paths and adds all provided paths.
+   *
+   * @param delayedPaths the list of paths to delay
+   */
+  public static void setDelayedPaths(List<String> delayedPaths) {
+    requestDelayedPaths.set(delayedPaths.toArray(String[]::new));
   }
 
   FakeStorageModule(
@@ -184,7 +209,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private void batchUpdate(RoutingContext routingContext) {
     WebContext context = new WebContext(routingContext);
-    JsonObject body = routingContext.getBodyAsJson();
+    JsonObject body = routingContext.body().asJsonObject();
 
     if (batchUpdatePreProcessor != null) {
       body = batchUpdatePreProcessor.apply(body);
@@ -256,6 +281,24 @@ public class FakeStorageModule extends AbstractVerticle {
 
     JsonObject body = getJsonFromBody(routingContext);
 
+    if (shouldApplyDelay(rootPath)) {
+      var vertx = routingContext.vertx();
+      var path = routingContext.request().path();
+      var method = routingContext.request().method();
+      log.debug("replace:: Using delay for: '{} {}', delayMs={}", method, path, fakeStorageDelay);
+      vertx.setTimer(fakeStorageDelay.get(), timerId -> vertx.executeBlocking(() -> {
+        log.debug("replace:: Executing delayed action: {} {}", method, path);
+        replaceSingleItem(routingContext, context, id, body);
+        return null;
+      }));
+    } else {
+      replaceSingleItem(routingContext, context, id, body);
+    }
+  }
+
+  private void replaceSingleItem(RoutingContext routingContext,
+    WebContext context, String id, JsonObject body) {
+
     final Result<Void> replaceResult = replaceSingleItem(context, id, body);
     if (replaceResult.succeeded()) {
       noContent().writeTo(routingContext.response());
@@ -320,7 +363,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Result<UUID> idParsingResult = getIdParameter(routingContext);
 
-    if(idParsingResult.failed()) {
+    if (idParsingResult.failed()) {
       idParsingResult.cause().writeTo(routingContext.response());
       return;
     }
@@ -329,7 +372,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     final String id = idParsingResult.value().toString();
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       final JsonObject resourceRepresentation = resourcesForTenant.get(id);
 
       log.debug("Found {} resource: {}", recordTypeName,
@@ -378,20 +421,27 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter()
-      .execute(resourcesForTenant.values(), query);
+    List<JsonObject> filteredItems = getFakeCQLToJSONInterpreter()
+      .execute(resourcesForTenant.values(), query, context);
 
     List<JsonObject> pagedItems = filteredItems.stream()
       .skip(offset)
       .limit(limit)
       .collect(Collectors.toList());
 
-    JsonObject result = new JsonObject();
+    JsonObject result;
 
-    result.put(collectionPropertyName, new JsonArray(pagedItems));
-    result.put("totalRecords", filteredItems.size());
-
-    log.debug("Found {} resources: {}", recordTypeName, result.encodePrettily());
+    // Handle singleton endpoints (e.g., /locale) that return a single object
+    if (collectionPropertyName == null) {
+      result = pagedItems.stream().findFirst().orElse(new JsonObject());
+      log.debug("Found {} singleton resource: {}", recordTypeName, result.encodePrettily());
+    } else {
+      // Return as a collection with metadata
+      result = new JsonObject()
+        .put(collectionPropertyName, new JsonArray(pagedItems))
+        .put("totalRecords", filteredItems.size());
+      log.debug("Found {} {} resources", filteredItems.size(), recordTypeName);
+    }
 
     HttpServerResponse response = routingContext.response();
 
@@ -406,6 +456,10 @@ public class FakeStorageModule extends AbstractVerticle {
 
     response.write(buffer);
     response.end();
+  }
+
+  FakeCQLToJSONInterpreter getFakeCQLToJSONInterpreter() {
+    return new FakeCQLToJSONInterpreter();
   }
 
   private void empty(RoutingContext routingContext) {
@@ -430,7 +484,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    new FakeCQLToJSONInterpreter()
+    getFakeCQLToJSONInterpreter()
       .execute(resourcesForTenant.values(), query)
       .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
@@ -444,7 +498,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       resourcesForTenant.remove(id);
 
       noContent().writeTo(routingContext.response());
@@ -460,14 +514,14 @@ public class FakeStorageModule extends AbstractVerticle {
 
   private static JsonObject getJsonFromBody(RoutingContext routingContext) {
     if (hasBody(routingContext)) {
-      return routingContext.getBodyAsJson();
+      return routingContext.body().asJsonObject();
     } else {
       return new JsonObject();
     }
   }
 
   private static boolean hasBody(RoutingContext routingContext) {
-    return StringUtils.isNotBlank(routingContext.getBodyAsString());
+    return StringUtils.isNotBlank(routingContext.body().asString());
   }
 
   private void checkTokenHeader(RoutingContext routingContext) {
@@ -506,7 +560,7 @@ public class FakeStorageModule extends AbstractVerticle {
     }
 
     final Result<String> validationResult = recordValidator.validate(
-      routingContext.getBodyAsString());
+      routingContext.body().asString());
 
     if (validationResult.failed()) {
       validationResult.cause().writeTo(routingContext.response());
@@ -631,7 +685,8 @@ public class FakeStorageModule extends AbstractVerticle {
         boolean isValidParameter = queryParameter.contains("query") ||
           queryParameter.contains("offset") ||
           isContainsQueryParameter(queryParameter) ||
-          queryParameter.contains("limit");
+          queryParameter.contains("limit") ||
+          queryParameter.contains("expandAll");
 
         return !isValidParameter;
       })
@@ -676,6 +731,15 @@ public class FakeStorageModule extends AbstractVerticle {
 
   public static void cleanUpRequestMappings() {
     requestMappings.clear();
+  }
+
+  public static void cleanupDelayData() {
+    fakeStorageDelay.set(0);
+    requestDelayedPaths.set(new String[0]);
+  }
+
+  private static boolean shouldApplyDelay(String p) {
+    return fakeStorageDelay.get() != 0 && Strings.CI.startsWithAny(p, requestDelayedPaths.get());
   }
 
   @Getter

@@ -28,7 +28,6 @@ import org.folio.circulation.domain.policy.FixedDueDateSchedules;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.NoFixedDueDateSchedules;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
-import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.RulesExecutionParameters;
@@ -57,19 +56,10 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
       log.info("lookupLoanPolicy:: loan or user is null");
       return ofAsync(() -> relatedRecords);
     }
-    return Result.of(relatedRecords::getLoan)
-      .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
-      .thenApply(mapResult(relatedRecords::withLoan));
-  }
-
-  public CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
-    RenewalContext renewalContext) {
-
-    log.debug("lookupLoanPolicy:: parameters renewalContext: {}", renewalContext);
-
-    return Result.of(renewalContext::getLoan)
-      .combineAfter(this::lookupPolicy, Loan::withLoanPolicy)
-      .thenApply(mapResult(renewalContext::withLoan));
+    return getLoanPolicy(relatedRecords)
+      .thenApply(result -> result.map(loanPolicy ->
+        relatedRecords.withLoan(relatedRecords.getLoan().withLoanPolicy(loanPolicy))
+      ));
   }
 
   public CompletableFuture<Result<Loan>> findPolicyForLoan(Result<Loan> loanResult) {
@@ -85,7 +75,16 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
         .thenApply(result -> result.map(loan::withLoanPolicy));
   }
 
-  private CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
+  private CompletableFuture<Result<LoanPolicy>> getLoanPolicy(LoanAndRelatedRecords relatedRecords) {
+    if (relatedRecords.getForceLoanPolicyId() != null) {
+      log.info("getLoanPolicy:: forceLoanPolicyId is set, getting Loan Policy by ID: {}",
+              relatedRecords.getForceLoanPolicyId());
+      return getLoanPolicyById(relatedRecords.getForceLoanPolicyId());
+    }
+    return lookupPolicy(relatedRecords.getLoan());
+  }
+
+  public CompletableFuture<Result<LoanPolicy>> getLoanPolicyById(String loanPolicyId) {
     log.debug("getLoanPolicyById:: parameters loanPolicyId: {}", loanPolicyId);
     if (isNull(loanPolicyId)) {
       log.info("getLoanPolicyById:: loanPolicy id is null");

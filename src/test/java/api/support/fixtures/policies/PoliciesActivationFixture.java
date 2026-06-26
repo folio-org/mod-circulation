@@ -128,14 +128,17 @@ public final class PoliciesActivationFixture {
   }
 
   public void use(PoliciesToActivate.PoliciesToActivateBuilder builder) {
-    final PoliciesToActivate overridePolicies = builder.build();
+    use(builder.build());
+  }
+
+  public void use(PoliciesToActivate policiesToActivate) {
     final PoliciesToActivate defaultPolicies = defaultRollingPolicies().build();
 
-    val loanPolicy = getOrDefault(overridePolicies::getLoanPolicy, defaultPolicies::getLoanPolicy);
-    val requestPolicy = getOrDefault(overridePolicies::getRequestPolicy, defaultPolicies::getRequestPolicy);
-    val noticePolicy = getOrDefault(overridePolicies::getNoticePolicy, defaultPolicies::getNoticePolicy);
-    val overduePolicy = getOrDefault(overridePolicies::getOverduePolicy, defaultPolicies::getOverduePolicy);
-    val lostPolicy = getOrDefault(overridePolicies::getLostItemPolicy, defaultPolicies::getLostItemPolicy);
+    val loanPolicy = getOrDefault(policiesToActivate::getLoanPolicy, defaultPolicies::getLoanPolicy);
+    val requestPolicy = getOrDefault(policiesToActivate::getRequestPolicy, defaultPolicies::getRequestPolicy);
+    val noticePolicy = getOrDefault(policiesToActivate::getNoticePolicy, defaultPolicies::getNoticePolicy);
+    val overduePolicy = getOrDefault(policiesToActivate::getOverduePolicy, defaultPolicies::getOverduePolicy);
+    val lostPolicy = getOrDefault(policiesToActivate::getLostItemPolicy, defaultPolicies::getLostItemPolicy);
 
     useFallbackPolicies(loanPolicy.getId(), requestPolicy.getId(), noticePolicy.getId(),
       overduePolicy.getId(), lostPolicy.getId());

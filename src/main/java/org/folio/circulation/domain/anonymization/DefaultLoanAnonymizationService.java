@@ -3,12 +3,15 @@ package org.folio.circulation.domain.anonymization;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.anonymization.LoanAnonymizationRecords.CAN_BE_ANONYMIZED_KEY;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
@@ -16,6 +19,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
 public class DefaultLoanAnonymizationService implements LoanAnonymizationService {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final AnonymizeStorageLoansRepository anonymizeStorageLoansRepository;
   private final AnonymizationCheckersService anonymizationCheckersService;
   private final EventPublisher eventPublisher;
@@ -24,7 +28,6 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
     AnonymizationCheckersService anonymizationCheckersService,
     AnonymizeStorageLoansRepository anonymizeStorageLoansRepository,
     EventPublisher eventPublisher) {
-
     this.anonymizationCheckersService = anonymizationCheckersService;
     this.anonymizeStorageLoansRepository = anonymizeStorageLoansRepository;
     this.eventPublisher = eventPublisher;
@@ -33,8 +36,9 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
   @Override
   public CompletableFuture<Result<LoanAnonymizationRecords>> anonymizeLoans(
     Supplier<CompletableFuture<Result<Collection<Loan>>>> loansToCheck) {
-
+    log.info("anonymizeLoans:: attempting to anonymize loans");
     if (anonymizationCheckersService.neverAnonymizeLoans()) {
+      log.info("anonymizeLoans:: loan anonymization is disabled");
       return completedFuture(Result.of(LoanAnonymizationRecords::new));
     }
 
@@ -46,9 +50,12 @@ public class DefaultLoanAnonymizationService implements LoanAnonymizationService
   }
 
   private CompletableFuture<Result<LoanAnonymizationRecords>> segregateLoanRecords(
-      Result<LoanAnonymizationRecords> anonymizationRecords) {
+    Result<LoanAnonymizationRecords> anonymizationRecords) {
 
+    log.info("segregateLoanRecords:: segregating loan records for anonymization");
     return completedFuture(anonymizationRecords.map(records -> {
+      log.info("segregateLoanRecords:: anonymized loans: {}, notAnonymizedLoans: {}",
+        records.getAnonymizedLoans()::size, records.getNotAnonymizedLoans()::size);
       Map<String, Set<String>> segregatedLoans = anonymizationCheckersService
           .segregateLoans(records.getLoansFound());
 

@@ -17,11 +17,9 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -55,7 +53,7 @@ class EndExpiredPatronActionSessionTests extends APITests {
   }
 
   @BeforeEach
-  public void before() {
+  void before() {
     JsonObject checkOutNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(CHECK_OUT_TEMPLATE_ID)
       .withCheckOutEvent()

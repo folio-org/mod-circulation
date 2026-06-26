@@ -41,7 +41,7 @@ public class FakeFeeFineOperationsModule {
     final JsonObject account = getAccountById(context);
 
     final String accountId = context.pathParam("accountId");
-    final double actionAmount = Double.parseDouble(context.getBodyAsJson().getString("amount"));
+    final double actionAmount = Double.parseDouble(context.body().asJsonObject().getString("amount"));
     final double accountAmount = account.getDouble("amount");
     final double accountRemainingAmount = account.getDouble("remaining");
 
@@ -76,7 +76,7 @@ public class FakeFeeFineOperationsModule {
   }
 
   private void cancelAccount(RoutingContext context) {
-    final String cancellationReason = context.getBodyAsJson()
+    final String cancellationReason = context.body().asJsonObject()
       .getString("cancellationReason", "Cancelled as error");
     final JsonObject account = getAccountById(context);
     final String accountId = context.pathParam("accountId");
@@ -156,7 +156,7 @@ public class FakeFeeFineOperationsModule {
   private Handler<RoutingContext> validateRequest(JsonSchemaValidator schemaValidator) {
     return context -> {
       final Result<String> validateResult = schemaValidator.validate(context
-        .getBodyAsString());
+        .body().asString());
 
       if (validateResult.failed()) {
         validateResult.cause().writeTo(context.response());

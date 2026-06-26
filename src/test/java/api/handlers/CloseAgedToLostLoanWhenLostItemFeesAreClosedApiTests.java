@@ -22,6 +22,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.services.agedtolost.LoanToChargeFees;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -47,13 +48,17 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     feeFineAccountFixture.payLostItemFee(loan.getId());
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());
 
+    var returnDate = ClockUtil.getZonedDateTime();
+    mockClockManagerToReturnFixedDateTime(returnDate);
     eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
 
-    assertThatLoanIsClosedAsLostAndPaid();
+    JsonObject loan = assertThatLoanIsClosedAsLostAndPaid();
+    assertThat(loan.getString("returnDate"), is(returnDate.toString()));
+    mockClockManagerToReturnDefaultDateTime();
 
     List<JsonObject> loanClosedEvents = getPublishedEventsAsList(byEventType(LOAN_CLOSED));
     assertThat(loanClosedEvents, hasSize(1));
-    assertThat(loanClosedEvents.get(0), isValidLoanClosedEvent(loan.getJson()));
+    assertThat(loanClosedEvents.get(0), isValidLoanClosedEvent(loan));
   }
 
   @Test
@@ -224,9 +229,15 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
 
     item = result.getItem();
     loan = result.getLoan();
-    cancelActualCostRecord();
 
-    assertThatLoanIsClosedAsLostAndPaid();
+    var returnDate = ClockUtil.getZonedDateTime();
+    mockClockManagerToReturnFixedDateTime(returnDate);
+    cancelActualCostRecord();
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    JsonObject loan = assertThatLoanIsClosedAsLostAndPaid();
+    assertThat(loan.getString("returnDate"), is(returnDate.toString()));
+    mockClockManagerToReturnDefaultDateTime();
   }
 
   @Test

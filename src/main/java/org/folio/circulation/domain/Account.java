@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.FeeAmount.noFeeAmount;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.utils.DateTimeUtil.compareToMillis;
 
 import java.time.ZonedDateTime;
@@ -41,14 +42,16 @@ public class Account {
           getProperty(representation, "feeFineType")),
         new AccountLoanInfo(
           getProperty(representation, "loanId"),
-          getProperty(representation, "userId")),
+          getProperty(representation, "userId"),
+          getDateTimeProperty(representation, "dueDate")),
         new AccountItemInfo(
           getProperty(representation, "itemId"),
           getProperty(representation, "title"),
           getProperty(representation, "barcode"),
           getProperty(representation, "callNumber"),
           getProperty(representation, "location"),
-          getProperty(representation, "materialTypeId"))
+          getProperty(representation, "materialTypeId"),
+          getProperty(representation, "materialType"))
       ),
       FeeAmount.from(representation, "amount"),
       FeeAmount.from(representation, "remaining"),
@@ -74,7 +77,9 @@ public class Account {
     jsonObject.put("callNumber", relatedRecordsInfo.getItemInfo().getCallNumber());
     jsonObject.put("location", relatedRecordsInfo.getItemInfo().getLocation());
     jsonObject.put("materialTypeId", relatedRecordsInfo.getItemInfo().getMaterialTypeId());
+    jsonObject.put("materialType", relatedRecordsInfo.getItemInfo().getMaterialType());
     jsonObject.put("loanId", relatedRecordsInfo.getLoanInfo().getLoanId());
+    jsonObject.put("dueDate", relatedRecordsInfo.getLoanInfo().getDueDate().toString());
     jsonObject.put("userId", relatedRecordsInfo.getLoanInfo().getUserId());
     jsonObject.put("itemId", relatedRecordsInfo.getItemInfo().getItemId());
 
@@ -127,6 +132,10 @@ public class Account {
 
   public String getMaterialTypeId() {
     return relatedRecordsInfo.getItemInfo().getMaterialTypeId();
+  }
+
+  public String getMaterialType() {
+    return relatedRecordsInfo.getItemInfo().getMaterialType();
   }
 
   public String getLoanId() {

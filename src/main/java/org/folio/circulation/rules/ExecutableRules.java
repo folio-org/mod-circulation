@@ -21,6 +21,11 @@ import lombok.Getter;
 public class ExecutableRules {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
+  public static final String MATCH_FAIL_MSG =
+    "Executing circulation rules: `%s` with parameters: `%s` to determine %s did not find a match";
+  public static final String MATCH_FAIL_MSG_REGEX
+    = "Executing circulation rules: `.*` with parameters: `.*` to determine .* did not find a match";
+
   @Getter()
   private final String text;
   private final Drools drools;
@@ -57,16 +62,11 @@ public class ExecutableRules {
   public Result<CirculationRuleMatch> determineOverduePolicy(RulesExecutionParameters parameters) {
     log.debug("determineOverduePolicy:: parameters parameters: {}", parameters);
 
-    return determinePolicy(parameters, drools::overduePolicy, "overdude policy");
+    return determinePolicy(parameters, drools::overduePolicy, "overdue policy");
   }
 
   private Result<CirculationRuleMatch> determinePolicy(RulesExecutionParameters parameters,
     BiFunction<MultiMap, Location, CirculationRuleMatch> droolsExecutor, String policyType) {
-
-    if (log.isInfoEnabled()) {
-      log.info("Executing circulation rules: `{}` with parameters: `{}` to determine {}",
-        text, parameters, policyType);
-    }
 
     return of(() -> droolsExecutor.apply(parameters.toMap(), parameters.getLocation()))
       .failWhen(this::noMatch, fail(parameters, policyType));
@@ -75,9 +75,7 @@ public class ExecutableRules {
   private Function<CirculationRuleMatch, HttpFailure> fail(
     RulesExecutionParameters parameters, String policyType) {
 
-    return match -> new ServerErrorFailure(format(
-      "Executing circulation rules: `%s` with parameters: `%s` to determine %s did not find a match",
-      text, parameters, policyType));
+    return match -> new ServerErrorFailure(format(MATCH_FAIL_MSG, text, parameters, policyType));
   }
 
   private Result<Boolean> noMatch(CirculationRuleMatch match) {

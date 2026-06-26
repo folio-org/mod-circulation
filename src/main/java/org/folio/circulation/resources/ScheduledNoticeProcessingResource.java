@@ -7,13 +7,14 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.sessions.PatronActionSessionRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.http.client.PageLimit;
@@ -47,8 +48,9 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
 
     final ScheduledNoticesRepository scheduledNoticesRepository =
       ScheduledNoticesRepository.using(clients);
-    final ConfigurationRepository configurationRepository =
-      new ConfigurationRepository(clients);
+    final CirculationSettingsService circulationSettingsService =
+      new CirculationSettingsService(clients);
+    final var settingsRepository = new SettingsRepository(clients);
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -57,8 +59,8 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
     final var patronActionSessionRepository = PatronActionSessionRepository.using(
       clients, loanRepository, userRepository);
 
-    safelyInitialise(configurationRepository::lookupSchedulerNoticesProcessingLimit)
-      .thenCompose(r -> r.after(limit -> findNoticesToSend(configurationRepository,
+    safelyInitialise(circulationSettingsService::getScheduledNoticesProcessingLimit)
+      .thenCompose(r -> r.after(limit -> findNoticesToSend(settingsRepository,
         scheduledNoticesRepository, patronActionSessionRepository, limit)))
       .thenCompose(r -> r.after(notices -> handleNotices(clients, requestRepository,
         loanRepository, notices)))
@@ -68,7 +70,7 @@ public abstract class ScheduledNoticeProcessingResource extends Resource {
   }
 
   protected abstract CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit);
 

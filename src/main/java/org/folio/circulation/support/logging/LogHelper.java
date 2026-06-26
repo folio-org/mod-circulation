@@ -79,10 +79,10 @@ public class LogHelper {
     log.debug("populateLoggingContext:: populating context: tenantId={}, requestId={}, userId={}",
       tenantId, requestId, userId);
 
-    FolioLoggingContext.put(FolioLoggingContext.TENANT_ID_LOGGING_VAR_NAME, tenantId);
-    FolioLoggingContext.put(FolioLoggingContext.REQUEST_ID_LOGGING_VAR_NAME, requestId);
-    FolioLoggingContext.put(FolioLoggingContext.USER_ID_LOGGING_VAR_NAME, userId);
-    FolioLoggingContext.put(FolioLoggingContext.MODULE_ID_LOGGING_VAR_NAME, MODULE_NAME);
+    FolioLoggingContext.put("tenantId", tenantId);
+    FolioLoggingContext.put("requestId", requestId);
+    FolioLoggingContext.put("userId", userId);
+    FolioLoggingContext.put("moduleId", MODULE_NAME);
 
     routingContext.next();
   }

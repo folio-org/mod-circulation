@@ -102,7 +102,7 @@ class RequestQueueTests {
       .put("position", position);
 
     return new Request(null, null, json, null, null, null, null, null, null, null, null, null,
-      null, false, null, false);
+      null, false, null, false, null);
   }
 
   private static String randomId() {

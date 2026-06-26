@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.LoanAction.CHECKED_OUT_THROUGH_OVERRIDE;
+import static org.folio.circulation.domain.representations.LoanProperties.USAGE_STATUS_IN_USE;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_ITEM;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_PROXY_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
@@ -21,8 +22,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.domain.CheckOutLock;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanAction;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
@@ -35,9 +39,9 @@ import org.folio.circulation.domain.notice.session.PatronActionSessionService;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.CheckOutByBarcodeRequest;
+import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.CheckOutValidators;
 import org.folio.circulation.infrastructure.storage.CheckOutLockRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -54,6 +58,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -70,10 +75,10 @@ import io.vertx.ext.web.RoutingContext;
 
 public class CheckOutByBarcodeResource extends Resource {
 
-  private final String rootPath;
-  final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final CirculationErrorType[] PARTIAL_SUCCESS_ERRORS = {
     FAILED_TO_SAVE_SESSION_RECORD, FAILED_TO_PUBLISH_CHECKOUT_EVENT};
+  private final String rootPath;
+  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   public CheckOutByBarcodeResource(String rootPath, HttpClient client) {
     super(client);
@@ -89,12 +94,23 @@ public class CheckOutByBarcodeResource extends Resource {
   }
 
   private void checkOut(RoutingContext routingContext) {
-    final WebContext context = new WebContext(routingContext);
+    var context = new WebContext(routingContext);
+    var request = CheckOutByBarcodeRequest.fromJson(routingContext.body().asJsonObject());
+    var loanRepresentation = new LoanRepresentation();
+    var permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
+    var errorHandler = new OverridingErrorHandler(permissions);
+    var clients = Clients.create(context, client);
 
-    CheckOutByBarcodeRequest request = CheckOutByBarcodeRequest.fromJson(
-      routingContext.getBodyAsJson());
+    checkOut(request, routingContext, context, errorHandler, permissions, clients, false)
+      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
+      .thenApply(r -> r.map(loanRepresentation::extendedLoan))
+      .thenApply(r -> createdLoanFrom(r, errorHandler))
+      .thenAccept(context::writeResultToHttpResponse);
+  }
 
-    final Clients clients = Clients.create(context, client);
+  CompletableFuture<Result<LoanAndRelatedRecords>> checkOut(CheckOutByBarcodeRequest request,
+    RoutingContext routingContext, WebContext context, CirculationErrorHandler errorHandler,
+    OkapiPermissions permissions, Clients clients, boolean isDryRun) {
 
     final var userRepository = new UserRepository(clients);
     final var itemRepository = new ItemRepository(clients);
@@ -102,50 +118,39 @@ public class CheckOutByBarcodeResource extends Resource {
     final var requestRepository = RequestRepository.using(clients, itemRepository,
       userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
-    final LoanService loanService = new LoanService(clients);
-    final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
-    final OverdueFinePolicyRepository overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
-    final LostItemPolicyRepository lostItemPolicyRepository = new LostItemPolicyRepository(clients);
-    final PatronNoticePolicyRepository patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
-    final PatronGroupRepository patronGroupRepository = new PatronGroupRepository(clients);
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
-    final ScheduledNoticesRepository scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
-    final LoanScheduledNoticeService scheduledNoticeService =
-      new LoanScheduledNoticeService(scheduledNoticesRepository, patronNoticePolicyRepository);
-    final ReminderFeeScheduledNoticeService reminderFeeScheduledNoticesService =
-      new ReminderFeeScheduledNoticeService(clients);
+    final var loanService = new LoanService(clients);
+    final var loanPolicyRepository = new LoanPolicyRepository(clients);
+    final var overdueFinePolicyRepository = new OverdueFinePolicyRepository(clients);
+    final var lostItemPolicyRepository = new LostItemPolicyRepository(clients);
+    final var patronNoticePolicyRepository = new PatronNoticePolicyRepository(clients);
+    final var patronGroupRepository = new PatronGroupRepository(clients);
+    final var scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
+    final var scheduledNoticeService = new LoanScheduledNoticeService(scheduledNoticesRepository,
+      patronNoticePolicyRepository);
+    final var reminderFeeScheduledNoticesService = new ReminderFeeScheduledNoticeService(clients);
 
-    OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
-    CirculationErrorHandler errorHandler = new OverridingErrorHandler(permissions);
-    CheckOutValidators validators = new CheckOutValidators(request, clients, errorHandler,
-      permissions, loanRepository);
-
+    var validators = new CheckOutValidators(request, clients, errorHandler, permissions,
+      loanRepository);
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
       requestRepository, requestQueueRepository);
-
-    final LoanRepresentation loanRepresentation = new LoanRepresentation();
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
-
-    final PatronActionSessionService patronActionSessionService =
-      PatronActionSessionService.using(clients,
-        PatronActionSessionRepository.using(clients, loanRepository,
-          userRepository));
+    final var eventPublisher = new EventPublisher(context, clients);
+    final var patronActionSessionService = PatronActionSessionService.using(clients,
+      PatronActionSessionRepository.using(clients, loanRepository, userRepository));
 
     final var requestScheduledNoticeService = RequestScheduledNoticeService.using(clients);
+    final var checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
+    final var settingsRepository = new SettingsRepository(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
-    final CheckOutLockRepository checkOutLockRepository = new CheckOutLockRepository(clients, routingContext);
 
-    AtomicReference<String> checkOutLockId = new AtomicReference<>();
-
-    final SettingsRepository settingsRepository = new SettingsRepository(clients);
-
-    ofAsync(() -> new LoanAndRelatedRecords(request.toLoan()))
+    var dryRunCheckOut = ofAsync(() -> new LoanAndRelatedRecords(request.toLoan(),
+      request.getForceLoanPolicyId()))
       .thenApply(validators::refuseCheckOutWhenServicePointIsNotPresent)
       .thenComposeAsync(r -> lookupUser(request.getUserBarcode(), userRepository, r, errorHandler))
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedManuallyForPatron)
       .thenComposeAsync(validators::refuseWhenCheckOutActionIsBlockedAutomaticallyForPatron)
-      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), userRepository, r, errorHandler))
+      .thenComposeAsync(r -> lookupProxyUser(request.getProxyUserBarcode(), userRepository, r,
+        errorHandler))
       .thenApply(validators::refuseWhenUserIsInactive)
       .thenApply(validators::refuseWhenProxyUserIsInactive)
       .thenComposeAsync(validators::refuseWhenInvalidProxyRelationship)
@@ -154,21 +159,30 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenApply(validators::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(validators::refuseWhenItemIsNotAllowedForCheckOut)
       .thenComposeAsync(validators::refuseWhenItemHasOpenLoans)
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
-      .thenComposeAsync(r -> r.after(requestQueueRepository::get))
+      .thenComposeAsync(r -> r.combineAfter(l -> getRequestQueue(l, requestQueueRepository),
+        LoanAndRelatedRecords::withRequestQueue))
       .thenCompose(validators::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(l -> lookupLoanPolicy(l, loanPolicyRepository, errorHandler)))
       .thenComposeAsync(validators::refuseWhenItemLimitIsReached)
       .thenCompose(validators::refuseWhenItemIsNotLoanable)
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         LoanAndRelatedRecords::withTimeZone))
       .thenComposeAsync(r -> r.after(overdueFinePolicyRepository::lookupOverdueFinePolicy))
-      .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy))
+      .thenComposeAsync(r -> r.after(lostItemPolicyRepository::lookupLostItemPolicy));
+
+    if (isDryRun) {
+      return dryRunCheckOut;
+    }
+    AtomicReference<String> checkOutLockId = new AtomicReference<>();
+
+    return dryRunCheckOut
       .thenApply(r -> r.next(this::setItemLocationIdAtCheckout))
-      .thenComposeAsync(r -> r.after(relatedRecords -> checkOut(relatedRecords, clients)))
+      .thenComposeAsync(r -> r.after(records -> checkOut(records, clients)))
       .thenApply(r -> r.map(this::checkOutItem))
+      .thenApply(r -> r.map(this::markInUseIfForUseAtLocation))
       .thenCompose(r -> r.after(l -> acquireLockIfNeededOrFail(settingsRepository,
         checkOutLockRepository, l, checkOutLockId, validators, errorHandler)))
       .thenComposeAsync(r -> r.after(requestQueueUpdate::onCheckOut))
@@ -184,11 +198,7 @@ public class CheckOutByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(l -> publishItemCheckedOutEvent(l, eventPublisher,
         userRepository, errorHandler)))
       .thenApply(r -> r.next(scheduledNoticeService::scheduleNoticesForLoanDueDate))
-      .thenApply(r -> r.next(reminderFeeScheduledNoticesService::scheduleFirstReminder))
-      .thenApply(r -> r.map(LoanAndRelatedRecords::getLoan))
-      .thenApply(r -> r.map(loanRepresentation::extendedLoan))
-      .thenApply(r -> createdLoanFrom(r, errorHandler))
-      .thenAccept(context::writeResultToHttpResponse);
+      .thenApply(r -> r.next(reminderFeeScheduledNoticesService::scheduleFirstReminder));
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> acquireLockIfNeededOrFail(
@@ -269,6 +279,11 @@ public class CheckOutByBarcodeResource extends Resource {
 
     log.debug("publishItemCheckedOutEvent:: parameters records: {}", () -> records);
 
+    if (records.getLoan().isForUseAtLocation()) {
+      eventPublisher.publishUsageAtLocationEvent(
+        records.getLoan().withAction(LoanAction.PICKED_UP_FOR_USE_AT_LOCATION), LogEventType.LOAN);
+    }
+
     return eventPublisher.publishItemCheckedOutEvent(records, userRepository)
       .thenApply(r -> errorHandler.handleAnyResult(r, FAILED_TO_PUBLISH_CHECKOUT_EVENT,
         succeeded(records)));
@@ -300,6 +315,16 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanAndRelatedRecords.changeItemStatus(CHECKED_OUT);
   }
 
+  private LoanAndRelatedRecords markInUseIfForUseAtLocation(LoanAndRelatedRecords loanAndRelatedRecords) {
+    log.debug("markInUseIfForUseAtLocation:: parameters: context: {}", loanAndRelatedRecords);
+
+    Loan loan = loanAndRelatedRecords.getLoan();
+    if (Environment.getForUseAtLocationEnabled() && loan.getLoanPolicy().isForUseAtLocation()) {
+      loan.changeStatusOfUsageAtLocation(USAGE_STATUS_IN_USE);
+    }
+    return loanAndRelatedRecords;
+  }
+
   private Result<HttpResponse> createdLoanFrom(Result<JsonObject> result,
     CirculationErrorHandler errorHandler) {
 
@@ -320,8 +345,6 @@ public class CheckOutByBarcodeResource extends Resource {
     UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
     CirculationErrorHandler errorHandler) {
 
-    log.debug("lookupUser:: parameters barcode: {}", barcode);
-
     return userRepository.getUserByBarcode(barcode)
       .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withRequestingUser))
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FETCH_USER, loanResult));
@@ -330,8 +353,6 @@ public class CheckOutByBarcodeResource extends Resource {
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupProxyUser(String barcode,
     UserRepository userRepository, Result<LoanAndRelatedRecords> loanResult,
     CirculationErrorHandler errorHandler) {
-
-    log.debug("lookupProxyUser:: parameters barcode: {}", barcode);
 
     return userRepository.getProxyUserByBarcode(barcode)
       .thenApply(userResult -> loanResult.combine(userResult, LoanAndRelatedRecords::withProxyingUser))
@@ -389,5 +410,15 @@ public class CheckOutByBarcodeResource extends Resource {
     return loanPolicy.calculateInitialDueDate(loan, requestQueue)
       .map(loan::changeDueDate)
       .map(loanAndRelatedRecords::withLoan);
+  }
+
+  private CompletableFuture<Result<RequestQueue>> getRequestQueue(
+    LoanAndRelatedRecords loanAndRelatedRecords, RequestQueueRepository requestQueueRepository) {
+
+    Item item = loanAndRelatedRecords.getItem();
+
+    return loanAndRelatedRecords.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
+      ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
+      : requestQueueRepository.getByItemId(item.getItemId());
   }
 }

@@ -68,6 +68,14 @@ public class LocationsFixture {
     return locationRecordCreator.createIfAbsent(
       locationExamples.thirdFloor());
   }
+
+  public IndividualResource floatingCollection() {
+    final LocationExamples locationExamples = getLocationExamples();
+
+    return locationRecordCreator.createIfAbsent(
+      locationExamples.floatingCollection());
+  }
+
   public IndividualResource fourthServicePoint() {
 
     final LocationExamples locationExamples = getLocationExamplesForCd4();

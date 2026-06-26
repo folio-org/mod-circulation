@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -37,24 +36,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.builders.AddInfoRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
 import api.support.fakes.FakePubSub;
-import api.support.fixtures.ConfigurationExample;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 import lombok.val;
 
 class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
-  private final static UUID TEMPLATE_ID = UUID.randomUUID();
+  private static final UUID TEMPLATE_ID = UUID.randomUUID();
 
   private static final String LOAN_INFO_ADDED = "testing patron info";
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     templateFixture.createDummyNoticeTemplate(TEMPLATE_ID);
   }
 
@@ -127,7 +126,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
   @Test
   void beforeRecurringNoticesAreRescheduled() {
-    configClient.create(ConfigurationExample.utcTimezoneConfiguration());
+    localeFixture.createUtcLocaleSettings();
 
     Period beforePeriod = Period.weeks(1);
     Period recurringPeriod = Period.days(1);
@@ -249,7 +248,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(12);
 
     int noticesLimitConfig = 10;
-    configClient.create(ConfigurationExample.schedulerNoticesLimitConfiguration(Integer.toString(noticesLimitConfig)));
+    circulationSettingsFixture.setScheduledNoticesProcessingLimit(noticesLimitConfig);
 
     //Should fetch 10 notices, when total records is 12
     //So that notices for one of the users should not be processed
@@ -521,7 +520,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
 
     verifyNumberOfScheduledNotices(1);
 
-    ZonedDateTime dueDate = parseDateTime(nodToJamesLoan.getJson().getString("dueDate"));;
+    ZonedDateTime dueDate = parseDateTime(nodToJamesLoan.getJson().getString("dueDate"));
     ZonedDateTime afterLoanDueDateTime = dueDate.plusDays(1);
 
     scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing(afterLoanDueDateTime);
@@ -690,7 +689,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     ZonedDateTime systemTime = ZonedDateTime.of(2020, 6, 25, 0, 0, 0, 0, ZoneId.of(timeZoneId))
       .plusMinutes(plusMinutes);
     mockClockManagerToReturnFixedDateTime(systemTime);
-    configClient.create(ConfigurationExample.timezoneConfigurationFor(timeZoneId));
+    localeFixture.createLocaleSettingsForTimezone(timeZoneId);
 
     JsonObject uponAtDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)

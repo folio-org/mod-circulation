@@ -9,9 +9,12 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.validation.UserNotFoundValidator;
@@ -27,6 +30,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 
 public class RenewByIdResource extends RenewalResource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   public RenewByIdResource(HttpClient client) {
     super("/circulation/renew-by-id", client);
   }
@@ -42,6 +47,8 @@ public class RenewByIdResource extends RenewalResource {
     final String itemId = requestResult
       .map(RenewByIdRequest::getItemId)
       .orElse("unknown item ID");
+
+    log.info("findLoan:: itemId={}", itemId);
 
     final SingleOpenLoanForItemInStorageFinder singleOpenLoanFinder
       = new SingleOpenLoanForItemInStorageFinder(loanRepository, userRepository, false);
@@ -60,6 +67,8 @@ public class RenewByIdResource extends RenewalResource {
   private CompletableFuture<Result<Item>> lookupItem(ItemByIdInStorageFinder itemFinder,
     String itemId, CirculationErrorHandler errorHandler) {
 
+    log.info("lookupItem:: itemId={}", itemId);
+
     return itemFinder.findItemById(itemId)
       .thenApply(r -> errorHandler.handleValidationResult(r, ITEM_DOES_NOT_EXIST, (Item) null));
   }
@@ -69,8 +78,11 @@ public class RenewByIdResource extends RenewalResource {
     CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST)) {
+      log.info("lookupLoan:: skipping because item does not exist");
       return completedFuture(succeeded(null));
     }
+
+    log.info("lookupLoan:: itemId={}", item::getItemId);
 
     return singleOpenLoanFinder.findSingleOpenLoan(item)
       .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
@@ -102,6 +114,7 @@ public class RenewByIdResource extends RenewalResource {
       return succeeded(loan);
     }
     else {
+      log.warn("refuseWhenUserDoesNotMatch:: loan {} is checked out to different user", loan::getId);
       Result<Loan> result = failedValidation("Cannot renew item checked out to different user",
         RenewByIdRequest.USER_ID, idRequest.getUserId());
 

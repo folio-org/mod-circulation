@@ -2,9 +2,10 @@ package org.folio.circulation.resources;
 
 import static java.lang.String.join;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.circulation.domain.EcsRequestPhase.INTERMEDIATE;
+import static org.folio.circulation.domain.EcsRequestPhase.PRIMARY;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.RequestType.RECALL;
@@ -23,8 +24,8 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INVALID_PROXY_RELATIONSHIP;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.NO_AVAILABLE_ITEMS_FOR_TLR;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.TLR_RECALL_WITHOUT_OPEN_LOAN_OR_RECALLABLE_ITEM;
-import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.CANNOT_CREATE_PAGE_TLR_WITHOUT_ITEM_ID;
+import static org.folio.circulation.support.ErrorCode.FULFILLMENT_PREFERENCE_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ErrorCode.REQUEST_LEVEL_IS_NOT_ALLOWED;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
@@ -51,8 +52,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
@@ -64,8 +67,8 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -74,6 +77,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestPolicyReposi
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
@@ -94,7 +98,8 @@ class RequestFromRepresentationService {
   private final UserRepository userRepository;
   private final LoanRepository loanRepository;
   private final ServicePointRepository servicePointRepository;
-  private final ConfigurationRepository configurationRepository;
+  private final SettingsRepository settingsRepository;
+  private final CirculationSettingsService circulationSettingsService;
   private final RequestPolicyRepository requestPolicyRepository;
   private final ProxyRelationshipValidator proxyRelationshipValidator;
   private final ServicePointPickupLocationValidator pickupLocationValidator;
@@ -103,7 +108,8 @@ class RequestFromRepresentationService {
   private final ItemForTlrService itemForTlrService;
 
   public RequestFromRepresentationService(Request.Operation operation,
-    RequestRelatedRepositories repositories, ProxyRelationshipValidator proxyRelationshipValidator,
+    RequestRelatedRepositories repositories, CirculationSettingsService circulationSettingsService,
+    ProxyRelationshipValidator proxyRelationshipValidator,
     ServicePointPickupLocationValidator pickupLocationValidator,
     CirculationErrorHandler errorHandler, ItemByInstanceIdFinder itemByInstanceIdFinder,
     ItemForTlrService itemForTlrService) {
@@ -117,8 +123,9 @@ class RequestFromRepresentationService {
     this.userRepository = repositories.getUserRepository();
     this.loanRepository = repositories.getLoanRepository();
     this.servicePointRepository = repositories.getServicePointRepository();
-    this.configurationRepository = repositories.getConfigurationRepository();
+    this.settingsRepository = repositories.getSettingsRepository();
     this.requestPolicyRepository = repositories.getRequestPolicyRepository();
+    this.circulationSettingsService = circulationSettingsService;
 
     this.proxyRelationshipValidator = proxyRelationshipValidator;
     this.pickupLocationValidator = pickupLocationValidator;
@@ -129,7 +136,7 @@ class RequestFromRepresentationService {
 
   CompletableFuture<Result<RequestAndRelatedRecords>> getRequestFrom(JsonObject representation) {
 
-    return configurationRepository.lookupTlrSettings()
+    return circulationSettingsService.getTlrSettings()
       .thenCompose(r -> r.after(tlrSettings -> initRequest(operation, tlrSettings, representation)))
       .thenApply(r -> r.next(this::validateStatus))
       .thenApply(r -> r.next(this::validateRequestLevel))
@@ -142,7 +149,7 @@ class RequestFromRepresentationService {
       .thenApply(this::refuseWhenNoRequestDate)
       .thenApply(r -> r.map(this::removeRelatedRecordInformation))
       .thenApply(r -> r.map(this::removeProcessingParameters))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         Request::truncateRequestExpirationDateToTheEndOfTheDay))
       .thenComposeAsync(r -> r.after(when(
         this::shouldFetchInstance, this::fetchInstance, req -> ofAsync(() -> req))))
@@ -249,7 +256,14 @@ class RequestFromRepresentationService {
     Request request = records.getRequest();
     Function<RequestAndRelatedRecords, CompletableFuture<Result<Request>>>
       itemAndLoanFetchingFunction;
-    if (request.isTitleLevel() && request.isPage()) {
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    log.info("fetchItemAndLoan:: ECS request phase is {}", ecsRequestPhase);
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("fetchItemAndLoan:: ECS request phase {} detected, using default item fetcher",
+        ecsRequestPhase);
+      itemAndLoanFetchingFunction = this::fetchItemAndLoanDefault;
+    }
+    else if (request.isTitleLevel() && request.isPage()) {
       itemAndLoanFetchingFunction = this::fetchItemAndLoanForPageTlr;
     }
     else if (request.isTitleLevel() && request.isRecall()) {
@@ -294,7 +308,17 @@ class RequestFromRepresentationService {
         NO_AVAILABLE_ITEMS_FOR_TLR, r))))
       .flatMapFuture(this::fetchFirstLoanForUserWithTheSameInstanceId)
       .flatMapFuture(this::fetchUserForLoan)
+      .flatMapFuture(this::fetchPrimaryServicePointForLocation)
       .toCompletableFuture();
+  }
+
+  private CompletableFuture<Result<Request>> fetchPrimaryServicePointForLocation(Request request) {
+    Location location = request.getItem().getLocation();
+
+    return servicePointRepository.getServicePointById(location.getPrimaryServicePointId())
+      .thenApply(mapResult(location::withPrimaryServicePoint))
+      .thenApply(mapResult(request.getItem()::withLocation))
+      .thenApply(mapResult(request::withItem));
   }
 
   private CompletableFuture<Result<Request>> fetchItemAndLoanForPageTlrReplacement(
@@ -325,7 +349,7 @@ class RequestFromRepresentationService {
       .map(Item::getItemId)
       .filter(itemId -> request.getInstanceItemsRequestPolicies().get(itemId)
         .allowsType(RECALL))
-      .collect(toList());
+      .toList();
 
     return loanRepository.findLoanWithClosestDueDate(recallableItemIds, recalledLoansIds)
       //Loan is null means that we have no items that haven't been recalled. In this case we
@@ -534,6 +558,12 @@ class RequestFromRepresentationService {
   }
 
   private Result<Request> validateAbsenceOfItemLinkInTlr(Request request) {
+    EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+    if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+      log.info("validateAbsenceOfItemLinkInTlr:: ECS request phase {} detected, skipping", ecsRequestPhase);
+      return of(() -> request);
+    }
+
     String itemId = request.getItemId();
     String holdingsRecordId = request.getHoldingsRecordId();
 
@@ -578,6 +608,10 @@ class RequestFromRepresentationService {
     representation.remove("pickupServicePoint");
     representation.remove("deliveryAddress");
 
+    JsonObject printDetails = representation.getJsonObject("printDetails");
+    if (printDetails != null && printDetails.containsKey("lastPrintRequester")) {
+      printDetails.remove("lastPrintRequester");
+    }
     return request;
   }
 

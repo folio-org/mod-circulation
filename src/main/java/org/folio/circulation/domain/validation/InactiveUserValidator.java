@@ -36,8 +36,6 @@ public class InactiveUserValidator {
   }
 
   public static InactiveUserValidator forProxy(String proxyUserBarcode) {
-    log.debug("forProxy:: parameters proxyUserBarcode: {}", proxyUserBarcode);
-
     return new InactiveUserValidator(LoanAndRelatedRecords::getProxy,
       "Cannot check out via inactive proxying user",
       "Cannot determine if proxying user is active or not",
@@ -46,8 +44,6 @@ public class InactiveUserValidator {
   }
 
   public static InactiveUserValidator forUser(String userBarcode) {
-    log.debug("forUser:: parameters userBarcode: {}", userBarcode);
-
     return new InactiveUserValidator(records -> records.getLoan().getUser(),
       "Cannot check out to inactive user",
       "Cannot determine if user is active or not",

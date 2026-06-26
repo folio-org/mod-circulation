@@ -136,7 +136,7 @@ public class CirculationRulesResource extends Resource {
     String rulesAsText;
     try {
       // try to convert, do not safe if conversion fails
-      rulesInput = routingContext.getBodyAsJson();
+      rulesInput = routingContext.body().asJsonObject();
       rulesAsText = getRulesAsText(rulesInput);
       Text2Drools.convert(rulesAsText,
         (policyType, policies, token) -> validatePolicy(

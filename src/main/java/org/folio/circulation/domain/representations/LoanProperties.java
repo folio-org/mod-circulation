@@ -34,7 +34,14 @@ public class LoanProperties {
   public static final String DATE_LOST_ITEM_SHOULD_BE_BILLED = "dateLostItemShouldBeBilled";
   public static final String METADATA = "metadata";
   public static final String UPDATED_BY_USER_ID = "updatedByUserId";
-
+  public static final String FOR_USE_AT_LOCATION = "forUseAtLocation";
+  public static final String AT_LOCATION_USE_STATUS = "status";
+  public static final String AT_LOCATION_USE_STATUS_DATE = "statusDate";
+  public static final String AT_LOCATION_USE_EXPIRY_DATE = "holdShelfExpirationDate";
+  public static final String USAGE_STATUS_IN_USE = "In use";
+  public static final String USAGE_STATUS_HELD = "Held";
+  public static final String USAGE_STATUS_RETURNED = "Returned";
+  public static final String CREATED_DATE = "createdDate";
   public static final String REMINDERS = "reminders";
   public static final String LAST_FEE_BILLED = "lastFeeBilled";
   public static final String BILL_NUMBER = "number";

@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Circulation Setting Schema",
+  "description": "Circulation setting",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "ID of the circulation setting",
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "name": {
+      "description": "Circulation setting name",
+      "type": "string"
+    },
+    "value": {
+      "description": "Circulation setting",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "description": "Metadata about creation and changes, provided by the server (client should not provide)",
+      "type": "object",
+      "$ref": "raml-util/schemas/metadata.schema"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "value"
+  ]
+}

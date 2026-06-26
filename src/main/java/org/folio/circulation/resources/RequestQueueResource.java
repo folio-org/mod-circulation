@@ -11,7 +11,6 @@ import static org.folio.circulation.support.results.Result.succeeded;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,8 +24,8 @@ import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -34,6 +33,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
 import org.folio.circulation.resources.context.RequestQueueType;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
@@ -97,10 +97,7 @@ public class RequestQueueResource extends Resource {
 
     final RequestRepresentation requestRepresentation = new RequestRepresentation();
 
-    CompletableFuture<Result<RequestQueue>> requestQueue = getRequestQueueByType(routingContext,
-      requestQueueType, requestQueueRepository);
-
-    requestQueue
+    getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository)
       .thenApply(r -> r.map(queue -> new MultipleRecords<>(queue.getRequests(), queue.size())))
       .thenApply(r -> r.map(requests ->
         requests.asJson(requestRepresentation::extendedRepresentation, "requests")))
@@ -112,28 +109,26 @@ public class RequestQueueResource extends Resource {
     String idParamValue = getIdParameterValueByQueueType(routingContext, requestQueueType);
 
     ReorderRequestContext reorderContext = new ReorderRequestContext(requestQueueType, idParamValue,
-      routingContext.getBodyAsJson().mapTo(ReorderQueueRequest.class));
-
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+      routingContext.body().asPojo(ReorderQueueRequest.class));
 
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    final var configurationRepository = new ConfigurationRepository(clients);
+    final var settingsRepository = new SettingsRepository(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
       requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      configurationRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
+      settingsRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
 
-    getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository);
-
-    validateTlrFeatureStatus(configurationRepository, requestQueueType, idParamValue)
+    validateTlrFeatureStatus(circulationSettingsService, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->
         getRequestQueueByType(routingContext, requestQueueType, requestQueueRepository)))
       .thenApply(r -> r.map(reorderContext::withRequestQueue))
@@ -152,10 +147,10 @@ public class RequestQueueResource extends Resource {
   }
 
   private CompletableFuture<Result<TlrSettingsConfiguration>> validateTlrFeatureStatus(
-    ConfigurationRepository configurationRepository, RequestQueueType requestQueueType,
+    CirculationSettingsService circulationSettingsService, RequestQueueType requestQueueType,
     String idParamValue) {
 
-    return configurationRepository.lookupTlrSettings()
+    return circulationSettingsService.getTlrSettings()
       .thenApply(r -> r.failWhen(
         tlrSettings -> succeeded(
           requestQueueType == FOR_INSTANCE ^ tlrSettings.isTitleLevelRequestsFeatureEnabled()),
@@ -171,7 +166,7 @@ public class RequestQueueResource extends Resource {
 
     reorderRequestContext.after(r -> {
       CompletableFuture.runAsync(() -> {
-        List<Request> reordered = r.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).collect(Collectors.toList());
+        List<Request> reordered = r.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).toList();
         eventPublisher.publishLogRecord(mapToRequestLogEventJson(reordered), LogEventType.REQUEST_REORDERED);
       });
       return null;

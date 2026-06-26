@@ -1,20 +1,24 @@
 package api.requests;
 
+import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.joining;
 import static org.folio.circulation.domain.RequestType.HOLD;
 import static org.folio.circulation.domain.RequestType.PAGE;
-import static org.folio.circulation.domain.notice.TemplateContextUtil.CURRENT_DATE_TIME;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDate;
@@ -35,11 +39,13 @@ import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.RequestTypeItemStatusWhiteList;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.services.StaffSlipsRequestFetchService;
 import org.folio.circulation.storage.mappers.InstanceMapper;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.json.JsonObjectArrayPropertyFetcher;
 import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -48,6 +54,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.LocationBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.AddressExamples;
 import api.support.http.IndividualResource;
@@ -67,9 +74,15 @@ class StaffSlipsTests extends APITests {
   private static final String REQUEST_KEY = "request";
   private static final String REQUESTER_KEY = "requester";
 
+  @BeforeEach
+  void beforeEach() {
+    StaffSlipsRequestFetchService.clearCustomRequestLimit();
+  }
+
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -88,6 +101,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -108,6 +122,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
 
@@ -118,6 +133,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -141,6 +157,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @MethodSource(value = "getAllowedStatusesForHoldRequest")
   void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponNod(b -> b.withStatus(itemStatus.getValue()));
 
@@ -181,6 +198,9 @@ class StaffSlipsTests extends APITests {
   })
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
+
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
@@ -243,9 +263,9 @@ class StaffSlipsTests extends APITests {
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 1, slipsType);
 
-    JsonObject slip = getPickSlipsList(response, slipsType).get(0);
+    JsonObject slip = getPickSlipsList(response, slipsType).getFirst();
     JsonObject itemContext = slip.getJsonObject(ITEM_KEY);
-    assertNotNull(slip.getString(CURRENT_DATE_TIME));
+    assertNotNull(slip.getString("currentDateTime"));
 
     ZonedDateTime requestCheckinDateTime = getDateTimeProperty(itemContext, "lastCheckedInDateTime");
 
@@ -253,6 +273,7 @@ class StaffSlipsTests extends APITests {
       .withInstance(new InstanceMapper().toDomain(itemResource.getInstance().getJson()));
 
     String contributorNames = item.getContributorNames().collect(joining("; "));
+    String seriesStatements = String.join("; ",item.getSeriesStatementValues());
 
     String yearCaptionsToken = String.join("; ", item.getYearCaption());
     String copyNumber = item.getCopyNumber() != null ? item.getCopyNumber() : "";
@@ -265,9 +286,11 @@ class StaffSlipsTests extends APITests {
     assertEquals(expectedItemStatus.getValue(), itemContext.getString("status"));
     assertEquals(item.getPrimaryContributorName(), itemContext.getString("primaryContributor"));
     assertEquals(contributorNames, itemContext.getString("allContributors"));
+    assertEquals(seriesStatements, itemContext.getString("seriesStatements"));
     assertEquals(item.getEnumeration(), itemContext.getString("enumeration"));
     assertEquals(item.getVolume(), itemContext.getString("volume"));
     assertEquals(item.getChronology(), itemContext.getString("chronology"));
+    assertEquals(item.getDisplaySummary(), itemContext.getString("displaySummary"));
     assertEquals(yearCaptionsToken, itemContext.getString("yearCaption"));
     assertEquals(materialTypeName, itemContext.getString("materialType"));
     assertEquals(loanTypeName, itemContext.getString("loanType"));
@@ -320,8 +343,11 @@ class StaffSlipsTests extends APITests {
     assertThat(requestContext.getString("requestDate"), isEquivalentTo(requestDate));
   }
 
-  @Test
-  void responseContainsPickSlipsForRequestsOfTypePageOnly() {
+  @ParameterizedTest
+  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
+  void responseContainsPickSlipsForRequestsOfTypePageOnly(Object trueValue) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
@@ -352,6 +378,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource steve = usersFixture.steve();
@@ -383,6 +410,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -438,6 +466,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -501,6 +530,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
+    circulationSettingsFixture.setPrintHoldRequests(true);
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 
@@ -542,6 +572,449 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, slipsType, item, pageRequest, james);
   }
 
+  @Test
+  void searchSlipsLimitIsRespected() {
+    circulationSettingsFixture.enableTlrFeature();
+    circulationSettingsFixture.setPrintHoldRequests(true);
+
+    UUID servicePointId = servicePointsFixture.cd6().getId();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    int batchSize = 50; // default value used by CqlIndexValuesFinder
+    int searchSlipsLimit = batchSize * 2;
+    int itemLevelRequestCount = searchSlipsLimit + 1;
+    StaffSlipsRequestFetchService.setCustomRequestLimit(searchSlipsLimit);
+
+    for (int i = 0; i < itemLevelRequestCount; i++) {
+      final int currentIndex = i;
+
+      IndividualResource location = locationsFixture.basedUponExampleLocation(
+        builder -> builder
+          .withName("Test location " + currentIndex)
+          .withCode("LOC_" + currentIndex)
+          .withPrimaryServicePoint(servicePointId));
+
+      UserResource requester = usersFixture.steve(b -> b.withBarcode("user_ilr_" + currentIndex));
+      IndividualResource holding = holdingsFixture.createHoldingsRecord(instanceId, location.getId());
+      IndividualResource item = itemsFixture.basedUponDunkirkWithCustomHoldingAndLocationAndCheckedOut(
+        holding.getId(), location.getId());
+
+      requestsFixture.place(new RequestBuilder()
+        .hold()
+        .fulfillToHoldShelf()
+        .withItemId(item.getId())
+        .withHoldingsRecordId(holding.getId())
+        .withInstanceId(instanceId)
+        .withRequestDate(ZonedDateTime.now(UTC))
+        .withRequesterId(requester.getId())
+        .withPickupServicePointId(servicePointId));
+    }
+
+    assertThat(requestsStorageClient.getAll().size(), is(itemLevelRequestCount));
+
+    // place a title-level hold to make sure that no search slips are created for requests WITHOUT
+    // itemId when the number of requests WITH itemId already reached/exceeded the limit
+    IndividualResource titleLevelHold = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, usersFixture.james());
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, searchSlipsLimit, SlipsType.SEARCH_SLIPS);
+
+    // verify that no search slip was built for title-level hold
+    assertTrue(
+      response.getJson()
+        .getJsonArray("searchSlips")
+        .stream()
+        .filter(JsonObject.class::isInstance)
+        .map(JsonObject.class::cast)
+        .noneMatch(slipJson -> titleLevelHold.getId().toString().equals(
+          slipJson.getJsonObject("request").getString("requestID")))
+    );
+  }
+
+  @Test
+  void pickSlipsLimitIsRespected() {
+    circulationSettingsFixture.enableTlrFeature();
+
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+
+    int batchSize = 50; // default value used by CqlIndexValuesFinder
+    int pickSlipsLimit = batchSize * 2;
+    int requestCount = pickSlipsLimit + 1;
+    StaffSlipsRequestFetchService.setCustomRequestLimit(pickSlipsLimit);
+
+    UUID instanceId = UUID.randomUUID();
+    for (int i = 0; i < requestCount; i++) {
+      final int currentIndex = i;
+      UserResource requester = usersFixture.steve(
+        b -> b.withBarcode("user_page_" + currentIndex).withUsername("user_page_" + currentIndex));
+      itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId)
+          .withBarcode("item_page_" + currentIndex));
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester, servicePointId);
+    }
+
+    assertThat(requestsStorageClient.getAll().size(), is(requestCount));
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, pickSlipsLimit, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void pickSlipsWillBeSortedByLocationShelvingOrderOrTitle() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    UUID circDesk1 = servicePointsFixture.cd1().getId();
+
+    // Second floor, shelving order 456
+    val secondFloorCd1 = locationsFixture.secondFloorEconomics();
+    val temeraire1SecondFloorCd1 = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumber("456").withCallNumberPrefix(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("919191"));
+
+    // Second floor, shelving order 123
+    val temeraire2SecondFloorCd1 = itemsFixture.basedUponTemeraire(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumber("123").withCallNumberPrefix(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    // Third floor, no shelving order, small angry planet.
+    val thirdFloorCd1 = locationsFixture.thirdFloor();
+    val planetThirdFloorCd1 = itemsFixture.basedUponSmallAngryPlanet(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(thirdFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    // Third floor, no shelving order, dunkirk
+    val dunkirk2ThirdFloorCd1 = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(thirdFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        instanceBuilder -> instanceBuilder.withId(UUID.randomUUID()),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation()
+            .withBarcode("81818181"));
+
+    // Second floor, np shelving order, dunkirk
+    val dunkirkSecondFloorCd1 = itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder
+            .withPermanentLocation(secondFloorCd1)
+            .withNoTemporaryLocation()
+            .withCallNumberPrefix(null).withCallNumber(null).withCallNumberSuffix(null),
+        instanceBuilder -> instanceBuilder.withId(UUID.randomUUID()),
+        itemBuilder -> itemBuilder
+            .withNoPermanentLocation()
+            .withNoTemporaryLocation());
+
+    val james = usersFixture.james();
+    val charlotte = usersFixture.charlotte();
+    val steve = usersFixture.steve();
+
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(temeraire1SecondFloorCd1)
+        .by(james));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(temeraire2SecondFloorCd1)
+        .by(charlotte));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(planetThirdFloorCd1)
+        .by(charlotte));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(dunkirkSecondFloorCd1)
+        .by(steve));
+    requestsFixture.place(new RequestBuilder()
+        .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+        .withRequestType(SlipsType.PICK_SLIPS.getRequestType().getValue())
+        .withPickupServicePointId(circDesk1)
+        .forItem(dunkirk2ThirdFloorCd1)
+        .by(charlotte));
+
+    val response = SlipsType.PICK_SLIPS.get(circDesk1);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    JsonArray pickSlips = response.getJson().getJsonArray("pickSlips");
+
+    JsonObject item = pickSlips.getJsonObject(0).getJsonObject("item");
+    String sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / 123 / Temeraire"));
+
+    item = pickSlips.getJsonObject(1).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / 456 / Temeraire"));
+
+    item = pickSlips.getJsonObject(2).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("2nd Floor - Economics / null / Dunkirk"));
+
+    item = pickSlips.getJsonObject(3).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("3rd Floor / null / Dunkirk"));
+
+    item = pickSlips.getJsonObject(4).getJsonObject("item");
+    sortValues = item.getString("effectiveLocationSpecific")
+        + " / " + item.getString("shelvingOrder") + " / " + item.getString("title");
+    assertThat(sortValues, is("3rd Floor / null / The Long Way to a Small, Angry Planet"));
+  }
+
+  @Test
+  void responseContainsSearchSlipsForTLR() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var steve = usersFixture.steve();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    var item = buildItem(instance.getId(), location);
+    checkOutFixture.checkOutByBarcode(item);
+    var holdRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(steve);
+
+    var holdRequest = requestsClient.create(holdRequestBuilder);
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
+    assertThat(response.getJson(), hasJsonPath("searchSlips[0].item.title",
+      "The Long Way to a Small, Angry Planet"));
+  }
+
+  @Test
+  void pickSlipForTitleLevelRequestContainsItemData() {
+    circulationSettingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var requester = usersFixture.steve();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    buildItem(instance.getId(), location);
+
+    var request = requestsClient.create(new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .page()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withInstanceId(instance.getId())
+      .withPickupServicePointId(servicePointId)
+      .by(requester));
+
+    assertThat(requestsClient.getAll(), hasSize(1));
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
+    assertResponseContains(response, SlipsType.PICK_SLIPS, request, requester);
+
+    JsonObject pickSips = response.getJson()
+      .getJsonArray(SlipsType.PICK_SLIPS.getCollectionName())
+      .getJsonObject(0);
+
+    assertThat(pickSips, hasJsonPath("item.title", "The Long Way to a Small, Angry Planet"));
+    assertThat(pickSips, hasJsonPath("item.barcode", "test"));
+    assertThat(pickSips, hasJsonPath("item.materialType", "Book"));
+    assertThat(pickSips, hasJsonPath("item.loanType", "Can Circulate"));
+    assertThat(pickSips, hasJsonPath("item.status", ItemStatus.PAGED.getValue()));
+  }
+
+  @Test
+  void responseContainsSearchSlipsForQueueTLRs() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var steve = usersFixture.steve();
+    var james = usersFixture.james();
+    var rebecca = usersFixture.rebecca();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    var item = buildItem(instance.getId(), location);
+    checkOutFixture.checkOutByBarcode(item);
+    var firstHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(steve);
+    var firstHoldRequest = requestsClient.create(firstHoldRequestBuilder);
+
+    var secondHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(james);
+    var secondHoldRequest = requestsClient.create(secondHoldRequestBuilder);
+
+    var thirdHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(rebecca);
+    var thirdHoldRequest = requestsClient.create(thirdHoldRequestBuilder);
+
+    assertThat(requestsClient.getAll(), hasSize(3));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 3, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, firstHoldRequest, steve);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, secondHoldRequest, james);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, thirdHoldRequest, rebecca);
+  }
+
+  @Test
+  void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings() {
+    circulationSettingsFixture.enableTlrFeature();
+    UserResource requester = usersFixture.steve();
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+
+    for (int i = 0; i < 11; i++) {
+      UUID instanceId = UUID.randomUUID();
+      String itemBarcode = "item_" + i;
+      itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId).withBarcode(itemBarcode));
+
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    }
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertResponseHasItems(response, 11, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance() {
+    circulationSettingsFixture.enableTlrFeature();
+    int batchSize = 50; // default value from CqlIndexValuesFinder
+
+    UUID servicePointId = servicePointsFixture.cd1().getId();
+    UUID locationId = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(servicePointId)).getId();
+    UUID instanceId = UUID.randomUUID();
+    UUID holdingId = UUID.randomUUID();
+
+    for (int i = 0; i < batchSize + 1; i++) {
+      String userBarcode = "user_" + i;
+      String itemBarcode = "item_" + i;
+      UserResource requester = usersFixture.steve(builder ->
+        builder.withBarcode(userBarcode).withUsername(userBarcode));
+
+      itemsFixture.basedUponDunkirk(
+        holdingBuilder -> holdingBuilder.withId(holdingId).withEffectiveLocationId(locationId),
+        instanceBuilder -> instanceBuilder.withId(instanceId),
+        itemBuilder -> itemBuilder.withEffectiveLocation(locationId).withBarcode(itemBarcode));
+
+      requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    }
+
+    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    assertResponseHasItems(response, batchSize + 1, SlipsType.PICK_SLIPS);
+  }
+
+  @Test
+  void searchSlipForTitleLevelHoldRequestIsPrintableAtAllServicePointsWithRelevantHoldings() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.enableTlrFeature();
+
+    UserResource requester = usersFixture.steve();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
+
+    UUID servicePointId1 = servicePointsFixture.cd1().getId();
+    UUID servicePointId2 = servicePointsFixture.cd2().getId();
+    UUID servicePointId3 = servicePointsFixture.cd3().getId();
+
+    IndividualResource location1 = buildLocation("Location for service point 1", servicePointId1);
+    IndividualResource location2 = buildLocation("Location for service point 2", servicePointId2);
+
+    holdingsFixture.createHoldingsRecord(instanceId, location1.getId());
+    holdingsFixture.createHoldingsRecord(instanceId, location2.getId());
+
+    IndividualResource hold = requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, requester);
+    assertThat(hold.getJson(), allOf(hasNoJsonPath("itemId"), hasNoJsonPath("holdingsRecordId")));
+
+    assertResponseHasItems(SlipsType.SEARCH_SLIPS.get(servicePointId1), 1, SlipsType.SEARCH_SLIPS);
+    assertResponseHasItems(SlipsType.SEARCH_SLIPS.get(servicePointId2), 1, SlipsType.SEARCH_SLIPS);
+    assertResponseHasItems(SlipsType.SEARCH_SLIPS.get(servicePointId3), 0, SlipsType.SEARCH_SLIPS);
+  }
+
+  @Test
+  void servicePointForTitleLevelRequestPickSlipIsChosenBasedOnItemLocation() {
+    circulationSettingsFixture.enableTlrFeature();
+
+    UUID instanceId = UUID.randomUUID();
+    UserResource requester = usersFixture.steve();
+    UUID servicePointId1 = servicePointsFixture.cd1().getId();
+    UUID servicePointId2 = servicePointsFixture.cd2().getId();
+    UUID itemLocationId = buildLocation("Item location", servicePointId1).getId();
+    UUID holdingLocationId = buildLocation("Holding location", servicePointId2).getId();
+
+    ItemResource item = itemsFixture.basedUponDunkirk(
+      holdingBuilder -> holdingBuilder.withEffectiveLocationId(holdingLocationId),
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      itemBuilder -> itemBuilder.withEffectiveLocation(itemLocationId));
+
+    IndividualResource page = requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    assertThat(page.getJson(), hasJsonPath("itemId", item.getId().toString()));
+
+    assertResponseHasItems(SlipsType.PICK_SLIPS.get(servicePointId1), 1, SlipsType.PICK_SLIPS);
+    assertResponseHasItems(SlipsType.PICK_SLIPS.get(servicePointId2), 0, SlipsType.PICK_SLIPS);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
@@ -576,6 +1049,28 @@ class StaffSlipsTests extends APITests {
     }
   }
 
+  private void assertResponseContains(Response response, SlipsType slipsType,
+    IndividualResource request, UserResource requester) {
+
+    long count = getSlipsStream(response, slipsType)
+      .filter(ps ->
+        request.getId().toString().equals(
+          getNestedStringProperty(ps, REQUEST_KEY, "requestID"))
+          && requester.getBarcode().equals(
+            getNestedStringProperty(ps, REQUESTER_KEY, "barcode")))
+      .count();
+
+    if (count == 0) {
+      fail("Response does not contain a pick slip with expected combination" +
+        " of item, request and requester");
+    }
+
+    if (count > 1) {
+      fail("Response contains multiple pick slips with expected combination" +
+        " of item, request and requester: " + count);
+    }
+  }
+
   private Stream<JsonObject> getSlipsStream(Response response, SlipsType slipsType) {
     return JsonObjectArrayPropertyFetcher.toStream(response.getJson(), slipsType.getCollectionName());
   }
@@ -587,6 +1082,34 @@ class StaffSlipsTests extends APITests {
 
   private String getName(JsonObject jsonObject) {
     return jsonObject.getString("name");
+  }
+
+  private ItemResource buildItem(UUID instanceId, IndividualResource location) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId)
+        .withEffectiveLocationId(location.getId()),
+      instanceBuilder -> instanceBuilder
+        .addIdentifier(isbnIdentifierId, "9780866989732")
+        .withId(instanceId),
+      itemBuilder -> itemBuilder.withBarcode("test")
+        .withMaterialType(materialTypesFixture.book().getId()));
+  }
+
+  private IndividualResource buildLocation(String name, UUID primaryServicePointId) {
+    UUID institutionId = locationsFixture.createInstitution("Test institution").getId();
+    UUID campusId = locationsFixture.createCampus("Test campus", institutionId).getId();
+    UUID libraryId = locationsFixture.createLibrary("Test library", campusId).getId();
+
+    return locationsFixture.createLocation(
+      new LocationBuilder()
+        .forLibrary(libraryId)
+        .forCampus(campusId)
+        .forInstitution(institutionId)
+        .withName(name)
+        .withCode(name)
+        .withPrimaryServicePoint(primaryServicePointId));
   }
 
   @AllArgsConstructor
@@ -605,4 +1128,6 @@ class StaffSlipsTests extends APITests {
     }
 
   }
+
+
 }

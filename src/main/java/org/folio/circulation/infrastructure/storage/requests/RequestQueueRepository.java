@@ -1,5 +1,6 @@
 package org.folio.circulation.infrastructure.storage.requests;
 
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.RequestLevel.ITEM;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
@@ -7,13 +8,16 @@ import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 import static org.folio.circulation.support.http.client.PageLimit.oneThousand;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
-import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -60,9 +64,10 @@ public class RequestQueueRepository {
   public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
     String instanceId, String itemId) {
 
-    return tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled()
-      ? getByInstanceId(instanceId)
-      : getByItemId(itemId);
+    boolean isTlrEnabled = tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled();
+    log.info("getQueue:: TLR feature is {}", isTlrEnabled ? "enabled" : "disabled");
+
+    return isTlrEnabled ? getByInstanceId(instanceId) : getByItemId(itemId);
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext context) {
@@ -74,33 +79,47 @@ public class RequestQueueRepository {
     ).thenApply(result -> result.map(context::withRequestQueue));
   }
 
+  public CompletableFuture<Result<RequestQueue>> getByInstanceIdAndItemId(String instanceId,
+    String itemId) {
+
+    return get(itemId, instanceId, EnumSet.of(ITEM, TITLE));
+  }
+
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
-    return get("instanceId", instanceId, List.of(ITEM, TITLE));
+    return get(null, instanceId, EnumSet.of(ITEM, TITLE));
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
-    return get("itemId", itemId, List.of(ITEM));
+    return get(itemId, null, EnumSet.of(ITEM));
   }
 
-  private CompletableFuture<Result<RequestQueue>> get(String idFieldName, String id,
-    Collection<RequestLevel> requestLevels) {
+  private CompletableFuture<Result<RequestQueue>> get(String itemId, String instanceId,
+    EnumSet<RequestLevel> requestLevels) {
 
-    log.debug("get:: parameters idFieldName: {}, id: {}, requestLevels: {}",
-      () -> idFieldName, () -> id, () -> collectionAsString(requestLevels));
+    Map<String, String> filters = new HashMap<>();
+    if (itemId != null) {
+      filters.put("itemId", itemId);
+    }
+    if (instanceId != null) {
+      filters.put("instanceId", instanceId);
+    }
+    if (filters.isEmpty()) {
+      log.info("get:: itemId and instanceId are null, returning an empty queue");
+      return ofAsync(new RequestQueue(emptyList()));
+    }
 
     List<String> requestLevelStrings = requestLevels.stream()
       .map(RequestLevel::getValue)
       .collect(Collectors.toList());
 
-    final Result<CqlQuery> itemIdQuery = exactMatch(idFieldName, id);
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
     final Result<CqlQuery> requestLevelQuery = exactMatchAny("requestLevel", requestLevelStrings);
 
-    return itemIdQuery.combine(statusQuery, CqlQuery::and)
+    return CqlQuery.exactMatchAny(filters)
+      .combine(statusQuery, CqlQuery::and)
       .combine(requestLevelQuery, CqlQuery::and)
       .map(q -> q.sortBy(ascending("position")))
-      .after(query -> requestRepository.findBy(query,
-        MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
+      .after(q -> requestRepository.findBy(q, MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }

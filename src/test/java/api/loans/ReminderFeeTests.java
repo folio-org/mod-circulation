@@ -1,13 +1,11 @@
 package api.loans;
 
 import api.support.APITests;
-import api.support.builders.CheckOutByBarcodeRequestBuilder;
-import api.support.builders.FeeFineOwnerBuilder;
-import api.support.builders.HoldingBuilder;
-import api.support.builders.ItemBuilder;
+import api.support.builders.*;
 import api.support.fakes.FakeModNotify;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
+import api.support.http.OkapiHeaders;
 import api.support.http.UserResource;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.support.http.client.Response;
@@ -25,6 +23,7 @@ import java.util.UUID;
 import static api.support.fixtures.CalendarExamples.CASE_FIRST_DAY_CLOSED_FOLLOWING_OPEN;
 import static api.support.fixtures.CalendarExamples.FIRST_DAY;
 import static api.support.fixtures.ItemExamples.basedUponSmallAngryPlanet;
+import static api.support.utl.BlockOverridesUtils.buildOkapiHeadersWithPermissions;
 import static api.support.utl.PatronNoticeTestHelper.*;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static java.time.ZoneOffset.UTC;
@@ -42,6 +41,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.equalTo;
 
 class ReminderFeeTests extends APITests {
 
@@ -57,6 +57,8 @@ class ReminderFeeTests extends APITests {
   private UUID remindersOneDayBetweenNotOnClosedDaysId;
 
   private UUID remindersTwoDaysBetweenNotOnClosedDaysPolicyId;
+
+  private static final String OVERRIDE_RENEWAL_BLOCK_PERMISSION = "circulation.override-renewal-block.post";
 
   @BeforeEach
   void beforeEach() {
@@ -682,6 +684,56 @@ class ReminderFeeTests extends APITests {
   }
 
   @Test
+  void willRenewWithOverride() {
+    useFallbackPolicies(
+      loanPolicyId,
+      requestPolicyId,
+      noticePolicyId,
+      remindersTwoDaysBetweenIncludeClosedDaysPolicyId,
+      lostItemFeePolicyId);
+
+    // Check out item, all days open service point
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+    final JsonObject loan = response.getJson();
+    ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
+
+    final OkapiHeaders okapiHeaders = buildOkapiHeadersWithPermissions(
+      OVERRIDE_RENEWAL_BLOCK_PERMISSION);
+
+    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+
+    ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
+    // Two days after due date, send reminder
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
+
+    // Attempt renewal with override when Reminders Policy allowRenewalOfItemsWithReminderFees
+    // is set to 'False' and loan has reminders already sent out
+    JsonObject renewedLoan = loansFixture.renewLoan(
+      new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(borrower)
+      .withServicePointId(servicePointsFixture.cd1().getId().toString())
+      .withOverrideBlocks(
+        new RenewBlockOverrides()
+          .withRenewalBlock(new JsonObject())
+          .withComment("TEST_COMMENT").create()),
+      okapiHeaders).getJson();
+
+    assertThat("renewal count should be 1 after renewal",
+      renewedLoan.getInteger("renewalCount"), is(1));
+  }
+
+  @Test
   void willResetRemindersRescheduleNoticeOnRenewal() {
     useFallbackPolicies(
       loanPolicyId,
@@ -701,7 +753,7 @@ class ReminderFeeTests extends APITests {
     ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
 
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().get(0);
+    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
     scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
@@ -716,18 +768,137 @@ class ReminderFeeTests extends APITests {
     assertThat("loan should have first reminder", loanAfterReminder.encode(),
       hasJsonPath("reminders.lastFeeBilled.number", is(1)));
 
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().getFirst();
+
     JsonObject loanAfterRenewal = loansFixture.attemptRenewal(200,
       item, borrower).getJson();
     waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
-    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().get(0);
+    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().getFirst();
 
     assertThat("renewal count should be 1 after renewal",
       loanAfterRenewal.getInteger("renewalCount"), is(1));
+    assertThat("rescheduled reminder should have different runtime than previous, second reminder",
+      scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),
+      is(not(equalTo(rescheduledNotice.getInstant("nextRunTime").toString()))));
     assertThat("rescheduled notice should be scheduled later than initial notice",
       rescheduledNotice.getInstant("nextRunTime")
         .isAfter(initialScheduledNotice.getInstant("nextRunTime")));
     assertThat("Loan should have no reminders after renewal",
-      not(loanAfterRenewal.containsKey("reminders")));
+      !loanAfterRenewal.containsKey("reminders"));
+  }
+
+  @Test
+  void willResetRemindersRescheduleNoticeOnManualDueDateChange() {
+    useFallbackPolicies(
+      loanPolicyId,
+      requestPolicyId,
+      noticePolicyId,
+      remindersOneDayBetweenNotOnClosedDaysId,
+      lostItemFeePolicyId);
+
+    // Check out item, all days open service point
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+    final JsonObject loan = response.getJson();
+    ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
+
+    waitAtMost(3, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().getFirst();
+
+    ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
+
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    waitAtMost(3, SECONDS).until(accountsClient::getAll, hasSize(1));
+
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().getFirst();
+
+    JsonObject loanAfterReminder = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
+    assertThat("loan should have first reminder", loanAfterReminder.encode(),
+      hasJsonPath("reminders.lastFeeBilled.number", is(1)));
+
+    ChangeDueDateRequestBuilder changeDueDate =
+      new ChangeDueDateRequestBuilder()
+        .forLoan(loan.getString("id"))
+        .withDueDate(dueDate.plusDays(10));
+    changeDueDateFixture.attemptChangeDueDate(changeDueDate).getJson();
+    waitAtMost(3, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().getFirst();
+    JsonObject loanAfterDueDateChange = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
+    assertThat("Loan should have no reminders after due date change",
+      !loanAfterDueDateChange.containsKey("reminders"));
+    assertThat("rescheduled reminder should have different runtime than previous, second reminder",
+      scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),
+      is(not(equalTo(rescheduledNotice.getInstant("nextRunTime").toString()))));
+    assertThat("rescheduled notice should be scheduled later than initial notice",
+      rescheduledNotice.getInstant("nextRunTime")
+        .isAfter(initialScheduledNotice.getInstant("nextRunTime")));
+  }
+
+  @Test
+  void willResetRemindersRescheduleNoticeOnRecall() {
+    useFallbackPolicies(
+      loanPolicyId,
+      requestPolicyId,
+      noticePolicyId,
+      remindersOneDayBetweenNotOnClosedDaysId,
+      lostItemFeePolicyId);
+
+    // Check out item, all days open service point
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(item)
+        .to(borrower)
+        .on(loanDate)
+        .at(servicePointsFixture.cd1()));
+    final JsonObject loan = response.getJson();
+    ZonedDateTime dueDate = DateFormatUtil.parseDateTime(loan.getString("dueDate"));
+
+    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+    JsonObject initialScheduledNotice = scheduledNoticesClient.getAll().getFirst();
+
+    ZonedDateTime latestRunTime = dueDate.plusDays(2).truncatedTo(DAYS.toChronoUnit()).plusMinutes(1);
+    scheduledNoticeProcessingClient.runScheduledDigitalRemindersProcessing(latestRunTime);
+
+    verifyNumberOfScheduledNotices(1);
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    waitAtMost(1, SECONDS).until(accountsClient::getAll, hasSize(1));
+
+    JsonObject scheduledNoticeSecondReminder = scheduledNoticesClient.getAll().getFirst();
+
+    JsonObject loanAfterReminder = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
+    assertThat("loan should have first reminder", loanAfterReminder.encode(),
+      hasJsonPath("reminders.lastFeeBilled.number", is(1)));
+
+    requestsFixture.place(new RequestBuilder()
+      .open()
+      .recall()
+      .forItem(item)
+      .by(usersFixture.james())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    waitAtMost(1, SECONDS).until(scheduledNoticesClient::getAll, hasSize(1));
+    JsonObject loanAfterRecall = loansClient.getById(UUID.fromString(loan.getString("id"))).getJson();
+
+    JsonObject rescheduledNotice = scheduledNoticesClient.getAll().getFirst();
+
+    assertThat("rescheduled reminder should have different runtime than previous, second reminder",
+      scheduledNoticeSecondReminder.getInstant("nextRunTime").toString(),
+      is(not(equalTo(rescheduledNotice.getInstant("nextRunTime").toString()))));
+    assertThat("Loan should have no reminders after recall",
+      !loanAfterRecall.containsKey("reminders"));
+    assertThat("a new, rescheduled notice with a new ID should be created",
+      rescheduledNotice.getString("id"),
+        is(not(equalTo(initialScheduledNotice.getString("id")))));
   }
 
 }

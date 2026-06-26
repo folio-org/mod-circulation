@@ -1,5 +1,7 @@
 package org.folio.circulation;
 
+import static org.folio.Environment.getHttpMaxPoolSize;
+
 import java.lang.invoke.MethodHandles;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,8 +10,10 @@ import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
+import org.folio.circulation.resources.CheckOutByBarcodeDryRunResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
+import org.folio.circulation.resources.CirculationSettingsResource;
 import org.folio.circulation.resources.ClaimItemReturnedResource;
 import org.folio.circulation.resources.DeclareClaimedReturnedItemAsMissingResource;
 import org.folio.circulation.resources.DeclareLostResource;
@@ -20,6 +24,7 @@ import org.folio.circulation.resources.ExpiredSessionProcessingResource;
 import org.folio.circulation.resources.FeeFineNotRealTimeScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.FeeFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.HealthResource;
+import org.folio.circulation.resources.ItemsByInstanceResource;
 import org.folio.circulation.resources.ItemsInTransitResource;
 import org.folio.circulation.resources.LoanAnonymizationResource;
 import org.folio.circulation.resources.LoanCirculationRulesEngineResource;
@@ -30,6 +35,8 @@ import org.folio.circulation.resources.NoticeCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineCirculationRulesEngineResource;
 import org.folio.circulation.resources.OverdueFineScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.PickSlipsResource;
+import org.folio.circulation.resources.PrintEventsResource;
+import org.folio.circulation.resources.RequestAnonymizationResource;
 import org.folio.circulation.resources.RequestByInstanceIdResource;
 import org.folio.circulation.resources.RequestCirculationRulesEngineResource;
 import org.folio.circulation.resources.RequestCollectionResource;
@@ -37,11 +44,14 @@ import org.folio.circulation.resources.RequestHoldShelfClearanceResource;
 import org.folio.circulation.resources.RequestQueueResource;
 import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
+import org.folio.circulation.resources.ScheduledRequestAnonymizationProcessingResource;
 import org.folio.circulation.resources.ScheduledDigitalRemindersProcessingResource;
 import org.folio.circulation.resources.SearchSlipsResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
+import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
+import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
 import org.folio.circulation.resources.handlers.FeeFineBalanceChangedHandlerResource;
 import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
@@ -52,8 +62,8 @@ import org.folio.circulation.support.logging.Logging;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.PoolOptions;
 import io.vertx.ext.web.Router;
 
 public class CirculationVerticle extends AbstractVerticle {
@@ -70,7 +80,10 @@ public class CirculationVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     // bump up the connection pool size from the default value of 5
-    final HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(100));
+    int httpMaxPoolSize = getHttpMaxPoolSize();
+    final HttpClient client = vertx.createHttpClient(new PoolOptions()
+      .setHttp1MaxSize(httpMaxPoolSize)
+      .setHttp2MaxSize(httpMaxPoolSize));
 
     this.server = vertx.createHttpServer();
 
@@ -80,18 +93,24 @@ public class CirculationVerticle extends AbstractVerticle {
 
     new HealthResource().register(router);
     new TenantActivationResource(client).register(router);
-
-    new CheckOutByBarcodeResource("/circulation/check-out-by-barcode", client).register(router);
+    var checkOutByBarcodeResource = new CheckOutByBarcodeResource(
+      "/circulation/check-out-by-barcode", client);
+    checkOutByBarcodeResource.register(router);
+    new CheckOutByBarcodeDryRunResource(
+      "/circulation/check-out-by-barcode-dry-run", client, checkOutByBarcodeResource)
+      .register(router);
     new CheckInByBarcodeResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);
-
+    new HoldByBarcodeResource(client).register(router);
+    new PickupByBarcodeResource(client).register(router);
     new AllowedServicePointsResource(client).register(router);
     new LoanCollectionResource(client).register(router);
     new RequestCollectionResource(client).register(router);
     new RequestQueueResource(client).register(router);
     new RequestByInstanceIdResource(client).register(router);
+    new ItemsByInstanceResource(client).register(router);
 
     new RequestHoldShelfClearanceResource(
       "/circulation/requests-reports/hold-shelf-clearance/:servicePointId", client)
@@ -130,6 +149,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new ScheduledDigitalRemindersProcessingResource(client).register(router);
     new DueDateNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new RequestScheduledNoticeProcessingResource(client).register(router);
+    new RequestAnonymizationResource(client).register(router);
     new FeeFineScheduledNoticeProcessingResource(client).register(router);
     new FeeFineNotRealTimeScheduledNoticeProcessingResource(client).register(router);
     new OverdueFineScheduledNoticeProcessingResource(client).register(router);
@@ -138,6 +158,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new LoanAnonymizationResource(client).register(router);
     new DeclareLostResource(client).register(router);
     new ScheduledAnonymizationProcessingResource(client).register(router);
+    new ScheduledRequestAnonymizationProcessingResource(client).register(router);
     new EndPatronActionSessionResource(client).register(router);
     new ClaimItemReturnedResource(client).register(router);
     new ChangeDueDateResource(client).register(router);
@@ -150,33 +171,30 @@ public class CirculationVerticle extends AbstractVerticle {
     // Handlers
     new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
     new FeeFineBalanceChangedHandlerResource(client).register(router);
+    new CirculationSettingsResource(client).register(router);
+    new PrintEventsResource(client).register(router);
 
     server.requestHandler(router)
-      .listen(config().getInteger("port"), result -> {
-        if (result.succeeded()) {
-          log.info("Listening on {}", server.actualPort());
-          startFuture.complete();
-        } else {
-          startFuture.fail(result.cause());
-        }
+      .listen(config().getInteger("port"))
+      .onFailure(startFuture::fail)
+      .onSuccess(httpServer -> {
+        log.info("Listening on {}", server.actualPort());
+        startFuture.complete();
       });
   }
 
   @Override
   public void stop(Promise<Void> stopFuture) {
     final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
     log.info("Stopping circulation module");
 
-    if(server != null) {
-      server.close(result -> {
-        if (result.succeeded()) {
+    if (server != null) {
+      server.close()
+        .onFailure(stopFuture::fail)
+        .onSuccess(v -> {
           log.info("Stopped listening on {}", server.actualPort());
           stopFuture.complete();
-        } else {
-          stopFuture.fail(result.cause());
-        }
-      });
+        });
     }
   }
 }

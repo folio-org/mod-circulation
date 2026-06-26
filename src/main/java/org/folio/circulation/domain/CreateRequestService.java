@@ -1,6 +1,8 @@
 package org.folio.circulation.domain;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.domain.EcsRequestPhase.INTERMEDIATE;
+import static org.folio.circulation.domain.EcsRequestPhase.PRIMARY;
 import static org.folio.circulation.domain.RequestLevel.TITLE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_ID;
@@ -81,7 +83,7 @@ public class CreateRequestService {
     log.debug("createRequest:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
 
     final var requestRepository = repositories.getRequestRepository();
-    final var configurationRepository = repositories.getConfigurationRepository();
+    final var settingsRepository = repositories.getSettingsRepository();
     final var automatedBlocksValidator = requestBlockValidators.getAutomatedPatronBlocksValidator();
     final var manualBlocksValidator = requestBlockValidators.getManualPatronBlocksValidator();
 
@@ -101,7 +103,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(when(this::shouldCheckItem, this::checkItem, this::doNothing)))
       .thenComposeAsync(r -> r.after(this::checkPolicy))
       .thenApply(r -> r.next(this::refuseHoldOrRecallTlrWhenPageableItemExists))
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RequestAndRelatedRecords::withTimeZone))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
@@ -227,6 +229,12 @@ public class CreateRequestService {
     boolean tlrFeatureEnabled = request.getTlrSettingsConfiguration().isTitleLevelRequestsFeatureEnabled();
 
     if (tlrFeatureEnabled && request.isTitleLevel() && request.isHold()) {
+      EcsRequestPhase ecsRequestPhase = request.getEcsRequestPhase();
+      if (ecsRequestPhase == PRIMARY || ecsRequestPhase == INTERMEDIATE) {
+        log.warn("checkPolicy:: ECS TLR Hold with phase {} detected, skipping policy check", ecsRequestPhase);
+        return ofAsync(() -> records);
+      }
+
       log.info("checkPolicy:: checking policy for title-level hold");
       return completedFuture(checkPolicyForTitleLevelHold(records));
     }

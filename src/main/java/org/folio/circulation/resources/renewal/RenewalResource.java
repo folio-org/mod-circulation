@@ -29,37 +29,53 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
+import static org.folio.circulation.support.CqlSortBy.sortBy;
+import static org.folio.circulation.support.CqlSortClause.descending;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.http.client.CqlQuery.greaterThan;
+import static org.folio.circulation.support.http.client.CqlQuery.hasValue;
+import static org.folio.circulation.support.http.client.CqlQuery.lessThan;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.Environment;
 import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanRepresentation;
+import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.OverdueFineService;
 import org.folio.circulation.domain.OverduePeriodCalculatorService;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.override.BlockOverrides;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
+import org.folio.circulation.domain.representations.MetadataProperties;
+import org.folio.circulation.domain.representations.RequestProperties;
 import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
 import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
 import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
@@ -69,7 +85,7 @@ import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -86,6 +102,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.LostItemFeeRefundService;
@@ -93,6 +110,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
+import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -106,6 +125,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public abstract class RenewalResource extends Resource {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final String rootPath;
   private static final String COMMENT = "comment";
   private static final String DUE_DATE = "dueDate";
@@ -131,6 +151,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private void renew(RoutingContext routingContext) {
+    log.debug("renew:: body={}", routingContext.body()::asString);
     final WebContext webContext = new WebContext(routingContext);
     final Clients clients = Clients.create(webContext, client);
     final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
@@ -149,11 +170,12 @@ public abstract class RenewalResource extends Resource {
     final StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
     final LoanRepresentation loanRepresentation = new LoanRepresentation();
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
+    final SettingsRepository settingsRepository = new SettingsRepository(clients);
+    final CirculationSettingsService circulationSettingsService = new CirculationSettingsService(clients);
     final LoanScheduledNoticeService scheduledNoticeService = LoanScheduledNoticeService.using(clients);
     final ReminderFeeScheduledNoticeService scheduledRemindersService = new ReminderFeeScheduledNoticeService(clients);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(webContext, clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 
@@ -163,7 +185,7 @@ public abstract class RenewalResource extends Resource {
       FeeFineScheduledNoticeService.using(clients);
 
     //TODO: Validation check for same user should be in the domain service
-    JsonObject bodyAsJson = routingContext.getBodyAsJson();
+    JsonObject bodyAsJson = routingContext.body().asJsonObject();
     BlockOverrides overrideBlocks = getOverrideBlocks(bodyAsJson);
     OkapiPermissions permissions = OkapiPermissions.from(new WebContext(routingContext).getHeaders());
     final Validator<RenewalContext> automatedPatronBlocksValidator =
@@ -186,12 +208,12 @@ public abstract class RenewalResource extends Resource {
         overrideRenewValidator, r, errorHandler))
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
       .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
-      .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, errorHandler)))
-      .thenCompose(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, requestRepository, errorHandler)))
+      .thenCompose(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         RenewalContext::withTlrSettings))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
-      .thenCompose(r -> r.combineAfter(configurationRepository::findTimeZoneConfiguration,
+      .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RenewalContext::withTimeZone))
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
@@ -222,6 +244,8 @@ public abstract class RenewalResource extends Resource {
       .noneMatch(request -> request.isFor(loan));
 
     if (loan.wasDueDateChangedByRecall() && loanIsRecalled) {
+      log.info("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: unsetting due date changed " +
+        "by recall for loan {}", loan::getId);
       return renewalContext.withLoan(loan.unsetDueDateChangedByRecall());
     }
     else {
@@ -233,6 +257,9 @@ public abstract class RenewalResource extends Resource {
     RenewalContext renewalContext, Clients clients, ItemRepository itemRepository,
     UserRepository userRepository, LoanRepository loanRepository,
     OverdueFinePolicyRepository overdueFinePolicyRepository) {
+
+    log.info("processFeesFines:: loanId={}, isRenewalBlockOverrideRequested={}",
+      renewalContext.getLoan()::getId, () -> isRenewalBlockOverrideRequested);
 
     return isRenewalBlockOverrideRequested
       ? processFeesFinesForRenewalBlockOverride(renewalContext, clients,
@@ -328,7 +355,7 @@ public abstract class RenewalResource extends Resource {
 
   private CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
     RenewalContext renewalContext, LoanPolicyRepository loanPolicyRepository,
-    CirculationErrorHandler errorHandler) {
+    RequestRepository requestRepository, CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
       FAILED_TO_FETCH_USER)) {
@@ -336,7 +363,69 @@ public abstract class RenewalResource extends Resource {
       return completedFuture(succeeded(renewalContext));
     }
 
-    return loanPolicyRepository.lookupLoanPolicy(renewalContext);
+    return isEcsLoan(renewalContext.getLoan(), requestRepository)
+      .thenCompose(r -> r.after(isEcsLoan -> lookupLoanPolicy(renewalContext, isEcsLoan, loanPolicyRepository)))
+      .thenApply(mapResult(renewalContext.getLoan()::withLoanPolicy))
+      .thenApply(mapResult(renewalContext::withLoan));
+  }
+
+  private CompletableFuture<Result<Boolean>> isEcsLoan(Loan loan, RequestRepository requestRepository) {
+    log.info("isEcsLoan:: checking if loan {} was created for an ECS request", loan::getId);
+
+    if (!Environment.getEcsTlrFeatureEnabled()) {
+      log.info("isEcsLoan:: ECS TLR feature is not enabled");
+      return ofAsync(false);
+    }
+
+    if (!loan.getItem().isDcbItem()) {
+      log.info("isEcsLoan:: loaned item is not a DCB item");
+      return ofAsync(false);
+    }
+
+    if (loan.getUser().isDcbUser()) {
+      log.info("isEcsLoan:: loan was created for DCB user");
+      return ofAsync(false);
+    }
+
+    return findRequestForEcsLoan(loan, requestRepository)
+      .thenApply(mapResult(Objects::nonNull));
+  }
+
+  private CompletableFuture<Result<LoanPolicy>> lookupLoanPolicy(RenewalContext context, boolean isEcsLoan,
+    LoanPolicyRepository loanPolicyRepository) {
+
+    Loan loan = context.getLoan();
+    if (isEcsLoan) {
+      log.info("findLoanPolicy:: loan {} is an ECS loan, reusing loan policy {}",
+        loan::getId, loan::getLoanPolicyId);
+      return loanPolicyRepository.getLoanPolicyById(loan.getLoanPolicyId());
+    }
+
+    return loanPolicyRepository.lookupPolicy(loan);
+  }
+
+  private CompletableFuture<Result<Request>> findRequestForEcsLoan(Loan loan,
+    RequestRepository requestRepository) {
+
+    log.info("findRequestForEcsLoan:: looking for filled ECS request for loan {}", loan::getId);
+
+    Result<CqlQuery> requestQuery = exactMatch(RequestProperties.REQUESTER_ID, loan.getUserId())
+      .combine(exactMatch(RequestProperties.ITEM_ID, loan.getItemId()), CqlQuery::and)
+      .combine(exactMatch(RequestProperties.STATUS, RequestStatus.CLOSED_FILLED.getValue()), CqlQuery::and)
+      .combine(hasValue(RequestProperties.ECS_REQUEST_PHASE), CqlQuery::and)
+      .combine(greaterThan(MetadataProperties.UPDATED_DATE, loan.getCreatedDate().minusMinutes(1)), CqlQuery::and)
+      .combine(lessThan(MetadataProperties.UPDATED_DATE, loan.getCreatedDate()), CqlQuery::and)
+      .map(q -> q.sortBy(sortBy(descending(MetadataProperties.UPDATED_DATE))));
+
+    return requestQuery.after(query -> requestRepository.findByWithoutItems(query, PageLimit.one()))
+      .thenApply(mapResult(MultipleRecords::firstOrNull))
+      .thenApply(r -> r.peek(request -> {
+        if (request != null) {
+          log.info("findRequestForEcsLoan:: request found: {}", request::getId);
+        } else {
+          log.info("findRequestForEcsLoan:: request not found");
+        }
+      }));
   }
 
   private CompletableFuture<Result<RenewalContext>> lookupOverdueFinePolicy(
@@ -423,7 +512,7 @@ public abstract class RenewalResource extends Resource {
   }
 
   private BlockOverrides getOverrideBlocks(JsonObject request) {
-    return BlockOverrides.from(getObjectProperty(request, "overrideBlocks"));
+    return BlockOverrides.from(getObjectProperty(request, OVERRIDE_BLOCKS));
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseIfNoPermissionsForRenewalOverride(
@@ -438,9 +527,11 @@ public abstract class RenewalResource extends Resource {
   }
 
   public CompletableFuture<Result<RenewalContext>> renewThroughOverride(RenewalContext context) {
+    log.info("renewThroughOverride:: loanId={}", context.getLoan()::getId);
     final JsonObject overrideBlocks = context.getRenewalRequest().getJsonObject(OVERRIDE_BLOCKS);
     final String comment = getProperty(overrideBlocks, COMMENT);
     if (StringUtils.isBlank(comment)) {
+      log.warn("renewThroughOverride:: override renewal request has no comment");
       return completedFuture(failedValidation("Override renewal request must have a comment",
         COMMENT, null));
     }
@@ -455,6 +546,9 @@ public abstract class RenewalResource extends Resource {
       .filter(Request::isRecall)
       .anyMatch(request -> request.isFor(loan));
 
+    log.info("renewThroughOverride:: loanId={}, loanIsRecalled={}, overrideDueDate={}",
+      loan::getId, () -> loanIsRecalled, () -> overrideDueDate);
+
     return completedFuture(overrideRenewal(loan, ClockUtil.getZonedDateTime(),
       overrideDueDate, comment, loanIsRecalled))
       .thenApply(mapResult(context::withLoan));
@@ -467,42 +561,55 @@ public abstract class RenewalResource extends Resource {
       final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
       if (loanPolicy.isNotLoanable() || loanPolicy.isNotRenewable()) {
+        log.info("overrideRenewal:: loan policy is not loanable/renewable for loanId={}", loan::getId);
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
       if (unableToCalculateProposedDueDate(loan, systemDate)) {
+        log.info("overrideRenewal:: unable to calculate proposed due date for loanId={}", loan::getId);
         return overrideRenewalForDueDate(loan, overrideDueDate, comment);
       }
 
       final Result<ZonedDateTime> newDueDateResult = calculateNewDueDate(overrideDueDate, loan, systemDate);
 
       if (loanPolicy.hasReachedRenewalLimit(loan)) {
+        log.info("overrideRenewal:: loan has reached renewal limit for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (hasRecallRequest) {
+        log.info("overrideRenewal:: loan has recall request for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (loan.isItemLost()) {
+        log.info("overrideRenewal:: item is lost for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
       if (proposedDueDateIsSameOrEarlier(loan, systemDate)) {
+        log.info("overrideRenewal:: proposed due date is same or earlier for loanId={}", loan::getId);
         return processRenewal(newDueDateResult, loan, comment);
       }
 
+      if (loan.getLastReminderFeeBilledNumber() != null && loan.getLastReminderFeeBilledNumber()>0) {
+        log.info("overrideRenewal:: loan has reminder fees for loanId={}", loan::getId);
+        return processRenewal(newDueDateResult, loan, comment);
+      }
       return failedValidation(errorForNotMatchingOverrideCases(loanPolicy));
 
     } catch (Exception e) {
+      log.warn("overrideRenewal:: exception during override renewal for loanId={}", loan.getId(), e);
       return failedDueToServerError(e);
     }
   }
 
   private Result<Loan> overrideRenewalForDueDate(Loan loan, ZonedDateTime overrideDueDate, String comment) {
     if (overrideDueDate == null) {
+      log.warn("overrideRenewalForDueDate:: overrideDueDate is null for loanId={}", loan::getId);
       return failedValidation(errorForDueDate());
     }
+    log.info("overrideRenewalForDueDate:: overriding due date for loanId={}, overrideDueDate={}", loan::getId, () -> overrideDueDate);
     return succeeded(overrideRenewLoan(overrideDueDate, loan, comment));
   }
 
@@ -537,7 +644,8 @@ public abstract class RenewalResource extends Resource {
 
   private Result<ZonedDateTime> calculateProposedDueDate(Loan loan, ZonedDateTime systemDate) {
     return loan.getLoanPolicy()
-      .determineStrategy(null, true, false, systemDate).calculateDueDate(loan);
+      .determineStrategy(null, true, false, systemDate, loan.getItemId())
+      .calculateDueDate(loan);
   }
 
   private boolean newDueDateAfterCurrentDueDate(Loan loan, Result<ZonedDateTime> proposedDueDateResult) {
@@ -555,6 +663,8 @@ public abstract class RenewalResource extends Resource {
 
   public Result<RenewalContext> regularRenew(RenewalContext context,
     CirculationErrorHandler errorHandler, ZonedDateTime renewDate) {
+
+    log.debug("regularRenew:: loanId={}", context.getLoan()::getId);
 
     return validateIfItemIsLoanable(context)
       .mapFailure(failure -> errorHandler.handleValidationError(failure,
@@ -575,9 +685,11 @@ public abstract class RenewalResource extends Resource {
 
   private Result<RenewalContext> validateIfItemIsLoanable(RenewalContext context) {
     LoanPolicy loanPolicy = context.getLoan().getLoanPolicy();
-    return loanPolicy.isNotLoanable()
-      ? failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable")))
-      : succeeded(context);
+    if (loanPolicy.isNotLoanable()) {
+      log.info("validateIfItemIsLoanable:: item is not loanable for loanId={}", context.getLoan()::getId);
+      return failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable")));
+    }
+    return succeeded(context);
   }
 
   private Result<RenewalContext> validateIfRenewIsAllowed(RenewalContext context,
@@ -604,6 +716,8 @@ public abstract class RenewalResource extends Resource {
   private Result<RenewalContext> validateIfRenewIsPossible(RenewalContext context) {
     Loan loan = context.getLoan();
     if (ITEM_STATUSES_NOT_POSSIBLE_TO_RENEW.contains(loan.getItemStatus())) {
+      log.info("validateIfRenewIsPossible:: renewal not possible for loanId={}, itemStatus={}",
+        loan::getId, loan::getItemStatusName);
       final List<ValidationError> errors = new ArrayList<>();
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(), loan.getItemId()));
       return failedValidation(errors);
@@ -615,6 +729,7 @@ public abstract class RenewalResource extends Resource {
     CirculationErrorHandler errorHandler) {
 
     if (errorHandler.hasAny(RENEWAL_ITEM_IS_NOT_LOANABLE)) {
+      log.info("renew:: skipping renew because item is not loanable");
       return succeeded(context);
     }
 
@@ -628,15 +743,17 @@ public abstract class RenewalResource extends Resource {
 
     if (errors.isEmpty()) {
       final BlockOverrides blockOverrides = BlockOverrides.from(getObjectProperty(
-        context.getRenewalRequest(), "overrideBlocks"));
+        context.getRenewalRequest(), OVERRIDE_BLOCKS));
 
       if (!blockOverrides.getPatronBlockOverride().isRequested() &&
         !blockOverrides.getRenewalBlockOverride().isRequested()) {
 
+        log.info("renew:: performing regular renewal for loanId={}", loan::getId);
         return proposedDueDateResult
           .map(dueDate -> loan.renew(dueDate, loanPolicy.getId()))
           .map(l -> context);
       }
+      log.info("renew:: performing override renewal for loanId={}", loan::getId);
       return proposedDueDateResult
         .map(dueDate -> loan.overrideRenewal(
           dueDate, loanPolicy.getId(), blockOverrides.getComment()))
@@ -652,9 +769,13 @@ public abstract class RenewalResource extends Resource {
       if (proposedDueDateResult.cause() instanceof ValidationErrorFailure) {
         var failureCause = (ValidationErrorFailure) proposedDueDateResult.cause();
 
+        log.warn("addErrorsIfDueDateResultFailed:: due date calculation failed for loanId={}, errors={}",
+          loan::getId, failureCause::getErrors);
         errors.addAll(failureCause.getErrors());
       }
     } else {
+      log.debug("addErrorsIfDueDateResultFailed:: checking due date for loanId={}, proposedDueDate={}",
+        loan::getId, proposedDueDateResult::value);
       errorWhenEarlierOrSameDueDate(loan, proposedDueDateResult.value(), errors);
     }
   }
@@ -665,7 +786,7 @@ public abstract class RenewalResource extends Resource {
     final var loanPolicy = loan.getLoanPolicy();
     final var isRenewalWithHoldRequest = firstRequestForLoanedItemIsHold(requestQueue, loan);
 
-    return loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate)
+    return loanPolicy.determineStrategy(null, true, isRenewalWithHoldRequest, systemDate, loan.getItemId())
       .calculateDueDate(loan);
   }
 
@@ -702,19 +823,23 @@ public abstract class RenewalResource extends Resource {
     final LoanPolicy loanPolicy = loan.getLoanPolicy();
 
     if (loanPolicy.isNotRenewable()) {
+      log.info("validateIfRenewIsAllowedAndDueDateRequired:: loan is not renewable, loanId={}", loan::getId);
       errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
     }
     if (firstRequestForLoanedItemIsHold(requestQueue, loan)) {
       if (!loanPolicy.isHoldRequestRenewable()) {
+        log.info("validateIfRenewIsAllowedAndDueDateRequired:: hold request is not renewable, loanId={}", loan::getId);
         errors.add(loanPolicyValidationError(loanPolicy, CAN_NOT_RENEW_ITEM_ERROR));
       }
 
       if (loanPolicy.isFixed()) {
         if (loanPolicy.hasAlternateRenewalLoanPeriodForHolds()) {
+          log.info("validateIfRenewIsAllowedAndDueDateRequired:: fixed policy has alternate renewal period for holds, loanId={}", loan::getId);
           errors.add(loanPolicyValidationError(loanPolicy,
             FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS));
         }
         if (loanPolicy.hasRenewalPeriod()) {
+          log.info("validateIfRenewIsAllowedAndDueDateRequired:: fixed policy has alternate renewal period, loanId={}", loan::getId);
           errors.add(loanPolicyValidationError(loanPolicy,
             FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD));
         }

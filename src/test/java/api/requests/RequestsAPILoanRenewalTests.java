@@ -302,7 +302,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWhenFirstRequestInQueueIsItemLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -316,7 +316,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWhenFirstRequestInQueueIsTitleLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -334,7 +334,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void forbidRenewalWhenFirstRequestInQueueIsTitleLevelHoldWithoutItemId() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending();
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.charlotte();
@@ -348,7 +348,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void alternateLoanPeriodIsNotUsedWhenFirstRequestInQueueIsItemLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     useRollingPolicyWithRenewingAllowedForHoldingRequest(); // base loan period - 3 weeks, alternate - 4 weeks
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -364,7 +364,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void alternateLoanPeriodIsNotUsedForRenewalWhenFirstRequestInQueueIsTitleLevelHoldForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     useRollingPolicyWithRenewingAllowedForHoldingRequest();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
@@ -384,7 +384,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void alternateLoanPeriodIsUsedForRenewalWhenFirstRequestInQueueIsTitleLevelHoldWithoutItemId() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     useRollingPolicyWithRenewingAllowedForHoldingRequest(); // base loan period - 3 weeks, alternate - 4 weeks
     ItemResource item = itemsFixture.basedUponNod();
     UUID instanceId = item.getInstanceId();
@@ -400,7 +400,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void forbidRenewalWhenTitleLevelRecallRequestExistsForSameItem() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.james();
     checkOutFixture.checkOutByBarcode(item, borrower);
@@ -418,7 +418,7 @@ class RequestsAPILoanRenewalTests extends APITests {
 
   @Test
   void allowRenewalWhenTitleLevelRecallRequestExistsForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
     ItemResource itemForRequest = items.get(1);
@@ -592,12 +592,13 @@ class RequestsAPILoanRenewalTests extends APITests {
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
-        "renewal would not change the due date"))));
+        "renewal would not change the due date, " +
+        "loan has reminder fees"))));
   }
 
   @Test
   void forbidRenewalOverrideWhenTitleLevelRecallRequestExistsForDifferentItemOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource itemForLoan = items.get(0);
     ItemResource itemForRequest = items.get(1);
@@ -623,7 +624,8 @@ class RequestsAPILoanRenewalTests extends APITests {
         "renewal date falls outside of the date ranges in the loan policy, " +
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
-        "renewal would not change the due date"))));
+        "renewal would not change the due date, " +
+        "loan has reminder fees"))));
   }
 
   @Test

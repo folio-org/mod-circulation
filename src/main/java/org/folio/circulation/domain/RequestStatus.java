@@ -30,6 +30,9 @@ public enum RequestStatus {
   private static final EnumSet<RequestStatus> OPEN_STATUSES = EnumSet.of(
     OPEN_NOT_YET_FILLED, OPEN_AWAITING_PICKUP, OPEN_IN_TRANSIT, OPEN_AWAITING_DELIVERY);
 
+  private static final EnumSet<RequestStatus> CLOSED_STATUSES = EnumSet.of(
+    CLOSED_FILLED, CLOSED_CANCELLED, CLOSED_UNFILLED, CLOSED_PICKUP_EXPIRED);
+
   private final String value;
 
   public static String invalidStatusErrorMessage() {
@@ -58,6 +61,11 @@ public enum RequestStatus {
   public static List<String> openStates() {
     return OPEN_STATUSES.stream().map(RequestStatus::getValue)
       .collect(Collectors.toList());
+  }
+
+  public static List<String> closedStates() {
+    return CLOSED_STATUSES.stream().map(RequestStatus::getValue)
+      .toList();
   }
 
   public boolean isValid() {

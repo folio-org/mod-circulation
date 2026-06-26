@@ -6,6 +6,8 @@ import static org.folio.circulation.domain.representations.LoanProperties.LOAN_P
 import static org.folio.circulation.domain.representations.LoanProperties.LOST_ITEM_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.OVERDUE_FINE_POLICY;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
+import static org.folio.circulation.domain.representations.LoanProperties.REMINDERS;
+
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
@@ -31,33 +33,42 @@ public class LoanRepresentation {
     JsonObject extendedRepresentation = extendedLoan(loan.asJson(), loan.getItem());
 
     if(loan.isDueDateChangedByNearExpireUser()) {
-      log.info("extendedLoan:: due date changed by near expire user");
+      log.debug("extendedLoan:: due date changed by near expire user");
       extendedRepresentation.put("dueDateChangedByNearExpireUser", loan.isDueDateChangedByNearExpireUser());
     }
 
     if(loan.isDueDateChangedByHold()) {
-      log.info("extendedLoan:: due date changed by hold");
+      log.debug("extendedLoan:: due date changed by hold");
       extendedRepresentation.put("dueDateChangedByHold",loan.isDueDateChangedByHold());
     }
 
     if(loan.getCheckinServicePoint() != null) {
-      log.info("extendedLoan:: checkinServicePoint is not null");
+      log.debug("extendedLoan:: checkinServicePoint is not null");
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckinServicePoint(), "checkinServicePoint");
     }
 
     if(loan.getCheckoutServicePoint() != null) {
-      log.info("extendedLoan:: checkoutServicePoint is not null");
+      log.debug("extendedLoan:: checkoutServicePoint is not null");
       addAdditionalServicePointProperties(extendedRepresentation, loan.getCheckoutServicePoint(), "checkoutServicePoint");
     }
 
     if (loan.getUser() != null) {
-      log.info("extendedLoan:: user is not null");
+      log.debug("extendedLoan:: user is not null");
       additionalBorrowerProperties(extendedRepresentation, loan.getUser());
     } else {
       //When there is no user, it means that the loan has been anonymized
-      log.info("extendedLoan:: there is no user, removing borrower");
+      log.debug("extendedLoan:: there is no user, removing borrower");
       extendedRepresentation.remove(BORROWER);
     }
+
+    if (loan.getOverdueFinePolicy().isReminderFeesPolicy()
+      && loan.getLastReminderFeeBilledNumber() != null) {
+      extendedRepresentation.getJsonObject(REMINDERS)
+        .put("renewalBlocked",
+          !loan.getOverdueFinePolicy()
+            .getRemindersPolicy().getAllowRenewalOfItemsWithReminderFees());
+    }
+
 
     addPolicy(extendedRepresentation, loan.getLoanPolicy(), LOAN_POLICY);
     addPolicy(extendedRepresentation, loan.getOverdueFinePolicy(), OVERDUE_FINE_POLICY);
@@ -166,9 +177,9 @@ public class LoanRepresentation {
     borrowerSummary.put("lastName", borrower.getLastName());
     borrowerSummary.put("middleName", borrower.getMiddleName());
     borrowerSummary.put("barcode", borrower.getBarcode());
-
+    borrowerSummary.put("preferredFirstName",borrower.getPreferredFirstName());
+    borrowerSummary.put("patronGroup",borrower.getPatronGroupId());
     loanRepresentation.put(BORROWER, borrowerSummary);
-
     additionalPatronGroupProperties(loanRepresentation, borrower.getPatronGroup());
   }
 

@@ -16,11 +16,8 @@ import org.folio.circulation.support.GetManyRecordsClient;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.json.JsonArray;
@@ -28,8 +25,6 @@ import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
 class FindMultipleRecordsUsingCqlTests {
-  @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Test
   void shouldFetchRecordsInSinglePage() {

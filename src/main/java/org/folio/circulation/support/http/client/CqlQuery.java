@@ -13,7 +13,9 @@ import java.lang.invoke.MethodHandles;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.support.CqlSortBy;
@@ -67,6 +69,20 @@ public class CqlQuery implements QueryParameter {
 
     return Result.of(() -> new CqlQuery(
       format("%s==(%s)", indexName, join(" or ", wrapValuesInQuotes(filteredValues))), none()));
+  }
+
+  public static Result<CqlQuery> exactMatchAny(Map<String, String> indicesToValues) {
+    String rawQuery = indicesToValues.entrySet()
+      .stream()
+      .filter(entry -> entry.getValue() != null)
+      .map(entry -> String.format("%s==\"%s\"", entry.getKey(), entry.getValue()))
+      .collect(Collectors.joining(" or "));
+
+    if (rawQuery.isEmpty()) {
+      return failedDueToServerError("Cannot generate empty CQL query");
+    }
+
+    return Result.of(() -> new CqlQuery("(" + rawQuery + ")", none()));
   }
 
   /**

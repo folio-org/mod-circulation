@@ -19,6 +19,15 @@ class SearchSlipsTests extends APITests {
 
   @Test
   void responseShouldHaveEmptyListOfSearchSlipsRecords() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    Response response = ResourceClient.forSearchSlips().getById(UUID.randomUUID());
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 0);
+  }
+
+  @Test
+  void responseShouldHaveNoSearchSlipsRecords() {
+    circulationSettingsFixture.setPrintHoldRequests(false);
     Response response = ResourceClient.forSearchSlips().getById(UUID.randomUUID());
     assertThat(response.getStatusCode(), is(HTTP_OK));
     assertResponseHasItems(response, 0);

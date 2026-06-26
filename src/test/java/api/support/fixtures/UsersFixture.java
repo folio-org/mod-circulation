@@ -2,7 +2,10 @@ package api.support.fixtures;
 
 import static api.support.fixtures.UserExamples.basedUponBobbyBibbin;
 import static api.support.fixtures.UserExamples.basedUponCharlotteBroadwell;
+import static api.support.fixtures.UserExamples.basedUponDcbUser;
+import static api.support.fixtures.UserExamples.basedUponGroot;
 import static api.support.fixtures.UserExamples.basedUponHenryHanks;
+import static api.support.fixtures.UserExamples.basedUponJames;
 import static api.support.fixtures.UserExamples.basedUponJamesRodwell;
 import static api.support.fixtures.UserExamples.basedUponJessicaPontefract;
 import static api.support.fixtures.UserExamples.basedUponRebeccaStuart;
@@ -32,6 +35,16 @@ public class UsersFixture {
   public UserResource jessica() {
     return createIfAbsent(basedUponJessicaPontefract()
       .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource groot() {
+    return createIfAbsent(basedUponGroot()
+      .inGroupFor(patronGroupsFixture.regular()));
+  }
+
+  public UserResource KimJames() {
+    return createIfAbsent(basedUponJames()
+      .inGroupFor(patronGroupsFixture.staff()));
   }
 
   public UserResource james() {
@@ -91,6 +104,15 @@ public class UsersFixture {
 
   public UserResource noUserGroupBob(Function<UserBuilder, UserBuilder> additionalConfiguration) {
     return createIfAbsent(additionalConfiguration.apply(basedUponBobbyBibbin()));
+  }
+
+  public UserResource dcbUser() {
+    return dcbUser(identity());
+  }
+
+  public UserResource dcbUser(Function<UserBuilder, UserBuilder> additionalConfiguration) {
+    return createIfAbsent(additionalConfiguration.apply(basedUponDcbUser()
+      .inGroupFor(patronGroupsFixture.regular())));
   }
 
   public void remove(UserResource user) {

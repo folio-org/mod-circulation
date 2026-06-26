@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toSet;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.collectionAsString;
@@ -27,6 +28,7 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
 public class InstanceRepository {
+  private static final String INSTANCES = "instances";
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionResourceClient instancesClient;
 
@@ -48,21 +50,35 @@ public class InstanceRepository {
       .thenApply(r -> r.map(mapper::toDomain));
   }
 
+  public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByRequests(
+    MultipleRecords<Request> requests) {
+
+    log.debug("fetchByRequests:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(requests));
+
+    return fetchByIds(requests.getRecords().stream()
+      .map(Request::getInstanceId)
+      .collect(toSet()));
+  }
+
   public CompletableFuture<Result<MultipleRecords<Instance>>> fetchByIds(
     Collection<String> instanceIds) {
 
+    log.info("fetchByIds:: fetching instances by {} IDs", instanceIds::size);
     log.debug("fetchByIds:: parameters instanceIds: {}", () -> collectionAsString(instanceIds));
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances",
-      mapper::toDomain)
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES, mapper::toDomain)
       .findByIds(instanceIds);
   }
 
 
-  public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(MultipleRecords<Request> multipleRequests) {
-    log.debug("findInstancesForRequests:: parameters multipleRequests: {}", () -> multipleRecordsAsString(multipleRequests));
+  public CompletableFuture<Result<MultipleRecords<Request>>> findInstancesForRequests(
+    MultipleRecords<Request> multipleRequests) {
+
+    log.debug("findInstancesForRequests:: parameters multipleRequests: {}",
+      () -> multipleRecordsAsString(multipleRequests));
 
     Collection<Request> requests = multipleRequests.getRecords();
     final List<String> instanceIdsToFetch = requests.stream()
@@ -79,7 +95,7 @@ public class InstanceRepository {
 
     InstanceMapper mapper = new InstanceMapper();
 
-    return findWithMultipleCqlIndexValues(instancesClient, "instances", mapper::toDomain)
+    return findWithMultipleCqlIndexValues(instancesClient, INSTANCES, mapper::toDomain)
       .findByIds(instanceIdsToFetch)
       .thenApply(multipleInstancesResult -> multipleInstancesResult.next(
         multipleInstances -> {

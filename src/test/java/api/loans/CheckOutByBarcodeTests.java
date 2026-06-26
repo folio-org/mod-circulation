@@ -36,6 +36,7 @@ import static api.support.matchers.LoanMatchers.isOpen;
 import static api.support.matchers.RequestMatchers.hasPosition;
 import static api.support.matchers.RequestMatchers.isClosedFilled;
 import static api.support.matchers.RequestMatchers.isOpenAwaitingPickup;
+import static api.support.matchers.RequestMatchers.isOpenInTransit;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
@@ -141,11 +142,11 @@ class CheckOutByBarcodeTests extends APITests {
   private static final ZonedDateTime TEST_DUE_DATE =
     ZonedDateTime.of(2019, 4, 20, 11, 30, 0, 0, UTC);
   public static final String OVERRIDE_ITEM_NOT_LOANABLE_BLOCK_PERMISSION =
-    "circulation.override-item-not-loanable-block";
+    "circulation.override-item-not-loanable-block.post";
   public static final String OVERRIDE_PATRON_BLOCK_PERMISSION =
-    "circulation.override-patron-block";
+    "circulation.override-patron-block.post";
   public static final String OVERRIDE_ITEM_LIMIT_BLOCK_PERMISSION =
-    "circulation.override-item-limit-block";
+    "circulation.override-item-limit-block.post";
   public static final String INSUFFICIENT_OVERRIDE_PERMISSIONS =
     "Insufficient override permissions";
   private static final String TEST_COMMENT = "Some comment";
@@ -351,6 +352,29 @@ class CheckOutByBarcodeTests extends APITests {
 
     assertThat("due date should be based upon fixed due date schedule",
       parseDateTime(loan.getString("dueDate")), is(END_OF_CURRENT_YEAR_DUE_DATE));
+  }
+
+  @Test
+  void canCheckOutUsingForceLoanPolicyId() {
+    IndividualResource loanPolicy = loanPoliciesFixture.canCirculateFixed();
+    IndividualResource forceLoanPolicy = loanPoliciesFixture.canCirculateRolling();
+    IndividualResource overdueFinePolicy = overdueFinePoliciesFixture.facultyStandard();
+    IndividualResource lostItemFeePolicy = lostItemFeePoliciesFixture.facultyStandard();
+    useFallbackPolicies(loanPolicy.getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.activeNotice().getId(),
+      overdueFinePolicy.getId(),
+      lostItemFeePolicy.getId());
+
+    final IndividualResource response = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder()
+        .forItem(itemsFixture.basedUponSmallAngryPlanet())
+        .to(usersFixture.steve())
+        .on(getZonedDateTime())
+        .at(UUID.randomUUID())
+        .forceLoanPolicy(forceLoanPolicy.getId().toString()));
+
+    loanHasLoanPolicyProperties(response.getJson(), forceLoanPolicy);
   }
 
   @Test
@@ -2492,7 +2516,7 @@ class CheckOutByBarcodeTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = TlrFeatureStatus.class, names = {"DISABLED", "NOT_CONFIGURED"})
   void titleLevelRequestIsIgnoredWhenTlrFeatureIsNotEnabled(TlrFeatureStatus tlrFeatureStatus) {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
     UserResource borrower = usersFixture.steve();
@@ -2519,7 +2543,7 @@ class CheckOutByBarcodeTests extends APITests {
     "Title, Title"
   })
   void canFulfilPageAndHoldRequestsWithMixedLevels(String pageRequestLevel, String holdRequestLevel) {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     ItemResource item = itemsFixture.basedUponNod();
     UserResource firstRequester = usersFixture.steve();
@@ -2582,7 +2606,7 @@ class CheckOutByBarcodeTests extends APITests {
 
   @Test
   void canCheckoutItemWhenTitleLevelPageRequestsExistForDifferentItemsOfSameInstance() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(4);
     UUID instanceId = items.stream().findAny().orElseThrow().getInstanceId();
@@ -2613,7 +2637,7 @@ class CheckOutByBarcodeTests extends APITests {
   void cannotCheckoutItemWhenTitleLevelPageRequestExistsForSameItem(
     String firstRequestLevel, String secondRequestLevel) {
 
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(2);
     ItemResource randomItem = items.stream().findAny().orElseThrow();
@@ -2750,6 +2774,45 @@ class CheckOutByBarcodeTests extends APITests {
     Assertions.assertTrue(responseList.stream().anyMatch(x -> x.getResponse().getStatusCode() == 201));
     Assertions.assertTrue(responseList.stream().anyMatch(x -> x.getResponse().getBody().
       contains("Patron has reached maximum limit of 1 items for loan type")));
+  }
+
+  @Test
+  void circulationItemCheckOutUpdatesPrimaryEcsRequestStatus() {
+    circulationSettingsFixture.enableTlrFeature();
+    UUID itemId = UUID.randomUUID();
+    String itemBarcode = "item_barcode";
+    UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+    UserResource requester = usersFixture.steve();
+    IndividualResource realInstance = instancesFixture.basedUponDunkirk();
+
+    // place title-level hold on instance with no items
+    IndividualResource initialRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
+      realInstance.getId(), requester, ZonedDateTime.now(), pickupServicePointId);
+    UUID requestId = initialRequest.getId();
+
+    // create circulation item which has same ID as the "real" item, but different holdingsId, instanceId, etc.
+    UUID dcbInstanceId = UUID.randomUUID();
+    IndividualResource dcbHoldings = holdingsFixture.defaultWithHoldings(dcbInstanceId);
+    final IndividualResource circulationItem = circulationItemsFixture.createCirculationItem(
+      itemId, itemBarcode, dcbHoldings.getId(), locationsFixture.mainFloor().getId(), "DCB instance");
+
+    // update request same way DCB does it when a borrowing transaction is created
+    requestsStorageClient.replace(requestId,
+      requestsStorageClient.get(requestId)
+        .getJson()
+        .put("itemId", itemId.toString())
+        .put("holdingsRecordId", dcbHoldings.getId().toString())
+        .put("item", new JsonObject().put("barcode", itemBarcode)));
+
+    UUID randomServicePointId = servicePointsFixture.cd2().getId();
+    checkInFixture.checkInByBarcode(circulationItem, randomServicePointId);
+    assertThat(requestsFixture.getById(requestId).getJson(), isOpenInTransit());
+
+    checkInFixture.checkInByBarcode(circulationItem, pickupServicePointId);
+    assertThat(requestsFixture.getById(requestId).getJson(), isOpenAwaitingPickup());
+
+    checkOutFixture.checkOutByBarcode(circulationItem, requester);
+    assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
   }
 
   private IndividualResource placeRequest(String requestLevel, ItemResource item,

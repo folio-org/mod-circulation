@@ -1,7 +1,7 @@
 package org.folio.circulation.support.request;
 
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.HoldingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.InstanceRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
@@ -27,7 +27,7 @@ public class RequestRelatedRepositories {
   private RequestRepository requestRepository;
   private RequestQueueRepository requestQueueRepository;
   private RequestPolicyRepository requestPolicyRepository;
-  private ConfigurationRepository configurationRepository;
+  private SettingsRepository settingsRepository;
   private ServicePointRepository servicePointRepository;
   private LocationRepository locationRepository;
 
@@ -42,7 +42,7 @@ public class RequestRelatedRepositories {
       userRepository, loanRepository);
     requestQueueRepository = new RequestQueueRepository(requestRepository);
     requestPolicyRepository = new RequestPolicyRepository(clients);
-    configurationRepository = new ConfigurationRepository(clients);
+    settingsRepository = new SettingsRepository(clients);
     servicePointRepository = new ServicePointRepository(clients);
     locationRepository = LocationRepository.using(clients);
   }

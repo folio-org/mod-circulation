@@ -14,13 +14,34 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.json.JsonObject;
 
 public class FakeCQLToJSONInterpreter {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
+  public List<JsonObject> execute(Collection<JsonObject> records, String query,
+    WebContext context) {
+
+    var initiallyFilteredRecords = execute(records, query);
+
+    // Routing SP filtering
+    String includeRoutingServicePointsParam = context.getStringParameter(
+      "includeRoutingServicePoints");
+    if (Boolean.parseBoolean(includeRoutingServicePointsParam)) {
+        return records.stream()
+          .filter(json -> json.containsKey("ecsRequestRouting")
+            ? json.getBoolean("ecsRequestRouting") 
+            : false)
+          .toList();
+    }
+
+    return initiallyFilteredRecords;
+  }
+
   public List<JsonObject> execute(Collection<JsonObject> records, String query) {
+
     final var queryAndSort = splitQueryAndSort(query);
     final var cqlPredicate = new CqlPredicate(queryAndSort.left);
 

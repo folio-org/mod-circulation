@@ -37,7 +37,6 @@ public class RequestUpdateLogEventMapper {
     populateItemData(request, logEventPayload);
     write(logEventPayload, REQUESTS.value(), mapCreatedRequestToJson(request));
 
-    log.info("mapToRequestLogEventJson:: result {}", logEventPayload::encode);
     return logEventPayload;
   }
 
@@ -51,7 +50,6 @@ public class RequestUpdateLogEventMapper {
     write(logEventPayload, REQUESTS.value(), mapUpdatedRequestPairToJson(
       new UpdatedRequestPair(original, updated)));
 
-    log.info("mapToRequestLogEventJson:: result {}", logEventPayload::encode);
     return logEventPayload;
   }
 
@@ -65,7 +63,6 @@ public class RequestUpdateLogEventMapper {
     populateItemData(requests.get(0), logEventPayload);
     write(logEventPayload, REQUESTS.value(), mapReorderedRequestsToJsonArray(requests));
 
-    log.info("mapToRequestLogEventJson:: result {}", logEventPayload::encode);
     return logEventPayload;
   }
 
@@ -90,7 +87,6 @@ public class RequestUpdateLogEventMapper {
     ofNullable(updatedRequestPair.getOriginal()).ifPresent(original -> requestPayload.put("original", original.asJson()));
     ofNullable(updatedRequestPair.getUpdated()).ifPresent(updated -> requestPayload.put("updated", updated.asJson()));
 
-    log.info("mapUpdatedRequestPairToJson:: result {}", requestPayload::encode);
     return requestPayload;
   }
 
@@ -100,7 +96,6 @@ public class RequestUpdateLogEventMapper {
     JsonObject requestPayload = new JsonObject();
     requestPayload.put("created", request.asJson());
 
-    log.info("mapCreatedRequestToJson:: result {}", requestPayload::encode);
     return requestPayload;
   }
 
@@ -113,7 +108,6 @@ public class RequestUpdateLogEventMapper {
       .map(r -> r.asJson().put("previousPosition", r.getPreviousPosition()))
       .collect(Collectors.toList())));
 
-    log.info("mapReorderedRequestsToJsonArray:: result {}", requestPayload::encode);
     return requestPayload;
   }
 }

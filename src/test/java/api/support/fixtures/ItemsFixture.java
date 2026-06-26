@@ -399,6 +399,22 @@ public class ItemsFixture {
       .collect(Collectors.toList());
   }
 
+  public List<ItemResource> createMultipleItemsOnePerInstance(int size,
+    List<Function<ItemBuilder, ItemBuilder>> itemAdditionalProperties) {
+
+    if (itemAdditionalProperties.size() != size) {
+      throw new AssertionError("Number of item additional properties should be equal to the size param");
+    }
+
+    return IntStream.range(0, size)
+      .mapToObj(num -> basedUponSmallAngryPlanet(
+        identity(),
+        identity(),
+        itemBuilder -> itemAdditionalProperties.get(num)
+          .apply(itemBuilder.withBarcode("0000" + num))))
+      .toList();
+  }
+
   private UUID booksInstanceTypeId() {
 
     final JsonObject booksInstanceType = new JsonObject();
@@ -424,7 +440,8 @@ public class ItemsFixture {
       .withCallNumber(prefix + "itCn", prefix + "itCnPrefix", prefix + "itCnSuffix")
       .withEnumeration(prefix + "enumeration1")
       .withChronology(prefix + "chronology")
-      .withVolume(prefix + "vol.1");
+      .withVolume(prefix + "vol.1")
+      .withDisplaySummary(prefix + "displaySummary");
   }
 
   public Function<ItemBuilder, ItemBuilder> addCallNumberStringComponents() {

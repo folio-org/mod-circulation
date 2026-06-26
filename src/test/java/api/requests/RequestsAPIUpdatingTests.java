@@ -866,7 +866,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
   @Test
   void editingRecallTlrShouldNotChangeRecalledItem() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     IndividualResource patron1 = usersFixture.steve();
     IndividualResource patron2 = usersFixture.rebecca();

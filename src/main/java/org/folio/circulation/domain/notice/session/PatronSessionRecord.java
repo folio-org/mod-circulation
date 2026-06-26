@@ -1,5 +1,10 @@
 package org.folio.circulation.domain.notice.session;
 
+import java.lang.invoke.MethodHandles;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import static java.util.Objects.requireNonNull;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ACTION_TYPE;
 import static org.folio.circulation.domain.notice.session.PatronActionSessionProperties.ID;
@@ -22,6 +27,7 @@ import lombok.ToString;
 @ToString
 @Getter
 public class PatronSessionRecord {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private final UUID id;
   private final UUID patronId;
@@ -58,6 +64,7 @@ public class PatronSessionRecord {
   }
 
   public static PatronSessionRecord from(JsonObject representation) {
+    log.debug("from:: parsing PatronSessionRecord from JSON representation");
     UUID id = getUUIDProperty(representation, ID);
     UUID patronId = getUUIDProperty(representation, PATRON_ID);
     UUID loanId = getUUIDProperty(representation, LOAN_ID);

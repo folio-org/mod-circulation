@@ -43,7 +43,6 @@ import api.support.TlrFeatureStatus;
 import api.support.builders.ReorderQueueBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakePubSub;
-import api.support.http.CheckOutResource;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
@@ -279,7 +278,11 @@ class RequestQueueResourceTest extends APITests {
 
     assertThat(request.containsKey("item"), is(true));
     JsonObject item = request.getJsonObject("item");
-    assertThat(item.fieldNames(), contains("barcode", "location", "enumeration", "volume", "chronology", "status", "callNumber", "callNumberComponents", "copyNumber"));
+    assertThat(item.fieldNames(), contains("barcode", "location",
+      "enumeration", "volume", "chronology", "loanTypeId", "loanTypeName", "status", "callNumber",
+      "callNumberComponents", "copyNumber", "itemEffectiveLocationId",
+      "itemEffectiveLocationName", "retrievalServicePointId",
+      "retrievalServicePointName"));
 
     assertThat(request.containsKey("loan"), is(true));
     JsonObject loan = request.getJsonObject("loan");
@@ -303,7 +306,7 @@ class RequestQueueResourceTest extends APITests {
 
   @Test
   void shouldGetRequestQueueForInstanceSuccessfully() {
-    configurationsFixture.enableTlrFeature();
+    circulationSettingsFixture.enableTlrFeature();
 
     UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
     String isbnValue = "9780866989427";

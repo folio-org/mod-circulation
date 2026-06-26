@@ -20,23 +20,53 @@ import io.vertx.core.json.JsonObject;
 
 public class RequestRepresentation {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   private static final String PICKUP_SERVICE_POINT = "pickupServicePoint";
 
   public JsonObject extendedRepresentation(Request request) {
     final JsonObject requestRepresentation = request.asJson();
+    final boolean anonymized = isAnonymized(requestRepresentation, request);
 
     addItemProperties(requestRepresentation, request.getItem());
     addInstanceProperties(requestRepresentation, request.getInstance(), request.getItem());
     addAdditionalLoanProperties(requestRepresentation, request.getLoan());
-    addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
-    addAdditionalProxyProperties(requestRepresentation, request.getProxy());
-    addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
-    addDeliveryAddress(requestRepresentation, request, request.getRequester());
 
+    if (anonymized) {
+      requestRepresentation.remove("requester");
+      requestRepresentation.remove("deliveryAddress");
+    } else if (request.getRequester() != null) {
+      addAdditionalRequesterProperties(requestRepresentation, request.getRequester());
+      addDeliveryAddress(requestRepresentation, request, request.getRequester());
+    }
+    if (request.getProxy() != null) {
+      addAdditionalProxyProperties(requestRepresentation, request.getProxy());
+    } else {
+      requestRepresentation.remove("proxy");
+    }
+    addAdditionalServicePointProperties(requestRepresentation, request.getPickupServicePoint());
+    addPrintDetailsProperties(request, requestRepresentation);
     removeSearchIndexFields(requestRepresentation);
 
     return requestRepresentation;
+  }
+
+  private void addPrintDetailsProperties(Request request, JsonObject requestRepresentation) {
+    JsonObject printDetails = requestRepresentation.getJsonObject("printDetails");
+    if (printDetails == null) {
+      if (log.isInfoEnabled()) {
+        log.info("addPrintEventProperties:: printDetails property is null for" +
+          " requestId {}", requestRepresentation.getString("id"));
+      }
+      return;
+    }
+
+    User printDetailsUser = request.getPrintDetailsRequester();
+    if (printDetailsUser != null) {
+      JsonObject lastPrintRequester = new JsonObject();
+      lastPrintRequester.put("firstName", printDetailsUser.getFirstName());
+      lastPrintRequester.put("lastName", printDetailsUser.getLastName());
+      lastPrintRequester.put("middleName", printDetailsUser.getMiddleName());
+      printDetails.put("lastPrintRequester", lastPrintRequester);
+    }
   }
 
   private static void addAdditionalRequesterProperties(JsonObject request, User requester) {
@@ -80,6 +110,9 @@ public class RequestRepresentation {
     }
     write(itemSummary, "volume", item.getVolume());
     write(itemSummary, "chronology", item.getChronology());
+    write(itemSummary, "displaySummary", item.getDisplaySummary());
+    write(itemSummary, "loanTypeId",  item.getLoanTypeId());
+    write(itemSummary, "loanTypeName",  item.getLoanTypeName());
 
     ItemStatus status = item.getStatus();
     if (status != null) {
@@ -91,7 +124,34 @@ public class RequestRepresentation {
     write(itemSummary, CALL_NUMBER_COMPONENTS,
       createCallNumberComponents(item.getCallNumberComponents()));
     write(itemSummary, "copyNumber", item.getCopyNumber());
+
+    effectiveLocationAndPrimaryServicePointSummary(itemSummary, request);
+
     write(request, "item", itemSummary);
+  }
+
+  private static void effectiveLocationAndPrimaryServicePointSummary(JsonObject itemSummary, JsonObject request) {
+    JsonObject requestItem = request.getJsonObject("item");
+    if (requestItem != null) {
+      String itemEffectiveLocationId = request.getJsonObject("item").getString(
+        "itemEffectiveLocationId");
+      String itemEffectiveLocationName =
+        request.getJsonObject("item").getString(
+        "itemEffectiveLocationName");
+      String retrievalServicePointId = request.getJsonObject("item").getString(
+        "retrievalServicePointId");
+      String retrievalServicePointName =
+        request.getJsonObject("item").getString(
+        "retrievalServicePointName");
+
+      write(itemSummary, "itemEffectiveLocationId", itemEffectiveLocationId);
+      write(itemSummary, "itemEffectiveLocationName",
+        itemEffectiveLocationName);
+      write(itemSummary, "retrievalServicePointId",
+        retrievalServicePointId);
+      write(itemSummary, "retrievalServicePointName",
+        retrievalServicePointName);
+    }
   }
 
   private static void addInstanceProperties(JsonObject request, Instance instance, Item item) {
@@ -256,6 +316,14 @@ public class RequestRepresentation {
 
   private static void removeSearchIndexFields(JsonObject request) {
     request.remove("searchIndex");
+  }
+
+  private static boolean isAnonymized(JsonObject json, Request req) {
+    if(json == null) return false;
+    String requesterId = json.getString("requesterId");
+    Boolean anonymized = json.getBoolean("anonymized");
+    String anonymizedDate = json.getString("anonymizedDate");
+    return requesterId == null || Boolean.TRUE.equals(anonymized) || anonymizedDate != null;
   }
 }
 

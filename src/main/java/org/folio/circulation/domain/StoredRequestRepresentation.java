@@ -7,6 +7,7 @@ import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +44,18 @@ public class StoredRequestRepresentation {
     JsonObject itemSummary = new JsonObject();
     write(itemSummary, "barcode", item.getBarcode());
 
+    if (Objects.nonNull(item.getLocation())) {
+      write(itemSummary, "itemEffectiveLocationId", item.getLocation().getId());
+      write(itemSummary, "itemEffectiveLocationName",
+        item.getLocation().getName());
+
+      if (Objects.nonNull(item.getLocation().getPrimaryServicePoint())) {
+        write(itemSummary, "retrievalServicePointId",
+          item.getLocation().getPrimaryServicePoint().getId());
+        write(itemSummary, "retrievalServicePointName",
+          item.getLocation().getPrimaryServicePoint().getName());
+      }
+    }
     request.put("item", itemSummary);
   }
 

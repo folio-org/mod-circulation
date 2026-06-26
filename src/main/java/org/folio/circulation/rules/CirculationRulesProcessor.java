@@ -118,7 +118,7 @@ public class CirculationRulesProcessor {
 
     return fetchLocation(params).thenCombine(rulesFuture, combined(
       (newParams, drools) -> {
-        log.info("Applying circulation rules with parameters: {}", newParams);
+        log.debug("Applying circulation rules with parameters: {}", newParams);
         return succeeded(droolsFunction.apply(drools, newParams));
       }));
   }
@@ -140,7 +140,7 @@ public class CirculationRulesProcessor {
     log.debug("fetchLocation:: parameters params: {}", params);
 
     if (params.getLocation() != null) {
-      log.info("fetchLocation:: location is not null");
+      log.debug("fetchLocation:: location is not null");
       return ofAsync(() -> params);
     }
 

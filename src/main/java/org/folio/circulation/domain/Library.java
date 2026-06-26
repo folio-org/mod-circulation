@@ -9,9 +9,10 @@ public class Library {
   }
 
   public static Library unknown(String id) {
-    return new Library(id, null);
+    return new Library(id, null, null);
   }
 
   String id;
   String name;
+  String code;
 }

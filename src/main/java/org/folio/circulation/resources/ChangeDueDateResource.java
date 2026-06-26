@@ -1,12 +1,17 @@
 package org.folio.circulation.resources;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.representations.ChangeDueDateRequest.DUE_DATE;
 import static org.folio.circulation.domain.representations.LoanProperties.ITEM_ID;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import static org.folio.circulation.resources.handlers.error.CirculationErrorType.ITEM_DOES_NOT_EXIST;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.MappingFunctions.toFixedValue;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
@@ -19,19 +24,24 @@ import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAndRelatedRecords;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
+import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.representations.ChangeDueDateRequest;
 import org.folio.circulation.domain.validation.ItemStatusValidator;
 import org.folio.circulation.domain.validation.LoanValidator;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.server.NoContentResponse;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
@@ -72,36 +82,62 @@ public class ChangeDueDateResource extends Resource {
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
+
+    final WebContext webContext = new WebContext(routingContext);
+    final OkapiPermissions okapiPermissions = OkapiPermissions.from(webContext.getHeaders());
+
+    final CirculationErrorHandler errorHandler = new OverridingErrorHandler(okapiPermissions);
+
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
     final LoanScheduledNoticeService scheduledNoticeService
       = LoanScheduledNoticeService.using(clients);
+    final OverdueFinePolicyRepository overdueFinePolicyRepository =
+      new OverdueFinePolicyRepository(clients);
+    final ReminderFeeScheduledNoticeService scheduledRemindersService =
+      new ReminderFeeScheduledNoticeService(clients);
 
     final ItemStatusValidator itemStatusValidator = new ItemStatusValidator(
         ChangeDueDateResource::errorWhenInIncorrectStatus);
 
-    final EventPublisher eventPublisher = new EventPublisher(routingContext);
+    final EventPublisher eventPublisher = new EventPublisher(context, clients);
 
     final LoanNoticeSender loanNoticeSender = LoanNoticeSender.using(clients, loanRepository);
 
-    final ConfigurationRepository configurationRepository = new ConfigurationRepository(clients);
     log.info("starting change due date process for loan {}", request.getLoanId());
     return succeeded(request)
       .after(r -> getExistingLoan(loanRepository, r))
       .thenApply(LoanValidator::refuseWhenLoanIsClosed)
       .thenApply(this::toLoanAndRelatedRecords)
-      .thenComposeAsync(r -> r.combineAfter(configurationRepository::lookupTlrSettings,
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         LoanAndRelatedRecords::withTlrSettings))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))
       .thenApply(itemStatusValidator::refuseWhenItemStatusDoesNotAllowDueDateChange)
+      .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
       .thenApply(r -> changeDueDate(r, request))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
       .thenComposeAsync(r -> r.after(eventPublisher::publishDueDateChangedEvent))
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
+      .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
+    LoanAndRelatedRecords context, OverdueFinePolicyRepository overdueFinePolicyRepository,
+    CirculationErrorHandler errorHandler)
+  {
+    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
+      FAILED_TO_FETCH_USER)) {
+      return completedFuture(succeeded(context));
+    }
+
+    return overdueFinePolicyRepository
+      .findOverdueFinePolicyForLoan(succeeded(context.getLoan()))
+      .thenApply(mapResult(context::withLoan));
   }
 
   private LoanAndRelatedRecords unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
@@ -111,7 +147,7 @@ public class ChangeDueDateResource extends Resource {
       () -> loanAndRelatedRecords);
     RequestQueue queue = loanAndRelatedRecords.getRequestQueue();
     Loan loan = loanAndRelatedRecords.getLoan();
-    log.info("Loan {} prior to flag check: {}", loan.getId(), loan.asJson().toString());
+    log.debug("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: checking loan: {}", loan.getId());
     if (loan.wasDueDateChangedByRecall() && !queue.hasOpenRecalls()) {
       log.info("Loan {} registers as having due date change flag set to true and no open recalls in queue.", loan.getId());
       return loanAndRelatedRecords.withLoan(loan.unsetDueDateChangedByRecall());
@@ -144,14 +180,14 @@ public class ChangeDueDateResource extends Resource {
 
     log.debug("changeDueDate:: parameters loanAndRelatedRecords: {}, dueDate: {}",
       () -> loanAndRelatedRecords, () -> dueDate);
-    loanAndRelatedRecords.getLoan().changeDueDate(dueDate);
+    loanAndRelatedRecords.getLoan().changeDueDate(dueDate).resetReminders();
 
     return loanAndRelatedRecords;
   }
 
   private Result<ChangeDueDateRequest> createChangeDueDateRequest(RoutingContext routingContext) {
     final String loanId = routingContext.pathParam("id");
-    final JsonObject body = routingContext.getBodyAsJson();
+    final JsonObject body = routingContext.body().asJsonObject();
     log.debug("createChangeDueDateRequest:: parameters loanId: {}, body: {}", () -> loanId, () -> body);
 
     if (!body.containsKey(DUE_DATE)) {

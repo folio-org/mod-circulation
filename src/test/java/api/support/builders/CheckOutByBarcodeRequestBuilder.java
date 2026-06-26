@@ -15,9 +15,10 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
   private final ZonedDateTime loanDate;
   private final String servicePointId;
   private final JsonObject overrideBlocks;
+  private final String forceLoanPolicyId;
 
   public CheckOutByBarcodeRequestBuilder() {
-    this(null, null, null, null, null, null);
+    this(null, null, null, null, null, null, null);
   }
 
   private CheckOutByBarcodeRequestBuilder(
@@ -26,7 +27,8 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     String proxyBarcode,
     ZonedDateTime loanDate,
     String servicePointId,
-    JsonObject overrideBlocks) {
+    JsonObject overrideBlocks,
+    String forceLoanPolicyId) {
 
     this.itemBarcode = itemBarcode;
     this.userBarcode = userBarcode;
@@ -34,6 +36,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     this.loanDate = loanDate;
     this.servicePointId = servicePointId;
     this.overrideBlocks = overrideBlocks;
+    this.forceLoanPolicyId = forceLoanPolicyId;
   }
 
   @Override
@@ -46,6 +49,7 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
     put(request, "loanDate", formatDateTimeOptional(this.loanDate));
     put(request, "servicePointId", this.servicePointId);
     put(request, "overrideBlocks", this.overrideBlocks);
+    put(request, "forceLoanPolicyId", this.forceLoanPolicyId);
 
     return request;
   }
@@ -57,7 +61,8 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
   }
 
   public CheckOutByBarcodeRequestBuilder to(IndividualResource loanee) {
@@ -67,7 +72,19 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
+  }
+
+  public CheckOutByBarcodeRequestBuilder to(String userBarcode) {
+    return new CheckOutByBarcodeRequestBuilder(
+      this.itemBarcode,
+      userBarcode,
+      this.proxyBarcode,
+      this.loanDate,
+      this.servicePointId,
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
   }
 
   public CheckOutByBarcodeRequestBuilder on(ZonedDateTime loanDate) {
@@ -77,7 +94,8 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
   }
 
   public CheckOutByBarcodeRequestBuilder proxiedBy(IndividualResource proxy) {
@@ -87,7 +105,8 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       getBarcode(proxy),
       this.loanDate,
       this.servicePointId,
-      this.overrideBlocks);
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
   }
 
   public CheckOutByBarcodeRequestBuilder at(String checkoutServicePointId) {
@@ -97,8 +116,21 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       checkoutServicePointId,
-      this.overrideBlocks);
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
   }
+
+  public CheckOutByBarcodeRequestBuilder forceLoanPolicy(String forceLoanPolicyId) {
+    return new CheckOutByBarcodeRequestBuilder(
+      this.itemBarcode,
+      this.userBarcode,
+      this.proxyBarcode,
+      this.loanDate,
+      this.servicePointId,
+      this.overrideBlocks,
+      forceLoanPolicyId);
+  }
+
 
   public CheckOutByBarcodeRequestBuilder at(IndividualResource checkoutServicePoint) {
     return at(checkoutServicePoint.getId());
@@ -111,7 +143,8 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       checkoutServicePointId.toString(),
-      this.overrideBlocks);
+      this.overrideBlocks,
+      this.forceLoanPolicyId);
   }
 
   public CheckOutByBarcodeRequestBuilder withOverrideBlocks(JsonObject overrideBlocks) {
@@ -121,7 +154,8 @@ public class CheckOutByBarcodeRequestBuilder extends JsonBuilder implements Buil
       this.proxyBarcode,
       this.loanDate,
       this.servicePointId,
-      overrideBlocks);
+      overrideBlocks,
+      this.forceLoanPolicyId);
   }
 
   private String getBarcode(IndividualResource record) {

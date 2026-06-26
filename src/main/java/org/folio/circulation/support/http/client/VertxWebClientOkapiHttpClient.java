@@ -1,33 +1,35 @@
 package org.folio.circulation.support.http.client;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.folio.circulation.support.results.Result.failed;
-import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.folio.circulation.support.http.client.Response.responseFrom;
+import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.results.Result;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.core.http.HttpMethod;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   private static final Duration DEFAULT_TIMEOUT = Duration.of(20, SECONDS);
   private static final String ACCEPT = HttpHeaderNames.ACCEPT.toString();
@@ -71,6 +73,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   public CompletableFuture<Result<Response>> post(String url,
     JsonObject body, Duration timeout) {
 
+    log.debug("post:: url={}", url);
+
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
@@ -79,7 +83,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
 
     request
       .timeout(timeout.toMillis())
-      .sendJsonObject(body, futureResponse::complete);
+      .sendJsonObject(body)
+      .onComplete(futureResponse::complete);
 
     return futureResponse
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
@@ -88,6 +93,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   @Override
   public CompletableFuture<Result<Response>> get(String url,
     Duration timeout, QueryParameter... queryParameters) {
+
+    log.debug("get:: url={}", url);
 
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
@@ -100,7 +107,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
 
     request
       .timeout(timeout.toMillis())
-      .send(futureResponse::complete);
+      .send()
+      .onComplete(futureResponse::complete);
 
     return futureResponse
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
@@ -134,6 +142,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   public CompletableFuture<Result<Response>> put(String url, JsonObject body,
     Duration timeout) {
 
+    log.debug("put:: url={}", url);
+
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
@@ -142,7 +152,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
 
     request
       .timeout(timeout.toMillis())
-      .sendJsonObject(body, futureResponse::complete);
+      .sendJsonObject(body)
+      .onComplete(futureResponse::complete);
 
     return futureResponse
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
@@ -166,6 +177,8 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
   public CompletableFuture<Result<Response>> delete(String url,
     Duration timeout, QueryParameter... queryParameters) {
 
+    log.debug("delete:: url={}", url);
+
     final CompletableFuture<AsyncResult<HttpResponse<Buffer>>> futureResponse
       = new CompletableFuture<>();
 
@@ -177,13 +190,15 @@ public class VertxWebClientOkapiHttpClient implements OkapiHttpClient {
 
     request
       .timeout(timeout.toMillis())
-      .send(futureResponse::complete);
+      .send()
+      .onComplete(futureResponse::complete);
 
     return futureResponse
       .thenApply(asyncResult -> mapAsyncResultToResult(url, asyncResult));
   }
 
   private HttpRequest<Buffer> withStandardHeaders(HttpRequest<Buffer> request) {
+    log.debug("withStandardHeaders:: url={}, tenantId={}", request.uri(), tenantId);
     return request
       .putHeader(ACCEPT, "application/json, text/plain")
       .putHeader(OKAPI_URL, okapiUrl.toString())

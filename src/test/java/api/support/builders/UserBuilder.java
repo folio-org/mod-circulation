@@ -22,12 +22,12 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final ZonedDateTime expirationDate;
   private final Collection<Address> addresses;
   private final JsonArray departments;
-
+  private final String type;
   private final boolean primaryAddress;
 
   public UserBuilder() {
     this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, null,"785493025613",
-      null, true, null, new ArrayList<>(), null, false);
+      null, true, null, new ArrayList<>(), null, null, false);
   }
 
   private UserBuilder(
@@ -43,6 +43,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     ZonedDateTime expirationDate,
     Collection<Address> addresses,
     JsonArray departments,
+    String type,
     boolean primaryAddress) {
 
     this.id = id;
@@ -60,6 +61,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
     this.addresses = addresses;
     this.departments = departments;
+    this.type = type;
     this.primaryAddress = primaryAddress;
   }
 
@@ -122,14 +124,21 @@ public class UserBuilder extends JsonBuilder implements Builder {
     if (this.departments != null) {
       request.put("departments", this.departments);
     }
+    if (this.type != null) {
+      request.put("type", this.type);
+    }
 
     return request;
   }
 
   public UserBuilder withName(String lastName, String firstName) {
+    String name = firstName != null && !firstName.isEmpty() && lastName != null
+      ? firstName.substring(0, 1).concat(lastName).toLowerCase()
+      : null;
+
     return new UserBuilder(
       this.id,
-      firstName.substring(0, 1).concat(lastName).toLowerCase(),
+      name,
       lastName,
       firstName,
       this.middleName,
@@ -140,6 +149,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -157,6 +167,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -174,6 +185,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -191,6 +203,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -208,6 +221,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -225,6 +239,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -242,6 +257,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -259,6 +275,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -280,6 +297,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -309,6 +327,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -326,6 +345,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       newExpirationDate,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -343,6 +363,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       null,
       this.addresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -369,6 +390,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -386,6 +408,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       departments,
+      this.type,
       Boolean.valueOf(primaryAddress));
   }
   public UserBuilder withNoAddresses() {
@@ -406,6 +429,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       newAddresses,
       this.departments,
+      this.type,
       this.primaryAddress);
   }
 
@@ -423,6 +447,25 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.type,
+      this.primaryAddress);
+  }
+
+  public UserBuilder withType(String type) {
+    return new UserBuilder(
+      this.id,
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.preferredFirstName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses,
+      this.departments,
+      type,
       this.primaryAddress);
   }
 }

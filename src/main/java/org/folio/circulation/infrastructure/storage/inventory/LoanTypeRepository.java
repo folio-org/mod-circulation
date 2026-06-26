@@ -15,6 +15,7 @@ import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.results.Result;
 
 public class LoanTypeRepository {
+  private static final String LOAN_TYPES = "loantypes";
   public final CollectionResourceClient loanTypesClient;
 
   public LoanTypeRepository(CollectionResourceClient loanTypesClient) {
@@ -34,8 +35,7 @@ public class LoanTypeRepository {
   CompletableFuture<Result<MultipleRecords<LoanType>>> findByIds(Set<String> ids) {
     final var mapper = new LoanTypeMapper();
 
-    return findWithMultipleCqlIndexValues(loanTypesClient,
-      "loantypes", mapper::toDomain)
+    return findWithMultipleCqlIndexValues(loanTypesClient, LOAN_TYPES, mapper::toDomain)
       .findByIds(ids);
   }
 }

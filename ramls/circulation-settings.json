@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Collection of Circulation settings",
+  "type": "object",
+  "properties": {
+    "circulationSettings": {
+      "description": "List of circulation settings",
+      "id": "circulationSettings",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "circulation-setting.json"
+      }
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "circulationSettings",
+    "totalRecords"
+  ]
+}

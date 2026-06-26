@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Request to switch status of use at location to 'Held'",
+  "properties": {
+    "itemBarcode": {
+      "description": "Barcode of the item being in use at location",
+      "type": "string"
+    }
+  },
+  "required": [
+    "itemBarcode"
+  ]
+}

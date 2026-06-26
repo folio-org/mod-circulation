@@ -11,7 +11,7 @@ import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeHandler;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
 import org.folio.circulation.domain.notice.schedule.TriggeringEvent;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
@@ -36,7 +36,7 @@ public class FeeFineScheduledNoticeProcessingResource extends ScheduledNoticePro
 
   @Override
   protected CompletableFuture<Result<MultipleRecords<ScheduledNotice>>> findNoticesToSend(
-    ConfigurationRepository configurationRepository,
+    SettingsRepository settingsRepository,
     ScheduledNoticesRepository scheduledNoticesRepository,
     PatronActionSessionRepository patronActionSessionRepository, PageLimit pageLimit) {
 

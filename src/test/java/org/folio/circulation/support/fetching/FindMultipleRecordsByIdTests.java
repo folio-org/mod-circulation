@@ -26,7 +26,6 @@ import org.folio.circulation.support.FindWithCqlQuery;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.results.Result;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,16 +33,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
 class FindMultipleRecordsByIdTests {
-  @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Captor
   private ArgumentCaptor<Result<CqlQuery>> generatedCqlQueries;
@@ -135,6 +130,74 @@ class FindMultipleRecordsByIdTests {
     final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
 
     assertThat("Should assume no records are found",
+        result.isEmpty(), is(true));
+
+    verify(queryFinder, times(0)).findByQuery(any(), any());
+  }
+
+  @Test
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForOnlyNullIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder);
+
+    final Collection<String> nullIds = new ArrayList<>();
+    nullIds.add(null);
+    nullIds.add(null);
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIds(nullIds);
+
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
+
+    assertThat("Should assume no records are found when all ids are null",
+        result.isEmpty(), is(true));
+
+    verify(queryFinder, times(0)).findByQuery(any(), any());
+  }
+
+  @Test
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForOnlyBlankIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder);
+
+    final Collection<String> blankIds = new ArrayList<>();
+    blankIds.add("");
+    blankIds.add("   ");
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIds(blankIds);
+
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
+
+    assertThat("Should assume no records are found when all ids are blank",
+        result.isEmpty(), is(true));
+
+    verify(queryFinder, times(0)).findByQuery(any(), any());
+  }
+
+  @Test
+  void shouldAssumeNoRecordsAreFoundWhenSearchingForBlankItemIds()
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final FindWithMultipleCqlIndexValues<JsonObject> fetcher
+      = new CqlIndexValuesFinder<>(queryFinder);
+
+    final Collection<String> blankIds = new ArrayList<>();
+    blankIds.add("");
+    blankIds.add(null);
+
+    final Result<CqlQuery> openStatusQuery = exactMatch("status", "Open");
+
+    final CompletableFuture<Result<MultipleRecords<JsonObject>>> futureResult
+      = fetcher.findByIdIndexAndQuery(blankIds, "itemId", openStatusQuery);
+
+    final MultipleRecords<JsonObject> result = getFutureResultValue(futureResult);
+
+    assertThat("Should assume no records are found when all item ids are blank or null",
         result.isEmpty(), is(true));
 
     verify(queryFinder, times(0)).findByQuery(any(), any());

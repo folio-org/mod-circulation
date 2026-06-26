@@ -9,8 +9,11 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 
+import java.lang.invoke.MethodHandles;
 import java.time.ZoneOffset;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.notice.NoticeFormat;
 import org.folio.circulation.domain.notice.NoticeTiming;
 import org.folio.circulation.domain.notice.schedule.ScheduledNotice;
@@ -25,6 +28,8 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.json.JsonObject;
 
 public class JsonScheduledNoticeMapper {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+
   private static final String ID = "id";
   private static final String SESSION_ID = "sessionId";
   public static final String LOAN_ID = "loanId";
@@ -69,7 +74,9 @@ public class JsonScheduledNoticeMapper {
   }
 
   private static Result<Period> getPeriod(JsonObject jsonObject) {
+    log.debug("getPeriod:: processing period from json");
     if (jsonObject == null) {
+      log.info("getPeriod:: jsonObject is null, returning null period");
       return succeeded(null);
     }
     return Period.from(jsonObject,
@@ -83,7 +90,8 @@ public class JsonScheduledNoticeMapper {
   }
 
   public static JsonObject mapToJson(ScheduledNotice notice) {
-    return new JsonObject()
+    log.debug("mapToJson:: parameters notice id: {}", notice != null ? notice.getId() : "null");
+    JsonObject result = new JsonObject()
       .put(ID, notice.getId())
       .put(SESSION_ID, notice.getSessionId())
       .put(LOAN_ID, notice.getLoanId())
@@ -93,6 +101,8 @@ public class JsonScheduledNoticeMapper {
       .put(TRIGGERING_EVENT, notice.getTriggeringEvent().getRepresentation())
       .put(NEXT_RUN_TIME, formatDateTime(notice.getNextRunTime().withZoneSameInstant(ZoneOffset.UTC)))
       .put(NOTICE_CONFIG, mapConfigToJson(notice.getConfiguration()));
+    log.debug("mapToJson:: result: scheduled notice mapped to json");
+    return result;
   }
 
   private static JsonObject mapConfigToJson(ScheduledNoticeConfig config) {

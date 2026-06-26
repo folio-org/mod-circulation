@@ -30,9 +30,14 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   private final TlrSettingsConfiguration tlrSettings;
   private final Request closedFilledRequest;
   private final CheckoutLockConfiguration checkoutLockConfiguration;
+  private final String forceLoanPolicyId;
 
   public LoanAndRelatedRecords(Loan loan) {
     this(loan, ZoneOffset.UTC);
+  }
+
+  public LoanAndRelatedRecords(Loan loan, String forceLoanPolicyId) {
+    this(loan, ZoneOffset.UTC, forceLoanPolicyId);
   }
 
   public LoanAndRelatedRecords(Loan loan, Loan existingLoan) {
@@ -40,11 +45,15 @@ public class LoanAndRelatedRecords implements UserRelatedRecord {
   }
 
   public LoanAndRelatedRecords(Loan loan, Loan existingLoan, ZoneId timeZone) {
-    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null, null, null);
+    this(loan, existingLoan, null, timeZone, new JsonObject(), null, null, null, null, null);
   }
 
   public LoanAndRelatedRecords(Loan loan, ZoneId timeZone) {
-    this(loan, null, null, timeZone, new JsonObject(), null, null, null, null);
+    this(loan, null, null, timeZone, new JsonObject(), null, null, null, null, null);
+  }
+
+  public LoanAndRelatedRecords(Loan loan, ZoneId timeZone, String forceLoanPolicyId) {
+    this(loan, null, null, timeZone, new JsonObject(), null, null, null, null, forceLoanPolicyId);
   }
 
   public LoanAndRelatedRecords changeItemStatus(ItemStatus status) {
