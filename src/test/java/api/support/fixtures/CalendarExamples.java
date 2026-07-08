@@ -8,6 +8,7 @@ import api.support.builders.OpeningDayPeriodBuilder;
 import io.vertx.core.MultiMap;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -53,16 +54,16 @@ public class CalendarExamples {
   static final String CASE_START_DATE_FRI_AND_END_DATE_NEXT_MONTHS = "88888888-2f09-4bc9-8924-3734882d44a3";
 
   public static final String CASE_CURRENT_IS_OPEN = "7a50ce1e-ce47-4841-a01f-fd771ff3da1b";
-  public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = LocalDate.of(2019, 2, 4);
-  public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = LocalDate.of(2019, 2, 5);
-  public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = LocalDate.of(2019, 2, 6);
-  public static final LocalDate CASE_CURRENT_IS_OPEN_IN_ONE_DAY = LocalDate.of(2019, 2, 7);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_PREV_DAY = LocalDate.of(2019, Month.FEBRUARY, 4);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_CURR_DAY = LocalDate.of(2019, Month.FEBRUARY, 5);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_NEXT_DAY = LocalDate.of(2019, Month.FEBRUARY, 6);
+  public static final LocalDate CASE_CURRENT_IS_OPEN_IN_ONE_DAY = LocalDate.of(2019, Month.FEBRUARY, 7);
 
-  public static final LocalDate MONDAY_DATE = LocalDate.of(2018, 12, 9);
-  public static final LocalDate TUESDAY_DATE = LocalDate.of(2018, 12, 10);
-  public static final LocalDate WEDNESDAY_DATE = LocalDate.of(2018, 12, 11);
-  public static final LocalDate THURSDAY_DATE = LocalDate.of(2018, 12, 12);
-  public static final LocalDate FRIDAY_DATE = LocalDate.of(2018, 12, 13);
+  public static final LocalDate MONDAY_DATE = LocalDate.of(2018, Month.DECEMBER, 9);
+  public static final LocalDate TUESDAY_DATE = LocalDate.of(2018, Month.DECEMBER, 10);
+  public static final LocalDate WEDNESDAY_DATE = LocalDate.of(2018, Month.DECEMBER, 11);
+  public static final LocalDate THURSDAY_DATE = LocalDate.of(2018, Month.DECEMBER, 12);
+  public static final LocalDate FRIDAY_DATE = LocalDate.of(2018, Month.DECEMBER, 13);
 
   public static final LocalTime START_TIME_FIRST_PERIOD = LocalTime.of(8, 0);
   public static final LocalTime END_TIME_FIRST_PERIOD = LocalTime.of(12, 0);
@@ -70,12 +71,12 @@ public class CalendarExamples {
   public static final LocalTime START_TIME_SECOND_PERIOD = LocalTime.of(14, 0);
   public static final LocalTime END_TIME_SECOND_PERIOD = LocalTime.of(19, 0);
 
-  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY = LocalDate.of(2019, 2, 1);
-  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = LocalDate.of(2019, 2, 2);
-  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = LocalDate.of(2019, 2, 4);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = LocalDate.of(2018, 12, 14);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = LocalDate.of(2018, 12, 15);
-  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = LocalDate.of(2018, 12, 17);
+  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY = LocalDate.of(2019, Month.FEBRUARY, 1);
+  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_CURR_DAY = LocalDate.of(2019, Month.FEBRUARY, 2);
+  public static final LocalDate CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY = LocalDate.of(2019, Month.FEBRUARY, 4);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_PREV_DATE = LocalDate.of(2018, Month.DECEMBER, 14);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_CURRENT_DATE = LocalDate.of(2018, Month.DECEMBER, 15);
+  public static final LocalDate CASE_FRI_SAT_MON_DAY_ALL_NEXT_DATE = LocalDate.of(2018, Month.DECEMBER, 17);
 
   public static final LocalDate CASE_PREV_DATE_OPEN = ClockUtil.getLocalDate().minusDays(1L);
   public static final LocalDate CASE_CURRENT_DATE_CLOSE = ClockUtil.getLocalDate();
@@ -83,12 +84,12 @@ public class CalendarExamples {
 
   public static final LocalDate CASE_LONG_TERM_DAYS_PREV_OPEN = ClockUtil.getLocalDate().plusDays(1L);
 
-  public static final LocalDate FIRST_DAY_OPEN = LocalDate.of(2020, 10, 29);
-  public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, 10, 30);
-  public static final LocalDate THIRD_DAY_CLOSED = LocalDate.of(2020, 10, 31);
-  public static final LocalDate THIRD_DAY_OPEN = LocalDate.of(2020, 10, 31);
+  public static final LocalDate FIRST_DAY_OPEN = LocalDate.of(2020, Month.OCTOBER, 29);
+  public static final LocalDate SECOND_DAY_CLOSED = LocalDate.of(2020, Month.OCTOBER, 30);
+  public static final LocalDate THIRD_DAY_CLOSED = LocalDate.of(2020, Month.OCTOBER, 31);
+  public static final LocalDate THIRD_DAY_OPEN = LocalDate.of(2020, Month.OCTOBER, 31);
 
-  public static final LocalDate FIRST_DAY = LocalDate.of(2023, 10, 29);
+  public static final LocalDate FIRST_DAY = LocalDate.of(2023, Month.OCTOBER, 29);
 
   private static final String REQUESTED_DATE_PARAM = "date";
 
