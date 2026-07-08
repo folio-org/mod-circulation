@@ -53,8 +53,9 @@ class HoldShelfExpirationDateTests extends APITests {
 
   @BeforeEach
   void setUp() {
-    // reset the clock before each test (just in case)
-    setClock(Clock .fixed(getInstant(), UTC));
+    // Sync test clock with CalendarExamples so that calendar entries (built at class-load time
+    // via ClockUtil.getLocalDate()) always align with the clock seen by the test server.
+    setClock(Clock.fixed(CASE_CURRENT_DATE_CLOSE.atStartOfDay(UTC).toInstant(), UTC));
   }
 
   @AfterEach
@@ -115,7 +116,9 @@ class HoldShelfExpirationDateTests extends APITests {
   }
 
   private boolean isSameDay(ChronoUnit interval, int amount, ZonedDateTime zdtWithZoneOffset) {
-    return interval.addTo(getZonedDateTime(), amount).toLocalDate().equals(LocalDate.now(zdtWithZoneOffset.getZone()));
+    ZoneId zone = zdtWithZoneOffset.getZone();
+    return interval.addTo(getZonedDateTime(), amount).withZoneSameInstant(zone).toLocalDate()
+      .equals(getZonedDateTime().withZoneSameInstant(zone).toLocalDate());
   }
 
   private void assertHoldShelfExpirationDateBasedOnStrategy(JsonObject storedRequest, String servicePoint, int amount, ChronoUnit interval) {

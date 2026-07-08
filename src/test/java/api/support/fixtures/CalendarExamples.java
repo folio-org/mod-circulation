@@ -440,8 +440,19 @@ public class CalendarExamples {
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_FRI_SAT_MON_DAY_ALL_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
-      case CASE_CURRENT_CLOSE_SERVICE_POINT_ID:
-        return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
+      case CASE_CURRENT_CLOSE_SERVICE_POINT_ID: {
+        LocalDate closedDate = LocalDate.parse(queries.get(REQUESTED_DATE_PARAM));
+        return new CalendarBuilder(
+          new OpeningDayPeriodBuilder(
+            CASE_CURRENT_CLOSE_SERVICE_POINT_ID,
+            new AdjacentOpeningDays(
+              new OpeningDay(new ArrayList<>(), closedDate.minusDays(1), true, true),
+              new OpeningDay(new ArrayList<>(), closedDate, false, false),
+              new OpeningDay(new ArrayList<>(), closedDate.plusDays(1), true, true)
+            )
+          )
+        );
+      }
       case CASE_LONG_TERM_DAYS_CURRENT_CLOSE_SERVICE_POINT_ID:
         return new CalendarBuilder(fakeOpeningPeriods.get(serviceId));
       case CASE_LONG_TERM_WEEKS_CURRENT_CLOSE_SERVICE_POINT_ID:
