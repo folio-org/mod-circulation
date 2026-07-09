@@ -1,3 +1,6 @@
+## 24.6.0-SNAPSHOT In progress
+* Fix flaky tests ([CIRC-2633](https://folio-org.atlassian.net/browse/CIRC-2633))
+
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))
 * Fix TLRs in Search slips missing key tokens ([CIRC-2228](https://folio-org.atlassian.net/browse/CIRC-2228))
