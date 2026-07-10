@@ -29,6 +29,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -280,23 +281,48 @@ public class ItemRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<String> itemIds) {
-    final var finder = new CqlIndexValuesFinder<>(createItemFinder());
+    return fetchItems(itemIds, new CqlIndexValuesFinder<>(createItemFinder()),
+      new CqlIndexValuesFinder<>(createCirculationItemFinder()));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<String> itemIds,
+    int maxValuesPerCqlSearchQuery) {
+
+    return fetchItems(itemIds,
+      new CqlIndexValuesFinder<>(createItemFinder(), maxValuesPerCqlSearchQuery),
+      new CqlIndexValuesFinder<>(createCirculationItemFinder(), maxValuesPerCqlSearchQuery));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<String> itemIds,
+    CqlIndexValuesFinder<JsonObject> itemFinder,
+    CqlIndexValuesFinder<JsonObject> circulationItemFinder) {
+
+    final var normalizedItemIds = normalizeItemIds(itemIds);
     final var mapper = new ItemMapper();
 
-    return finder.findByIds(itemIds)
+    return itemFinder.findByIds(normalizedItemIds)
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(records -> records.mapRecords(mapper::toDomain)))
-      .thenCompose(res -> res.value().getTotalRecords() == itemIds.size()
+      .thenCompose(res -> res.value().getTotalRecords() == normalizedItemIds.size()
         ? CompletableFuture.completedFuture(res)
-        : res.combineAfter(x -> lookupDcbItem(res, itemIds), MultipleRecords::combine));
+        : res.combineAfter(x -> lookupDcbItem(res, normalizedItemIds, circulationItemFinder),
+          MultipleRecords::combine));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>>
     lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
+
+    return lookupDcbItem(inventoryItems, itemIds,
+      new CqlIndexValuesFinder<>(createCirculationItemFinder()));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Item>>>
+    lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds,
+      CqlIndexValuesFinder<JsonObject> finder) {
+
     log.debug("lookupDcbItem:: Looking up for DCB items");
 
     var inventoryItemIds = inventoryItems.value().toKeys(Item::getItemId);
-    final var finder = new CqlIndexValuesFinder<>(createCirculationItemFinder());
     var dcbItemIds = itemIds.stream().filter(ids -> !inventoryItemIds.contains(ids)).toList();
     final var mapper = new ItemMapper();
 
@@ -304,6 +330,15 @@ public class ItemRepository {
       .thenApply(mapResult(identityMap::add))
       .thenApply(r -> r.map(records -> records.mapRecords(mapper::toDomain)))
       .thenApply(r -> r.mapFailure(failure -> succeeded(MultipleRecords.empty())));
+  }
+
+  private Collection<String> normalizeItemIds(Collection<String> itemIds) {
+    return itemIds.stream()
+      .filter(Objects::nonNull)
+      .map(String::trim)
+      .filter(id -> !id.isEmpty())
+      .distinct()
+      .toList();
   }
 
   private CompletableFuture<Result<Item>> fetchItem(String itemId) {
@@ -395,6 +430,13 @@ public class ItemRepository {
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
+      .thenComposeAsync(this::fetchItemsRelatedRecords);
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Item>>> fetchFor(
+    Collection<String> itemIds, int maxValuesPerCqlSearchQuery) {
+
+    return fetchItems(itemIds, maxValuesPerCqlSearchQuery)
       .thenComposeAsync(this::fetchItemsRelatedRecords);
   }
 

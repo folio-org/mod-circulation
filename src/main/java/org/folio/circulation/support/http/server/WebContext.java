@@ -9,6 +9,8 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
@@ -21,9 +23,27 @@ import io.vertx.ext.web.RoutingContext;
 
 public class WebContext {
   private final RoutingContext routingContext;
+  private final Map<String, String> detachedHeaders;
 
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
+    this.detachedHeaders = null;
+  }
+
+  public WebContext(Map<String, String> detachedHeaders) {
+    this.routingContext = null;
+
+    Map<String, String> normalizedHeaders = new HashMap<>();
+
+    if (detachedHeaders != null) {
+      detachedHeaders.forEach((key, value) -> {
+        if (key != null && value != null) {
+          normalizedHeaders.put(key.toLowerCase(Locale.ROOT), value);
+        }
+      });
+    }
+
+    this.detachedHeaders = Map.copyOf(normalizedHeaders);
   }
 
   public String getTenantId() {
@@ -49,16 +69,28 @@ public class WebContext {
   }
 
   private String getHeader(String header) {
-    return routingContext.request().getHeader(header);
+    if (routingContext != null) {
+      return routingContext.request().getHeader(header);
+    }
+
+    return detachedHeaders.get(header.toLowerCase(Locale.ROOT));
   }
 
   public Integer getIntegerParameter(String name, Integer defaultValue) {
+    if (routingContext == null) {
+      return defaultValue;
+    }
+
     String value = routingContext.request().getParam(name);
 
     return value != null ? Integer.parseInt(value) : defaultValue;
   }
 
   public String getStringParameter(String name, String defaultValue) {
+    if (routingContext == null) {
+      return defaultValue;
+    }
+
     String value = routingContext.request().getParam(name);
 
     return value != null ? value : defaultValue;
@@ -95,7 +127,7 @@ public class WebContext {
   }
 
   public void write(HttpResponse response) {
-    response.writeTo(routingContext.response());
+    response.writeTo(requireRoutingContext().response());
   }
 
   public void writeResultToHttpResponse(Result<HttpResponse> result) {
@@ -103,7 +135,19 @@ public class WebContext {
   }
 
   public Map<String, String> getHeaders() {
+    if (routingContext == null) {
+      return detachedHeaders;
+    }
+
     return routingContext.request().headers().entries().stream()
       .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue, (a, b) -> b));
+  }
+
+  private RoutingContext requireRoutingContext() {
+    if (routingContext == null) {
+      throw new IllegalStateException("RoutingContext is not available for detached WebContext");
+    }
+
+    return routingContext;
   }
 }

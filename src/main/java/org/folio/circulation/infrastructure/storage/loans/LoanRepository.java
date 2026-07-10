@@ -479,6 +479,18 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     return queryLoanStorage(cqlQueryResult, loansLimit);
   }
 
+  public Result<CqlQuery> createOpenLoanPageQuery() {
+    return getStatusCQLQuery("Open")
+      .map(query -> query.sortBy(ascending(ID)));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findOpenLoans(PageLimit pageLimit,
+    Offset offset) {
+
+    return createOpenLoanPageQuery()
+      .after(query -> getMany(query, pageLimit, offset));
+  }
+
   public CompletableFuture<Result<Loan>> findLastLoanForItem(String itemId) {
     log.debug("findLastLoanForItem:: parameters itemId: {}", itemId);
     final Result<CqlQuery> cqlQuery = exactMatch(ITEM_ID, itemId)

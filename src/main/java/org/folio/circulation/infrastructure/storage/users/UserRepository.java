@@ -35,6 +35,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
+import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
+import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
@@ -178,11 +180,27 @@ public class UserRepository {
       User::from);
   }
 
+  private FindWithMultipleCqlIndexValues<User> createUsersFetcher(int maxValuesPerCqlSearchQuery) {
+    return new CqlIndexValuesFinder<>(
+      new CqlQueryFinder<>(usersStorageClient, USERS_RECORD_PROPERTY, User::from),
+      maxValuesPerCqlSearchQuery);
+  }
+
   public CompletableFuture<Result<Map<String, User>>> getUsersForUserIds(Collection<String> ids) {
     log.debug("getUsersForUserIds:: parameters ids: {}", () -> collectionAsString(ids));
     final FindWithMultipleCqlIndexValues<User> fetcher = createUsersFetcher();
 
     return fetcher.findByIds(ids)
+      .thenApply(mapResult(users -> users.toMap(User::getId)));
+  }
+
+  public CompletableFuture<Result<Map<String, User>>> getUsersForUserIds(Collection<String> ids,
+    int maxValuesPerCqlSearchQuery) {
+
+    log.debug("getUsersForUserIds:: parameters ids: {}, maxValuesPerCqlSearchQuery: {}",
+      () -> collectionAsString(ids), () -> maxValuesPerCqlSearchQuery);
+
+    return createUsersFetcher(maxValuesPerCqlSearchQuery).findByIds(ids)
       .thenApply(mapResult(users -> users.toMap(User::getId)));
   }
 
