@@ -1,6 +1,6 @@
 ## 24.6.0-SNAPSHOT In progress
 * Fix flaky tests ([CIRC-2633](https://folio-org.atlassian.net/browse/CIRC-2633))
-* Implement shadow location handling for DCB items in fetchItemRelatedRecords ([CIRC-2538](https://folio-org.atlassian.net/browse/CIRC-2538))
+* Refactor item location handling to use locationRepository directly for effective location retrieval ([CIRC-2538](https://folio-org.atlassian.net/browse/CIRC-2538))
 
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))
