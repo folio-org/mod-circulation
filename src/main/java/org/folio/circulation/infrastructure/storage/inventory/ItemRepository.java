@@ -401,16 +401,10 @@ public class ItemRepository {
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
       .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
-      .thenComposeAsync(combineAfter(this::getEffectiveLocation, Item::withLocation))
+      .thenComposeAsync(combineAfter(locationRepository::getEffectiveLocation, Item::withLocation))
       .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
       .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType))
       .thenCompose(CompletableFuture::completedFuture);
-  }
-
-  private CompletableFuture<Result<Location>> getEffectiveLocation(Item item) {
-    return item.isDcbItem()
-      ? shadowLocationRepository.getEffectiveLocation(item)
-      : locationRepository.getEffectiveLocation(item);
   }
 
   private CompletableFuture<Result<Holdings>> fetchHoldingsRecord(Item item) {
