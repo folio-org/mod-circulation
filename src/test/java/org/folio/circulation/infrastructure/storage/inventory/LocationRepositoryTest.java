@@ -92,6 +92,42 @@ class LocationRepositoryTest {
     verify(servicePointRepository, never()).getServicePointById(anyString());
   }
 
+  @Test
+  void getEffectiveLocationShouldFetchServicePointFromStorageWhenNameIsAbsent() {
+    final var spId = UUID.randomUUID().toString();
+    final var locationId = UUID.randomUUID().toString();
+
+    final var locationJson = new JsonObject()
+      .put("id", locationId)
+      .put("name", "Regular Location")
+      .put("code", "REG-LOC")
+      .put("primaryServicePoint", spId);
+
+    final var locationsClient = mock(CollectionResourceClient.class);
+    final var servicePointRepository = mock(ServicePointRepository.class);
+
+    when(locationsClient.get(anyString())).thenReturn(ofAsync(
+      () -> new Response(200, locationJson.encodePrettily(), "application/json")));
+    when(servicePointRepository.getServicePointById(any(UUID.class)))
+      .thenReturn(ofAsync(() -> null));
+
+    final var clients = mock(Clients.class);
+    when(clients.locationsStorage()).thenReturn(locationsClient);
+    when(clients.institutionsStorage()).thenReturn(mock(CollectionResourceClient.class));
+    when(clients.campusesStorage()).thenReturn(mock(CollectionResourceClient.class));
+    when(clients.librariesStorage()).thenReturn(mock(CollectionResourceClient.class));
+
+    final var itemJson = new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("holdingsRecordId", UUID.randomUUID().toString())
+      .put("effectiveLocationId", locationId);
+    final Item item = new ItemMapper().toDomain(itemJson);
+
+    get(using(clients, servicePointRepository).getEffectiveLocation(item));
+
+    verify(servicePointRepository).getServicePointById(UUID.fromString(spId));
+  }
+
   @SneakyThrows
   private <T> Result<T> get(CompletableFuture<Result<T>> future) {
     return future.get(1, TimeUnit.SECONDS);
