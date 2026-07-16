@@ -311,6 +311,11 @@ public class LocationRepository {
       log.info("Location was not found, aborting fetching primary service point");
       return ofAsync(() -> null);
     }
+    if (location.getPrimaryServicePoint() != null
+        && location.getPrimaryServicePoint().getName() != null) {
+      log.info("fetchPrimaryServicePoint:: using effectiveLocationPrimaryServicePointName");
+      return ofAsync(location::getPrimaryServicePoint);
+    }
 
     return servicePointRepository.getServicePointById(location.getPrimaryServicePointId());
   }
