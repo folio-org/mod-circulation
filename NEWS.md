@@ -1,3 +1,6 @@
+## 24.6.0-SNAPSHOT In progress
+* Fix flaky tests ([CIRC-2633](https://folio-org.atlassian.net/browse/CIRC-2633))
+* Implement shadow location handling for DCB items in fetchItemRelatedRecords ([CIRC-2538](https://folio-org.atlassian.net/browse/CIRC-2538))
 * Fail on startup if Kafka config is invalid ([CIRC-2003](https://folio-org.atlassian.net/browse/CIRC-2003))
 
 ## 24.5.0 2026-04-14
