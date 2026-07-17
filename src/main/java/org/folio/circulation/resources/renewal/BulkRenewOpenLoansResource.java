@@ -1,5 +1,11 @@
 package org.folio.circulation.resources.renewal;
 
+import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
+
+import java.util.Locale;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.resources.Resource;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.RouteRegistration;
@@ -11,6 +17,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class BulkRenewOpenLoansResource extends Resource {
+  private static final Logger log = LogManager.getLogger(BulkRenewOpenLoansResource.class);
+
   // Task 1 establishes the shared guard seam; later tasks will use it for background work.
   private static final BulkRenewalJobGuard DEFAULT_JOB_GUARD = new BulkRenewalJobGuard();
 
@@ -40,6 +48,8 @@ public class BulkRenewOpenLoansResource extends Resource {
   }
 
   private void bulkRenewOpenLoans(RoutingContext routingContext) {
+    log.info("bulk renewal inbound request headers={}", inboundHeadersAsString(routingContext));
+
     final WebContext context = new WebContext(routingContext);
     BulkRenewalWebContext detachedContext = new BulkRenewalWebContext(context.getHeaders());
 
@@ -49,5 +59,13 @@ public class BulkRenewOpenLoansResource extends Resource {
     }
 
     context.write(NoContentResponse.noContent());
+  }
+
+  private String inboundHeadersAsString(RoutingContext routingContext) {
+    return routingContext.request().headers().entries().stream()
+      .filter(entry -> !TOKEN.equalsIgnoreCase(entry.getKey()))
+      .map(entry -> entry.getKey().toLowerCase(Locale.ROOT) + "=" + entry.getValue())
+      .toList()
+      .toString();
   }
 }

@@ -4,13 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -23,6 +34,30 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class BulkRenewOpenLoansResourceTest {
+  private TestAppender appender;
+  private org.apache.logging.log4j.core.Logger coreLogger;
+
+  @BeforeEach
+  void setUp() {
+    appender = new TestAppender();
+    appender.start();
+
+    coreLogger = (org.apache.logging.log4j.core.Logger) LogManager.getLogger(
+      BulkRenewOpenLoansResource.class);
+    coreLogger.addAppender(appender);
+    coreLogger.setLevel(Level.INFO);
+  }
+
+  @AfterEach
+  void tearDown() {
+    if (coreLogger != null && appender != null) {
+      coreLogger.removeAppender(appender);
+    }
+
+    if (appender != null) {
+      appender.stop();
+    }
+  }
 
   @Test
   void bulkRenewOpenLoansRouteIsRegistered() {
@@ -34,6 +69,36 @@ class BulkRenewOpenLoansResourceTest {
 
     assertTrue(router.getRoutes().stream()
       .anyMatch(route -> "/circulation/bulk-renew-open-loans".equals(route.getPath())));
+  }
+
+  @Test
+  void bulkRenewOpenLoansLogsInboundRequestHeadersWithoutToken(Vertx vertx,
+    VertxTestContext testContext) {
+
+    Router router = Router.router(vertx);
+    HttpClient client = vertx.createHttpClient();
+    BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
+
+    new BulkRenewOpenLoansResource(client, guard, new AcceptingService(guard)).register(router);
+
+    vertx.createHttpServer()
+      .requestHandler(router)
+      .listen(0)
+      .onComplete(testContext.succeeding(server ->
+        WebClient.create(vertx)
+          .post(server.actualPort(), "localhost", "/circulation/bulk-renew-open-loans")
+          .putHeader("x-okapi-url", "https://okapi.example.org")
+          .putHeader("x-okapi-token", "secret-token")
+          .send()
+          .onComplete(testContext.succeeding(response -> {
+            assertEquals(204, response.statusCode());
+            assertTrue(appender.hasMessageContaining("bulk renewal inbound request headers="));
+            assertTrue(appender.hasMessageContaining("x-okapi-url=https://okapi.example.org"));
+            assertFalse(appender.hasMessageContaining("secret-token"));
+
+            server.close()
+              .onComplete(testContext.succeeding(v -> testContext.completeNow()));
+          }))));
   }
 
   @Test
@@ -147,6 +212,37 @@ class BulkRenewOpenLoansResourceTest {
     @Override
     public boolean trigger() {
       return false;
+    }
+  }
+
+  private static final class AcceptingService extends BulkRenewOpenLoansService {
+    private AcceptingService(BulkRenewalJobGuard guard) {
+      super(guard, BulkRenewOpenLoansService::noOpRunner);
+    }
+
+    @Override
+    public boolean trigger(BulkRenewalWebContext detachedContext) {
+      return true;
+    }
+  }
+
+  private static final class TestAppender extends AbstractAppender {
+    private final List<LogEvent> events = new ArrayList<>();
+
+    private TestAppender() {
+      super("BulkRenewOpenLoansResourceTestAppender", null,
+        PatternLayout.createDefaultLayout(), false, Property.EMPTY_ARRAY);
+    }
+
+    @Override
+    public void append(LogEvent event) {
+      events.add(event.toImmutable());
+    }
+
+    private boolean hasMessageContaining(String fragment) {
+      return events.stream()
+        .map(event -> event.getMessage().getFormattedMessage())
+        .anyMatch(message -> message.contains(fragment));
     }
   }
 }
