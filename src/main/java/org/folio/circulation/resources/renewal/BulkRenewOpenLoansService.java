@@ -5,6 +5,7 @@ import static org.folio.circulation.resources.handlers.error.CirculationErrorTyp
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.utils.LogUtil.headersAsString;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -62,6 +63,7 @@ import io.vertx.core.json.JsonObject;
 public class BulkRenewOpenLoansService {
   private static final Logger log = LogManager.getLogger(BulkRenewOpenLoansService.class);
   private static final int BULK_FETCH_CHUNK_SIZE = BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
+  private static final int REQUEST_CQL_FETCH_CHUNK_SIZE = 50;
 
   private final BulkRenewalJobGuard guard;
   private final Function<String, CompletableFuture<Result<Void>>> jobRunner;
@@ -120,6 +122,9 @@ public class BulkRenewOpenLoansService {
     if (backgroundJobRunner == null && detachedContextJobRunner == null && httpClient == null) {
       return trigger();
     }
+
+    log.info("bulk renewal detached context headers={}",
+      headersAsString(detachedContext == null ? Map.of() : detachedContext.getHeaders()));
 
     if (backgroundJobRunner != null) {
       return triggerInternal(jobId -> backgroundJobRunner.create(jobId).run(jobId));
@@ -244,10 +249,10 @@ public class BulkRenewOpenLoansService {
 
     static BulkRenewalRequestQueueLookup requestQueueLookup(RequestRepository requestRepository) {
       return new BulkRenewalRequestQueueLookup(
-        itemIds -> requestRepository.findOpenRequestsByItemIds(itemIds, BULK_FETCH_CHUNK_SIZE)
+        itemIds -> requestRepository.findOpenRequestsByItemIds(itemIds, REQUEST_CQL_FETCH_CHUNK_SIZE)
           .thenApply(result -> result.map(MultipleRecords::getRecords)),
         instanceIds -> requestRepository.findOpenRequestsByInstanceIds(instanceIds,
-            BULK_FETCH_CHUNK_SIZE)
+            REQUEST_CQL_FETCH_CHUNK_SIZE)
           .thenApply(result -> result.map(MultipleRecords::getRecords)));
     }
 

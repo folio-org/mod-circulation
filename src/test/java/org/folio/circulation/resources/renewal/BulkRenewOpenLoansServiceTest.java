@@ -115,6 +115,21 @@ class BulkRenewOpenLoansServiceTest {
   }
 
   @Test
+  void shouldLogDetachedContextHeadersWithoutToken() {
+    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(new BulkRenewalJobGuard(),
+      (jobId, detachedContext) -> completedFuture(succeeded(null)));
+
+    service.trigger(new BulkRenewalWebContext(Map.of(
+      "x-okapi-url", "http://localhost:8082",
+      "x-okapi-tenant", "diku",
+      "x-okapi-token", "secret-token")));
+
+    assertTrue(appender.hasMessageContaining("bulk renewal detached context headers="));
+    assertTrue(appender.hasMessageContaining("x-okapi-url=http://localhost:8082"));
+    assertFalse(appender.hasMessageContaining("secret-token"));
+  }
+
+  @Test
   void shouldAlwaysReleaseGuardWhenBackgroundJobFinishes() throws InterruptedException {
     TrackingBulkRenewalJobGuard guard = new TrackingBulkRenewalJobGuard();
     CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
@@ -235,6 +250,7 @@ class BulkRenewOpenLoansServiceTest {
     ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
     UserRepository userRepository = Mockito.mock(UserRepository.class);
     RequestRepository requestRepository = Mockito.mock(RequestRepository.class);
+    int requestCqlChunkSize = 50;
     List<String> ids = List.of("a", "b");
     Loan loan = loanWithItemAndUser(1);
     String itemId = loan.getItemId();
@@ -243,11 +259,10 @@ class BulkRenewOpenLoansServiceTest {
       .thenReturn(completedFuture(succeeded(MultipleRecords.empty())));
     when(userRepository.getUsersForUserIds(ids, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE))
       .thenReturn(completedFuture(succeeded(Map.of())));
-    when(requestRepository.findOpenRequestsByItemIds(List.of(itemId),
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE))
+    when(requestRepository.findOpenRequestsByItemIds(List.of(itemId), requestCqlChunkSize))
       .thenReturn(completedFuture(succeeded(MultipleRecords.empty())));
     when(requestRepository.findOpenRequestsByInstanceIds(List.of("instance-1"),
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE))
+      requestCqlChunkSize))
       .thenReturn(completedFuture(succeeded(MultipleRecords.empty())));
 
     BulkRenewOpenLoansService.RealRunnerFactories.itemFetcher(itemRepository).apply(ids).join();
@@ -261,11 +276,10 @@ class BulkRenewOpenLoansServiceTest {
     verify(itemRepository, never()).fetchFor(ids);
     verify(userRepository).getUsersForUserIds(ids, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE);
     verify(userRepository, never()).getUsersForUserIds(ids);
-    verify(requestRepository).findOpenRequestsByItemIds(List.of(itemId),
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE);
+    verify(requestRepository).findOpenRequestsByItemIds(List.of(itemId), requestCqlChunkSize);
     verify(requestRepository, never()).findOpenRequestsByItemIds(List.of(itemId));
     verify(requestRepository).findOpenRequestsByInstanceIds(List.of("instance-1"),
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE);
+      requestCqlChunkSize);
     verify(requestRepository, never()).findOpenRequestsByInstanceIds(List.of("instance-1"));
   }
 
