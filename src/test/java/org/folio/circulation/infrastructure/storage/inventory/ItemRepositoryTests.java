@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +25,6 @@ import org.folio.circulation.domain.ItemDescription;
 import org.folio.circulation.domain.LoanType;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.MaterialType;
-import org.folio.circulation.storage.mappers.ItemMapper;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
@@ -138,68 +136,6 @@ class ItemRepositoryTests {
     assertThat(updateResult, succeeded());
   }
 
-  @Test
-  void fetchItemRelatedRecordsShouldUseShadowLocationRepoForDcbItem() {
-    final var locationRepository = mock(LocationRepository.class);
-    final var shadowLocationRepository = mock(ShadowLocationRepository.class);
-    final var materialTypeRepository = mock(MaterialTypeRepository.class);
-    final var instanceRepository = mock(InstanceRepository.class);
-    final var holdingsRepository = mock(HoldingsRepository.class);
-    final var loanTypeRepository = mock(LoanTypeRepository.class);
-
-    when(locationRepository.getEffectiveLocation(any())).thenReturn(ofAsync(Location::unknown));
-    when(shadowLocationRepository.getEffectiveLocation(any())).thenReturn(ofAsync(Location::unknown));
-    when(materialTypeRepository.getFor(any())).thenReturn(ofAsync(MaterialType::unknown));
-    when(instanceRepository.fetchById(anyString())).thenReturn(ofAsync(Instance::unknown));
-    when(holdingsRepository.fetchById(anyString())).thenReturn(ofAsync(Holdings::unknown));
-
-    final var repository = new ItemRepository(null, locationRepository, shadowLocationRepository,
-      materialTypeRepository, instanceRepository, holdingsRepository, loanTypeRepository, null);
-
-    final var dcbItemJson = new JsonObject()
-      .put("id", UUID.randomUUID().toString())
-      .put("dcbItem", true)
-      .put("holdingsRecordId", UUID.randomUUID().toString())
-      .put("effectiveLocationId", UUID.randomUUID().toString());
-    final var dcbItem = new ItemMapper().toDomain(dcbItemJson);
-
-    get(repository.fetchItemRelatedRecords(Result.succeeded(dcbItem)));
-
-    verify(shadowLocationRepository).getEffectiveLocation(any());
-    verify(locationRepository, never()).getEffectiveLocation(any());
-  }
-
-  @Test
-  void fetchItemRelatedRecordsShouldUseRegularLocationRepoForNonDcbItem() {
-    final var locationRepository = mock(LocationRepository.class);
-    final var shadowLocationRepository = mock(ShadowLocationRepository.class);
-    final var materialTypeRepository = mock(MaterialTypeRepository.class);
-    final var instanceRepository = mock(InstanceRepository.class);
-    final var holdingsRepository = mock(HoldingsRepository.class);
-    final var loanTypeRepository = mock(LoanTypeRepository.class);
-
-    when(locationRepository.getEffectiveLocation(any())).thenReturn(ofAsync(Location::unknown));
-    when(shadowLocationRepository.getEffectiveLocation(any())).thenReturn(ofAsync(Location::unknown));
-    when(materialTypeRepository.getFor(any())).thenReturn(ofAsync(MaterialType::unknown));
-    when(instanceRepository.fetchById(anyString())).thenReturn(ofAsync(Instance::unknown));
-    when(holdingsRepository.fetchById(anyString())).thenReturn(ofAsync(Holdings::unknown));
-
-    final var repository = new ItemRepository(null, locationRepository, shadowLocationRepository,
-      materialTypeRepository, instanceRepository, holdingsRepository, loanTypeRepository, null);
-
-    final var regularItemJson = new JsonObject()
-      .put("id", UUID.randomUUID().toString())
-      .put("dcbItem", false)
-      .put("holdingsRecordId", UUID.randomUUID().toString())
-      .put("effectiveLocationId", UUID.randomUUID().toString());
-    final var regularItem = new ItemMapper().toDomain(regularItemJson);
-
-    get(repository.fetchItemRelatedRecords(Result.succeeded(regularItem)));
-
-    verify(locationRepository).getEffectiveLocation(any());
-    verify(shadowLocationRepository, never()).getEffectiveLocation(any());
-  }
-
   private void mockedClientGet(CollectionResourceClient client, String body) {
     when(client.get(anyString())).thenReturn(ofAsync(
       () -> new Response(200, body, "application/json")));
@@ -215,9 +151,6 @@ class ItemRepositoryTests {
 
 
     when(locationRepository.getEffectiveLocation(any()))
-      .thenReturn(ofAsync(Location::unknown));
-
-    when(shadowLocationRepository.getEffectiveLocation(any()))
       .thenReturn(ofAsync(Location::unknown));
 
     when(materialTypeRepository.getFor(any()))

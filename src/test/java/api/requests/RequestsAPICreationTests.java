@@ -5573,4 +5573,46 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(itemResponse.getString("retrievalServicePointName"),
       is(pickupServicePoint.getJson().getString("name")));
   }
+
+  @Test
+  void retrievalServicePointNameUsesEffectiveLocationPrimaryServicePointNameForEcsItem() {
+    final String realSpName = "Member Circ Desk";
+
+    IndividualResource dcbServicePoint = servicePointsFixture.create(
+      new ServicePointBuilder("DCB", "DCB", "DCB"));
+
+    IndividualResource institution = locationsFixture.createInstitution("ECS Institution");
+    IndividualResource campus = locationsFixture.createCampus("ECS Campus", institution.getId());
+    IndividualResource library = locationsFixture.createLibrary("ECS Library", campus.getId());
+
+    IndividualResource ecsLocation = locationsFixture.createLocation(
+      new LocationBuilder()
+        .withName("ECS Shadow Location")
+        .withCode("ECS-SHADOW-" + UUID.randomUUID())
+        .forInstitution(institution.getId())
+        .forCampus(campus.getId())
+        .forLibrary(library.getId())
+        .withPrimaryServicePoint(dcbServicePoint.getId())
+        .withEffectiveLocationPrimaryServicePointName(realSpName));
+
+    IndividualResource instance = instancesFixture.basedUponDunkirk();
+    IndividualResource holdings = holdingsFixture.defaultWithHoldings(instance.getId());
+
+    IndividualResource item = itemsClient.create(new ItemBuilder()
+      .forHolding(holdings.getId())
+      .withMaterialType(materialTypesFixture.book().getId())
+      .withPermanentLoanType(loanTypesFixture.canCirculate().getId())
+      .withPermanentLocation(ecsLocation)
+      .create());
+
+    IndividualResource request = requestsClient.create(new RequestBuilder()
+      .page()
+      .forItem(item)
+      .withInstanceId(instance.getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId())
+      .by(usersFixture.james()));
+
+    assertThat(request.getJson().getJsonObject("item").getString("retrievalServicePointName"),
+      is(realSpName));
+  }
 }
