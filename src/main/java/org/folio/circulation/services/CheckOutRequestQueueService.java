@@ -35,8 +35,8 @@ public class CheckOutRequestQueueService extends RequestQueueService {
   protected CompletableFuture<Result<Boolean>> isTitleLevelRequestFulfillableByItem(Item item,
     Request request) {
 
-    log.info("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, request.itemId: {}, holdingId: {}, request.holdingId: {}, requestId: {}",
-      item::getItemId, request::getItemId, item::getHoldingsRecordId, request::getHoldingsRecordId, request::getId);
+    log.info("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
+      item::getItemId, request::getId);
 
     if (!Strings.CS.equals(request.getInstanceId(), item.getInstanceId()) && !item.isDcbItem()) {
       log.info("isTitleLevelRequestFulfillableByItem:: instanceId mismatch, not fulfillable");
