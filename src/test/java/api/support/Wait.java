@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.awaitility.core.ConditionFactory;
+import org.hamcrest.Matcher;
 
 import io.vertx.core.Future;
 import lombok.SneakyThrows;
@@ -36,6 +37,11 @@ public class Wait {
   public static <T> T waitForValue(Callable<T> valueSupplier, Predicate<T> valuePredicate) {
     return waitAtMost(15, SECONDS)
       .until(valueSupplier, valuePredicate);
+  }
+
+  public static <T> T waitForValue(Callable<T> valueSupplier, Matcher<T> valueMatcher) {
+    return waitAtMost(15, SECONDS)
+      .until(valueSupplier, valueMatcher);
   }
 
   public static void waitFor(Callable<Boolean> conditionEvaluator) {

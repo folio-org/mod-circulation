@@ -1,6 +1,8 @@
 package api;
 
 import static api.support.APITestContext.TENANT_ID;
+import static api.support.Wait.waitFor;
+import static api.support.Wait.waitForValue;
 import static api.support.fakes.FakePubSub.getCreatedEventTypes;
 import static api.support.fakes.FakePubSub.getDeletedEventTypes;
 import static api.support.fakes.FakePubSub.getRegisteredPublishers;
@@ -27,7 +29,12 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.Is.is;
+
+import java.util.Arrays;
+import java.util.List;
 
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.resources.TenantActivationResource;
@@ -39,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
+import api.support.Wait;
 
 class TenantActivationResourceTests extends APITests {
 
@@ -104,14 +112,21 @@ class TenantActivationResourceTests extends APITests {
   @Test
   void kafkaTopicsAreCreatedAndDeleted() {
     TenantActivationResource.enableNativeKafkaIntegration();
-    assertThat(kafkaHelper.listTopics(), Matchers.empty());
+
+    List<String> circulationTopics = Arrays.stream(CirculationKafkaTopic.values())
+      .map(topic -> topic.fullTopicName(TENANT_ID))
+      .toList();
+
+    assertThat(kafkaHelper.listTopics(), everyItem(not(in(circulationTopics))));
 
     Response postResponse = tenantActivationFixture.postTenant();
+
     assertThat(postResponse, hasStatus(HTTP_CREATED));
-    kafkaHelper.waitForTopicCount(CirculationKafkaTopic.values().length);
+    waitFor(() -> kafkaHelper.listTopics().containsAll(circulationTopics));
 
     Response deleteResponse = tenantActivationFixture.deleteTenant(true);
+
     assertThat(deleteResponse, hasStatus(HTTP_NO_CONTENT));
-    kafkaHelper.waitForTopicCount(0);
+    waitFor(() -> kafkaHelper.listTopics().stream().noneMatch(circulationTopics::contains));
   }
 }
