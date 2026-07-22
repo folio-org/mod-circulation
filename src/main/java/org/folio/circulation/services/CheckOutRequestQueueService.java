@@ -38,12 +38,9 @@ public class CheckOutRequestQueueService extends RequestQueueService {
     log.info("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, request.itemId: {}, holdingId: {}, request.holdingId: {}, requestId: {}",
       item::getItemId, request::getItemId, item::getHoldingsRecordId, request::getHoldingsRecordId, request::getId);
 
-    if (!Strings.CS.equals(request.getInstanceId(), item.getInstanceId())) {
+    if (!Strings.CS.equals(request.getInstanceId(), item.getInstanceId()) && !item.isDcbItem()) {
       log.info("isTitleLevelRequestFulfillableByItem:: instanceId mismatch, not fulfillable");
-      return item.isDcbItem()
-        ? ofAsync(Strings.CS.equals(request.getItemId(), item.getItemId())
-            && Strings.CS.equals(item.getHoldingsRecordId(), request.getHoldingsRecordId()))
-        : ofAsync(false);
+      return ofAsync(false);
     }
 
     if (request.isRecall()) {
