@@ -25,4 +25,9 @@ public class TenantActivationFixture {
     return restAssuredClient.delete(circulationModuleUrl("/_/tenant"),
       "tenant-api-delete-test-request");
   }
+
+  public Response deleteTenant(boolean purge) {
+    return restAssuredClient.delete(new JsonObject().put("purge", purge),
+      circulationModuleUrl("/_/tenant"), "tenant-api-delete-test-request");
+  }
 }

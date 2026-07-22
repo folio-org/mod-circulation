@@ -5,9 +5,6 @@ import static api.support.Wait.waitForValue;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toMap;
-import static org.awaitility.Awaitility.waitAtMost;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
@@ -19,13 +16,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.circulation.domain.events.DomainEventPayloadType;
@@ -42,14 +36,7 @@ import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.admin.ConsumerGroupDescription;
-import io.vertx.kafka.admin.ConsumerGroupListing;
-import io.vertx.kafka.client.common.TopicPartition;
-import io.vertx.kafka.client.consumer.OffsetAndMetadata;
-import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -66,34 +53,34 @@ public class EventConsumerVerticleTest extends APITests {
   @Test
   void circulationRulesUpdateEventsAreDeliveredToMultipleConsumers() {
     // first verticle has been deployed beforehand, so we should already see a group with 1 consumer
-    List<String> groupsBeforeDeployment = getConsumerGroups(1);
+    List<String> groupsBeforeDeployment = kafkaHelper.getConsumerGroups(1);
     assertThat(groupsBeforeDeployment, hasSize(1));
     String group1 = groupsBeforeDeployment.getFirst();
-    verifyConsumerGroups(Map.of(group1, 1));
+    kafkaHelper.verifyConsumerGroups(Map.of(group1, 1));
 
     String secondVerticleId = deployVerticle();
     // after deploying second verticle we should see 2 groups with 1 consumer each
-    List<String> groupsAfterDeployment = getConsumerGroups(2);
+    List<String> groupsAfterDeployment = kafkaHelper.getConsumerGroups(2);
     assertThat(groupsAfterDeployment, hasSize(2));
     String group2 = groupsAfterDeployment.stream()
       .filter(groupId -> !groupId.equals(group1))
       .findFirst()
       .orElseThrow();
-    verifyConsumerGroups(Map.of(group1, 1, group2, 1));
+    kafkaHelper.verifyConsumerGroups(Map.of(group1, 1, group2, 1));
 
-    int initialOffsetForGroup1 = getOffset(CIRCULATION_RULES_TOPIC, group1);
-    int initialOffsetForGroup2 = getOffset(CIRCULATION_RULES_TOPIC, group2);
+    int initialOffsetForGroup1 = kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1);
+    int initialOffsetForGroup2 = kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group2);
 
     JsonObject rules = circulationRulesFixture.getRules().getJson();
     publishCirculationRulesUpdateEvent(rules, rules);
 
     // verify that both consumer groups have received and processed the event
-    waitForValue(() -> getOffset(CIRCULATION_RULES_TOPIC, group1), initialOffsetForGroup1 + 1);
-    waitForValue(() -> getOffset(CIRCULATION_RULES_TOPIC, group2), initialOffsetForGroup2 + 1);
+    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1), initialOffsetForGroup1 + 1);
+    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group2), initialOffsetForGroup2 + 1);
 
     // undeploy second verticle and delete its consumer group
     undeployVerticle(secondVerticleId);
-    deleteConsumerGroup(group2);
+    kafkaHelper.deleteConsumerGroup(group2);
   }
 
   @Test
@@ -156,14 +143,14 @@ public class EventConsumerVerticleTest extends APITests {
     eventWithEmptyNewRulesAsText.getJsonObject("data").getJsonObject("new").put("rulesAsText", "");
 
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutTenant);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutType);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutTimestamp);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutData);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutOldRules);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutNewRules);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutNewRulesAsText);
-    publishEvent(CIRCULATION_RULES_TOPIC, eventWithEmptyNewRulesAsText);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutTenant);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutType);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutTimestamp);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutData);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutOldRules);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutNewRules);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithoutNewRulesAsText);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, eventWithEmptyNewRulesAsText);
     waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 8);
 
     Rules newCachedRules = getInstance().getRules(TENANT_ID);
@@ -202,7 +189,7 @@ public class EventConsumerVerticleTest extends APITests {
       .put("timestamp", ClockUtil.getInstant().minus(1, MINUTES).toEpochMilli());
 
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
-    publishEvent(CIRCULATION_RULES_TOPIC, event);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, event);
     waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
 
     Rules newCachedRules = getInstance().getRules(TENANT_ID);
@@ -222,7 +209,7 @@ public class EventConsumerVerticleTest extends APITests {
     Rules originalCachedRules = getInstance().getRules(TENANT_ID);
 
     int initialOffset = getOffsetForCirculationRulesUpdateEvents();
-    publishEvent(CIRCULATION_RULES_TOPIC, event);
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, event);
     waitForValue(EventConsumerVerticleTest::getOffsetForCirculationRulesUpdateEvents, initialOffset + 1);
 
     Rules newCachedRules = getInstance().getRules(TENANT_ID);
@@ -244,26 +231,11 @@ public class EventConsumerVerticleTest extends APITests {
   }
 
   private static int getOffsetForCirculationRulesUpdateEvents() {
-    return getOffset(CIRCULATION_RULES_TOPIC, getCirculationRulesUpdateEventConsumerGroupId());
-  }
-
-  @SneakyThrows
-  private static int getOffset(String topic, String consumerGroupId) {
-    return waitFor(kafkaAdminClient.listConsumerGroupOffsets(consumerGroupId)
-      .map(partitions -> Optional.ofNullable(partitions.get(new TopicPartition(topic, 0)))
-        .map(OffsetAndMetadata::getOffset)
-        .map(Long::intValue)
-        .orElse(0))); // if topic does not exist yet
+    return kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, getCirculationRulesUpdateEventConsumerGroupId());
   }
 
   private void publishCirculationRulesUpdateEvent(JsonObject oldRules, JsonObject newRules) {
-    publishEvent(CIRCULATION_RULES_TOPIC, buildUpdateEvent(oldRules, newRules));
-  }
-
-  private void publishEvent(String topic, JsonObject eventPayload) {
-    var record = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
-    record.addHeader("X-Okapi-Tenant", TENANT_ID);
-    waitFor(kafkaProducer.write(record));
+    kafkaHelper.publishEvent(CIRCULATION_RULES_TOPIC, buildUpdateEvent(oldRules, newRules));
   }
 
   private static JsonObject buildUpdateEvent(JsonObject oldVersion, JsonObject newVersion) {
@@ -289,66 +261,12 @@ public class EventConsumerVerticleTest extends APITests {
     APITestContext.undeployVerticle(deploymentId);
   }
 
-  public static <T> T waitFor(Future<T> future) {
-    return waitFor(future, 10);
-  }
-
-  @SneakyThrows
-  public static <T> T waitFor(Future<T> future, int timeoutSeconds) {
-    return future.toCompletionStage()
-      .toCompletableFuture()
-      .get(timeoutSeconds, SECONDS);
-  }
-
-  private static Map<String, ConsumerGroupDescription> verifyConsumerGroups(
-    Map<String, Integer> groupIdToSize) {
-
-    return waitAtMost(30, SECONDS)
-      .until(() -> waitFor(
-        kafkaAdminClient.describeConsumerGroups(new ArrayList<>(groupIdToSize.keySet()))),
-        groups -> groups.entrySet()
-          .stream()
-          .collect(toMap(Map.Entry::getKey, e -> e.getValue().getMembers().size()))
-          .equals(groupIdToSize)
-      );
-  }
-
-  private List<String> getConsumerGroups(int expectedGroupCount) {
-    return waitAtMost(30, SECONDS)
-      .until(() -> waitFor(kafkaAdminClient.listConsumerGroups()), groups -> groups.size() == expectedGroupCount)
-      .stream()
-      .map(ConsumerGroupListing::getGroupId)
-      .toList();
-  }
-
-  private static List<String> getCirculationRulesUpdateEventConsumerGroupIds() {
-    return waitFor(kafkaAdminClient.listConsumerGroups())
-      .stream()
-      .map(ConsumerGroupListing::getGroupId)
-      .filter(groupId -> groupId.matches(CIRCULATION_RULES_UPDATED_EVENT_CONSUMER_GROUP_ID_PATTERN))
-      .toList();
-  }
-
   private static String getCirculationRulesUpdateEventConsumerGroupId() {
-    List<String> groupIds = getCirculationRulesUpdateEventConsumerGroupIds();
+    List<String> groupIds = kafkaHelper.findConsumerGroupIds(CIRCULATION_RULES_UPDATED_EVENT_CONSUMER_GROUP_ID_PATTERN);
     assertThat("Expected exactly one consumer group", groupIds, hasSize(1));
     return groupIds.getFirst();
   }
 
-  private static void deleteConsumerGroup(String groupId) {
-    if (groupExists(groupId)) {
-      waitFor(kafkaAdminClient.deleteConsumerGroups(List.of(groupId)));
-      if (groupExists(groupId)) {
-        fail("Failed to delete consumer group: " + groupId);
-      }
-    }
-  }
 
-  private static boolean groupExists(String groupId) {
-    return waitFor(kafkaAdminClient.listConsumerGroups())
-      .stream()
-      .map(ConsumerGroupListing::getGroupId)
-      .anyMatch(groupId::equals);
-  }
 
 }

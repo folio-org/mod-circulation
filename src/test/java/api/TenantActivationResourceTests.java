@@ -29,9 +29,12 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
+import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.http.client.Response;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -96,5 +99,19 @@ class TenantActivationResourceTests extends APITests {
     Rules cachedRules = CirculationRulesCache.getInstance().getRules(TENANT_ID);
     assertThat(cachedRules, not(nullValue()));
     assertThat(cachedRules.getRulesAsText(), equalTo(circulationRulesFixture.getCirculationRules()));
+  }
+
+  @Test
+  void kafkaTopicsAreCreatedAndDeleted() {
+    TenantActivationResource.enableNativeKafkaIntegration();
+    assertThat(kafkaHelper.listTopics(), Matchers.empty());
+
+    Response postResponse = tenantActivationFixture.postTenant();
+    assertThat(postResponse, hasStatus(HTTP_CREATED));
+    kafkaHelper.waitForTopicCount(CirculationKafkaTopic.values().length);
+
+    Response deleteResponse = tenantActivationFixture.deleteTenant(true);
+    assertThat(deleteResponse, hasStatus(HTTP_NO_CONTENT));
+    kafkaHelper.waitForTopicCount(0);
   }
 }

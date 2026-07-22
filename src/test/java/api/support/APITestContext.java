@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.Launcher;
@@ -34,6 +35,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import lombok.SneakyThrows;
 
@@ -227,6 +229,26 @@ public class APITestContext {
 
     return vertxAssistant.createUsingVertx(vertx ->
       KafkaProducer.create(vertx, config, String.class, JsonObject.class));
+  }
+
+  public static KafkaConsumer<String, JsonObject> createKafkaConsumer(String kafkaUrl,
+    String consumerGroupId) {
+
+    Properties config = new Properties();
+    config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+
+    return vertxAssistant.createUsingVertx(vertx -> {
+      KafkaConsumer<String, JsonObject> consumer = KafkaConsumer.create(vertx, config);
+      consumer.handler(record -> consumer.commit());
+      return consumer;
+    });
   }
 
   public static KafkaAdminClient createKafkaAdminClient(String kafkaUrl) {
