@@ -1,6 +1,7 @@
 package org.folio.circulation.infrastructure.storage;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ErrorCode.CALENDAR_OPEN_PERIODS_NOT_FOUND;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -57,7 +58,8 @@ public class CalendarRepository {
       .mapTo(CalendarRepository::convertToOpeningDays)
       .whenNotFound(
         failedValidation(
-          new ValidationError("Calendar open periods are not found", Collections.emptyMap())
+          new ValidationError("Calendar open periods are not found", Collections.emptyMap(),
+            CALENDAR_OPEN_PERIODS_NOT_FOUND)
         )
       )
       .fetch(path);

@@ -1,6 +1,11 @@
 package org.folio.circulation.resources;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED;
+import static org.folio.circulation.support.ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED_WHEN_DUE_DATE_UNCHANGED;
+import static org.folio.circulation.support.ErrorCode.OVERRIDE_RENEWAL_NOT_ALLOWED_FOR_CURRENT_LOAN;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_BLOCKED_BY_RECALL;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
@@ -44,7 +49,8 @@ public final class RenewalValidator {
     if (isSameOrBefore(loan, proposedDueDate)) {
       log.info("errorWhenEarlierOrSameDueDate:: due date from loan: {}, proposedDueDate: {}",
         loan::getDueDate, () -> proposedDueDate);
-      errors.add(loanPolicyValidationError(loan.getLoanPolicy(), RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+      errors.add(loanPolicyValidationError(loan.getLoanPolicy(), RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE,
+        RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
     }
   }
 
@@ -54,7 +60,7 @@ public final class RenewalValidator {
         loan::getDueDate, () -> proposedDueDate);
 
       return failedValidation(loanPolicyValidationError(loan.getLoanPolicy(),
-        RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+        RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE, RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
     }
 
     return succeeded(proposedDueDate);
@@ -68,6 +74,12 @@ public final class RenewalValidator {
   public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
     String message) {
     return loanPolicyValidationError(loanPolicy, message, Collections.emptyMap());
+  }
+
+  public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
+    String message, ErrorCode errorCode) {
+
+    return loanPolicyValidationError(loanPolicy, message, Collections.emptyMap(), errorCode);
   }
 
   public static ValidationError loanPolicyValidationError(LoanPolicy loanPolicy,
@@ -106,26 +118,32 @@ public final class RenewalValidator {
       "renewal would not change the due date, " +
       "loan has reminder fees";
 
-    return loanPolicyValidationError(loanPolicy, reason);
+    return loanPolicyValidationError(loanPolicy, reason, OVERRIDE_RENEWAL_NOT_ALLOWED_FOR_CURRENT_LOAN);
   }
 
   public static ValidationError errorForDueDate() {
     return new ValidationError(
       "New due date must be specified when due date calculation fails",
-      "dueDate", "null");
+      "dueDate", "null", OVERRIDE_RENEWAL_DUE_DATE_REQUIRED);
   }
 
   public static ValidationError overrideDueDateIsRequiredError() {
     return new ValidationError(
       "New due date is required when renewal would not change the due date",
-      "dueDate", "null");
+      "dueDate", "null", OVERRIDE_RENEWAL_DUE_DATE_REQUIRED_WHEN_DUE_DATE_UNCHANGED);
   }
 
   public static ValidationError errorForRecallRequest(String reason, String requestId) {
-    return new ValidationError(reason, "requestId", requestId);
+    return new ValidationError(reason, "requestId", requestId, RENEWAL_BLOCKED_BY_RECALL);
   }
 
   public static ValidationError itemByIdValidationError(String reason, String itemId) {
     return new ValidationError(reason, "itemId", itemId);
+  }
+
+  public static ValidationError itemByIdValidationError(String reason, String itemId,
+    ErrorCode errorCode) {
+
+    return new ValidationError(reason, "itemId", itemId, errorCode);
   }
 }

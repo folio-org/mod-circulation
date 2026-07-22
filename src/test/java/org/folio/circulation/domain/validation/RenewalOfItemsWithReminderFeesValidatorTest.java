@@ -11,10 +11,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static api.support.matchers.FailureMatcher.hasValidationFailure;
+import static api.support.matchers.ResultMatchers.hasValidationError;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
+import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.util.Collections.emptyList;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_BLOCKED_BY_REMINDER_FEES;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 
 class RenewalOfItemsWithReminderFeesValidatorTest {
 
@@ -54,8 +58,9 @@ class RenewalOfItemsWithReminderFeesValidatorTest {
       validator.blockRenewalIfRuledByRemindersFeePolicy(renewalContext);
 
     assertThat(result.failed(), is(true));
-    assertThat(result, hasValidationFailure(
-      "Renewals not allowed for loans with reminders."));
+    assertThat(result, hasValidationError(allOf(
+      hasMessage("Renewals not allowed for loans with reminders."),
+      hasCode(RENEWAL_BLOCKED_BY_REMINDER_FEES))));
   }
 
   private Loan createLoan(Boolean allowRenewalOfItemsWithReminderFees, boolean hasReminders) {

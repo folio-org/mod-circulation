@@ -36,6 +36,7 @@ import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasErrors;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
 import static api.support.matchers.ValidationErrorMatchers.hasUUIDParameter;
@@ -84,6 +85,7 @@ import api.support.builders.AddInfoRequestBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.awaitility.Awaitility;
 import org.folio.Environment;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.domain.EcsRequestPhase;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
@@ -646,7 +648,8 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
-      hasLoanPolicyNameParameter("Limited Renewals Policy"))));
+      hasLoanPolicyNameParameter("Limited Renewals Policy"),
+      hasCode(ErrorCode.LOAN_RENEWAL_LIMIT_REACHED))));
   }
 
   @Test
@@ -668,8 +671,9 @@ public abstract class RenewalAPITests extends APITests {
 
     Response response = attemptRenewal(smallAngryPlanet, jessica);
 
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Cannot renew loan when user is inactive or expired")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("Cannot renew loan when user is inactive or expired"),
+      hasCode(ErrorCode.USER_IS_INACTIVE_OR_EXPIRED))));
   }
 
   @Test
@@ -706,10 +710,12 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
-      hasLoanPolicyNameParameter("Limited Renewals Policy"))));
+      hasLoanPolicyNameParameter("Limited Renewals Policy"),
+      hasCode(ErrorCode.LOAN_RENEWAL_LIMIT_REACHED))));
 
-    assertThat(response.getJson(), hasErrorWith(
-      hasMessage("items cannot be renewed when there is an active recall request")));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage("items cannot be renewed when there is an active recall request"),
+      hasCode(ErrorCode.RENEWAL_BLOCKED_BY_RECALL))));
   }
 
   @Test
@@ -746,12 +752,14 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan at maximum renewal number"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
-      hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
+      hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"),
+      hasCode(ErrorCode.LOAN_RENEWAL_LIMIT_REACHED))));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("renewal would not change the due date"),
       hasLoanPolicyIdParameter(limitedRenewalsPolicyId),
-      hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"))));
+      hasLoanPolicyNameParameter("Limited Renewals And Limited Due Date Policy"),
+      hasCode(ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE))));
   }
 
   @Test
@@ -777,7 +785,8 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
-      hasLoanPolicyNameParameter("Non Renewable Policy"))));
+      hasLoanPolicyNameParameter("Non Renewable Policy"),
+      hasCode(ErrorCode.LOAN_NOT_RENEWABLE))));
     assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
   }
 
@@ -812,7 +821,8 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("loan is not renewable"),
       hasLoanPolicyIdParameter(notRenewablePolicyId),
-      hasLoanPolicyNameParameter("Non Renewable Policy"))));
+      hasLoanPolicyNameParameter("Non Renewable Policy"),
+      hasCode(ErrorCode.LOAN_NOT_RENEWABLE))));
     assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
   }
 
@@ -847,7 +857,8 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
-      hasLoanPolicyNameParameter("Non loanable policy"))));
+      hasLoanPolicyNameParameter("Non loanable policy"),
+      hasCode(ErrorCode.ITEM_NOT_LOANABLE))));
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
@@ -874,7 +885,8 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage(ITEM_IS_DECLARED_LOST),
-      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()),
+      hasCode(ErrorCode.ITEM_DECLARED_LOST_NOT_RENEWABLE))));
     assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
   }
 
@@ -898,7 +910,8 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Claimed returned"),
-      hasUUIDParameter("itemId", smallAngryPlanet.getId()))));
+      hasUUIDParameter("itemId", smallAngryPlanet.getId()),
+      hasCode(ErrorCode.ITEM_CLAIMED_RETURNED_NOT_RENEWABLE))));
     assertThat(getOverridableBlockNames(response), hasSize(0));
   }
 
@@ -910,7 +923,8 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
-      hasUUIDParameter("itemId", result.getItem().getId()))));
+      hasUUIDParameter("itemId", result.getItem().getId()),
+      hasCode(ErrorCode.ITEM_AGED_TO_LOST_NOT_RENEWABLE))));
     assertThat(getOverridableBlockNames(response), hasItem("renewalBlock"));
 
     Awaitility.await()
@@ -934,7 +948,8 @@ public abstract class RenewalAPITests extends APITests {
     //Occurs when current loanee is not found, so relates to loan rather than user in request
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasUUIDParameter("userId", steve.getId()))));
+      hasUUIDParameter("userId", steve.getId()),
+      hasCode(ErrorCode.USER_NOT_FOUND))));
   }
 
   @Test
@@ -966,7 +981,8 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot renew item checked out to different user"),
-      hasUserRelatedParameter(james))));
+      hasUserRelatedParameter(james),
+      hasCode(ErrorCode.ITEM_CHECKED_OUT_TO_DIFFERENT_USER))));
   }
 
   @Test
@@ -1665,7 +1681,8 @@ public abstract class RenewalAPITests extends APITests {
     assertThat(renewalResponse, hasErrorWith(allOf(
       hasMessage("item is not loanable"),
       hasLoanPolicyIdParameter(notLoanablePolicyId),
-      hasLoanPolicyNameParameter("Non loanable policy"))));
+      hasLoanPolicyNameParameter("Non loanable policy"),
+      hasCode(ErrorCode.ITEM_NOT_LOANABLE))));
 
     assertThat(getErrorsFromResponse(response), hasItem(
       isBlockRelatedError(MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE, PATRON_BLOCK_NAME,
@@ -1714,7 +1731,9 @@ public abstract class RenewalAPITests extends APITests {
     Response response = loansFixture.attemptRenewal(
       buildRenewByBarcodeRequestWithPatronBlockOverride(item, jessica));
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS),
+      hasCode(ErrorCode.INSUFFICIENT_OVERRIDE_PERMISSIONS))));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }
@@ -1733,7 +1752,9 @@ public abstract class RenewalAPITests extends APITests {
     Response response = loansFixture.attemptRenewal(
       buildRenewByBarcodeRequestWithPatronBlockOverride(item, jessica), okapiHeaders);
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS),
+      hasCode(ErrorCode.INSUFFICIENT_OVERRIDE_PERMISSIONS))));
     assertThat(getMissingPermissions(response), hasSize(1));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }
@@ -1750,9 +1771,12 @@ public abstract class RenewalAPITests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("item is Aged to lost"),
-      hasUUIDParameter("itemId", item.getId()))));
+      hasUUIDParameter("itemId", item.getId()),
+      hasCode(ErrorCode.ITEM_AGED_TO_LOST_NOT_RENEWABLE))));
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS),
+      hasCode(ErrorCode.INSUFFICIENT_OVERRIDE_PERMISSIONS))));
     assertThat(getMissingPermissions(response), hasSize(2));
     assertThat(getMissingPermissions(response), hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION));
   }

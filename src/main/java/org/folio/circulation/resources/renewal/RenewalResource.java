@@ -107,6 +107,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.LostItemFeeRefundService;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -533,7 +534,7 @@ public abstract class RenewalResource extends Resource {
     if (StringUtils.isBlank(comment)) {
       log.warn("renewThroughOverride:: override renewal request has no comment");
       return completedFuture(failedValidation("Override renewal request must have a comment",
-        COMMENT, null));
+        COMMENT, null, ErrorCode.OVERRIDE_RENEWAL_COMMENT_REQUIRED));
     }
     final ZonedDateTime overrideDueDate = getDateTimeProperty(overrideBlocks.getJsonObject(
       RENEWAL_DUE_DATE_REQUIRED_OVERRIDE_BLOCK), DUE_DATE);
@@ -687,7 +688,8 @@ public abstract class RenewalResource extends Resource {
     LoanPolicy loanPolicy = context.getLoan().getLoanPolicy();
     if (loanPolicy.isNotLoanable()) {
       log.info("validateIfItemIsLoanable:: item is not loanable for loanId={}", context.getLoan()::getId);
-      return failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable")));
+      return failedValidation(List.of(loanPolicyValidationError(loanPolicy, "item is not loanable",
+        ErrorCode.ITEM_NOT_LOANABLE)));
     }
     return succeeded(context);
   }
@@ -719,7 +721,8 @@ public abstract class RenewalResource extends Resource {
       log.info("validateIfRenewIsPossible:: renewal not possible for loanId={}, itemStatus={}",
         loan::getId, loan::getItemStatusName);
       final List<ValidationError> errors = new ArrayList<>();
-      errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(), loan.getItemId()));
+      errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(), loan.getItemId(),
+        itemStatusNotRenewableErrorCode(loan.getItemStatus())));
       return failedValidation(errors);
     }
     return succeeded(context);
@@ -806,11 +809,12 @@ public abstract class RenewalResource extends Resource {
 
     if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),
-        loan.getItemId()));
+        loan.getItemId(), itemStatusNotRenewableErrorCode(loan.getItemStatus())));
     }
 
     if (loanPolicy.hasReachedRenewalLimit(loan)) {
-      errors.add(loanPolicyValidationError(loanPolicy, "loan at maximum renewal number"));
+      errors.add(loanPolicyValidationError(loanPolicy, "loan at maximum renewal number",
+        ErrorCode.LOAN_RENEWAL_LIMIT_REACHED));
     }
 
     return errors;
@@ -824,29 +828,49 @@ public abstract class RenewalResource extends Resource {
 
     if (loanPolicy.isNotRenewable()) {
       log.info("validateIfRenewIsAllowedAndDueDateRequired:: loan is not renewable, loanId={}", loan::getId);
-      errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable"));
+      errors.add(loanPolicyValidationError(loanPolicy, "loan is not renewable",
+        ErrorCode.LOAN_NOT_RENEWABLE));
     }
     if (firstRequestForLoanedItemIsHold(requestQueue, loan)) {
       if (!loanPolicy.isHoldRequestRenewable()) {
         log.info("validateIfRenewIsAllowedAndDueDateRequired:: hold request is not renewable, loanId={}", loan::getId);
-        errors.add(loanPolicyValidationError(loanPolicy, CAN_NOT_RENEW_ITEM_ERROR));
+        errors.add(loanPolicyValidationError(loanPolicy, CAN_NOT_RENEW_ITEM_ERROR,
+          ErrorCode.RENEWAL_BLOCKED_BY_HOLD_REQUEST));
       }
 
       if (loanPolicy.isFixed()) {
         if (loanPolicy.hasAlternateRenewalLoanPeriodForHolds()) {
           log.info("validateIfRenewIsAllowedAndDueDateRequired:: fixed policy has alternate renewal period for holds, loanId={}", loan::getId);
           errors.add(loanPolicyValidationError(loanPolicy,
-            FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS));
+            FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS,
+            ErrorCode.FIXED_LOAN_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS));
         }
         if (loanPolicy.hasRenewalPeriod()) {
           log.info("validateIfRenewIsAllowedAndDueDateRequired:: fixed policy has alternate renewal period, loanId={}", loan::getId);
           errors.add(loanPolicyValidationError(loanPolicy,
-            FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD));
+            FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD,
+            ErrorCode.FIXED_LOAN_POLICY_HAS_RENEWAL_PERIOD));
         }
       }
     }
 
     return errors;
+  }
+
+  private static ErrorCode itemStatusNotRenewableErrorCode(ItemStatus itemStatus) {
+    if (itemStatus == AGED_TO_LOST) {
+      return ErrorCode.ITEM_AGED_TO_LOST_NOT_RENEWABLE;
+    }
+
+    if (itemStatus == DECLARED_LOST) {
+      return ErrorCode.ITEM_DECLARED_LOST_NOT_RENEWABLE;
+    }
+
+    if (itemStatus == CLAIMED_RETURNED) {
+      return ErrorCode.ITEM_CLAIMED_RETURNED_NOT_RENEWABLE;
+    }
+
+    return null;
   }
 
   private static boolean firstRequestForLoanedItemIsHold(RequestQueue requestQueue, Loan loan) {

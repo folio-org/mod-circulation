@@ -32,6 +32,7 @@ import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.resources.RenewalValidator;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.storage.mappers.TimePeriodMapper;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -157,14 +158,15 @@ public class LoanPolicy extends Policy {
 
     if(loansPolicy == null) {
       return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
-        this::loanPolicyValidationError);
+        (message, errorCode) -> loanPolicyValidationError(message, errorCode));
     }
 
     if(isRolling(loansPolicy)) {
       if(isRenewal) {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy, isRenewalWithHoldRequest),
-          getRenewalDueDateLimitSchedules(), this::loanPolicyValidationError);
+          getRenewalDueDateLimitSchedules(),
+          (message, errorCode) -> loanPolicyValidationError(message, errorCode));
       }
       else {
         boolean useAlternatePeriod = false;
@@ -181,7 +183,8 @@ public class LoanPolicy extends Policy {
     else if(isFixed(loansPolicy)) {
       if (isRenewal) {
         return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-          getRenewalFixedDueDateSchedules(), systemDate, this::loanPolicyValidationError);
+          getRenewalFixedDueDateSchedules(), systemDate,
+          (message, errorCode) -> loanPolicyValidationError(message, errorCode));
       }
       else {
         if (isAlternatePeriod(requestQueue, itemId)) {
@@ -197,12 +200,18 @@ public class LoanPolicy extends Policy {
     }
     else {
       return new UnknownDueDateStrategy(getId(), getName(),
-        getProfileId(loansPolicy), isRenewal, this::loanPolicyValidationError);
+        getProfileId(loansPolicy), isRenewal,
+        (message, errorCode) -> loanPolicyValidationError(message, errorCode));
     }
   }
 
   private ValidationError loanPolicyValidationError(String message) {
     return RenewalValidator.loanPolicyValidationError(this, message);
+  }
+
+  private ValidationError loanPolicyValidationError(String message, ErrorCode errorCode) {
+    return RenewalValidator.loanPolicyValidationError(this, message, Collections.emptyMap(),
+      errorCode);
   }
 
   private boolean isAlternatePeriod(RequestQueue requestQueue, String itemId) {

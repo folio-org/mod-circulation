@@ -11,6 +11,7 @@ import static api.support.matchers.LoanAccountMatcher.hasNoOverdueFine;
 import static api.support.matchers.PatronNoticeMatcher.hasEmailNoticeProperties;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -43,6 +44,7 @@ import java.util.UUID;
 
 import api.support.builders.AddInfoRequestBuilder;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -125,7 +127,8 @@ class OverrideRenewByBarcodeTests extends APITests {
     //Occurs when current loanee is not found, so relates to loan rather than user in request
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("user is not found"),
-      hasParameter("userId", steve.getId().toString()))));
+      hasParameter("userId", steve.getId().toString()),
+      hasCode(ErrorCode.USER_NOT_FOUND))));
   }
 
   @Test
@@ -159,7 +162,8 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Cannot renew item checked out to different user"),
-      hasUserRelatedParameter(james))));
+      hasUserRelatedParameter(james),
+      hasCode(ErrorCode.ITEM_CHECKED_OUT_TO_DIFFERENT_USER))));
   }
 
   @Test
@@ -173,7 +177,8 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(response.getJson(), hasErrorWith(allOf(
       hasMessage("Override renewal request must have a comment"),
-      hasParameter("comment", null))));
+      hasParameter("comment", null),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_COMMENT_REQUIRED))));
   }
 
   @Test
@@ -198,7 +203,8 @@ class OverrideRenewByBarcodeTests extends APITests {
       OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("New due date must be specified when due date calculation fails"))));
+      hasMessage("New due date must be specified when due date calculation fails"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED))));
   }
 
   @Test
@@ -271,7 +277,8 @@ class OverrideRenewByBarcodeTests extends APITests {
       OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("New due date must be specified when due date calculation fails"))));
+      hasMessage("New due date must be specified when due date calculation fails"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED))));
   }
 
   @Test
@@ -364,7 +371,8 @@ class OverrideRenewByBarcodeTests extends APITests {
     Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, jessica);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("renewal date falls outside of date ranges in the loan policy"))));
+      hasMessage("renewal date falls outside of date ranges in the loan policy"),
+      hasCode(ErrorCode.RENEWAL_DATE_OUTSIDE_LOAN_POLICY_DATE_RANGES))));
 
     final ZonedDateTime newDueDate = loanDueDate.plusWeeks(3).plusMonths(2);
 
@@ -522,7 +530,8 @@ class OverrideRenewByBarcodeTests extends APITests {
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
         "renewal would not change the due date, " +
-        "loan has reminder fees"))));
+        "loan has reminder fees"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_NOT_ALLOWED_FOR_CURRENT_LOAN))));
   }
 
   @Test
@@ -605,13 +614,15 @@ class OverrideRenewByBarcodeTests extends APITests {
 
     assertThat(renewalResponse, hasErrors(1));
     assertThat(renewalResponse, hasErrorWith(allOf(
-      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
+      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE),
+      hasCode(ErrorCode.ITEM_NOT_LOANABLE))));
 
     Response response = loansFixture.attemptOverride(smallAngryPlanet, jessica,
       OVERRIDE_COMMENT, null);
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("New due date must be specified when due date calculation fails"))));
+      hasMessage("New due date must be specified when due date calculation fails"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED))));
   }
 
   @Test
@@ -632,7 +643,8 @@ class OverrideRenewByBarcodeTests extends APITests {
       loansFixture.attemptRenewal(422, smallAngryPlanet, jessica).getJson();
     assertThat(renewalResponse, hasErrors(1));
     assertThat(renewalResponse, hasErrorWith(allOf(
-      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE))));
+      hasMessage(ITEM_IS_NOT_LOANABLE_MESSAGE),
+      hasCode(ErrorCode.ITEM_NOT_LOANABLE))));
 
     ZonedDateTime newDueDate = ClockUtil.getZonedDateTime().plusWeeks(2);
 
@@ -845,7 +857,9 @@ class OverrideRenewByBarcodeTests extends APITests {
             .withPatronBlock(new JsonObject())
             .withComment(OVERRIDE_COMMENT).create()));
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(INSUFFICIENT_OVERRIDE_PERMISSIONS),
+      hasCode(ErrorCode.INSUFFICIENT_OVERRIDE_PERMISSIONS))));
     assertThat(getMissingPermissions(response), hasSize(2));
     assertThat(getMissingPermissions(response), allOf(hasItem(OVERRIDE_PATRON_BLOCK_PERMISSION),
       hasItem(OVERRIDE_RENEWAL_PERMISSION)));
@@ -886,12 +900,16 @@ class OverrideRenewByBarcodeTests extends APITests {
   }
 
   private Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
-    return hasMessage(String.format("No item with barcode %s exists",
-      item.getJson().getString("barcode")));
+    return allOf(
+      hasMessage(String.format("No item with barcode %s exists",
+        item.getJson().getString("barcode"))),
+      hasCode(ErrorCode.ITEM_BARCODE_NOT_FOUND));
   }
 
   private Matcher<ValidationError> hasRenewalWouldNotChangeDueDateMessage() {
-    return hasMessage("renewal would not change the due date");
+    return allOf(
+      hasMessage("renewal would not change the due date"),
+      hasCode(ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
   }
 
   private void createLoanPolicyAndSetAsFallback(LoanPolicyBuilder loanPolicyBuilder) {
