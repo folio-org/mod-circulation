@@ -1,12 +1,18 @@
 package org.folio.circulation.services.events;
 
+import static org.folio.rest.tools.utils.TenantTool.tenantId;
+
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.kafka.services.KafkaAdminClientService;
 import org.folio.kafka.services.KafkaTopic;
+import org.folio.rest.tools.utils.TenantTool;
 
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -36,5 +42,11 @@ public class KafkaService {
     return kafkaAdminClientService.deleteKafkaTopics(topics, tenantId)
       .toCompletionStage()
       .toCompletableFuture();
+  }
+
+  public KafkaEventPublisher<String, JsonObject> createPublisher(CirculationKafkaTopic topic,
+    Context context, String tenantId) {
+
+    return new KafkaEventPublisher<>(context, topic.fullTopicName(tenantId));
   }
 }

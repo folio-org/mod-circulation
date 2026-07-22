@@ -1,5 +1,6 @@
 package api.support;
 
+import static api.support.APITestContext.TENANT_ID;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
@@ -23,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
+import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -323,7 +325,7 @@ public abstract class APITests {
       return;
     }
 
-    kafkaHelper = KafkaTestHelper.start();
+    setUpKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -363,6 +365,15 @@ public abstract class APITests {
     FakeStorageModule.cleanupDelayData();
 
     mockClockManagerToReturnDefaultDateTime();
+  }
+
+  private static void setUpKafka() {
+    kafkaHelper = KafkaTestHelper.getInstance();
+    createKafkaTopics();
+  }
+
+  private static void createKafkaTopics() {
+    kafkaHelper.createTopic(CirculationStorageKafkaTopic.CIRCULATION_RULES, TENANT_ID);
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

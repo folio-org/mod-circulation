@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -57,7 +58,7 @@ public class KafkaTestHelper {
     this.adminClient = createKafkaAdminClient(kafkaUrl);
   }
 
-  public static KafkaTestHelper start() {
+  public static KafkaTestHelper getInstance() {
     if (INSTANCE != null) {
       log.info("Kafka container is already running");
       return INSTANCE;
@@ -133,6 +134,10 @@ public class KafkaTestHelper {
     var record = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
     record.addHeader("X-Okapi-Tenant", TENANT_ID);
     waitFor(producer.write(record));
+  }
+
+  public void createTopic(KafkaTopic topic, String tenantId) {
+    createTopic(topic.fullTopicName(tenantId));
   }
 
   public void createTopic(String topic) {

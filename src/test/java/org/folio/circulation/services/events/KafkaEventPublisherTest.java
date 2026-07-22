@@ -4,7 +4,6 @@ import static api.support.Wait.waitFor;
 import static api.support.Wait.waitForValue;
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
-import static org.folio.circulation.services.events.KafkaEventPublisherFactory.itemCheckedInEventPublisher;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
@@ -13,13 +12,15 @@ import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.support.http.OkapiHeader;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import api.support.KafkaTestHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
 
 @ExtendWith(VertxExtension.class)
 class KafkaEventPublisherTest {
@@ -37,26 +38,28 @@ class KafkaEventPublisherTest {
   @BeforeAll
   static void setUp() {
     TenantActivationResource.enableNativeKafkaIntegration();
-    kafkaHelper = KafkaTestHelper.start();
+    kafkaHelper = KafkaTestHelper.getInstance();
   }
 
-  @Test
-  void itemCheckedInEventPublisherTest(Vertx vertx) {
-    String topic = CirculationKafkaTopic.ITEM_CHECKED_IN.fullTopicName(TEST_TENANT);
-    kafkaHelper.createTopic(topic);
+  @ParameterizedTest
+  @EnumSource(CirculationKafkaTopic.class)
+  void testCirculationTopicPublishers(CirculationKafkaTopic topic, Vertx vertx) {
+    String fullTopicName = topic.fullTopicName(TEST_TENANT);
+    kafkaHelper.createTopic(fullTopicName);
 
-    String consumerGroupId = "test-group";
-    var consumer = kafkaHelper.createConsumer(consumerGroupId);
-    waitFor(consumer.subscribe(topic));
-    int initialOffset = kafkaHelper.getOffset(topic, consumerGroupId);
+    String consumerGroupId = topic.name() + "-consumer-group-" + randomUUID();
+    KafkaConsumer<String, JsonObject> consumer = kafkaHelper.createConsumer(consumerGroupId);
+    waitFor(consumer.subscribe(fullTopicName));
+    int initialOffset = kafkaHelper.getOffset(fullTopicName, consumerGroupId);
     assertEquals(0, initialOffset);
 
-    var eventPayload = new JsonObject().put("itemId", randomUUID().toString());
-    var event = new DomainEvent<>(randomUUID(), DomainEventType.CREATED,
+    JsonObject eventPayload = new JsonObject().put("itemId", randomUUID().toString());
+    DomainEvent<JsonObject> event = new DomainEvent<>(randomUUID(), DomainEventType.CREATED,
       TEST_TENANT, currentTimeMillis(), eventPayload);
 
-    var publisher = itemCheckedInEventPublisher(vertx.getOrCreateContext(), HEADERS);
+    KafkaEventPublisher<String, JsonObject> publisher =
+      new KafkaEventPublisher<>(vertx.getOrCreateContext(), fullTopicName);
     waitFor(publisher.publish(randomUUID().toString(), event, HEADERS));
-    waitForValue(() -> kafkaHelper.getOffset(topic, consumerGroupId), 1);
+    waitForValue(() -> kafkaHelper.getOffset(fullTopicName, consumerGroupId), 1);
   }
 }
