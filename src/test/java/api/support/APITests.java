@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
-import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -369,11 +368,7 @@ public abstract class APITests {
 
   private static void setUpKafka() {
     kafkaHelper = KafkaTestHelper.getInstance();
-    createKafkaTopics();
-  }
-
-  private static void createKafkaTopics() {
-    kafkaHelper.createTopic(CirculationStorageKafkaTopic.CIRCULATION_RULES, TENANT_ID);
+    kafkaHelper.createCirculationTopics(TENANT_ID);
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

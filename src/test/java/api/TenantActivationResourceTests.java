@@ -1,8 +1,6 @@
 package api;
 
 import static api.support.APITestContext.TENANT_ID;
-import static api.support.Wait.waitFor;
-import static api.support.Wait.waitForValue;
 import static api.support.fakes.FakePubSub.getCreatedEventTypes;
 import static api.support.fakes.FakePubSub.getDeletedEventTypes;
 import static api.support.fakes.FakePubSub.getRegisteredPublishers;
@@ -29,8 +27,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.Is.is;
 
 import java.util.Arrays;
@@ -41,12 +37,10 @@ import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.http.client.Response;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
-import api.support.Wait;
 
 class TenantActivationResourceTests extends APITests {
 
@@ -117,16 +111,19 @@ class TenantActivationResourceTests extends APITests {
       .map(topic -> topic.fullTopicName(TENANT_ID))
       .toList();
 
-    assertThat(kafkaHelper.listTopics(), everyItem(not(in(circulationTopics))));
+    kafkaHelper.deleteTopics(circulationTopics);
 
-    Response postResponse = tenantActivationFixture.postTenant();
-
-    assertThat(postResponse, hasStatus(HTTP_CREATED));
-    waitFor(() -> kafkaHelper.listTopics().containsAll(circulationTopics));
+    Response postResponse1 = tenantActivationFixture.postTenant();
+    assertThat(postResponse1, hasStatus(HTTP_CREATED));
+    kafkaHelper.verifyTopicsExist(circulationTopics);
 
     Response deleteResponse = tenantActivationFixture.deleteTenant(true);
-
     assertThat(deleteResponse, hasStatus(HTTP_NO_CONTENT));
-    waitFor(() -> kafkaHelper.listTopics().stream().noneMatch(circulationTopics::contains));
+    kafkaHelper.verifyTopicsDoNotExist(circulationTopics);
+
+    // recreate tenant to avoid breaking other tests
+    Response postResponse2 = tenantActivationFixture.postTenant();
+    assertThat(postResponse2, hasStatus(HTTP_CREATED));
+    kafkaHelper.verifyTopicsExist(circulationTopics);
   }
 }

@@ -4,7 +4,6 @@ import static api.support.Wait.waitFor;
 import static api.support.Wait.waitForValue;
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 
@@ -51,7 +50,6 @@ class KafkaEventPublisherTest {
     KafkaConsumer<String, JsonObject> consumer = kafkaHelper.createConsumer(consumerGroupId);
     waitFor(consumer.subscribe(fullTopicName));
     int initialOffset = kafkaHelper.getOffset(fullTopicName, consumerGroupId);
-    assertEquals(0, initialOffset);
 
     JsonObject eventPayload = new JsonObject().put("itemId", randomUUID().toString());
     DomainEvent<JsonObject> event = new DomainEvent<>(randomUUID(), DomainEventType.CREATED,
@@ -60,6 +58,7 @@ class KafkaEventPublisherTest {
     KafkaEventPublisher<String, JsonObject> publisher =
       new KafkaEventPublisher<>(vertx.getOrCreateContext(), fullTopicName);
     waitFor(publisher.publish(randomUUID().toString(), event, HEADERS));
-    waitForValue(() -> kafkaHelper.getOffset(fullTopicName, consumerGroupId), 1);
+    waitForValue(() -> kafkaHelper.getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
+    consumer.close();
   }
 }

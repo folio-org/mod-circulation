@@ -7,17 +7,20 @@ import static api.support.APITestContext.createKafkaProducer;
 import static api.support.Wait.waitFor;
 import static api.support.Wait.waitForSize;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
 import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -39,41 +42,79 @@ import lombok.extern.log4j.Log4j2;
 public class KafkaTestHelper {
 
   private static KafkaTestHelper INSTANCE;
-  private final KafkaProducer<String, JsonObject> producer;
-  private final KafkaAdminClient adminClient;
-  private final String kafkaUrl;
+  private KafkaContainer container;
+  private KafkaProducer<String, JsonObject> producer;
+  private KafkaAdminClient adminClient;
+  private String kafkaUrl;
 
   private KafkaTestHelper() {
-    setSystemProperties();
-    KafkaContainer container = initContainer();
-    String host = container.getHost();
-    String port = String.valueOf(container.getFirstMappedPort());
-    log.info("Kafka container started: host={}, port={}", host, port);
-
-    System.setProperty("kafka-host", host);
-    System.setProperty("kafka-port", port);
-
-    this.kafkaUrl = String.format("%s:%s", host, port);
-    this.producer = createKafkaProducer(kafkaUrl);
-    this.adminClient = createKafkaAdminClient(kafkaUrl);
+    start();
   }
 
   public static KafkaTestHelper getInstance() {
     if (INSTANCE != null) {
-      log.info("Kafka container is already running");
+      log.info("getInstance:: returning existing instance");
       return INSTANCE;
     }
+
     INSTANCE = new KafkaTestHelper();
     return INSTANCE;
   }
 
-  private static KafkaContainer initContainer() {
-    log.info("starting Kafka container...");
+  private void start() {
+    log.info("start:: starting Kafka test helper");
+    setSystemProperties();
+
+    log.info("start:: starting Kafka container");
     KafkaContainer container = new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.2.0"));
     container.start();
-    Runtime.getRuntime().addShutdownHook(new Thread(container::stop));
+    String host = container.getHost();
+    String port = String.valueOf(container.getFirstMappedPort());
+    log.info("start:: Kafka container started: host={}, port={}", host, port);
 
-    return container;
+    System.setProperty("kafka-host", host);
+    System.setProperty("kafka-port", port);
+
+    this.container = container;
+    this.kafkaUrl = String.format("%s:%s", host, port);
+    this.producer = createKafkaProducer(kafkaUrl);
+    this.adminClient = createKafkaAdminClient(kafkaUrl);
+
+    Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+  }
+
+  private void stop() {
+    if (container == null || !container.isRunning()) {
+      log.info("stop:: Kafka container is not running, nothing to stop");
+      return;
+    }
+
+    log.info("stop:: stopping Kafka container");
+    try {
+      container.stop();
+    } catch (Exception e) {
+      log.error("stop:: failed to stop Kafka container", e);
+    }
+
+    if (producer != null) {
+      try {
+        producer.close();
+      } catch (Exception e) {
+        log.error("stop:: failed to stop Kafka producer", e);
+      }
+    }
+
+    if (adminClient != null) {
+      try {
+        adminClient.close();
+      } catch (Exception e) {
+        log.error("stop:: failed to stop Kafka admin client", e);
+      }
+    }
+  }
+
+  public void createCirculationTopics(String tenantId) {
+    createTopic(CirculationStorageKafkaTopic.CIRCULATION_RULES, tenantId);
   }
 
   public Map<String, ConsumerGroupDescription> verifyConsumerGroups(
@@ -123,17 +164,24 @@ public class KafkaTestHelper {
 
   @SneakyThrows
   public int getOffset(String topic, String consumerGroupId) {
-    return waitFor(adminClient.listConsumerGroupOffsets(consumerGroupId)
+    Integer offset = waitFor(adminClient.listConsumerGroupOffsets(consumerGroupId)
       .map(partitions -> Optional.ofNullable(partitions.get(new TopicPartition(topic, 0)))
         .map(OffsetAndMetadata::getOffset)
         .map(Long::intValue)
         .orElse(0))); // if topic does not exist yet
+
+    return offset != null ? offset : 0;
+
   }
 
   public void publishEvent(String topic, JsonObject eventPayload) {
     var record = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
     record.addHeader("X-Okapi-Tenant", TENANT_ID);
     waitFor(producer.write(record));
+  }
+
+  public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
+    return createKafkaConsumer(kafkaUrl, consumerGroupId);
   }
 
   public void createTopic(KafkaTopic topic, String tenantId) {
@@ -144,26 +192,80 @@ public class KafkaTestHelper {
     createTopics(List.of(topic));
   }
 
-  public void createTopics(List<String> topics) {
-    List<NewTopic> newTopics = topics.stream()
+  public void createTopics(Collection<String> topics) {
+    Set<String> existingTopics = listTopics();
+    List<String> nonExistentTopics = topics.stream()
+      .filter(not(existingTopics::contains))
+      .toList();
+
+    if (nonExistentTopics.isEmpty()) {
+      return;
+    }
+
+    List<NewTopic> newTopics = nonExistentTopics.stream()
       .map(topic -> new NewTopic(topic, 1, (short) 1))
       .toList();
 
     waitFor(adminClient.createTopics(newTopics));
+    verifyTopicsExist(topics);
   }
 
   public Set<String> listTopics() {
     return waitFor(adminClient.listTopics());
   }
 
-  public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
-    return createKafkaConsumer(kafkaUrl, consumerGroupId);
+  public void deleteAllTopics() {
+    deleteTopics(listTopics());
   }
 
-  public void deleteAllTopics() {
-    waitFor(adminClient.listTopics()
-      .compose(topics -> adminClient.deleteTopics(new ArrayList<>(topics))));
+  public void deleteTopics(Collection<String> topics) {
+    List<String> existingTopics = listTopics()
+      .stream()
+      .filter(topics::contains)
+      .toList();
+
+    waitFor(adminClient.deleteTopics(existingTopics));
+    verifyTopicsDoNotExist(topics);
   }
+
+  public void clearTopic(String topic) {
+    clearTopics(List.of(topic));
+  }
+
+  public void clearAllTopics() {
+    clearTopics(listTopics());
+  }
+
+  public void clearTopics(Collection<String> topics) {
+    if (topics.isEmpty()) {
+      return;
+    }
+
+    List<String> existingTopics = listTopics()
+      .stream()
+      .filter(topics::contains)
+      .toList();
+
+    deleteTopics(existingTopics);
+    createTopics(existingTopics);
+  }
+
+  public void verifyTopicExists(String topic) {
+    verifyTopicsExist(List.of(topic));
+  }
+
+  public void verifyTopicsExist(Collection<String> topics) {
+    waitFor(() -> listTopics().containsAll(topics));
+  }
+
+  public void verifyTopicDoesNotExist(String topic) {
+    verifyTopicsDoNotExist(List.of(topic));
+  }
+
+  public void verifyTopicsDoNotExist(Collection<String> topics) {
+    waitFor(() -> listTopics().stream().noneMatch(topics::contains));
+  }
+
 
   public void waitForTopicCount(int expectedCount) {
     waitForSize(this::listTopics, expectedCount);
