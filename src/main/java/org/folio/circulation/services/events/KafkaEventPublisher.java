@@ -42,7 +42,7 @@ public class KafkaEventPublisher<K, T> {
 
     KafkaProducer<K, String> producer = null;
     try {
-      producer = getOrCreateProducer();
+      producer = createProducer();
       log.info("publish:: Producer created, sending the record...");
 
       producer.send(producerRecord)
@@ -61,12 +61,9 @@ public class KafkaEventPublisher<K, T> {
     return Result.emptyAsync();
   }
 
-  private KafkaProducer<K, String> getOrCreateProducer() {
-    return getOrCreateProducer("");
-  }
 
-  private KafkaProducer<K, String> getOrCreateProducer(String prefix) {
-    return producerManager.createShared(prefix + kafkaTopic);
+  private KafkaProducer<K, String> createProducer() {
+    return producerManager.createShared(kafkaTopic);
   }
 
   private static KafkaProducerManager createProducerManager(Context vertxContext) {

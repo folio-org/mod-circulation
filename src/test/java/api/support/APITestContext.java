@@ -246,7 +246,7 @@ public class APITestContext {
 
     return vertxAssistant.createUsingVertx(vertx -> {
       KafkaConsumer<String, JsonObject> consumer = KafkaConsumer.create(vertx, config);
-      consumer.handler(record -> consumer.commit());
+      consumer.handler(rec -> consumer.commit());
       return consumer;
     });
   }
