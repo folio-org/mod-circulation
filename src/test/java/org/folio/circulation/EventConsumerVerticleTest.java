@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,14 +54,16 @@ public class EventConsumerVerticleTest extends APITests {
   @Test
   void circulationRulesUpdateEventsAreDeliveredToMultipleConsumers() {
     // first verticle has been deployed beforehand, so we should already see a group with 1 consumer
-    List<String> groupsBeforeDeployment = kafkaHelper.getConsumerGroups(1);
+    Collection<String> groupsBeforeDeployment = kafkaHelper.getConsumerGroups(
+      CIRCULATION_RULES_UPDATED_EVENT_CONSUMER_GROUP_ID_PATTERN, 1);
     assertThat(groupsBeforeDeployment, hasSize(1));
-    String group1 = groupsBeforeDeployment.getFirst();
+    String group1 = groupsBeforeDeployment.iterator().next();
     kafkaHelper.verifyConsumerGroups(Map.of(group1, 1));
 
     String secondVerticleId = deployVerticle();
     // after deploying second verticle we should see 2 groups with 1 consumer each
-    List<String> groupsAfterDeployment = kafkaHelper.getConsumerGroups(2);
+    Collection<String> groupsAfterDeployment = kafkaHelper.getConsumerGroups(
+      CIRCULATION_RULES_UPDATED_EVENT_CONSUMER_GROUP_ID_PATTERN, 2);
     assertThat(groupsAfterDeployment, hasSize(2));
     String group2 = groupsAfterDeployment.stream()
       .filter(groupId -> !groupId.equals(group1))

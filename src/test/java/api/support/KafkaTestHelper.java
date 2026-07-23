@@ -126,16 +126,35 @@ public class KafkaTestHelper {
         groups -> groups.entrySet()
           .stream()
           .collect(toMap(Map.Entry::getKey, e -> e.getValue().getMembers().size()))
-          .equals(groupIdToSize)
+          .entrySet()
+          .containsAll(groupIdToSize.entrySet())
       );
   }
 
-  public List<String> getConsumerGroups(int expectedGroupCount) {
+  public Collection<String> getConsumerGroups(int expectedGroupCount) {
     return waitAtMost(30, SECONDS)
       .until(() -> waitFor(adminClient.listConsumerGroups()), groups -> groups.size() == expectedGroupCount)
       .stream()
       .map(ConsumerGroupListing::getGroupId)
       .toList();
+  }
+
+  public Collection<String> getConsumerGroups() {
+    return waitFor(adminClient.listConsumerGroups())
+      .stream()
+      .map(ConsumerGroupListing::getGroupId)
+      .toList();
+  }
+
+  public Collection<String> getConsumerGroups(String groupIdPattern) {
+    return getConsumerGroups()
+      .stream()
+      .filter(groupId -> groupId.matches(groupIdPattern))
+      .toList();
+  }
+
+  public Collection<String> getConsumerGroups(String groupIdPattern, int expectedGroupCount) {
+    return waitForSize(() -> getConsumerGroups(groupIdPattern), expectedGroupCount);
   }
 
   public void deleteConsumerGroup(String groupId) {

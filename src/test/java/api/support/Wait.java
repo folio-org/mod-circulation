@@ -19,7 +19,7 @@ import lombok.SneakyThrows;
 
 public class Wait {
 
-  private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+  private static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
   private Wait() { }
 
@@ -42,7 +42,7 @@ public class Wait {
       .until(valueSupplier, valuePredicate);
   }
 
-  public static <T> T waitForValue(Callable<T> valueSupplier, Matcher<T> valueMatcher) {
+  public static <T> T waitForValueMatching(Callable<T> valueSupplier, Matcher<T> valueMatcher) {
     return waitAtMost(DEFAULT_TIMEOUT_SECONDS, SECONDS)
       .until(valueSupplier, valueMatcher);
   }

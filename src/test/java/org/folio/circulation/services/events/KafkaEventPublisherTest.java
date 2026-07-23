@@ -45,6 +45,7 @@ class KafkaEventPublisherTest {
   void testCirculationTopicPublishers(CirculationKafkaTopic topic, Vertx vertx) {
     String fullTopicName = topic.fullTopicName(TEST_TENANT);
     kafkaHelper.createTopic(fullTopicName);
+    kafkaHelper.verifyTopicExists(fullTopicName);
 
     String consumerGroupId = topic.name() + "-consumer-group-" + randomUUID();
     KafkaConsumer<String, JsonObject> consumer = kafkaHelper.createConsumer(consumerGroupId);
