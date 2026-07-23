@@ -42,7 +42,7 @@ import lombok.extern.log4j.Log4j2;
 public class KafkaTestHelper {
 
   private static KafkaTestHelper INSTANCE;
-  private KafkaContainer container;
+  private KafkaContainer kafkaContainer;
   private KafkaProducer<String, JsonObject> producer;
   private KafkaAdminClient adminClient;
   private String kafkaUrl;
@@ -75,7 +75,7 @@ public class KafkaTestHelper {
     System.setProperty("kafka-host", host);
     System.setProperty("kafka-port", port);
 
-    this.container = container;
+    this.kafkaContainer = container;
     this.kafkaUrl = String.format("%s:%s", host, port);
     this.producer = createKafkaProducer(kafkaUrl);
     this.adminClient = createKafkaAdminClient(kafkaUrl);
@@ -84,14 +84,14 @@ public class KafkaTestHelper {
   }
 
   private void stop() {
-    if (container == null || !container.isRunning()) {
+    if (kafkaContainer == null || !kafkaContainer.isRunning()) {
       log.info("stop:: Kafka container is not running, nothing to stop");
       return;
     }
 
     log.info("stop:: stopping Kafka container");
     try {
-      container.stop();
+      kafkaContainer.stop();
     } catch (Exception e) {
       log.error("stop:: failed to stop Kafka container", e);
     }
@@ -194,9 +194,9 @@ public class KafkaTestHelper {
   }
 
   public void publishEvent(String topic, JsonObject eventPayload) {
-    var record = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
-    record.addHeader("X-Okapi-Tenant", TENANT_ID);
-    waitFor(producer.write(record));
+    var kafkaRecord = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
+    kafkaRecord.addHeader("X-Okapi-Tenant", TENANT_ID);
+    waitFor(producer.write(kafkaRecord));
   }
 
   public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
