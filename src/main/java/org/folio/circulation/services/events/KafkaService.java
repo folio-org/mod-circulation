@@ -25,6 +25,7 @@ public class KafkaService {
   }
 
   public CompletableFuture<Void> createTopics(KafkaTopic[] topics, String tenantId) {
+    log.info("createTopics:: tenant={}, topics={}", tenantId, topics);
     return kafkaAdminClientService.createKafkaTopics(topics, tenantId)
       .toCompletionStage()
       .toCompletableFuture();
@@ -35,6 +36,7 @@ public class KafkaService {
   }
 
   public CompletableFuture<Void> deleteTopics(KafkaTopic[] topics, String tenantId) {
+    log.info("deleteTopics:: tenant={}, topics={}", tenantId, topics);
     return kafkaAdminClientService.deleteKafkaTopics(topics, tenantId)
       .toCompletionStage()
       .toCompletableFuture();
@@ -43,6 +45,7 @@ public class KafkaService {
   public KafkaEventPublisher<String, JsonObject> createPublisher(CirculationKafkaTopic topic,
     Context context, String tenantId) {
 
+    log.info("createPublisher:: tenant={}, topic={}", tenantId, topic);
     return new KafkaEventPublisher<>(context, topic.fullTopicName(tenantId));
   }
 }

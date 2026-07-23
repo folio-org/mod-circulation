@@ -3,7 +3,9 @@ package org.folio.circulation.domain.events;
 import org.folio.kafka.services.KafkaTopic;
 
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 
+@ToString(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 public enum CirculationKafkaTopic implements KafkaTopic {
   ITEM_CHECKED_OUT("ITEM_CHECKED_OUT", 10),
@@ -14,6 +16,7 @@ public enum CirculationKafkaTopic implements KafkaTopic {
   LOAN_DUE_DATE_CHANGED("LOAN_DUE_DATE_CHANGED", 10),
   LOAN_CLOSED("LOAN_CLOSED", 10);
 
+  @ToString.Include
   private final String topic;
   private final int partitions;
 
