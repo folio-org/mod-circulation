@@ -1,15 +1,14 @@
 package api.support;
 
 import static api.support.APITestContext.TENANT_ID;
-import static api.support.APITestContext.createKafkaAdminClient;
-import static api.support.APITestContext.createKafkaConsumer;
-import static api.support.APITestContext.createKafkaProducer;
 import static api.support.Wait.waitFor;
 import static api.support.Wait.waitForSize;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
+import static org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -19,15 +18,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
 import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
@@ -45,6 +47,7 @@ import lombok.extern.log4j.Log4j2;
 public class KafkaTestHelper {
 
   private static KafkaTestHelper INSTANCE;
+  private Vertx vertx;
   private KafkaContainer kafkaContainer;
   private KafkaProducer<String, JsonObject> producer;
   private KafkaAdminClient adminClient;
@@ -68,6 +71,7 @@ public class KafkaTestHelper {
     log.info("start:: starting Kafka test helper");
     setSystemProperties();
 
+
     log.info("start:: starting Kafka container");
     KafkaContainer container = new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.2.0"));
     container.start();
@@ -80,8 +84,9 @@ public class KafkaTestHelper {
 
     this.kafkaContainer = container;
     this.kafkaUrl = String.format("%s:%s", host, port);
-    this.producer = createKafkaProducer(kafkaUrl);
-    this.adminClient = createKafkaAdminClient(kafkaUrl);
+    this.vertx = Vertx.vertx();
+    this.producer = createProducer();
+    this.adminClient = createAdminClient();
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
   }
@@ -202,8 +207,33 @@ public class KafkaTestHelper {
     waitFor(producer.write(kafkaRecord));
   }
 
+  public KafkaProducer<String, JsonObject> createProducer() {
+    Properties config = new Properties();
+    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+    config.put(ACKS_CONFIG, "1");
+
+    return KafkaProducer.create(vertx, config, String.class, JsonObject.class);
+  }
+
   public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
-    return createKafkaConsumer(kafkaUrl, consumerGroupId);
+    Properties config = new Properties();
+    config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+
+    return KafkaConsumer.create(vertx, config);
+  }
+
+  public KafkaAdminClient createAdminClient() {
+    Properties config = new Properties();
+    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+
+    return KafkaAdminClient.create(vertx, config);
   }
 
   public <K, V> Collection<ConsumerRecord<K,V>> consumeEvents(KafkaConsumer<K, V> consumer,
