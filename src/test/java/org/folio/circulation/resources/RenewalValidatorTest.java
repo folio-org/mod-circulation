@@ -2,10 +2,13 @@ package org.folio.circulation.resources;
 
 import static api.support.matchers.ResultMatchers.hasValidationError;
 import static api.support.matchers.ResultMatchers.succeeded;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierOrSameDueDate;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 
 import java.time.ZonedDateTime;
 
@@ -24,8 +27,9 @@ class RenewalValidatorTest {
 
     val validationResult = errorWhenEarlierOrSameDueDate(loan, proposedDueDate);
 
-    assertThat(validationResult, hasValidationError(
-      hasMessage("renewal would not change the due date")));
+    assertThat(validationResult, hasValidationError(allOf(
+      hasMessage("renewal would not change the due date"),
+      hasCode(RENEWAL_WOULD_NOT_CHANGE_DUE_DATE))));
   }
 
   @Test

@@ -23,12 +23,13 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import api.support.builders.LoanBuilder;
@@ -94,6 +95,9 @@ class RegularRenewalTest {
       ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
     assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
     assertTrue(matchErrorReason(errorHandler, ITEM_IS_AGED_TO_LOST));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_BLOCKED_BY_RECALL));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.ITEM_NOT_LOANABLE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.ITEM_AGED_TO_LOST_NOT_RENEWABLE));
   }
 
   @Test
@@ -106,6 +110,7 @@ class RegularRenewalTest {
 
     assertTrue(matchErrorReason(errorHandler,
       ITEMS_CANNOT_BE_RENEWED_WHEN_THERE_IS_AN_ACTIVE_RECALL_REQUEST));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_BLOCKED_BY_RECALL));
   }
 
   @Test
@@ -118,6 +123,7 @@ class RegularRenewalTest {
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorType(errorHandler, RENEWAL_ITEM_IS_NOT_LOANABLE));
     assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.ITEM_NOT_LOANABLE));
   }
 
   @Test
@@ -128,6 +134,7 @@ class RegularRenewalTest {
     renew(loanPolicy, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_IS_NOT_RENEWABLE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.LOAN_NOT_RENEWABLE));
   }
 
   @Test
@@ -147,6 +154,7 @@ class RegularRenewalTest {
 
     assertTrue(matchErrorReason(errorHandler,
       ITEMS_CANNOT_BE_RENEWED_ACTIVE_PENDING_HOLD_REQUEST));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_BLOCKED_BY_HOLD_REQUEST));
   }
 
   @Test
@@ -167,6 +175,8 @@ class RegularRenewalTest {
 
     assertTrue(matchErrorReason(errorHandler,
       ALTERNATIVE_RENEWAL_PERIOD_FOR_HOLDS_IS_SPECIFIED));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.FIXED_LOAN_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS));
   }
 
   @Test
@@ -188,15 +198,17 @@ class RegularRenewalTest {
 
     assertTrue(matchErrorReason(errorHandler,
       POLICY_HAS_FIXED_PROFILE_BUT_RENEWAL_PERIOD_IS_SPECIFIED));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.FIXED_LOAN_POLICY_HAS_RENEWAL_PERIOD));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {
-    "Declared lost",
-    "Aged to lost",
-    "Claimed returned",
+  @CsvSource({
+    "Declared lost, ITEM_DECLARED_LOST_NOT_RENEWABLE",
+    "Aged to lost, ITEM_AGED_TO_LOST_NOT_RENEWABLE",
+    "Claimed returned, ITEM_CLAIMED_RETURNED_NOT_RENEWABLE",
   })
-  void cannotRenewItemsWithDisallowedStatuses(String itemStatus) {
+  void cannotRenewItemsWithDisallowedStatuses(String itemStatus, ErrorCode errorCode) {
     final var loanPolicy = new LoanPolicyBuilder().asDomainObject();
     final var loan = new LoanBuilder().asDomainObject()
       .withLoanPolicy(loanPolicy)
@@ -206,6 +218,7 @@ class RegularRenewalTest {
     renew(loan, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, "item is " + itemStatus));
+    assertTrue(matchErrorCode(errorHandler, errorCode));
   }
 
   @Test
@@ -220,6 +233,7 @@ class RegularRenewalTest {
     renew(loan, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.LOAN_RENEWAL_LIMIT_REACHED));
   }
 
   @Test
@@ -231,6 +245,8 @@ class RegularRenewalTest {
     renew(loanPolicy, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, CANNOT_DETERMINE_WHEN_TO_RENEW_FROM));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.LOAN_POLICY_RENEW_FROM_NOT_RECOGNIZED));
   }
 
   @Test
@@ -249,6 +265,7 @@ class RegularRenewalTest {
     renew(loan, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
   }
 
   @Test
@@ -262,6 +279,7 @@ class RegularRenewalTest {
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorType(errorHandler, RENEWAL_ITEM_IS_NOT_LOANABLE));
     assertTrue(matchErrorReason(errorHandler, ITEM_IS_NOT_LOANABLE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.ITEM_NOT_LOANABLE));
   }
 
   @Test
@@ -273,6 +291,7 @@ class RegularRenewalTest {
     renew(loanPolicy, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_IS_NOT_RENEWABLE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.LOAN_NOT_RENEWABLE));
   }
 
   private Result<Loan> renew(Loan loan, Request topRequest,
@@ -314,6 +333,13 @@ class RegularRenewalTest {
     return errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
+  }
+
+  private boolean matchErrorCode(CirculationErrorHandler errorHandler, ErrorCode expectedCode) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .flatMap(httpFailure -> httpFailure.getErrors().stream())
+      .anyMatch(error -> error.getCode() == expectedCode);
   }
 
   private boolean matchErrorType(CirculationErrorHandler errorHandler,

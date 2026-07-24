@@ -14,6 +14,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_BLOCKED_BY_REMINDER_FEES;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getObjectProperty;
 import static org.folio.circulation.support.results.Result.failed;
@@ -44,7 +45,8 @@ public class RenewalOfItemsWithReminderFeesValidator {
   private HttpFailure createBlockedRenewalDueToReminderFeesPolicyError() {
     String reasonAndMessage = "Renewals not allowed for loans with reminders.";
     log.debug("createBlockedRenewalDueToReminderFeesPolicyError");
-    return singleValidationError(new ValidationError(reasonAndMessage, "reason", reasonAndMessage));
+    return singleValidationError(new ValidationError(reasonAndMessage, "reason", reasonAndMessage,
+      RENEWAL_BLOCKED_BY_REMINDER_FEES));
   }
 
   private static boolean renewalBlockedDueToReminders(RenewalContext renewalContext) {

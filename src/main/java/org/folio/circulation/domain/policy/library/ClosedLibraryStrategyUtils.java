@@ -2,6 +2,7 @@ package org.folio.circulation.domain.policy.library;
 
 import static java.util.Collections.emptyMap;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.isShortTermLoans;
+import static org.folio.circulation.support.ErrorCode.CALENDAR_TIMETABLE_ABSENT;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
@@ -90,7 +91,7 @@ public final class ClosedLibraryStrategyUtils {
   //TODO: Should have parameters for validation error
   static ValidationErrorFailure failureForAbsentTimetable() {
     String message = "Calendar timetable is absent for requested date";
-    return singleValidationError(new ValidationError(message, emptyMap()));
+    return singleValidationError(new ValidationError(message, emptyMap(), CALENDAR_TIMETABLE_ABSENT));
   }
 
   public static ClosedLibraryStrategy determineClosedLibraryStrategyForTruncatedDueDate(

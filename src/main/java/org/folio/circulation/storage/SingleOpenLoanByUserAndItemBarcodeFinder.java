@@ -1,6 +1,7 @@
 package org.folio.circulation.storage;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ErrorCode.ITEM_CHECKED_OUT_TO_DIFFERENT_USER;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 
@@ -64,7 +65,7 @@ public class SingleOpenLoanByUserAndItemBarcodeFinder {
       log.info("refuseWhenUserDoesNotMatch:: item is checked out to a different user, loanId: {}",
         loan::getId);
       return completedFuture(failedValidation("Cannot renew item checked out to different user",
-        RenewByBarcodeRequest.USER_BARCODE, userBarcode));
+        RenewByBarcodeRequest.USER_BARCODE, userBarcode, ITEM_CHECKED_OUT_TO_DIFFERENT_USER));
     }
   }
 
