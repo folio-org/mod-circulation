@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -155,10 +156,12 @@ public class LoanPolicy extends Policy {
     final JsonObject loansPolicy = getLoansPolicy();
     final JsonObject renewalsPolicy = getRenewalsPolicy();
     final JsonObject holds = getHolds();
+    final BiFunction<String, ErrorCode, ValidationError> errorForPolicy =
+      this::loanPolicyValidationError;
 
     if(loansPolicy == null) {
       return new UnknownDueDateStrategy(getId(), getName(), "", isRenewal,
-        (message, errorCode) -> loanPolicyValidationError(message, errorCode));
+        errorForPolicy);
     }
 
     if(isRolling(loansPolicy)) {
@@ -166,7 +169,7 @@ public class LoanPolicy extends Policy {
         return new RollingRenewalDueDateStrategy(getId(), getName(),
           systemDate, getRenewFrom(), getRenewalPeriod(loansPolicy, renewalsPolicy, isRenewalWithHoldRequest),
           getRenewalDueDateLimitSchedules(),
-          (message, errorCode) -> loanPolicyValidationError(message, errorCode));
+          errorForPolicy);
       }
       else {
         boolean useAlternatePeriod = false;
@@ -183,8 +186,7 @@ public class LoanPolicy extends Policy {
     else if(isFixed(loansPolicy)) {
       if (isRenewal) {
         return new FixedScheduleRenewalDueDateStrategy(getId(), getName(),
-          getRenewalFixedDueDateSchedules(), systemDate,
-          (message, errorCode) -> loanPolicyValidationError(message, errorCode));
+          getRenewalFixedDueDateSchedules(), systemDate, errorForPolicy);
       }
       else {
         if (isAlternatePeriod(requestQueue, itemId)) {
@@ -200,8 +202,7 @@ public class LoanPolicy extends Policy {
     }
     else {
       return new UnknownDueDateStrategy(getId(), getName(),
-        getProfileId(loansPolicy), isRenewal,
-        (message, errorCode) -> loanPolicyValidationError(message, errorCode));
+        getProfileId(loansPolicy), isRenewal, errorForPolicy);
     }
   }
 
