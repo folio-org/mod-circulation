@@ -6,10 +6,8 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Collection;
 import java.util.Map;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.support.http.OkapiHeader;
@@ -20,7 +18,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import api.support.KafkaTestHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.client.consumer.KafkaConsumer;
 
 class KafkaEventPublisherTest {
 
