@@ -244,11 +244,7 @@ public class APITestContext {
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 
-    return vertxAssistant.createUsingVertx(vertx -> {
-      KafkaConsumer<String, JsonObject> consumer = KafkaConsumer.create(vertx, config);
-      consumer.handler(rec -> consumer.commit());
-      return consumer;
-    });
+    return vertxAssistant.createUsingVertx(vertx -> KafkaConsumer.create(vertx, config));
   }
 
   public static KafkaAdminClient createKafkaAdminClient(String kafkaUrl) {

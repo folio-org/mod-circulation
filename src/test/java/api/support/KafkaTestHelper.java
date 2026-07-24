@@ -6,12 +6,14 @@ import static api.support.APITestContext.createKafkaConsumer;
 import static api.support.APITestContext.createKafkaProducer;
 import static api.support.Wait.waitFor;
 import static api.support.Wait.waitForSize;
+import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
 import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
@@ -201,6 +204,22 @@ public class KafkaTestHelper {
 
   public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
     return createKafkaConsumer(kafkaUrl, consumerGroupId);
+  }
+
+  public <K, V> Collection<ConsumerRecord<K,V>> consumeEvents(KafkaConsumer<K, V> consumer,
+    String topic, int expectedEventCount) {
+
+    Collection<ConsumerRecord<K, V>> allRecords = new ArrayList<>();
+    long deadline = currentTimeMillis() + Duration.ofSeconds(30).toMillis();
+    while (allRecords.size() < expectedEventCount && currentTimeMillis() < deadline) {
+      waitFor(consumer.poll(Duration.ofSeconds(5)))
+        .records()
+        .records(topic)
+        .iterator()
+        .forEachRemaining(allRecords::add);
+    }
+    waitFor(consumer.commit());
+    return allRecords;
   }
 
   public void createTopic(KafkaTopic topic, String tenantId) {

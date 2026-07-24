@@ -1,5 +1,7 @@
 package org.folio.circulation.services.events;
 
+import static org.folio.circulation.support.results.Result.succeeded;
+
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -45,11 +47,14 @@ public class KafkaEventPublisher<K, T> {
       producer = createProducer();
       log.info("publish:: Producer created, sending the record...");
 
-      producer.send(producerRecord)
+      return producer.send(producerRecord)
         .onSuccess(r -> log.info("publish:: Succeeded sending domain event with key [{}]", key))
         .onFailure(cause -> log.error("publish:: Unable to send domain event with key [{}]", key, cause))
         .eventually(producer::flush)
-        .eventually(producer::close);
+        .eventually(producer::close)
+        .toCompletionStage()
+        .toCompletableFuture()
+        .thenApply(ignored -> succeeded(null));
     } catch (Exception e) {
       log.error("publish:: Failed to initiate send for domain event with key [{}]", key, e);
       if (producer != null) {
