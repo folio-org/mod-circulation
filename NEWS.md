@@ -1,6 +1,7 @@
 ## 24.6.0-SNAPSHOT In progress
 * Fix flaky tests ([CIRC-2633](https://folio-org.atlassian.net/browse/CIRC-2633))
 * Refactor item location handling to use locationRepository directly for effective location retrieval ([CIRC-2538](https://folio-org.atlassian.net/browse/CIRC-2538))
+* Fail on startup if Kafka config is invalid ([CIRC-2003](https://folio-org.atlassian.net/browse/CIRC-2003))
 
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))
@@ -60,7 +61,6 @@
 * Enable Maven GitHub workflow ([CIRC-2559](https://folio-org.atlassian.net/browse/CIRC-2559))
 * Logging in `org.folio.circulation.support` package ([CIRC-1811](https://folio-org.atlassian.net/browse/CIRC-1811))
 * Sorting page slips ([CIRC-1889](https://folio-org.atlassian.net/browse/CIRC-1889))
-* Fail on startup if Kafka config is invalid ([CIRC-2003](https://folio-org.atlassian.net/browse/CIRC-2003))
 
 ## 24.4.0 2025-03-12
 * Patron notices for the trigger “Item recalled” not sent if the item is not 1st in the title request queue (CIRC-2168)
