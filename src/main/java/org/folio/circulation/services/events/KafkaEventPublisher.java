@@ -44,31 +44,25 @@ public class KafkaEventPublisher<K, T> {
 
     KafkaProducer<K, String> producer = null;
     try {
-      producer = createProducer();
-      log.info("publish:: Producer created, sending the record...");
+      producer = producerManager.createShared(kafkaTopic);
+      log.debug("publish:: producer created, sending the record...");
 
       return producer.send(producerRecord)
-        .onSuccess(r -> log.info("publish:: Succeeded sending domain event with key [{}]", key))
-        .onFailure(cause -> log.error("publish:: Unable to send domain event with key [{}]", key, cause))
+        .onSuccess(r -> log.info("publish:: published event with key {}", key))
+        .onFailure(cause -> log.error("publish:: failed to publish event with key {}", key, cause))
         .eventually(producer::flush)
         .eventually(producer::close)
         .toCompletionStage()
         .toCompletableFuture()
         .thenApply(ignored -> succeeded(null));
     } catch (Exception e) {
-      log.error("publish:: Failed to initiate send for domain event with key [{}]", key, e);
+      log.error("publish:: failed to publish event with key {}", key, e);
       if (producer != null) {
-        log.info("publish:: Producer is not null, trying to close. Event key: {}.", key);
+        log.debug("publish:: trying to close producer for event {}", key);
         producer.close();
       }
+      return Result.emptyAsync();
     }
-
-    return Result.emptyAsync();
-  }
-
-
-  private KafkaProducer<K, String> createProducer() {
-    return producerManager.createShared(kafkaTopic);
   }
 
   private static KafkaProducerManager createProducerManager(Context vertxContext) {
