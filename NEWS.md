@@ -3,6 +3,7 @@
 * Refactor item location handling to use locationRepository directly for effective location retrieval ([CIRC-2538](https://folio-org.atlassian.net/browse/CIRC-2538))
 * Fail on startup if Kafka config is invalid ([CIRC-2003](https://folio-org.atlassian.net/browse/CIRC-2003))
 * Fix loan status in `AnonymizeLoansTests` fixture for closed loans with open fees ([CIRC-2641](https://folio-org.atlassian.net/browse/CIRC-2641))
+* Fix Item check-out for related ECS TLR Page request when ILR exist for different requester ([CIRC-2644](https://folio-org.atlassian.net/browse/CIRC-2644))
 
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))

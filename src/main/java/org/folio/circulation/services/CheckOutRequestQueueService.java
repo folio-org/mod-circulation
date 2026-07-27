@@ -5,7 +5,7 @@ import static org.folio.circulation.support.results.Result.ofAsync;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
@@ -38,14 +38,14 @@ public class CheckOutRequestQueueService extends RequestQueueService {
     log.info("isTitleLevelRequestFulfillableByItem:: parameters itemId: {}, requestId: {}",
       item::getItemId, request::getId);
 
-    if (!StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
+    if (!Strings.CS.equals(request.getInstanceId(), item.getInstanceId()) && !item.isDcbItem()) {
       log.info("isTitleLevelRequestFulfillableByItem:: instanceId mismatch, not fulfillable");
       return ofAsync(false);
     }
 
     if (request.isRecall()) {
       log.info("isTitleLevelRequestFulfillableByItem:: recall request, checking itemId match");
-      return ofAsync(StringUtils.equals(request.getItemId(), item.getItemId()));
+      return ofAsync(Strings.CS.equals(request.getItemId(), item.getItemId()));
     }
 
     return canRequestBeFulfilledByItem(item, request);

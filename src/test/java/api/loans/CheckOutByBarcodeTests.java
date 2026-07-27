@@ -2815,6 +2815,51 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
   }
 
+  @Test
+  void shouldCheckoutItemToRequesterOneWithTitleLevelPageAndDcbItemWhenItemLevelHoldExistForRequesterTwo() {
+    circulationSettingsFixture.enableTlrFeature();
+
+    IndividualResource realInstance = instancesFixture.basedUponDunkirk();
+
+    UUID dcbInstanceId = UUID.randomUUID();
+    IndividualResource dcbHoldings = holdingsFixture.defaultWithHoldings(dcbInstanceId);
+    String barcode = "00001";
+    IndividualResource dcbItem = circulationItemsFixture.createCirculationItem(
+      UUID.randomUUID(), barcode, dcbHoldings.getId(),
+      locationsFixture.mainFloor().getId(), "DCB instance");
+
+    IndividualResource firstRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
+      realInstance.getId(), usersFixture.steve(), ZonedDateTime.now());
+    UUID requestId = firstRequest.getId();
+
+    requestsStorageClient.replace(requestId,
+      requestsStorageClient.get(requestId).getJson()
+        .put("itemId", dcbItem.getId().toString())
+        .put("holdingsRecordId", dcbHoldings.getId().toString())
+        .put("item", new JsonObject().put("barcode", barcode)));
+
+    UUID randomServicePointId = servicePointsFixture.cd2().getId();
+    checkInFixture.checkInByBarcode(dcbItem, randomServicePointId);
+    assertThat(requestsFixture.getById(requestId).getJson(), isOpenInTransit());
+
+    checkInFixture.checkInByBarcode(dcbItem, servicePointsFixture.cd1().getId());
+    assertThat(requestsFixture.getById(requestId).getJson(), isOpenAwaitingPickup());
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .fulfillToHoldShelf()
+      .withItemId(dcbItem.getId())
+      .withInstanceId(realInstance.getId())
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.jessica().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    UserResource borrower = usersFixture.steve();
+    checkOutFixture.checkOutByBarcode(dcbItem, borrower);
+
+    assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
+  }
+
   private IndividualResource placeRequest(String requestLevel, ItemResource item,
     IndividualResource requester) {
 
