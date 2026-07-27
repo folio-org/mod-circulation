@@ -5,7 +5,7 @@ import java.lang.invoke.MethodHandles;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.anonymization.DefaultLoanAnonymizationService;
-import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
+import org.folio.circulation.domain.anonymization.service.AnonymizationEligibilityService;
 import org.folio.circulation.domain.anonymization.service.LoansForBorrowerFinder;
 import org.folio.circulation.domain.representations.anonymization.AnonymizeLoansRepresentation;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
@@ -53,7 +53,7 @@ public class LoanAnonymizationResource extends Resource {
     final var eventPublisher = new EventPublisher(clients);
 
     final var loanAnonymizationService = new DefaultLoanAnonymizationService(
-      new AnonymizationCheckersService(), anonymizeStorageLoansRepository, eventPublisher);
+      new AnonymizationEligibilityService(), anonymizeStorageLoansRepository, eventPublisher);
 
     log.info("anonymizeLoans:: initializing loan anonymization for borrower: {}", borrowerId);
 
