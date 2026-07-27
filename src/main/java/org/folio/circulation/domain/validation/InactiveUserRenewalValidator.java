@@ -1,6 +1,8 @@
 package org.folio.circulation.domain.validation;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.support.ErrorCode.USER_IS_INACTIVE_OR_EXPIRED;
+import static org.folio.circulation.support.ErrorCode.USER_STATUS_CANNOT_BE_DETERMINED;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -12,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
@@ -37,19 +40,22 @@ public class InactiveUserRenewalValidator {
 
     if (user.cannotDetermineStatus()) {
       log.info("refuseWhenUserIsInactive:: cannot determine status");
-      return failed(createInactiveUserValidationError(cannotDetermineMessage, cannotDetermineReason));
+      return failed(createInactiveUserValidationError(cannotDetermineMessage, cannotDetermineReason,
+        USER_STATUS_CANNOT_BE_DETERMINED));
     } else if (user.isInactive()) {
       log.info("refuseWhenUserIsInactive:: user is inactive");
-      return failed(createInactiveUserValidationError(isInactiveMessage, isInactiveReason));
+      return failed(createInactiveUserValidationError(isInactiveMessage, isInactiveReason,
+        USER_IS_INACTIVE_OR_EXPIRED));
     } else {
       return succeeded(renewalContext);
     }
   }
 
-  private HttpFailure createInactiveUserValidationError(String message, String reason) {
+  private HttpFailure createInactiveUserValidationError(String message, String reason,
+    ErrorCode errorCode) {
     log.debug("createInactiveUserValidationError:: parameters message: {}, reason: {}", message,
       reason);
 
-    return singleValidationError(new ValidationError(message, "reason", reason));
+    return singleValidationError(new ValidationError(message, "reason", reason, errorCode));
   }
 }

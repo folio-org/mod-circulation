@@ -14,6 +14,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -78,5 +79,13 @@ class InvalidLoanPolicyTests {
     assertTrue(errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason("profile \"\" in the loan policy is not recognised")));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.LOAN_POLICY_PROFILE_NOT_RECOGNIZED));
+  }
+
+  private boolean matchErrorCode(CirculationErrorHandler errorHandler, ErrorCode expectedCode) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .flatMap(httpFailure -> httpFailure.getErrors().stream())
+      .anyMatch(error -> error.getCode() == expectedCode);
   }
 }

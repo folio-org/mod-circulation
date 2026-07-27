@@ -4,6 +4,7 @@ import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.ResultMatchers.hasValidationError;
 import static api.support.matchers.ResultMatchers.succeeded;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasMessageContaining;
 import static java.util.Collections.emptyList;
@@ -24,6 +25,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -72,7 +74,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED))));
   }
 
   @Test
@@ -83,7 +87,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED))));
   }
 
   @Test
@@ -108,7 +114,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(LoanPolicy.from(loanPolicyJson), null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(OVERRIDE_DUE_DATE_MUST_BE_SPECIFIED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED))));
   }
 
   @Test
@@ -157,7 +165,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED_WHEN_DUE_DATE_UNCHANGED))));
   }
 
   @Test
@@ -177,7 +187,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renewWithRecall(loan, null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED_WHEN_DUE_DATE_UNCHANGED))));
   }
 
   @Test
@@ -211,7 +223,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED_WHEN_DUE_DATE_UNCHANGED))));
   }
 
   @Test
@@ -243,7 +257,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(loan, null);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR)));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage(NEW_DUE_DATE_IS_REQUIRED_ERROR),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_DUE_DATE_REQUIRED_WHEN_DUE_DATE_UNCHANGED))));
   }
 
   @Test
@@ -252,8 +268,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(loan, ClockUtil.getZonedDateTime().plusDays(9));
 
-    assertThat(renewedLoan, hasValidationError(
-      hasMessageContaining("Override renewal does not match any of expected cases")));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessageContaining("Override renewal does not match any of expected cases"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_NOT_ALLOWED_FOR_CURRENT_LOAN))));
   }
 
   @Test
@@ -263,7 +280,9 @@ class OverrideRenewalTest {
 
     final Result<Loan> renewedLoan = renew(loan, overrideDate);
 
-    assertThat(renewedLoan, hasValidationError(hasMessage("renewal would not change the due date")));
+    assertThat(renewedLoan, hasValidationError(allOf(
+      hasMessage("renewal would not change the due date"),
+      hasCode(ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE))));
   }
 
   @Test

@@ -59,11 +59,12 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    void doNotAnonymizeClosedLoanWithOpenFees() {
+    void anonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(loansNotAnonymizedImmediately(segregatedLoans).size(), is(1));
+      // Fees and fines are ignored when loans with fees should not be treated differently
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -381,7 +382,7 @@ class AnonymizeLoansTests {
   }
 
   private Loan closedLoanWithOpenFee() {
-    return loan("Open", null)
+    return loan("Closed", null)
       .withAccounts(List.of(openFee()));
   }
 

@@ -1,17 +1,24 @@
 package org.folio.circulation.domain.policy;
 
 import static java.lang.String.format;
+import static org.folio.circulation.support.ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_DURATION_INVALID;
+import static org.folio.circulation.support.ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_INTERVAL_NOT_RECOGNIZED;
+import static org.folio.circulation.support.ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_NOT_RECOGNIZED;
+import static org.folio.circulation.support.ErrorCode.LOAN_POLICY_RENEW_FROM_NOT_RECOGNIZED;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_DATE_OUTSIDE_LOAN_POLICY_DATE_RANGES;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZonedDateTime;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
@@ -49,6 +56,19 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     FixedDueDateSchedules dueDateLimitSchedules,
     Function<String, ValidationError> errorForPolicy) {
 
+    this(loanPolicyId, loanPolicyName, systemDate, renewFrom, period, dueDateLimitSchedules,
+      (message, errorCode) -> errorForPolicy.apply(message));
+  }
+
+  RollingRenewalDueDateStrategy(
+    String loanPolicyId,
+    String loanPolicyName,
+    ZonedDateTime systemDate,
+    String renewFrom,
+    Period period,
+    FixedDueDateSchedules dueDateLimitSchedules,
+    BiFunction<String, ErrorCode, ValidationError> errorForPolicy) {
+
     super(loanPolicyId, loanPolicyName, errorForPolicy);
     this.systemDate = systemDate;
     this.renewFrom = renewFrom;
@@ -61,7 +81,8 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     log.debug("calculateDueDate:: parameters loan: {}", loan);
     if(StringUtils.isBlank(renewFrom)) {
       log.error("calculateDueDate:: renewFrom is blank");
-      return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
+      return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE,
+        LOAN_POLICY_RENEW_FROM_NOT_RECOGNIZED));
     }
     log.info("calculateDueDate:: renewFrom: {}", renewFrom);
     switch (renewFrom) {
@@ -70,7 +91,8 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
       case RENEW_FROM_SYSTEM_DATE:
         return calculateDueDate(systemDate);
       default:
-        return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE));
+        return failedValidation(errorForPolicy(RENEW_FROM_UNRECOGNISED_MESSAGE,
+          LOAN_POLICY_RENEW_FROM_NOT_RECOGNIZED));
     }
   }
 
@@ -83,9 +105,12 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
   Result<ZonedDateTime> renewalDueDate(ZonedDateTime from) {
     log.debug("renewalDueDate:: parameters from: {}", from);
     return period.addTo(from,
-        () -> errorForPolicy(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE),
-        interval -> errorForPolicy(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval)),
-        duration -> errorForPolicy(format(RENEWAL_INVALID_DURATION_MESSAGE, duration)))
+        () -> errorForPolicy(RENEWAL_UNRECOGNISED_PERIOD_MESSAGE,
+          LOAN_POLICY_RENEWAL_PERIOD_NOT_RECOGNIZED),
+        interval -> errorForPolicy(format(RENEWAL_UNRECOGNISED_INTERVAL_MESSAGE, interval),
+          LOAN_POLICY_RENEWAL_PERIOD_INTERVAL_NOT_RECOGNIZED),
+        duration -> errorForPolicy(format(RENEWAL_INVALID_DURATION_MESSAGE, duration),
+          LOAN_POLICY_RENEWAL_PERIOD_DURATION_INVALID))
       .next(dateTime -> {
         log.info("renewalDueDate:: result: {}", dateTime);
         return succeeded(dateTime);
@@ -98,7 +123,8 @@ class RollingRenewalDueDateStrategy extends DueDateStrategy {
     log.debug("truncateDueDateBySchedule:: parameters from: {}, dueDate: {}", from, dueDate);
 
     return dueDateLimitSchedules.truncateDueDate(dueDate, from,
-      () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE))
+      () -> errorForPolicy(NO_APPLICABLE_DUE_DATE_LIMIT_SCHEDULE_MESSAGE,
+        RENEWAL_DATE_OUTSIDE_LOAN_POLICY_DATE_RANGES))
       .next(dateTime -> {
         log.info("truncateDueDateBySchedule:: result: {}", dateTime);
         return succeeded(dateTime);

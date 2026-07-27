@@ -30,6 +30,7 @@ import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_BEGI
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY;
 import static org.folio.circulation.domain.policy.DueDateManagement.MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY;
 import static org.folio.circulation.domain.policy.LoanPolicyPeriod.HOURS;
+import static org.folio.circulation.support.ErrorCode.CALENDAR_OPEN_PERIODS_NOT_FOUND;
 import static org.folio.circulation.support.ErrorCode.ITEM_NOT_LOANABLE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
@@ -622,7 +623,8 @@ class CheckOutCalculateDueDateTests extends APITests {
         .at(UUID.fromString(CASE_CALENDAR_IS_UNAVAILABLE_SERVICE_POINT_ID)));
 
     assertThat(response.getJson(), hasErrorWith(allOf(
-      hasMessage("Calendar open periods are not found"))));
+      hasMessage("Calendar open periods are not found"),
+      hasCode(CALENDAR_OPEN_PERIODS_NOT_FOUND))));
   }
 
   @Test

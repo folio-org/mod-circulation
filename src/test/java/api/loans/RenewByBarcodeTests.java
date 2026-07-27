@@ -1,7 +1,10 @@
 package api.loans;
 
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static api.support.matchers.ValidationErrorMatchers.hasParameter;
+import static org.folio.circulation.support.ErrorCode.ITEM_BARCODE_NOT_FOUND;
+import static org.hamcrest.CoreMatchers.allOf;
 
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
@@ -31,7 +34,9 @@ class RenewByBarcodeTests extends RenewalAPITests {
 
   @Override
   Matcher<ValidationError> hasItemNotFoundMessage(IndividualResource item) {
-    return hasMessage(String.format("No item with barcode %s exists",
-      item.getJson().getString("barcode")));
+    return allOf(
+      hasMessage(String.format("No item with barcode %s exists",
+        item.getJson().getString("barcode"))),
+      hasCode(ITEM_BARCODE_NOT_FOUND));
   }
 }
