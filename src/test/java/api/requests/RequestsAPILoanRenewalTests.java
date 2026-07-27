@@ -3,6 +3,7 @@ package api.requests;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
 import static api.support.matchers.DateTimeMatchers.isEquivalentTo;
 import static api.support.matchers.TextDateTimeMatcher.withinSecondsAfter;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasErrors;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +70,9 @@ class RequestsAPILoanRenewalTests extends APITests {
 
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG),
+      hasCode(ErrorCode.RENEWAL_BLOCKED_BY_RECALL))));
   }
 
   @Test
@@ -593,7 +597,8 @@ class RequestsAPILoanRenewalTests extends APITests {
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
         "renewal would not change the due date, " +
-        "loan has reminder fees"))));
+        "loan has reminder fees"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_NOT_ALLOWED_FOR_CURRENT_LOAN))));
   }
 
   @Test
@@ -625,7 +630,8 @@ class RequestsAPILoanRenewalTests extends APITests {
         "items cannot be renewed when there is an active recall request, " +
         "item is Declared lost, item is Aged to lost, " +
         "renewal would not change the due date, " +
-        "loan has reminder fees"))));
+        "loan has reminder fees"),
+      hasCode(ErrorCode.OVERRIDE_RENEWAL_NOT_ALLOWED_FOR_CURRENT_LOAN))));
   }
 
   @Test
@@ -652,8 +658,12 @@ class RequestsAPILoanRenewalTests extends APITests {
 
     Response response = loansFixture.attemptRenewal(smallAngryPlanet, rebecca);
 
-    assertThat(response.getJson(), hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
-    assertThat(response.getJson(), hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE)));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG),
+      hasCode(ErrorCode.RENEWAL_BLOCKED_BY_RECALL))));
+    assertThat(response.getJson(), hasErrorWith(allOf(
+      hasMessage(EXPECTED_REASON_LOAN_IS_NOT_RENEWABLE),
+      hasCode(ErrorCode.LOAN_NOT_RENEWABLE))));
   }
 
   @Test
@@ -682,8 +692,12 @@ class RequestsAPILoanRenewalTests extends APITests {
     JsonObject renewalResponse = response.getJson();
 
     assertThat(renewalResponse, hasErrors(2));
-    assertThat(renewalResponse, hasErrorWith(hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG)));
-    assertThat(renewalResponse, hasErrorWith(hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE)));
+    assertThat(renewalResponse, hasErrorWith(allOf(
+      hasMessage(ITEMS_CANNOT_BE_RENEWED_MSG),
+      hasCode(ErrorCode.RENEWAL_BLOCKED_BY_RECALL))));
+    assertThat(renewalResponse, hasErrorWith(allOf(
+      hasMessage(EXPECTED_REASON_LOAN_IS_NOT_LOANABLE),
+      hasCode(ErrorCode.ITEM_NOT_LOANABLE))));
   }
 
   @Test
@@ -727,7 +741,9 @@ class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Item's loan policy has fixed profile but alternative renewal period for holds is specified")));
+      allOf(
+        hasMessage("Item's loan policy has fixed profile but alternative renewal period for holds is specified"),
+        hasCode(ErrorCode.FIXED_LOAN_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS))));
   }
 
   @Test
@@ -769,7 +785,9 @@ class RequestsAPILoanRenewalTests extends APITests {
     Response response = loansFixture.attemptRenewal(422, smallAngryPlanet, rebecca);
 
     assertThat(response.getJson(), hasErrorWith(
-      hasMessage("Item's loan policy has fixed profile but renewal period is specified")));
+      allOf(
+        hasMessage("Item's loan policy has fixed profile but renewal period is specified"),
+        hasCode(ErrorCode.FIXED_LOAN_POLICY_HAS_RENEWAL_PERIOD))));
   }
 
   private void loanPolicyWithRollingProfileAndRenewingIsForbiddenWhenHoldIsPending() {

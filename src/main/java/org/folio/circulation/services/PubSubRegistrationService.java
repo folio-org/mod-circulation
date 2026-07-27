@@ -17,7 +17,7 @@ public class PubSubRegistrationService {
     throw new IllegalStateException();
   }
 
-  public static CompletableFuture<Boolean> registerModule(
+  public static CompletableFuture<Void> registerModule(
     Map<String, String> headers, Vertx vertx) {
 
     return PubSubClientUtils.registerModule(new OkapiConnectionParams(headers, vertx))
@@ -27,6 +27,7 @@ public class PubSubRegistrationService {
         } else {
           logger.error("Error during module registration in mod-pubsub", throwable);
         }
-      });
+      })
+      .thenApply(ignored -> null);
   }
 }

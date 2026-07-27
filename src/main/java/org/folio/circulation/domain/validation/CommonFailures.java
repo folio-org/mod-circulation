@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.validation;
 
 import static java.lang.String.format;
+import static org.folio.circulation.support.ErrorCode.ITEM_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
@@ -26,7 +27,7 @@ public class CommonFailures {
     log.debug("noItemFoundForBarcodeFailure:: parameters itemBarcode: {}", itemBarcode);
     return () -> singleValidationError(
       format("No item with barcode %s exists", itemBarcode),
-      "itemBarcode", itemBarcode);
+      "itemBarcode", itemBarcode, ITEM_BARCODE_NOT_FOUND);
   }
 
   public static Supplier<HttpFailure> noItemFoundForIdFailure(String itemId) {
