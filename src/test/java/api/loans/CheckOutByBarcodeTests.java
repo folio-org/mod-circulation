@@ -2346,8 +2346,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
+  void dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
     ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS, 1));
 
@@ -2446,8 +2445,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
+  void dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
     ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS, 1));
 
@@ -2469,8 +2467,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategyWithTwoOpeningPeriods() {
+  void shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategyWithTwoOpeningPeriods() {
     ZonedDateTime loanDate = atStartOfDay(MONDAY_DATE, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, 3));
 
@@ -2492,8 +2489,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategyWithTwoOpeningPeriods() {
+  void shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategyWithTwoOpeningPeriods() {
     ZonedDateTime loanDate = atStartOfDay(MONDAY_DATE, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, 3));
 
@@ -2816,9 +2812,8 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void shouldCheckoutItemToRequesterOneWithTitleLevelPageAndDcbItemWhenItemLevelHoldExistForRequesterTwo() {
+  void shouldCheckoutItemToRequesterOneWithTitleLevelPageAndDcbItemWhenItemLevelHoldExistsForRequesterTwo() {
     circulationSettingsFixture.enableTlrFeature();
-
     IndividualResource realInstance = instancesFixture.basedUponDunkirk();
 
     UUID dcbInstanceId = UUID.randomUUID();
@@ -2856,7 +2851,6 @@ class CheckOutByBarcodeTests extends APITests {
 
     UserResource borrower = usersFixture.steve();
     checkOutFixture.checkOutByBarcode(dcbItem, borrower);
-
     assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
   }
 
