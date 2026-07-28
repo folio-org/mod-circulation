@@ -2823,8 +2823,9 @@ class CheckOutByBarcodeTests extends APITests {
       UUID.randomUUID(), barcode, dcbHoldings.getId(),
       locationsFixture.mainFloor().getId(), "DCB instance");
 
+    UserResource steve = usersFixture.steve();
     IndividualResource firstRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
-      realInstance.getId(), usersFixture.steve(), ZonedDateTime.now());
+      realInstance.getId(), steve, ZonedDateTime.now());
     UUID requestId = firstRequest.getId();
 
     requestsStorageClient.replace(requestId,
@@ -2849,8 +2850,7 @@ class CheckOutByBarcodeTests extends APITests {
       .withRequesterId(usersFixture.jessica().getId())
       .withPickupServicePointId(servicePointsFixture.cd1().getId()));
 
-    UserResource borrower = usersFixture.steve();
-    checkOutFixture.checkOutByBarcode(dcbItem, borrower);
+    checkOutFixture.checkOutByBarcode(dcbItem, steve);
     assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
   }
 
