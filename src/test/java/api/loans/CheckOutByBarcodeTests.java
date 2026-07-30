@@ -2346,8 +2346,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
+  void dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheEndOfCurrentHoursStrategy() {
     ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_END_OF_CURRENT_SERVICE_POINT_HOURS, 1));
 
@@ -2446,8 +2445,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
+  void dueDateShouldBeTruncatedToTheEndOfPreviousServicePointHoursIfMoveToTheBeginningOfNextStrategy() {
     ZonedDateTime loanDate = atStartOfDay(FIRST_DAY_OPEN, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_BEGINNING_OF_NEXT_OPEN_SERVICE_POINT_HOURS, 1));
 
@@ -2469,8 +2467,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategyWithTwoOpeningPeriods() {
+  void shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfPrevOpenDayStrategyWithTwoOpeningPeriods() {
     ZonedDateTime loanDate = atStartOfDay(MONDAY_DATE, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_PREVIOUS_OPEN_DAY, 3));
 
@@ -2492,8 +2489,7 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  public void
-  shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategyWithTwoOpeningPeriods() {
+  void shouldBeTruncatedToTheEndOfPrevOpenDayForMoveToTheEndOfNextOpenDayStrategyWithTwoOpeningPeriods() {
     ZonedDateTime loanDate = atStartOfDay(MONDAY_DATE, UTC).plusHours(16);
     use(buildLoanPolicyWithRollingLoan(MOVE_TO_THE_END_OF_THE_NEXT_OPEN_DAY, 3));
 
@@ -2812,6 +2808,49 @@ class CheckOutByBarcodeTests extends APITests {
     assertThat(requestsFixture.getById(requestId).getJson(), isOpenAwaitingPickup());
 
     checkOutFixture.checkOutByBarcode(circulationItem, requester);
+    assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
+  }
+
+  @Test
+  void shouldCheckoutItemToRequesterOneWithTitleLevelPageAndDcbItemWhenItemLevelHoldExistsForRequesterTwo() {
+    circulationSettingsFixture.enableTlrFeature();
+    IndividualResource realInstance = instancesFixture.basedUponDunkirk();
+
+    UUID dcbInstanceId = UUID.randomUUID();
+    IndividualResource dcbHoldings = holdingsFixture.defaultWithHoldings(dcbInstanceId);
+    String barcode = "00001";
+    IndividualResource dcbItem = circulationItemsFixture.createCirculationItem(
+      UUID.randomUUID(), barcode, dcbHoldings.getId(),
+      locationsFixture.mainFloor().getId(), "DCB instance");
+
+    UserResource steve = usersFixture.steve();
+    IndividualResource firstRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
+      realInstance.getId(), steve, ZonedDateTime.now());
+    UUID requestId = firstRequest.getId();
+
+    requestsStorageClient.replace(requestId,
+      requestsStorageClient.get(requestId).getJson()
+        .put("itemId", dcbItem.getId().toString())
+        .put("holdingsRecordId", dcbHoldings.getId().toString())
+        .put("item", new JsonObject().put("barcode", barcode)));
+
+    UUID randomServicePointId = servicePointsFixture.cd2().getId();
+    checkInFixture.checkInByBarcode(dcbItem, randomServicePointId);
+    assertThat(requestsFixture.getById(requestId).getJson(), isOpenInTransit());
+
+    checkInFixture.checkInByBarcode(dcbItem, servicePointsFixture.cd1().getId());
+    assertThat(requestsFixture.getById(requestId).getJson(), isOpenAwaitingPickup());
+
+    requestsFixture.place(new RequestBuilder()
+      .hold()
+      .fulfillToHoldShelf()
+      .withItemId(dcbItem.getId())
+      .withInstanceId(realInstance.getId())
+      .withRequestDate(ZonedDateTime.now())
+      .withRequesterId(usersFixture.jessica().getId())
+      .withPickupServicePointId(servicePointsFixture.cd1().getId()));
+
+    checkOutFixture.checkOutByBarcode(dcbItem, steve);
     assertThat(requestsFixture.getById(requestId).getJson(), isClosedFilled());
   }
 
