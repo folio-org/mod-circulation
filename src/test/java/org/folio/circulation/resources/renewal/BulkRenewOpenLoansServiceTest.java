@@ -6,6 +6,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.Offset.zeroOffset;
 import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +14,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,19 +41,25 @@ import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
+import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
+import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.fetching.GetManyRecordsRepository;
+import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -337,6 +346,52 @@ class BulkRenewOpenLoansServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  void shouldSkipAutomatedPatronBlockValidationForBulkRenewal() throws Exception {
+    Clients clients = Mockito.mock(Clients.class);
+    CollectionResourceClient userManualBlocksClient = Mockito.mock(CollectionResourceClient.class);
+    AutomatedPatronBlocksRepository automatedPatronBlocksRepository = Mockito.mock(
+      AutomatedPatronBlocksRepository.class);
+    UUID userId = UUID.randomUUID();
+    RenewalContext context = RenewalContext.create(new LoanBuilder()
+        .withId(UUID.randomUUID())
+        .withUserId(userId)
+        .withItemId(UUID.randomUUID())
+        .asDomainObject(),
+      new io.vertx.core.json.JsonObject(), "trigger-user")
+      .withRequestQueue(new RequestQueue(List.of()));
+
+    when(clients.userManualBlocksStorageClient()).thenReturn(userManualBlocksClient);
+    when(userManualBlocksClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
+      .thenReturn(completedFuture(succeeded(emptyResponse("manualblocks"))));
+    when(automatedPatronBlocksRepository.findByUserId(userId.toString()))
+      .thenReturn(completedFuture(Result.failed(new TestFailure(
+        "automated patron blocks should be skipped"))));
+
+    Class<?> runnerClass = Class.forName(
+      "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
+    Constructor<?> constructor = runnerClass.getDeclaredConstructor(HttpClient.class,
+      BulkRenewalWebContext.class);
+    constructor.setAccessible(true);
+    Object runner = constructor.newInstance(Mockito.mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of()));
+    Method applyPatronBlockValidations = runnerClass.getDeclaredMethod(
+      "applyPatronBlockValidations", Clients.class, OkapiPermissions.class,
+      AutomatedPatronBlocksRepository.class, RenewalContext.class,
+      CirculationErrorHandler.class);
+    applyPatronBlockValidations.setAccessible(true);
+
+    CompletableFuture<Result<RenewalContext>> validation =
+      (CompletableFuture<Result<RenewalContext>>) applyPatronBlockValidations.invoke(runner,
+        clients, OkapiPermissions.empty(), automatedPatronBlocksRepository, context,
+        new OverridingErrorHandler(null));
+
+    assertTrue(validation.join().succeeded());
+    verify(userManualBlocksClient).getMany(any(CqlQuery.class), any(PageLimit.class));
+    verify(automatedPatronBlocksRepository, never()).findByUserId(userId.toString());
+  }
+
+  @Test
   void shouldTriggerServiceFromResourceAndReturnNoContentImmediately(Vertx vertx,
     VertxTestContext testContext) {
 
@@ -542,5 +597,12 @@ class BulkRenewOpenLoansServiceTest {
       UUID.randomUUID(), "Reminder policy")
       .withAllowRenewalOfItemsWithReminderFees(false)
       .create());
+  }
+
+  private static Response emptyResponse(String recordsPropertyName) {
+    return new Response(200, new io.vertx.core.json.JsonObject()
+      .put(recordsPropertyName, new io.vertx.core.json.JsonArray())
+      .put("totalRecords", 0)
+      .encode(), "application/json");
   }
 }

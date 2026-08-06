@@ -394,16 +394,15 @@ public class BulkRenewOpenLoansService {
       Validator<RenewalContext> manualPatronBlocksValidator =
         RenewalPreRenewalValidator.createManualPatronBlocksValidator(renewalRequest,
           okapiPermissions, clients);
-      Validator<RenewalContext> automatedPatronBlocksValidator =
-        RenewalPreRenewalValidator.createAutomatedPatronBlocksValidator(renewalRequest,
-          okapiPermissions, automatedPatronBlocksRepository);
 
       return RenewalPreRenewalValidator.refuseWhenRenewalActionIsBlockedForPatron(
-          manualPatronBlocksValidator, succeeded(renewalContext), errorHandler,
-          USER_IS_BLOCKED_MANUALLY)
-        .thenCompose(result -> RenewalPreRenewalValidator.refuseWhenRenewalActionIsBlockedForPatron(
-          automatedPatronBlocksValidator, result, errorHandler,
-          USER_IS_BLOCKED_AUTOMATICALLY));
+        manualPatronBlocksValidator, succeeded(renewalContext), errorHandler,
+        USER_IS_BLOCKED_MANUALLY);
+        // Temporarily disabled for bulk-renewal performance testing. Treat patrons as having
+        // no automated patron blocks, so no automated patron-block API lookup is performed.
+        // .thenCompose(result -> RenewalPreRenewalValidator.refuseWhenRenewalActionIsBlockedForPatron(
+        //   automatedPatronBlocksValidator, result, errorHandler,
+        //   USER_IS_BLOCKED_AUTOMATICALLY));
     }
 
     private CompletableFuture<Result<RenewalContext>> applyRenewalLogic(Clients clients,
