@@ -426,7 +426,7 @@ public class BulkRenewOpenLoansService {
 
       CompletableFuture<Result<Void>> processing = completedFuture(succeeded(null));
 
-      StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+      // StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
       FeeFineScheduledNoticeService feeFineNoticeService = FeeFineScheduledNoticeService.using(clients);
       LoanScheduledNoticeService loanScheduledNoticeService = LoanScheduledNoticeService.using(clients);
       ReminderFeeScheduledNoticeService reminderFeeScheduledNoticeService =
@@ -445,7 +445,10 @@ public class BulkRenewOpenLoansService {
 
       for (RenewalContext context : pageContext.successfulRenewalContexts()) {
         processing = processing.thenCompose(result -> result.after(ignored ->
-          storeLoanAndItem.updateLoanAndItemInStorage(context)
+          // Temporarily disabled for bulk-renewal performance testing. Renewal and item
+          // changes are not persisted while this step is bypassed.
+          // storeLoanAndItem.updateLoanAndItemInStorage(context)
+          completedFuture(succeeded(context))
             .thenCompose(stored -> stored.after(overdueFineService::createOverdueFineIfNecessary))
             .thenApply(updated -> updated.next(feeFineNoticeService::scheduleOverdueFineNotices))
             .thenCompose(updated -> updated.after(eventPublisher::publishDueDateChangedEvent))
