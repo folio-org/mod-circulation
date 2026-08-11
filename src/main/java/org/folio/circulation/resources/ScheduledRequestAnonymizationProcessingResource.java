@@ -22,6 +22,8 @@ public class ScheduledRequestAnonymizationProcessingResource extends Resource {
   }
 
   private void scheduledAnonymizeRequest(RoutingContext routingContext) {
+    // implement the request anonymization process here
+
     routingContext.response()
       .setStatusCode(200)
       .putHeader("content-length", "0")
