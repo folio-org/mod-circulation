@@ -1,12 +1,6 @@
 package org.folio.circulation.resources;
 
-import java.lang.invoke.MethodHandles;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
-import org.folio.circulation.support.http.server.WebContext;
 
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
@@ -17,8 +11,6 @@ import io.vertx.ext.web.RoutingContext;
  * This process is intended to run in short intervals.
  */
 public class ScheduledRequestAnonymizationProcessingResource extends Resource {
-  private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
   public ScheduledRequestAnonymizationProcessingResource(HttpClient client) {
     super(client);
   }
@@ -30,6 +22,9 @@ public class ScheduledRequestAnonymizationProcessingResource extends Resource {
   }
 
   private void scheduledAnonymizeRequest(RoutingContext routingContext) {
-// implement the request anonymization process here
+    routingContext.response()
+      .setStatusCode(200)
+      .putHeader("content-length", "0")
+      .end();
   }
 }
