@@ -1,90 +1,90 @@
 package org.folio.circulation.resources;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 
 class ScheduledRequestAnonymizationProcessingResourceTest {
   private static final String ENDPOINT =
     "/circulation/scheduled-request-anonymize-processing";
+  private static final int TIMEOUT = 1;
 
-  @Test
-  void scheduledRequestAnonymizationResourceRegisters() {
-    Vertx vertx = Vertx.vertx();
+  private Vertx vertx;
+  private Router router;
+  private WebClient webClient;
+  private HttpServer server;
+  private int port;
 
-    try {
-      Router router = Router.router(vertx);
-      HttpClient client = vertx.createHttpClient();
+  @BeforeEach
+  void setUp() throws Exception {
+    vertx = Vertx.vertx();
+    router = Router.router(vertx);
+    HttpClient client = vertx.createHttpClient();
+    webClient = WebClient.create(vertx);
+    port = NetworkUtils.nextFreePort();
 
-      new ScheduledRequestAnonymizationProcessingResource(client)
-        .register(router);
+    new ScheduledRequestAnonymizationProcessingResource(client)
+      .register(router);
 
-      assertTrue(
-        router.getRoutes().stream()
-          .anyMatch(route -> ENDPOINT.equals(route.getPath()))
-      );
+    server = vertx.createHttpServer()
+      .requestHandler(router)
+      .listen(port)
+      .toCompletionStage()
+      .toCompletableFuture()
+      .get(TIMEOUT, TimeUnit.SECONDS);
+  }
+
+  @AfterEach
+  void tearDown() throws Exception {
+    if (webClient != null) {
+      webClient.close();
     }
-    finally {
+
+    if (server != null) {
+      server.close()
+        .toCompletionStage()
+        .toCompletableFuture()
+        .get(TIMEOUT, TimeUnit.SECONDS);
+    }
+
+    if (vertx != null) {
       vertx.close()
         .toCompletionStage()
         .toCompletableFuture()
-        .join();
+        .get(TIMEOUT, TimeUnit.SECONDS);
     }
+  }
+
+  @Test
+  void scheduledRequestAnonymizationResourceRegisters() {
+    assertTrue(router.getRoutes().stream()
+      .anyMatch(route -> ENDPOINT.equals(route.getPath())));
   }
 
   @Test
   void scheduledRequestAnonymizationRespondsWithEmptyBodyImmediately()
     throws Exception {
 
-    Vertx vertx = Vertx.vertx();
+    var response = webClient
+      .post(port, "localhost", ENDPOINT)
+      .send()
+      .toCompletionStage()
+      .toCompletableFuture()
+      .get(TIMEOUT, TimeUnit.SECONDS);
 
-    try {
-      Router router = Router.router(vertx);
-      HttpClient client = vertx.createHttpClient();
-      int port = NetworkUtils.nextFreePort();
-
-      new ScheduledRequestAnonymizationProcessingResource(client)
-        .register(router);
-
-      var server = vertx.createHttpServer()
-        .requestHandler(router)
-        .listen(port)
-        .toCompletionStage()
-        .toCompletableFuture()
-        .get(1, TimeUnit.SECONDS);
-
-      try {
-        var response = WebClient.create(vertx)
-          .post(port, "localhost", ENDPOINT)
-          .send()
-          .toCompletionStage()
-          .toCompletableFuture()
-          .get(1, TimeUnit.SECONDS);
-
-        assertEquals(200, response.statusCode());
-        assertEquals(0, response.body() == null ? 0 : response.body().length());
-      }
-      finally {
-        server.close()
-          .toCompletionStage()
-          .toCompletableFuture()
-          .get(1, TimeUnit.SECONDS);
-      }
-    }
-    finally {
-      vertx.close()
-        .toCompletionStage()
-        .toCompletableFuture()
-        .get(1, TimeUnit.SECONDS);
-    }
+    assertEquals(200, response.statusCode());
+    assertEquals(0, response.body() == null ? 0 : response.body().length());
   }
 }
