@@ -67,24 +67,24 @@ class ScheduledRequestAnonymizationProcessingResourceTest {
     }
   }
 
-//  @Test
-//  void scheduledRequestAnonymizationResourceRegisters() {
-//    assertTrue(router.getRoutes().stream()
-//      .anyMatch(route -> ENDPOINT.equals(route.getPath())));
-//  }
-//
-//  @Test
-//  void scheduledRequestAnonymizationRespondsWithEmptyBodyImmediately()
-//    throws Exception {
-//
-//    var response = webClient
-//      .post(port, "localhost", ENDPOINT)
-//      .send()
-//      .toCompletionStage()
-//      .toCompletableFuture()
-//      .get(TIMEOUT, TimeUnit.SECONDS);
-//
-//    assertEquals(200, response.statusCode());
-//    assertEquals(0, response.body() == null ? 0 : response.body().length());
-//  }
+  @Test
+  void scheduledRequestAnonymizationResourceRegisters() {
+    assertTrue(router.getRoutes().stream()
+      .anyMatch(route -> ENDPOINT.equals(route.getPath())));
+  }
+
+  @Test
+  void scheduledRequestAnonymizationRespondsWithEmptyBodyImmediately()
+    throws Exception {
+
+    var response = webClient
+      .post(port, "localhost", ENDPOINT)
+      .send()
+      .toCompletionStage()
+      .toCompletableFuture()
+      .get(TIMEOUT, TimeUnit.SECONDS);
+
+    assertEquals(200, response.statusCode());
+    assertEquals(0, response.body() == null ? 0 : response.body().length());
+  }
 }
