@@ -146,6 +146,86 @@ class ImmediatePatronNoticeFormatTests extends APITests {
       hasNoticeProperties(patron.getId(), SMS_TEMPLATE_ID, "sms", "text/plain", anything())));
   }
 
+  @Test
+  void noNoticeIsSentWhenPolicyHasNoConfigurationForEventType() {
+    use(new NoticePolicyBuilder()
+      .withName("No check-out notices policy")
+      .withLoanNotices(List.of()));
+
+    var patron = usersFixture.steve();
+    var item = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(item, patron);
+    endPatronSessionClient.endCheckOutSession(patron.getId());
+
+    verifyNumberOfSentNotices(0);
+    verifyNumberOfPublishedEvents(NOTICE, 0);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+  }
+
+  @Test
+  void firstEmailConfigWinsWhenPolicyHasDuplicateEmailConfigurations() {
+    UUID secondEmailTemplateId = UUID.fromString("ccc00000-0000-0000-0000-000000000003");
+
+    use(new NoticePolicyBuilder()
+      .withName("Duplicate email check-out policy")
+      .withLoanNotices(List.of(
+        checkOutConfig(EMAIL_TEMPLATE_ID).withEmailFormat().create(),
+        checkOutConfig(secondEmailTemplateId).withEmailFormat().create())));
+
+    var patron = usersFixture.steve();
+    var item = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(item, patron);
+    endPatronSessionClient.endCheckOutSession(patron.getId());
+
+    verifyNumberOfSentNotices(1);
+    assertThat(FakeModNotify.getSentPatronNotices(),
+      hasItems(hasEmailNoticeProperties(patron.getId(), EMAIL_TEMPLATE_ID, anything())));
+  }
+
+  @Test
+  void singleNoticeIsSentWhenMultipleItemsCheckedOutWithSamePolicy() {
+    use(new NoticePolicyBuilder()
+      .withName("Email check-out policy")
+      .withLoanNotices(List.of(checkOutConfig(EMAIL_TEMPLATE_ID).withEmailFormat().create())));
+
+    var patron = usersFixture.steve();
+    var firstItem = itemsFixture.basedUponNod();
+    var secondItem = itemsFixture.basedUponSmallAngryPlanet();
+
+    checkOutFixture.checkOutByBarcode(firstItem, patron);
+    checkOutFixture.checkOutByBarcode(secondItem, patron);
+    endPatronSessionClient.endCheckOutSession(patron.getId());
+
+    verifyNumberOfSentNotices(1);
+    verifyNumberOfPublishedEvents(NOTICE, 1);
+    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+
+    assertThat(FakeModNotify.getSentPatronNotices(),
+      hasItems(hasEmailNoticeProperties(patron.getId(), EMAIL_TEMPLATE_ID, anything())));
+  }
+
+  @Test
+  void smsNoticeIsSentWhenOnlyDeprecatedPreferenceIsSet() {
+    use(new NoticePolicyBuilder()
+      .withName("Email+SMS check-out policy")
+      .withLoanNotices(List.of(
+        checkOutConfig(EMAIL_TEMPLATE_ID).withEmailFormat().create(),
+        checkOutConfig(SMS_TEMPLATE_ID).withSmsFormat().create())));
+
+    var patron = usersFixture.steve(
+      b -> b.withDeprecatedPreferredContactTypeId(SMS_CONTACT_TYPE));
+    var item = itemsFixture.basedUponNod();
+
+    checkOutFixture.checkOutByBarcode(item, patron);
+    endPatronSessionClient.endCheckOutSession(patron.getId());
+
+    verifyNumberOfSentNotices(1);
+    assertThat(FakeModNotify.getSentPatronNotices(),
+      hasItems(hasNoticeProperties(patron.getId(), SMS_TEMPLATE_ID, "sms", "text/plain", anything())));
+  }
+
   private static NoticeConfigurationBuilder checkOutConfig(UUID templateId) {
     return new NoticeConfigurationBuilder()
       .withTemplateId(templateId)

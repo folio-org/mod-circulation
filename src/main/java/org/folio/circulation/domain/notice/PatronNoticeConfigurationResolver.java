@@ -16,28 +16,31 @@ import org.folio.circulation.domain.User;
 public class PatronNoticeConfigurationResolver {
   private static final Logger log = LogManager.getLogger(PatronNoticeConfigurationResolver.class);
 
-  public static List<NoticeConfiguration> firstMatchGroup(List<NoticeConfiguration> candidates) {
-    if (candidates == null || candidates.isEmpty()) {
+  public static List<NoticeConfiguration> matchGroupOf(
+    List<NoticeConfiguration> candidates, NoticeConfiguration anchor) {
+
+    if (candidates == null || candidates.isEmpty() || anchor == null) {
       return List.of();
     }
-    var key = candidates.getFirst().matchKey();
+
+    var key = anchor.matchKey();
+
     return candidates.stream()
       .filter(candidate -> key.equals(candidate.matchKey()))
       .toList();
   }
 
-  public List<NoticeConfiguration> select(List<NoticeConfiguration> matchGroup, User recipient) {
-    if (matchGroup == null || matchGroup.isEmpty()) {
-      return List.of();
-    }
+  public static List<NoticeConfiguration> firstMatchGroup(List<NoticeConfiguration> candidates) {
+    return candidates == null || candidates.isEmpty()
+      ? List.of()
+      : matchGroupOf(candidates, candidates.getFirst());
+  }
 
-    var group = firstMatchGroup(matchGroup);
-    if (group.size() != matchGroup.size()) {
-      log.warn("select:: received {} configurations spanning several match groups, " +
-        "narrowing to the first group of {}", matchGroup.size(), group.size());
-    }
+  public static List<NoticeConfiguration> select(
+    List<NoticeConfiguration> matchGroup, User recipient) {
 
-    var byFormat = indexByFormat(group);
+    var byFormat = indexByFormat(matchGroup);
+
     if (byFormat.isEmpty()) {
       return List.of();
     }
@@ -46,69 +49,103 @@ public class PatronNoticeConfigurationResolver {
       return List.copyOf(byFormat.values());
     }
 
-    var selected = selectByPreferences(byFormat, recipient);
-    if (selected.isEmpty()) {
-      log.warn("select:: no notice configuration selected for recipient {}, event {}, " +
-          "available formats {} - sending nothing",
-        recipient == null ? null : recipient.getId(), eventTypeOf(group), byFormat.keySet());
-    }
-    return selected;
+    return selectByPreferences(byFormat, recipient);
   }
 
-  public boolean requiresPreference(List<NoticeConfiguration> matchGroup) {
-    return indexByFormat(firstMatchGroup(matchGroup)).size() > 1;
+  public static Set<NoticeFormat> resolveFormats(
+    List<NoticeConfiguration> matchGroup, User recipient) {
+
+    return select(matchGroup, recipient).stream()
+      .map(NoticeConfiguration::getNoticeFormat)
+      .collect(toCollection(LinkedHashSet::new));
   }
 
-  private List<NoticeConfiguration> selectByPreferences(
+  public static boolean requiresPreference(List<NoticeConfiguration> matchGroup) {
+    return indexByFormat(matchGroup).size() > 1;
+  }
+
+  private static List<NoticeConfiguration> selectByPreferences(
     Map<NoticeFormat, NoticeConfiguration> byFormat, User recipient) {
 
-    var preferredFormats =
-      UserPreferredNoticeFormats.fromPreferredContactTypeIds(recipient);
+    var preferredFormats = UserPreferredNoticeFormats.fromPreferredContactTypeIds(recipient);
 
     if (!preferredFormats.isEmpty()) {
-      return preferredFormats.stream()
+      var matched = preferredFormats.stream()
         .map(byFormat::get)
         .filter(Objects::nonNull)
         .toList();
+
+      if (!matched.isEmpty()) {
+        return matched;
+      }
+
+      log.info("selectByPreferences:: preferred formats {} are not configured, available {} - " +
+        "falling back to default channel", preferredFormats, byFormat.keySet());
+    } else {
+      var deprecatedFormat =
+        UserPreferredNoticeFormats.fromDeprecatedPreferredContactTypeId(recipient);
+
+      if (deprecatedFormat.isPresent()) {
+        var configuration = byFormat.get(deprecatedFormat.get());
+
+        if (configuration != null) {
+          return List.of(configuration);
+        }
+
+        log.info("selectByPreferences:: preferred format {} is not configured, available {} - " +
+          "falling back to default channel", deprecatedFormat.get(), byFormat.keySet());
+      }
     }
-
-    var deprecatedFormat =
-      UserPreferredNoticeFormats.fromDeprecatedPreferredContactTypeId(recipient);
-
-    if (deprecatedFormat.isPresent()) {
-      var configuration = byFormat.get(deprecatedFormat.get());
-
-      return configuration == null
-        ? List.of()
-        : List.of(configuration);
-    }
-
-    return emailOnly(byFormat);
+    return defaultChannel(byFormat);
   }
 
-  private static List<NoticeConfiguration> emailOnly(
+  private static List<NoticeConfiguration> defaultChannel(
     Map<NoticeFormat, NoticeConfiguration> byFormat) {
+
     var emailConfiguration = byFormat.get(NoticeFormat.EMAIL);
-    return emailConfiguration == null ? List.of() : List.of(emailConfiguration);
+
+    if (emailConfiguration != null) {
+      return List.of(emailConfiguration);
+    }
+
+    return List.of(byFormat.values().iterator().next());
   }
 
   private static Map<NoticeFormat, NoticeConfiguration> indexByFormat(
     List<NoticeConfiguration> matchGroup) {
 
     var byFormat = new LinkedHashMap<NoticeFormat, NoticeConfiguration>();
+
+    if (matchGroup == null || matchGroup.isEmpty()) {
+      return byFormat;
+    }
+
+    NoticeConfigurationMatchKey groupKey = null;
+
     for (NoticeConfiguration configuration : matchGroup) {
-      NoticeFormat format = configuration.getNoticeFormat();
-      if (format == null || !format.isDeliverable()) {
-        log.warn("indexByFormat:: skipping notice configuration {} with undeliverable format {}",
-          configuration.getTemplateId(), format);
+      if (groupKey == null) {
+        groupKey = configuration.matchKey();
+      } else if (!groupKey.equals(configuration.matchKey())) {
         continue;
       }
-      byFormat.putIfAbsent(format, configuration);
-    }
-    return byFormat;
-  }
 
-  private static NoticeEventType eventTypeOf(List<NoticeConfiguration> group) {
-    return group.isEmpty() ? null : group.getFirst().getNoticeEventType();
+      var format = configuration.getNoticeFormat();
+
+      if (format == null || !format.isDeliverable()) {
+        log.debug("indexByFormat:: skipping configuration with template {}, format {} is not " +
+          "deliverable", configuration.getTemplateId(), format);
+        continue;
+      }
+
+      var previous = byFormat.putIfAbsent(format, configuration);
+
+      if (previous != null) {
+        log.warn("indexByFormat:: match group contains several configurations for format {}, " +
+            "using template {} and ignoring template {}", format, previous.getTemplateId(),
+          configuration.getTemplateId());
+      }
+    }
+
+    return byFormat;
   }
 }

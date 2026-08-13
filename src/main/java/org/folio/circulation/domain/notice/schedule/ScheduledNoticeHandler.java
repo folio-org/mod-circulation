@@ -11,20 +11,29 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRelatedRecord;
+import org.folio.circulation.domain.notice.NoticeConfiguration;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.PatronNoticeConfigurationResolver;
+import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
+import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -46,6 +55,8 @@ public abstract class ScheduledNoticeHandler {
   protected final CollectionResourceClient templateNoticesClient;
   private final ScheduledPatronNoticeService patronNoticeService;
   private final EventPublisher eventPublisher;
+  private final Map<String, CompletableFuture<Result<PatronNoticePolicy>>> patronNoticePolicyCache =
+    new ConcurrentHashMap<>();
 
   protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
@@ -197,12 +208,21 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
-    log.info("sendNotice:: sending notice for scheduled notice {}", context.getNotice().getId());
     if (isNoticeIrrelevant(context)) {
-      log.info("sendNotice:: notice is irrelevant, skipping send");
+      log.info("sendNotice:: notice {} is irrelevant, skipping send", context.getNotice().getId());
       return ofAsync(() -> context);
     }
 
+    return shouldSendByPreference(context)
+      .thenCompose(shouldSend -> shouldSend
+        ? doSendNotice(context)
+        : skipDueToPreference(context));
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> doSendNotice(
+    ScheduledNoticeContext context) {
+
+    log.info("doSendNotice:: sending notice {}", context.getNotice().getId());
     return patronNoticeService.sendNotice(
       context.getNotice().getConfiguration(),
       context.getNotice().getRecipientUserId(),
@@ -214,6 +234,119 @@ public abstract class ScheduledNoticeHandler {
         }
         return r.map(v -> context);
       });
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> skipDueToPreference(
+    ScheduledNoticeContext context) {
+
+    log.info("skipDueToPreference:: notice {} format {} filtered out by user preference, skipping send",
+      context.getNotice().getId(), context.getNotice().getConfiguration().getFormat());
+
+    return ofAsync(() -> context);
+  }
+
+  protected CompletableFuture<Boolean> shouldSendByPreference(ScheduledNoticeContext context) {
+    var policyId = context.getPatronNoticePolicyId();
+    if (policyId == null) {
+      log.debug("shouldSendByPreference:: no patron notice policy id for notice {}, sending as usual",
+        context.getNotice().getId());
+      return completedFuture(true);
+    }
+
+    return lookupPatronNoticePolicy(policyId)
+      .thenApply(r -> {
+        if (r.failed()) {
+          log.warn("shouldSendByPreference:: failed to look up notice policy {} for notice {}: {}",
+            policyId, context.getNotice().getId(), r.cause());
+          return true;
+        }
+
+        return evaluatePreference(context, r.value());
+      });
+  }
+
+  private CompletableFuture<Result<PatronNoticePolicy>> lookupPatronNoticePolicy(String policyId) {
+    return patronNoticePolicyCache.computeIfAbsent(policyId,
+      id -> patronNoticePolicyRepository.lookupPolicy(id, new AppliedRuleConditions(false, false, false)));
+  }
+
+  private boolean evaluatePreference(ScheduledNoticeContext context, PatronNoticePolicy policy) {
+    var notice = context.getNotice();
+    var noticeConfig = notice.getConfiguration();
+    var eventType = NoticeEventType.from(notice.getTriggeringEvent().getRepresentation());
+
+    if (eventType == NoticeEventType.UNKNOWN) {
+      log.debug("evaluatePreference:: triggering event {} has no patron notice policy " +
+        "counterpart, sending as usual", notice.getTriggeringEvent());
+      return true;
+    }
+
+    var candidates = policy.lookupNoticeConfigurations(eventType).stream()
+      .filter(candidate -> matchesScheduledConfig(candidate, noticeConfig))
+      .toList();
+    var anchor = candidates.stream()
+      .filter(candidate -> Objects.equals(candidate.getTemplateId(), noticeConfig.getTemplateId()))
+      .findFirst();
+
+    if (anchor.isEmpty()) {
+      log.info("evaluatePreference:: template {} of notice {} is no longer present in policy {}, " +
+          "sending as scheduled", noticeConfig.getTemplateId(), notice.getId(),
+        context.getPatronNoticePolicyId());
+      return true;
+    }
+
+    var matchGroup = PatronNoticeConfigurationResolver.matchGroupOf(candidates, anchor.get());
+
+    if (!PatronNoticeConfigurationResolver.requiresPreference(matchGroup)) {
+      return true;
+    }
+
+    var recipient = extractRecipientUser(context);
+    var resolvedFormats = PatronNoticeConfigurationResolver.resolveFormats(matchGroup, recipient);
+    var shouldSend = resolvedFormats.contains(noticeConfig.getFormat());
+
+    if (!shouldSend) {
+      log.info("evaluatePreference:: notice {} format {} is not among resolved formats {}, skipping",
+        notice.getId(), noticeConfig.getFormat(), resolvedFormats);
+    }
+
+    return shouldSend;
+  }
+
+  private static boolean matchesScheduledConfig(NoticeConfiguration candidate,
+    ScheduledNoticeConfig config) {
+
+    if (candidate.getTiming() != config.getTiming()) {
+      return false;
+    }
+    if (candidate.isRecurring() != config.isRecurring()) {
+      return false;
+    }
+    if (candidate.sendInRealTime() != config.sendInRealTime()) {
+      return false;
+    }
+
+    return !candidate.isRecurring() || periodsEqual(candidate.getRecurringPeriod(), config.getRecurringPeriod());
+  }
+
+  private static boolean periodsEqual(Period first, Period second) {
+    if (first == null || second == null) {
+      return first == second;
+    }
+
+    return Objects.equals(first.getDuration(), second.getDuration())
+      && Objects.equals(first.getInterval(), second.getInterval());
+  }
+
+  private static User extractRecipientUser(ScheduledNoticeContext context) {
+    if (context.getLoan() != null && context.getLoan().getUser() != null) {
+      return context.getLoan().getUser();
+    }
+    if (context.getRequest() != null && context.getRequest().getUser() != null) {
+      return context.getRequest().getUser();
+    }
+
+    return null;
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForLoan(

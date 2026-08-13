@@ -2,7 +2,6 @@ package org.folio.circulation.domain.notice;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class PatronNoticePolicy {
 
@@ -21,13 +20,5 @@ public class PatronNoticePolicy {
     return noticeConfigurations.stream()
       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))
       .toList();
-  }
-
-  /**
-   * @deprecated Use {@link #lookupNoticeConfigurations(NoticeEventType)} instead.
-   */
-  @Deprecated(forRemoval = false)
-  public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType) {
-    return lookupNoticeConfigurations(eventType).stream().findFirst();
   }
 }

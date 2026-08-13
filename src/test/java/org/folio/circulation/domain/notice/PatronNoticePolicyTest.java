@@ -22,6 +22,6 @@ class PatronNoticePolicyTest {
     var policy = new PatronNoticePolicy(List.of(first, second, third));
 
     assertThat(policy.lookupNoticeConfigurations(NoticeEventType.CHECK_OUT), is(List.of(first, second, third)));
-    assertThat(policy.lookupNoticeConfiguration(NoticeEventType.CHECK_OUT).orElseThrow(), is(first));
+    assertThat(policy.lookupNoticeConfigurations(NoticeEventType.CHECK_OUT).getFirst(), is(first));
   }
 }

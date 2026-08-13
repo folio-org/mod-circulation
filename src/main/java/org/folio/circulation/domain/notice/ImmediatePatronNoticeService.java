@@ -37,13 +37,11 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final PatronNoticePolicyRepository noticePolicyRepository;
   private final NoticeContextCombiner noticeContextCombiner;
-  private final PatronNoticeConfigurationResolver configurationResolver;
 
   public ImmediatePatronNoticeService(Clients clients, NoticeContextCombiner noticeContextCombiner) {
     super(clients);
     this.noticePolicyRepository = new PatronNoticePolicyRepository(clients);
     this.noticeContextCombiner = noticeContextCombiner;
-    this.configurationResolver = new PatronNoticeConfigurationResolver();
   }
 
   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event) {
@@ -110,16 +108,16 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
       .findFirst()
       .orElse(null);
 
-    var selectedConfigurations = configurationResolver.select(matchGroup, recipient);
+    var selected = PatronNoticeConfigurationResolver.select(matchGroup, recipient);
 
-    if (selectedConfigurations.isEmpty()) {
+    if (selected.isEmpty()) {
       log.info("applyPatronNoticePolicy:: no notice configuration selected for recipient {}",
         context.getGroupDefinition().getRecipientId());
 
       return ofAsync(() -> null);
     }
 
-    return allOf(selectedConfigurations, configuration -> sendNotice(context, configuration))
+    return allOf(selected, configuration -> sendNotice(context, configuration))
       .thenApply(mapResult(ignored -> null));
   }
 

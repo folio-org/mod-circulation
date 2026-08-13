@@ -6,7 +6,9 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.folio.circulation.domain.User;
@@ -19,8 +21,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import api.support.builders.UserBuilder;
 
 class PatronNoticeConfigurationResolverTest {
-  private final PatronNoticeConfigurationResolver resolver =
-    new PatronNoticeConfigurationResolver();
 
   @ParameterizedTest
   @MethodSource("preferenceCases")
@@ -31,7 +31,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(preferredContactTypeIds, deprecatedPreferredContactTypeId);
     var group = threeFormatGroup("email", "sms", "print");
 
-    assertThat(formats(resolver.select(group, user)), is(expectedFormats));
+    assertThat(formats(PatronNoticeConfigurationResolver.select(group, user)), is(expectedFormats));
   }
 
   static Stream<Arguments> preferenceCases() {
@@ -53,7 +53,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(preferredContactTypeIds, null);
     var configuration = configuration("template", configuredFormat);
 
-    var selected = resolver.select(List.of(configuration), user);
+    var selected = PatronNoticeConfigurationResolver.select(List.of(configuration), user);
 
     assertThat(selected, is(List.of(configuration)));
   }
@@ -71,7 +71,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of("002", "003"), null);
     var group = threeFormatGroup("email-template", "sms-template", "print-template");
 
-    var selected = resolver.select(group, user);
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
 
     assertThat(selected, hasSize(2));
     assertThat(
@@ -84,7 +84,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of("002", "001", "003"), null);
     var group = threeFormatGroup("email", "sms", "print");
 
-    var selected = resolver.select(group, user);
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
 
     assertThat(
       formats(selected),
@@ -96,40 +96,49 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of(), null);
     var group = threeFormatGroup("email", "sms", "print");
 
-    var selected = resolver.select(group, user);
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
 
     assertThat(selected, hasSize(1));
     assertThat(selected.getFirst().getNoticeFormat(), is(NoticeFormat.EMAIL));
   }
 
   @Test
-  void selectsNothingWhenPreferencesAndEmailAreMissing() {
+  void selectsFirstAvailableWhenPreferencesAndEmailAreMissing() {
     var user = buildUser(List.of(), null);
     var group = List.of(
       configuration("sms", NoticeFormat.SMS),
       configuration("print", NoticeFormat.PRINT));
 
-    assertThat(resolver.select(group, user), empty());
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
+
+    assertThat(selected, hasSize(1));
+    assertThat(selected.getFirst().getNoticeFormat(), is(NoticeFormat.SMS));
   }
 
   @Test
-  void selectsNothingWhenArrayPreferenceIsNotConfigured() {
+  void fallsBackToEmailWhenArrayPreferenceIsNotConfigured() {
     var user = buildUser(List.of("003"), null);
     var group = List.of(
       configuration("email", NoticeFormat.EMAIL),
       configuration("print", NoticeFormat.PRINT));
 
-    assertThat(resolver.select(group, user), empty());
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
+
+    assertThat(selected, hasSize(1));
+    assertThat(selected.getFirst().getNoticeFormat(), is(NoticeFormat.EMAIL));
   }
 
   @Test
-  void selectsNothingWhenDeprecatedPreferenceIsNotConfigured() {
+  void fallsBackToEmailWhenDeprecatedPreferenceIsNotConfigured() {
     var user = buildUser(null, "003");
     var group = List.of(
       configuration("email", NoticeFormat.EMAIL),
       configuration("print", NoticeFormat.PRINT));
 
-    assertThat(resolver.select(group, user), empty());
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
+
+    assertThat(selected, hasSize(1));
+    assertThat(selected.getFirst().getNoticeFormat(), is(NoticeFormat.EMAIL));
   }
 
   @Test
@@ -137,7 +146,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of("999"), "003");
     var group = threeFormatGroup("email", "sms", "print");
 
-    var selected = resolver.select(group, user);
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
 
     assertThat(formats(selected), is(List.of(NoticeFormat.SMS)));
   }
@@ -147,7 +156,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of("999"), null);
     var group = threeFormatGroup("email", "sms", "print");
 
-    var selected = resolver.select(group, user);
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
 
     assertThat(formats(selected), is(List.of(NoticeFormat.EMAIL)));
   }
@@ -159,7 +168,7 @@ class PatronNoticeConfigurationResolverTest {
     var sms = configuration("sms", NoticeFormat.SMS);
     var user = buildUser(List.of("002", "003"), null);
 
-    var selected = resolver.select(
+    var selected = PatronNoticeConfigurationResolver.select(
       List.of(firstEmail, secondEmail, sms), user);
 
     assertThat(selected, is(List.of(firstEmail, sms)));
@@ -198,7 +207,7 @@ class PatronNoticeConfigurationResolverTest {
       null,
       true);
 
-    var selected = resolver.select(List.of(first, second), null);
+    var selected = PatronNoticeConfigurationResolver.select(List.of(first, second), null);
 
     assertThat(selected, is(List.of(first)));
   }
@@ -207,19 +216,19 @@ class PatronNoticeConfigurationResolverTest {
   void returnsEmptyListForEmptyInput() {
     var user = buildUser(List.of("002"), null);
 
-    assertThat(resolver.select(List.of(), user), empty());
+    assertThat(PatronNoticeConfigurationResolver.select(List.of(), user), empty());
   }
 
   @Test
   void returnsEmptyListForNullInput() {
-    assertThat(resolver.select(null, null), empty());
+    assertThat(PatronNoticeConfigurationResolver.select(null, null), empty());
   }
 
   @Test
   void doesNotRequirePreferencesForSingleFormat() {
     var group = List.of(configuration("email", NoticeFormat.EMAIL));
 
-    assertThat(resolver.requiresPreference(group), is(false));
+    assertThat(PatronNoticeConfigurationResolver.requiresPreference(group), is(false));
   }
 
   @Test
@@ -228,7 +237,7 @@ class PatronNoticeConfigurationResolverTest {
       configuration("email", NoticeFormat.EMAIL),
       configuration("sms", NoticeFormat.SMS));
 
-    assertThat(resolver.requiresPreference(group), is(true));
+    assertThat(PatronNoticeConfigurationResolver.requiresPreference(group), is(true));
   }
 
   @Test
@@ -238,8 +247,8 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of("003"), null);
     var group = List.of(email, unknown);
 
-    assertThat(resolver.requiresPreference(group), is(false));
-    assertThat(resolver.select(group, user), is(List.of(email)));
+    assertThat(PatronNoticeConfigurationResolver.requiresPreference(group), is(false));
+    assertThat(PatronNoticeConfigurationResolver.select(group, user), is(List.of(email)));
   }
 
   @Test
@@ -247,7 +256,7 @@ class PatronNoticeConfigurationResolverTest {
     var user = buildUser(List.of("002", "003", "001"), null);
     var group = threeFormatGroup("email", "sms", "print");
 
-    var selected = resolver.select(group, user);
+    var selected = PatronNoticeConfigurationResolver.select(group, user);
 
     assertThat(selected, hasSize(3));
     assertTrue(selected.stream()
@@ -255,8 +264,114 @@ class PatronNoticeConfigurationResolverTest {
       .allMatch(NoticeFormat::isDeliverable));
   }
 
+
+  @Test
+  void matchGroupOfReturnsEmptyListWhenCandidatesAreNull() {
+    var anchor = configuration("email", NoticeFormat.EMAIL);
+
+    assertThat(PatronNoticeConfigurationResolver.matchGroupOf(null, anchor), empty());
+  }
+
+  @Test
+  void matchGroupOfReturnsEmptyListWhenCandidatesAreEmpty() {
+    var anchor = configuration("email", NoticeFormat.EMAIL);
+
+    assertThat(PatronNoticeConfigurationResolver.matchGroupOf(List.of(), anchor), empty());
+  }
+
+  @Test
+  void matchGroupOfReturnsEmptyListWhenAnchorIsNull() {
+    var group = threeFormatGroup("email", "sms", "print");
+
+    assertThat(PatronNoticeConfigurationResolver.matchGroupOf(group, null), empty());
+  }
+
+  @Test
+  void matchGroupOfReturnsConfigurationsMatchingAnchorKey() {
+    var email = configuration("email", NoticeFormat.EMAIL);
+    var sms = configuration("sms", NoticeFormat.SMS);
+    var differentTiming = new NoticeConfiguration(
+      "later-email",
+      NoticeFormat.EMAIL,
+      NoticeEventType.CHECK_OUT,
+      NoticeTiming.UPON_AT,
+      null,
+      false,
+      null,
+      true);
+
+    var result = PatronNoticeConfigurationResolver.matchGroupOf(
+      List.of(email, sms, differentTiming), email);
+
+    assertThat(result, is(List.of(email, sms)));
+  }
+
+  @Test
+  void matchGroupOfReturnsEmptyListWhenNothingMatchesAnchor() {
+    var anchor = new NoticeConfiguration(
+      "unique",
+      NoticeFormat.EMAIL,
+      NoticeEventType.CHECK_OUT,
+      NoticeTiming.UPON_AT,
+      null,
+      false,
+      null,
+      true);
+    var group = threeFormatGroup("email", "sms", "print");
+
+    assertThat(PatronNoticeConfigurationResolver.matchGroupOf(group, anchor), empty());
+  }
+
+  @Test
+  void firstMatchGroupReturnsEmptyListForNullInput() {
+    assertThat(PatronNoticeConfigurationResolver.firstMatchGroup(null), empty());
+  }
+
+  @Test
+  void firstMatchGroupReturnsEmptyListForEmptyInput() {
+    assertThat(PatronNoticeConfigurationResolver.firstMatchGroup(List.of()), empty());
+  }
+
+  @Test
+  void resolveFormatsReturnsFormatsOfSelectedConfigurations() {
+    var user = buildUser(List.of("002", "003"), null);
+    var group = threeFormatGroup("email", "sms", "print");
+
+    var formats = PatronNoticeConfigurationResolver.resolveFormats(group, user);
+
+    Set<NoticeFormat> expected = new LinkedHashSet<>(List.of(NoticeFormat.EMAIL, NoticeFormat.SMS));
+    assertThat(formats, is(expected));
+  }
+
+  @Test
+  void resolveFormatsReturnsEmptySetWhenGroupIsEmpty() {
+    var user = buildUser(List.of("002"), null);
+
+    assertThat(PatronNoticeConfigurationResolver.resolveFormats(List.of(), user), empty());
+  }
+
+  @Test
+  void resolveFormatsReturnsSingleFormatWhenOnlyOneConfigured() {
+    var user = buildUser(List.of(), null);
+    var group = List.of(configuration("email", NoticeFormat.EMAIL));
+
+    var formats = PatronNoticeConfigurationResolver.resolveFormats(group, user);
+
+    assertThat(formats, is(Set.of(NoticeFormat.EMAIL)));
+  }
+
+  @Test
+  void doesNotRequirePreferencesForEmptyGroup() {
+    assertThat(PatronNoticeConfigurationResolver.requiresPreference(List.of()), is(false));
+  }
+
+  @Test
+  void doesNotRequirePreferencesForNullGroup() {
+    assertThat(PatronNoticeConfigurationResolver.requiresPreference(null), is(false));
+  }
+
   private static User buildUser(List<String> preferredContactTypeIds,
-                                String deprecatedPreferredContactTypeId) {
+    String deprecatedPreferredContactTypeId) {
 
     var builder = new UserBuilder();
 
@@ -273,9 +388,7 @@ class PatronNoticeConfigurationResolverTest {
   }
 
   private static List<NoticeConfiguration> threeFormatGroup(
-    String emailTemplateId,
-    String smsTemplateId,
-    String printTemplateId) {
+    String emailTemplateId, String smsTemplateId, String printTemplateId) {
 
     return List.of(
       configuration(emailTemplateId, NoticeFormat.EMAIL),
