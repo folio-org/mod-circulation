@@ -16,6 +16,9 @@ import org.folio.circulation.domain.User;
 public class PatronNoticeConfigurationResolver {
   private static final Logger log = LogManager.getLogger(PatronNoticeConfigurationResolver.class);
 
+  private PatronNoticeConfigurationResolver() {
+  }
+
   public static List<NoticeConfiguration> matchGroupOf(
     List<NoticeConfiguration> candidates, NoticeConfiguration anchor) {
 
