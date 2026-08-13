@@ -1440,6 +1440,18 @@
     {
       "id": "template-engine",
       "version": "2.2"
+    },
+    {
+      "id": "checkout-lock-storage",
+      "version": "0.1"
+    },
+    {
+      "id": "search-inventory",
+      "version": "1.0"
+    },
+    {
+      "id": "locale",
+      "version": "1.0"
     }
   ],
   "optional": [
