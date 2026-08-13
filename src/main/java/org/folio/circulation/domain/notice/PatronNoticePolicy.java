@@ -23,6 +23,9 @@ public class PatronNoticePolicy {
       .toList();
   }
 
+  /**
+   * @deprecated Use {@link #lookupNoticeConfigurations(NoticeEventType)} instead.
+   */
   @Deprecated(forRemoval = false)
   public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType) {
     return lookupNoticeConfigurations(eventType).stream().findFirst();

@@ -182,7 +182,7 @@ public class User {
       .stream()
       .filter(String.class::isInstance)
       .map(String.class::cast)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   public String getPreferredContactTypeId() {
