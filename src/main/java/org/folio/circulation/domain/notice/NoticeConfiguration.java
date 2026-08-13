@@ -61,4 +61,8 @@ public class NoticeConfiguration {
   public boolean sendInRealTime() {
     return sendInRealTime;
   }
+
+  public NoticeConfigurationMatchKey matchKey() {
+    return NoticeConfigurationMatchKey.from(this);
+  }
 }

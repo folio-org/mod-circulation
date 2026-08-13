@@ -17,9 +17,14 @@ public class PatronNoticePolicy {
     return noticeConfigurations;
   }
 
-  public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType) {
+  public List<NoticeConfiguration> lookupNoticeConfigurations(NoticeEventType eventType) {
     return noticeConfigurations.stream()
       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))
-      .findFirst();
+      .toList();
+  }
+
+  @Deprecated(forRemoval = false)
+  public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType) {
+    return lookupNoticeConfigurations(eventType).stream().findFirst();
   }
 }

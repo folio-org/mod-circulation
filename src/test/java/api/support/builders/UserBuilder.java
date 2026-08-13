@@ -3,6 +3,7 @@ package api.support.builders;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import api.support.http.IndividualResource;
@@ -22,12 +23,14 @@ public class UserBuilder extends JsonBuilder implements Builder {
   private final ZonedDateTime expirationDate;
   private final Collection<Address> addresses;
   private final JsonArray departments;
+  private final JsonArray preferredContactTypeIds;
+  private final String preferredContactTypeId;
   private final String type;
   private final boolean primaryAddress;
 
   public UserBuilder() {
     this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, null,"785493025613",
-      null, true, null, new ArrayList<>(), null, null, false);
+      null, true, null, new ArrayList<>(), null, null, null, null, false);
   }
 
   private UserBuilder(
@@ -43,6 +46,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
     ZonedDateTime expirationDate,
     Collection<Address> addresses,
     JsonArray departments,
+    JsonArray preferredContactTypeIds,
+    String preferredContactTypeId,
     String type,
     boolean primaryAddress) {
 
@@ -61,6 +66,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
     this.addresses = addresses;
     this.departments = departments;
+    this.preferredContactTypeIds = preferredContactTypeIds;
+    this.preferredContactTypeId = preferredContactTypeId;
     this.type = type;
     this.primaryAddress = primaryAddress;
   }
@@ -85,7 +92,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
     put(request, "active", active);
     put(request, "expirationDate", expirationDate);
 
-    if(firstName != null || lastName != null) {
+    if (firstName != null || lastName != null ||
+      preferredContactTypeIds != null || preferredContactTypeId != null) {
       JsonObject personalInformation = new JsonObject()
         .put("lastName", this.lastName)
         .put("firstName", this.firstName);
@@ -96,6 +104,14 @@ public class UserBuilder extends JsonBuilder implements Builder {
 
       if(this.preferredFirstName != null) {
         personalInformation.put("preferredFirstName", this.preferredFirstName);
+      }
+
+      if (this.preferredContactTypeIds != null) {
+        personalInformation.put("preferredContactTypeIds", this.preferredContactTypeIds);
+      }
+
+      if (this.preferredContactTypeId != null) {
+        personalInformation.put("preferredContactTypeId", this.preferredContactTypeId);
       }
 
       if(this.addresses != null && !this.addresses.isEmpty()) {
@@ -149,6 +165,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -167,6 +185,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -185,6 +205,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -203,6 +225,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -221,6 +245,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -239,6 +265,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -257,6 +285,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -275,6 +305,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -297,6 +329,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -327,6 +361,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -345,6 +381,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       newExpirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -363,6 +401,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       null,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -390,6 +430,49 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
+      this.type,
+      this.primaryAddress);
+  }
+
+  public UserBuilder withPreferredContactTypeIds(List<String> preferredContactTypeIds) {
+    JsonArray values = preferredContactTypeIds == null ? null : new JsonArray(preferredContactTypeIds);
+    return new UserBuilder(
+      this.id,
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.preferredFirstName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses,
+      this.departments,
+      values,
+      this.preferredContactTypeId,
+      this.type,
+      this.primaryAddress);
+  }
+
+  public UserBuilder withDeprecatedPreferredContactTypeId(String preferredContactTypeId) {
+    return new UserBuilder(
+      this.id,
+      this.username,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.preferredFirstName,
+      this.barcode,
+      this.patronGroupId,
+      this.active,
+      this.expirationDate,
+      this.addresses,
+      this.departments,
+      this.preferredContactTypeIds,
+      preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -407,7 +490,9 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.active,
       this.expirationDate,
       this.addresses,
-      departments,
+      this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       Boolean.valueOf(primaryAddress));
   }
@@ -429,6 +514,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       newAddresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -447,6 +534,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       this.type,
       this.primaryAddress);
   }
@@ -465,6 +554,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
       this.expirationDate,
       this.addresses,
       this.departments,
+      this.preferredContactTypeIds,
+      this.preferredContactTypeId,
       type,
       this.primaryAddress);
   }

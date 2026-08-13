@@ -172,6 +172,24 @@ public class User {
       .collect(Collectors.toList());
   }
 
+  public List<String> getPreferredContactTypeIds() {
+    var personal = getPersonal();
+    if (personal == null) {
+      return List.of();
+    }
+
+    return personal.getJsonArray("preferredContactTypeIds", new JsonArray())
+      .stream()
+      .filter(String.class::isInstance)
+      .map(String.class::cast)
+      .collect(Collectors.toList());
+  }
+
+  public String getPreferredContactTypeId() {
+    var personal = getPersonal();
+    return personal == null ? null : personal.getString("preferredContactTypeId");
+  }
+
   public Collection<Department> getDepartments() {
     return departments;
   }
