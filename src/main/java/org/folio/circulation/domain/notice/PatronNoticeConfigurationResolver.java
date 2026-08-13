@@ -55,12 +55,6 @@ public class PatronNoticeConfigurationResolver {
     return selected;
   }
 
-  public Set<NoticeFormat> resolveFormats(List<NoticeConfiguration> matchGroup, User recipient) {
-    return select(matchGroup, recipient).stream()
-      .map(NoticeConfiguration::getNoticeFormat)
-      .collect(toCollection(LinkedHashSet::new));
-  }
-
   public boolean requiresPreference(List<NoticeConfiguration> matchGroup) {
     return indexByFormat(firstMatchGroup(matchGroup)).size() > 1;
   }
