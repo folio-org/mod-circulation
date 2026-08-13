@@ -1,3 +1,8 @@
+## 24.5.1 2026-08-13
+* Fix request anonymization stub ([CIRC-2658](https://folio-org.atlassian.net/browse/CIRC-2658))
+* Add missing dependency declarations to module descriptor ([CIRC-2642](https://folio-org.atlassian.net/browse/CIRC-2642))
+* Fix matching ECS TLR request to item being checked out in non data tenant ([CIRC-2657](https://folio-org.atlassian.net/browse/CIRC-2657))
+
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))
 * Fix TLRs in Search slips missing key tokens ([CIRC-2228](https://folio-org.atlassian.net/browse/CIRC-2228))
