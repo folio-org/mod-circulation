@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,6 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRelatedRecord;
 import org.folio.circulation.domain.notice.NoticeConfiguration;
@@ -28,7 +31,6 @@ import org.folio.circulation.domain.notice.NoticeEventType;
 import org.folio.circulation.domain.notice.PatronNoticeConfigurationResolver;
 import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
-import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
@@ -288,41 +290,62 @@ public abstract class ScheduledNoticeHandler {
   private boolean evaluatePreference(ScheduledNoticeContext context, PatronNoticePolicy policy) {
     var notice = context.getNotice();
     var noticeConfig = notice.getConfiguration();
-    var eventType = NoticeEventType.from(notice.getTriggeringEvent().getRepresentation());
 
-    if (eventType == NoticeEventType.UNKNOWN) {
-      log.debug("evaluatePreference:: triggering event {} has no patron notice policy " +
-        "counterpart, sending as usual", notice.getTriggeringEvent());
+    var eventType = validateEventType(notice);
+    if (eventType.isEmpty()) {
       return true;
     }
 
-    var candidates = policy.lookupNoticeConfigurations(eventType).stream()
-      .filter(candidate -> matchesScheduledConfig(candidate, noticeConfig))
-      .toList();
-    var anchor = candidates.stream()
-      .filter(candidate -> Objects.equals(candidate.getTemplateId(), noticeConfig.getTemplateId()))
-      .findFirst();
-
-    if (anchor.isEmpty()) {
+    var matchGroup = findMatchingTemplate(policy, eventType.get(), noticeConfig);
+    if (matchGroup.isEmpty()) {
       log.info("evaluatePreference:: template {} of notice {} is no longer present in policy {}, " +
           "sending as scheduled", noticeConfig.getTemplateId(), notice.getId(),
         context.getPatronNoticePolicyId());
       return true;
     }
 
-    var matchGroup = PatronNoticeConfigurationResolver.matchGroupOf(candidates, anchor.get());
+    return resolveNoticeFormats(context, noticeConfig, matchGroup.get());
+  }
+
+  private static Optional<NoticeEventType> validateEventType(ScheduledNotice notice) {
+    var eventType = NoticeEventType.from(notice.getTriggeringEvent().getRepresentation());
+
+    if (eventType == NoticeEventType.UNKNOWN) {
+      log.debug("validateEventType:: triggering event {} has no patron notice policy " +
+        "counterpart, sending as usual", notice.getTriggeringEvent());
+      return Optional.empty();
+    }
+
+    return Optional.of(eventType);
+  }
+
+  private static Optional<List<NoticeConfiguration>> findMatchingTemplate(
+    PatronNoticePolicy policy, NoticeEventType eventType, ScheduledNoticeConfig noticeConfig) {
+
+    var candidates = policy.lookupNoticeConfigurations(eventType).stream()
+      .filter(candidate -> matchesScheduledConfig(candidate, noticeConfig))
+      .toList();
+
+    return candidates.stream()
+      .filter(candidate -> Objects.equals(candidate.getTemplateId(), noticeConfig.getTemplateId()))
+      .findFirst()
+      .map(anchor -> PatronNoticeConfigurationResolver.matchGroupOf(candidates, anchor));
+  }
+
+  private boolean resolveNoticeFormats(ScheduledNoticeContext context,
+    ScheduledNoticeConfig noticeConfig, List<NoticeConfiguration> matchGroup) {
 
     if (!PatronNoticeConfigurationResolver.requiresPreference(matchGroup)) {
       return true;
     }
 
-    var recipient = extractRecipientUser(context);
-    var resolvedFormats = PatronNoticeConfigurationResolver.resolveFormats(matchGroup, recipient);
+    var resolvedFormats = PatronNoticeConfigurationResolver.resolveFormats(matchGroup,
+      extractRecipientUser(context));
     var shouldSend = resolvedFormats.contains(noticeConfig.getFormat());
 
     if (!shouldSend) {
-      log.info("evaluatePreference:: notice {} format {} is not among resolved formats {}, skipping",
-        notice.getId(), noticeConfig.getFormat(), resolvedFormats);
+      log.info("resolveNoticeFormats:: notice {} format {} is not among resolved formats {}, skipping",
+        context.getNotice().getId(), noticeConfig.getFormat(), resolvedFormats);
     }
 
     return shouldSend;
@@ -331,37 +354,19 @@ public abstract class ScheduledNoticeHandler {
   private static boolean matchesScheduledConfig(NoticeConfiguration candidate,
     ScheduledNoticeConfig config) {
 
-    if (candidate.getTiming() != config.getTiming()) {
-      return false;
-    }
-    if (candidate.isRecurring() != config.isRecurring()) {
-      return false;
-    }
-    if (candidate.sendInRealTime() != config.sendInRealTime()) {
-      return false;
-    }
-
-    return !candidate.isRecurring() || periodsEqual(candidate.getRecurringPeriod(), config.getRecurringPeriod());
-  }
-
-  private static boolean periodsEqual(Period first, Period second) {
-    if (first == null || second == null) {
-      return first == second;
-    }
-
-    return Objects.equals(first.getDuration(), second.getDuration())
-      && Objects.equals(first.getInterval(), second.getInterval());
+    return Objects.equals(candidate.getTiming(), config.getTiming())
+      && Objects.equals(candidate.isRecurring(), config.isRecurring())
+      && Objects.equals(candidate.sendInRealTime(), config.sendInRealTime())
+      && (!candidate.isRecurring()
+      || Objects.equals(candidate.getRecurringPeriod(), config.getRecurringPeriod()));
   }
 
   private static User extractRecipientUser(ScheduledNoticeContext context) {
-    if (context.getLoan() != null && context.getLoan().getUser() != null) {
-      return context.getLoan().getUser();
-    }
-    if (context.getRequest() != null && context.getRequest().getUser() != null) {
-      return context.getRequest().getUser();
-    }
-
-    return null;
+    return Optional.ofNullable(context.getLoan())
+      .map(Loan::getUser)
+      .or(() -> Optional.ofNullable(context.getRequest())
+        .map(Request::getUser))
+      .orElse(null);
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForLoan(

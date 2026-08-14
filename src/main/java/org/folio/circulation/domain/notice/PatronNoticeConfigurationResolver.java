@@ -2,6 +2,7 @@ package org.folio.circulation.domain.notice;
 
 import static java.util.stream.Collectors.toCollection;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,7 +26,7 @@ public class PatronNoticeConfigurationResolver {
     List<NoticeConfiguration> candidates, NoticeConfiguration anchor) {
 
     if (CollectionUtils.isEmpty(candidates) || anchor == null) {
-      return List.of();
+      return Collections.emptyList();
     }
 
     var key = anchor.matchKey();
@@ -37,7 +38,7 @@ public class PatronNoticeConfigurationResolver {
 
   public static List<NoticeConfiguration> firstMatchGroup(List<NoticeConfiguration> candidates) {
     return CollectionUtils.isEmpty(candidates)
-      ? List.of()
+      ? Collections.emptyList()
       : matchGroupOf(candidates, candidates.getFirst());
   }
 
@@ -47,7 +48,7 @@ public class PatronNoticeConfigurationResolver {
     var byFormat = indexByFormat(matchGroup);
 
     if (byFormat.isEmpty()) {
-      return List.of();
+      return Collections.emptyList();
     }
 
     if (byFormat.size() == 1) {
@@ -71,6 +72,10 @@ public class PatronNoticeConfigurationResolver {
 
   private static List<NoticeConfiguration> selectByPreferences(
     Map<NoticeFormat, NoticeConfiguration> byFormat, User recipient) {
+
+    if (recipient == null) {
+      return defaultChannel(byFormat);
+    }
 
     var preferredFormats = UserPreferredNoticeFormats.fromPreferredContactTypeIds(recipient);
 
@@ -114,24 +119,16 @@ public class PatronNoticeConfigurationResolver {
   private static Map<NoticeFormat, NoticeConfiguration> indexByFormat(
     List<NoticeConfiguration> matchGroup) {
 
-    var byFormat = new LinkedHashMap<NoticeFormat, NoticeConfiguration>();
-
     if (CollectionUtils.isEmpty(matchGroup)) {
-      return byFormat;
+      return Collections.emptyMap();
     }
 
-    NoticeConfigurationMatchKey groupKey = null;
+    var byFormat = new LinkedHashMap<NoticeFormat, NoticeConfiguration>();
 
-    for (NoticeConfiguration configuration : matchGroup) {
-      if (groupKey == null) {
-        groupKey = configuration.matchKey();
-      } else if (!groupKey.equals(configuration.matchKey())) {
-        continue;
-      }
-
+    for (var configuration : matchGroup) {
       var format = configuration.getNoticeFormat();
 
-      if (format == null || !format.isDeliverable()) {
+      if (format == NoticeFormat.UNKNOWN) {
         log.debug("indexByFormat:: skipping configuration with template {}, format {} is not " +
           "deliverable", configuration.getTemplateId(), format);
         continue;

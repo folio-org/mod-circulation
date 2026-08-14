@@ -2,8 +2,6 @@ package org.folio.circulation.domain.notice;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -30,13 +28,5 @@ class NoticeFormatTest {
     assertThat(NoticeFormat.PRINT.getRepresentation(), is("Print"));
     assertThat(NoticeFormat.PRINT.getDeliveryChannel(), is("mail"));
     assertThat(NoticeFormat.PRINT.getOutputFormat(), is("text/html"));
-  }
-
-  @Test
-  void knowsWhichFormatsAreDeliverable() {
-    assertTrue(NoticeFormat.EMAIL.isDeliverable());
-    assertTrue(NoticeFormat.SMS.isDeliverable());
-    assertTrue(NoticeFormat.PRINT.isDeliverable());
-    assertFalse(NoticeFormat.UNKNOWN.isDeliverable());
   }
 }

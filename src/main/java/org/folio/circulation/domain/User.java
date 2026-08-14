@@ -173,12 +173,7 @@ public class User {
   }
 
   public List<String> getPreferredContactTypeIds() {
-    var personal = getPersonal();
-    if (personal == null) {
-      return List.of();
-    }
-
-    return personal.getJsonArray("preferredContactTypeIds", new JsonArray())
+    return getArrayProperty(getPersonal(), "preferredContactTypeIds")
       .stream()
       .filter(String.class::isInstance)
       .map(String.class::cast)
@@ -186,8 +181,7 @@ public class User {
   }
 
   public String getPreferredContactTypeId() {
-    var personal = getPersonal();
-    return personal == null ? null : personal.getString("preferredContactTypeId");
+    return getProperty(getPersonal(), "preferredContactTypeId");
   }
 
   public Collection<Department> getDepartments() {

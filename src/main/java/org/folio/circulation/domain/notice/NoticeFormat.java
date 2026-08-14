@@ -1,7 +1,5 @@
 package org.folio.circulation.domain.notice;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Arrays;
 
 public enum NoticeFormat {
@@ -39,9 +37,5 @@ public enum NoticeFormat {
 
   public String getRepresentation() {
     return representation;
-  }
-
-  public boolean isDeliverable() {
-    return StringUtils.isNotBlank(deliveryChannel);
   }
 }

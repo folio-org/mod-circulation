@@ -1,10 +1,10 @@
 package org.folio.circulation.domain.notice;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.User;
 
 public final class UserPreferredNoticeFormats {
@@ -22,7 +22,7 @@ public final class UserPreferredNoticeFormats {
   }
 
   public static Optional<NoticeFormat> toFormat(String contactTypeId) {
-    if (contactTypeId == null || contactTypeId.isBlank()) {
+    if (StringUtils.isBlank(contactTypeId)) {
       return Optional.empty();
     }
 
@@ -30,24 +30,14 @@ public final class UserPreferredNoticeFormats {
   }
 
   public static List<NoticeFormat> fromPreferredContactTypeIds(User user) {
-    if (user == null) {
-      return List.of();
-    }
-
-    var formats = new LinkedHashSet<NoticeFormat>();
-    user.getPreferredContactTypeIds().stream()
+    return user.getPreferredContactTypeIds().stream()
       .map(UserPreferredNoticeFormats::toFormat)
       .flatMap(Optional::stream)
-      .forEach(formats::add);
-
-    return List.copyOf(formats);
+      .distinct()
+      .toList();
   }
 
   public static Optional<NoticeFormat> fromDeprecatedPreferredContactTypeId(User user) {
-    if (user == null) {
-      return Optional.empty();
-    }
-
     return toFormat(user.getPreferredContactTypeId());
   }
 }

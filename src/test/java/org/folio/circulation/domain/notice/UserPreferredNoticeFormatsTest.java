@@ -45,9 +45,4 @@ class UserPreferredNoticeFormatsTest {
     assertThat(UserPreferredNoticeFormats.fromDeprecatedPreferredContactTypeId(user).orElseThrow(),
       is(NoticeFormat.SMS));
   }
-
-  @Test
-  void returnsEmptyListForNullUser() {
-    assertThat(UserPreferredNoticeFormats.fromPreferredContactTypeIds(null), is(List.of()));
-  }
 }

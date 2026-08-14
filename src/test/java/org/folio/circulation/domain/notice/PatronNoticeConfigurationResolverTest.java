@@ -261,7 +261,7 @@ class PatronNoticeConfigurationResolverTest {
     assertThat(selected, hasSize(3));
     assertTrue(selected.stream()
       .map(NoticeConfiguration::getNoticeFormat)
-      .allMatch(NoticeFormat::isDeliverable));
+      .noneMatch(format -> format == NoticeFormat.UNKNOWN));
   }
 
 
@@ -368,6 +368,14 @@ class PatronNoticeConfigurationResolverTest {
   @Test
   void doesNotRequirePreferencesForNullGroup() {
     assertThat(PatronNoticeConfigurationResolver.requiresPreference(null), is(false));
+  }
+
+  @Test
+  void selectsDefaultChannelWhenRecipientIsNull() {
+    var selected = PatronNoticeConfigurationResolver.select(
+      threeFormatGroup("email", "sms", "print"), null);
+
+    assertThat(formats(selected), is(List.of(NoticeFormat.EMAIL)));
   }
 
   private static User buildUser(List<String> preferredContactTypeIds,

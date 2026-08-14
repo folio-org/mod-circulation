@@ -1,0 +1,1740 @@
+diff --git a/diff.txt b/diff.txt
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/src/main/java/org/folio/circulation/domain/User.java b/src/main/java/org/folio/circulation/domain/User.java
+index 5e73c1f25..945abfcc8 100644
+--- a/src/main/java/org/folio/circulation/domain/User.java
++++ b/src/main/java/org/folio/circulation/domain/User.java
+@@ -172,6 +172,24 @@ public class User {
+       .collect(Collectors.toList());
+   }
+
++  public List<String> getPreferredContactTypeIds() {
++    var personal = getPersonal();
++    if (personal == null) {
++      return List.of();
++    }
++
++    return personal.getJsonArray("preferredContactTypeIds", new JsonArray())
++      .stream()
++      .filter(String.class::isInstance)
++      .map(String.class::cast)
++      .collect(Collectors.toList());
++  }
++
++  public String getPreferredContactTypeId() {
++    var personal = getPersonal();
++    return personal == null ? null : personal.getString("preferredContactTypeId");
++  }
++
+   public Collection<Department> getDepartments() {
+     return departments;
+   }
+diff --git a/src/main/java/org/folio/circulation/domain/notice/ImmediatePatronNoticeService.java b/src/main/java/org/folio/circulation/domain/notice/ImmediatePatronNoticeService.java
+index bd9999e48..b72dc875d 100644
+--- a/src/main/java/org/folio/circulation/domain/notice/ImmediatePatronNoticeService.java
++++ b/src/main/java/org/folio/circulation/domain/notice/ImmediatePatronNoticeService.java
+@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+
+ import static java.util.Collections.singletonList;
++import static java.util.concurrent.CompletableFuture.completedFuture;
+ import static java.util.stream.Collectors.groupingBy;
+ import static java.util.stream.Collectors.toList;
+ import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
+@@ -15,12 +16,14 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
+ import java.util.Collection;
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Optional;
++import java.util.Objects;
+ import java.util.concurrent.CompletableFuture;
+
++import org.folio.circulation.domain.User;
+ import org.folio.circulation.domain.notice.combiner.NoticeContextCombiner;
+ import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
++import org.folio.circulation.infrastructure.storage.users.UserRepository;
+ import org.folio.circulation.rules.AppliedRuleConditions;
+ import org.folio.circulation.rules.CirculationRuleMatch;
+ import org.folio.circulation.support.Clients;
+@@ -37,11 +40,15 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
+   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+   private final PatronNoticePolicyRepository noticePolicyRepository;
+   private final NoticeContextCombiner noticeContextCombiner;
++  private final PatronNoticeConfigurationResolver configurationResolver;
++  private final UserRepository userRepository;
+
+   public ImmediatePatronNoticeService(Clients clients, NoticeContextCombiner noticeContextCombiner) {
+     super(clients);
+     this.noticePolicyRepository = new PatronNoticePolicyRepository(clients);
+     this.noticeContextCombiner = noticeContextCombiner;
++    this.configurationResolver = new PatronNoticeConfigurationResolver();
++    this.userRepository = new UserRepository(clients);
+   }
+
+   public CompletableFuture<Result<Void>> acceptNoticeEvent(PatronNoticeEvent event) {
+@@ -94,33 +101,84 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
+   }
+
+   private CompletableFuture<Result<Void>> applyPatronNoticePolicy(EventGroupContext context) {
+-    return findMatchingNoticeConfiguration(context)
+-      .map(context::withNoticeConfig)
+-      .map(this::updateNoticeLogContext)
+-      .map(this::sendNotice)
+-      .orElseGet(() -> ofAsync(() -> null));
+-  }
++    var matchGroup = PatronNoticeConfigurationResolver.firstMatchGroup(
++      context.getPatronNoticePolicy()
++        .lookupNoticeConfigurations(context.getGroupDefinition().getEventType()));
++
++    if (matchGroup.isEmpty()) {
++      log.debug("applyPatronNoticePolicy:: no notice configuration for event type {}",
++        context.getGroupDefinition().getEventType());
++      return ofAsync(() -> null);
++    }
++
++    return fetchRecipientIfNeeded(context, matchGroup)
++      .thenCompose(recipient -> {
++        var selectedConfigurations = configurationResolver.select(matchGroup, recipient);
+
+-  private Optional<NoticeConfiguration> findMatchingNoticeConfiguration(EventGroupContext context) {
+-    return context.getPatronNoticePolicy().lookupNoticeConfiguration(
+-      context.getGroupDefinition().getEventType());
++        if (selectedConfigurations.isEmpty()) {
++          log.info("applyPatronNoticePolicy:: no notice configuration selected for recipient {}",
++            context.getGroupDefinition().getRecipientId());
++          return ofAsync(() -> null);
++        }
++
++        return allOf(selectedConfigurations, configuration -> sendNotice(context, configuration))
++          .thenApply(mapResult(ignored -> null));
++      });
+   }
+
+-  private EventGroupContext updateNoticeLogContext(EventGroupContext context) {
+-    return context.withCombinedNoticeLogContext(
+-      context.getCombinedNoticeLogContext()
+-        .withNoticePolicyId(context.getGroupDefinition().getNoticePolicyId())
+-        .withTemplateId(context.getNoticeConfig().getTemplateId())
+-        .withTriggeringEvent(context.getNoticeConfig().getNoticeEventType().getRepresentation()));
++  private CompletableFuture<User> fetchRecipientIfNeeded(EventGroupContext context,
++    List<NoticeConfiguration> matchGroup) {
++
++    var recipientFromEvent = context.getEvents().stream()
++      .map(PatronNoticeEvent::getUser)
++      .filter(Objects::nonNull)
++      .findFirst()
++      .orElse(null);
++
++    if (recipientFromEvent != null) {
++      return completedFuture(recipientFromEvent);
++    }
++
++    if (!configurationResolver.requiresPreference(matchGroup)) {
++      return completedFuture(null);
++    }
++
++    var recipientId = context.getGroupDefinition().getRecipientId();
++
++    return userRepository.getUser(recipientId)
++      .thenApply(r -> {
++        if (r.failed()) {
++          log.warn("fetchRecipientIfNeeded:: failed to fetch user {}, falling back to Email only: {}",
++            recipientId, r.cause());
++          return null;
++        }
++        if (r.value() == null) {
++          log.warn("fetchRecipientIfNeeded:: user {} not found, falling back to Email only",
++            recipientId);
++        }
++        return r.value();
++      })
++      .exceptionally(t -> {
++        log.warn("fetchRecipientIfNeeded:: exception fetching user {}, falling back to Email only: {}",
++          recipientId, t.getMessage());
++        return null;
++      });
+   }
+
+-  private CompletableFuture<Result<Void>> sendNotice(EventGroupContext context) {
+-    PatronNotice patronNotice = new PatronNotice(
++  private CompletableFuture<Result<Void>> sendNotice(EventGroupContext context,
++    NoticeConfiguration configuration) {
++
++    var patronNotice = new PatronNotice(
+       context.getGroupDefinition().getRecipientId(),
+       context.getCombinedNoticeContext(),
+-      context.getNoticeConfig());
++      configuration);
++
++    var noticeLogContext = context.getCombinedNoticeLogContext()
++      .withNoticePolicyId(context.getGroupDefinition().getNoticePolicyId())
++      .withTemplateId(configuration.getTemplateId())
++      .withTriggeringEvent(configuration.getNoticeEventType().getRepresentation());
+
+-    return sendNotice(patronNotice, context.getCombinedNoticeLogContext());
++    return sendNotice(patronNotice, noticeLogContext);
+   }
+
+   @With
+diff --git a/src/main/java/org/folio/circulation/domain/notice/NoticeConfiguration.java b/src/main/java/org/folio/circulation/domain/notice/NoticeConfiguration.java
+index ba65bf457..154199520 100644
+--- a/src/main/java/org/folio/circulation/domain/notice/NoticeConfiguration.java
++++ b/src/main/java/org/folio/circulation/domain/notice/NoticeConfiguration.java
+@@ -61,4 +61,8 @@ public class NoticeConfiguration {
+   public boolean sendInRealTime() {
+     return sendInRealTime;
+   }
++
++  public NoticeConfigurationMatchKey matchKey() {
++    return NoticeConfigurationMatchKey.from(this);
++  }
+ }
+diff --git a/src/main/java/org/folio/circulation/domain/notice/NoticeConfigurationMatchKey.java b/src/main/java/org/folio/circulation/domain/notice/NoticeConfigurationMatchKey.java
+new file mode 100644
+index 000000000..836e52af6
+--- /dev/null
++++ b/src/main/java/org/folio/circulation/domain/notice/NoticeConfigurationMatchKey.java
+@@ -0,0 +1,27 @@
++package org.folio.circulation.domain.notice;
++
++public record NoticeConfigurationMatchKey(
++  NoticeEventType noticeEventType,
++  NoticeTiming timing,
++  Long timingPeriodDuration,
++  String timingPeriodInterval,
++  boolean recurring,
++  Long recurringPeriodDuration,
++  String recurringPeriodInterval,
++  boolean sendInRealTime) {
++
++  public static NoticeConfigurationMatchKey from(NoticeConfiguration configuration) {
++    var timingPeriod = configuration.getTimingPeriod();
++    var recurringPeriod = configuration.getRecurringPeriod();
++
++    return new NoticeConfigurationMatchKey(
++      configuration.getNoticeEventType(),
++      configuration.getTiming(),
++      timingPeriod == null ? null : timingPeriod.getDuration(),
++      timingPeriod == null ? null : timingPeriod.getInterval(),
++      configuration.isRecurring(),
++      recurringPeriod == null ? null : recurringPeriod.getDuration(),
++      recurringPeriod == null ? null : recurringPeriod.getInterval(),
++      configuration.sendInRealTime());
++  }
++}
+diff --git a/src/main/java/org/folio/circulation/domain/notice/NoticeFormat.java b/src/main/java/org/folio/circulation/domain/notice/NoticeFormat.java
+index f46e2cc0b..c5179befc 100644
+--- a/src/main/java/org/folio/circulation/domain/notice/NoticeFormat.java
++++ b/src/main/java/org/folio/circulation/domain/notice/NoticeFormat.java
+@@ -1,10 +1,13 @@
+ package org.folio.circulation.domain.notice;
+
++import org.apache.commons.lang3.StringUtils;
++
+ import java.util.Arrays;
+
+ public enum NoticeFormat {
+
+   EMAIL("Email", "email", "text/html"),
++  SMS("SMS", "sms", "text/plain"),
+   PRINT("Print", "mail", "text/html"),
+   UNKNOWN("Unknown", "", "");
+
+@@ -37,4 +40,8 @@ public enum NoticeFormat {
+   public String getRepresentation() {
+     return representation;
+   }
++
++  public boolean isDeliverable() {
++    return StringUtils.isNotBlank(deliveryChannel);
++  }
+ }
+diff --git a/src/main/java/org/folio/circulation/domain/notice/PatronNoticeConfigurationResolver.java b/src/main/java/org/folio/circulation/domain/notice/PatronNoticeConfigurationResolver.java
+new file mode 100644
+index 000000000..10048e0d8
+--- /dev/null
++++ b/src/main/java/org/folio/circulation/domain/notice/PatronNoticeConfigurationResolver.java
+@@ -0,0 +1,120 @@
++package org.folio.circulation.domain.notice;
++
++import static java.util.stream.Collectors.toCollection;
++
++import java.util.LinkedHashMap;
++import java.util.LinkedHashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Objects;
++import java.util.Set;
++
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++import org.folio.circulation.domain.User;
++
++public class PatronNoticeConfigurationResolver {
++  private static final Logger log = LogManager.getLogger(PatronNoticeConfigurationResolver.class);
++
++  public static List<NoticeConfiguration> firstMatchGroup(List<NoticeConfiguration> candidates) {
++    if (candidates == null || candidates.isEmpty()) {
++      return List.of();
++    }
++    var key = candidates.getFirst().matchKey();
++    return candidates.stream()
++      .filter(candidate -> key.equals(candidate.matchKey()))
++      .toList();
++  }
++
++  public List<NoticeConfiguration> select(List<NoticeConfiguration> matchGroup, User recipient) {
++    if (matchGroup == null || matchGroup.isEmpty()) {
++      return List.of();
++    }
++
++    var group = firstMatchGroup(matchGroup);
++    if (group.size() != matchGroup.size()) {
++      log.warn("select:: received {} configurations spanning several match groups, " +
++        "narrowing to the first group of {}", matchGroup.size(), group.size());
++    }
++
++    var byFormat = indexByFormat(group);
++    if (byFormat.isEmpty()) {
++      return List.of();
++    }
++
++    if (byFormat.size() == 1) {
++      return List.copyOf(byFormat.values());
++    }
++
++    var selected = selectByPreferences(byFormat, recipient);
++    if (selected.isEmpty()) {
++      log.warn("select:: no notice configuration selected for recipient {}, event {}, " +
++          "available formats {} - sending nothing",
++        recipient == null ? null : recipient.getId(), eventTypeOf(group), byFormat.keySet());
++    }
++    return selected;
++  }
++
++  public Set<NoticeFormat> resolveFormats(List<NoticeConfiguration> matchGroup, User recipient) {
++    return select(matchGroup, recipient).stream()
++      .map(NoticeConfiguration::getNoticeFormat)
++      .collect(toCollection(LinkedHashSet::new));
++  }
++
++  public boolean requiresPreference(List<NoticeConfiguration> matchGroup) {
++    return indexByFormat(firstMatchGroup(matchGroup)).size() > 1;
++  }
++
++  private List<NoticeConfiguration> selectByPreferences(
++    Map<NoticeFormat, NoticeConfiguration> byFormat, User recipient) {
++
++    var preferredFormats =
++      UserPreferredNoticeFormats.fromPreferredContactTypeIds(recipient);
++
++    if (!preferredFormats.isEmpty()) {
++      return preferredFormats.stream()
++        .map(byFormat::get)
++        .filter(Objects::nonNull)
++        .toList();
++    }
++
++    var deprecatedFormat =
++      UserPreferredNoticeFormats.fromDeprecatedPreferredContactTypeId(recipient);
++
++    if (deprecatedFormat.isPresent()) {
++      var configuration = byFormat.get(deprecatedFormat.get());
++
++      return configuration == null
++        ? List.of()
++        : List.of(configuration);
++    }
++
++    return emailOnly(byFormat);
++  }
++
++  private static List<NoticeConfiguration> emailOnly(
++    Map<NoticeFormat, NoticeConfiguration> byFormat) {
++    var emailConfiguration = byFormat.get(NoticeFormat.EMAIL);
++    return emailConfiguration == null ? List.of() : List.of(emailConfiguration);
++  }
++
++  private static Map<NoticeFormat, NoticeConfiguration> indexByFormat(
++    List<NoticeConfiguration> matchGroup) {
++
++    var byFormat = new LinkedHashMap<NoticeFormat, NoticeConfiguration>();
++    for (NoticeConfiguration configuration : matchGroup) {
++      NoticeFormat format = configuration.getNoticeFormat();
++      if (format == null || !format.isDeliverable()) {
++        log.warn("indexByFormat:: skipping notice configuration {} with undeliverable format {}",
++          configuration.getTemplateId(), format);
++        continue;
++      }
++      byFormat.putIfAbsent(format, configuration);
++    }
++    return byFormat;
++  }
++
++  private static NoticeEventType eventTypeOf(List<NoticeConfiguration> group) {
++    return group.isEmpty() ? null : group.getFirst().getNoticeEventType();
++  }
++}
+diff --git a/src/main/java/org/folio/circulation/domain/notice/PatronNoticePolicy.java b/src/main/java/org/folio/circulation/domain/notice/PatronNoticePolicy.java
+index 126cc3c86..149bf6b39 100644
+--- a/src/main/java/org/folio/circulation/domain/notice/PatronNoticePolicy.java
++++ b/src/main/java/org/folio/circulation/domain/notice/PatronNoticePolicy.java
+@@ -17,9 +17,14 @@ public class PatronNoticePolicy {
+     return noticeConfigurations;
+   }
+
+-  public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType) {
++  public List<NoticeConfiguration> lookupNoticeConfigurations(NoticeEventType eventType) {
+     return noticeConfigurations.stream()
+       .filter(d -> Objects.equals(d.getNoticeEventType(), eventType))
+-      .findFirst();
++      .toList();
++  }
++
++  @Deprecated(forRemoval = false)
++  public Optional<NoticeConfiguration> lookupNoticeConfiguration(NoticeEventType eventType) {
++    return lookupNoticeConfigurations(eventType).stream().findFirst();
+   }
+ }
+diff --git a/src/main/java/org/folio/circulation/domain/notice/UserPreferredNoticeFormats.java b/src/main/java/org/folio/circulation/domain/notice/UserPreferredNoticeFormats.java
+new file mode 100644
+index 000000000..8e9ce2eed
+--- /dev/null
++++ b/src/main/java/org/folio/circulation/domain/notice/UserPreferredNoticeFormats.java
+@@ -0,0 +1,53 @@
++package org.folio.circulation.domain.notice;
++
++import java.util.LinkedHashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Optional;
++
++import org.folio.circulation.domain.User;
++
++public final class UserPreferredNoticeFormats {
++  public static final String CONTACT_TYPE_EMAIL = "002";
++  public static final String CONTACT_TYPE_MAIL = "001";
++  public static final String CONTACT_TYPE_SMS = "003";
++
++  private static final Map<String, NoticeFormat> CONTACT_TYPE_FORMATS = Map.of(
++    CONTACT_TYPE_EMAIL, NoticeFormat.EMAIL,
++    CONTACT_TYPE_MAIL, NoticeFormat.PRINT,
++    CONTACT_TYPE_SMS, NoticeFormat.SMS
++  );
++
++  private UserPreferredNoticeFormats() {
++  }
++
++  public static Optional<NoticeFormat> toFormat(String contactTypeId) {
++    if (contactTypeId == null || contactTypeId.isBlank()) {
++      return Optional.empty();
++    }
++
++    return Optional.ofNullable(CONTACT_TYPE_FORMATS.get(contactTypeId));
++  }
++
++  public static List<NoticeFormat> fromPreferredContactTypeIds(User user) {
++    if (user == null) {
++      return List.of();
++    }
++
++    var formats = new LinkedHashSet<NoticeFormat>();
++    user.getPreferredContactTypeIds().stream()
++      .map(UserPreferredNoticeFormats::toFormat)
++      .flatMap(Optional::stream)
++      .forEach(formats::add);
++
++    return List.copyOf(formats);
++  }
++
++  public static Optional<NoticeFormat> fromDeprecatedPreferredContactTypeId(User user) {
++    if (user == null) {
++      return Optional.empty();
++    }
++
++    return toFormat(user.getPreferredContactTypeId());
++  }
++}
+diff --git a/src/main/java/org/folio/circulation/domain/notice/schedule/GroupedScheduledNoticeHandler.java b/src/main/java/org/folio/circulation/domain/notice/schedule/GroupedScheduledNoticeHandler.java
+index dd76e25c5..2db6221b5 100644
+--- a/src/main/java/org/folio/circulation/domain/notice/schedule/GroupedScheduledNoticeHandler.java
++++ b/src/main/java/org/folio/circulation/domain/notice/schedule/GroupedScheduledNoticeHandler.java
+@@ -141,13 +141,24 @@ public abstract class GroupedScheduledNoticeHandler {
+
+     //All the notices have the same properties, so we can get any of them
+     ScheduledNoticeContext contextSample = relevantContexts.get(0);
++
++    return singleNoticeHandler.shouldSendByPreference(contextSample)
++      .thenCompose(shouldSend -> shouldSend
++        ? doSendGroupedNotice(contexts, relevantContexts, contextSample)
++        : skipGroupedNoticeDueToPreference(contexts, relevantContexts));
++  }
++
++  private CompletableFuture<Result<List<ScheduledNoticeContext>>> doSendGroupedNotice(
++    List<ScheduledNoticeContext> contexts, List<ScheduledNoticeContext> relevantContexts,
++    ScheduledNoticeContext contextSample) {
++
+     User user = contextSample.getLoan().getUser();
+
+     List<JsonObject> noticeContexts = relevantContexts.stream()
+       .map(ScheduledNoticeContext::getNoticeContext)
+       .collect(toList());
+
+-    log.info("sendGroupedNotice:: attempting to send a grouped notice for {} scheduled notices",
++    log.info("doSendGroupedNotice:: attempting to send a grouped notice for {} scheduled notices",
+       relevantContexts.size());
+
+     return patronNoticeService.sendNotice(
+@@ -158,6 +169,15 @@ public abstract class GroupedScheduledNoticeHandler {
+       .thenApply(mapResult(v -> contexts));
+   }
+
++  private CompletableFuture<Result<List<ScheduledNoticeContext>>> skipGroupedNoticeDueToPreference(
++    List<ScheduledNoticeContext> contexts, List<ScheduledNoticeContext> relevantContexts) {
++
++    log.info("skipGroupedNoticeDueToPreference:: skipping group of {} scheduled notices filtered "
++      + "out by user notice format preference", relevantContexts.size());
++
++    return completedFuture(succeeded(contexts));
++  }
++
+   private static NoticeLogContext buildNoticeLogContext(List<ScheduledNoticeContext> contexts,
+     User user) {
+
+diff --git a/src/main/java/org/folio/circulation/domain/notice/schedule/ScheduledNoticeHandler.java b/src/main/java/org/folio/circulation/domain/notice/schedule/ScheduledNoticeHandler.java
+index 401b7151f..997632220 100644
+--- a/src/main/java/org/folio/circulation/domain/notice/schedule/ScheduledNoticeHandler.java
++++ b/src/main/java/org/folio/circulation/domain/notice/schedule/ScheduledNoticeHandler.java
+@@ -10,21 +10,32 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
+
+ import java.lang.invoke.MethodHandles;
+ import java.util.Collection;
++import java.util.LinkedHashSet;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Objects;
+ import java.util.concurrent.CompletableFuture;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.stream.Collectors;
+
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ import org.folio.circulation.domain.ItemRelatedRecord;
++import org.folio.circulation.domain.User;
+ import org.folio.circulation.domain.UserRelatedRecord;
++import org.folio.circulation.domain.notice.NoticeConfiguration;
++import org.folio.circulation.domain.notice.NoticeEventType;
++import org.folio.circulation.domain.notice.PatronNoticeConfigurationResolver;
++import org.folio.circulation.domain.notice.PatronNoticePolicy;
+ import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
++import org.folio.circulation.domain.policy.Period;
+ import org.folio.circulation.domain.representations.logs.NoticeLogContext;
+ import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
+ import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
+ import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
+ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
++import org.folio.circulation.rules.AppliedRuleConditions;
+ import org.folio.circulation.rules.CirculationRuleMatch;
+ import org.folio.circulation.services.EventPublisher;
+ import org.folio.circulation.support.Clients;
+@@ -46,6 +57,9 @@ public abstract class ScheduledNoticeHandler {
+   protected final CollectionResourceClient templateNoticesClient;
+   private final ScheduledPatronNoticeService patronNoticeService;
+   private final EventPublisher eventPublisher;
++  private final PatronNoticeConfigurationResolver configurationResolver = new PatronNoticeConfigurationResolver();
++  private final Map<String, CompletableFuture<Result<PatronNoticePolicy>>> patronNoticePolicyCache =
++    new ConcurrentHashMap<>();
+
+   protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
+     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
+@@ -203,6 +217,15 @@ public abstract class ScheduledNoticeHandler {
+       return ofAsync(() -> context);
+     }
+
++    return shouldSendByPreference(context)
++      .thenCompose(shouldSend -> shouldSend
++        ? doSendNotice(context)
++        : skipDueToPreference(context));
++  }
++
++  private CompletableFuture<Result<ScheduledNoticeContext>> doSendNotice(
++    ScheduledNoticeContext context) {
++
+     return patronNoticeService.sendNotice(
+       context.getNotice().getConfiguration(),
+       context.getNotice().getRecipientUserId(),
+@@ -216,6 +239,106 @@ public abstract class ScheduledNoticeHandler {
+       });
+   }
+
++  private CompletableFuture<Result<ScheduledNoticeContext>> skipDueToPreference(
++    ScheduledNoticeContext context) {
++
++    log.info("skipDueToPreference:: notice {} format {} filtered out by user preference, skipping send",
++      context.getNotice().getId(), context.getNotice().getConfiguration().getFormat());
++
++    return ofAsync(() -> context);
++  }
++
++  protected CompletableFuture<Boolean> shouldSendByPreference(ScheduledNoticeContext context) {
++    var policyId = context.getPatronNoticePolicyId();
++    if (policyId == null) {
++      log.debug("shouldSendByPreference:: no patron notice policy id for notice {}, sending as usual",
++        context.getNotice().getId());
++      return completedFuture(true);
++    }
++
++    return lookupPatronNoticePolicy(policyId)
++      .thenApply(r -> {
++        if (r.failed()) {
++          log.warn("shouldSendByPreference:: failed to look up notice policy {} for notice {}: {}",
++            policyId, context.getNotice().getId(), r.cause());
++          return true;
++        }
++
++        return evaluatePreference(context, r.value());
++      });
++  }
++
++  private CompletableFuture<Result<PatronNoticePolicy>> lookupPatronNoticePolicy(String policyId) {
++    return patronNoticePolicyCache.computeIfAbsent(policyId,
++      id -> patronNoticePolicyRepository.lookupPolicy(id, new AppliedRuleConditions(false, false, false)));
++  }
++
++  private boolean evaluatePreference(ScheduledNoticeContext context, PatronNoticePolicy policy) {
++    var notice = context.getNotice();
++    var noticeConfig = notice.getConfiguration();
++    var eventType = NoticeEventType.from(notice.getTriggeringEvent().getRepresentation());
++
++    var matchGroup = policy.lookupNoticeConfigurations(eventType).stream()
++      .filter(candidate -> matchesScheduledConfig(candidate, noticeConfig))
++      .collect(Collectors.toList());
++
++    var distinctFormats = matchGroup.stream()
++      .map(NoticeConfiguration::getNoticeFormat)
++      .collect(Collectors.toCollection(LinkedHashSet::new));
++
++    if (distinctFormats.size() <= 1) {
++      log.debug("evaluatePreference:: single format for notice {}, sending as usual", notice.getId());
++      return true;
++    }
++
++    var recipient = extractRecipientUser(context);
++    var resolvedFormats = configurationResolver.resolveFormats(matchGroup, recipient);
++    var shouldSend = resolvedFormats.contains(noticeConfig.getFormat());
++
++    if (!shouldSend) {
++      log.info("evaluatePreference:: notice {} format {} not among resolved formats {} for recipient preference,"
++        + " skipping", notice.getId(), noticeConfig.getFormat(), resolvedFormats);
++    }
++
++    return shouldSend;
++  }
++
++  private static boolean matchesScheduledConfig(NoticeConfiguration candidate,
++    ScheduledNoticeConfig config) {
++
++    if (candidate.getTiming() != config.getTiming()) {
++      return false;
++    }
++    if (candidate.isRecurring() != config.isRecurring()) {
++      return false;
++    }
++    if (candidate.sendInRealTime() != config.sendInRealTime()) {
++      return false;
++    }
++
++    return !candidate.isRecurring() || periodsEqual(candidate.getRecurringPeriod(), config.getRecurringPeriod());
++  }
++
++  private static boolean periodsEqual(Period first, Period second) {
++    if (first == null || second == null) {
++      return first == second;
++    }
++
++    return Objects.equals(first.getDuration(), second.getDuration())
++      && Objects.equals(first.getInterval(), second.getInterval());
++  }
++
++  private static User extractRecipientUser(ScheduledNoticeContext context) {
++    if (context.getLoan() != null && context.getLoan().getUser() != null) {
++      return context.getLoan().getUser();
++    }
++    if (context.getRequest() != null && context.getRequest().getUser() != null) {
++      return context.getRequest().getUser();
++    }
++
++    return null;
++  }
++
+   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForLoan(
+     ScheduledNoticeContext context) {
+
+diff --git a/src/test/java/api/support/builders/NoticeConfigurationBuilder.java b/src/test/java/api/support/builders/NoticeConfigurationBuilder.java
+index c6ca618d8..5a9071928 100644
+--- a/src/test/java/api/support/builders/NoticeConfigurationBuilder.java
++++ b/src/test/java/api/support/builders/NoticeConfigurationBuilder.java
+@@ -42,6 +42,29 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
+       this.sendInRealTime);
+   }
+
++  public NoticeConfigurationBuilder withEmailFormat() {
++    return withFormat("Email");
++  }
++
++  public NoticeConfigurationBuilder withSmsFormat() {
++    return withFormat("SMS");
++  }
++
++  public NoticeConfigurationBuilder withPrintFormat() {
++    return withFormat("Print");
++  }
++
++  private NoticeConfigurationBuilder withFormat(String format) {
++    return new NoticeConfigurationBuilder(
++      this.templateId,
++      format,
++      this.eventType,
++      this.timing,
++      this.timingPeriod,
++      this.recurringPeriod,
++      this.sendInRealTime);
++  }
++
+   public NoticeConfigurationBuilder withEventType(String eventType) {
+     return new NoticeConfigurationBuilder(
+       this.templateId,
+diff --git a/src/test/java/api/support/builders/UserBuilder.java b/src/test/java/api/support/builders/UserBuilder.java
+index cb288666c..3a3b016c5 100644
+--- a/src/test/java/api/support/builders/UserBuilder.java
++++ b/src/test/java/api/support/builders/UserBuilder.java
+@@ -3,6 +3,7 @@ package api.support.builders;
+ import java.time.ZonedDateTime;
+ import java.util.ArrayList;
+ import java.util.Collection;
++import java.util.List;
+ import java.util.UUID;
+
+ import api.support.http.IndividualResource;
+@@ -22,12 +23,14 @@ public class UserBuilder extends JsonBuilder implements Builder {
+   private final ZonedDateTime expirationDate;
+   private final Collection<Address> addresses;
+   private final JsonArray departments;
++  private final JsonArray preferredContactTypeIds;
++  private final String preferredContactTypeId;
+   private final String type;
+   private final boolean primaryAddress;
+
+   public UserBuilder() {
+     this(UUID.randomUUID(), "sjones", "Jones", "Steven", null, null,"785493025613",
+-      null, true, null, new ArrayList<>(), null, null, false);
++      null, true, null, new ArrayList<>(), null, null, null, null, false);
+   }
+
+   private UserBuilder(
+@@ -43,6 +46,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+     ZonedDateTime expirationDate,
+     Collection<Address> addresses,
+     JsonArray departments,
++    JsonArray preferredContactTypeIds,
++    String preferredContactTypeId,
+     String type,
+     boolean primaryAddress) {
+
+@@ -61,6 +66,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+
+     this.addresses = addresses;
+     this.departments = departments;
++    this.preferredContactTypeIds = preferredContactTypeIds;
++    this.preferredContactTypeId = preferredContactTypeId;
+     this.type = type;
+     this.primaryAddress = primaryAddress;
+   }
+@@ -85,7 +92,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+     put(request, "active", active);
+     put(request, "expirationDate", expirationDate);
+
+-    if(firstName != null || lastName != null) {
++    if (firstName != null || lastName != null ||
++      preferredContactTypeIds != null || preferredContactTypeId != null) {
+       JsonObject personalInformation = new JsonObject()
+         .put("lastName", this.lastName)
+         .put("firstName", this.firstName);
+@@ -98,6 +106,14 @@ public class UserBuilder extends JsonBuilder implements Builder {
+         personalInformation.put("preferredFirstName", this.preferredFirstName);
+       }
+
++      if (this.preferredContactTypeIds != null) {
++        personalInformation.put("preferredContactTypeIds", this.preferredContactTypeIds);
++      }
++
++      if (this.preferredContactTypeId != null) {
++        personalInformation.put("preferredContactTypeId", this.preferredContactTypeId);
++      }
++
+       if(this.addresses != null && !this.addresses.isEmpty()) {
+         JsonArray mappedAddresses = new JsonArray();
+
+@@ -149,6 +165,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -167,6 +185,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -185,6 +205,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -203,6 +225,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -221,6 +245,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -239,6 +265,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -257,6 +285,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -275,6 +305,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -297,6 +329,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -327,6 +361,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -345,6 +381,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       newExpirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -363,6 +401,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       null,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -390,6 +430,49 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
++      this.type,
++      this.primaryAddress);
++  }
++
++  public UserBuilder withPreferredContactTypeIds(List<String> preferredContactTypeIds) {
++    JsonArray values = preferredContactTypeIds == null ? null : new JsonArray(preferredContactTypeIds);
++    return new UserBuilder(
++      this.id,
++      this.username,
++      this.lastName,
++      this.firstName,
++      this.middleName,
++      this.preferredFirstName,
++      this.barcode,
++      this.patronGroupId,
++      this.active,
++      this.expirationDate,
++      this.addresses,
++      this.departments,
++      values,
++      this.preferredContactTypeId,
++      this.type,
++      this.primaryAddress);
++  }
++
++  public UserBuilder withDeprecatedPreferredContactTypeId(String preferredContactTypeId) {
++    return new UserBuilder(
++      this.id,
++      this.username,
++      this.lastName,
++      this.firstName,
++      this.middleName,
++      this.preferredFirstName,
++      this.barcode,
++      this.patronGroupId,
++      this.active,
++      this.expirationDate,
++      this.addresses,
++      this.departments,
++      this.preferredContactTypeIds,
++      preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -407,7 +490,9 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.active,
+       this.expirationDate,
+       this.addresses,
+-      departments,
++      this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       Boolean.valueOf(primaryAddress));
+   }
+@@ -429,6 +514,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       newAddresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -447,6 +534,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       this.type,
+       this.primaryAddress);
+   }
+@@ -465,6 +554,8 @@ public class UserBuilder extends JsonBuilder implements Builder {
+       this.expirationDate,
+       this.addresses,
+       this.departments,
++      this.preferredContactTypeIds,
++      this.preferredContactTypeId,
+       type,
+       this.primaryAddress);
+   }
+diff --git a/src/test/java/org/folio/circulation/domain/UserTests.java b/src/test/java/org/folio/circulation/domain/UserTests.java
+index 686c86b84..068b866c8 100644
+--- a/src/test/java/org/folio/circulation/domain/UserTests.java
++++ b/src/test/java/org/folio/circulation/domain/UserTests.java
+@@ -1,8 +1,15 @@
+ package org.folio.circulation.domain;
+
++import static org.hamcrest.CoreMatchers.nullValue;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.hamcrest.Matchers.contains;
++import static org.hamcrest.Matchers.empty;
+
++import java.util.List;
++
++import io.vertx.core.json.JsonArray;
++import io.vertx.core.json.JsonObject;
+ import org.junit.jupiter.api.Test;
+
+ import api.support.builders.UserBuilder;
+@@ -27,4 +34,49 @@ class UserTests {
+
+     assertThat(activeUser.getPersonalName(), is("cjones"));
+   }
++
++  @Test
++  void preferredContactTypeIdsAreReadInOrder() {
++    var user = new User(new UserBuilder()
++      .withPreferredContactTypeIds(List.of("002", "003"))
++      .create());
++
++    assertThat(user.getPreferredContactTypeIds(), contains("002", "003"));
++  }
++
++  @Test
++  void preferredContactTypeIdsIgnoreNonStringEntries() {
++    var user = new User(new JsonObject()
++      .put("personal", new JsonObject()
++        .put("preferredContactTypeIds", new JsonArray().add("002").add(1).add(new JsonObject()))));
++
++    assertThat(user.getPreferredContactTypeIds(), contains("002"));
++  }
++
++  @Test
++  void preferredContactTypeIdsAreEmptyWhenPersonalIsMissing() {
++    User user = new User(new UserBuilder()
++      .withNoPersonalDetails()
++      .create());
++
++    assertThat(user.getPreferredContactTypeIds(), empty());
++  }
++
++  @Test
++  void deprecatedPreferredContactTypeIdIsReadWhenPresent() {
++    var user = new User(new UserBuilder()
++      .withDeprecatedPreferredContactTypeId("003")
++      .create());
++
++    assertThat(user.getPreferredContactTypeId(), is("003"));
++  }
++
++  @Test
++  void deprecatedPreferredContactTypeIdIsNullWhenMissing() {
++    var user = new User(new UserBuilder()
++      .withNoPersonalDetails()
++      .create());
++
++    assertThat(user.getPreferredContactTypeId(), nullValue());
++  }
+ }
+diff --git a/src/test/java/org/folio/circulation/domain/notice/NoticeConfigurationMatchKeyTest.java b/src/test/java/org/folio/circulation/domain/notice/NoticeConfigurationMatchKeyTest.java
+new file mode 100644
+index 000000000..4c3e2f5e1
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/domain/notice/NoticeConfigurationMatchKeyTest.java
+@@ -0,0 +1,101 @@
++package org.folio.circulation.domain.notice;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++
++import org.folio.circulation.domain.policy.Period;
++import org.junit.jupiter.api.Test;
++
++class NoticeConfigurationMatchKeyTest {
++
++  @Test
++  void ignoresTemplateIdAndFormat() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++    var right = new NoticeConfiguration("t2", NoticeFormat.SMS, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++
++    assertThat(left.matchKey(), is(right.matchKey()));
++    assertThat(left.matchKey().hashCode(), is(right.matchKey().hashCode()));
++  }
++
++  @Test
++  void ignoresTemplateIdAlone() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++    var right = new NoticeConfiguration("t9", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++
++    assertThat(left.matchKey(), is(right.matchKey()));
++  }
++
++  @Test
++  void differsWhenTimingChanges() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++    var right = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.BEFORE, Period.days(1), false, null, true);
++
++    assertThat(left.matchKey().equals(right.matchKey()), is(false));
++  }
++
++  @Test
++  void differsWhenTimingPeriodChanges() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++    var right = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(2), false, null, true);
++
++    assertThat(left.matchKey().equals(right.matchKey()), is(false));
++  }
++
++  @Test
++  void differsWhenRecurringChanges() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, false, null, true);
++    var right = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, true, Period.days(1), true);
++
++    assertThat(left.matchKey().equals(right.matchKey()), is(false));
++  }
++
++  @Test
++  void differsWhenRecurringPeriodChanges() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), true, Period.days(1), true);
++    var right = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), true, Period.days(2), true);
++
++    assertThat(left.matchKey().equals(right.matchKey()), is(false));
++  }
++
++  @Test
++  void differsWhenSendInRealTimeChanges() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, false, null, true);
++    var right = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, false, null, false);
++
++    assertThat(left.matchKey().equals(right.matchKey()), is(false));
++  }
++
++  @Test
++  void differsWhenEventTypeChanges() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, false, null, true);
++    var right = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_IN,
++      NoticeTiming.UPON_AT, null, false, null, true);
++
++    assertThat(left.matchKey().equals(right.matchKey()), is(false));
++  }
++
++  @Test
++  void handlesNullPeriods() {
++    var left = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, false, null, true);
++    var right = new NoticeConfiguration("t2", NoticeFormat.SMS, NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT, null, false, null, true);
++
++    assertThat(left.matchKey(), is(right.matchKey()));
++  }
++}
+diff --git a/src/test/java/org/folio/circulation/domain/notice/NoticeFormatTest.java b/src/test/java/org/folio/circulation/domain/notice/NoticeFormatTest.java
+new file mode 100644
+index 000000000..22babcdf7
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/domain/notice/NoticeFormatTest.java
+@@ -0,0 +1,42 @@
++package org.folio.circulation.domain.notice;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++import org.junit.jupiter.api.Test;
++
++class NoticeFormatTest {
++
++  @Test
++  void parsesKnownFormats() {
++    assertThat(NoticeFormat.from("Email"), is(NoticeFormat.EMAIL));
++    assertThat(NoticeFormat.from("SMS"), is(NoticeFormat.SMS));
++    assertThat(NoticeFormat.from("Print"), is(NoticeFormat.PRINT));
++    assertThat(NoticeFormat.from("bogus"), is(NoticeFormat.UNKNOWN));
++  }
++
++  @Test
++  void exposesExpectedValues() {
++    assertThat(NoticeFormat.EMAIL.getRepresentation(), is("Email"));
++    assertThat(NoticeFormat.EMAIL.getDeliveryChannel(), is("email"));
++    assertThat(NoticeFormat.EMAIL.getOutputFormat(), is("text/html"));
++
++    assertThat(NoticeFormat.SMS.getRepresentation(), is("SMS"));
++    assertThat(NoticeFormat.SMS.getDeliveryChannel(), is("sms"));
++    assertThat(NoticeFormat.SMS.getOutputFormat(), is("text/plain"));
++
++    assertThat(NoticeFormat.PRINT.getRepresentation(), is("Print"));
++    assertThat(NoticeFormat.PRINT.getDeliveryChannel(), is("mail"));
++    assertThat(NoticeFormat.PRINT.getOutputFormat(), is("text/html"));
++  }
++
++  @Test
++  void knowsWhichFormatsAreDeliverable() {
++    assertTrue(NoticeFormat.EMAIL.isDeliverable());
++    assertTrue(NoticeFormat.SMS.isDeliverable());
++    assertTrue(NoticeFormat.PRINT.isDeliverable());
++    assertFalse(NoticeFormat.UNKNOWN.isDeliverable());
++  }
++}
+diff --git a/src/test/java/org/folio/circulation/domain/notice/PatronNoticeConfigurationResolverTest.java b/src/test/java/org/folio/circulation/domain/notice/PatronNoticeConfigurationResolverTest.java
+new file mode 100644
+index 000000000..257c14fb1
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/domain/notice/PatronNoticeConfigurationResolverTest.java
+@@ -0,0 +1,315 @@
++package org.folio.circulation.domain.notice;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.hamcrest.Matchers.empty;
++import static org.hamcrest.Matchers.hasSize;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++import java.util.List;
++import java.util.stream.Stream;
++
++import org.folio.circulation.domain.User;
++import org.folio.circulation.domain.policy.Period;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.Arguments;
++import org.junit.jupiter.params.provider.MethodSource;
++
++import api.support.builders.UserBuilder;
++
++class PatronNoticeConfigurationResolverTest {
++  private final PatronNoticeConfigurationResolver resolver =
++    new PatronNoticeConfigurationResolver();
++
++  @ParameterizedTest
++  @MethodSource("preferenceCases")
++  void selectsConfigurationsUsingContactTypePreferences(
++    List<String> preferredContactTypeIds, String deprecatedPreferredContactTypeId,
++    List<NoticeFormat> expectedFormats) {
++
++    var user = buildUser(preferredContactTypeIds, deprecatedPreferredContactTypeId);
++    var group = threeFormatGroup("email", "sms", "print");
++
++    assertThat(formats(resolver.select(group, user)), is(expectedFormats));
++  }
++
++  static Stream<Arguments> preferenceCases() {
++    return Stream.of(
++      Arguments.of(List.of("002", "003"), "001", List.of(NoticeFormat.EMAIL, NoticeFormat.SMS)),
++      Arguments.of(List.of("002"), "003", List.of(NoticeFormat.EMAIL)),
++      Arguments.of(List.of(), "003", List.of(NoticeFormat.SMS)),
++      Arguments.of(null, "001", List.of(NoticeFormat.PRINT)),
++      Arguments.of(List.of(), null, List.of(NoticeFormat.EMAIL)),
++      Arguments.of(null, null, List.of(NoticeFormat.EMAIL))
++    );
++  }
++
++  @ParameterizedTest
++  @MethodSource("singleFormatCases")
++  void returnsSingleFormatRegardlessOfPreferences(NoticeFormat configuredFormat,
++    List<String> preferredContactTypeIds) {
++
++    var user = buildUser(preferredContactTypeIds, null);
++    var configuration = configuration("template", configuredFormat);
++
++    var selected = resolver.select(List.of(configuration), user);
++
++    assertThat(selected, is(List.of(configuration)));
++  }
++
++  static Stream<Arguments> singleFormatCases() {
++    return Stream.of(
++      Arguments.of(NoticeFormat.EMAIL, List.of("003", "001")),
++      Arguments.of(NoticeFormat.SMS, List.of("002")),
++      Arguments.of(NoticeFormat.PRINT, List.of("002", "003"))
++    );
++  }
++
++  @Test
++  void preservesTemplateIdsWhenSelectingMultipleFormats() {
++    var user = buildUser(List.of("002", "003"), null);
++    var group = threeFormatGroup("email-template", "sms-template", "print-template");
++
++    var selected = resolver.select(group, user);
++
++    assertThat(selected, hasSize(2));
++    assertThat(
++      templateIds(selected),
++      is(List.of("email-template", "sms-template")));
++  }
++
++  @Test
++  void selectsAllPreferredFormatsInPreferenceOrder() {
++    var user = buildUser(List.of("002", "001", "003"), null);
++    var group = threeFormatGroup("email", "sms", "print");
++
++    var selected = resolver.select(group, user);
++
++    assertThat(
++      formats(selected),
++      is(List.of(NoticeFormat.EMAIL, NoticeFormat.PRINT, NoticeFormat.SMS)));
++  }
++
++  @Test
++  void selectsOnlyEmailWhenPreferencesAreMissing() {
++    var user = buildUser(List.of(), null);
++    var group = threeFormatGroup("email", "sms", "print");
++
++    var selected = resolver.select(group, user);
++
++    assertThat(selected, hasSize(1));
++    assertThat(selected.getFirst().getNoticeFormat(), is(NoticeFormat.EMAIL));
++  }
++
++  @Test
++  void selectsNothingWhenPreferencesAndEmailAreMissing() {
++    var user = buildUser(List.of(), null);
++    var group = List.of(
++      configuration("sms", NoticeFormat.SMS),
++      configuration("print", NoticeFormat.PRINT));
++
++    assertThat(resolver.select(group, user), empty());
++  }
++
++  @Test
++  void selectsNothingWhenArrayPreferenceIsNotConfigured() {
++    var user = buildUser(List.of("003"), null);
++    var group = List.of(
++      configuration("email", NoticeFormat.EMAIL),
++      configuration("print", NoticeFormat.PRINT));
++
++    assertThat(resolver.select(group, user), empty());
++  }
++
++  @Test
++  void selectsNothingWhenDeprecatedPreferenceIsNotConfigured() {
++    var user = buildUser(null, "003");
++    var group = List.of(
++      configuration("email", NoticeFormat.EMAIL),
++      configuration("print", NoticeFormat.PRINT));
++
++    assertThat(resolver.select(group, user), empty());
++  }
++
++  @Test
++  void usesDeprecatedPreferenceWhenArrayHasNoUsableValues() {
++    var user = buildUser(List.of("999"), "003");
++    var group = threeFormatGroup("email", "sms", "print");
++
++    var selected = resolver.select(group, user);
++
++    assertThat(formats(selected), is(List.of(NoticeFormat.SMS)));
++  }
++
++  @Test
++  void selectsEmailWhenNoPreferenceValueIsUsable() {
++    var user = buildUser(List.of("999"), null);
++    var group = threeFormatGroup("email", "sms", "print");
++
++    var selected = resolver.select(group, user);
++
++    assertThat(formats(selected), is(List.of(NoticeFormat.EMAIL)));
++  }
++
++  @Test
++  void keepsFirstConfigurationForDuplicateFormat() {
++    var firstEmail = configuration("first-email", NoticeFormat.EMAIL);
++    var secondEmail = configuration("second-email", NoticeFormat.EMAIL);
++    var sms = configuration("sms", NoticeFormat.SMS);
++    var user = buildUser(List.of("002", "003"), null);
++
++    var selected = resolver.select(
++      List.of(firstEmail, secondEmail, sms), user);
++
++    assertThat(selected, is(List.of(firstEmail, sms)));
++  }
++
++  @Test
++  void keepsConfigurationsMatchingTheFirstMatchGroup() {
++    var email = configuration("email", NoticeFormat.EMAIL);
++    var sms = configuration("sms", NoticeFormat.SMS);
++    var differentTiming = new NoticeConfiguration(
++      "later-email",
++      NoticeFormat.EMAIL,
++      NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT,
++      null,
++      false,
++      null,
++      true);
++
++    var group = PatronNoticeConfigurationResolver.firstMatchGroup(
++      List.of(email, sms, differentTiming));
++
++    assertThat(group, is(List.of(email, sms)));
++  }
++
++  @Test
++  void selectsOnlyFromTheFirstMatchGroup() {
++    var first = configuration("first", NoticeFormat.EMAIL);
++    var second = new NoticeConfiguration(
++      "second",
++      NoticeFormat.EMAIL,
++      NoticeEventType.CHECK_OUT,
++      NoticeTiming.UPON_AT,
++      null,
++      false,
++      null,
++      true);
++
++    var selected = resolver.select(List.of(first, second), null);
++
++    assertThat(selected, is(List.of(first)));
++  }
++
++  @Test
++  void returnsEmptyListForEmptyInput() {
++    var user = buildUser(List.of("002"), null);
++
++    assertThat(resolver.select(List.of(), user), empty());
++  }
++
++  @Test
++  void returnsEmptyListForNullInput() {
++    assertThat(resolver.select(null, null), empty());
++  }
++
++  @Test
++  void doesNotRequirePreferencesForSingleFormat() {
++    var group = List.of(configuration("email", NoticeFormat.EMAIL));
++
++    assertThat(resolver.requiresPreference(group), is(false));
++  }
++
++  @Test
++  void requiresPreferencesForMultipleFormats() {
++    var group = List.of(
++      configuration("email", NoticeFormat.EMAIL),
++      configuration("sms", NoticeFormat.SMS));
++
++    assertThat(resolver.requiresPreference(group), is(true));
++  }
++
++  @Test
++  void ignoresUndeliverableFormatsWhenCountingFormats() {
++    var email = configuration("email", NoticeFormat.EMAIL);
++    var unknown = configuration("unknown", NoticeFormat.UNKNOWN);
++    var user = buildUser(List.of("003"), null);
++    var group = List.of(email, unknown);
++
++    assertThat(resolver.requiresPreference(group), is(false));
++    assertThat(resolver.select(group, user), is(List.of(email)));
++  }
++
++  @Test
++  void returnsOnlyDeliverableFormats() {
++    var user = buildUser(List.of("002", "003", "001"), null);
++    var group = threeFormatGroup("email", "sms", "print");
++
++    var selected = resolver.select(group, user);
++
++    assertThat(selected, hasSize(3));
++    assertTrue(selected.stream()
++      .map(NoticeConfiguration::getNoticeFormat)
++      .allMatch(NoticeFormat::isDeliverable));
++  }
++
++  private static User buildUser(List<String> preferredContactTypeIds,
++                                String deprecatedPreferredContactTypeId) {
++
++    var builder = new UserBuilder();
++
++    if (preferredContactTypeIds != null) {
++      builder = builder.withPreferredContactTypeIds(preferredContactTypeIds);
++    }
++
++    if (deprecatedPreferredContactTypeId != null) {
++      builder = builder.withDeprecatedPreferredContactTypeId(
++        deprecatedPreferredContactTypeId);
++    }
++
++    return new User(builder.create());
++  }
++
++  private static List<NoticeConfiguration> threeFormatGroup(
++    String emailTemplateId,
++    String smsTemplateId,
++    String printTemplateId) {
++
++    return List.of(
++      configuration(emailTemplateId, NoticeFormat.EMAIL),
++      configuration(smsTemplateId, NoticeFormat.SMS),
++      configuration(printTemplateId, NoticeFormat.PRINT));
++  }
++
++  private static NoticeConfiguration configuration(
++    String templateId, NoticeFormat format) {
++
++    return new NoticeConfiguration(
++      templateId,
++      format,
++      NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER,
++      Period.days(1),
++      false,
++      null,
++      true);
++  }
++
++  private static List<NoticeFormat> formats(
++    List<NoticeConfiguration> configurations) {
++
++    return configurations.stream()
++      .map(NoticeConfiguration::getNoticeFormat)
++      .toList();
++  }
++
++  private static List<String> templateIds(
++    List<NoticeConfiguration> configurations) {
++
++    return configurations.stream()
++      .map(NoticeConfiguration::getTemplateId)
++      .toList();
++  }
++}
+diff --git a/src/test/java/org/folio/circulation/domain/notice/PatronNoticePolicyTest.java b/src/test/java/org/folio/circulation/domain/notice/PatronNoticePolicyTest.java
+new file mode 100644
+index 000000000..fe0d0ebd9
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/domain/notice/PatronNoticePolicyTest.java
+@@ -0,0 +1,27 @@
++package org.folio.circulation.domain.notice;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++
++import java.util.List;
++
++import org.folio.circulation.domain.policy.Period;
++import org.junit.jupiter.api.Test;
++
++class PatronNoticePolicyTest {
++
++  @Test
++  void lookupNoticeConfigurationsReturnsAllMatchingEntriesInOrder() {
++    var first = new NoticeConfiguration("t1", NoticeFormat.EMAIL, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++    var second = new NoticeConfiguration("t2", NoticeFormat.SMS, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++    var third = new NoticeConfiguration("t3", NoticeFormat.PRINT, NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER, Period.days(1), false, null, true);
++
++    var policy = new PatronNoticePolicy(List.of(first, second, third));
++
++    assertThat(policy.lookupNoticeConfigurations(NoticeEventType.CHECK_OUT), is(List.of(first, second, third)));
++    assertThat(policy.lookupNoticeConfiguration(NoticeEventType.CHECK_OUT).orElseThrow(), is(first));
++  }
++}
+diff --git a/src/test/java/org/folio/circulation/domain/notice/PatronNoticeTest.java b/src/test/java/org/folio/circulation/domain/notice/PatronNoticeTest.java
+new file mode 100644
+index 000000000..fd05d400c
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/domain/notice/PatronNoticeTest.java
+@@ -0,0 +1,61 @@
++package org.folio.circulation.domain.notice;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++
++import java.util.UUID;
++import java.util.stream.Stream;
++
++import org.folio.circulation.domain.policy.Period;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.Arguments;
++import org.junit.jupiter.params.provider.MethodSource;
++
++import io.vertx.core.json.JsonObject;
++
++class PatronNoticeTest {
++
++  @ParameterizedTest
++  @MethodSource("noticeFormats")
++  void buildsNoticeUsingConfigurationFormat(NoticeFormat format,
++    String deliveryChannel, String outputFormat) {
++
++    var configuration = new NoticeConfiguration(
++      "template",
++      format,
++      NoticeEventType.CHECK_OUT,
++      NoticeTiming.AFTER,
++      Period.days(1),
++      false,
++      null,
++      true);
++
++    var notice = new PatronNotice(
++      "recipient",
++      new JsonObject().put("key", "value"),
++      configuration);
++
++    assertThat(notice.getDeliveryChannel(), is(deliveryChannel));
++    assertThat(notice.getOutputFormat(), is(outputFormat));
++  }
++
++  static Stream<Arguments> noticeFormats() {
++    return Stream.of(
++      Arguments.of(NoticeFormat.EMAIL, "email", "text/html"),
++      Arguments.of(NoticeFormat.SMS, "sms", "text/plain"),
++      Arguments.of(NoticeFormat.PRINT, "mail", "text/html")
++    );
++  }
++
++  @Test
++  void buildsEmailNotice() {
++    var notice = PatronNotice.buildEmail(
++      "recipient",
++      UUID.randomUUID(),
++      new JsonObject());
++
++    assertThat(notice.getDeliveryChannel(), is("email"));
++    assertThat(notice.getOutputFormat(), is("text/html"));
++  }
++}
+diff --git a/src/test/java/org/folio/circulation/domain/notice/UserPreferredNoticeFormatsTest.java b/src/test/java/org/folio/circulation/domain/notice/UserPreferredNoticeFormatsTest.java
+new file mode 100644
+index 000000000..9b357c7c3
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/domain/notice/UserPreferredNoticeFormatsTest.java
+@@ -0,0 +1,53 @@
++package org.folio.circulation.domain.notice;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++
++import java.util.List;
++
++import org.folio.circulation.domain.User;
++import org.junit.jupiter.api.Test;
++
++import api.support.builders.UserBuilder;
++
++class UserPreferredNoticeFormatsTest {
++
++  @Test
++  void mapsContactTypesToFormats() {
++    assertThat(UserPreferredNoticeFormats.toFormat("002").orElseThrow(), is(NoticeFormat.EMAIL));
++    assertThat(UserPreferredNoticeFormats.toFormat("001").orElseThrow(), is(NoticeFormat.PRINT));
++    assertThat(UserPreferredNoticeFormats.toFormat("003").orElseThrow(), is(NoticeFormat.SMS));
++  }
++
++  @Test
++  void ignoresUnknownOrBlankValues() {
++    assertThat(UserPreferredNoticeFormats.toFormat("999").isEmpty(), is(true));
++    assertThat(UserPreferredNoticeFormats.toFormat("").isEmpty(), is(true));
++    assertThat(UserPreferredNoticeFormats.toFormat(null).isEmpty(), is(true));
++  }
++
++  @Test
++  void readsAndDeduplicatesPreferredContactTypeIds() {
++    var user = new User(new UserBuilder()
++      .withPreferredContactTypeIds(List.of("002", "003", "002"))
++      .create());
++
++    assertThat(UserPreferredNoticeFormats.fromPreferredContactTypeIds(user),
++      is(List.of(NoticeFormat.EMAIL, NoticeFormat.SMS)));
++  }
++
++  @Test
++  void usesDeprecatedPreferredContactTypeIdAsFallback() {
++    var user = new User(new UserBuilder()
++      .withDeprecatedPreferredContactTypeId("003")
++      .create());
++
++    assertThat(UserPreferredNoticeFormats.fromDeprecatedPreferredContactTypeId(user).orElseThrow(),
++      is(NoticeFormat.SMS));
++  }
++
++  @Test
++  void returnsEmptyListForNullUser() {
++    assertThat(UserPreferredNoticeFormats.fromPreferredContactTypeIds(null), is(List.of()));
++  }
++}
+diff --git a/src/test/java/org/folio/circulation/infrastructure/storage/notices/PatronNoticePolicyMapperTest.java b/src/test/java/org/folio/circulation/infrastructure/storage/notices/PatronNoticePolicyMapperTest.java
+new file mode 100644
+index 000000000..73f9a5e67
+--- /dev/null
++++ b/src/test/java/org/folio/circulation/infrastructure/storage/notices/PatronNoticePolicyMapperTest.java
+@@ -0,0 +1,53 @@
++package org.folio.circulation.infrastructure.storage.notices;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++
++import java.util.List;
++
++import org.folio.circulation.domain.notice.NoticeEventType;
++import org.folio.circulation.domain.notice.NoticeFormat;
++import org.junit.jupiter.api.Test;
++
++import api.support.builders.NoticeConfigurationBuilder;
++import io.vertx.core.json.JsonArray;
++import io.vertx.core.json.JsonObject;
++
++class PatronNoticePolicyMapperTest {
++
++  private final PatronNoticePolicyMapper mapper = new PatronNoticePolicyMapper();
++
++  @Test
++  void parsesSmsFormat() {
++    var policy = mapper.apply(new JsonObject()
++      .put("loanNotices", new JsonArray(List.of(
++        new NoticeConfigurationBuilder().withDueDateEvent().withSmsFormat().create()
++      )))).value();
++
++    var configuration = policy.getNoticeConfigurations().getFirst();
++    assertThat(configuration.getNoticeFormat(), is(NoticeFormat.SMS));
++    assertThat(configuration.getNoticeEventType(), is(NoticeEventType.DUE_DATE));
++  }
++
++  @Test
++  void parsesMixedFormats() {
++    var policy = mapper.apply(new JsonObject()
++      .put("loanNotices", new JsonArray(List.of(
++        new NoticeConfigurationBuilder().withDueDateEvent().withEmailFormat().create(),
++        new NoticeConfigurationBuilder().withDueDateEvent().withSmsFormat().create(),
++        new NoticeConfigurationBuilder().withDueDateEvent().withPrintFormat().create()
++      )))).value();
++
++    assertThat(policy.getNoticeConfigurations().size(), is(3));
++  }
++
++  @Test
++  void rejectsUnknownFormats() {
++    var result = mapper.apply(new JsonObject()
++      .put("loanNotices", new JsonArray(List.of(
++        new NoticeConfigurationBuilder().withDueDateEvent().create().put("format", "Bogus")
++      ))));
++
++    assertThat(result.failed(), is(true));
++  }
++}
