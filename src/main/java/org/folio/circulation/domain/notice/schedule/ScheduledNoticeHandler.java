@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.lang.Boolean.FALSE;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -55,8 +56,9 @@ public abstract class ScheduledNoticeHandler {
   protected final CollectionResourceClient templateNoticesClient;
   private final ScheduledPatronNoticeService patronNoticeService;
   private final EventPublisher eventPublisher;
-  private final Map<String, CompletableFuture<Result<PatronNoticePolicy>>> patronNoticePolicyCache =
-    new ConcurrentHashMap<>();
+  private final Map<String, PatronNoticePolicy> patronNoticePolicyCache = new ConcurrentHashMap<>();
+  private static final AppliedRuleConditions NO_RULE_CONDITIONS =
+    new AppliedRuleConditions(false, false, false);
 
   protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
@@ -214,9 +216,9 @@ public abstract class ScheduledNoticeHandler {
     }
 
     return shouldSendByPreference(context)
-      .thenCompose(shouldSend -> shouldSend
-        ? doSendNotice(context)
-        : skipDueToPreference(context));
+      .thenCompose(shouldSend -> FALSE.equals(shouldSend)
+        ? skipDueToPreference(context)
+        : doSendNotice(context));
   }
 
   private CompletableFuture<Result<ScheduledNoticeContext>> doSendNotice(
@@ -266,8 +268,20 @@ public abstract class ScheduledNoticeHandler {
   }
 
   private CompletableFuture<Result<PatronNoticePolicy>> lookupPatronNoticePolicy(String policyId) {
-    return patronNoticePolicyCache.computeIfAbsent(policyId,
-      id -> patronNoticePolicyRepository.lookupPolicy(id, new AppliedRuleConditions(false, false, false)));
+    var cachedPolicy = patronNoticePolicyCache.get(policyId);
+
+    if (cachedPolicy != null) {
+      log.debug("lookupPatronNoticePolicy:: cache hit for policy {}", policyId);
+      return ofAsync(() -> cachedPolicy);
+    }
+
+    return patronNoticePolicyRepository.lookupPolicy(policyId, NO_RULE_CONDITIONS)
+      .thenApply(result -> {
+        if (!result.failed() && result.value() != null) {
+          patronNoticePolicyCache.put(policyId, result.value());
+        }
+        return result;
+      });
   }
 
   private boolean evaluatePreference(ScheduledNoticeContext context, PatronNoticePolicy policy) {

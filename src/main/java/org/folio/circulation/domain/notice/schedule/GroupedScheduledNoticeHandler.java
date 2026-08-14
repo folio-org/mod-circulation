@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.lang.Boolean.FALSE;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -143,9 +144,9 @@ public abstract class GroupedScheduledNoticeHandler {
     ScheduledNoticeContext contextSample = relevantContexts.get(0);
 
     return singleNoticeHandler.shouldSendByPreference(contextSample)
-      .thenCompose(shouldSend -> shouldSend
-        ? doSendGroupedNotice(contexts, relevantContexts, contextSample)
-        : skipGroupedNoticeDueToPreference(contexts, relevantContexts));
+      .thenCompose(shouldSend -> FALSE.equals(shouldSend)
+        ? skipGroupedNoticeDueToPreference(contexts, relevantContexts)
+        : doSendGroupedNotice(contexts, relevantContexts, contextSample));
   }
 
   private CompletableFuture<Result<List<ScheduledNoticeContext>>> doSendGroupedNotice(
