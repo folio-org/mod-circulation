@@ -264,6 +264,13 @@ class PatronNoticeConfigurationResolverTest {
       .noneMatch(format -> format == NoticeFormat.UNKNOWN));
   }
 
+  @Test
+  void selectReturnsEmptyListWhenNoDeliverableFormats() {
+    var group = List.of(configuration("unknown", NoticeFormat.UNKNOWN));
+
+    assertThat(PatronNoticeConfigurationResolver.select(group, null), empty());
+  }
+
 
   @Test
   void matchGroupOfReturnsEmptyListWhenCandidatesAreNull() {
