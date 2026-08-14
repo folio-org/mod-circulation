@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.User;
@@ -22,7 +24,7 @@ public class PatronNoticeConfigurationResolver {
   public static List<NoticeConfiguration> matchGroupOf(
     List<NoticeConfiguration> candidates, NoticeConfiguration anchor) {
 
-    if (candidates == null || candidates.isEmpty() || anchor == null) {
+    if (CollectionUtils.isEmpty(candidates) || anchor == null) {
       return List.of();
     }
 
@@ -34,7 +36,7 @@ public class PatronNoticeConfigurationResolver {
   }
 
   public static List<NoticeConfiguration> firstMatchGroup(List<NoticeConfiguration> candidates) {
-    return candidates == null || candidates.isEmpty()
+    return CollectionUtils.isEmpty(candidates)
       ? List.of()
       : matchGroupOf(candidates, candidates.getFirst());
   }
@@ -105,13 +107,8 @@ public class PatronNoticeConfigurationResolver {
   private static List<NoticeConfiguration> defaultChannel(
     Map<NoticeFormat, NoticeConfiguration> byFormat) {
 
-    var emailConfiguration = byFormat.get(NoticeFormat.EMAIL);
-
-    if (emailConfiguration != null) {
-      return List.of(emailConfiguration);
-    }
-
-    return List.of(byFormat.values().iterator().next());
+    return List.of(ObjectUtils.getIfNull(byFormat.get(NoticeFormat.EMAIL),
+      () -> byFormat.values().iterator().next()));
   }
 
   private static Map<NoticeFormat, NoticeConfiguration> indexByFormat(
@@ -119,7 +116,7 @@ public class PatronNoticeConfigurationResolver {
 
     var byFormat = new LinkedHashMap<NoticeFormat, NoticeConfiguration>();
 
-    if (matchGroup == null || matchGroup.isEmpty()) {
+    if (CollectionUtils.isEmpty(matchGroup)) {
       return byFormat;
     }
 

@@ -9,6 +9,7 @@ import java.util.UUID;
 import api.support.http.IndividualResource;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.ObjectUtils;
 
 public class UserBuilder extends JsonBuilder implements Builder {
   private final UUID id;
@@ -92,8 +93,7 @@ public class UserBuilder extends JsonBuilder implements Builder {
     put(request, "active", active);
     put(request, "expirationDate", expirationDate);
 
-    if (firstName != null || lastName != null ||
-      preferredContactTypeIds != null || preferredContactTypeId != null) {
+    if (ObjectUtils.anyNotNull(firstName, lastName, preferredContactTypeIds, preferredContactTypeId)) {
       JsonObject personalInformation = new JsonObject()
         .put("lastName", this.lastName)
         .put("firstName", this.firstName);

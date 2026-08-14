@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ItemRelatedRecord;
@@ -249,7 +250,7 @@ public abstract class ScheduledNoticeHandler {
 
   protected CompletableFuture<Boolean> shouldSendByPreference(ScheduledNoticeContext context) {
     var policyId = context.getPatronNoticePolicyId();
-    if (policyId == null) {
+    if (StringUtils.isBlank(policyId)) {
       log.debug("shouldSendByPreference:: no patron notice policy id for notice {}, sending as usual",
         context.getNotice().getId());
       return completedFuture(true);
@@ -277,7 +278,7 @@ public abstract class ScheduledNoticeHandler {
 
     return patronNoticePolicyRepository.lookupPolicy(policyId, NO_RULE_CONDITIONS)
       .thenApply(result -> {
-        if (!result.failed() && result.value() != null) {
+        if (result.succeeded() && result.value() != null) {
           patronNoticePolicyCache.put(policyId, result.value());
         }
         return result;
