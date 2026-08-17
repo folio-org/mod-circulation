@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
 import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -252,22 +253,29 @@ public abstract class ScheduledNoticeHandler {
 
   protected CompletableFuture<Boolean> shouldSendByPreference(ScheduledNoticeContext context) {
     var policyId = context.getPatronNoticePolicyId();
+
     if (StringUtils.isBlank(policyId)) {
       log.debug("shouldSendByPreference:: no patron notice policy id for notice {}, sending as usual",
         context.getNotice().getId());
-      return completedFuture(true);
+
+      return completedFuture(TRUE);
     }
 
     return lookupPatronNoticePolicy(policyId)
-      .thenApply(r -> {
-        if (r.failed()) {
-          log.warn("shouldSendByPreference:: failed to look up notice policy {} for notice {}: {}",
-            policyId, context.getNotice().getId(), r.cause());
-          return true;
-        }
+      .thenApply(policyLookup -> shouldSend(context, policyLookup));
+  }
 
-        return evaluatePreference(context, r.value());
-      });
+  private boolean shouldSend(ScheduledNoticeContext context,
+    Result<PatronNoticePolicy> policyLookup) {
+
+    if (policyLookup.failed()) {
+      log.warn("shouldSend:: failed to look up notice policy {} for notice {}: {}",
+        context.getPatronNoticePolicyId(), context.getNotice().getId(), policyLookup.cause());
+
+      return true;
+    }
+
+    return evaluatePreference(context, policyLookup.value());
   }
 
   private CompletableFuture<Result<PatronNoticePolicy>> lookupPatronNoticePolicy(String policyId) {
@@ -279,12 +287,17 @@ public abstract class ScheduledNoticeHandler {
     }
 
     return patronNoticePolicyRepository.lookupPolicy(policyId, NO_RULE_CONDITIONS)
-      .thenApply(result -> {
-        if (result.succeeded() && result.value() != null) {
-          patronNoticePolicyCache.put(policyId, result.value());
-        }
-        return result;
-      });
+      .thenApply(result -> cachePolicy(policyId, result));
+  }
+
+  private Result<PatronNoticePolicy> cachePolicy(String policyId,
+    Result<PatronNoticePolicy> result) {
+
+    if (result.succeeded() && result.value() != null) {
+      patronNoticePolicyCache.put(policyId, result.value());
+    }
+
+    return result;
   }
 
   private boolean evaluatePreference(ScheduledNoticeContext context, PatronNoticePolicy policy) {
