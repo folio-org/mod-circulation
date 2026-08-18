@@ -172,6 +172,18 @@ public class User {
       .collect(Collectors.toList());
   }
 
+  public List<String> getPreferredContactTypeIds() {
+    return getArrayProperty(getPersonal(), "preferredContactTypeIds")
+      .stream()
+      .filter(String.class::isInstance)
+      .map(String.class::cast)
+      .toList();
+  }
+
+  public String getPreferredContactTypeId() {
+    return getProperty(getPersonal(), "preferredContactTypeId");
+  }
+
   public Collection<Department> getDepartments() {
     return departments;
   }
