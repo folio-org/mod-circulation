@@ -516,6 +516,31 @@ class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
         .getJson(), not(isAnonymized()));
   }
 
+  /**
+   * With treatEnabled=false an open fee plays no part: once the loan-close
+   * interval has passed the loan is anonymized even though money is still owed.
+   */
+  @Test
+  void closedLoanWithOpenFeesIsAnonymizedAfterIntervalWhenFeesNotTreatedDifferently() {
+    createConfiguration(new LoanHistoryConfigurationBuilder()
+      .loanCloseAnonymizeAfterXInterval(1, "minute"));
+
+    final IndividualResource loanResource = checkOutFixture.checkOutByBarcode(
+      new CheckOutByBarcodeRequestBuilder().forItem(item1)
+        .to(user)
+        .at(servicePoint.getId()));
+
+    createOpenAccountWithFeeFines(loanResource);
+
+    checkInFixture.checkInByBarcode(item1);
+
+    mockClockManagerToReturnFixedDateTime(getZonedDateTime()
+      .plus(ONE_MINUTE_AND_ONE_MILLIS, ChronoUnit.MILLIS));
+    anonymizeLoansInTenant();
+
+    assertThat(loansStorageClient.getById(loanResource.getId()).getJson(), isAnonymized());
+  }
+
   private void createAnonymizeAfterIntervalConfiguration(int duration, String intervalName) {
     createConfiguration(new LoanHistoryConfigurationBuilder()
       .loanCloseAnonymizeAfterXInterval(duration, intervalName));

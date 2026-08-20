@@ -60,6 +60,10 @@ public class Clients {
   private final CollectionResourceClient feeFineOwnerStorageClient;
   private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
+  private final CollectionResourceClient anonymizationDueDateStampClient;
+  private final CollectionResourceClient anonymizationDueDateClearClient;
+  private final CollectionResourceClient anonymizationDueDateDueClient;
+  private final CollectionResourceClient anonymizationDueDateUnevaluatedClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final GetManyRecordsClient userManualBlocksStorageClient;
@@ -109,6 +113,12 @@ public class Clients {
       lostItemPoliciesStorageClient = createLostItemPoliciesStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       anonymizeStorageLoansClient = createAnonymizeStorageLoansClient(client, context);
+      anonymizationDueDateStampClient = createAnonymizationDueDateStampClient(client, context);
+      anonymizationDueDateClearClient = createAnonymizationDueDateClearClient(client, context);
+      anonymizationDueDateDueClient = getCollectionResourceClient(client, context,
+        "/anonymization-due-date-storage/due");
+      anonymizationDueDateUnevaluatedClient = getCollectionResourceClient(client, context,
+        "/anonymization-due-date-storage/unevaluated");
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
@@ -221,6 +231,22 @@ public class Clients {
 
   public CollectionResourceClient anonymizeStorageLoansClient() {
     return anonymizeStorageLoansClient;
+  }
+
+  public CollectionResourceClient anonymizationDueDateStampClient() {
+    return anonymizationDueDateStampClient;
+  }
+
+  public CollectionResourceClient anonymizationDueDateClearClient() {
+    return anonymizationDueDateClearClient;
+  }
+
+  public CollectionResourceClient anonymizationDueDateDueClient() {
+    return anonymizationDueDateDueClient;
+  }
+
+  public CollectionResourceClient anonymizationDueDateUnevaluatedClient() {
+    return anonymizationDueDateUnevaluatedClient;
   }
 
   public CollectionResourceClient locationsStorage() {
@@ -587,6 +613,22 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/anonymize-storage-loans");
+  }
+
+  private static CollectionResourceClient createAnonymizationDueDateStampClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/anonymization-due-date-storage/stamp");
+  }
+
+  private static CollectionResourceClient createAnonymizationDueDateClearClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/anonymization-due-date-storage/clear");
   }
 
   private static CollectionResourceClient createLocationsStorageClient(

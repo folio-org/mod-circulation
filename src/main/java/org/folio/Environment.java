@@ -21,6 +21,14 @@ public class Environment {
     return getVariable("SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK", 50000);
   }
 
+  /**
+   * Page size of the anonymization evaluation sweep. Defaults to the drain limit
+   * so a post-upgrade backfill is not throttled. Lower it to smooth per-run load.
+   */
+  public static int getScheduledAnonymizationEvaluationPageSize() {
+    return getVariable("SCHEDULED_ANONYMIZATION_EVALUATION_PAGE_SIZE", 50000);
+  }
+
   public static boolean getEnableFloatingCollections() {
     return getVariable("ENABLE_FLOATING_COLLECTIONS", false);
   }

@@ -539,6 +539,14 @@ public class FakeOkapi extends AbstractVerticle {
   private void registerFakeStorageLoansAnonymize(Router router) {
     router.post("/anonymize-storage-loans")
       .handler(new FakeLoanAnonymizationResource());
+    router.post("/anonymization-due-date-storage/stamp")
+      .handler(FakeAnonymizationDueDateResource.stampResource());
+    router.post("/anonymization-due-date-storage/clear")
+      .handler(FakeAnonymizationDueDateResource.clearResource());
+    router.get("/anonymization-due-date-storage/due")
+      .handler(FakeAnonymizationDueDateResource.dueResource());
+    router.get("/anonymization-due-date-storage/unevaluated")
+      .handler(FakeAnonymizationDueDateResource.unevaluatedResource());
   }
 
   private void registerCirculationRulesStorage(Router router) {

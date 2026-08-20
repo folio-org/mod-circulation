@@ -17,7 +17,7 @@ import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
-import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
+import org.folio.circulation.domain.anonymization.service.AnonymizationEligibilityService;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.Nested;
@@ -28,7 +28,7 @@ import io.vertx.core.json.JsonObject;
 class AnonymizeLoansTests {
   @Nested
   class WhenAnonymizingAllLoansImmediatelyTests {
-    private final AnonymizationCheckersService checker = checker();
+    private final AnonymizationEligibilityService checker = checker();
 
     @Test
     void anonymizeClosedLoanWithNoFees() {
@@ -79,10 +79,10 @@ class AnonymizeLoansTests {
       return segregatedLoans.get("anonymizeImmediately");
     }
 
-    private AnonymizationCheckersService checker() {
+    private AnonymizationEligibilityService checker() {
       // Fee fines closing type is deliberately different to make sure that it is ignored when
       // loans with fees should not be treated differently
-      return new AnonymizationCheckersService(
+      return new AnonymizationEligibilityService(
         new LoanAnonymizationConfiguration(ClosingType.IMMEDIATELY, ClosingType.NEVER,
           false, null, null), ClockUtil::getZonedDateTime);
     }
@@ -90,7 +90,7 @@ class AnonymizeLoansTests {
 
   @Nested
   class WhenAnonymizingLoansWithFeesImmediatelyTests {
-    private final AnonymizationCheckersService checker = checker();
+    private final AnonymizationEligibilityService checker = checker();
 
     @Test
     void anonymizeClosedLoanWithClosedFees() {
@@ -121,10 +121,10 @@ class AnonymizeLoansTests {
       return segregatedLoans.get("feesAndFinesOpen");
     }
 
-    private AnonymizationCheckersService checker() {
+    private AnonymizationEligibilityService checker() {
       // General closing type is deliberately different to make sure that the
       // loans with fees closing type is definitely used
-      return new AnonymizationCheckersService(
+      return new AnonymizationEligibilityService(
         new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.IMMEDIATELY,
           true, null, null), ClockUtil::getZonedDateTime);
     }
@@ -132,7 +132,7 @@ class AnonymizeLoansTests {
 
   @Nested
   class WhenNeverAnonymizingLoansTests {
-    private final AnonymizationCheckersService checker = checker();
+    private final AnonymizationEligibilityService checker = checker();
 
     @Test
     void doNotAnonymizeLoanClosedWithNoFees() {
@@ -186,10 +186,10 @@ class AnonymizeLoansTests {
       return segregatedLoans.get("neverAnonymizeLoans");
     }
 
-    private AnonymizationCheckersService checker() {
+    private AnonymizationEligibilityService checker() {
       // Fee fines closing type is deliberately different to make sure that it is ignored when
       // loans with fees should not be treated differently
-      return new AnonymizationCheckersService(
+      return new AnonymizationEligibilityService(
         new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.NEVER,
           true, null, null), ClockUtil::getZonedDateTime);
     }
@@ -197,7 +197,7 @@ class AnonymizeLoansTests {
 
   @Nested
   class WhenManuallyAnonymizingLoansTests {
-    private final AnonymizationCheckersService checker = checker();
+    private final AnonymizationEligibilityService checker = checker();
 
     @Test
     void anonymizeLoanClosedWithNoFees() {
@@ -248,15 +248,15 @@ class AnonymizeLoansTests {
       return segregatedLoans.get("haveAssociatedFeesAndFines");
     }
 
-    private AnonymizationCheckersService checker() {
+    private AnonymizationEligibilityService checker() {
       // Manual anonymization is triggered by providing no config
-      return new AnonymizationCheckersService(null, ClockUtil::getZonedDateTime);
+      return new AnonymizationEligibilityService(null, ClockUtil::getZonedDateTime);
     }
   }
 
   @Nested
   class WhenAnonymizingLoansClosedEarlierTests {
-    private final AnonymizationCheckersService checker = checker();
+    private final AnonymizationEligibilityService checker = checker();
 
     @Test
     void anonymizeLoanClosedMoreThanOneWeekAgo() {
@@ -345,10 +345,10 @@ class AnonymizeLoansTests {
       return segregatedLoans.get("loanClosedPeriodNotPassed");
     }
 
-    private AnonymizationCheckersService checker() {
+    private AnonymizationEligibilityService checker() {
       // Fee fines closing type is deliberately different to make sure that it is ignored when
       // loans with fees should not be treated differently
-      return new AnonymizationCheckersService(
+      return new AnonymizationEligibilityService(
         new LoanAnonymizationConfiguration(ClosingType.INTERVAL, ClosingType.INTERVAL,
           true, Period.weeks(1),  Period.weeks(1)),
         () -> ZonedDateTime.of(2021, 5, 15, 8, 15, 43, 0, ZoneId.of("UTC")));

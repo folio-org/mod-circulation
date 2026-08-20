@@ -232,17 +232,6 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     return latestPatronInfoAddedComment;
   }
 
-  public CompletableFuture<Result<MultipleRecords<Loan>>> findLoansToAnonymize(
-    PageLimit pageLimit) {
-
-    log.debug("findLoansToAnonymize:: parameters pageLimit: {}", pageLimit);
-
-    Result<CqlQuery> cqlQuery = getStatusCQLQuery("Closed")
-      .combine(CqlQuery.hasValue(USER_ID), CqlQuery::and);
-
-    return queryLoanStorage(cqlQuery, pageLimit);
-  }
-
   private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorage(
     Result<CqlQuery> statusQuery, PageLimit pageLimit) {
 

@@ -36,7 +36,9 @@ public class CirculationSettingsService {
   private static final String SETTING_NAME_PRINT_HOLD_REQUESTS = "PRINT_HOLD_REQUESTS";
   private static final String SETTING_NAME_NOTICES_LIMIT = "noticesLimit";
   private static final String SETTING_NAME_OTHER_SETTINGS = "other_settings";
-  private static final String SETTING_NAME_LOAN_HISTORY = "loan_history";
+  // Public because CirculationSettingsResource keys its invalidation hook off
+  // the same name.
+  public static final String SETTING_NAME_LOAN_HISTORY = "loan_history";
 
   private static final int DEFAULT_SCHEDULED_NOTICES_PROCESSING_LIMIT = 100;
   private static final int DEFAULT_CHECKOUT_SESSION_TIMEOUT_MINUTES = 3;
