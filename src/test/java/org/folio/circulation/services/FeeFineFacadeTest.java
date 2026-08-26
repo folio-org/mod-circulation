@@ -13,6 +13,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -96,6 +97,24 @@ class FeeFineFacadeTest {
     assertThat(result.failed(), is(true));
     assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
     assertThat(((ServerErrorFailure) result.cause()).getReason(), is(expectedError));
+  }
+
+  @Test
+  void shouldCreateAccountWhenStaffUserIsNotFound() throws Exception {
+    when(accountClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(accountActionsClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(servicePointClient.get("cd1-id"))
+      .thenReturn(ofAsync(jsonResponse(200, new JsonObject().put("id", "cd1-id"))));
+
+    final Result<FeeFineAction> result = feeFineFacade
+      .createAccount(createCommandBuilder().withStaffUserId(null).build())
+      .get(5, TimeUnit.SECONDS);
+
+    assertThat(result, notNullValue());
+    assertThat(result.succeeded(), is(true));
+    verify(accountActionsClient).post(any());
   }
 
   @Test

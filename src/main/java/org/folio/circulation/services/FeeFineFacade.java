@@ -143,7 +143,14 @@ public class FeeFineFacade {
     }
 
     return userRepository.getUser(command.getStaffUserId())
-      .thenApply(r -> r.map(builder::withCreatedBy));
+      .thenApply(r -> r.map(user -> {
+        if (user == null) {
+          log.warn("populateCreatedBy:: staff user not found for userId: {}, " +
+            "creating action without source", command.getStaffUserId());
+          return builder;
+        }
+        return builder.withCreatedBy(user);
+      }));
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchServicePoint(String servicePointId) {
