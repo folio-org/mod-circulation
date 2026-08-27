@@ -2004,7 +2004,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
 
     final var publishedEvents = waitAtMost(2, SECONDS)
-     .until(FakePubSub::getPublishedEvents, hasSize(5));
+     .until(FakePubSub::getPublishedEvents, hasSize(6));
     final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
     assertThat(checkedInEvent, isValidItemCheckedInEvent(checkInResponse.getLoan()));
     final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));
