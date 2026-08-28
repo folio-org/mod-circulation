@@ -1,8 +1,11 @@
 package org.folio.circulation.services.events;
 
+import static java.util.Set.of;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.support.results.Result;
@@ -10,7 +13,6 @@ import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaProducerManager;
 import org.folio.kafka.SimpleKafkaProducerManager;
 import org.folio.kafka.services.KafkaEnvironmentProperties;
-import org.folio.kafka.services.KafkaProducerRecordBuilder;
 import org.folio.rest.tools.utils.TenantTool;
 
 import io.vertx.core.Context;
@@ -21,7 +23,14 @@ import lombok.extern.log4j.Log4j2;
 
 @RequiredArgsConstructor
 @Log4j2
-public class KafkaEventPublisher<K, T> {
+public class KafkaEventPublisher<K> {
+  private static final String TENANT_ID_HEADER = "folio.tenantId";
+  private static final Set<String> FORWARDED_OKAPI_HEADERS = of(
+    "x-okapi-url",
+    "x-okapi-tenant",
+    "x-okapi-token",
+    "x-okapi-request-id",
+    "x-okapi-user-id");
 
   private final String kafkaTopic;
   private final KafkaProducerManager producerManager;
@@ -30,17 +39,15 @@ public class KafkaEventPublisher<K, T> {
     this(kafkaTopic, createProducerManager(vertxContext));
   }
 
-  public CompletableFuture<Result<Void>> publish(K key, DomainEvent<T> event, Map<String, String> okapiHeaders) {
-    log.info("publish:: key = {}, eventId = {}, type = {}, topic = {}", key, event.getId(),
-      event.getType(), kafkaTopic);
+  public CompletableFuture<Result<Void>> publish(K key, String payload, Map<String, String> okapiHeaders) {
+    log.info("publish:: key = {}, topic = {}", key, kafkaTopic);
 
     KafkaProducerRecord<K, String> producerRecord =
-      new KafkaProducerRecordBuilder<K, DomainEvent<T>>(TenantTool.tenantId(okapiHeaders))
-        .key(key)
-        .value(event)
-        .topic(kafkaTopic)
-        .propagateOkapiHeaders(okapiHeaders)
-        .build();
+      KafkaProducerRecord.create(kafkaTopic, key, payload);
+    producerRecord.addHeader(TENANT_ID_HEADER, TenantTool.tenantId(okapiHeaders));
+    okapiHeaders.entrySet().stream()
+      .filter(entry -> FORWARDED_OKAPI_HEADERS.contains(entry.getKey().toLowerCase()))
+      .forEach(entry -> producerRecord.addHeader(entry.getKey(), entry.getValue()));
 
     KafkaProducer<K, String> producer = null;
     try {
@@ -61,7 +68,7 @@ public class KafkaEventPublisher<K, T> {
         log.debug("publish:: trying to close producer for event {}", key);
         producer.close();
       }
-      return Result.emptyAsync();
+      return failedFuture(e);
     }
   }
 

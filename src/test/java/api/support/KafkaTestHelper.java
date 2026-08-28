@@ -7,6 +7,8 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
+import static org.folio.kafka.KafkaTopicNameHelper.getEventTypeFromTopicName;
+import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -14,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,14 +24,18 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
+import org.folio.circulation.domain.events.FeeFineKafkaTopic;
 import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
 import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import api.support.fakes.FakePubSub;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
@@ -51,6 +58,7 @@ public class KafkaTestHelper {
   private KafkaContainer kafkaContainer;
   private KafkaProducer<String, JsonObject> producer;
   private KafkaAdminClient adminClient;
+  private KafkaConsumer<String, String> circulationEventRecorder;
   private String kafkaUrl;
 
   private KafkaTestHelper() {
@@ -123,6 +131,18 @@ public class KafkaTestHelper {
 
   public void createCirculationTopics(String tenantId) {
     createTopic(CirculationStorageKafkaTopic.CIRCULATION_RULES, tenantId);
+  }
+
+  public void createCirculationPublicationTopics(String tenantId) {
+    createTopics(Arrays.stream(CirculationKafkaTopic.values())
+      .map(topic -> topic.fullTopicName(tenantId))
+      .toList());
+  }
+
+  public void createFeeFineTopics(String tenantId) {
+    createTopics(List.of(
+      FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED.fullTopicName(tenantId),
+      FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED.fullTopicName(tenantId)));
   }
 
   public Map<String, ConsumerGroupDescription> verifyConsumerGroups(
@@ -202,9 +222,29 @@ public class KafkaTestHelper {
   }
 
   public void publishEvent(String topic, JsonObject eventPayload) {
+    publishEvent(topic, eventPayload, Map.of("X-Okapi-Tenant", TENANT_ID));
+  }
+
+  public void publishEvent(String topic, JsonObject eventPayload, Map<String, String> headers) {
     var kafkaRecord = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
-    kafkaRecord.addHeader("X-Okapi-Tenant", TENANT_ID);
+    headers.forEach(kafkaRecord::addHeader);
+    headers.entrySet().stream()
+      .filter(entry -> "X-Okapi-Tenant".equalsIgnoreCase(entry.getKey()))
+      .findFirst()
+      .ifPresent(entry -> kafkaRecord.addHeader("folio.tenantId", entry.getValue()));
     waitFor(producer.write(kafkaRecord));
+  }
+
+  public void startCirculationEventRecorder(String tenantId) {
+    if (circulationEventRecorder != null) {
+      return;
+    }
+
+    String topicPattern = environment() + "\\." + tenantId + "\\.circulation\\..+";
+    circulationEventRecorder = createConsumer("circulation-event-recorder-" + UUID.randomUUID());
+    circulationEventRecorder.handler(record -> FakePubSub.recordPublishedEvent(
+      getEventTypeFromTopicName(record.topic()), record.value()));
+    waitFor(circulationEventRecorder.subscribe(Pattern.compile(topicPattern)));
   }
 
   public KafkaProducer<String, JsonObject> createProducer() {
@@ -215,7 +255,7 @@ public class KafkaTestHelper {
     return KafkaProducer.create(vertx, config, String.class, JsonObject.class);
   }
 
-  public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
+  public KafkaConsumer<String, String> createConsumer(String consumerGroupId) {
     Properties config = new Properties();
     config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
     config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);

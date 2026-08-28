@@ -5,10 +5,10 @@ import static api.support.fakes.StorageSchema.validatorForFeeFineCancelOperation
 import static api.support.fakes.StorageSchema.validatorForFeeFineOperationSchema;
 import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 import java.util.Map;
 import java.util.UUID;
@@ -167,6 +167,6 @@ public class FakeFeeFineOperationsModule {
   }
 
   private static String getTenant(RoutingContext context) {
-    return context.request().headers().get(OKAPI_TENANT_HEADER);
+    return context.request().headers().get(TENANT);
   }
 }

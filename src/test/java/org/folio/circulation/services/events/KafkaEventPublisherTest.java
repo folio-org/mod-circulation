@@ -2,14 +2,14 @@ package org.folio.circulation.services.events;
 
 import static api.support.Wait.waitFor;
 import static api.support.Wait.waitForValue;
-import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Collection;
 import java.util.Map;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
-import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.support.http.OkapiHeader;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +33,6 @@ class KafkaEventPublisherTest {
 
   @BeforeAll
   static void setUp() {
-    TenantActivationResource.enableNativeKafkaIntegration();
     kafkaHelper = KafkaTestHelper.getInstance();
   }
 
@@ -50,14 +49,15 @@ class KafkaEventPublisherTest {
     int initialOffset = kafkaHelper.getOffset(fullTopicName, consumerGroupId);
 
     JsonObject eventPayload = new JsonObject().put("itemId", randomUUID().toString());
-    var event = new DomainEvent<>(randomUUID(), DomainEventType.CREATED,
-      TEST_TENANT, currentTimeMillis(), eventPayload);
 
-    KafkaEventPublisher<String, JsonObject> publisher =
+    KafkaEventPublisher<String> publisher =
       new KafkaEventPublisher<>(Vertx.vertx().getOrCreateContext(), fullTopicName);
-    waitFor(publisher.publish(randomUUID().toString(), event, HEADERS));
-    var consumerRecords = kafkaHelper.consumeEvents(consumer, fullTopicName, 1);
+    waitFor(publisher.publish(randomUUID().toString(), eventPayload.encode(), HEADERS));
+    Collection<ConsumerRecord<String, String>> consumerRecords =
+      kafkaHelper.consumeEvents(consumer, fullTopicName, 1);
+
     assertEquals(1, consumerRecords.size());
+    assertEquals(eventPayload.encode(), consumerRecords.iterator().next().value());
     waitForValue(() -> kafkaHelper.getOffset(fullTopicName, consumerGroupId), initialOffset + 1);
     consumer.close();
   }

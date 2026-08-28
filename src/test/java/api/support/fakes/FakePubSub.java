@@ -120,6 +120,12 @@ public class FakePubSub {
     return publishedEvents;
   }
 
+  public static void recordPublishedEvent(String eventType, String eventPayload) {
+    publishedEvents.add(new JsonObject()
+      .put("eventType", eventType)
+      .put("eventPayload", eventPayload));
+  }
+
   public static List<JsonObject> getCreatedEventTypes() {
     return createdEventTypes;
   }

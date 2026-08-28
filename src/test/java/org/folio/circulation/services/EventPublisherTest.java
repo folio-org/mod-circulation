@@ -38,7 +38,7 @@ class EventPublisherTest {
   @Mock
   private Clients clients;
   @Mock
-  private PubSubPublishingService pubSubPublishingService;
+  private EventPublishingService eventPublishingService;
   @Mock
   private CollectionResourceClient localeClient;
   @Mock
@@ -48,10 +48,10 @@ class EventPublisherTest {
 
   @BeforeEach
   void setUp() {
-    when(clients.pubSubPublishingService()).thenReturn(pubSubPublishingService);
+    when(clients.eventPublishingService()).thenReturn(eventPublishingService);
     when(clients.localeClient()).thenReturn(localeClient);
     when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
-    when(pubSubPublishingService.publishEvent(anyString(), anyString()))
+    when(eventPublishingService.publishEvent(anyString(), anyString()))
       .thenReturn(CompletableFuture.completedFuture(true));
     when(localeClient.get())
       .thenReturn(CompletableFuture.completedFuture(
@@ -123,7 +123,7 @@ class EventPublisherTest {
 
   private String captureLogPayloadByAction(String action) {
     ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
-    verify(pubSubPublishingService, atLeastOnce())
+    verify(eventPublishingService, atLeastOnce())
       .publishEvent(eq(LOG_RECORD.name()), payloadCaptor.capture());
 
     return payloadCaptor.getAllValues().stream()

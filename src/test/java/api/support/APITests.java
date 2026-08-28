@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
-import org.folio.circulation.resources.TenantActivationResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -348,7 +347,6 @@ public abstract class APITests {
 
     FakePubSub.clearPublishedEvents();
     FakePubSub.setFailPublishingWithBadRequestError(false);
-    TenantActivationResource.disableNativeKafkaIntegration();
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
     FakeStorageModule.cleanUpRequestMappings();
@@ -369,6 +367,9 @@ public abstract class APITests {
   private static void setUpKafka() {
     kafkaHelper = KafkaTestHelper.getInstance();
     kafkaHelper.createCirculationTopics(TENANT_ID);
+    kafkaHelper.createCirculationPublicationTopics(TENANT_ID);
+    kafkaHelper.createFeeFineTopics(TENANT_ID);
+    kafkaHelper.startCirculationEventRecorder(TENANT_ID);
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

@@ -9,6 +9,7 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
@@ -21,9 +22,17 @@ import io.vertx.ext.web.RoutingContext;
 
 public class WebContext {
   private final RoutingContext routingContext;
+  private final Map<String, String> headers;
 
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
+    this.headers = normalizeHeaders(routingContext.request().headers().entries().stream()
+      .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b)));
+  }
+
+  public WebContext(Map<String, String> headers) {
+    this.routingContext = null;
+    this.headers = normalizeHeaders(headers);
   }
 
   public String getTenantId() {
@@ -49,16 +58,24 @@ public class WebContext {
   }
 
   private String getHeader(String header) {
-    return routingContext.request().getHeader(header);
+    return headers.get(header.toLowerCase());
   }
 
   public Integer getIntegerParameter(String name, Integer defaultValue) {
+    if (routingContext == null) {
+      return defaultValue;
+    }
+
     String value = routingContext.request().getParam(name);
 
     return value != null ? Integer.parseInt(value) : defaultValue;
   }
 
   public String getStringParameter(String name, String defaultValue) {
+    if (routingContext == null) {
+      return defaultValue;
+    }
+
     String value = routingContext.request().getParam(name);
 
     return value != null ? value : defaultValue;
@@ -103,7 +120,12 @@ public class WebContext {
   }
 
   public Map<String, String> getHeaders() {
-    return routingContext.request().headers().entries().stream()
-      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue, (a, b) -> b));
+    return headers;
+  }
+
+  private static Map<String, String> normalizeHeaders(Map<String, String> headers) {
+    return headers.entrySet().stream()
+      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue,
+        (a, b) -> b, HashMap::new));
   }
 }

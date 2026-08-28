@@ -115,7 +115,9 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/loan-anonymization/by-user/{userId}",
           "permissionsRequired": [
             "circulation.loans.collection.anonymize.user.post"
@@ -131,7 +133,9 @@
       "version": "0.3",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loans/{id}/declare-item-lost",
           "permissionsRequired": [
             "circulation.loans.declare-item-lost.post"
@@ -147,7 +151,9 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loans/{id}/change-due-date",
           "permissionsRequired": [
             "circulation.loans.change-due-date.post"
@@ -163,7 +169,9 @@
       "version": "0.2",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loans/{id}/claim-item-returned",
           "permissionsRequired": [
             "circulation.loans.claim-item-returned.post"
@@ -173,7 +181,9 @@
           ]
         },
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loans/{id}/declare-claimed-returned-item-as-missing",
           "permissionsRequired": [
             "circulation.loans.declare-claimed-returned-item-as-missing.post"
@@ -189,7 +199,9 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/circulation/items-by-instance",
           "permissionsRequired": [
             "circulation.items-by-instance.get"
@@ -205,7 +217,9 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/loans/{id}/add-info",
           "permissionsRequired": [
             "circulation.loans.add-info.post"
@@ -299,7 +313,9 @@
             "POST"
           ],
           "pathPattern": "/circulation/pickup-by-barcode-for-use-at-location",
-          "permissionsRequired": ["circulation.pickup-by-barcode-for-use-at-location.post"],
+          "permissionsRequired": [
+            "circulation.pickup-by-barcode-for-use-at-location.post"
+          ],
           "modulePermissions": [
             "circulation.usage-at-location.all"
           ]
@@ -309,7 +325,9 @@
             "POST"
           ],
           "pathPattern": "/circulation/hold-by-barcode-for-use-at-location",
-          "permissionsRequired": ["circulation.hold-by-barcode-for-use-at-location.post"],
+          "permissionsRequired": [
+            "circulation.hold-by-barcode-for-use-at-location.post"
+          ],
           "modulePermissions": [
             "circulation.usage-at-location.all"
           ]
@@ -407,7 +425,7 @@
           "permissionsRequired": [
             "circulation.requests.item.post"
           ],
-          "permissionsDesired" : [
+          "permissionsDesired": [
             "circulation.override-patron-block.post"
           ],
           "modulePermissions": [
@@ -710,7 +728,6 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
-            "pubsub.publish.post",
             "circulation-storage.loans-history.collection.get"
           ]
         }
@@ -768,7 +785,9 @@
           ]
         },
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/circulation/settings/{id}",
           "permissionsRequired": [
             "circulation.settings.item.get"
@@ -776,8 +795,11 @@
           "modulePermissions": [
             "circulation-storage.circulation-settings.item.get"
           ]
-        }, {
-          "methods": ["PUT"],
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
           "pathPattern": "/circulation/settings/{id}",
           "permissionsRequired": [
             "circulation.settings.item.put"
@@ -785,8 +807,11 @@
           "modulePermissions": [
             "circulation-storage.circulation-settings.item.put"
           ]
-        }, {
-          "methods": ["POST"],
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/settings",
           "permissionsRequired": [
             "circulation.settings.item.post"
@@ -794,8 +819,11 @@
           "modulePermissions": [
             "circulation-storage.circulation-settings.item.post"
           ]
-        }, {
-          "methods": ["DELETE"],
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
           "pathPattern": "/circulation/settings/{id}",
           "permissionsRequired": [
             "circulation.settings.item.delete"
@@ -811,7 +839,9 @@
       "version": "1.0",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/print-events-entry",
           "permissionsRequired": [
             "circulation.print-events-entry.item.post"
@@ -850,7 +880,6 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
-            "pubsub.publish.post",
             "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
@@ -873,8 +902,7 @@
             "lost-item-fees-policies.item.get",
             "lost-item-fees-policies.collection.get",
             "circulation-storage.loans.item.get",
-            "circulation-storage.loans.collection.get",
-            "pubsub.publish.post"
+            "circulation-storage.loans.collection.get"
           ],
           "unit": "minute",
           "delay": "20"
@@ -899,7 +927,6 @@
             "users.item.get",
             "addresstypes.collection.get",
             "templates.item.get",
-            "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
@@ -932,7 +959,6 @@
             "users.item.get",
             "addresstypes.collection.get",
             "templates.item.get",
-            "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.loans-history.collection.get",
@@ -961,7 +987,6 @@
             "usergroups.item.get",
             "circulation-storage.circulation-settings.item.get",
             "circulation-storage.circulation-settings.collection.get",
-            "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "templates.item.get",
@@ -997,7 +1022,6 @@
             "users.item.get",
             "users.collection.get",
             "addresstypes.collection.get",
-            "pubsub.publish.post",
             "templates.item.get",
             "circulation-storage.loans-history.collection.get"
           ],
@@ -1034,7 +1058,6 @@
             "users.item.get",
             "users.collection.get",
             "addresstypes.collection.get",
-            "pubsub.publish.post",
             "templates.item.get",
             "circulation-storage.loans-history.collection.get",
             "mod-settings.global.read.stripes-core.prefs.manage"
@@ -1069,7 +1092,6 @@
             "users.item.get",
             "users.collection.get",
             "addresstypes.collection.get",
-            "pubsub.publish.post",
             "templates.item.get",
             "circulation-storage.loans-history.collection.get",
             "mod-settings.global.read.stripes-core.prefs.manage"
@@ -1112,7 +1134,6 @@
             "anonymize-storage-loans.post",
             "accounts.collection.get",
             "feefineactions.collection.get",
-            "pubsub.publish.post",
             "circulation-storage.loans-history.collection.get"
           ],
           "unit": "minute",
@@ -1143,7 +1164,6 @@
             "circulation.internal.fetch-items.collection.get",
             "lost-item-fees-policies.item.get",
             "lost-item-fees-policies.collection.get",
-            "pubsub.publish.post",
             "users.item.get",
             "users.collection.get",
             "addresstypes.collection.get",
@@ -1170,7 +1190,6 @@
             "feefines.collection.get",
             "accounts.item.post",
             "feefineactions.item.post",
-            "pubsub.publish.post",
             "users.item.get",
             "users.collection.get",
             "usergroups.collection.get",
@@ -1210,7 +1229,6 @@
             "addresstypes.collection.get",
             "templates.item.get",
             "owners.collection.get",
-            "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
             "circulation-storage.fixed-due-date-schedules.item.get",
@@ -1232,37 +1250,6 @@
       ]
     },
     {
-      "id": "circulation-event-handlers",
-      "version": "0.2",
-      "handlers": [
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/handlers/loan-related-fee-fine-closed",
-          "permissionsRequired": [
-            "circulation.handlers.loan-related-fee-fine-closed.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
-            "pubsub.publish.post"
-          ]
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/circulation/handlers/fee-fine-balance-changed",
-          "permissionsRequired": [
-            "circulation.handlers.fee-fine-balance-changed.post"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.handlers.fee-fine-balance-changed.post"
-          ]
-        }
-      ]
-    },
-    {
       "id": "_tenant",
       "version": "1.0",
       "interfaceType": "system",
@@ -1273,9 +1260,6 @@
           ],
           "pathPattern": "/_/tenant",
           "modulePermissions": [
-            "pubsub.event-types.post",
-            "pubsub.publishers.post",
-            "pubsub.subscribers.post",
             "circulation-storage.circulation-rules.get"
           ]
         },
@@ -1358,7 +1342,7 @@
       "version": "1.0"
     },
     {
-      "id" : "cancellation-reason-storage",
+      "id": "cancellation-reason-storage",
       "version": "1.1"
     },
     {
@@ -1384,22 +1368,6 @@
     {
       "id": "check-in-storage",
       "version": "0.2"
-    },
-    {
-      "id": "pubsub-event-types",
-      "version": "0.1"
-    },
-    {
-      "id": "pubsub-publishers",
-      "version": "0.1"
-    },
-    {
-      "id": "pubsub-subscribers",
-      "version": "0.1"
-    },
-    {
-      "id": "pubsub-publish",
-      "version": "0.1"
     },
     {
       "id": "automated-patron-blocks",
@@ -1470,7 +1438,9 @@
       "permissionName": "circulation.requests.queue.item-reorder.collection.post",
       "displayName": "circulation - reorder queue for an item",
       "description": "change request positions in queue for an item",
-      "replaces": ["circulation.requests.queue.reorder.collection.post"]
+      "replaces": [
+        "circulation.requests.queue.reorder.collection.post"
+      ]
     },
     {
       "permissionName": "circulation.requests.queue.instance-reorder.collection.post",
@@ -1676,7 +1646,9 @@
       "permissionName": "circulation.requests.queue-instance.collection.get",
       "displayName": "circulation - request queue for an instance",
       "description": "get request queue for an instance",
-      "replaces": ["circulation.requests.queue.collection.get"]
+      "replaces": [
+        "circulation.requests.queue.collection.get"
+      ]
     },
     {
       "permissionName": "circulation.requests.queue-item.collection.get",
@@ -1717,25 +1689,33 @@
       "permissionName": "circulation.override-renewal-block.post",
       "displayName": "circulation - override renewal block",
       "description": "renewal block override",
-      "replaces": ["circulation.override-renewal-block"]
+      "replaces": [
+        "circulation.override-renewal-block"
+      ]
     },
     {
       "permissionName": "circulation.override-item-limit-block.post",
       "displayName": "circulation - override item limit block",
       "description": "item limit block override",
-      "replaces": ["circulation.override-item-limit-block"]
+      "replaces": [
+        "circulation.override-item-limit-block"
+      ]
     },
     {
       "permissionName": "circulation.override-item-not-loanable-block.post",
       "displayName": "circulation - override item not loanable block",
       "description": "item not loanable block override",
-      "replaces": ["circulation.override-item-not-loanable-block.post"]
+      "replaces": [
+        "circulation.override-item-not-loanable-block.post"
+      ]
     },
     {
       "permissionName": "circulation.override-patron-block.post",
       "displayName": "circulation - override patron block",
       "description": "patron block override",
-      "replaces": ["circulation.override-patron-block"]
+      "replaces": [
+        "circulation.override-patron-block"
+      ]
     },
     {
       "permissionName": "circulation.requests.allowed-service-points.get",
@@ -1794,25 +1774,25 @@
     },
     {
       "permissionName": "circulation.request-anonymization-settings.get",
-      "displayName": "Circulation: Request Anonymization settings — GET",
+      "displayName": "Circulation: Request Anonymization settings \u2014 GET",
       "description": "Allows requesting Request Anonymization settings (placeholder)",
       "subPermissions": []
     },
     {
       "permissionName": "circulation.request-anonymization-settings.put",
-      "displayName": "Circulation: Request Anonymization settings — PUT",
+      "displayName": "Circulation: Request Anonymization settings \u2014 PUT",
       "description": "Allows updating Request Anonymization settings (placeholder)",
       "subPermissions": []
     },
     {
       "permissionName": "modperms.circulation.request-anonymization-settings.get",
-      "displayName": "Module perms: Request Anonymization settings — GET",
+      "displayName": "Module perms: Request Anonymization settings \u2014 GET",
       "description": "Backend module permission for GET (placeholder)",
       "subPermissions": []
     },
     {
       "permissionName": "modperms.circulation.request-anonymization-settings.put",
-      "displayName": "Module perms: Request Anonymization settings — PUT",
+      "displayName": "Module perms: Request Anonymization settings \u2014 PUT",
       "description": "Backend module permission for PUT (placeholder)",
       "subPermissions": []
     },
@@ -1868,8 +1848,8 @@
     },
     {
       "permissionName": "modperms.circulation.requests.hold-shelf-clearance-report.get",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation.internal.fetch-items.collection.get",
         "circulation-storage.requests.item.get",
@@ -1882,8 +1862,8 @@
     },
     {
       "permissionName": "modperms.circulation.handlers.loan-related-fee-fine-closed.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.item.put",
@@ -1904,8 +1884,8 @@
     },
     {
       "permissionName": "modperms.circulation.handlers.fee-fine-balance-changed.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.get",
         "circulation-storage.loans.collection.get",
@@ -1932,15 +1912,14 @@
         "usergroups.item.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "feefineactions.item.get",
-        "feefineactions.collection.get",
-        "pubsub.publish.post"
+        "feefineactions.collection.get"
       ],
       "visible": false
     },
     {
       "permissionName": "modperms.circulation.requests.item.move.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.requests.item.put",
         "circulation-storage.requests.item.post",
@@ -1976,15 +1955,14 @@
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "calendar.endpoint.dates.get",
-        "pubsub.publish.post",
         "circulation-storage.loans-history.collection.get"
       ],
       "visible": false
     },
     {
       "permissionName": "modperms.circulation.check-out-by-barcode.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
@@ -2025,7 +2003,6 @@
         "overdue-fines-policies.collection.get",
         "lost-item-fees-policies.item.get",
         "lost-item-fees-policies.collection.get",
-        "pubsub.publish.post",
         "checkout-lock-storage.checkout-locks.item.post",
         "checkout-lock-storage.checkout-locks.item.delete",
         "mod-settings.entries.collection.get",
@@ -2042,8 +2019,8 @@
     },
     {
       "permissionName": "modperms.circulation.check-out-by-barcode-dry-run.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.post",
         "circulation-storage.loans.item.get",
@@ -2089,8 +2066,8 @@
     },
     {
       "permissionName": "modperms.circulation.check-in-by-barcode.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -2134,7 +2111,6 @@
         "accounts.item.put",
         "accounts.collection.get",
         "accounts.item.post",
-        "pubsub.publish.post",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
@@ -2160,8 +2136,8 @@
     },
     {
       "permissionName": "circulation.renew-loan.all",
-      "displayName" : "Renew a loan",
-      "description" : "Permissions needed to renew a loan",
+      "displayName": "Renew a loan",
+      "description": "Permissions needed to renew a loan",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -2205,7 +2181,6 @@
         "accounts.item.post",
         "feesfines.accounts.cancel.post",
         "feesfines.accounts-bulk.cancel.post",
-        "pubsub.publish.post",
         "patron-blocks.automated-patron-blocks.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "overdue-fines-policies.item.get",
@@ -2218,12 +2193,14 @@
         "circulation-storage.loans-history.collection.get"
       ],
       "visible": false,
-      "replaces": ["circulation.renew-loan"]
+      "replaces": [
+        "circulation.renew-loan"
+      ]
     },
     {
       "permissionName": "circulation.usage-at-location.all",
-      "displayName" : "Put item on hold or pick it up for use at location",
-      "description" : "Permissions needed to take an item on or off hold shelf for use at location",
+      "displayName": "Put item on hold or pick it up for use at location",
+      "description": "Permissions needed to take an item on or off hold shelf for use at location",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -2232,15 +2209,14 @@
         "circulation-storage.loan-policies.collection.get",
         "circulation.internal.fetch-items.collection.get",
         "users.item.get",
-        "users.collection.get",
-        "pubsub.publish.post"
+        "users.collection.get"
       ],
       "visible": false
     },
     {
       "permissionName": "perms.circulation.loans.anonymize.all",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.put",
         "circulation-storage.loans.item.get",
@@ -2268,16 +2244,17 @@
         "patron-notice.post",
         "anonymize-storage-loans.post",
         "feefineactions.collection.get",
-        "pubsub.publish.post",
         "circulation-storage.loans-history.collection.get"
       ],
       "visible": false,
-      "replaces": ["modperms.circulation.loans.anonymize"]
+      "replaces": [
+        "modperms.circulation.loans.anonymize"
+      ]
     },
     {
       "permissionName": "modperms.circulation.loans.item.post",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.post",
         "circulation-storage.loans.item.get",
@@ -2299,15 +2276,14 @@
         "circulation.internal.fetch-items.collection.get",
         "users.item.get",
         "addresstypes.collection.get",
-        "proxiesfor.collection.get",
-        "pubsub.publish.post"
+        "proxiesfor.collection.get"
       ],
       "visible": false
     },
     {
       "permissionName": "modperms.circulation.loans.collection.get",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.collection.get",
         "circulation-storage.loan-policies.item.get",
@@ -2328,8 +2304,8 @@
     },
     {
       "permissionName": "modperms.circulation.loans.item.get",
-      "displayName" : "module permissions for one op",
-      "description" : "to reduce X-Okapi-Token size",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
       "subPermissions": [
         "circulation-storage.loans.item.get",
         "circulation-storage.loan-policies.item.get",
@@ -2361,8 +2337,7 @@
         "inventory-storage.items.item.get",
         "inventory-storage.holdings-records.item.get",
         "inventory-storage.instances.item.get",
-        "service-points.item.get",
-        "pubsub.publish.post"
+        "service-points.item.get"
       ],
       "visible": false
     },
@@ -2434,7 +2409,6 @@
         "mod-settings.global.read.circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "manualblocks.collection.get",
-        "pubsub.publish.post",
         "patron-blocks.automated-patron-blocks.collection.get",
         "circulation-storage.loans-history.collection.get",
         "overdue-fines-policies.item.get",
@@ -2522,7 +2496,6 @@
         "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "pubsub.publish.post",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get",
         "circulation-storage.loans-history.collection.get"
@@ -2565,7 +2538,6 @@
         "addresstypes.collection.get",
         "usergroups.collection.get",
         "usergroups.item.get",
-        "pubsub.publish.post",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "locale.item.get",
@@ -2610,7 +2582,6 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get",
-        "pubsub.publish.post",
         "circulation-storage.fixed-due-date-schedules.collection.get",
         "circulation-storage.loans-history.collection.get"
       ],
@@ -2634,7 +2605,6 @@
         "usergroups.collection.get",
         "usergroups.item.get",
         "feefineactions.item.post",
-        "pubsub.publish.post",
         "note.types.collection.get",
         "notes.item.post",
         "actual-cost-record-storage.actual-cost-records.item.post",
@@ -2661,7 +2631,6 @@
         "scheduled-notice-storage.scheduled-notices.item.post",
         "users.item.get",
         "addresstypes.collection.get",
-        "pubsub.publish.post",
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "circulation.settings.item.get",
@@ -2678,8 +2647,7 @@
         "circulation-storage.loans.item.put",
         "circulation.internal.fetch-items.collection.get",
         "users.item.get",
-        "addresstypes.collection.get",
-        "pubsub.publish.post"
+        "addresstypes.collection.get"
       ],
       "visible": false
     },
@@ -2696,11 +2664,12 @@
         "addresstypes.collection.get",
         "notes.collection.get",
         "notes.item.post",
-        "note.types.collection.get",
-        "pubsub.publish.post"
+        "note.types.collection.get"
       ],
       "visible": false,
-      "replaces": ["modperms.circulation.loans.claim-item-returned.post"]
+      "replaces": [
+        "modperms.circulation.loans.claim-item-returned.post"
+      ]
     },
     {
       "permissionName": "modperms.circulation.loans.declare-claimed-returned-item-as-missing.post",
@@ -2714,8 +2683,7 @@
         "users.item.get",
         "addresstypes.collection.get",
         "notes.item.post",
-        "note.types.collection.get",
-        "pubsub.publish.post"
+        "note.types.collection.get"
       ],
       "visible": false
     },
@@ -2746,7 +2714,6 @@
         "addresstypes.collection.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "pubsub.publish.post",
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "overdue-fines-policies.item.get",
@@ -2812,8 +2779,8 @@
     },
     {
       "permissionName": "circulation.internal.fetch-items.collection.get",
-      "displayName" : "Fetch item(s)",
-      "description" : "Internal permission set for fetching item(s)",
+      "displayName": "Fetch item(s)",
+      "description": "Internal permission set for fetching item(s)",
       "subPermissions": [
         "inventory-storage.items.item.get",
         "circulation-item.collection.get",
@@ -2841,12 +2808,14 @@
         "inventory-storage.identifier-types.collection.get"
       ],
       "visible": false,
-      "replaces": ["circulation.internal.fetch-items"]
+      "replaces": [
+        "circulation.internal.fetch-items"
+      ]
     },
     {
       "permissionName": "circulation.internal.apply-rules.execute",
-      "displayName" : "Apply circulation rules",
-      "description" : "Internal permission set for applying circulation rules",
+      "displayName": "Apply circulation rules",
+      "description": "Internal permission set for applying circulation rules",
       "subPermissions": [
         "circulation.rules.loan-policy.get",
         "circulation-storage.loan-policies.collection.get",
@@ -2859,7 +2828,9 @@
         "circulation-storage.patron-notice-policies.collection.get"
       ],
       "visible": false,
-      "replaces": ["circulation.internal.apply-rules"]
+      "replaces": [
+        "circulation.internal.apply-rules"
+      ]
     }
   ],
   "launchDescriptor": {
@@ -2868,11 +2839,18 @@
     "dockerArgs": {
       "HostConfig": {
         "Memory": 1073741824,
-        "PortBindings": { "9801/tcp": [ { "HostPort": "%p" } ] }
+        "PortBindings": {
+          "9801/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
+        }
       }
     },
     "env": [
-      { "name": "JAVA_OPTIONS",
+      {
+        "name": "JAVA_OPTIONS",
         "value": "-XX:MaxRAMPercentage=66.0"
       },
       {
@@ -2906,4 +2884,3 @@
     ]
   }
 }
-
