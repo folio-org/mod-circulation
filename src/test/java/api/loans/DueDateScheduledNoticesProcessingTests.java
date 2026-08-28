@@ -49,7 +49,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -195,7 +195,7 @@ class DueDateScheduledNoticesProcessingTests extends APITests {
     checkInFixture.checkInByBarcode(item);
     //Clear sent notices again
     FakeModNotify.clearSentPatronNotices();
-    FakePubSub.clearPublishedEvents();
+    KafkaPublishedEvents.clearPublishedEvents();
 
     //Run after loan is closed
     scheduledNoticeProcessingClient.runLoanNoticesProcessing(

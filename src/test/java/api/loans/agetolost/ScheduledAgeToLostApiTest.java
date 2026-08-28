@@ -1,7 +1,6 @@
 package api.loans.agetolost;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
-import static api.support.fakes.FakePubSub.getPublishedEvents;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.EventMatchers.isValidItemAgedToLostEvent;
@@ -37,8 +36,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import api.support.KafkaEventAssertions;
+import api.support.KafkaPublishedEvents;
 import api.support.MultipleJsonRecords;
-import api.support.PubsubPublisherTestUtils;
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.http.IndividualResource;
@@ -187,7 +187,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
       .collect(Collectors.toList());
 
     assertThat(agedToLostActions, iterableWithSize(1));
-    agedToLostActions.forEach(PubsubPublisherTestUtils::assertThatPublishedLoanLogRecordEventsAreValid);
+    agedToLostActions.forEach(KafkaEventAssertions::assertThatPublishedLoanLogRecordEventsAreValid);
   }
 
   private ZonedDateTime getLoanOverdueDate() {
@@ -265,7 +265,7 @@ class ScheduledAgeToLostApiTest extends SpringApiTest {
   private static void assertThatItemAgedToLostEventsWerePublished(
     Collection<IndividualResource> loans) {
 
-    List<JsonObject> itemAgedToLostEvents = getPublishedEvents()
+    List<JsonObject> itemAgedToLostEvents = KafkaPublishedEvents.getPublishedEvents()
       .filterToList(byEventType(ITEM_AGED_TO_LOST));
 
     assertThat(itemAgedToLostEvents, hasSize(loans.size()));

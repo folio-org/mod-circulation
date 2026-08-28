@@ -67,7 +67,7 @@ import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -787,7 +787,7 @@ class RequestsAPIUpdatingTests extends APITests {
     // and one log events for loans
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(9));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(9));
 
     final var requestCreatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_CREATED.value()));
     final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));
@@ -854,7 +854,7 @@ class RequestsAPIUpdatingTests extends APITests {
 
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(2));
 
     final var requestUpdatedLogEvent = publishedEvents.findFirst(byLogEventType(REQUEST_UPDATED.value()));
     var resultStr = requestUpdatedLogEvent.getString("eventPayload");

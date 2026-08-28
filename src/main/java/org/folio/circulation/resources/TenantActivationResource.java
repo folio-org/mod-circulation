@@ -5,6 +5,7 @@ import static org.folio.circulation.support.http.server.NoContentResponse.noCont
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.circulation.services.events.KafkaService;
@@ -23,9 +24,17 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class TenantActivationResource extends Resource {
+  private final Function<Vertx, KafkaService> kafkaServiceFactory;
 
   public TenantActivationResource(HttpClient client) {
+    this(client, KafkaService::new);
+  }
+
+  TenantActivationResource(HttpClient client,
+    Function<Vertx, KafkaService> kafkaServiceFactory) {
+
     super(client);
+    this.kafkaServiceFactory = kafkaServiceFactory;
   }
 
   public void register(Router router) {
@@ -50,7 +59,7 @@ public class TenantActivationResource extends Resource {
   private CompletableFuture<Void> createKafkaTopics(WebContext webContext, Vertx  vertx) {
     String tenantId = webContext.getTenantId();
 
-    return new KafkaService(vertx).createCirculationTopics(tenantId);
+    return kafkaServiceFactory.apply(vertx).createCirculationTopics(tenantId);
   }
 
   private void disableModuleForTenant(RoutingContext routingContext) {
@@ -66,7 +75,8 @@ public class TenantActivationResource extends Resource {
     WebContext webContext = new WebContext(routingContext);
 
     return isPurgeRequested(routingContext)
-      ? new KafkaService(routingContext.vertx()).deleteCirculationTopics(webContext.getTenantId())
+      ? kafkaServiceFactory.apply(routingContext.vertx())
+        .deleteCirculationTopics(webContext.getTenantId())
       : CompletableFuture.completedFuture(null);
   }
 

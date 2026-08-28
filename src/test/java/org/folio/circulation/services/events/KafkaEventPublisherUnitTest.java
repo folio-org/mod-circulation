@@ -1,18 +1,23 @@
 package org.folio.circulation.services.events;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_OKAPI_URL;
+import static org.folio.kafka.headers.FolioKafkaHeaders.TENANT_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 import org.folio.kafka.KafkaProducerManager;
 import org.junit.jupiter.api.Test;
@@ -36,7 +41,7 @@ class KafkaEventPublisherUnitTest {
   private KafkaProducer<String, String> producer;
 
   @Test
-  void publishesRawPayloadWithoutDomainEventWrapper() {
+  void publishesRawPayloadWithoutEnvelope() {
     when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
     when(producer.send(any())).thenReturn(Future.succeededFuture());
     when(producer.flush()).thenReturn(Future.succeededFuture());
@@ -47,7 +52,7 @@ class KafkaEventPublisherUnitTest {
       .put("loanId", "loan-1")
       .encode();
     Map<String, String> headers = Map.of(
-      OKAPI_URL, "http://okapi:9130",
+      OKAPI_URL, DEFAULT_OKAPI_URL,
       TENANT, "test",
       TOKEN, "token");
 
@@ -66,9 +71,58 @@ class KafkaEventPublisherUnitTest {
     assertThat(record.key(), is("key-1"));
     assertThat(record.value(), is(payload));
     assertThat(record.value(), not(is(new JsonObject().put("data", new JsonObject(payload)).encode())));
-    assertThat(record.headers().stream()
-      .filter(header -> "folio.tenantId".equals(header.key()))
+    assertThat(tenantIdHeaderValue(record), is("test"));
+  }
+
+  @Test
+  void addsTenantIdHeaderWhenOkapiTenantHeaderIsLowercase() {
+    when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
+    when(producer.send(any())).thenReturn(Future.succeededFuture());
+    when(producer.flush()).thenReturn(Future.succeededFuture());
+    when(producer.close()).thenReturn(Future.succeededFuture());
+
+    String payload = new JsonObject()
+      .put("userId", "user-1")
+      .put("loanId", "loan-1")
+      .encode();
+    Map<String, String> headers = Map.of(
+      OKAPI_URL.toLowerCase(), DEFAULT_OKAPI_URL,
+      TENANT.toLowerCase(), "test",
+      TOKEN.toLowerCase(), "token");
+
+    new KafkaEventPublisher<String>(TOPIC, producerManager)
+      .publish("key-1", payload, headers)
+      .join();
+
+    ArgumentCaptor<KafkaProducerRecord<String, String>> recordCaptor =
+      ArgumentCaptor.forClass(KafkaProducerRecord.class);
+    verify(producer).send(recordCaptor.capture());
+
+    assertThat(tenantIdHeaderValue(recordCaptor.getValue()), is("test"));
+  }
+
+  @Test
+  void failsWhenKafkaSendFails() {
+    var failure = new IllegalStateException("Kafka is unreachable");
+    when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
+    when(producer.send(any())).thenReturn(Future.failedFuture(failure));
+    when(producer.flush()).thenReturn(Future.succeededFuture());
+    when(producer.close()).thenReturn(Future.succeededFuture());
+
+    var error = assertThrows(CompletionException.class, () ->
+      new KafkaEventPublisher<String>(TOPIC, producerManager)
+        .publish("key-1", "{}", Map.of(TENANT, "test"))
+        .join());
+
+    assertThat(error.getCause(), sameInstance(failure));
+    verify(producer).exceptionHandler(any());
+  }
+
+  private static String tenantIdHeaderValue(KafkaProducerRecord<String, String> record) {
+    return record.headers().stream()
+      .filter(header -> TENANT_ID.equals(header.key()))
       .findFirst()
-      .orElse(null), not(nullValue()));
+      .map(header -> header.value().toString(UTF_8))
+      .orElse(null);
   }
 }

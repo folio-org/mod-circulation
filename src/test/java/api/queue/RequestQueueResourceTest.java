@@ -42,7 +42,7 @@ import api.support.APITests;
 import api.support.TlrFeatureStatus;
 import api.support.builders.ReorderQueueBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonArray;
@@ -615,7 +615,7 @@ class RequestQueueResourceTest extends APITests {
     int numberOfPublishedEvents = 16;
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(numberOfPublishedEvents));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(numberOfPublishedEvents));
 
     final var reorderedLogEvents = publishedEvents.filterToList(
       byLogEventType(REQUEST_REORDERED.value()));

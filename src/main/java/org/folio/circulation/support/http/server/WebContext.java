@@ -26,8 +26,7 @@ public class WebContext {
 
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
-    this.headers = normalizeHeaders(routingContext.request().headers().entries().stream()
-      .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b)));
+    this.headers = normalizeHeaders(headersFrom(routingContext));
   }
 
   public WebContext(Map<String, String> headers) {
@@ -127,5 +126,14 @@ public class WebContext {
     return headers.entrySet().stream()
       .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue,
         (a, b) -> b, HashMap::new));
+  }
+
+  private static Map<String, String> headersFrom(RoutingContext routingContext) {
+    var requestHeaders = routingContext.request().headers();
+
+    return requestHeaders == null
+      ? Map.of()
+      : requestHeaders.entries().stream()
+        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b));
   }
 }

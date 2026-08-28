@@ -17,7 +17,7 @@ import api.support.APITests;
 import api.support.builders.AccountBuilder;
 import api.support.builders.FeefineActionsBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.TimedTaskClient;
@@ -38,7 +38,7 @@ abstract public class LoanAnonymizationTests extends APITests {
   @AfterEach
   public void afterEach() {
     mockClockManagerToReturnDefaultDateTime();
-    FakePubSub.clearPublishedEvents();
+    KafkaPublishedEvents.clearPublishedEvents();
   }
 
   LoanAnonymizationAPIResponse anonymizeLoansInTenant() {

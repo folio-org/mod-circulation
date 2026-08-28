@@ -2,8 +2,9 @@ package api.loans;
 
 import static api.requests.RequestsAPICreationTests.setupMissingItem;
 import static api.support.APITestContext.END_OF_CURRENT_YEAR_DUE_DATE;
+import static api.support.APITestContext.TENANT_ID;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.ItemBuilder.AVAILABLE;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.CLAIMED_RETURNED;
@@ -103,6 +104,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.domain.policy.DueDateManagement;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.domain.representations.logs.LogEventType;
@@ -126,7 +128,7 @@ import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.UserBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fakes.FakeStorageModule;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -1588,7 +1590,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(2));
 
     final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT.name()));
 
@@ -1634,7 +1636,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(2));
 
     final var checkedOutEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_OUT));
 
@@ -1662,21 +1664,24 @@ class CheckOutByBarcodeTests extends APITests {
   }
 
   @Test
-  void checkOutShouldNotFailIfEventPublishingFailsWithBadRequestError() {
+  void checkOutShouldNotFailWhenKafkaPublishingFails() throws Exception {
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
+    IndividualResource steve = usersFixture.steve();
+    String topic = CirculationKafkaTopic.ITEM_CHECKED_OUT.fullTopicName(TENANT_ID);
 
-    FakePubSub.setFailPublishingWithBadRequestError(true);
-    // since ITEM_CHECKED_OUT event is published asynchronously it doesn't affect check-out response
-    checkOutFixture.checkOutByBarcode(
-      new CheckOutByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .to(steve)
-        .on(getZonedDateTime())
-        .at(UUID.randomUUID()));
-    FakePubSub.setFailPublishingWithBadRequestError(false);
+    try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
+      checkOutFixture.checkOutByBarcode(
+        new CheckOutByBarcodeRequestBuilder()
+          .forItem(smallAngryPlanet)
+          .to(steve)
+          .on(getZonedDateTime())
+          .at(UUID.randomUUID()));
 
-    assertThat(itemsClient.get(smallAngryPlanet), hasItemStatus(CHECKED_OUT));
+      Awaitility.await()
+        .pollDelay(1, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(itemsClient.get(smallAngryPlanet),
+          hasItemStatus(CHECKED_OUT)));
+    }
   }
 
   @Test
@@ -2058,7 +2063,7 @@ class CheckOutByBarcodeTests extends APITests {
 
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(2));
 
     final var checkOutLogEvent = publishedEvents.findFirst(byLogEventType(LogEventType.CHECK_OUT_THROUGH_OVERRIDE.value()));
 

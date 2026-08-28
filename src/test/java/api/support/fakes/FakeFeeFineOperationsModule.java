@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import lombok.SneakyThrows;
 
 public class FakeFeeFineOperationsModule {
@@ -34,7 +35,9 @@ public class FakeFeeFineOperationsModule {
     router.post("/accounts/:accountId/cancel")
       .handler(validateRequest(validatorForFeeFineCancelOperationSchema()));
     router.post("/accounts/:accountId/cancel").handler(this::cancelAccount);
-    router.post("/actual-cost-fee-fine/cancel").handler(this::cancelActualCostFee);
+    router.post("/actual-cost-fee-fine/cancel")
+      .handler(BodyHandler.create())
+      .handler(this::cancelActualCostFee);
   }
 
   private void refundAccount(RoutingContext context) {

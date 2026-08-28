@@ -90,7 +90,12 @@ public class EventSubscribersFixture {
       OkapiHeader.OKAPI_URL, headers.getUrl().toString(),
       OkapiHeader.TENANT, headers.getTenantId(),
       OkapiHeader.TOKEN, headers.getToken(),
-      OkapiHeader.USER_ID, headers.getUserId()
+      OkapiHeader.USER_ID, headers.getUserId(),
+      OkapiHeader.REQUEST_ID, requestId(headers.getRequestId())
     );
+  }
+
+  private static String requestId(String requestId) {
+    return requestId == null ? UUID.randomUUID().toString() : requestId;
   }
 }

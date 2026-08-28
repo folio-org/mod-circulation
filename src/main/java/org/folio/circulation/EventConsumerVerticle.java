@@ -6,6 +6,7 @@ import static org.folio.Environment.getHttpMaxPoolSize;
 import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_OKAPI_URL;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_ENV;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_HOST;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_MAX_REQUEST_SIZE;
@@ -53,10 +54,9 @@ public class EventConsumerVerticle extends AbstractVerticle {
     "/META-INF/maven/org.folio/mod-circulation/pom.properties";
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
-  private static final String DEFAULT_OKAPI_URL = "http://okapi:9130";
   private static final int DEFAULT_KAFKA_MAX_REQUEST_SIZE = 4000000;
-  private  static final String AUTO_OFFSET_RESET_PROPERTY = "kafka.consumer.auto.offset.reset";
-  private  static final String AUTO_OFFSET_RESET_LATEST = "latest";
+  private static final String AUTO_OFFSET_RESET_PROPERTY = "kafka.consumer.auto.offset.reset";
+  private static final String AUTO_OFFSET_RESET_EARLIEST = "earliest";
 
   private final List<KafkaConsumerWrapper<String, String>> consumers = new ArrayList<>();
   private KafkaConfig kafkaConfig;
@@ -201,13 +201,12 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private static void setSystemProperties() {
-    // This is for CIRCULATION_RULES_UPDATED topic consumers only.
-    // Consider removing this when adding another consumer.
+    // Read existing records when a consumer group has no committed offset.
     String autoOffsetReset = System.getProperty(AUTO_OFFSET_RESET_PROPERTY);
     if (autoOffsetReset == null) {
       log.info("setSystemProperties:: setting system property: {}={}",
-        AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_LATEST);
-      System.setProperty(AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_LATEST);
+        AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_EARLIEST);
+      System.setProperty(AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_EARLIEST);
     } else {
       log.info("setSystemProperties:: system property {} is already set to '{}', doing nothing",
         AUTO_OFFSET_RESET_PROPERTY, autoOffsetReset);

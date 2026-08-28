@@ -9,6 +9,7 @@ import java.util.List;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import lombok.Setter;
 
 public class FakeModNotify {
@@ -20,6 +21,7 @@ public class FakeModNotify {
 
   public static void register(Router router) {
     router.post("/patron-notice")
+      .handler(BodyHandler.create())
       .handler(routingContext -> {
         if (failPatronNoticesWithBadRequest) {
           Buffer buffer = Buffer.buffer(
