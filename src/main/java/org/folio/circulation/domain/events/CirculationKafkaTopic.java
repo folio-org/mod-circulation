@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.events;
 
+import java.util.Optional;
+
 import org.folio.kafka.services.KafkaTopic;
 
 import lombok.AllArgsConstructor;
@@ -38,13 +40,13 @@ public enum CirculationKafkaTopic implements KafkaTopic {
     return partitions;
   }
 
-  public static java.util.Optional<CirculationKafkaTopic> fromEventType(String eventType) {
+  public static Optional<CirculationKafkaTopic> fromEventType(String eventType) {
     for (CirculationKafkaTopic topic : values()) {
       if (topic.topic.equals(eventType)) {
-        return java.util.Optional.of(topic);
+        return Optional.of(topic);
       }
     }
 
-    return java.util.Optional.empty();
+    return Optional.empty();
   }
 }

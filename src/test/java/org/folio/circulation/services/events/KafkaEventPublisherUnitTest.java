@@ -7,6 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +38,7 @@ class KafkaEventPublisherUnitTest {
   @Test
   void publishesRawPayloadWithoutDomainEventWrapper() {
     when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
-    when(producer.send(org.mockito.ArgumentMatchers.any())).thenReturn(Future.succeededFuture());
+    when(producer.send(any())).thenReturn(Future.succeededFuture());
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
 

@@ -13,6 +13,7 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_POR
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_REPLICATION_FACTOR;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL;
 import static org.folio.circulation.support.utils.RandomUtil.generateRandomDigits;
+import static org.folio.kafka.KafkaTopicNameHelper.formatGroupName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -196,7 +197,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   public static String consumerGroupId(EventType eventType) {
-    return org.folio.kafka.KafkaTopicNameHelper.formatGroupName(eventType.name(), REAL_MODULE_ID);
+    return formatGroupName(eventType.name(), REAL_MODULE_ID);
   }
 
   private static void setSystemProperties() {

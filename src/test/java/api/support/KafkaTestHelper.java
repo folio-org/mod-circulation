@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.domain.events.FeeFineKafkaTopic;
 import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
@@ -260,9 +261,9 @@ public class KafkaTestHelper {
     config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
     config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringDeserializer");
+      StringDeserializer.class.getName());
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringDeserializer");
+      StringDeserializer.class.getName());
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 

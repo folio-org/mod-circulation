@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import api.support.builders.NoticeConfigurationBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -96,7 +97,7 @@ class ImmediatePatronNoticeServiceTest {
       .put("id", policyId)
       .put("name", "Test Notice Policy")
       .put("loanNotices", new JsonArray().add(
-        new api.support.builders.NoticeConfigurationBuilder()
+        new NoticeConfigurationBuilder()
           .withTemplateId(UUID.randomUUID())
           .withCheckOutEvent()
           .withEmailFormat()
