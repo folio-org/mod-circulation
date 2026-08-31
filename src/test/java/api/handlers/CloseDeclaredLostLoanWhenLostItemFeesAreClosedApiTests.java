@@ -19,7 +19,6 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.policy.Period;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -226,21 +225,24 @@ class CloseDeclaredLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLo
   }
 
   @Test
-  void shouldIgnoreErrorWhenNoLoanIdSpecifiedInPayload() {
-    final Response response = eventSubscribersFixture
-      .attemptPublishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
+  void shouldConsumeEventWhenNoLoanIdSpecifiedInPayload() {
+    int initialOffset = eventSubscribersFixture.getLoanRelatedFeeFineClosedConsumerOffset();
 
-    assertThat(response.getStatusCode(), is(204));
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(null, UUID.randomUUID());
+
+    assertThat(eventSubscribersFixture.getLoanRelatedFeeFineClosedConsumerOffset(),
+      is(initialOffset + 1));
   }
 
   @Test
-  void shouldIgnoreErrorWhenNonExistentLoanIdProvided() {
+  void shouldConsumeEventWhenNonExistentLoanIdProvided() {
     final UUID loanId = UUID.randomUUID();
-    final Response response = eventSubscribersFixture
-      .attemptPublishLoanRelatedFeeFineClosedEvent(loanId,
-        UUID.randomUUID());
+    int initialOffset = eventSubscribersFixture.getLoanRelatedFeeFineClosedConsumerOffset();
 
-    assertThat(response.getStatusCode(), is(204));
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loanId, UUID.randomUUID());
+
+    assertThat(eventSubscribersFixture.getLoanRelatedFeeFineClosedConsumerOffset(),
+      is(initialOffset + 1));
   }
 
   @Test
