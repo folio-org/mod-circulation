@@ -18,6 +18,8 @@ import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.logging.PatronNoticeLogHelper;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.json.JsonObject;
+
 public abstract class PatronNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -42,7 +44,7 @@ public abstract class PatronNoticeService {
     }
 
     log.debug("sendNotice:: posting notice to patron notice client");
-    return patronNoticeClient.post(patronNotice.toJson())
+    return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))
       .thenApply(r ->  new ResponseInterpreter<Response>().on(200, r).flatMap(r))
       .whenComplete((r, t) -> logResult(patronNotice, noticeLogContext, r, t))
       .thenApply(r -> r.map(ignored -> null));

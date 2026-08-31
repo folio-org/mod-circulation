@@ -58,12 +58,14 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
     log.debug("validate:: event validation complete: {}", event.id());
   }
 
-  private static String invalidEventReason(Exception exception) {
-    if (exception instanceof NullPointerException || isBlank(exception.getMessage())) {
+  static String invalidEventReason(Exception exception) {
+    if (exception instanceof NullPointerException) {
       return "missing required event field";
     }
 
-    return exception.getMessage();
+    return isBlank(exception.getMessage())
+      ? "unspecified validation failure"
+      : exception.getMessage();
   }
 
 }

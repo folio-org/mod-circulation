@@ -33,4 +33,16 @@ class CirculationRulesUpdateEventHandlerTest {
     assertThat(result.succeeded(), is(true));
     assertThat(result.result(), is("event-key"));
   }
+
+  @Test
+  void identifiesMissingRequiredEventField() {
+    assertThat(CirculationRulesUpdateEventHandler.invalidEventReason(
+      new NullPointerException()), is("missing required event field"));
+  }
+
+  @Test
+  void doesNotTreatBlankExceptionMessageAsMissingEventField() {
+    assertThat(CirculationRulesUpdateEventHandler.invalidEventReason(
+      new IllegalStateException()), is("unspecified validation failure"));
+  }
 }
