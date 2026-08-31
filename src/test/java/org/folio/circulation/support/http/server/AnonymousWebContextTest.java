@@ -11,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.ext.web.RoutingContext;
@@ -20,11 +22,17 @@ class AnonymousWebContextTest {
   @Mock
   private RoutingContext routingContext;
   @Mock
+  private Vertx vertx;
+  @Mock
+  private Context vertxContext;
+  @Mock
   private HttpServerRequest request;
 
   @BeforeEach
   public void mockRoutingContext() {
     when(routingContext.request()).thenReturn(request);
+    when(routingContext.vertx()).thenReturn(vertx);
+    when(vertx.getOrCreateContext()).thenReturn(vertxContext);
   }
 
   @Test

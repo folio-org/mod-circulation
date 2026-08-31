@@ -6,6 +6,7 @@ import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,12 +18,14 @@ import java.util.concurrent.CompletionException;
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.services.events.KafkaEventPublisher;
 import org.folio.circulation.services.events.KafkaService;
+import org.folio.circulation.support.http.server.WebContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 
 @ExtendWith(MockitoExtension.class)
 class KafkaEventPublishingServiceTest {
@@ -33,9 +36,22 @@ class KafkaEventPublishingServiceTest {
   @Mock
   private Context vertxContext;
   @Mock
+  private Vertx vertx;
+  @Mock
+  private WebContext webContext;
+  @Mock
   private KafkaService kafkaService;
   @Mock
   private KafkaEventPublisher<String> publisher;
+
+  @Test
+  void createsServiceUsingContextFromWebContext() {
+    when(webContext.getHeaders()).thenReturn(OKAPI_HEADERS);
+    when(webContext.getVertxContext()).thenReturn(vertxContext);
+    when(vertxContext.owner()).thenReturn(vertx);
+
+    assertDoesNotThrow(() -> new KafkaEventPublishingService(webContext));
+  }
 
   @Test
   void failsWhenKafkaPublisherFails() {

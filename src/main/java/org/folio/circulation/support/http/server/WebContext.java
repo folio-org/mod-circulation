@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.server;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
@@ -17,21 +18,27 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.Context;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
 
 public class WebContext {
   private final RoutingContext routingContext;
   private final Map<String, String> headers;
+  private final Context vertxContext;
 
+  /** Creates a context for an HTTP request using its routing and Vert.x contexts. */
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
     this.headers = normalizeHeaders(headersFrom(routingContext));
+    this.vertxContext = routingContext.vertx().getOrCreateContext();
   }
 
-  public WebContext(Map<String, String> headers) {
+  /** Creates a context for a Kafka event, which has headers but no HTTP routing context. */
+  public WebContext(Map<String, String> headers, Context vertxContext) {
     this.routingContext = null;
     this.headers = normalizeHeaders(headers);
+    this.vertxContext = requireNonNull(vertxContext, "Vert.x context is required");
   }
 
   public String getTenantId() {
@@ -120,6 +127,10 @@ public class WebContext {
 
   public Map<String, String> getHeaders() {
     return headers;
+  }
+
+  public Context getVertxContext() {
+    return vertxContext;
   }
 
   private static Map<String, String> normalizeHeaders(Map<String, String> headers) {

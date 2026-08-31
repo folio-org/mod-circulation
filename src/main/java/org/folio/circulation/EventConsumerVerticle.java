@@ -111,10 +111,12 @@ public class EventConsumerVerticle extends AbstractVerticle {
       createConsumer(CIRCULATION_RULES_UPDATED, new CirculationRulesUpdateEventHandler(),
         buildUniqueModuleId()), // puts consumers into separate groups so that they all receive the same event
       createConsumer(LOAN_RELATED_FEE_FINE_CLOSED, FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED,
-        new LoanRelatedFeeFineClosedKafkaEventHandler(httpClient, kafkaConfig.getOkapiUrl()),
+        new LoanRelatedFeeFineClosedKafkaEventHandler(context, httpClient,
+          kafkaConfig.getOkapiUrl()),
         REAL_MODULE_ID),
       createConsumer(FEE_FINE_BALANCE_CHANGED, FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED,
-        new FeeFineBalanceChangedKafkaEventHandler(httpClient, kafkaConfig.getOkapiUrl()),
+        new FeeFineBalanceChangedKafkaEventHandler(context, httpClient,
+          kafkaConfig.getOkapiUrl()),
         REAL_MODULE_ID)
     )).mapEmpty();
   }

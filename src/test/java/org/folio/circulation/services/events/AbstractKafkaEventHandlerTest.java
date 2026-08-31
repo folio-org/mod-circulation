@@ -26,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
@@ -34,6 +35,8 @@ import io.vertx.kafka.client.producer.KafkaHeader;
 
 @ExtendWith(MockitoExtension.class)
 class AbstractKafkaEventHandlerTest {
+  @Mock
+  private Context vertxContext;
   @Mock
   private HttpClient client;
   @Mock
@@ -45,7 +48,7 @@ class AbstractKafkaEventHandlerTest {
 
   @BeforeEach
   void setUp() {
-    handler = new AbstractKafkaEventHandler(client, DEFAULT_OKAPI_URL,
+    handler = new AbstractKafkaEventHandler(vertxContext, client, DEFAULT_OKAPI_URL,
       FEE_FINE_BALANCE_CHANGED, processor) {};
     when(consumerRecord.key()).thenReturn("event-key");
     when(consumerRecord.value()).thenReturn(new JsonObject().put("id", "event-id").encode());
@@ -67,6 +70,7 @@ class AbstractKafkaEventHandlerTest {
     assertThat(payloadCaptor.getValue().getString("id"), equalTo("event-id"));
     assertThat(contextCaptor.getValue().getTenantId(), equalTo("tenant-id"));
     assertThat(contextCaptor.getValue().getOkapiLocation(), equalTo(DEFAULT_OKAPI_URL));
+    assertThat(contextCaptor.getValue().getVertxContext(), is(vertxContext));
   }
 
   @Test

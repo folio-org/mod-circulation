@@ -14,7 +14,6 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.Context;
-import io.vertx.core.Vertx;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -25,7 +24,7 @@ public class KafkaEventPublishingService implements EventPublishingService {
   private final KafkaService kafkaService;
 
   public KafkaEventPublishingService(WebContext context) {
-    this(context.getHeaders(), Vertx.currentContext());
+    this(context.getHeaders(), context.getVertxContext());
   }
 
   KafkaEventPublishingService(Map<String, String> okapiHeaders, Context vertxContext) {
