@@ -5,7 +5,9 @@ import java.lang.invoke.MethodHandles;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.HttpStatus.HTTP_OK;
+import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
@@ -34,6 +36,11 @@ public abstract class PatronNoticeService {
     log.info("sendNotice:: sending notice to recipient {}, template {}",
       patronNotice != null ? patronNotice.getRecipientId() : "null",
       patronNotice != null && patronNotice.getTemplateId() != null ? patronNotice.getTemplateId() : "null");
+
+    if (patronNotice == null) {
+      log.debug("sendNotice:: patron notice is null");
+      return completedFuture(succeeded(null));
+    }
 
     log.debug("sendNotice:: posting notice to patron notice client");
     return patronNoticeClient.post(patronNotice.toJson())
