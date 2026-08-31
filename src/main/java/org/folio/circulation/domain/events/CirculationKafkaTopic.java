@@ -2,7 +2,7 @@ package org.folio.circulation.domain.events;
 
 import java.util.Optional;
 
-public enum CirculationKafkaTopic implements EnumKafkaTopic {
+public enum CirculationKafkaTopic implements KafkaTopicDefinition {
   ITEM_CHECKED_OUT,
   ITEM_CHECKED_IN,
   ITEM_DECLARED_LOST,

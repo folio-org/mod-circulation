@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
-class EnumKafkaTopicTest {
+class KafkaTopicDefinitionTest {
 
   @Test
   void circulationTopicsHaveExpectedConfiguration() {
@@ -16,7 +16,7 @@ class EnumKafkaTopicTest {
 
   @Test
   void circulationStorageTopicHasExpectedConfiguration() {
-    EnumKafkaTopic topic = CirculationStorageKafkaTopic.CIRCULATION_RULES;
+    KafkaTopicDefinition topic = CirculationStorageKafkaTopic.CIRCULATION_RULES;
 
     assertConfiguration(topic, "circulation", "rules");
   }
@@ -27,11 +27,11 @@ class EnumKafkaTopicTest {
       .forEach(topic -> assertConfiguration(topic, "feesfines", topic.name()));
   }
 
-  private void assertConfiguration(EnumKafkaTopic topic, String moduleName,
+  private void assertConfiguration(KafkaTopicDefinition topic, String moduleName,
     String topicName) {
 
     assertEquals(moduleName, topic.moduleName());
     assertEquals(topicName, topic.topicName());
-    assertEquals(EnumKafkaTopic.DEFAULT_NUM_PARTITIONS, topic.numPartitions());
+    assertEquals(KafkaTopicDefinition.DEFAULT_NUM_PARTITIONS, topic.numPartitions());
   }
 }
