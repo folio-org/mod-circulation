@@ -26,8 +26,9 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class LoanRelatedFeeFineClosedEventProcessor {
+public class LoanRelatedFeeFineClosedEventProcessor implements KafkaEventProcessor {
 
+  @Override
   public CompletableFuture<Result<Void>> process(JsonObject eventPayload,
     WebContext context, HttpClient client) {
 

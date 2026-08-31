@@ -1,18 +1,7 @@
 package org.folio.circulation.domain.events;
 
-import org.folio.kafka.services.KafkaTopic;
-
-import lombok.AllArgsConstructor;
-import lombok.ToString;
-
-@AllArgsConstructor
-@ToString(onlyExplicitlyIncluded = true)
-public enum CirculationStorageKafkaTopic implements KafkaTopic {
-  CIRCULATION_RULES("rules", 10);
-
-  @ToString.Include
-  private final String topic;
-  private final int partitions;
+public enum CirculationStorageKafkaTopic implements EnumKafkaTopic {
+  CIRCULATION_RULES;
 
   @Override
   public String moduleName() {
@@ -21,12 +10,6 @@ public enum CirculationStorageKafkaTopic implements KafkaTopic {
 
   @Override
   public String topicName() {
-    return topic;
-  }
-
-  @Override
-  public int numPartitions() {
-    return partitions;
+    return "rules";
   }
 }
-

@@ -20,9 +20,10 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class FeeFineBalanceChangedEventProcessor {
+public class FeeFineBalanceChangedEventProcessor implements KafkaEventProcessor {
   private static final String ACTUAL_COST_FEE_FINE_TYPE_ID = "73785370-d3bd-4d92-942d-ae2268e02ded";
 
+  @Override
   public CompletableFuture<Result<Void>> process(JsonObject eventPayload,
     WebContext context, HttpClient client) {
 

@@ -1,43 +1,13 @@
 package org.folio.circulation.services.events;
 
-import static io.vertx.core.Future.failedFuture;
-import static io.vertx.core.Future.succeededFuture;
-import static org.folio.circulation.services.events.KafkaRecordHeaders.okapiHeaders;
+import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 
-import org.folio.circulation.support.http.server.WebContext;
-import org.folio.kafka.AsyncRecordHandler;
-
-import io.vertx.core.Future;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 
-@Log4j2
-@RequiredArgsConstructor
-public class FeeFineBalanceChangedKafkaEventHandler implements AsyncRecordHandler<String, String> {
-  private final HttpClient client;
-  private final String defaultOkapiUrl;
-  private final FeeFineBalanceChangedEventProcessor processor =
-    new FeeFineBalanceChangedEventProcessor();
+public class FeeFineBalanceChangedKafkaEventHandler extends AbstractKafkaEventHandler {
 
-  @Override
-  public Future<String> handle(KafkaConsumerRecord<String, String> consumerRecord) {
-    try {
-      String eventKey = consumerRecord.key();
-      log.info("handle:: fee/fine balance changed event received: key={}", eventKey);
-      log.debug("handle:: value={}", consumerRecord.value());
-
-      WebContext context = new WebContext(okapiHeaders(consumerRecord, defaultOkapiUrl));
-      return Future.fromCompletionStage(processor.process(new JsonObject(consumerRecord.value()),
-          context, client))
-        .compose(result -> result.succeeded()
-          ? succeededFuture(eventKey)
-          : failedFuture(result.cause().toString()));
-    } catch (Exception e) {
-      log.error("handle:: failed to process fee/fine balance changed event", e);
-      return failedFuture(e);
-    }
+  public FeeFineBalanceChangedKafkaEventHandler(HttpClient client, String defaultOkapiUrl) {
+    super(client, defaultOkapiUrl, FEE_FINE_BALANCE_CHANGED,
+      new FeeFineBalanceChangedEventProcessor());
   }
 }
