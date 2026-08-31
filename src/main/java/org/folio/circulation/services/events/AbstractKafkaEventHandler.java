@@ -35,7 +35,6 @@ abstract class AbstractKafkaEventHandler implements AsyncRecordHandler<String, S
     try {
       String eventKey = consumerRecord.key();
       log.info("handle:: {} event received: key={}", eventType, eventKey);
-      log.debug("handle:: value={}", consumerRecord.value());
 
       WebContext context = new WebContext(okapiHeaders(consumerRecord, defaultOkapiUrl));
       return Future.fromCompletionStage(processor.process(new JsonObject(consumerRecord.value()),

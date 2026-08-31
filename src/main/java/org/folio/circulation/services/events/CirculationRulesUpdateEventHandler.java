@@ -26,7 +26,6 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
     try {
       final String eventValue = consumerRecord.value();
       log.info("handle:: event received: key={}", eventKey);
-      log.debug("handle:: value={}", eventValue);
 
       event = toEntityChangedEvent(eventValue);
       if (event.payloadType() != UPDATED) {
@@ -54,7 +53,7 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
   private static void validate(DomainEvent<EntityChangedEventData> event) {
     log.info("validate:: validating event: {}", event.id());
     if (isBlank(event.data().newVersion().getString("rulesAsText"))) {
-      throw new IllegalArgumentException("Event does not contain new circulation rules: " + event);
+      throw new IllegalArgumentException("Event does not contain new circulation rules");
     }
     log.debug("validate:: event validation complete: {}", event.id());
   }

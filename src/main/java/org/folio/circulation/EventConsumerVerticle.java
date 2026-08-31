@@ -145,7 +145,9 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .loadLimit(DEFAULT_LOAD_LIMIT)
       .globalLoadSensor(new GlobalLoadSensor())
       .subscriptionDefinition(buildSubscriptionDefinition(eventType, kafkaTopic))
-      .processRecordErrorHandler((t, r) -> log.error("Failed to process event: {}", r, t))
+      .processRecordErrorHandler((t, r) -> log.error(
+        "Failed to process {} event: topic={}, partition={}, offset={}",
+        eventType, r.topic(), r.partition(), r.offset(), t))
       .build();
 
     return consumer.start(handler, moduleId)
