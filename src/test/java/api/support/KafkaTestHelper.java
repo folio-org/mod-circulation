@@ -260,7 +260,8 @@ public class KafkaTestHelper {
     }
 
     String topicPattern = environment() + "\\." + tenantId + "\\.circulation\\..+";
-    circulationEventRecorder = createConsumer("circulation-event-recorder-" + UUID.randomUUID());
+    circulationEventRecorder = createConsumer(
+      "circulation-event-recorder-" + UUID.randomUUID(), true);
     circulationEventRecorder.handler(record -> KafkaPublishedEvents.recordPublishedEvent(
       getEventTypeFromTopicName(record.topic()), record.value()));
     waitFor(circulationEventRecorder.subscribe(Pattern.compile(topicPattern)));
@@ -275,6 +276,12 @@ public class KafkaTestHelper {
   }
 
   public KafkaConsumer<String, String> createConsumer(String consumerGroupId) {
+    return createConsumer(consumerGroupId, false);
+  }
+
+  private KafkaConsumer<String, String> createConsumer(String consumerGroupId,
+    boolean enableAutoCommit) {
+
     Properties config = new Properties();
     config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
     config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
@@ -283,7 +290,7 @@ public class KafkaTestHelper {
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
       StringDeserializer.class.getName());
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, Boolean.toString(enableAutoCommit));
 
     return KafkaConsumer.create(vertx, config);
   }
