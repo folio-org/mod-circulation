@@ -35,8 +35,7 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
 
       validate(event);
     } catch (Exception e) {
-      log.warn("handle:: invalid circulation rules update event skipped: key={}, reason={}",
-        eventKey, invalidEventReason(e));
+      log.warn("handle:: invalid circulation rules update event skipped: key={}", eventKey, e);
       return succeededFuture(eventKey);
     }
 
@@ -56,16 +55,6 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
       throw new IllegalArgumentException("Event does not contain new circulation rules");
     }
     log.debug("validate:: event validation complete: {}", event.id());
-  }
-
-  static String invalidEventReason(Exception exception) {
-    if (exception instanceof NullPointerException) {
-      return "missing required event field";
-    }
-
-    return isBlank(exception.getMessage())
-      ? "unspecified validation failure"
-      : exception.getMessage();
   }
 
 }
