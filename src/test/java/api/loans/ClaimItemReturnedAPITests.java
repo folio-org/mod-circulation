@@ -71,11 +71,13 @@ class ClaimItemReturnedAPITests extends APITests {
     String topic = CirculationKafkaTopic.ITEM_CLAIMED_RETURNED.fullTopicName(TENANT_ID);
 
     try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
-      claimItemReturnedFixture.attemptClaimItemReturned(500,
+      Response response = claimItemReturnedFixture.attemptClaimItemReturned(500,
         new ClaimItemReturnedRequestBuilder()
           .forLoan(loanId)
           .withItemClaimedReturnedDate(getZonedDateTime())
           .withComment("testing"));
+
+      assertThat(response.getStatusCode(), is(500));
     }
   }
 

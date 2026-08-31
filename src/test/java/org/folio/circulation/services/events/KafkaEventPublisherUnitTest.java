@@ -11,7 +11,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,7 +41,7 @@ class KafkaEventPublisherUnitTest {
 
   @Test
   void publishesRawPayloadWithoutEnvelope() {
-    when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
+    when(producerManager.<String, String>createShared(TOPIC)).thenReturn(producer);
     when(producer.send(any())).thenReturn(Future.succeededFuture());
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
@@ -66,17 +65,18 @@ class KafkaEventPublisherUnitTest {
       ArgumentCaptor.forClass(KafkaProducerRecord.class);
     verify(producer).send(recordCaptor.capture());
 
-    KafkaProducerRecord<String, String> record = recordCaptor.getValue();
-    assertThat(record.topic(), is(TOPIC));
-    assertThat(record.key(), is("key-1"));
-    assertThat(record.value(), is(payload));
-    assertThat(record.value(), not(is(new JsonObject().put("data", new JsonObject(payload)).encode())));
-    assertThat(tenantIdHeaderValue(record), is("test"));
+    KafkaProducerRecord<String, String> producerRecord = recordCaptor.getValue();
+    assertThat(producerRecord.topic(), is(TOPIC));
+    assertThat(producerRecord.key(), is("key-1"));
+    assertThat(producerRecord.value(), is(payload));
+    assertThat(producerRecord.value(),
+      not(is(new JsonObject().put("data", new JsonObject(payload)).encode())));
+    assertThat(tenantIdHeaderValue(producerRecord), is("test"));
   }
 
   @Test
   void addsTenantIdHeaderWhenOkapiTenantHeaderIsLowercase() {
-    when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
+    when(producerManager.<String, String>createShared(TOPIC)).thenReturn(producer);
     when(producer.send(any())).thenReturn(Future.succeededFuture());
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
@@ -104,22 +104,21 @@ class KafkaEventPublisherUnitTest {
   @Test
   void failsWhenKafkaSendFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
-    when(producerManager.<String, String>createShared(eq(TOPIC))).thenReturn(producer);
+    when(producerManager.<String, String>createShared(TOPIC)).thenReturn(producer);
     when(producer.send(any())).thenReturn(Future.failedFuture(failure));
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
 
-    var error = assertThrows(CompletionException.class, () ->
-      new KafkaEventPublisher<String>(TOPIC, producerManager)
-        .publish("key-1", "{}", Map.of(TENANT, "test"))
-        .join());
+    var publishFuture = new KafkaEventPublisher<String>(TOPIC, producerManager)
+      .publish("key-1", "{}", Map.of(TENANT, "test"));
+    var error = assertThrows(CompletionException.class, publishFuture::join);
 
     assertThat(error.getCause(), sameInstance(failure));
     verify(producer).exceptionHandler(any());
   }
 
-  private static String tenantIdHeaderValue(KafkaProducerRecord<String, String> record) {
-    return record.headers().stream()
+  private static String tenantIdHeaderValue(KafkaProducerRecord<String, String> producerRecord) {
+    return producerRecord.headers().stream()
       .filter(header -> TENANT_ID.equals(header.key()))
       .findFirst()
       .map(header -> header.value().toString(UTF_8))

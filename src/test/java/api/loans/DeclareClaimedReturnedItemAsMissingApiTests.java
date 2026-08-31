@@ -69,10 +69,12 @@ class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
 
     String topic = CirculationKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
     try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
-      claimItemReturnedFixture.attemptDeclareClaimedReturnedItemAsMissing(500,
+      Response response = claimItemReturnedFixture.attemptDeclareClaimedReturnedItemAsMissing(500,
         new DeclareClaimedReturnedItemAsMissingRequestBuilder()
           .forLoan(loanId)
           .withComment(TESTING_COMMENT));
+
+      assertThat(response.getStatusCode(), is(500));
     }
   }
 

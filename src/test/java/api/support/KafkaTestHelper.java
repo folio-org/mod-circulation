@@ -262,8 +262,8 @@ public class KafkaTestHelper {
     String topicPattern = environment() + "\\." + tenantId + "\\.circulation\\..+";
     circulationEventRecorder = createConsumer(
       "circulation-event-recorder-" + UUID.randomUUID(), true);
-    circulationEventRecorder.handler(record -> KafkaPublishedEvents.recordPublishedEvent(
-      getEventTypeFromTopicName(record.topic()), record.value()));
+    circulationEventRecorder.handler(consumerRecord -> KafkaPublishedEvents.recordPublishedEvent(
+      getEventTypeFromTopicName(consumerRecord.topic()), consumerRecord.value()));
     waitFor(circulationEventRecorder.subscribe(Pattern.compile(topicPattern)));
   }
 

@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.services.events.KafkaService;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
@@ -52,9 +53,13 @@ public class KafkaEventPublishingService implements EventPublishingService {
     return fromEventType(eventType)
       .map(topic -> kafkaService.createPublisher(topic, vertxContext, tenantId)
         .publish(randomUUID().toString(), payload, okapiHeaders)
-        .thenApply(result -> result.succeeded()))
+        .thenApply(KafkaEventPublishingService::resultSucceeded))
       .orElseGet(() -> failedFuture(new IllegalArgumentException(
         "Unsupported circulation Kafka event type: " + eventType)));
+  }
+
+  private static boolean resultSucceeded(Result<?> result) {
+    return result.succeeded();
   }
 
   private static String tenantIdFrom(Map<String, String> okapiHeaders) {

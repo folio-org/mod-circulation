@@ -46,9 +46,9 @@ class KafkaEventPublishingServiceTest {
       .thenReturn(failedFuture(failure));
 
     var service = new KafkaEventPublishingService(OKAPI_HEADERS, vertxContext, kafkaService);
+    var publishFuture = service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD);
 
-    var error = assertThrows(CompletionException.class,
-      () -> service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD).join());
+    var error = assertThrows(CompletionException.class, publishFuture::join);
 
     assertThat(error.getCause(), instanceOf(IllegalStateException.class));
     assertThat(error.getCause(), sameInstance(failure));
