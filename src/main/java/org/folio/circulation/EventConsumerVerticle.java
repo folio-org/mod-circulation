@@ -16,6 +16,8 @@ import static org.folio.circulation.support.kafka.KafkaConfigConstants.OKAPI_URL
 import static org.folio.circulation.support.utils.RandomUtil.generateRandomDigits;
 import static org.folio.kafka.KafkaTopicNameHelper.formatGroupName;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -50,8 +52,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   public static final String MODULE_NAME = "mod-circulation";
   public static final String REAL_MODULE_ID = String.format("%s-%s",
     MODULE_NAME, moduleVersion());
-  private static final String MODULE_VERSION_RESOURCE =
-    "/META-INF/maven/org.folio/mod-circulation/pom.properties";
+  private static final String MODULE_VERSION_RESOURCE = "/module-version.properties";
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
   private static final int DEFAULT_KAFKA_MAX_REQUEST_SIZE = 4000000;
@@ -216,15 +217,22 @@ public class EventConsumerVerticle extends AbstractVerticle {
   private static String moduleVersion() {
     try (var stream = EventConsumerVerticle.class.getResourceAsStream(MODULE_VERSION_RESOURCE)) {
       if (stream == null) {
-        return "24.6.0";
+        throw new IllegalStateException("Missing module version resource: "
+          + MODULE_VERSION_RESOURCE);
       }
 
       var properties = new Properties();
       properties.load(stream);
-      return properties.getProperty("version", "24.6.0").replace("-SNAPSHOT", "");
-    } catch (Exception e) {
-      log.warn("moduleVersion:: failed to read module version, using fallback", e);
-      return "24.6.0";
+      String version = properties.getProperty("version");
+      if (version == null || version.isBlank() || version.contains("${")) {
+        throw new IllegalStateException("Invalid module version in "
+          + MODULE_VERSION_RESOURCE + ": " + version);
+      }
+
+      return version.replace("-SNAPSHOT", "");
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to read module version from "
+        + MODULE_VERSION_RESOURCE, e);
     }
   }
 
