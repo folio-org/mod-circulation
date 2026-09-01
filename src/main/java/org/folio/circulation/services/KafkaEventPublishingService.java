@@ -46,19 +46,23 @@ public class KafkaEventPublishingService implements EventPublishingService {
   }
 
   @Override
-  public CompletableFuture<Boolean> publishEvent(String eventType, String payload) {
+  public CompletableFuture<Void> publishEvent(String eventType, String payload) {
     log.info("publishEvent:: eventType={}, tenantId={}", eventType, tenantId);
 
     return fromEventType(eventType)
       .map(topic -> kafkaService.createPublisher(topic, vertxContext, tenantId)
         .publish(randomUUID().toString(), payload, okapiHeaders)
-        .thenApply(KafkaEventPublishingService::resultSucceeded))
+        .thenApply(KafkaEventPublishingService::failOnPublishingError))
       .orElseGet(() -> failedFuture(new IllegalArgumentException(
         "Unsupported circulation Kafka event type: " + eventType)));
   }
 
-  private static boolean resultSucceeded(Result<?> result) {
-    return result.succeeded();
+  private static Void failOnPublishingError(Result<?> result) {
+    if (result.failed()) {
+      throw new IllegalStateException(result.cause().toString());
+    }
+
+    return null;
   }
 
   private static String tenantIdFrom(Map<String, String> okapiHeaders) {

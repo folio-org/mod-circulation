@@ -21,10 +21,13 @@ import org.folio.circulation.support.results.Result;
 import io.vertx.core.Context;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
+import lombok.Getter;
 
 public class WebContext {
   private final RoutingContext routingContext;
+  @Getter
   private final Map<String, String> headers;
+  @Getter
   private final Context vertxContext;
 
   /** Creates a context for an HTTP request using its routing and Vert.x contexts. */
@@ -123,14 +126,6 @@ public class WebContext {
 
   public void writeResultToHttpResponse(Result<HttpResponse> result) {
     result.applySideEffect(this::write, this::write);
-  }
-
-  public Map<String, String> getHeaders() {
-    return headers;
-  }
-
-  public Context getVertxContext() {
-    return vertxContext;
   }
 
   private static Map<String, String> normalizeHeaders(Map<String, String> headers) {

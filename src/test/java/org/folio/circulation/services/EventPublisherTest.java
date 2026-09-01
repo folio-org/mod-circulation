@@ -1,5 +1,6 @@
 package org.folio.circulation.services;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
@@ -57,10 +58,9 @@ class EventPublisherTest {
     lenient().when(clients.localeClient()).thenReturn(localeClient);
     lenient().when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
     lenient().when(eventPublishingService.publishEvent(anyString(), anyString()))
-      .thenReturn(CompletableFuture.completedFuture(true));
+      .thenReturn(completedFuture(null));
     lenient().when(localeClient.get())
-      .thenReturn(CompletableFuture.completedFuture(
-        Result.failed(new ServerErrorFailure("locale not available"))));
+      .thenReturn(completedFuture(Result.failed(new ServerErrorFailure("locale not available"))));
 
     eventPublisher = new EventPublisher(clients);
   }

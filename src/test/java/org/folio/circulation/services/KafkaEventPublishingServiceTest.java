@@ -3,6 +3,7 @@ package org.folio.circulation.services;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.sameInstance;
@@ -13,11 +14,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.services.events.KafkaEventPublisher;
 import org.folio.circulation.services.events.KafkaService;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.http.server.WebContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,5 +71,21 @@ class KafkaEventPublishingServiceTest {
 
     assertThat(error.getCause(), instanceOf(IllegalStateException.class));
     assertThat(error.getCause(), sameInstance(failure));
+  }
+
+  @Test
+  void failsWhenKafkaPublisherReturnsFailure() {
+    when(kafkaService.createPublisher(CirculationKafkaTopic.ITEM_CHECKED_IN, vertxContext,
+      TENANT_ID)).thenReturn(publisher);
+    when(publisher.publish(anyString(), eq(PAYLOAD), eq(OKAPI_HEADERS)))
+      .thenReturn(CompletableFuture.completedFuture(
+        failed(new ServerErrorFailure("Kafka publish failed"))));
+
+    var service = new KafkaEventPublishingService(OKAPI_HEADERS, vertxContext, kafkaService);
+    var publishFuture = service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD);
+
+    var error = assertThrows(CompletionException.class, publishFuture::join);
+
+    assertThat(error.getCause(), instanceOf(IllegalStateException.class));
   }
 }

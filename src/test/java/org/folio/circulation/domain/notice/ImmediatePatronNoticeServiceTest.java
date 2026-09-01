@@ -114,7 +114,7 @@ class ImmediatePatronNoticeServiceTest {
 
     Response noticePostResponse = new Response(200, "", "application/json");
     when(patronNoticeClient.post(any())).thenReturn(completedFuture(Result.succeeded(noticePostResponse)));
-    when(eventPublishingService.publishEvent(any(), any())).thenReturn(completedFuture(true));
+    when(eventPublishingService.publishEvent(any(), any())).thenReturn(completedFuture(null));
 
     Result<Void> result = immediatePatronNoticeService.acceptNoticeEvent(event).join();
 
