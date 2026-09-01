@@ -2,6 +2,8 @@ package org.folio.circulation;
 
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getenv;
+import static java.util.Map.of;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
 import static org.folio.Environment.getHttpMaxPoolSize;
 import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
@@ -22,13 +24,13 @@ import java.util.List;
 
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.domain.events.FeeFineKafkaTopic;
-import org.folio.circulation.domain.events.DomainEventType;
 import org.folio.circulation.services.events.CirculationRulesUpdateEventHandler;
 import org.folio.circulation.services.events.FeeFineBalanceChangedKafkaEventHandler;
 import org.folio.circulation.services.events.LoanRelatedFeeFineClosedKafkaEventHandler;
 import org.folio.kafka.AsyncRecordHandler;
 import org.folio.kafka.GlobalLoadSensor;
 import org.folio.kafka.KafkaConfig;
+import org.folio.kafka.KafkaConfigWithConsumerOverrides;
 import org.folio.kafka.KafkaConsumerWrapper;
 import org.folio.kafka.SubscriptionDefinition;
 import org.folio.kafka.services.KafkaEnvironmentProperties;
@@ -53,21 +55,25 @@ public class EventConsumerVerticle extends AbstractVerticle {
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
   private static final int DEFAULT_KAFKA_MAX_REQUEST_SIZE = 4000000;
-  private static final String AUTO_OFFSET_RESET_PROPERTY = "kafka.consumer.auto.offset.reset";
   private static final String AUTO_OFFSET_RESET_EARLIEST = "earliest";
+  private static final String AUTO_OFFSET_RESET_LATEST = "latest";
 
   private final List<KafkaConsumerWrapper<String, String>> consumers = new ArrayList<>();
-  private KafkaConfig kafkaConfig;
+  private KafkaConfig circulationRulesKafkaConfig;
+  private KafkaConfig genericKafkaConfig;
   private HttpClient httpClient;
 
   @Override
   public void init(Vertx vertx, Context context) {
     super.init(vertx, context);
-    kafkaConfig = buildKafkaConfig();
+    KafkaConfig kafkaConfig = buildKafkaConfig();
+    circulationRulesKafkaConfig = new KafkaConfigWithConsumerOverrides(kafkaConfig,
+      of(AUTO_OFFSET_RESET_CONFIG, AUTO_OFFSET_RESET_LATEST));
+    genericKafkaConfig = new KafkaConfigWithConsumerOverrides(kafkaConfig,
+      of(AUTO_OFFSET_RESET_CONFIG, AUTO_OFFSET_RESET_EARLIEST));
     httpClient = vertx.createHttpClient(new PoolOptions()
       .setHttp1MaxSize(getHttpMaxPoolSize())
       .setHttp2MaxSize(getHttpMaxPoolSize()));
-    setSystemProperties();
   }
 
   @Override
@@ -105,25 +111,19 @@ public class EventConsumerVerticle extends AbstractVerticle {
   private Future<Void> createConsumers() {
     log.info("createConsumers:: creating consumers");
     return Future.all(List.of(
-      createConsumer(CIRCULATION_RULES_UPDATED, new CirculationRulesUpdateEventHandler(),
-        buildUniqueModuleId()), // puts consumers into separate groups so that they all receive the same event
+      // A unique group lets every module instance receive circulation rules updates.
+      createConsumer(CIRCULATION_RULES_UPDATED.name(), CIRCULATION_RULES_UPDATED.getKafkaTopic(),
+        new CirculationRulesUpdateEventHandler(), buildUniqueModuleId(),
+        circulationRulesKafkaConfig),
       createConsumer(LOAN_RELATED_FEE_FINE_CLOSED, FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED,
         new LoanRelatedFeeFineClosedKafkaEventHandler(context, httpClient,
-          kafkaConfig.getOkapiUrl()),
+          genericKafkaConfig.getOkapiUrl()),
         REAL_MODULE_ID),
       createConsumer(FEE_FINE_BALANCE_CHANGED, FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED,
         new FeeFineBalanceChangedKafkaEventHandler(context, httpClient,
-          kafkaConfig.getOkapiUrl()),
+          genericKafkaConfig.getOkapiUrl()),
         REAL_MODULE_ID)
     )).mapEmpty();
-  }
-
-  private Future<KafkaConsumerWrapper<String, String>> createConsumer(DomainEventType eventType,
-    AsyncRecordHandler<String, String> handler, String moduleId) {
-
-    log.info("createConsumer:: creating consumer for event type {}", eventType);
-
-    return createConsumer(eventType.name(), eventType.getKafkaTopic(), handler, moduleId);
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(EventType eventType,
@@ -131,11 +131,12 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
     log.info("createConsumer:: creating consumer for event type {}", eventType);
 
-    return createConsumer(eventType.name(), kafkaTopic, handler, moduleId);
+    return createConsumer(eventType.name(), kafkaTopic, handler, moduleId, genericKafkaConfig);
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(String eventType,
-    KafkaTopic kafkaTopic, AsyncRecordHandler<String, String> handler, String moduleId) {
+    KafkaTopic kafkaTopic, AsyncRecordHandler<String, String> handler, String moduleId,
+    KafkaConfig kafkaConfig) {
 
     KafkaConsumerWrapper<String, String> consumer = KafkaConsumerWrapper.<String, String>builder()
       .context(context)
@@ -200,19 +201,6 @@ public class EventConsumerVerticle extends AbstractVerticle {
 
   public static String consumerGroupId(EventType eventType) {
     return formatGroupName(eventType.name(), REAL_MODULE_ID);
-  }
-
-  private static void setSystemProperties() {
-    // Read existing records when a consumer group has no committed offset.
-    String autoOffsetReset = System.getProperty(AUTO_OFFSET_RESET_PROPERTY);
-    if (autoOffsetReset == null) {
-      log.info("setSystemProperties:: setting system property: {}={}",
-        AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_EARLIEST);
-      System.setProperty(AUTO_OFFSET_RESET_PROPERTY, AUTO_OFFSET_RESET_EARLIEST);
-    } else {
-      log.info("setSystemProperties:: system property {} is already set to '{}', doing nothing",
-        AUTO_OFFSET_RESET_PROPERTY, autoOffsetReset);
-    }
   }
 
 }
