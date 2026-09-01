@@ -13,13 +13,13 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 class KafkaRecordHeaders {
   static Map<String, String> okapiHeaders(KafkaConsumerRecord<String, String> consumerRecord,
-    String defaultOkapiUrl) {
+    String defaultGatewayUrl) {
 
     Map<String, String> headers = new HashMap<>();
     consumerRecord.headers()
       .forEach(header -> headers.put(header.key(), header.value().toString()));
 
-    putIfAbsentIgnoringCase(headers, OKAPI_URL, defaultOkapiUrl);
+    putIfAbsentIgnoringCase(headers, OKAPI_URL, defaultGatewayUrl);
     putIfAbsentIgnoringCase(headers, TENANT, headers.get(TENANT_ID));
 
     return headers;

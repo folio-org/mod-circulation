@@ -8,9 +8,9 @@ import io.vertx.core.http.HttpClient;
 public class FeeFineBalanceChangedKafkaEventHandler extends AbstractKafkaEventHandler {
 
   public FeeFineBalanceChangedKafkaEventHandler(Context vertxContext, HttpClient client,
-    String defaultOkapiUrl) {
+    String defaultGatewayUrl) {
 
-    super(vertxContext, client, defaultOkapiUrl, FEE_FINE_BALANCE_CHANGED,
+    super(vertxContext, client, defaultGatewayUrl, FEE_FINE_BALANCE_CHANGED,
       new FeeFineBalanceChangedEventProcessor());
   }
 }

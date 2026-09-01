@@ -19,16 +19,16 @@ import lombok.extern.log4j.Log4j2;
 abstract class AbstractKafkaEventHandler implements AsyncRecordHandler<String, String> {
   private final Context vertxContext;
   private final HttpClient client;
-  private final String defaultOkapiUrl;
+  private final String defaultGatewayUrl;
   private final EventType eventType;
   private final KafkaEventProcessor processor;
 
   protected AbstractKafkaEventHandler(Context vertxContext, HttpClient client,
-    String defaultOkapiUrl, EventType eventType, KafkaEventProcessor processor) {
+    String defaultGatewayUrl, EventType eventType, KafkaEventProcessor processor) {
 
     this.vertxContext = vertxContext;
     this.client = client;
-    this.defaultOkapiUrl = defaultOkapiUrl;
+    this.defaultGatewayUrl = defaultGatewayUrl;
     this.eventType = eventType;
     this.processor = processor;
   }
@@ -39,7 +39,7 @@ abstract class AbstractKafkaEventHandler implements AsyncRecordHandler<String, S
       String eventKey = consumerRecord.key();
       log.info("handle:: {} event received: key={}", eventType, eventKey);
 
-      WebContext context = new WebContext(okapiHeaders(consumerRecord, defaultOkapiUrl),
+      WebContext context = new WebContext(okapiHeaders(consumerRecord, defaultGatewayUrl),
         vertxContext);
       return Future.fromCompletionStage(processor.process(new JsonObject(consumerRecord.value()),
           context, client))

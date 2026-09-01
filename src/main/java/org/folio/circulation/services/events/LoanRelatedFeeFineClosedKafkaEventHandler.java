@@ -8,9 +8,9 @@ import io.vertx.core.http.HttpClient;
 public class LoanRelatedFeeFineClosedKafkaEventHandler extends AbstractKafkaEventHandler {
 
   public LoanRelatedFeeFineClosedKafkaEventHandler(Context vertxContext, HttpClient client,
-    String defaultOkapiUrl) {
+    String defaultGatewayUrl) {
 
-    super(vertxContext, client, defaultOkapiUrl, LOAN_RELATED_FEE_FINE_CLOSED,
+    super(vertxContext, client, defaultGatewayUrl, LOAN_RELATED_FEE_FINE_CLOSED,
       new LoanRelatedFeeFineClosedEventProcessor());
   }
 }
