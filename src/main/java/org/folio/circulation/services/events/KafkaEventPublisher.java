@@ -8,6 +8,7 @@ import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersFromMap;
 import static org.folio.kafka.headers.FolioKafkaHeaders.TENANT_ID;
 
 import java.util.Map;
@@ -52,9 +53,9 @@ public class KafkaEventPublisher<K> {
     KafkaProducerRecord<K, String> producerRecord =
       KafkaProducerRecord.create(kafkaTopic, key, payload);
     producerRecord.addHeader(TENANT_ID, tenantId);
-    headers.entrySet().stream()
-      .filter(entry -> FORWARDED_HEADERS.contains(entry.getKey().toLowerCase()))
-      .forEach(entry -> producerRecord.addHeader(entry.getKey(), entry.getValue()));
+    producerRecord.addHeaders(kafkaHeadersFromMap(headers).stream()
+      .filter(header -> FORWARDED_HEADERS.contains(header.key().toLowerCase()))
+      .toList());
 
     KafkaProducer<K, String> producer = null;
     try {

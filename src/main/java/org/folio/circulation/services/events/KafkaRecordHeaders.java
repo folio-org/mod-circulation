@@ -2,6 +2,7 @@ package org.folio.circulation.services.events;
 
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersToMap;
 import static org.folio.kafka.headers.FolioKafkaHeaders.TENANT_ID;
 
 import java.util.HashMap;
@@ -15,9 +16,7 @@ class KafkaRecordHeaders {
   static Map<String, String> headersFrom(KafkaConsumerRecord<String, String> consumerRecord,
     String defaultGatewayUrl) {
 
-    Map<String, String> headers = new HashMap<>();
-    consumerRecord.headers()
-      .forEach(header -> headers.put(header.key(), header.value().toString()));
+    Map<String, String> headers = new HashMap<>(kafkaHeadersToMap(consumerRecord.headers()));
 
     putIfAbsentIgnoringCase(headers, OKAPI_URL, defaultGatewayUrl);
     putIfAbsentIgnoringCase(headers, TENANT, headers.get(TENANT_ID));
