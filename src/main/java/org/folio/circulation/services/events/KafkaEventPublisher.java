@@ -41,7 +41,9 @@ public class KafkaEventPublisher<K> {
   private final KafkaProducerManager producerManager;
 
   public KafkaEventPublisher(Context vertxContext, String kafkaTopic, String tenantId) {
-    this(kafkaTopic, tenantId, createProducerManager(vertxContext));
+    this.kafkaTopic = kafkaTopic;
+    this.tenantId = tenantId;
+    this.producerManager = createProducerManager(vertxContext);
   }
 
   public CompletableFuture<Result<Void>> publish(K key, String payload, Map<String, String> okapiHeaders) {

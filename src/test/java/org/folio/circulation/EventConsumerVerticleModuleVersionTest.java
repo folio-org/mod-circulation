@@ -25,6 +25,6 @@ class EventConsumerVerticleModuleVersionTest {
     String version = properties.getProperty("version");
     assertNotNull(version);
     assertFalse(version.contains("${"));
-    assertEquals(MODULE_NAME + "-" + version.replace("-SNAPSHOT", ""), REAL_MODULE_ID);
+    assertEquals(REAL_MODULE_ID, MODULE_NAME + "-" + version.replace("-SNAPSHOT", ""));
   }
 }

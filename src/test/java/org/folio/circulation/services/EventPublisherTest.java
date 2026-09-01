@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
