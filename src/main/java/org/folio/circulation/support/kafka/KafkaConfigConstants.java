@@ -1,10 +1,9 @@
 package org.folio.circulation.support.kafka;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class KafkaConfigConstants {
+@UtilityClass
+public class KafkaConfigConstants {
 
   public static final String KAFKA_HOST = "KAFKA_HOST";
   public static final String KAFKA_PORT = "KAFKA_PORT";
