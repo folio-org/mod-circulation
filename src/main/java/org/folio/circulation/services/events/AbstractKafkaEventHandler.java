@@ -2,7 +2,7 @@ package org.folio.circulation.services.events;
 
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
-import static org.folio.circulation.services.events.KafkaRecordHeaders.okapiHeaders;
+import static org.folio.circulation.services.events.KafkaRecordHeaders.headersFrom;
 
 import org.folio.circulation.domain.EventType;
 import org.folio.circulation.support.http.server.WebContext;
@@ -39,7 +39,7 @@ abstract class AbstractKafkaEventHandler implements AsyncRecordHandler<String, S
       String eventKey = consumerRecord.key();
       log.info("handle:: {} event received: key={}", eventType, eventKey);
 
-      WebContext context = new WebContext(okapiHeaders(consumerRecord, defaultGatewayUrl),
+      WebContext context = new WebContext(headersFrom(consumerRecord, defaultGatewayUrl),
         vertxContext);
       return Future.fromCompletionStage(processor.process(new JsonObject(consumerRecord.value()),
           context, client))

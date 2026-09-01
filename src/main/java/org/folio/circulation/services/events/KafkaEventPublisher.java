@@ -29,7 +29,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @Log4j2
 public class KafkaEventPublisher<K> {
-  private static final Set<String> FORWARDED_OKAPI_HEADERS = of(
+  private static final Set<String> FORWARDED_HEADERS = of(
     OKAPI_URL.toLowerCase(),
     TENANT.toLowerCase(),
     TOKEN.toLowerCase(),
@@ -46,14 +46,14 @@ public class KafkaEventPublisher<K> {
     this.producerManager = createProducerManager(vertxContext);
   }
 
-  public CompletableFuture<Result<Void>> publish(K key, String payload, Map<String, String> okapiHeaders) {
+  public CompletableFuture<Result<Void>> publish(K key, String payload, Map<String, String> headers) {
     log.info("publish:: key = {}, topic = {}", key, kafkaTopic);
 
     KafkaProducerRecord<K, String> producerRecord =
       KafkaProducerRecord.create(kafkaTopic, key, payload);
     producerRecord.addHeader(TENANT_ID, tenantId);
-    okapiHeaders.entrySet().stream()
-      .filter(entry -> FORWARDED_OKAPI_HEADERS.contains(entry.getKey().toLowerCase()))
+    headers.entrySet().stream()
+      .filter(entry -> FORWARDED_HEADERS.contains(entry.getKey().toLowerCase()))
       .forEach(entry -> producerRecord.addHeader(entry.getKey(), entry.getValue()));
 
     KafkaProducer<K, String> producer = null;

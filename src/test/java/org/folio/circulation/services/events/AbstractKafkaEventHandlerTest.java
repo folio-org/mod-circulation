@@ -2,7 +2,7 @@ package org.folio.circulation.services.events;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
-import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_OKAPI_URL;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_GATEWAY_URL;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.kafka.headers.FolioKafkaHeaders.TENANT_ID;
@@ -48,7 +48,7 @@ class AbstractKafkaEventHandlerTest {
 
   @BeforeEach
   void setUp() {
-    handler = new AbstractKafkaEventHandler(vertxContext, client, DEFAULT_OKAPI_URL,
+    handler = new AbstractKafkaEventHandler(vertxContext, client, DEFAULT_GATEWAY_URL,
       FEE_FINE_BALANCE_CHANGED, processor) {};
     when(consumerRecord.key()).thenReturn("event-key");
     when(consumerRecord.value()).thenReturn(new JsonObject().put("id", "event-id").encode());
@@ -69,7 +69,7 @@ class AbstractKafkaEventHandlerTest {
     verify(processor).process(payloadCaptor.capture(), contextCaptor.capture(), eq(client));
     assertThat(payloadCaptor.getValue().getString("id"), equalTo("event-id"));
     assertThat(contextCaptor.getValue().getTenantId(), equalTo("tenant-id"));
-    assertThat(contextCaptor.getValue().getOkapiLocation(), equalTo(DEFAULT_OKAPI_URL));
+    assertThat(contextCaptor.getValue().getOkapiLocation(), equalTo(DEFAULT_GATEWAY_URL));
     assertThat(contextCaptor.getValue().getVertxContext(), is(vertxContext));
   }
 

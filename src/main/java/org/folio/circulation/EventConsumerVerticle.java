@@ -9,7 +9,7 @@ import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.circulation.support.ModuleInfo.moduleVersion;
-import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_OKAPI_URL;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_GATEWAY_URL;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_ENV;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_HOST;
 import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_MAX_REQUEST_SIZE;
@@ -188,7 +188,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
       .put(KAFKA_PORT, KafkaEnvironmentProperties.port())
       .put(KAFKA_REPLICATION_FACTOR, KafkaEnvironmentProperties.replicationFactor())
       .put(KAFKA_ENV, KafkaEnvironmentProperties.environment())
-      .put(OKAPI_URL, getenv().getOrDefault(OKAPI_URL, DEFAULT_OKAPI_URL))
+      .put(OKAPI_URL, getenv().getOrDefault(OKAPI_URL, DEFAULT_GATEWAY_URL))
       .put(KAFKA_MAX_REQUEST_SIZE, getenv().getOrDefault(KAFKA_MAX_REQUEST_SIZE,
         String.valueOf(DEFAULT_KAFKA_MAX_REQUEST_SIZE)));
   }

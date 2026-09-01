@@ -34,7 +34,7 @@ import io.vertx.core.Vertx;
 class KafkaEventPublishingServiceTest {
   private static final String TENANT_ID = "test_tenant";
   private static final String PAYLOAD = "{}";
-  private static final Map<String, String> OKAPI_HEADERS = Map.of(TENANT, TENANT_ID);
+  private static final Map<String, String> HEADERS = Map.of(TENANT, TENANT_ID);
 
   @Mock
   private Context vertxContext;
@@ -49,7 +49,7 @@ class KafkaEventPublishingServiceTest {
 
   @Test
   void createsServiceUsingContextFromWebContext() {
-    when(webContext.getHeaders()).thenReturn(OKAPI_HEADERS);
+    when(webContext.getHeaders()).thenReturn(HEADERS);
     when(webContext.getVertxContext()).thenReturn(vertxContext);
     when(vertxContext.owner()).thenReturn(vertx);
 
@@ -61,10 +61,10 @@ class KafkaEventPublishingServiceTest {
     var failure = new IllegalStateException("Kafka publish failed");
     when(kafkaService.createPublisher(CirculationKafkaTopic.ITEM_CHECKED_IN, vertxContext,
       TENANT_ID)).thenReturn(publisher);
-    when(publisher.publish(anyString(), eq(PAYLOAD), eq(OKAPI_HEADERS)))
+    when(publisher.publish(anyString(), eq(PAYLOAD), eq(HEADERS)))
       .thenReturn(failedFuture(failure));
 
-    var service = new KafkaEventPublishingService(OKAPI_HEADERS, vertxContext, kafkaService);
+    var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
     var publishFuture = service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD);
 
     var error = assertThrows(CompletionException.class, publishFuture::join);
@@ -77,11 +77,11 @@ class KafkaEventPublishingServiceTest {
   void failsWhenKafkaPublisherReturnsFailure() {
     when(kafkaService.createPublisher(CirculationKafkaTopic.ITEM_CHECKED_IN, vertxContext,
       TENANT_ID)).thenReturn(publisher);
-    when(publisher.publish(anyString(), eq(PAYLOAD), eq(OKAPI_HEADERS)))
+    when(publisher.publish(anyString(), eq(PAYLOAD), eq(HEADERS)))
       .thenReturn(CompletableFuture.completedFuture(
         failed(new ServerErrorFailure("Kafka publish failed"))));
 
-    var service = new KafkaEventPublishingService(OKAPI_HEADERS, vertxContext, kafkaService);
+    var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
     var publishFuture = service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD);
 
     var error = assertThrows(CompletionException.class, publishFuture::join);

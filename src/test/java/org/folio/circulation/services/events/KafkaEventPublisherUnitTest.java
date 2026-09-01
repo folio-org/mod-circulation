@@ -4,7 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
-import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_OKAPI_URL;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.DEFAULT_GATEWAY_URL;
 import static org.folio.kafka.headers.FolioKafkaHeaders.TENANT_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -52,7 +52,7 @@ class KafkaEventPublisherUnitTest {
       .put("loanId", "loan-1")
       .encode();
     Map<String, String> headers = Map.of(
-      OKAPI_URL, DEFAULT_OKAPI_URL,
+      OKAPI_URL, DEFAULT_GATEWAY_URL,
       TENANT, "test",
       TOKEN, "token");
 
@@ -87,7 +87,7 @@ class KafkaEventPublisherUnitTest {
       .put("loanId", "loan-1")
       .encode();
     Map<String, String> headers = Map.of(
-      OKAPI_URL.toLowerCase(), DEFAULT_OKAPI_URL,
+      OKAPI_URL.toLowerCase(), DEFAULT_GATEWAY_URL,
       TENANT.toLowerCase(), "different-tenant",
       TOKEN.toLowerCase(), "token");
 

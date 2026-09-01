@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class KafkaEventPublishingService implements EventPublishingService {
-  private final Map<String, String> okapiHeaders;
+  private final Map<String, String> headers;
   private final String tenantId;
   private final Context vertxContext;
   private final KafkaService kafkaService;
@@ -27,20 +27,20 @@ public class KafkaEventPublishingService implements EventPublishingService {
     this(context.getHeaders(), context.getVertxContext());
   }
 
-  KafkaEventPublishingService(Map<String, String> okapiHeaders, Context vertxContext) {
-    this(okapiHeaders, vertxContext,
+  KafkaEventPublishingService(Map<String, String> headers, Context vertxContext) {
+    this(headers, vertxContext,
       new KafkaService(requireVertxContext(vertxContext).owner()));
   }
 
-  KafkaEventPublishingService(Map<String, String> okapiHeaders, Context vertxContext,
+  KafkaEventPublishingService(Map<String, String> headers, Context vertxContext,
     KafkaService kafkaService) {
 
     if (vertxContext == null) {
       throw new IllegalStateException("Kafka event publishing requires a Vert.x context");
     }
 
-    this.okapiHeaders = okapiHeaders;
-    this.tenantId = tenantIdFrom(okapiHeaders);
+    this.headers = headers;
+    this.tenantId = tenantIdFrom(headers);
     this.vertxContext = vertxContext;
     this.kafkaService = requireNonNull(kafkaService, "Kafka service is required");
   }
@@ -51,7 +51,7 @@ public class KafkaEventPublishingService implements EventPublishingService {
 
     return fromEventType(eventType)
       .map(topic -> kafkaService.createPublisher(topic, vertxContext, tenantId)
-        .publish(randomUUID().toString(), payload, okapiHeaders)
+        .publish(randomUUID().toString(), payload, headers)
         .thenApply(KafkaEventPublishingService::failOnPublishingError))
       .orElseGet(() -> failedFuture(new IllegalArgumentException(
         "Unsupported circulation Kafka event type: " + eventType)));
@@ -65,8 +65,8 @@ public class KafkaEventPublishingService implements EventPublishingService {
     return null;
   }
 
-  private static String tenantIdFrom(Map<String, String> okapiHeaders) {
-    return okapiHeaders.entrySet().stream()
+  private static String tenantIdFrom(Map<String, String> headers) {
+    return headers.entrySet().stream()
       .filter(entry -> TENANT.equalsIgnoreCase(entry.getKey()))
       .map(Map.Entry::getValue)
       .findFirst()

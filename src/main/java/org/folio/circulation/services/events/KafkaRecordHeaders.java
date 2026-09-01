@@ -12,7 +12,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 class KafkaRecordHeaders {
-  static Map<String, String> okapiHeaders(KafkaConsumerRecord<String, String> consumerRecord,
+  static Map<String, String> headersFrom(KafkaConsumerRecord<String, String> consumerRecord,
     String defaultGatewayUrl) {
 
     Map<String, String> headers = new HashMap<>();

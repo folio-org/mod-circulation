@@ -72,12 +72,12 @@ public class EventSubscribersFixture {
     String topicName = topic.fullTopicName(TENANT_ID);
     int initialOffset = kafkaHelper.getOffset(topicName, consumerGroupId);
 
-    kafkaHelper.publishEvent(topicName, payload, okapiHeaders());
+    kafkaHelper.publishEvent(topicName, payload, headers());
 
     waitForValue(() -> kafkaHelper.getOffset(topicName, consumerGroupId), initialOffset + 1);
   }
 
-  private static Map<String, String> okapiHeaders() {
+  private static Map<String, String> headers() {
     var headers = getOkapiHeadersFromContext();
     return Map.of(
       OkapiHeader.OKAPI_URL, headers.getUrl().toString(),
