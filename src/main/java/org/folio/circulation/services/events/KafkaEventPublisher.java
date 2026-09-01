@@ -37,10 +37,11 @@ public class KafkaEventPublisher<K> {
     USER_ID.toLowerCase());
 
   private final String kafkaTopic;
+  private final String tenantId;
   private final KafkaProducerManager producerManager;
 
-  public KafkaEventPublisher(Context vertxContext, String kafkaTopic) {
-    this(kafkaTopic, createProducerManager(vertxContext));
+  public KafkaEventPublisher(Context vertxContext, String kafkaTopic, String tenantId) {
+    this(kafkaTopic, tenantId, createProducerManager(vertxContext));
   }
 
   public CompletableFuture<Result<Void>> publish(K key, String payload, Map<String, String> okapiHeaders) {
@@ -48,7 +49,7 @@ public class KafkaEventPublisher<K> {
 
     KafkaProducerRecord<K, String> producerRecord =
       KafkaProducerRecord.create(kafkaTopic, key, payload);
-    producerRecord.addHeader(TENANT_ID, tenantIdFrom(okapiHeaders));
+    producerRecord.addHeader(TENANT_ID, tenantId);
     okapiHeaders.entrySet().stream()
       .filter(entry -> FORWARDED_OKAPI_HEADERS.contains(entry.getKey().toLowerCase()))
       .forEach(entry -> producerRecord.addHeader(entry.getKey(), entry.getValue()));
@@ -85,14 +86,6 @@ public class KafkaEventPublisher<K> {
         .build();
 
     return new SimpleKafkaProducerManager(vertxContext.owner(), kafkaConfig);
-  }
-
-  private static String tenantIdFrom(Map<String, String> okapiHeaders) {
-    return okapiHeaders.entrySet().stream()
-      .filter(entry -> TENANT.equalsIgnoreCase(entry.getKey()))
-      .map(Map.Entry::getValue)
-      .findFirst()
-      .orElseThrow(() -> new IllegalArgumentException(TENANT + " header is required"));
   }
 
 }

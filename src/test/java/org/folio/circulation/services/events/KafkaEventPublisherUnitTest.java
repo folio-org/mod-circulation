@@ -33,6 +33,7 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
 @ExtendWith(MockitoExtension.class)
 class KafkaEventPublisherUnitTest {
   private static final String TOPIC = "folio.test.circulation.ITEM_CHECKED_OUT";
+  private static final String TENANT_ID_VALUE = "test";
 
   @Mock
   private KafkaProducerManager producerManager;
@@ -55,7 +56,7 @@ class KafkaEventPublisherUnitTest {
       TENANT, "test",
       TOKEN, "token");
 
-    var result = new KafkaEventPublisher<String>(TOPIC, producerManager)
+    var result = new KafkaEventPublisher<String>(TOPIC, TENANT_ID_VALUE, producerManager)
       .publish("key-1", payload, headers)
       .join();
 
@@ -75,7 +76,7 @@ class KafkaEventPublisherUnitTest {
   }
 
   @Test
-  void addsTenantIdHeaderWhenOkapiTenantHeaderIsLowercase() {
+  void usesConfiguredTenantIdForKafkaHeader() {
     when(producerManager.<String, String>createShared(TOPIC)).thenReturn(producer);
     when(producer.send(any())).thenReturn(Future.succeededFuture());
     when(producer.flush()).thenReturn(Future.succeededFuture());
@@ -87,10 +88,10 @@ class KafkaEventPublisherUnitTest {
       .encode();
     Map<String, String> headers = Map.of(
       OKAPI_URL.toLowerCase(), DEFAULT_OKAPI_URL,
-      TENANT.toLowerCase(), "test",
+      TENANT.toLowerCase(), "different-tenant",
       TOKEN.toLowerCase(), "token");
 
-    new KafkaEventPublisher<String>(TOPIC, producerManager)
+    new KafkaEventPublisher<String>(TOPIC, TENANT_ID_VALUE, producerManager)
       .publish("key-1", payload, headers)
       .join();
 
@@ -109,7 +110,7 @@ class KafkaEventPublisherUnitTest {
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
 
-    var publishFuture = new KafkaEventPublisher<String>(TOPIC, producerManager)
+    var publishFuture = new KafkaEventPublisher<String>(TOPIC, TENANT_ID_VALUE, producerManager)
       .publish("key-1", "{}", Map.of(TENANT, "test"));
     var error = assertThrows(CompletionException.class, publishFuture::join);
 

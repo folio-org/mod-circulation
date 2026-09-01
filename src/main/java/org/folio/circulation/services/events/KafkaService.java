@@ -45,6 +45,6 @@ public class KafkaService {
     Context context, String tenantId) {
 
     log.info("createPublisher:: tenant={}, topic={}", tenantId, topic);
-    return new KafkaEventPublisher<>(context, topic.fullTopicName(tenantId));
+    return new KafkaEventPublisher<>(context, topic.fullTopicName(tenantId), tenantId);
   }
 }

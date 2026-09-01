@@ -51,7 +51,7 @@ class KafkaEventPublisherTest {
     JsonObject eventPayload = new JsonObject().put("itemId", randomUUID().toString());
 
     KafkaEventPublisher<String> publisher =
-      new KafkaEventPublisher<>(Vertx.vertx().getOrCreateContext(), fullTopicName);
+      new KafkaEventPublisher<>(Vertx.vertx().getOrCreateContext(), fullTopicName, TEST_TENANT);
     waitFor(publisher.publish(randomUUID().toString(), eventPayload.encode(), HEADERS));
     Collection<ConsumerRecord<String, String>> consumerRecords =
       kafkaHelper.consumeEvents(consumer, fullTopicName, 1);
