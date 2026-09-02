@@ -41,7 +41,7 @@ public class KafkaService {
       .toCompletableFuture();
   }
 
-  public KafkaEventPublisher<String> createPublisher(CirculationKafkaTopic topic,
+  public KafkaEventPublisher<String> createPublisher(KafkaTopic topic,
     Context context, String tenantId) {
 
     log.info("createPublisher:: tenant={}, topic={}", tenantId, topic);

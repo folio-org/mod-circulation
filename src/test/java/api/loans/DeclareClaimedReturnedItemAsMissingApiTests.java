@@ -18,7 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.circulation.domain.events.CirculationKafkaTopic;
+import org.folio.circulation.domain.events.AuditKafkaTopic;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
       .forLoan(loanId)
       .withItemClaimedReturnedDate(getZonedDateTime()));
 
-    String topic = CirculationKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
+    String topic = AuditKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
     try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
       Response response = claimItemReturnedFixture.attemptDeclareClaimedReturnedItemAsMissing(500,
         new DeclareClaimedReturnedItemAsMissingRequestBuilder()

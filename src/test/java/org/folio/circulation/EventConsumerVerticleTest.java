@@ -123,6 +123,7 @@ public class EventConsumerVerticleTest extends APITests {
 
     try {
       waitForValue(() -> kafkaHelper.getOffset(topic, groupId), 1);
+      assertThat(kafkaHelper.getOffset(topic, groupId), equalTo(1));
     } finally {
       undeployVerticle(secondVerticleId);
       kafkaHelper.deleteConsumerGroup(additionalRulesGroupId);

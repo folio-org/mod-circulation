@@ -2,8 +2,10 @@ package org.folio.circulation.services;
 
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.folio.circulation.domain.EventType.ITEM_CHECKED_IN;
+import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.results.Result.failed;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.sameInstance;
@@ -11,12 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.folio.circulation.domain.events.AuditKafkaTopic;
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.services.events.KafkaEventPublisher;
 import org.folio.circulation.services.events.KafkaService;
@@ -55,6 +59,20 @@ class KafkaEventPublishingServiceTest {
     when(vertxContext.owner()).thenReturn(vertx);
 
     assertDoesNotThrow(() -> new KafkaEventPublishingService(webContext));
+  }
+
+  @Test
+  void publishesLogRecordsToAuditTopic() {
+    when(kafkaService.createPublisher(AuditKafkaTopic.LOG_RECORD, vertxContext,
+      TENANT_ID)).thenReturn(publisher);
+    when(publisher.publish(anyString(), eq(PAYLOAD), eq(HEADERS)))
+      .thenReturn(CompletableFuture.completedFuture(succeeded(null)));
+
+    var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
+
+    service.publishEvent(LOG_RECORD.name(), PAYLOAD).join();
+
+    verify(kafkaService).createPublisher(AuditKafkaTopic.LOG_RECORD, vertxContext, TENANT_ID);
   }
 
   @Test

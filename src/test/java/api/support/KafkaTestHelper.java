@@ -36,9 +36,10 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.folio.circulation.domain.events.AuditKafkaTopic;
 import org.folio.circulation.domain.events.CirculationKafkaTopic;
-import org.folio.circulation.domain.events.FeeFineKafkaTopic;
 import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
+import org.folio.circulation.domain.events.FeeFineKafkaTopic;
 import org.folio.kafka.headers.FolioKafkaHeaders;
 import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
@@ -69,7 +70,7 @@ public class KafkaTestHelper {
   private KafkaContainer kafkaContainer;
   private KafkaProducer<String, JsonObject> producer;
   private KafkaAdminClient adminClient;
-  private KafkaConsumer<String, String> circulationEventRecorder;
+  private KafkaConsumer<String, String> publishedEventRecorder;
   private String kafkaUrl;
 
   private KafkaTestHelper() {
@@ -149,6 +150,12 @@ public class KafkaTestHelper {
 
   public void createCirculationPublicationTopics(String tenantId) {
     createTopics(Arrays.stream(CirculationKafkaTopic.values())
+      .map(topic -> topic.fullTopicName(tenantId))
+      .toList());
+  }
+
+  public void createAuditTopics(String tenantId) {
+    createTopics(Arrays.stream(AuditKafkaTopic.values())
       .map(topic -> topic.fullTopicName(tenantId))
       .toList());
   }
@@ -254,17 +261,17 @@ public class KafkaTestHelper {
     return () -> alterTopicConfig(topic, DELETE, null);
   }
 
-  public void startCirculationEventRecorder(String tenantId) {
-    if (circulationEventRecorder != null) {
+  public void startPublishedEventRecorder(String tenantId) {
+    if (publishedEventRecorder != null) {
       return;
     }
 
-    String topicPattern = environment() + "\\." + tenantId + "\\.circulation\\..+";
-    circulationEventRecorder = createConsumer(
-      "circulation-event-recorder-" + UUID.randomUUID(), true);
-    circulationEventRecorder.handler(consumerRecord -> KafkaPublishedEvents.recordPublishedEvent(
+    String topicPattern = environment() + "\\." + tenantId + "\\.(circulation|audit)\\..+";
+    publishedEventRecorder = createConsumer(
+      "published-event-recorder-" + UUID.randomUUID(), true);
+    publishedEventRecorder.handler(consumerRecord -> KafkaPublishedEvents.recordPublishedEvent(
       getEventTypeFromTopicName(consumerRecord.topic()), consumerRecord.value()));
-    waitFor(circulationEventRecorder.subscribe(Pattern.compile(topicPattern)));
+    waitFor(publishedEventRecorder.subscribe(Pattern.compile(topicPattern)));
   }
 
   public KafkaProducer<String, JsonObject> createProducer() {

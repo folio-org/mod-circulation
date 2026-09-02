@@ -366,8 +366,9 @@ public abstract class APITests {
     kafkaHelper = KafkaTestHelper.getInstance();
     kafkaHelper.createCirculationTopics(TENANT_ID);
     kafkaHelper.createCirculationPublicationTopics(TENANT_ID);
+    kafkaHelper.createAuditTopics(TENANT_ID);
     kafkaHelper.createFeeFineTopics(TENANT_ID);
-    kafkaHelper.startCirculationEventRecorder(TENANT_ID);
+    kafkaHelper.startPublishedEventRecorder(TENANT_ID);
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

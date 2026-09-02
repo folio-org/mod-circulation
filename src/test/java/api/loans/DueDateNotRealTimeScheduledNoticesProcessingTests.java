@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.folio.circulation.domain.events.CirculationKafkaTopic;
+import org.folio.circulation.domain.events.AuditKafkaTopic;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateFormatUtil;
@@ -659,7 +659,7 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(0);
 
-    String topic = CirculationKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
+    String topic = AuditKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
     try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
       scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
       scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();

@@ -22,6 +22,12 @@ class KafkaTopicDefinitionTest {
   }
 
   @Test
+  void auditTopicsHaveExpectedConfiguration() {
+    Arrays.stream(AuditKafkaTopic.values())
+      .forEach(topic -> assertConfiguration(topic, "audit", topic.name()));
+  }
+
+  @Test
   void feeFineTopicsHaveExpectedConfiguration() {
     Arrays.stream(FeeFineKafkaTopic.values())
       .forEach(topic -> assertConfiguration(topic, "feesfines", topic.name()));
