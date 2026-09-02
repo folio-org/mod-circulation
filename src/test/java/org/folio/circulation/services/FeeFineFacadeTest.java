@@ -84,6 +84,12 @@ class FeeFineFacadeTest {
   void shouldForwardFailureIfAnAccountIsNotCreated() {
     final String expectedError = "Fee fine account failed to be created";
 
+    when(userClient.get("user-id"))
+      .thenReturn(ofAsync(jsonResponse(200, new JsonObject()
+        .put("id", "user-id")
+        .put("personal", new JsonObject()
+          .put("firstName", "Admin")
+          .put("lastName", "Admin")))));
     when(accountClient.post(any()))
       .thenAnswer(postRespondWithRequestAndFail(expectedError));
 
