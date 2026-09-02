@@ -8,11 +8,13 @@ import static api.support.matchers.AccountMatchers.isTransferredFully;
 import static api.support.matchers.ActualCostRecordMatchers.hasAdditionalInfoForStaff;
 import static api.support.matchers.ActualCostRecordMatchers.isInStatus;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemFee;
+import static api.support.matchers.LoanAccountMatcher.hasLostItemFeeActualCost;
 import static api.support.matchers.LoanAccountMatcher.hasLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemFee;
 import static api.support.matchers.LoanAccountMatcher.hasNoLostItemProcessingFee;
 import static api.support.matchers.LoanAccountMatcher.hasOverdueFine;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
+import static org.folio.circulation.domain.ActualCostRecord.Status.BILLED;
 import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
 import static org.folio.circulation.domain.ActualCostRecord.Status.OPEN;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimePropertyByPath;
@@ -21,20 +23,24 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.iterableWithSize;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.policy.Period;
+import org.folio.circulation.domain.policy.lostitem.ChargeAmountType;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import api.support.MultipleJsonRecords;
 import api.support.builders.LostItemFeePolicyBuilder;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
+import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
 import api.support.spring.SpringApiTest;
 import io.vertx.core.json.JsonObject;
@@ -266,6 +272,44 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
       : hasNoLostItemProcessingFee());
   }
 
+  @Test
+  void shouldCancelSetCostLostItemFeeWhenFeeTypeWasChangedInPolicyAfterCharge() {
+    double lostItemFeeAmount = 1.0;
+    LostItemFeePolicyBuilder policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("test policy")
+      .withLostItemProcessingFee(0.0)
+      .withSetCost(lostItemFeeAmount)
+      .withFeeRefundInterval(Period.months(6));
+
+    AgeToLostResult ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    IndividualResource loan = ageToLostResult.getLoan();
+
+    assertThat(loan, hasLostItemFee(isOpen(lostItemFeeAmount)));
+
+    changeLostItemFeeChargeAmountTypeInPolicyForLoan(loan, ChargeAmountType.ACTUAL_COST);
+    performActionThatRequiresRefund(ageToLostResult);
+
+    assertThat(loan, hasLostItemFee(isClosedCancelled(cancellationReason, lostItemFeeAmount)));
+  }
+
+  @Test
+  void shouldCancelActualCostLostItemFeeWhenFeeTypeWasChangedInPolicyAfterCharge() {
+    double lostItemFeeAmount = 1.0;
+    LostItemFeePolicyBuilder policy = lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+      .withName("test policy")
+      .withLostItemProcessingFee(0.0)
+      .withActualCost(lostItemFeeAmount)
+      .withFeeRefundInterval(Period.months(6));
+
+    AgeToLostResult ageToLostResult = ageToLostFixture.createLoanAgeToLostAndChargeFees(policy);
+    IndividualResource loan = ageToLostResult.getLoan();
+    billActualCostLostItemFee(loan, lostItemFeeAmount);
+    changeLostItemFeeChargeAmountTypeInPolicyForLoan(loan, ChargeAmountType.SET_COST);
+    performActionThatRequiresRefund(ageToLostResult);
+
+    assertThat(loan, hasLostItemFeeActualCost(isClosedCancelled(cancellationReason, lostItemFeeAmount)));
+  }
+
   private void assertThatBillingInformationRemoved(IndividualResource loan) {
     assertThat(loansStorageClient.get(loan).getJson().toString(), allOf(
       hasNoJsonPath("agedToLostDelayedBilling.lostItemHasBeenBilled"),
@@ -275,5 +319,33 @@ public abstract class RefundAgedToLostFeesTestBase extends SpringApiTest {
 
   private void performActionThatRequiresRefund(AgeToLostResult result) {
     performActionThatRequiresRefund(result, ClockUtil.getZonedDateTime());
+  }
+
+  private void billActualCostLostItemFee(IndividualResource loan, double amount) {
+    MultipleJsonRecords actualCostRecordsBeforeAction =
+      actualCostRecordsClient.getMany(CqlQuery.exactMatch("loan.id", loan.getId().toString()));
+    assertThat(actualCostRecordsBeforeAction, iterableWithSize(1));
+    JsonObject actualCostRecord = actualCostRecordsBeforeAction.getFirst();
+    assertThat(actualCostRecord, isInStatus(OPEN));
+
+    IndividualResource account = feeFineAccountFixture.createLostItemFeeActualCostAccount(amount, loan,
+      feeFineTypeFixture.lostItemActualCostFee(), feeFineOwnerFixture.cd1Owner(), "staffInfo", "patronInfo");
+
+    assertThat(loan, hasLostItemFeeActualCost(isOpen(amount)));
+
+    actualCostRecord.put("status", "Billed")
+      .getJsonObject("feeFine")
+      .put("accountId", account.getId().toString());
+
+    actualCostRecordsClient.replace(UUID.fromString(actualCostRecord.getString("id")), actualCostRecord);
+  }
+
+  private void changeLostItemFeeChargeAmountTypeInPolicyForLoan(IndividualResource loan,
+    ChargeAmountType chargeAmountType) {
+
+    UUID lostItemFeePolicyId = UUID.fromString(loan.getJson().getString("lostItemPolicyId"));
+    JsonObject lostItemFeePolicy = lostItemFeePolicyClient.getById(lostItemFeePolicyId).getJson();
+    lostItemFeePolicy.getJsonObject("chargeAmountItem").put("chargeType", chargeAmountType.getValue());
+    lostItemFeePolicyClient.replace(lostItemFeePolicyId, lostItemFeePolicy);
   }
 }
