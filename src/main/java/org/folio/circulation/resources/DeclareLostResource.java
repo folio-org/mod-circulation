@@ -87,9 +87,6 @@ public class DeclareLostResource extends Resource {
     Clients clients, WebContext context) {
 
     log.debug("declareItemLost:: parameters request: {}", () -> request);
-    log.info("declareItemLost:: loanId={}, tenantId={}, staffUserId={}", request.getLoanId(),
-      context.getTenantId(), context.getUserId());
-
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);

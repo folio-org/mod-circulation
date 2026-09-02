@@ -37,7 +37,6 @@ import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
-import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -82,18 +81,14 @@ public class UserRepository {
   public CompletableFuture<Result<User>> getUser(String userId) {
     log.debug("getUser:: parameters userId: {}", userId);
     if(isNull(userId)) {
-      log.warn("getUser:: userId is null");
+      log.info("getUser:: userId is null");
       return ofAsync(() -> null);
     }
 
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
-      .whenNotFound(response -> {
-        log.warn("getUser:: mod-users returned status {} for userId={}",
-          response.getStatusCode(), userId);
-        return succeeded(null);
-      })
+      .whenNotFound(succeeded(null))
       .fetch(userId)
       .thenComposeAsync(this::resolveAddressTypeNames);
   }
