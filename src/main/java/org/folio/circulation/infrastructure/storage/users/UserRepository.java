@@ -89,11 +89,7 @@ public class UserRepository {
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
-      .whenNotFound(response -> {
-        log.warn("getUser:: mod-users returned status {} for userId={}, url={}",
-          response.getStatusCode(), userId, response.getFromUrl());
-        return succeeded(null);
-      })
+      .whenNotFound(succeeded(null))
       .fetch(userId)
       .thenComposeAsync(this::resolveAddressTypeNames);
   }
