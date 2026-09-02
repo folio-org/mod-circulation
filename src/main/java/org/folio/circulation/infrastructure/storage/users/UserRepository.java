@@ -82,14 +82,18 @@ public class UserRepository {
   public CompletableFuture<Result<User>> getUser(String userId) {
     log.debug("getUser:: parameters userId: {}", userId);
     if(isNull(userId)) {
-      log.info("getUser:: userId is null");
+      log.warn("getUser:: userId is null");
       return ofAsync(() -> null);
     }
 
     return FetchSingleRecord.<User>forRecord("user")
       .using(usersStorageClient)
       .mapTo(User::new)
-      .whenNotFound(succeeded(null))
+      .whenNotFound(response -> {
+        log.warn("getUser:: mod-users returned status {} for userId={}, url={}",
+          response.getStatusCode(), userId, response.getFromUrl());
+        return succeeded(null);
+      })
       .fetch(userId)
       .thenComposeAsync(this::resolveAddressTypeNames);
   }

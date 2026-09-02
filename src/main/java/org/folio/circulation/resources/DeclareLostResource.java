@@ -106,8 +106,11 @@ public class DeclareLostResource extends Resource {
         .thenCompose(r -> r.after(this::refuseWhenFeeFineOwnerIsNotFound))
         .thenCompose(declareItemLost(clients))
         .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-        .thenCompose(r -> r.after(ctx -> lostItemFeeService
-          .chargeLostItemFees(ctx, context.getUserId())));
+        .thenCompose(r -> r.after(ctx -> {
+          log.info("declareItemLost:: tenantId={}, staffUserId={}, loanId={}",
+            context.getTenantId(), context.getUserId(), request.getLoanId());
+          return lostItemFeeService.chargeLostItemFees(ctx, context.getUserId());
+        }));
   }
 
   private Function<Result<DeclareLostContext>, CompletionStage<Result<DeclareLostContext>>>
