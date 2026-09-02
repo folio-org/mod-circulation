@@ -5,6 +5,7 @@ import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.results.Result;
 
@@ -41,6 +42,11 @@ public class FetchSingleRecord<T> {
   public FetchSingleRecord<T> whenNotFound(Result<T> result) {
     return new FetchSingleRecord<>(recordType, client, interpreter
       .on(404, result));
+  }
+
+  public FetchSingleRecord<T> whenNotFound(Function<Response, Result<T>> mapper) {
+    return new FetchSingleRecord<>(recordType, client,
+      interpreter.flatMapOn(404, mapper));
   }
 
   public CompletableFuture<Result<T>> fetch(String id) {
