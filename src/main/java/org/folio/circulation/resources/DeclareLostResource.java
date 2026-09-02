@@ -87,6 +87,9 @@ public class DeclareLostResource extends Resource {
     Clients clients, WebContext context) {
 
     log.debug("declareItemLost:: parameters request: {}", () -> request);
+    log.info("declareItemLost:: loanId={}, tenantId={}, staffUserId={}", request.getLoanId(),
+      context.getTenantId(), context.getUserId());
+
     final var itemRepository = new ItemRepository(clients);
     final var userRepository = new UserRepository(clients);
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
@@ -106,11 +109,8 @@ public class DeclareLostResource extends Resource {
         .thenCompose(r -> r.after(this::refuseWhenFeeFineOwnerIsNotFound))
         .thenCompose(declareItemLost(clients))
         .thenCompose(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
-        .thenCompose(r -> r.after(ctx -> {
-          log.info("declareItemLost:: tenantId={}, staffUserId={}, loanId={}",
-            context.getTenantId(), context.getUserId(), request.getLoanId());
-          return lostItemFeeService.chargeLostItemFees(ctx, context.getUserId());
-        }));
+        .thenCompose(r -> r.after(ctx -> lostItemFeeService
+          .chargeLostItemFees(ctx, context.getUserId())));
   }
 
   private Function<Result<DeclareLostContext>, CompletionStage<Result<DeclareLostContext>>>

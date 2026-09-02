@@ -46,6 +46,7 @@ import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -121,6 +122,27 @@ class FeeFineFacadeTest {
     assertThat(result, notNullValue());
     assertThat(result.succeeded(), is(true));
     verify(accountActionsClient).post(any());
+  }
+
+  @Test
+  void shouldKeepStaffUserIdAsSourceWhenStaffUserIsNotFound() throws Exception {
+    when(accountClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(accountActionsClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(userClient.get("user-id"))
+      .thenReturn(ofAsync(jsonResponse(404, new JsonObject())));
+    when(servicePointClient.get("cd1-id"))
+      .thenReturn(ofAsync(jsonResponse(200, new JsonObject().put("id", "cd1-id"))));
+
+    final Result<FeeFineAction> result = feeFineFacade
+      .createAccount(createCommandBuilder().build())
+      .get(5, TimeUnit.SECONDS);
+
+    assertThat(result.succeeded(), is(true));
+    ArgumentCaptor<JsonObject> actionCaptor = ArgumentCaptor.forClass(JsonObject.class);
+    verify(accountActionsClient).post(actionCaptor.capture());
+    assertThat(actionCaptor.getValue().getString("source"), is("user-id"));
   }
 
   @Test

@@ -102,7 +102,7 @@ public class FeeFineFacade {
       .account(account)
       .currentServicePointId(command.getServicePointId())
       .refundReason(command.getRefundReason())
-      .userName(user.getPersonalName())
+      .userName(staffUserSource(user, command.getStaffUserId()))
       .build();
 
     return feeFineService.refundAccount(refundCommand);
@@ -128,7 +128,7 @@ public class FeeFineFacade {
       .accountId(account.getId())
       .currentServicePointId(command.getServicePointId())
       .cancellationReason(command.getCancelReason())
-      .userName(user.getPersonalName())
+      .userName(staffUserSource(user, command.getStaffUserId()))
       .build();
 
     return feeFineService.cancelAccount(cancelCommand);
@@ -143,14 +143,32 @@ public class FeeFineFacade {
     }
 
     return userRepository.getUser(command.getStaffUserId())
-      .thenApply(r -> r.map(user -> {
-        if (user == null) {
-          log.warn("populateCreatedBy:: staff user not found for userId: {}, " +
-            "creating action without source", command.getStaffUserId());
-          return builder;
-        }
-        return builder.withCreatedBy(user);
-      }));
+      .thenApply(r -> r.map(user -> builder.withCreatedBy(
+        staffUserSource(user, command.getStaffUserId()))));
+  }
+
+  /**
+   * Resolves the staff user who performed the action, to be stored as the source of the fee/fine
+   * action.
+   *
+   * <p>The staff user cannot always be resolved. The request may reach this module without
+   * {@code X-Okapi-User-Id} (in ECS an action can be re-issued in another tenant under a system
+   * user, in which case the original user id is not propagated), or the id may belong to a user
+   * who has no record in the tenant the loan belongs to. Neither case should fail the operation
+   * the user asked for, so the staff user ID is stored as the source instead of dropping the
+   * creator information.
+   *
+   * @see <a href="https://folio-org.atlassian.net/browse/CIRC-2673">CIRC-2673</a>
+   */
+  private static String staffUserSource(User user, String staffUserId) {
+    if (user == null) {
+      log.warn("staffUserSource:: staff user {} could not be resolved, " +
+        "using the user ID as the fee/fine action source", staffUserId);
+
+      return staffUserId;
+    }
+
+    return user.getPersonalName();
   }
 
   private CompletableFuture<Result<ServicePoint>> fetchServicePoint(String servicePointId) {
