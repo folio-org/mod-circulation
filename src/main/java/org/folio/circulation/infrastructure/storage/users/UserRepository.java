@@ -37,6 +37,7 @@ import org.folio.circulation.support.FetchSingleRecord;
 import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.PageLimit;
+import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
