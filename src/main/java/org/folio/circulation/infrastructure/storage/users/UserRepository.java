@@ -90,8 +90,8 @@ public class UserRepository {
       .using(usersStorageClient)
       .mapTo(User::new)
       .whenNotFound(response -> {
-        log.warn("getUser:: mod-users returned status {} for userId={}, url={}",
-          response.getStatusCode(), userId, response.getFromUrl());
+        log.warn("getUser:: mod-users returned status {} for userId={}",
+          response.getStatusCode(), userId);
         return succeeded(null);
       })
       .fetch(userId)
