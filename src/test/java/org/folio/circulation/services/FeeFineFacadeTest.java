@@ -82,7 +82,7 @@ class FeeFineFacadeTest {
   }
 
   @Test
-  void shouldForwardFailureIfAnAccountIsNotCreated() {
+  void shouldForwardFailureIfAnAccountIsNotCreated() throws Exception {
     final String expectedError = "Fee fine account failed to be created";
 
     when(userClient.get("user-id"))
@@ -97,7 +97,7 @@ class FeeFineFacadeTest {
     final Result<List<FeeFineAction>> result = feeFineFacade.createAccounts(Arrays.asList(
       createCommandBuilder().build(),
       createCommandBuilder().build()))
-      .getNow(null);
+      .get(5, TimeUnit.SECONDS);
 
     assertThat(result, notNullValue());
 
