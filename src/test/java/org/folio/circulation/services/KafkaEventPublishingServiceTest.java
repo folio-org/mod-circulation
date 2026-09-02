@@ -29,11 +29,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 
 @ExtendWith(MockitoExtension.class)
 class KafkaEventPublishingServiceTest {
   private static final String TENANT_ID = "test_tenant";
-  private static final String PAYLOAD = "{}";
+  private static final JsonObject PAYLOAD = new JsonObject();
   private static final Map<String, String> HEADERS = Map.of(TENANT, TENANT_ID);
 
   @Mock

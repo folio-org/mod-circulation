@@ -14,6 +14,7 @@ import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.Context;
+import io.vertx.core.json.JsonObject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -46,7 +47,7 @@ public class KafkaEventPublishingService implements EventPublishingService {
   }
 
   @Override
-  public CompletableFuture<Void> publishEvent(String eventType, String payload) {
+  public CompletableFuture<Void> publishEvent(String eventType, JsonObject payload) {
     log.info("publishEvent:: eventType={}, tenantId={}", eventType, tenantId);
 
     return fromEventType(eventType)

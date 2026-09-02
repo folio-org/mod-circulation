@@ -9,6 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -56,7 +57,7 @@ class EventPublisherTest {
     lenient().when(clients.eventPublishingService()).thenReturn(eventPublishingService);
     lenient().when(clients.localeClient()).thenReturn(localeClient);
     lenient().when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
-    lenient().when(eventPublishingService.publishEvent(anyString(), anyString()))
+    lenient().when(eventPublishingService.publishEvent(anyString(), any(JsonObject.class)))
       .thenReturn(completedFuture(null));
     lenient().when(localeClient.get())
       .thenReturn(completedFuture(Result.failed(new ServerErrorFailure("locale not available"))));
@@ -110,7 +111,7 @@ class EventPublisherTest {
   @Test
   void publishLogRecordReturnsServerErrorWhenKafkaPublishingFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
-    when(eventPublishingService.publishEvent(eq(LOG_RECORD.name()), anyString()))
+    when(eventPublishingService.publishEvent(eq(LOG_RECORD.name()), any(JsonObject.class)))
       .thenReturn(failedFuture(failure));
 
     var result = eventPublisher.publishLogRecord(new JsonObject()
@@ -124,7 +125,7 @@ class EventPublisherTest {
   @Test
   void publishLoanClosedEventReturnsServerErrorWhenKafkaPublishingFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
-    when(eventPublishingService.publishEvent(eq(LOAN_CLOSED.name()), anyString()))
+    when(eventPublishingService.publishEvent(eq(LOAN_CLOSED.name()), any(JsonObject.class)))
       .thenReturn(failedFuture(failure));
 
     var result = eventPublisher.publishLoanClosedEvent(buildLoan()).join();
@@ -161,12 +162,11 @@ class EventPublisherTest {
   }
 
   private String captureLogPayloadByAction(String action) {
-    ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<JsonObject> payloadCaptor = ArgumentCaptor.forClass(JsonObject.class);
     verify(eventPublishingService, atLeastOnce())
       .publishEvent(eq(LOG_RECORD.name()), payloadCaptor.capture());
 
     return payloadCaptor.getAllValues().stream()
-      .map(JsonObject::new)
       .filter(json -> action.equals(
         json.getJsonObject("payload", new JsonObject()).getString("action")))
       .findFirst()

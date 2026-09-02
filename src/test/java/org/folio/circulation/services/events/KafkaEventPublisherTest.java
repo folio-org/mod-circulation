@@ -52,7 +52,7 @@ class KafkaEventPublisherTest {
 
     KafkaEventPublisher<String> publisher =
       new KafkaEventPublisher<>(Vertx.vertx().getOrCreateContext(), fullTopicName, TEST_TENANT);
-    waitFor(publisher.publish(randomUUID().toString(), eventPayload.encode(), HEADERS));
+    waitFor(publisher.publish(randomUUID().toString(), eventPayload, HEADERS));
     Collection<ConsumerRecord<String, String>> consumerRecords =
       kafkaHelper.consumeEvents(consumer, fullTopicName, 1);
 

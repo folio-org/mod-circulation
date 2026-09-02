@@ -47,10 +47,10 @@ class KafkaEventPublisherUnitTest {
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
 
-    String payload = new JsonObject()
+    JsonObject payload = new JsonObject()
       .put("userId", "user-1")
       .put("loanId", "loan-1")
-      .encode();
+      .put("item", new JsonObject().put("status", "Checked out"));
     Map<String, String> headers = Map.of(
       OKAPI_URL, DEFAULT_GATEWAY_URL,
       TENANT, "test",
@@ -69,9 +69,9 @@ class KafkaEventPublisherUnitTest {
     KafkaProducerRecord<String, String> producerRecord = recordCaptor.getValue();
     assertThat(producerRecord.topic(), is(TOPIC));
     assertThat(producerRecord.key(), is("key-1"));
-    assertThat(producerRecord.value(), is(payload));
+    assertThat(producerRecord.value(), is(payload.encode()));
     assertThat(producerRecord.value(),
-      not(is(new JsonObject().put("data", new JsonObject(payload)).encode())));
+      not(is(new JsonObject().put("data", payload).encode())));
     assertThat(tenantIdHeaderValue(producerRecord), is("test"));
   }
 
@@ -82,10 +82,9 @@ class KafkaEventPublisherUnitTest {
     when(producer.flush()).thenReturn(Future.succeededFuture());
     when(producer.close()).thenReturn(Future.succeededFuture());
 
-    String payload = new JsonObject()
+    JsonObject payload = new JsonObject()
       .put("userId", "user-1")
-      .put("loanId", "loan-1")
-      .encode();
+      .put("loanId", "loan-1");
     Map<String, String> headers = Map.of(
       OKAPI_URL.toLowerCase(), DEFAULT_GATEWAY_URL,
       TENANT.toLowerCase(), "different-tenant",
@@ -111,7 +110,7 @@ class KafkaEventPublisherUnitTest {
     when(producer.close()).thenReturn(Future.succeededFuture());
 
     var publishFuture = new KafkaEventPublisher<String>(TOPIC, TENANT_ID_VALUE, producerManager)
-      .publish("key-1", "{}", Map.of(TENANT, "test"));
+      .publish("key-1", new JsonObject(), Map.of(TENANT, "test"));
     var error = assertThrows(CompletionException.class, publishFuture::join);
 
     assertThat(error.getCause(), sameInstance(failure));

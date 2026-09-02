@@ -119,7 +119,7 @@ public class EventPublisher {
         loan.getId());
       // run ITEM_CHECKED_OUT event publishing asynchronously to prevent any impact on the performance of check-out
       runAsync(() -> eventPublishingService.publishEvent(ITEM_CHECKED_OUT.name(),
-        payloadJsonObject.encode()));
+        payloadJsonObject));
     } else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
     }
@@ -146,7 +146,7 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      return eventPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
+      return eventPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject)
         .handle((result, error) -> handlePublishEventError(error, context));
     }
 
@@ -177,7 +177,7 @@ public class EventPublisher {
     write(payload, USER_ID_FIELD, loan.getUserId());
     write(payload, LOAN_ID_FIELD, loan.getId());
 
-    return eventPublishingService.publishEvent(eventName, payload.encode())
+    return eventPublishingService.publishEvent(eventName, payload)
       .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
@@ -406,7 +406,7 @@ public class EventPublisher {
     write(eventJson, LOG_EVENT_TYPE.value(), payloadType.value());
     write(eventJson, PAYLOAD.value(), context);
 
-    return eventPublishingService.publishEvent(LOG_RECORD.name(), eventJson.encode())
+    return eventPublishingService.publishEvent(LOG_RECORD.name(), eventJson)
       .handle((result, error) -> handlePublishEventError(error, null));
   }
 
@@ -462,7 +462,7 @@ public class EventPublisher {
     write(payloadJson, USER_ID_FIELD, loan.getUserId());
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
 
-    return eventPublishingService.publishEvent(eventName, payloadJson.encode())
+    return eventPublishingService.publishEvent(eventName, payloadJson)
       .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
@@ -497,7 +497,7 @@ public class EventPublisher {
         runAsync(() -> publishDueDateLogEvent(loan));
       }
 
-      return eventPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
+      return eventPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject)
         .handle((result, error) -> handlePublishEventError(error, loan));
     }
     else {
