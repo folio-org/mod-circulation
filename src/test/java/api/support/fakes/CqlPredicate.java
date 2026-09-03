@@ -69,8 +69,10 @@ public final class CqlPredicate implements Predicate<JsonObject> {
   private boolean evaluateLogicalOperation(JsonObject json, CQLBooleanNode node) {
     final CqlLogicalOperator operator = logicalOperators.get(node.getOperator());
 
-    return operator.apply(evaluate(json, node.getRightOperand()),
-      evaluate(json, node.getLeftOperand()));
+    // Operand order matters for NOT ("A NOT B" means A && !B); it is
+    // irrelevant for the symmetric AND/OR.
+    return operator.apply(evaluate(json, node.getLeftOperand()),
+      evaluate(json, node.getRightOperand()));
   }
 
   private boolean isMatchAllRecordsTerm(CQLTermNode node) {

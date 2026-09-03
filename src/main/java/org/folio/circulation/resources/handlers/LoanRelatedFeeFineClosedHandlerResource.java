@@ -9,6 +9,7 @@ import static org.folio.circulation.support.results.MappingFunctions.toFixedValu
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ import org.folio.circulation.domain.subscribers.LoanRelatedFeeFineClosedEvent;
 import org.folio.circulation.infrastructure.storage.ActualCostRecordRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.AccountRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
+import org.folio.circulation.infrastructure.storage.loans.AnonymizationDueDateStorageRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.loans.LostItemPolicyRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
@@ -61,8 +63,12 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
 
     log.info("Event {} received: {}", LOAN_RELATED_FEE_FINE_CLOSED, routingContext.body().asString());
 
+    final var dueDateStorageRepository = new AnonymizationDueDateStorageRepository(clients);
+
     createAndValidateRequest(routingContext)
-      .after(request -> processEvent(loanRepository, request, closeLoanWithLostItemService))
+      .after(request -> clearAnonymizationDueDate(dueDateStorageRepository, request)
+        .thenCompose(r -> r.after(notUsed ->
+          processEvent(loanRepository, request, closeLoanWithLostItemService))))
       .exceptionally(CommonFailures::failedDueToServerError)
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(result -> result.applySideEffect(context::write, failure -> {
@@ -70,6 +76,23 @@ public class LoanRelatedFeeFineClosedHandlerResource extends Resource {
           routingContext.body().asString(), failure);
 
         context.write(noContent());
+      }));
+  }
+
+  /**
+   * A fee/fine closing changes the loan's anonymization eligibility, so clear
+   * its due-date row and let the next sweep re-evaluate it. Never fails the
+   * event: a missed clear only delays re-evaluation.
+   */
+  private CompletableFuture<Result<Integer>> clearAnonymizationDueDate(
+    AnonymizationDueDateStorageRepository dueDateStorageRepository,
+    LoanRelatedFeeFineClosedEvent event) {
+
+    return dueDateStorageRepository.clearByLoanIds(List.of(event.getLoanId()))
+      .thenApply(r -> r.mapFailure(failure -> {
+        log.warn("clearAnonymizationDueDate:: clearing stamp failed for loan {}: {}",
+          event.getLoanId(), failure);
+        return succeeded(0);
       }));
   }
 

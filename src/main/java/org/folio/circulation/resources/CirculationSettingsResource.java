@@ -15,6 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CirculationSetting;
 import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
+import org.folio.circulation.infrastructure.storage.loans.AnonymizationDueDateStorageRepository;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.NoContentResponse;
@@ -46,6 +48,7 @@ public class CirculationSettingsResource extends CollectionResource {
     ofAsync(circulationSetting)
       .thenApply(refuseWhenCirculationSettingIsInvalid())
       .thenCompose(r -> r.after(circulationSettingsRepository::create))
+      .thenApply(r -> r.peek(setting -> invalidateAnonymizationDueDatesIfLoanHistory(clients, setting)))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse);
@@ -64,6 +67,7 @@ public class CirculationSettingsResource extends CollectionResource {
     ofAsync(circulationSetting)
       .thenApply(refuseWhenCirculationSettingIsInvalid())
       .thenCompose(r -> r.after(circulationSettingsRepository::update))
+      .thenApply(r -> r.peek(setting -> invalidateAnonymizationDueDatesIfLoanHistory(clients, setting)))
       .thenApply(r -> r.map(CirculationSetting::getRepresentation))
       .thenApply(r -> r.map(JsonHttpResponse::created))
       .thenAccept(context::writeResultToHttpResponse);
@@ -88,11 +92,20 @@ public class CirculationSettingsResource extends CollectionResource {
   void delete(RoutingContext routingContext) {
     final var context = new WebContext(routingContext);
     final var clients = Clients.create(context, client);
+    final var circulationSettingsRepository = new CirculationSettingsRepository(clients);
 
     ofAsync(routingContext.request().getParam("id"))
       .thenApply(refuseWhenIdIsInvalid())
       .thenApply(r -> r.peek(id -> log.debug("delete:: parameters id: {}", id)))
-      .thenCompose(r -> r.after(clients.circulationSettingsStorageClient()::delete))
+      // Fetch before deleting so we know whether the removed setting was
+      // loan_history (a policy change that invalidates the due-dates).
+      .thenCompose(r -> r.after(id -> circulationSettingsRepository.getById(id)
+        .thenCompose(settingResult -> clients.circulationSettingsStorageClient().delete(id)
+          .thenApply(deleteResult -> deleteResult.map(response -> {
+            settingResult.peek(setting ->
+              invalidateAnonymizationDueDatesIfLoanHistory(clients, setting));
+            return response;
+          })))))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
   }
@@ -121,6 +134,25 @@ public class CirculationSettingsResource extends CollectionResource {
     clients.loansStorage().delete()
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  /**
+   * Any create/replace/delete of the loan_history setting invalidates the
+   * derived due-dates, so clear them all and let the next sweep re-evaluate.
+   * Fire-and-forget: a missed clear only delays re-evaluation.
+   */
+  private static void invalidateAnonymizationDueDatesIfLoanHistory(
+    Clients clients, CirculationSetting setting) {
+
+    if (setting == null
+      || !CirculationSettingsService.SETTING_NAME_LOAN_HISTORY.equals(setting.getName())) {
+      return;
+    }
+    log.info("invalidate:: loan_history changed, clearing all anonymization due-dates");
+    new AnonymizationDueDateStorageRepository(clients).clearAll()
+      .thenAccept(r -> r.applySideEffect(
+        cleared -> log.info("invalidate:: cleared {} anonymization due-dates", cleared),
+        failure -> log.warn("invalidate:: clearing stamps failed: {}", failure)));
   }
 
   private static void setRandomIdIfMissing(JsonObject representation) {

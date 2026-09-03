@@ -783,7 +783,8 @@
             "circulation.settings.item.put"
           ],
           "modulePermissions": [
-            "circulation-storage.circulation-settings.item.put"
+            "circulation-storage.circulation-settings.item.put",
+            "anonymization-due-date-storage.clear.post"
           ]
         }, {
           "methods": ["POST"],
@@ -792,7 +793,8 @@
             "circulation.settings.item.post"
           ],
           "modulePermissions": [
-            "circulation-storage.circulation-settings.item.post"
+            "circulation-storage.circulation-settings.item.post",
+            "anonymization-due-date-storage.clear.post"
           ]
         }, {
           "methods": ["DELETE"],
@@ -801,7 +803,9 @@
             "circulation.settings.item.delete"
           ],
           "modulePermissions": [
-            "circulation-storage.circulation-settings.item.delete"
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.item.delete",
+            "anonymization-due-date-storage.clear.post"
           ]
         }
       ]
@@ -1110,6 +1114,9 @@
             "scheduled-notice-storage.scheduled-notices.item.post",
             "patron-notice.post",
             "anonymize-storage-loans.post",
+            "anonymization-due-date-storage.stamp.post",
+            "anonymization-due-date-storage.due.get",
+            "anonymization-due-date-storage.unevaluated.get",
             "accounts.collection.get",
             "feefineactions.collection.get",
             "pubsub.publish.post",
@@ -1431,6 +1438,10 @@
     },
     {
       "id": "anonymize-storage-loans",
+      "version": "0.1"
+    },
+    {
+      "id": "anonymization-due-date-storage",
       "version": "0.1"
     },
     {
@@ -1898,7 +1909,8 @@
         "actual-cost-record-storage.actual-cost-records.item.get",
         "actual-cost-record-storage.actual-cost-records.item.post",
         "actual-cost-record-storage.actual-cost-records.item.put",
-        "actual-cost-record-storage.actual-cost-records.item.delete"
+        "actual-cost-record-storage.actual-cost-records.item.delete",
+        "anonymization-due-date-storage.clear.post"
       ],
       "visible": false
     },

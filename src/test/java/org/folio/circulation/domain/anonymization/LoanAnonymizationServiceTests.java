@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
-import org.folio.circulation.domain.anonymization.service.AnonymizationCheckersService;
+import org.folio.circulation.domain.anonymization.service.AnonymizationEligibilityService;
 import org.folio.circulation.domain.anonymization.service.LoansForTenantFinder;
 import org.folio.circulation.infrastructure.storage.loans.AnonymizeStorageLoansRepository;
 import org.folio.circulation.services.EventPublisher;
@@ -136,10 +136,10 @@ class LoanAnonymizationServiceTests {
   }
 
   private LoanAnonymizationService createService(LoanAnonymizationConfiguration config) {
-    final var anonymizationCheckersService = new AnonymizationCheckersService(config,
+    final var anonymizationEligibilityService = new AnonymizationEligibilityService(config,
       ClockUtil::getZonedDateTime);
 
-    return new DefaultLoanAnonymizationService(anonymizationCheckersService,
+    return new DefaultLoanAnonymizationService(anonymizationEligibilityService,
       anonymizeStorageLoansRepository, eventPublisher);
   }
 }
