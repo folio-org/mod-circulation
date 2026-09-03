@@ -3,7 +3,7 @@ package api.support.fixtures;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.TENANT_ID;
 import static api.support.Wait.waitForValue;
-import static org.folio.circulation.EventConsumerVerticle.consumerGroupId;
+import static org.folio.circulation.EventConsumerVerticle.genericConsumerGroupId;
 import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.circulation.domain.EventType.LOAN_RELATED_FEE_FINE_CLOSED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
@@ -28,25 +28,25 @@ public class EventSubscribersFixture {
   public void publishLoanRelatedFeeFineClosedEvent(UUID loanId, UUID accountId) {
     publishKafkaEvent(FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED,
       buildLoanRelatedFeeFineClosedPayload(loanId, accountId),
-      consumerGroupId(LOAN_RELATED_FEE_FINE_CLOSED));
+      genericConsumerGroupId(LOAN_RELATED_FEE_FINE_CLOSED));
   }
 
   public void publishLoanRelatedFeeFineClosedEventForActualCostFee(UUID loanId) {
     publishKafkaEvent(FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED,
       buildLoanRelatedFeeFineClosedPayload(loanId, null),
-      consumerGroupId(LOAN_RELATED_FEE_FINE_CLOSED));
+      genericConsumerGroupId(LOAN_RELATED_FEE_FINE_CLOSED));
   }
 
   public void publishFeeFineBalanceChangedEvent(UUID loanId, UUID accountId) {
     publishKafkaEvent(FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED,
       buildFeeFineBalanceChangedPayload(loanId, accountId),
-      consumerGroupId(FEE_FINE_BALANCE_CHANGED));
+      genericConsumerGroupId(FEE_FINE_BALANCE_CHANGED));
   }
 
   public int getLoanRelatedFeeFineClosedConsumerOffset() {
     return kafkaHelper.getOffset(
       FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED.fullTopicName(TENANT_ID),
-      consumerGroupId(LOAN_RELATED_FEE_FINE_CLOSED));
+      genericConsumerGroupId(LOAN_RELATED_FEE_FINE_CLOSED));
   }
 
   private JsonObject buildLoanRelatedFeeFineClosedPayload(UUID loanId, UUID accountId) {

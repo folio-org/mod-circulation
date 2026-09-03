@@ -8,7 +8,7 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
-import static org.folio.circulation.EventConsumerVerticle.consumerGroupId;
+import static org.folio.circulation.EventConsumerVerticle.genericConsumerGroupId;
 import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.circulation.rules.cache.CirculationRulesCache.getInstance;
@@ -103,7 +103,7 @@ public class EventConsumerVerticleTest extends APITests {
   void feeFineConsumersStartAtEarliestOffset() {
     String tenantId = "offsetreset" + UUID.randomUUID().toString().replace("-", "");
     String topic = FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED.fullTopicName(tenantId);
-    String groupId = consumerGroupId(FEE_FINE_BALANCE_CHANGED);
+    String groupId = genericConsumerGroupId(FEE_FINE_BALANCE_CHANGED);
     JsonObject event = new JsonObject()
       .put("loanId", randomId())
       .put("feeFineId", randomId())

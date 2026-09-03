@@ -50,7 +50,7 @@ import lombok.extern.log4j.Log4j2;
 public class EventConsumerVerticle extends AbstractVerticle {
 
   public static final String MODULE_NAME = "mod-circulation";
-  public static final String REAL_MODULE_ID = String.format("%s-%s",
+  public static final String RULES_CONSUMER_MODULE_ID = String.format("%s-%s",
     MODULE_NAME, moduleVersion());
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
@@ -113,25 +113,23 @@ public class EventConsumerVerticle extends AbstractVerticle {
     return Future.all(List.of(
       // A unique group lets every module instance receive circulation rules updates.
       createConsumer(CIRCULATION_RULES_UPDATED.name(), CIRCULATION_RULES_UPDATED.getKafkaTopic(),
-        new CirculationRulesUpdateEventHandler(), buildUniqueModuleId(),
+        new CirculationRulesUpdateEventHandler(), buildUniqueRulesConsumerModuleId(),
         circulationRulesKafkaConfig),
       createConsumer(LOAN_RELATED_FEE_FINE_CLOSED, FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED,
         new LoanRelatedFeeFineClosedKafkaEventHandler(context, httpClient,
-          genericKafkaConfig.getOkapiUrl()),
-        REAL_MODULE_ID),
+          genericKafkaConfig.getOkapiUrl())),
       createConsumer(FEE_FINE_BALANCE_CHANGED, FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED,
         new FeeFineBalanceChangedKafkaEventHandler(context, httpClient,
-          genericKafkaConfig.getOkapiUrl()),
-        REAL_MODULE_ID)
+          genericKafkaConfig.getOkapiUrl()))
     )).mapEmpty();
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(EventType eventType,
-    KafkaTopic kafkaTopic, AsyncRecordHandler<String, String> handler, String moduleId) {
+    KafkaTopic kafkaTopic, AsyncRecordHandler<String, String> handler) {
 
     log.info("createConsumer:: creating consumer for event type {}", eventType);
 
-    return createConsumer(eventType.name(), kafkaTopic, handler, moduleId, genericKafkaConfig);
+    return createConsumer(eventType.name(), kafkaTopic, handler, MODULE_NAME, genericKafkaConfig);
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(String eventType,
@@ -193,14 +191,15 @@ public class EventConsumerVerticle extends AbstractVerticle {
         String.valueOf(DEFAULT_KAFKA_MAX_REQUEST_SIZE)));
   }
 
-  public String buildUniqueModuleId() {
-      String id = String.format("%s_%s_%s", REAL_MODULE_ID, generateRandomDigits(10), currentTimeMillis());
-      log.info("buildUniqueModuleId:: using module ID {}", id);
-      return id;
+  public String buildUniqueRulesConsumerModuleId() {
+    String id = String.format("%s_%s_%s", RULES_CONSUMER_MODULE_ID,
+      generateRandomDigits(10), currentTimeMillis());
+    log.info("buildUniqueRulesConsumerModuleId:: using module ID {}", id);
+    return id;
   }
 
-  public static String consumerGroupId(EventType eventType) {
-    return formatGroupName(eventType.name(), REAL_MODULE_ID);
+  public static String genericConsumerGroupId(EventType eventType) {
+    return formatGroupName(eventType.name(), MODULE_NAME);
   }
 
 }
