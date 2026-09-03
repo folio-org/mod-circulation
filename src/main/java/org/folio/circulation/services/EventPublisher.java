@@ -76,19 +76,19 @@ public class EventPublisher {
   private static final String ACTION_COMMENT_TEMPLATE = "Additional information: %s";
 
 
-  private final PubSubPublishingService pubSubPublishingService;
+  private final EventPublishingService eventPublishingService;
   private final Clients clients;
   private WebContext webContext;
 
   public EventPublisher(WebContext webContext, Clients clients) {
     this.webContext = webContext;
     this.clients = clients;
-    this.pubSubPublishingService = clients.pubSubPublishingService();
+    this.eventPublishingService = clients.eventPublishingService();
   }
 
   public EventPublisher(Clients clients) {
     this.clients = clients;
-    this.pubSubPublishingService = clients.pubSubPublishingService();
+    this.eventPublishingService = clients.eventPublishingService();
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> publishItemCheckedOutEvent(
@@ -112,14 +112,14 @@ public class EventPublisher {
 
       runAsync(() -> userRepository.getUser(loanAndRelatedRecords.getLoggedInUserId())
         .thenApplyAsync(r -> r.after(loggedInUser -> completedFuture(
-          succeeded(pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+          succeeded(eventPublishingService.publishEvent(LOG_RECORD.name(),
             mapToCheckOutLogEventContent(loanAndRelatedRecords, loggedInUser)))))));
 
       logger.info("publishItemCheckedOutEvent:: publishing ITEM_CHECKED_OUT event for loan {}",
         loan.getId());
       // run ITEM_CHECKED_OUT event publishing asynchronously to prevent any impact on the performance of check-out
-      runAsync(() -> pubSubPublishingService.publishEvent(ITEM_CHECKED_OUT.name(),
-        payloadJsonObject.encode()));
+      runAsync(() -> eventPublishingService.publishEvent(ITEM_CHECKED_OUT.name(),
+        payloadJsonObject));
     } else {
       logger.error(FAILED_TO_PUBLISH_LOG_TEMPLATE, ITEM_CHECKED_OUT.name());
     }
@@ -134,7 +134,7 @@ public class EventPublisher {
       context.getLoan() != null ? context.getLoan().getId() : "null");
     runAsync(() -> userRepository.getUser(context.getLoggedInUserId())
       .thenCompose(r1 -> r1.after(loggedInUser -> getUserForLastLoan(context, userRepository, loanRepository)
-        .thenCompose(r -> r.after(userFromLastLoan -> pubSubPublishingService.publishEvent(LOG_RECORD.name(),
+        .thenCompose(r -> r.after(userFromLastLoan -> eventPublishingService.publishEvent(LOG_RECORD.name(),
           mapToCheckInLogEventContent(context, loggedInUser, userFromLastLoan)).thenApply(Result::succeeded)))))
     );
 
@@ -146,7 +146,7 @@ public class EventPublisher {
       write(payloadJsonObject, LOAN_ID_FIELD, loan.getId());
       write(payloadJsonObject, RETURN_DATE_FIELD, loan.getReturnDate());
 
-      return pubSubPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject.encode())
+      return eventPublishingService.publishEvent(ITEM_CHECKED_IN.name(), payloadJsonObject)
         .handle((result, error) -> handlePublishEventError(error, context));
     }
 
@@ -177,7 +177,7 @@ public class EventPublisher {
     write(payload, USER_ID_FIELD, loan.getUserId());
     write(payload, LOAN_ID_FIELD, loan.getId());
 
-    return pubSubPublishingService.publishEvent(eventName, payload.encode())
+    return eventPublishingService.publishEvent(eventName, payload)
       .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
@@ -406,7 +406,7 @@ public class EventPublisher {
     write(eventJson, LOG_EVENT_TYPE.value(), payloadType.value());
     write(eventJson, PAYLOAD.value(), context);
 
-    return pubSubPublishingService.publishEvent(LOG_RECORD.name(), eventJson.encode())
+    return eventPublishingService.publishEvent(LOG_RECORD.name(), eventJson)
       .handle((result, error) -> handlePublishEventError(error, null));
   }
 
@@ -462,7 +462,7 @@ public class EventPublisher {
     write(payloadJson, USER_ID_FIELD, loan.getUserId());
     write(payloadJson, LOAN_ID_FIELD, loan.getId());
 
-    return pubSubPublishingService.publishEvent(eventName, payloadJson.encode())
+    return eventPublishingService.publishEvent(eventName, payloadJson)
       .handle((result, error) -> handlePublishEventError(error, loan));
   }
 
@@ -497,7 +497,7 @@ public class EventPublisher {
         runAsync(() -> publishDueDateLogEvent(loan));
       }
 
-      return pubSubPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject.encode())
+      return eventPublishingService.publishEvent(LOAN_DUE_DATE_CHANGED.name(), payloadJsonObject)
         .handle((result, error) -> handlePublishEventError(error, loan));
     }
     else {

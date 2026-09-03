@@ -15,6 +15,7 @@ import org.folio.circulation.domain.notice.combiner.NoticeContextCombiner;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.CirculationRulesProcessor;
+import org.folio.circulation.services.EventPublishingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.http.client.Response;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import api.support.builders.NoticeConfigurationBuilder;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -39,7 +41,7 @@ class ImmediatePatronNoticeServiceTest {
   @Mock private CollectionResourceClient patronNoticeClient;
   @Mock private CollectionResourceClient patronNoticePoliciesStorageClient;
   @Mock private CirculationRulesProcessor circulationRulesProcessor;
-  @Mock private org.folio.circulation.services.PubSubPublishingService pubSubPublishingService;
+  @Mock private EventPublishingService eventPublishingService;
   @Mock private NoticeContextCombiner noticeContextCombiner;
 
   private ImmediatePatronNoticeService immediatePatronNoticeService;
@@ -49,7 +51,7 @@ class ImmediatePatronNoticeServiceTest {
     when(clients.patronNoticeClient()).thenReturn(patronNoticeClient);
     when(clients.patronNoticePolicesStorageClient()).thenReturn(patronNoticePoliciesStorageClient);
     when(clients.circulationRulesProcessor()).thenReturn(circulationRulesProcessor);
-    when(clients.pubSubPublishingService()).thenReturn(pubSubPublishingService);
+    when(clients.eventPublishingService()).thenReturn(eventPublishingService);
 
     immediatePatronNoticeService = new ImmediatePatronNoticeService(clients, noticeContextCombiner);
   }
@@ -95,7 +97,7 @@ class ImmediatePatronNoticeServiceTest {
       .put("id", policyId)
       .put("name", "Test Notice Policy")
       .put("loanNotices", new JsonArray().add(
-        new api.support.builders.NoticeConfigurationBuilder()
+        new NoticeConfigurationBuilder()
           .withTemplateId(UUID.randomUUID())
           .withCheckOutEvent()
           .withEmailFormat()
@@ -112,7 +114,7 @@ class ImmediatePatronNoticeServiceTest {
 
     Response noticePostResponse = new Response(200, "", "application/json");
     when(patronNoticeClient.post(any())).thenReturn(completedFuture(Result.succeeded(noticePostResponse)));
-    when(pubSubPublishingService.publishEvent(any(), any())).thenReturn(completedFuture(true));
+    when(eventPublishingService.publishEvent(any(), any())).thenReturn(completedFuture(null));
 
     Result<Void> result = immediatePatronNoticeService.acceptNoticeEvent(event).join();
 

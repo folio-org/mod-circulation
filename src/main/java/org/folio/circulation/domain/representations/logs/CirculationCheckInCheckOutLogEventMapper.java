@@ -34,11 +34,11 @@ public class CirculationCheckInCheckOutLogEventMapper {
   }
 
   /**
-   * This method returns {@link String} content for check-in log event payload
+   * This method returns {@link JsonObject} content for check-in log event payload
    * @param checkInContext check-in flow context {@link CheckInContext}
    * @return check-in log event payload
    */
-  public static String mapToCheckInLogEventContent(CheckInContext checkInContext,
+  public static JsonObject mapToCheckInLogEventContent(CheckInContext checkInContext,
     User loggedInUser, User userFromLastLoan) {
 
     log.debug("mapToCheckInLogEventContent:: parameters checkInContext: {}, loggedInUser: {}, " +
@@ -58,15 +58,15 @@ public class CirculationCheckInCheckOutLogEventMapper {
 
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(checkInContext));
 
-    return logEventPayload.encode();
+    return logEventPayload;
   }
 
   /**
-   * This method returns {@link String} content for check-out log event payload
+   * This method returns {@link JsonObject} content for check-out log event payload
    * @param loanAndRelatedRecords check-out flow context {@link LoanAndRelatedRecords}
    * @return check-out log event payload
    */
-  public static String mapToCheckOutLogEventContent(LoanAndRelatedRecords loanAndRelatedRecords,
+  public static JsonObject mapToCheckOutLogEventContent(LoanAndRelatedRecords loanAndRelatedRecords,
     User loggedInUser) {
 
     log.debug("mapToCheckOutLogEventContent:: parameters loanAndRelatedRecords: {}, " +
@@ -88,7 +88,7 @@ public class CirculationCheckInCheckOutLogEventMapper {
     write(logEventPayload, REQUESTS.value(), getUpdatedRequests(loanAndRelatedRecords));
     logEventPayload.put(PAYLOAD,payload);
 
-    return logEventPayload.encode();
+    return logEventPayload;
   }
 
   private static void populateLoanAndItemInCheckoutEvent(LoanAndRelatedRecords loanAndRelatedRecords, User loggedInUser, JsonObject data) {

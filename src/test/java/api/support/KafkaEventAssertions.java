@@ -1,6 +1,6 @@
 package api.support;
 
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.KafkaPublishedEvents.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.matchers.EventMatchers.*;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
@@ -8,10 +8,11 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import io.vertx.core.json.JsonObject;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-public class PubsubPublisherTestUtils {
-  private PubsubPublisherTestUtils() { }
-
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class KafkaEventAssertions {
   public static void assertThatPublishedLoanLogRecordEventsAreValid(JsonObject loan) {
     getPublishedEventsAsList(byLogEventType(LOAN.value())).stream()
       .filter(event -> event.getString("eventPayload").contains(loan.getString("id")))

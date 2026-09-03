@@ -6,8 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import static org.folio.HttpStatus.HTTP_OK;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 
-import io.vertx.core.json.JsonObject;
 import java.util.concurrent.CompletableFuture;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.services.EventPublisher;
@@ -17,6 +17,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.client.ResponseInterpreter;
 import org.folio.circulation.support.logging.PatronNoticeLogHelper;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.json.JsonObject;
 
 public abstract class PatronNoticeService {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -35,6 +37,11 @@ public abstract class PatronNoticeService {
     log.info("sendNotice:: sending notice to recipient {}, template {}",
       patronNotice != null ? patronNotice.getRecipientId() : "null",
       patronNotice != null && patronNotice.getTemplateId() != null ? patronNotice.getTemplateId() : "null");
+
+    if (patronNotice == null) {
+      log.debug("sendNotice:: patron notice is null");
+      return emptyAsync();
+    }
 
     log.debug("sendNotice:: posting notice to patron notice client");
     return patronNoticeClient.post(JsonObject.mapFrom(patronNotice))

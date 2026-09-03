@@ -1,9 +1,16 @@
 package org.folio.circulation.services;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
+import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.domain.EventType.LOG_RECORD;
+import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -12,7 +19,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Durations;
@@ -38,7 +44,7 @@ class EventPublisherTest {
   @Mock
   private Clients clients;
   @Mock
-  private PubSubPublishingService pubSubPublishingService;
+  private EventPublishingService eventPublishingService;
   @Mock
   private CollectionResourceClient localeClient;
   @Mock
@@ -48,14 +54,13 @@ class EventPublisherTest {
 
   @BeforeEach
   void setUp() {
-    when(clients.pubSubPublishingService()).thenReturn(pubSubPublishingService);
-    when(clients.localeClient()).thenReturn(localeClient);
-    when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
-    when(pubSubPublishingService.publishEvent(anyString(), anyString()))
-      .thenReturn(CompletableFuture.completedFuture(true));
-    when(localeClient.get())
-      .thenReturn(CompletableFuture.completedFuture(
-        Result.failed(new ServerErrorFailure("locale not available"))));
+    lenient().when(clients.eventPublishingService()).thenReturn(eventPublishingService);
+    lenient().when(clients.localeClient()).thenReturn(localeClient);
+    lenient().when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
+    lenient().when(eventPublishingService.publishEvent(anyString(), any(JsonObject.class)))
+      .thenReturn(completedFuture(null));
+    lenient().when(localeClient.get())
+      .thenReturn(completedFuture(Result.failed(new ServerErrorFailure("locale not available"))));
 
     eventPublisher = new EventPublisher(clients);
   }
@@ -103,6 +108,33 @@ class EventPublisherTest {
       });
   }
 
+  @Test
+  void publishLogRecordReturnsServerErrorWhenKafkaPublishingFails() {
+    var failure = new IllegalStateException("Kafka is unreachable");
+    when(eventPublishingService.publishEvent(eq(LOG_RECORD.name()), any(JsonObject.class)))
+      .thenReturn(failedFuture(failure));
+
+    var result = eventPublisher.publishLogRecord(new JsonObject()
+      .put("loanId", UUID.randomUUID().toString()), LOAN).join();
+
+    assertThat(result.failed(), is(true));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(((ServerErrorFailure) result.cause()).getReason(), is(failure.getMessage()));
+  }
+
+  @Test
+  void publishLoanClosedEventReturnsServerErrorWhenKafkaPublishingFails() {
+    var failure = new IllegalStateException("Kafka is unreachable");
+    when(eventPublishingService.publishEvent(eq(LOAN_CLOSED.name()), any(JsonObject.class)))
+      .thenReturn(failedFuture(failure));
+
+    var result = eventPublisher.publishLoanClosedEvent(buildLoan()).join();
+
+    assertThat(result.failed(), is(true));
+    assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
+    assertThat(((ServerErrorFailure) result.cause()).getReason(), is(failure.getMessage()));
+  }
+
   private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {
     ZonedDateTime previousDueDate = ZonedDateTime.now().minusDays(7);
     ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(7);
@@ -121,13 +153,20 @@ class EventPublisherTest {
     return RenewalContext.create(loan, new JsonObject(), renewalStaffId);
   }
 
+  private static Loan buildLoan() {
+    return Loan.from(new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("userId", UUID.randomUUID().toString())
+      .put("itemId", UUID.randomUUID().toString())
+      .put("status", new JsonObject().put("name", "Closed")));
+  }
+
   private String captureLogPayloadByAction(String action) {
-    ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
-    verify(pubSubPublishingService, atLeastOnce())
+    ArgumentCaptor<JsonObject> payloadCaptor = ArgumentCaptor.forClass(JsonObject.class);
+    verify(eventPublishingService, atLeastOnce())
       .publishEvent(eq(LOG_RECORD.name()), payloadCaptor.capture());
 
     return payloadCaptor.getAllValues().stream()
-      .map(JsonObject::new)
       .filter(json -> action.equals(
         json.getJsonObject("payload", new JsonObject()).getString("action")))
       .findFirst()

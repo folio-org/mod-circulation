@@ -7,6 +7,11 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toMap;
+import static org.apache.kafka.clients.admin.AlterConfigOp.OpType.DELETE;
+import static org.apache.kafka.clients.admin.AlterConfigOp.OpType.SET;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.kafka.KafkaTopicNameHelper.getEventTypeFromTopicName;
+import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
 import static org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -14,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +27,20 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.folio.circulation.domain.events.AuditKafkaTopic;
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.domain.events.CirculationStorageKafkaTopic;
+import org.folio.circulation.domain.events.FeeFineKafkaTopic;
+import org.folio.kafka.headers.FolioKafkaHeaders;
 import org.folio.kafka.services.KafkaTopic;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -46,11 +62,15 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class KafkaTestHelper {
 
+  private static final String MAX_MESSAGE_BYTES = "max.message.bytes";
+  private static final DockerImageName KAFKA_IMAGE =
+    DockerImageName.parse("apache/kafka-native:4.2.0");
   private static KafkaTestHelper INSTANCE;
   private Vertx vertx;
   private KafkaContainer kafkaContainer;
   private KafkaProducer<String, JsonObject> producer;
   private KafkaAdminClient adminClient;
+  private KafkaConsumer<String, String> publishedEventRecorder;
   private String kafkaUrl;
 
   private KafkaTestHelper() {
@@ -67,13 +87,16 @@ public class KafkaTestHelper {
     return INSTANCE;
   }
 
+  public static KafkaContainer createKafkaContainer() {
+    return new KafkaContainer(KAFKA_IMAGE);
+  }
+
   private void start() {
     log.info("start:: starting Kafka test helper");
     setSystemProperties();
 
-
     log.info("start:: starting Kafka container");
-    KafkaContainer container = new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.2.0"));
+    KafkaContainer container = createKafkaContainer();
     container.start();
     String host = container.getHost();
     String port = String.valueOf(container.getFirstMappedPort());
@@ -123,6 +146,24 @@ public class KafkaTestHelper {
 
   public void createCirculationTopics(String tenantId) {
     createTopic(CirculationStorageKafkaTopic.CIRCULATION_RULES, tenantId);
+  }
+
+  public void createCirculationPublicationTopics(String tenantId) {
+    createTopics(Arrays.stream(CirculationKafkaTopic.values())
+      .map(topic -> topic.fullTopicName(tenantId))
+      .toList());
+  }
+
+  public void createAuditTopics(String tenantId) {
+    createTopics(Arrays.stream(AuditKafkaTopic.values())
+      .map(topic -> topic.fullTopicName(tenantId))
+      .toList());
+  }
+
+  public void createFeeFineTopics(String tenantId) {
+    createTopics(List.of(
+      FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED.fullTopicName(tenantId),
+      FeeFineKafkaTopic.LOAN_RELATED_FEE_FINE_CLOSED.fullTopicName(tenantId)));
   }
 
   public Map<String, ConsumerGroupDescription> verifyConsumerGroups(
@@ -202,9 +243,35 @@ public class KafkaTestHelper {
   }
 
   public void publishEvent(String topic, JsonObject eventPayload) {
+    publishEvent(topic, eventPayload, Map.of(TENANT, TENANT_ID));
+  }
+
+  public void publishEvent(String topic, JsonObject eventPayload, Map<String, String> headers) {
     var kafkaRecord = KafkaProducerRecord.create(topic, UUID.randomUUID().toString(), eventPayload);
-    kafkaRecord.addHeader("X-Okapi-Tenant", TENANT_ID);
+    headers.forEach(kafkaRecord::addHeader);
+    headers.entrySet().stream()
+      .filter(entry -> TENANT.equalsIgnoreCase(entry.getKey()))
+      .findFirst()
+      .ifPresent(entry -> kafkaRecord.addHeader(FolioKafkaHeaders.TENANT_ID, entry.getValue()));
     waitFor(producer.write(kafkaRecord));
+  }
+
+  public AutoCloseable rejectMessagesToTopic(String topic) {
+    alterTopicConfig(topic, SET, "1");
+    return () -> alterTopicConfig(topic, DELETE, null);
+  }
+
+  public void startPublishedEventRecorder(String tenantId) {
+    if (publishedEventRecorder != null) {
+      return;
+    }
+
+    String topicPattern = environment() + "\\." + tenantId + "\\.(circulation|audit)\\..+";
+    publishedEventRecorder = createConsumer(
+      "published-event-recorder-" + UUID.randomUUID(), true);
+    publishedEventRecorder.handler(consumerRecord -> KafkaPublishedEvents.recordPublishedEvent(
+      getEventTypeFromTopicName(consumerRecord.topic()), consumerRecord.value()));
+    waitFor(publishedEventRecorder.subscribe(Pattern.compile(topicPattern)));
   }
 
   public KafkaProducer<String, JsonObject> createProducer() {
@@ -215,16 +282,22 @@ public class KafkaTestHelper {
     return KafkaProducer.create(vertx, config, String.class, JsonObject.class);
   }
 
-  public KafkaConsumer<String, JsonObject> createConsumer(String consumerGroupId) {
+  public KafkaConsumer<String, String> createConsumer(String consumerGroupId) {
+    return createConsumer(consumerGroupId, false);
+  }
+
+  private KafkaConsumer<String, String> createConsumer(String consumerGroupId,
+    boolean enableAutoCommit) {
+
     Properties config = new Properties();
     config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
     config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringDeserializer");
+      StringDeserializer.class.getName());
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringDeserializer");
+      StringDeserializer.class.getName());
     config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, Boolean.toString(enableAutoCommit));
 
     return KafkaConsumer.create(vertx, config);
   }
@@ -337,6 +410,22 @@ public class KafkaTestHelper {
 
   public void waitForTopicCount(int expectedCount) {
     waitForSize(this::listTopics, expectedCount);
+  }
+
+  @SneakyThrows
+  private void alterTopicConfig(String topic, AlterConfigOp.OpType operation, String value) {
+    Properties config = new Properties();
+    config.put(BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+
+    var resource = new ConfigResource(ConfigResource.Type.TOPIC, topic);
+    var configEntry = new ConfigEntry(MAX_MESSAGE_BYTES, value);
+    var configOperation = new AlterConfigOp(configEntry, operation);
+
+    try (Admin admin = Admin.create(config)) {
+      admin.incrementalAlterConfigs(Map.of(resource, List.of(configOperation)))
+        .all()
+        .get(30, SECONDS);
+    }
   }
 
   private static void setSystemProperties() {

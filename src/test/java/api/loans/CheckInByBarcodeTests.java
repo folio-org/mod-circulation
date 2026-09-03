@@ -1,7 +1,8 @@
 package api.loans;
 
 import static api.support.APITestContext.getUserId;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.APITestContext.TENANT_ID;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.Wait.waitAtLeast;
 import static api.support.builders.ItemBuilder.INTELLECTUAL_ITEM;
 import static api.support.fakes.PublishedEvents.byEventType;
@@ -30,7 +31,7 @@ import static api.support.matchers.TextDateTimeMatcher.withinSecondsBeforeNow;
 import static api.support.matchers.UUIDMatcher.is;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
-import static api.support.utl.PatronNoticeTestHelper.clearSentPatronNoticesAndPubsubEvents;
+import static api.support.utl.PatronNoticeTestHelper.clearSentPatronNoticesAndKafkaEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfPublishedEvents;
 import static api.support.utl.PatronNoticeTestHelper.verifyNumberOfSentNotices;
 import static java.time.ZoneOffset.UTC;
@@ -50,7 +51,6 @@ import static org.folio.circulation.domain.representations.logs.LogEventType.NOT
 import static org.folio.circulation.domain.representations.logs.LogEventType.NOTICE_ERROR;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -80,6 +80,7 @@ import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.User;
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -103,7 +104,7 @@ import api.support.builders.OverdueFinePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.builders.ServicePointBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CheckOutResource;
@@ -394,21 +395,20 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
   }
 
   @Test
-  void checkInFailsWhenEventPublishingFailsWithBadRequestError() {
+  void checkInFailsWhenKafkaPublishingFails() throws Exception {
     ZonedDateTime loanDate = ZonedDateTime.of(2018, 3, 1, 13, 25, 46, 0, UTC);
     IndividualResource smallAngryPlanet = itemsFixture.basedUponSmallAngryPlanet();
-    final IndividualResource steve = usersFixture.steve();
+    IndividualResource steve = usersFixture.steve();
     checkOutFixture.checkOutByBarcode(smallAngryPlanet, steve, loanDate);
 
-    FakePubSub.setFailPublishingWithBadRequestError(true);
-    Response response = checkInFixture.attemptCheckInByBarcode(500,
-      new CheckInByBarcodeRequestBuilder()
-        .forItem(smallAngryPlanet)
-        .on(getZonedDateTime())
-        .at(UUID.randomUUID()));
-
-    assertThat(response.getBody(), containsString(
-      "Error during publishing Event Message in PubSub. Status code: 400"));
+    String topic = CirculationKafkaTopic.ITEM_CHECKED_IN.fullTopicName(TENANT_ID);
+    try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
+      checkInFixture.attemptCheckInByBarcode(500,
+        new CheckInByBarcodeRequestBuilder()
+          .forItem(smallAngryPlanet)
+          .on(getZonedDateTime())
+          .at(UUID.randomUUID()));
+    }
   }
 
   @Test
@@ -890,7 +890,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     verifyNumberOfPublishedEvents(NOTICE, 1);
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
 
-    clearSentPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndKafkaEvents();
 
     //Check-in again and verify no notice are sent
     checkInFixture.checkInByBarcode(requestedItem, checkInDate, pickupServicePointId);
@@ -1125,7 +1125,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
     checkPatronNoticeEvent(firstRequest, firstRequester, item, requestAwaitingPickupTemplateId, false);
 
-    clearSentPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndKafkaEvents();
 
     // Check-in again and verify that same notice is not sent repeatedly
 
@@ -1176,7 +1176,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     checkPatronNoticeEvent(secondRequest, secondRequester, item, requestAwaitingPickupTemplateId, false);
 
-    clearSentPatronNoticesAndPubsubEvents();
+    clearSentPatronNoticesAndKafkaEvents();
 
     // Check-in again and verify that same notice is not sent repeatedly
 
@@ -1623,7 +1623,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(itemsClient.getById(item.getId()).getJson(), isAvailable());
 
     waitAtMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(5));
 
     Response response = loansClient.getById(UUID.fromString(checkOutResource.getString("id")));
     JsonObject loan = response.getJson();
@@ -1645,7 +1645,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
       // there should be 7 events published: ITEM_CHECKED_OUT, LOG_RECORDs: CHECK_OUT_EVENT
       // LOG_RECORD: LOAN (aged to lost), ITEM_AGED_TO_LOST, LOG_RECORD: LOAN (status change)
       // ITEM_CHECKED_IN, LOG_RECORDs: CHECK_IN_EVENT
-      .until(FakePubSub::getPublishedEvents, hasSize(7));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(7));
 
     assertThatPublishedLoanLogRecordEventsAreValid(loan);
   }
@@ -1674,7 +1674,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
 
     // There should be four events published - first ones for "check out" and check out log event, second ones for "check in" and check in log event
     final var publishedEvents = waitAtMost(2, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(4));
 
     final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
 
@@ -1693,7 +1693,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
         .at(checkInServicePointId));
 
     final var secondPublishedEvents = waitAtMost(2, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(5));
     final var checkedInEvent2 = secondPublishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
     assertThat(checkedInEvent2, doesNotContainUserBarcode());
   }
@@ -2004,7 +2004,7 @@ void verifyItemEffectiveLocationIdAtCheckOut() {
     assertThat(requestAfterCheckIn, RequestMatchers.isOpenNotYetFilled());
 
     final var publishedEvents = waitAtMost(2, SECONDS)
-     .until(FakePubSub::getPublishedEvents, hasSize(5));
+     .until(KafkaPublishedEvents::getPublishedEvents, hasSize(5));
     final var checkedInEvent = publishedEvents.findFirst(byEventType(ITEM_CHECKED_IN.name()));
     assertThat(checkedInEvent, isValidItemCheckedInEvent(checkInResponse.getLoan()));
     final var checkInLogEvent = publishedEvents.findFirst(byLogEventType(CHECK_IN.value()));

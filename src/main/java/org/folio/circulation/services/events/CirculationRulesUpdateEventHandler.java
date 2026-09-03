@@ -6,9 +6,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.circulation.domain.events.DomainEventMapper.toEntityChangedEvent;
 import static org.folio.circulation.domain.events.DomainEventPayloadType.UPDATED;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.circulation.domain.events.DomainEvent;
-import org.folio.circulation.domain.events.DomainEventPayloadType;
 import org.folio.circulation.domain.events.EntityChangedEventData;
 import org.folio.circulation.rules.cache.CirculationRulesCache;
 import org.folio.kafka.AsyncRecordHandler;
@@ -22,24 +20,31 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> consumerRecord) {
+    final String eventKey = consumerRecord.key();
+
+    final DomainEvent<EntityChangedEventData> event;
     try {
-      final String eventKey = consumerRecord.key();
       final String eventValue = consumerRecord.value();
       log.info("handle:: event received: key={}", eventKey);
-      log.debug("handle:: value={}", eventValue);
 
-      final DomainEvent<EntityChangedEventData> event = toEntityChangedEvent(eventValue);
+      event = toEntityChangedEvent(eventValue);
       if (event.payloadType() != UPDATED) {
         log.warn("handle:: unsupported event type: {}", event.payloadType());
         return succeededFuture(eventKey);
       }
-      validate(event);
-      CirculationRulesCache.getInstance().handleRulesUpdateEvent(event);
 
+      validate(event);
+    } catch (Exception e) {
+      log.warn("handle:: invalid circulation rules update event skipped: key={}", eventKey, e);
+      return succeededFuture(eventKey);
+    }
+
+    try {
+      CirculationRulesCache.getInstance().handleRulesUpdateEvent(event);
       log.info("handle:: circulation rules update event processed: {}", eventKey);
       return succeededFuture(eventKey);
     } catch (Exception e) {
-      log.error("handle:: failed to process circulation rules update event", e);
+      log.error("handle:: failed to apply circulation rules update event", e);
       return failedFuture(e);
     }
   }
@@ -47,7 +52,7 @@ public class CirculationRulesUpdateEventHandler implements AsyncRecordHandler<St
   private static void validate(DomainEvent<EntityChangedEventData> event) {
     log.info("validate:: validating event: {}", event.id());
     if (isBlank(event.data().newVersion().getString("rulesAsText"))) {
-      throw new IllegalArgumentException("Event does not contain new circulation rules: " + event);
+      throw new IllegalArgumentException("Event does not contain new circulation rules");
     }
     log.debug("validate:: event validation complete: {}", event.id());
   }

@@ -1,10 +1,10 @@
 package api.requests;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedNoticeLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedNoticeLogRecordEventsAreValid;
 import static api.support.TlrFeatureStatus.ENABLED;
 import static api.support.builders.RequestBuilder.OPEN_AWAITING_PICKUP;
 import static api.support.builders.RequestBuilder.OPEN_NOT_YET_FILLED;
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.KafkaPublishedEvents.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.AutomatedPatronBlocksFixture.MAX_NUMBER_OF_ITEMS_CHARGED_OUT_MESSAGE;
@@ -153,7 +153,7 @@ import api.support.builders.ServicePointBuilder;
 import api.support.builders.UserBuilder;
 import api.support.builders.UserManualBlockBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fakes.PublishedEvents;
 import api.support.fixtures.CheckInFixture;
 import api.support.fixtures.ItemExamples;
@@ -628,7 +628,7 @@ public class RequestsAPICreationTests extends APITests {
 
     var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(1));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(1));
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
   }
 
@@ -1547,7 +1547,7 @@ public class RequestsAPICreationTests extends APITests {
     checkInFixture.checkInByBarcode(item);
     checkOutFixture.checkOutByBarcode(item, usersFixture.charlotte()).getJson();
 
-    FakePubSub.getPublishedEvents().stream().map(event -> new JsonObject(event.getString("eventPayload")))
+    KafkaPublishedEvents.getPublishedEvents().stream().map(event -> new JsonObject(event.getString("eventPayload")))
       .filter(event -> event.containsKey("logEventType") && event.getString("logEventType").equals("CHECK_IN_EVENT")
         && !event.containsKey("requests"))
       .forEach(event -> assertTrue(event.containsKey("userBarcode")));
@@ -1921,7 +1921,7 @@ public class RequestsAPICreationTests extends APITests {
 
     PublishedEvents publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(10));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(10));
 
     JsonObject loanWithoutChange = loansClient.get(initialLoan.getId()).getJson();
     assertNull(loanWithoutChange.getString("dueDateChangedByRecall"));
@@ -2071,7 +2071,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(5));
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(1));
   }
 
@@ -5521,8 +5521,6 @@ public class RequestsAPICreationTests extends APITests {
     IndividualResource pickupServicePoint2 = servicePointsFixture.cd5();
     IndividualResource thirdFloorLocation =
       locationsFixture.basedUponExampleLocation(r->r.withPrimaryServicePoint(pickupServicePoint2.getId()));
-    System.out.println("thirdFloorLocation>> "+ thirdFloorLocation.getJson().encode());
-    System.out.println("pickupServicePoint2>> "+ pickupServicePoint2.getJson().encode());
     final IndividualResource charlotte = usersFixture.charlotte();
     requestsStorageClient.replace(request.getId(),
       RequestBuilder.from(request)

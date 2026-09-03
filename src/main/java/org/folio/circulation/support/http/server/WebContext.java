@@ -1,5 +1,6 @@
 package org.folio.circulation.support.http.server;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
 import static org.folio.circulation.support.http.OkapiHeader.REQUEST_ID;
@@ -9,6 +10,7 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
@@ -16,14 +18,30 @@ import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.VertxWebClientOkapiHttpClient;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.Context;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.RoutingContext;
+import lombok.Getter;
 
 public class WebContext {
   private final RoutingContext routingContext;
+  @Getter
+  private final Map<String, String> headers;
+  @Getter
+  private final Context vertxContext;
 
+  /** Creates a context for an HTTP request using its routing and Vert.x contexts. */
   public WebContext(RoutingContext routingContext) {
     this.routingContext = routingContext;
+    this.headers = normalizeHeaders(headersFrom(routingContext));
+    this.vertxContext = routingContext.vertx().getOrCreateContext();
+  }
+
+  /** Creates a context for a Kafka event, which has headers but no HTTP routing context. */
+  public WebContext(Map<String, String> headers, Context vertxContext) {
+    this.routingContext = null;
+    this.headers = normalizeHeaders(headers);
+    this.vertxContext = requireNonNull(vertxContext, "Vert.x context is required");
   }
 
   public String getTenantId() {
@@ -49,16 +67,24 @@ public class WebContext {
   }
 
   private String getHeader(String header) {
-    return routingContext.request().getHeader(header);
+    return headers.get(header.toLowerCase());
   }
 
   public Integer getIntegerParameter(String name, Integer defaultValue) {
+    if (routingContext == null) {
+      return defaultValue;
+    }
+
     String value = routingContext.request().getParam(name);
 
     return value != null ? Integer.parseInt(value) : defaultValue;
   }
 
   public String getStringParameter(String name, String defaultValue) {
+    if (routingContext == null) {
+      return defaultValue;
+    }
+
     String value = routingContext.request().getParam(name);
 
     return value != null ? value : defaultValue;
@@ -102,8 +128,18 @@ public class WebContext {
     result.applySideEffect(this::write, this::write);
   }
 
-  public Map<String, String> getHeaders() {
-    return routingContext.request().headers().entries().stream()
-      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue, (a, b) -> b));
+  private static Map<String, String> normalizeHeaders(Map<String, String> headers) {
+    return headers.entrySet().stream()
+      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue,
+        (a, b) -> b, HashMap::new));
+  }
+
+  private static Map<String, String> headersFrom(RoutingContext routingContext) {
+    var requestHeaders = routingContext.request().headers();
+
+    return requestHeaders == null
+      ? Map.of()
+      : requestHeaders.entries().stream()
+        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b));
   }
 }

@@ -1,5 +1,6 @@
 package api.loans;
 
+import static api.support.APITestContext.TENANT_ID;
 import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanPolicyContextMatchersForUnlimitedRenewals;
 import static api.support.fixtures.TemplateContextMatchers.getMultipleLoansContextMatcher;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.circulation.domain.events.AuditKafkaTopic;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.utils.DateFormatUtil;
@@ -41,7 +43,6 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.UserBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -634,7 +635,9 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
   }
 
   @Test
-  void scheduledNotRealTimeNoticesShouldBeSentOnlyOncePerDayIfPubSubReturnsError() {
+  void scheduledNotRealTimeNoticesShouldBeSentOnlyOncePerDayIfKafkaPublishingFails()
+    throws Exception {
+
     JsonObject afterDueDateNoticeConfig = new NoticeConfigurationBuilder()
       .withTemplateId(TEMPLATE_ID)
       .withDueDateEvent()
@@ -649,7 +652,6 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     use(noticePolicy);
 
     ZonedDateTime loanDate = ClockUtil.getZonedDateTime().minusMonths(1);
-
     IndividualResource steve = usersFixture.steve();
     ItemResource dunkirk = itemsFixture.basedUponDunkirk();
     checkOutFixture.checkOutByBarcode(dunkirk, steve, loanDate);
@@ -657,17 +659,16 @@ class DueDateNotRealTimeScheduledNoticesProcessingTests extends APITests {
     verifyNumberOfScheduledNotices(1);
     verifyNumberOfSentNotices(0);
 
-    FakePubSub.setFailPublishingWithBadRequestError(true);
+    String topic = AuditKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
+    try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
+      scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
+      scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
 
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
-    scheduledNoticeProcessingClient.runDueDateNotRealTimeNoticesProcessing();
-
-    verifyNumberOfSentNotices(1);
-    verifyNumberOfScheduledNotices(1);
-    verifyNumberOfPublishedEvents(NOTICE, 0);
-    verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
-
-    FakePubSub.setFailPublishingWithBadRequestError(false);
+      verifyNumberOfSentNotices(1);
+      verifyNumberOfScheduledNotices(1);
+      verifyNumberOfPublishedEvents(NOTICE, 0);
+      verifyNumberOfPublishedEvents(NOTICE_ERROR, 0);
+    }
   }
 
   @Test

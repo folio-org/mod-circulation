@@ -101,8 +101,6 @@ public final class CirculationRulesCache {
   }
 
   public void handleRulesUpdateEvent(DomainEvent<EntityChangedEventData> event) {
-    log.debug("handleRulesUpdateEvent:: event={}", () -> event);
-
     final String tenantId = event.tenantId();
     log.info("handleRulesUpdateEvent:: handling rules update event {} for tenant {}",
       event.id(), event.tenantId());
