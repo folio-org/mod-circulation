@@ -2,7 +2,6 @@ package org.folio.circulation.infrastructure.storage.inventory;
 
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
@@ -162,18 +161,18 @@ public class ItemRepository {
 
   public CompletableFuture<Result<Item>> fetchByBarcode(String barcode) {
     return fetchItemByBarcode(barcode, createItemFinder())
-      .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
+      .thenCompose(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
         item -> fetchItemByBarcode(barcode, createCirculationItemFinder())
           .thenApply(r -> r.mapFailure(failure -> Result.succeeded(item)))
         , item -> completedFuture(itemResult))))
-      .thenComposeAsync(this::fetchItemRelatedRecords);
+      .thenCompose(this::fetchItemRelatedRecords);
   }
 
   public CompletableFuture<Result<Item>> fetchById(String itemId) {
     return fetchItem(itemId)
-      .thenComposeAsync(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
+      .thenCompose(itemResult -> itemResult.after(when(item -> ofAsync(item::isNotFound),
         item -> fetchCirculationItem(itemId), item -> completedFuture(itemResult))))
-      .thenComposeAsync(this::fetchItemRelatedRecords);
+      .thenCompose(this::fetchItemRelatedRecords);
   }
 
   private CompletableFuture<Result<Item>> fetchCirculationItem(String id) {
@@ -230,11 +229,10 @@ public class ItemRepository {
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchMaterialTypes(
     Result<MultipleRecords<Item>> result) {
 
-    return supplyAsync(() -> result.after(items -> materialTypeRepository.getMaterialTypes(items)
-        .thenApply(r -> r.map(records -> records.getRecordsMap(MaterialType::getId)))
-        .thenApply(mapResult(materialTypes -> items.combineRecords(materialTypes,
-          Item::getMaterialTypeId, Item::withMaterialType, MaterialType.unknown())))))
-      .thenCompose(Function.identity());
+    return result.after(items -> materialTypeRepository.getMaterialTypes(items)
+      .thenApply(r -> r.map(records -> records.getRecordsMap(MaterialType::getId)))
+      .thenApply(mapResult(materialTypes -> items.combineRecords(materialTypes,
+        Item::getMaterialTypeId, Item::withMaterialType, MaterialType.unknown()))));
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchLoanTypes(
@@ -243,11 +241,10 @@ public class ItemRepository {
     return result.after(items -> {
       final var loanTypeIdsToFetch = items.toKeys(Item::getLoanTypeId);
 
-      return supplyAsync(() -> loanTypeRepository.findByIds(loanTypeIdsToFetch)
+      return loanTypeRepository.findByIds(loanTypeIdsToFetch)
         .thenApply(r -> r.map(records -> records.getRecordsMap(LoanType::getId)))
         .thenApply(mapResult(loanTypes -> items.combineRecords(loanTypes,
-          Item::getLoanTypeId, Item::withLoanType, LoanType.unknown()))))
-        .thenCompose(Function.identity());
+          Item::getLoanTypeId, Item::withLoanType, LoanType.unknown())));
     });
   }
 
@@ -257,11 +254,10 @@ public class ItemRepository {
     return result.after(items -> {
       final var instanceIds = items.toKeys(Item::getInstanceId);
 
-      return supplyAsync(() -> instanceRepository.fetchByIds(instanceIds)
+      return instanceRepository.fetchByIds(instanceIds)
         .thenApply(r -> r.map(records -> records.getRecordsMap(Instance::getId)))
         .thenApply(mapResult(instances -> items.combineRecords(instances,
-          Item::getInstanceId, Item::withInstance, Instance.unknown()))))
-        .thenCompose(Function.identity());
+          Item::getInstanceId, Item::withInstance, Instance.unknown())));
     });
   }
 
@@ -271,11 +267,10 @@ public class ItemRepository {
     return result.after(items -> {
       final var holdingsIds = items.toKeys(Item::getHoldingsRecordId);
 
-      return supplyAsync(() -> holdingsRepository.fetchByIds(holdingsIds)
+      return holdingsRepository.fetchByIds(holdingsIds)
         .thenApply(r -> r.map(records -> records.getRecordsMap(Holdings::getId)))
         .thenApply(mapResult(holdings -> items.combineRecords(holdings,
-          Item::getHoldingsRecordId, Item::withHoldings, Holdings.unknown()))))
-        .thenCompose(Function.identity());
+          Item::getHoldingsRecordId, Item::withHoldings, Holdings.unknown())));
     });
   }
 
@@ -369,7 +364,7 @@ public class ItemRepository {
     return finder.find(byIndex(indexName, ids))
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
-      .thenComposeAsync(this::fetchItemsRelatedRecords)
+      .thenCompose(this::fetchItemsRelatedRecords)
       .thenApply(mapResult(MultipleRecords::getRecords));
   }
 
@@ -388,22 +383,22 @@ public class ItemRepository {
     return finder.find(byIndex(indexName, ids).withQuery(query))
       .thenApply(mapResult(identityMap::add))
       .thenApply(mapResult(m -> m.mapRecords(mapper::toDomain)))
-      .thenComposeAsync(this::fetchItemsRelatedRecords);
+      .thenCompose(this::fetchItemsRelatedRecords);
   }
 
   public CompletableFuture<Result<MultipleRecords<Item>>> fetchFor(
     Collection<String> itemIds) {
 
     return fetchItems(itemIds)
-      .thenComposeAsync(this::fetchItemsRelatedRecords);
+      .thenCompose(this::fetchItemsRelatedRecords);
   }
 
   public CompletableFuture<Result<Item>> fetchItemRelatedRecords(Result<Item> itemResult) {
     return itemResult.combineAfter(this::fetchHoldingsRecord, Item::withHoldings)
-      .thenComposeAsync(combineAfter(this::fetchInstance, Item::withInstance))
-      .thenComposeAsync(combineAfter(locationRepository::getEffectiveLocation, Item::withLocation))
-      .thenComposeAsync(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
-      .thenComposeAsync(combineAfter(this::fetchLoanType, Item::withLoanType))
+      .thenCompose(combineAfter(this::fetchInstance, Item::withInstance))
+      .thenCompose(combineAfter(locationRepository::getEffectiveLocation, Item::withLocation))
+      .thenCompose(combineAfter(materialTypeRepository::getFor, Item::withMaterialType))
+      .thenCompose(combineAfter(this::fetchLoanType, Item::withLoanType))
       .thenCompose(CompletableFuture::completedFuture);
   }
 
@@ -438,10 +433,10 @@ public class ItemRepository {
     Result<MultipleRecords<Item>> items) {
 
     return fetchHoldingsRecords(items)
-      .thenComposeAsync(this::fetchInstances)
-      .thenComposeAsync(this::fetchLocations)
-      .thenComposeAsync(this::fetchMaterialTypes)
-      .thenComposeAsync(this::fetchLoanTypes);
+      .thenCompose(this::fetchInstances)
+      .thenCompose(this::fetchLocations)
+      .thenCompose(this::fetchMaterialTypes)
+      .thenCompose(this::fetchLoanTypes);
   }
 
   private CqlQueryFinder<JsonObject> createItemFinder() {
