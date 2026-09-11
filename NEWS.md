@@ -1,3 +1,6 @@
+## 24.5.2 2026-09-11
+* Improve memory management in ItemRepository ([CIRC-2677](https://folio-org.atlassian.net/browse/CIRC-2677))
+
 ## 24.5.1 2026-08-13
 * Fix request anonymization stub ([CIRC-2658](https://folio-org.atlassian.net/browse/CIRC-2658))
 * Add missing dependency declarations to module descriptor ([CIRC-2642](https://folio-org.atlassian.net/browse/CIRC-2642))
