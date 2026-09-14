@@ -5,5 +5,5 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.json.JsonObject;
 
 public interface EventPublishingService {
-  CompletableFuture<Void> publishEvent(String eventType, JsonObject payload);
+  CompletableFuture<Void> publishEvent(String key, String eventType, JsonObject payload);
 }

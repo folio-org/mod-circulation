@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -70,7 +71,7 @@ class KafkaEventPublishingServiceTest {
 
     var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
 
-    service.publishEvent(LOG_RECORD.name(), PAYLOAD).join();
+    service.publishEvent("1", LOG_RECORD.name(), PAYLOAD).join();
 
     verify(kafkaService).createPublisher(AuditKafkaTopic.LOG_RECORD, vertxContext, TENANT_ID);
   }
@@ -84,7 +85,7 @@ class KafkaEventPublishingServiceTest {
       .thenReturn(failedFuture(failure));
 
     var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
-    var publishFuture = service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD);
+    var publishFuture = service.publishEvent("1", ITEM_CHECKED_IN.name(), PAYLOAD);
 
     var error = assertThrows(CompletionException.class, publishFuture::join);
 
@@ -101,10 +102,24 @@ class KafkaEventPublishingServiceTest {
         failed(new ServerErrorFailure("Kafka publish failed"))));
 
     var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
-    var publishFuture = service.publishEvent(ITEM_CHECKED_IN.name(), PAYLOAD);
+    var publishFuture = service.publishEvent("1", ITEM_CHECKED_IN.name(), PAYLOAD);
 
     var error = assertThrows(CompletionException.class, publishFuture::join);
 
     assertThat(error.getCause(), instanceOf(IllegalStateException.class));
+  }
+
+  @Test
+  void publishEvent_nullKey_usesRandomUuidAsFallbackKey() {
+    when(kafkaService.createPublisher(CirculationKafkaTopic.ITEM_CHECKED_IN, vertxContext,
+      TENANT_ID)).thenReturn(publisher);
+    when(publisher.publish(anyString(), eq(PAYLOAD), eq(HEADERS)))
+      .thenReturn(CompletableFuture.completedFuture(succeeded(null)));
+
+    var service = new KafkaEventPublishingService(HEADERS, vertxContext, kafkaService);
+
+    service.publishEvent(null, ITEM_CHECKED_IN.name(), PAYLOAD).join();
+
+    verify(publisher).publish(notNull(), eq(PAYLOAD), eq(HEADERS));
   }
 }

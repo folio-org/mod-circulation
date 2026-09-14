@@ -57,7 +57,7 @@ class EventPublisherTest {
     lenient().when(clients.eventPublishingService()).thenReturn(eventPublishingService);
     lenient().when(clients.localeClient()).thenReturn(localeClient);
     lenient().when(clients.settingsStorageClient()).thenReturn(settingsStorageClient);
-    lenient().when(eventPublishingService.publishEvent(anyString(), any(JsonObject.class)))
+    lenient().when(eventPublishingService.publishEvent(anyString(), anyString(), any(JsonObject.class)))
       .thenReturn(completedFuture(null));
     lenient().when(localeClient.get())
       .thenReturn(completedFuture(Result.failed(new ServerErrorFailure("locale not available"))));
@@ -111,11 +111,12 @@ class EventPublisherTest {
   @Test
   void publishLogRecordReturnsServerErrorWhenKafkaPublishingFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
-    when(eventPublishingService.publishEvent(eq(LOG_RECORD.name()), any(JsonObject.class)))
+    when(eventPublishingService.publishEvent(anyString(), eq(LOG_RECORD.name()), any(JsonObject.class)))
       .thenReturn(failedFuture(failure));
 
-    var result = eventPublisher.publishLogRecord(new JsonObject()
-      .put("loanId", UUID.randomUUID().toString()), LOAN).join();
+    var loanId = UUID.randomUUID().toString();
+    var result = eventPublisher.publishLogRecord(
+      loanId, new JsonObject().put("loanId", loanId), LOAN).join();
 
     assertThat(result.failed(), is(true));
     assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
@@ -125,7 +126,7 @@ class EventPublisherTest {
   @Test
   void publishLoanClosedEventReturnsServerErrorWhenKafkaPublishingFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
-    when(eventPublishingService.publishEvent(eq(LOAN_CLOSED.name()), any(JsonObject.class)))
+    when(eventPublishingService.publishEvent(anyString(), eq(LOAN_CLOSED.name()), any(JsonObject.class)))
       .thenReturn(failedFuture(failure));
 
     var result = eventPublisher.publishLoanClosedEvent(buildLoan()).join();
@@ -164,7 +165,7 @@ class EventPublisherTest {
   private String captureLogPayloadByAction(String action) {
     ArgumentCaptor<JsonObject> payloadCaptor = ArgumentCaptor.forClass(JsonObject.class);
     verify(eventPublishingService, atLeastOnce())
-      .publishEvent(eq(LOG_RECORD.name()), payloadCaptor.capture());
+      .publishEvent(anyString(), eq(LOG_RECORD.name()), payloadCaptor.capture());
 
     return payloadCaptor.getAllValues().stream()
       .filter(json -> action.equals(

@@ -8,6 +8,7 @@ import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -58,14 +59,15 @@ public class KafkaEventPublishingService implements EventPublishingService {
   }
 
   @Override
-  public CompletableFuture<Void> publishEvent(String eventType, JsonObject payload) {
+  public CompletableFuture<Void> publishEvent(String key, String eventType, JsonObject payload) {
     log.info("publishEvent:: eventType={}, tenantId={}", eventType, tenantId);
 
+    var eventKey = Optional.ofNullable(key).orElse(randomUUID().toString());
     return EVENT_TOPICS.stream()
       .filter(topic -> topic.topicName().equals(eventType))
       .findFirst()
       .map(topic -> kafkaService.createPublisher(topic, vertxContext, tenantId)
-        .publish(randomUUID().toString(), payload, headers)
+        .publish(eventKey, payload, headers)
         .thenApply(KafkaEventPublishingService::failOnPublishingError))
       .orElseGet(() -> failedFuture(new IllegalArgumentException(
         "Unsupported Kafka event type: " + eventType)));
