@@ -1,7 +1,6 @@
 package org.folio.circulation.services.events;
 
 import static java.util.concurrent.CompletableFuture.failedFuture;
-import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +13,7 @@ import org.folio.kafka.services.KafkaEnvironmentProperties;
 import org.folio.kafka.services.KafkaProducerRecordBuilder;
 
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
@@ -37,6 +37,7 @@ public class KafkaEventPublisher<K> {
     Map<String, String> headers) {
 
     log.info("publish:: key = {}, topic = {}", key, kafkaTopic);
+    long publishingStartedAt = System.nanoTime();
 
     KafkaProducerRecord<K, String> producerRecord =
       new KafkaProducerRecordBuilder<K, Object>(tenantId)
@@ -48,19 +49,40 @@ public class KafkaEventPublisher<K> {
 
     KafkaProducer<K, String> producer = null;
     try {
+      log.debug("publish:: creating producer: key={}, topic={}, tenantId={}, thread={}",
+        key, kafkaTopic, tenantId, Thread.currentThread().getName());
       producer = producerManager.createShared(kafkaTopic);
+      KafkaProducer<K, String> sharedProducer = producer;
+      log.debug("publish:: producer created: key={}, topic={}, elapsedMs={}, thread={}",
+        key, kafkaTopic, elapsedMillis(publishingStartedAt), Thread.currentThread().getName());
       producer.exceptionHandler(cause -> log.error(
         "publish:: Kafka producer error for event with key {}", key, cause));
-      log.debug("publish:: producer created, sending the record...");
+      log.debug("publish:: sending record: key={}, topic={}, thread={}",
+        key, kafkaTopic, Thread.currentThread().getName());
 
       return producer.send(producerRecord)
-        .onSuccess(r -> log.info("publish:: published event with key {}", key))
-        .onFailure(cause -> log.error("publish:: failed to publish event with key {}", key, cause))
-        .eventually(producer::flush)
-        .eventually(producer::close)
+        .onSuccess(r -> log.info(
+          "publish:: send completed: key={}, topic={}, elapsedMs={}, thread={}",
+          key, kafkaTopic, elapsedMillis(publishingStartedAt), Thread.currentThread().getName()))
+        .onFailure(cause -> log.error(
+          "publish:: send failed: key={}, topic={}, elapsedMs={}, thread={}",
+          key, kafkaTopic, elapsedMillis(publishingStartedAt), Thread.currentThread().getName(), cause))
+        .eventually(() -> flush(sharedProducer, key))
+        .eventually(() -> close(sharedProducer, key))
         .toCompletionStage()
         .toCompletableFuture()
-        .thenApply(ignored -> succeeded(null));
+        .thenApply(ignored -> Result.<Void>succeeded(null))
+        .whenComplete((result, cause) -> {
+          if (cause == null) {
+            log.debug("publish:: completed: key={}, topic={}, elapsedMs={}, thread={}",
+              key, kafkaTopic, elapsedMillis(publishingStartedAt),
+              Thread.currentThread().getName());
+          } else {
+            log.error("publish:: failed: key={}, topic={}, elapsedMs={}, thread={}",
+              key, kafkaTopic, elapsedMillis(publishingStartedAt),
+              Thread.currentThread().getName(), cause);
+          }
+        });
     } catch (Exception e) {
       log.error("publish:: failed to publish event with key {}", key, e);
       if (producer != null) {
@@ -69,6 +91,38 @@ public class KafkaEventPublisher<K> {
       }
       return failedFuture(e);
     }
+  }
+
+  private Future<Void> flush(KafkaProducer<K, String> producer, K key) {
+    long startedAt = System.nanoTime();
+    log.debug("publish:: flushing producer: key={}, topic={}, thread={}",
+      key, kafkaTopic, Thread.currentThread().getName());
+
+    return producer.flush()
+      .onSuccess(ignored -> log.debug(
+        "publish:: producer flushed: key={}, topic={}, elapsedMs={}, thread={}",
+        key, kafkaTopic, elapsedMillis(startedAt), Thread.currentThread().getName()))
+      .onFailure(cause -> log.error(
+        "publish:: producer flush failed: key={}, topic={}, elapsedMs={}, thread={}",
+        key, kafkaTopic, elapsedMillis(startedAt), Thread.currentThread().getName(), cause));
+  }
+
+  private Future<Void> close(KafkaProducer<K, String> producer, K key) {
+    long startedAt = System.nanoTime();
+    log.debug("publish:: closing producer: key={}, topic={}, thread={}",
+      key, kafkaTopic, Thread.currentThread().getName());
+
+    return producer.close()
+      .onSuccess(ignored -> log.debug(
+        "publish:: producer closed: key={}, topic={}, elapsedMs={}, thread={}",
+        key, kafkaTopic, elapsedMillis(startedAt), Thread.currentThread().getName()))
+      .onFailure(cause -> log.error(
+        "publish:: producer close failed: key={}, topic={}, elapsedMs={}, thread={}",
+        key, kafkaTopic, elapsedMillis(startedAt), Thread.currentThread().getName(), cause));
+  }
+
+  private static long elapsedMillis(long startedAt) {
+    return (System.nanoTime() - startedAt) / 1_000_000;
   }
 
   private static KafkaProducerManager createProducerManager(Context vertxContext) {
