@@ -1,5 +1,6 @@
 package api;
 
+import static api.support.KafkaTestHelper.createKafkaContainer;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
@@ -9,6 +10,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_HOST;
+import static org.folio.circulation.support.kafka.KafkaConfigConstants.KAFKA_PORT;
 import static org.testcontainers.Testcontainers.exposeHostPorts;
 
 import java.nio.file.Path;
@@ -18,11 +21,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -51,6 +56,9 @@ class DroolsIT {
 
   /** testcontainers logging requires log4j-slf4j-impl in test scope */
   private static final Logger LOG = LoggerFactory.getLogger(DroolsIT.class);
+  private static final String KAFKA_NETWORK_ALIAS = "kafka";
+  private static final int KAFKA_INTERNAL_PORT = 19092;
+  private static final Network NETWORK = Network.newNetwork();
   private static String OKAPI_URL;
 
   @RegisterExtension
@@ -59,9 +67,19 @@ class DroolsIT {
       .globalTemplating(true)).build();
 
   @Container
+  private static final KafkaContainer KAFKA =
+    createKafkaContainer()
+      .withNetwork(NETWORK)
+      .withListener(KAFKA_NETWORK_ALIAS + ":" + KAFKA_INTERNAL_PORT);
+
+  @Container
   private static final GenericContainer<?> MOD_CIRCULATION =
     new GenericContainer<>(
       new ImageFromDockerfile("mod-circulation").withFileFromPath(".", Path.of(".")))
+    .dependsOn(KAFKA)
+    .withNetwork(NETWORK)
+    .withEnv(KAFKA_HOST, KAFKA_NETWORK_ALIAS)
+    .withEnv(KAFKA_PORT, String.valueOf(KAFKA_INTERNAL_PORT))
     .withExposedPorts(9801)
     .withAccessToHost(true);
 
@@ -123,7 +141,6 @@ class DroolsIT {
         "{'openings':[{},{},{}]}");
     stubFor(put("/item-storage/items/cd738da1-5b28-4d1b-99b4-31420b7d80ab").willReturn(noContent()));
     stubFor(post("/loan-storage/loans").willReturn(aResponse().withStatus(201).withBody("{{{request.body}}}")));
-    stubFor(post("/pubsub/publish").willReturn(noContent()));
     stubFor(post("/patron-action-session-storage/patron-action-sessions")
         .willReturn(aResponse().withStatus(201).withBody("{{{request.body}}}")));
     stub("/settings/entries.*", "{}");

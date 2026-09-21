@@ -1,6 +1,6 @@
 package api.loans.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.AccountMatchers.isClosedCancelled;
 import static api.support.matchers.AccountMatchers.isOpen;
 import static api.support.matchers.AccountMatchers.isPaidFully;

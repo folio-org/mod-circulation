@@ -1,6 +1,6 @@
 package api.loans.anonymization;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedAnonymizeLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedAnonymizeLoanLogRecordEventsAreValid;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;

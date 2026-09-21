@@ -15,6 +15,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
+import lombok.Getter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +30,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @With
+@Getter
 public class NoticeLogContextItem {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 

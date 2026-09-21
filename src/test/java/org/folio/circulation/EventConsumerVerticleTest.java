@@ -5,11 +5,15 @@ import static api.support.Wait.waitForValue;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.circulation.EventConsumerVerticle.buildConfig;
+import static org.folio.circulation.EventConsumerVerticle.genericConsumerGroupId;
+import static org.folio.circulation.domain.EventType.FEE_FINE_BALANCE_CHANGED;
 import static org.folio.circulation.domain.events.DomainEventType.CIRCULATION_RULES_UPDATED;
 import static org.folio.circulation.rules.cache.CirculationRulesCache.getInstance;
 import static org.folio.kafka.services.KafkaEnvironmentProperties.environment;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
@@ -24,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.circulation.domain.events.DomainEventPayloadType;
+import org.folio.circulation.domain.events.FeeFineKafkaTopic;
 import org.folio.circulation.rules.cache.Rules;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
@@ -60,6 +65,13 @@ public class EventConsumerVerticleTest extends APITests {
     String group1 = groupsBeforeDeployment.iterator().next();
     kafkaHelper.verifyConsumerGroups(Map.of(group1, 1));
 
+    int initialOffsetForGroup1 = kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1);
+    JsonObject rules = circulationRulesFixture.getRules().getJson();
+    publishCirculationRulesUpdateEvent(rules, rules);
+    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1),
+      initialOffsetForGroup1 + 1);
+    int offsetAfterHistoricalEvent = initialOffsetForGroup1 + 1;
+
     String secondVerticleId = deployVerticle();
     // after deploying second verticle we should see 2 groups with 1 consumer each
     Collection<String> groupsAfterDeployment = kafkaHelper.getConsumerGroups(
@@ -71,19 +83,52 @@ public class EventConsumerVerticleTest extends APITests {
       .orElseThrow();
     kafkaHelper.verifyConsumerGroups(Map.of(group1, 1, group2, 1));
 
-    int initialOffsetForGroup1 = kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1);
-    int initialOffsetForGroup2 = kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group2);
+    // A new circulation rules consumer starts at the latest offset and does not commit old records.
+    await().pollDelay(2, SECONDS).atMost(3, SECONDS)
+      .until(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group2), equalTo(0));
 
-    JsonObject rules = circulationRulesFixture.getRules().getJson();
     publishCirculationRulesUpdateEvent(rules, rules);
 
     // verify that both consumer groups have received and processed the event
-    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1), initialOffsetForGroup1 + 1);
-    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group2), initialOffsetForGroup2 + 1);
+    int expectedOffset = offsetAfterHistoricalEvent + 1;
+    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group1), expectedOffset);
+    waitForValue(() -> kafkaHelper.getOffset(CIRCULATION_RULES_TOPIC, group2), expectedOffset);
 
     // undeploy second verticle and delete its consumer group
     undeployVerticle(secondVerticleId);
     kafkaHelper.deleteConsumerGroup(group2);
+  }
+
+  @Test
+  void feeFineConsumersStartAtEarliestOffset() {
+    String tenantId = "offsetreset" + UUID.randomUUID().toString().replace("-", "");
+    String topic = FeeFineKafkaTopic.FEE_FINE_BALANCE_CHANGED.fullTopicName(tenantId);
+    String groupId = genericConsumerGroupId(FEE_FINE_BALANCE_CHANGED);
+    JsonObject event = new JsonObject()
+      .put("loanId", randomId())
+      .put("feeFineId", randomId())
+      .put("feeFineTypeId", randomId());
+
+    kafkaHelper.publishEvent(topic, event);
+
+    Collection<String> groupsBeforeDeployment = kafkaHelper.getConsumerGroups(
+      CIRCULATION_RULES_UPDATED_EVENT_CONSUMER_GROUP_ID_PATTERN, 1);
+    String secondVerticleId = deployVerticle();
+    Collection<String> groupsAfterDeployment = kafkaHelper.getConsumerGroups(
+      CIRCULATION_RULES_UPDATED_EVENT_CONSUMER_GROUP_ID_PATTERN, 2);
+    String additionalRulesGroupId = groupsAfterDeployment.stream()
+      .filter(group -> !groupsBeforeDeployment.contains(group))
+      .findFirst()
+      .orElseThrow();
+
+    try {
+      waitForValue(() -> kafkaHelper.getOffset(topic, groupId), 1);
+      assertThat(kafkaHelper.getOffset(topic, groupId), equalTo(1));
+    } finally {
+      undeployVerticle(secondVerticleId);
+      kafkaHelper.deleteConsumerGroup(additionalRulesGroupId);
+      kafkaHelper.deleteTopics(List.of(topic));
+    }
   }
 
   @Test

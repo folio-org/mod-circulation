@@ -1,6 +1,6 @@
 package api.loans.agetolost;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.DeclareItemLostRequestBuilder.forLoan;
 import static api.support.http.CqlQuery.queryFromTemplate;
 import static api.support.matchers.AccountMatchers.isOpen;

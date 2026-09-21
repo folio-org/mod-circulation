@@ -58,4 +58,19 @@ class PatronNoticeTest {
     assertThat(notice.getDeliveryChannel(), is("email"));
     assertThat(notice.getOutputFormat(), is("text/html"));
   }
+
+  @Test
+  void serializesNoticeContext() {
+    var notice = PatronNotice.buildEmail(
+      "recipient",
+      UUID.randomUUID(),
+      new JsonObject().put("key", "value"));
+
+    var json = notice.toJson();
+
+    assertThat(json.getString("recipientId"), is("recipient"));
+    assertThat(json.getString("deliveryChannel"), is("email"));
+    assertThat(json.getString("outputFormat"), is("text/html"));
+    assertThat(json.getJsonObject("context").getString("key"), is("value"));
+  }
 }

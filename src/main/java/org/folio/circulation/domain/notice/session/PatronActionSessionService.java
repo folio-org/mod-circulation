@@ -203,8 +203,8 @@ public class PatronActionSessionService {
       sessions.size(), user.getId());
 
     return allOf(sessions, this::buildNoticeEvents)
-      .thenApply(result -> result.map(patronNoticeService::acceptNoticeEvents))
-      .thenApply(mapResult(v -> sessions));
+      .thenCompose(result -> result.after(events -> patronNoticeService.acceptNoticeEvents(events)
+        .thenApply(mapResult(v -> sessions))));
   }
 
   private CompletableFuture<Result<Void>> publishNoticeErrorEvent(

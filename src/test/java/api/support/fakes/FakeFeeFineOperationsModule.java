@@ -5,10 +5,10 @@ import static api.support.fakes.StorageSchema.validatorForFeeFineCancelOperation
 import static api.support.fakes.StorageSchema.validatorForFeeFineOperationSchema;
 import static org.folio.circulation.domain.ActualCostRecord.Status.CANCELLED;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import lombok.SneakyThrows;
 
 public class FakeFeeFineOperationsModule {
@@ -34,7 +35,9 @@ public class FakeFeeFineOperationsModule {
     router.post("/accounts/:accountId/cancel")
       .handler(validateRequest(validatorForFeeFineCancelOperationSchema()));
     router.post("/accounts/:accountId/cancel").handler(this::cancelAccount);
-    router.post("/actual-cost-fee-fine/cancel").handler(this::cancelActualCostFee);
+    router.post("/actual-cost-fee-fine/cancel")
+      .handler(BodyHandler.create())
+      .handler(this::cancelActualCostFee);
   }
 
   private void refundAccount(RoutingContext context) {
@@ -167,6 +170,6 @@ public class FakeFeeFineOperationsModule {
   }
 
   private static String getTenant(RoutingContext context) {
-    return context.request().headers().get(OKAPI_TENANT_HEADER);
+    return context.request().headers().get(TENANT);
   }
 }

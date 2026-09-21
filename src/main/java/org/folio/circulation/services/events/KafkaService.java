@@ -8,7 +8,6 @@ import org.folio.kafka.services.KafkaTopic;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -42,10 +41,10 @@ public class KafkaService {
       .toCompletableFuture();
   }
 
-  public KafkaEventPublisher<String, JsonObject> createPublisher(CirculationKafkaTopic topic,
+  public KafkaEventPublisher<String> createPublisher(KafkaTopic topic,
     Context context, String tenantId) {
 
     log.info("createPublisher:: tenant={}, topic={}", tenantId, topic);
-    return new KafkaEventPublisher<>(context, topic.fullTopicName(tenantId));
+    return new KafkaEventPublisher<>(context, topic.fullTopicName(tenantId), tenantId);
   }
 }

@@ -1,7 +1,7 @@
 package api.loans;
 
 import static api.loans.CheckOutByBarcodeTests.INSUFFICIENT_OVERRIDE_PERMISSIONS;
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.FixedDueDateSchedule.forDay;
 import static api.support.builders.FixedDueDateSchedule.todayOnly;
 import static api.support.builders.FixedDueDateSchedule.wholeMonth;
@@ -112,7 +112,7 @@ import api.support.builders.RenewBlockOverrides;
 import api.support.builders.RenewByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fixtures.ItemExamples;
 import api.support.fixtures.TemplateContextMatchers;
 import api.support.http.CheckOutResource;
@@ -862,7 +862,7 @@ public abstract class RenewalAPITests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(2));
 
     assertThatPublishedLoanLogRecordEventsAreValid(renewalResponse);
     assertThat(getOverridableBlockNames(response), hasItem("renewalDueDateRequiredBlock"));
@@ -929,7 +929,7 @@ public abstract class RenewalAPITests extends APITests {
 
     Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(5));
 
     assertThatPublishedLoanLogRecordEventsAreValid(loansClient.getById(result.getLoan().getId()).getJson());
   }
@@ -1622,7 +1622,7 @@ public abstract class RenewalAPITests extends APITests {
     // fourth one for "log record", and fifth one for "renewed".
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(5));
 
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 

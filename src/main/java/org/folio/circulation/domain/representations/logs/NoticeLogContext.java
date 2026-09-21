@@ -37,6 +37,7 @@ import lombok.With;
 @AllArgsConstructor
 @NoArgsConstructor
 @With
+@Getter
 public class NoticeLogContext {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
