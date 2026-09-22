@@ -175,6 +175,7 @@ public class RequestsAPICreationTests extends APITests {
   private static final String HOLD_REQUEST_EVENT = "Hold request";
   private static final String RECALL_REQUEST_EVENT = "Recall request";
   private static final String ITEM_RECALLED = "Item recalled";
+  private static final String HOLD_REQUEST_FOR_ITEM = "Hold request for item";
 
   private static final UUID CONFIRMATION_TEMPLATE_ID_FROM_NOTICE_POLICY = UUID.randomUUID();
   private static final UUID CANCELLATION_TEMPLATE_ID_FROM_NOTICE_POLICY = UUID.randomUUID();
@@ -2071,7 +2072,7 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
     var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(5));
+      .until(FakePubSub::getPublishedEvents, hasSize(6));
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(1));
   }
 
@@ -2091,6 +2092,56 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(holdRequest.getJson().getString("requestType"), is(HOLD.getValue()));
     assertThat(holdRequest.getJson().getJsonObject("item").getString("status"), is(ItemStatus.AWAITING_PICKUP.getValue()));
     assertThat(holdRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+  }
+
+  @Test
+  void titleLevelHoldRequestShouldSendNoticesToAllBorrowers() {
+    // Enable title-level requests
+    settingsFixture.enableTlrFeature();
+
+    // Configure patron notice policy with "Hold request for item" loan notice
+    UUID holdRequestForItemTemplateId = UUID.randomUUID();
+    JsonObject holdRequestForItemNoticeConfiguration = new NoticeConfigurationBuilder()
+      .withTemplateId(holdRequestForItemTemplateId)
+      .withEventType(HOLD_REQUEST_FOR_ITEM)
+      .create();
+    NoticePolicyBuilder noticePolicy = new NoticePolicyBuilder()
+      .withName("Policy with hold request for item notice")
+      .withLoanNotices(Collections.singletonList(holdRequestForItemNoticeConfiguration));
+    useFallbackPolicies(
+      loanPoliciesFixture.canCirculateRolling().getId(),
+      requestPoliciesFixture.allowAllRequestPolicy().getId(),
+      noticePoliciesFixture.create(noticePolicy).getId(),
+      overdueFinePoliciesFixture.facultyStandard().getId(),
+      lostItemFeePoliciesFixture.facultyStandard().getId());
+
+    // Create 3 items for the same instance
+    List<ItemResource> items = itemsFixture.createMultipleItemsForTheSameInstance(3);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    // Check out all 3 items to different borrowers
+    final IndividualResource borrower1 = usersFixture.jessica();
+    final IndividualResource borrower2 = usersFixture.steve();
+    final IndividualResource borrower3 = usersFixture.charlotte();
+
+    checkOutFixture.checkOutByBarcode(items.get(0), borrower1);
+    checkOutFixture.checkOutByBarcode(items.get(1), borrower2);
+    checkOutFixture.checkOutByBarcode(items.get(2), borrower3);
+
+    // Create a title-level hold request from a different user
+    final IndividualResource requester = usersFixture.james();
+    final IndividualResource titleLevelHoldRequest = requestsFixture.placeTitleLevelHoldShelfRequest(
+      instanceId, requester);
+
+    // Verify the request was created correctly
+    assertThat(titleLevelHoldRequest.getJson().getString("requestType"), is(HOLD.getValue()));
+    assertThat(titleLevelHoldRequest.getJson().getString("requestLevel"), is("Title"));
+    assertThat(titleLevelHoldRequest.getJson().getString("status"), is(RequestStatus.OPEN_NOT_YET_FILLED.getValue()));
+
+    // Wait for events to be published: 3 checkouts + 3 LOG_RECORD (hold) + 3 LOG_RECORD (notice) + others
+    Awaitility.await()
+      .atMost(2, TimeUnit.SECONDS)
+      .until(FakePubSub::getPublishedEvents, hasSize(13));
   }
 
   @Test

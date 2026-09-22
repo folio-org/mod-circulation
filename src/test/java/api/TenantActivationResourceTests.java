@@ -1,6 +1,7 @@
 package api;
 
 import static api.support.APITestContext.TENANT_ID;
+import static api.support.fakes.FakePubSub.clearRegistrationData;
 import static api.support.fakes.FakePubSub.getCreatedEventTypes;
 import static api.support.fakes.FakePubSub.getDeletedEventTypes;
 import static api.support.fakes.FakePubSub.getRegisteredPublishers;
@@ -46,6 +47,7 @@ class TenantActivationResourceTests extends APITests {
 
   @BeforeEach
   public void init() {
+    clearRegistrationData();
     setFailPubSubRegistration(false);
     setFailPubSubUnregistering(false);
   }

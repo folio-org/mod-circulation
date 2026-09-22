@@ -13,6 +13,7 @@ public enum NoticeEventType {
   DUE_DATE("Due date"),
   ITEM_RECALLED("Item recalled"),
   AGED_TO_LOST("Aged to lost"),
+  HOLD_REQUEST_FOR_ITEM("Hold request for item"),
 
   // Request notices,
   PAGING_REQUEST("Paging request"),
