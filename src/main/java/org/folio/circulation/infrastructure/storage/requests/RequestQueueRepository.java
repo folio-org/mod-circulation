@@ -61,13 +61,32 @@ public class RequestQueueRepository {
       .thenApply(mapResult(records::withRequestQueue));
   }
 
+  public CompletableFuture<Result<RequestAndRelatedRecords>> getLightweightForPositioning(
+    RequestAndRelatedRecords records) {
+
+    log.debug("getLightweightForPositioning:: parameters requestAndRelatedRecords: {}", records);
+    Request request = records.getRequest();
+
+    return getQueue(request.getTlrSettingsConfiguration(), request.getInstanceId(),
+      request.getItemId(), false)
+      .thenApply(mapResult(records::withRequestQueue));
+  }
+
   public CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
     String instanceId, String itemId) {
+
+    return getQueue(tlrSettings, instanceId, itemId, true);
+  }
+
+  private CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,
+    String instanceId, String itemId, boolean enrichRelatedRecords) {
 
     boolean isTlrEnabled = tlrSettings != null && tlrSettings.isTitleLevelRequestsFeatureEnabled();
     log.info("getQueue:: TLR feature is {}", isTlrEnabled ? "enabled" : "disabled");
 
-    return isTlrEnabled ? getByInstanceId(instanceId) : getByItemId(itemId);
+    return isTlrEnabled
+      ? get(null, instanceId, EnumSet.of(ITEM, TITLE), enrichRelatedRecords)
+      : get(itemId, null, EnumSet.of(ITEM), enrichRelatedRecords);
   }
 
   public CompletableFuture<Result<RenewalContext>> get(RenewalContext context) {
@@ -82,19 +101,19 @@ public class RequestQueueRepository {
   public CompletableFuture<Result<RequestQueue>> getByInstanceIdAndItemId(String instanceId,
     String itemId) {
 
-    return get(itemId, instanceId, EnumSet.of(ITEM, TITLE));
+    return get(itemId, instanceId, EnumSet.of(ITEM, TITLE), true);
   }
 
   public CompletableFuture<Result<RequestQueue>> getByInstanceId(String instanceId) {
-    return get(null, instanceId, EnumSet.of(ITEM, TITLE));
+    return get(null, instanceId, EnumSet.of(ITEM, TITLE), true);
   }
 
   public CompletableFuture<Result<RequestQueue>> getByItemId(String itemId) {
-    return get(itemId, null, EnumSet.of(ITEM));
+    return get(itemId, null, EnumSet.of(ITEM), true);
   }
 
   private CompletableFuture<Result<RequestQueue>> get(String itemId, String instanceId,
-    EnumSet<RequestLevel> requestLevels) {
+    EnumSet<RequestLevel> requestLevels, boolean enrichRelatedRecords) {
 
     Map<String, String> filters = new HashMap<>();
     if (itemId != null) {
@@ -115,11 +134,15 @@ public class RequestQueueRepository {
     final Result<CqlQuery> statusQuery = exactMatchAny("status", RequestStatus.openStates());
     final Result<CqlQuery> requestLevelQuery = exactMatchAny("requestLevel", requestLevelStrings);
 
-    return CqlQuery.exactMatchAny(filters)
+    Result<CqlQuery> query = CqlQuery.exactMatchAny(filters)
       .combine(statusQuery, CqlQuery::and)
       .combine(requestLevelQuery, CqlQuery::and)
-      .map(q -> q.sortBy(ascending("position")))
-      .after(q -> requestRepository.findBy(q, MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
+      .map(q -> q.sortBy(ascending("position")));
+
+    return query
+      .after(q -> enrichRelatedRecords
+        ? requestRepository.findBy(q, MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE)
+        : requestRepository.findByWithoutItems(q, MAXIMUM_SUPPORTED_REQUEST_QUEUE_SIZE))
       .thenApply(r -> r.map(MultipleRecords::getRecords))
       .thenApply(r -> r.map(RequestQueue::new));
   }

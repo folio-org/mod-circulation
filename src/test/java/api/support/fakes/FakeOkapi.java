@@ -26,6 +26,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.results.Result;
 
@@ -39,6 +40,8 @@ import io.vertx.ext.web.RoutingContext;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final HttpFailure REQUEST_QUEUE_LOCK_CONFLICT = response -> response
+    .setStatusCode(409).end("Request queue is already locked");
 
   private static final int PORT_TO_USE = nextFreePort();
   private static final String address =
@@ -413,6 +416,13 @@ public class FakeOkapi extends AbstractVerticle {
       .create().register(router);
 
     new FakeStorageModuleBuilder()
+      .withRecordName("request-queue-lock-storage")
+      .withRootPath("/request-queue-lock-storage")
+      .withCollectionPropertyName("request-queue-lock-storage")
+      .withRecordConstraint(this::requestQueueHasAlreadyAcquiredLock)
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
       .withRecordName("settings")
       .withRootPath("/settings/entries")
       .withCollectionPropertyName("items")
@@ -460,6 +470,19 @@ public class FakeOkapi extends AbstractVerticle {
         currentRequest.getString("userId")))
       .findAny()
       .map(r -> ValidationErrorFailure.failedValidation("Unable to acquire lock", "", ""))
+      .orElse(Result.succeeded(null));
+  }
+
+  private Result<Object> requestQueueHasAlreadyAcquiredLock(Collection<JsonObject> existingLocks,
+    JsonObject requestedLock) {
+
+    return existingLocks.stream()
+      .filter(lock -> Objects.equals(lock.getString("queueType"),
+        requestedLock.getString("queueType")))
+      .filter(lock -> Objects.equals(lock.getString("queueId"),
+        requestedLock.getString("queueId")))
+      .findAny()
+      .map(lock -> Result.<Object>failed(REQUEST_QUEUE_LOCK_CONFLICT))
       .orElse(Result.succeeded(null));
   }
 

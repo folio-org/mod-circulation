@@ -94,6 +94,14 @@ public class UpdateRequestQueue {
         request, requestQueue, item, checkInServicePointId)));
   }
 
+  public Result<RequestAndRelatedRecords> prepareForCreate(
+    RequestAndRelatedRecords relatedRecords) {
+
+    RequestQueue requestQueue = relatedRecords.getRequestQueue();
+    requestQueue.add(relatedRecords.getRequest());
+    return succeeded(relatedRecords);
+  }
+
   private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
     Request requestBeingFulfilled, RequestQueue requestQueue, Item item, String checkInServicePointId) {
 
@@ -285,18 +293,6 @@ public class UpdateRequestQueue {
         requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)))
       .thenApply(r -> r.map(relatedRecords::withRequestQueue))
       .thenApply(r -> r.map(v -> v.withClosedFilledRequest(firstRequest)));
-  }
-
-  CompletableFuture<Result<RequestAndRelatedRecords>> onCreate(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    log.debug("onCreate:: parameters requestAndRelatedRecords: {}", () -> requestAndRelatedRecords);
-    final Request request = requestAndRelatedRecords.getRequest();
-    final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-    requestQueue.add(request);
-
-    return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
-        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
   }
 
   CompletableFuture<Result<RequestAndRelatedRecords>> onCancellation(

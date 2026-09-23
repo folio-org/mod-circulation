@@ -76,6 +76,7 @@ public class Clients {
   private final CollectionResourceClient actualCostFeeFineCancelClient;
   private final CollectionResourceClient departmentClient;
   private final CollectionResourceClient checkOutLockStorageClient;
+  private final CollectionResourceClient requestQueueLockStorageClient;
   private final CollectionResourceClient circulationItemClient;
   private final CollectionResourceClient searchClient;
   private final GetManyRecordsClient settingsStorageClient;
@@ -158,6 +159,7 @@ public class Clients {
       actualCostFeeFineCancelClient = createActualCostFeeFineCancelClient(client, context);
       departmentClient = createDepartmentClient(client, context);
       checkOutLockStorageClient = createCheckoutLockClient(client, context);
+      requestQueueLockStorageClient = createRequestQueueLockClient(client, context);
       settingsStorageClient = createSettingsStorageClient(client, context);
       localeClient = createLocaleClient(client, context);
       circulationItemClient = createCirculationItemClient(client, context);
@@ -413,6 +415,10 @@ public class Clients {
 
   public CollectionResourceClient checkOutLockClient() {
     return checkOutLockStorageClient;
+  }
+
+  public CollectionResourceClient requestQueueLockStorageClient() {
+    return requestQueueLockStorageClient;
   }
 
   public GetManyRecordsClient settingsStorageClient() {
@@ -906,6 +912,12 @@ public class Clients {
     OkapiHttpClient client, WebContext context) throws MalformedURLException {
 
     return  getCollectionResourceClient(client, context, "/check-out-lock-storage");
+  }
+
+  private CollectionResourceClient createRequestQueueLockClient(
+    OkapiHttpClient client, WebContext context) throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/request-queue-lock-storage");
   }
 
   private CollectionResourceClient createCirculationItemClient(

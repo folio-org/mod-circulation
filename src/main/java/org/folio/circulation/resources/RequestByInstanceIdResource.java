@@ -63,12 +63,14 @@ import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueLockRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.resources.handlers.error.FailFastErrorHandler;
 import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.services.RequestQueueService;
+import org.folio.circulation.services.RequestQueueLockService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.Clients;
@@ -85,6 +87,7 @@ import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -121,7 +124,7 @@ public class RequestByInstanceIdResource extends Resource {
     final var requestBody = routingContext.body().asJsonObject();
 
     new CirculationSettingsService(clients).getTlrSettings()
-      .thenCompose(r -> r.after(config -> buildAndPlaceRequests(clients, eventPublisher,
+      .thenCompose(r -> r.after(config -> buildAndPlaceRequests(routingContext.vertx(), clients, eventPublisher,
         repositories, itemFinder, config, requestBody)))
       .thenApply(r -> r.map(RequestAndRelatedRecords::getRequest))
       .thenApply(r -> r.map(new RequestRepresentation()::extendedRepresentation))
@@ -237,11 +240,11 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> buildAndPlaceRequests(
-    Clients clients, EventPublisher eventPublisher, RequestRelatedRepositories repositories,
+    Vertx vertx, Clients clients, EventPublisher eventPublisher, RequestRelatedRepositories repositories,
     ItemByInstanceIdFinder itemFinder, TlrSettingsConfiguration tlrConfig, JsonObject requestBody) {
 
     return buildRequests(requestBody, tlrConfig, itemFinder, repositories)
-      .thenCompose(r -> r.after(requests -> placeRequests(clients, eventPublisher, repositories,
+      .thenCompose(r -> r.after(requests -> placeRequests(vertx, clients, eventPublisher, repositories,
         itemFinder, requests)));
   }
 
@@ -282,7 +285,7 @@ public class RequestByInstanceIdResource extends Resource {
   }
 
   private CompletableFuture<Result<RequestAndRelatedRecords>> placeRequests(
-    Clients clients, EventPublisher eventPublisher, RequestRelatedRepositories repositories,
+    Vertx vertx, Clients clients, EventPublisher eventPublisher, RequestRelatedRepositories repositories,
     ItemByInstanceIdFinder itemFinder, List<JsonObject> requestRepresentations) {
 
     final var itemRepository = repositories.getItemRepository();
@@ -300,7 +303,8 @@ public class RequestByInstanceIdResource extends Resource {
     final CreateRequestService createRequestService = new CreateRequestService(repositories,
       updateUponRequest, new RequestLoanValidator(itemFinder, loanRepository),
       new RequestNoticeSender(clients), regularRequestBlockValidators(clients), eventPublisher,
-      new FailFastErrorHandler());
+      new FailFastErrorHandler(),
+      new RequestQueueLockService(new RequestQueueLockRepository(clients), vertx));
 
     return placeRequest(requestRepresentations, 0, createRequestService,
       clients, new HashSet<>(), repositories);

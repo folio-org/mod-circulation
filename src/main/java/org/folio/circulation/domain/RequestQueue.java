@@ -101,6 +101,16 @@ public class RequestQueue {
     reSequenceRequests();
   }
 
+  public boolean hasSequentialPositions() {
+    int expectedPosition = 1;
+    for (Request request : requests) {
+      if (!Objects.equals(request.getPosition(), expectedPosition++)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public void update(Request original, Request updated) {
     updatedRequests.add(new UpdatedRequestPair(original, updated));
   }

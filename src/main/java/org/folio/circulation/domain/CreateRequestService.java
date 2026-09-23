@@ -30,6 +30,7 @@ import static org.folio.circulation.support.ValidationErrorFailure.failedValidat
 import static org.folio.circulation.support.results.MappingFunctions.when;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.logResult;
 
@@ -47,7 +48,11 @@ import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
+import org.folio.circulation.services.RequestQueueLockService;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
+import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.support.ErrorCode;
+import org.folio.circulation.support.ServerErrorFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.request.RequestRelatedRepositories;
 import org.folio.circulation.support.results.Result;
@@ -62,11 +67,13 @@ public class CreateRequestService {
   private final RequestBlockValidators requestBlockValidators;
   private final EventPublisher eventPublisher;
   private final CirculationErrorHandler errorHandler;
+  private final RequestQueueLockService requestQueueLockService;
 
   public CreateRequestService(RequestRelatedRepositories repositories,
     UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
     RequestNoticeSender requestNoticeSender, RequestBlockValidators requestBlockValidators,
-    EventPublisher eventPublisher, CirculationErrorHandler errorHandler) {
+    EventPublisher eventPublisher, CirculationErrorHandler errorHandler,
+    RequestQueueLockService requestQueueLockService) {
 
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
@@ -75,6 +82,7 @@ public class CreateRequestService {
     this.requestBlockValidators = requestBlockValidators;
     this.eventPublisher = eventPublisher;
     this.errorHandler = errorHandler;
+    this.requestQueueLockService = requestQueueLockService;
   }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
@@ -108,12 +116,57 @@ public class CreateRequestService {
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateItem::onRequestCreateOrUpdate))
       .thenComposeAsync(r -> r.after(updateUponRequest.updateLoan::onRequestCreateOrUpdate))
-      .thenComposeAsync(r -> r.after(requestRepository::create))
-      .thenComposeAsync(r -> r.after(updateUponRequest.updateRequestQueue::onCreate))
+      .thenComposeAsync(r -> r.after(records -> createWithLockedPosition(records,
+        requestRepository, settingsRepository)))
       .thenApplyAsync(r -> {
         r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       }).thenApply(r -> logResult(r, "createRequest"));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> createWithLockedPosition(
+    RequestAndRelatedRecords records, RequestRepository requestRepository,
+    SettingsRepository settingsRepository) {
+
+    return of(() -> RequestQueueKey.from(records))
+      .after(key -> settingsRepository.lookupRequestQueueLockSettings()
+        .thenCompose(configurationResult -> configurationResult.after(configuration ->
+          requestQueueLockService.execute(key, configuration,
+            () -> createWithFreshQueue(records, requestRepository)))));
+  }
+
+  private CompletableFuture<Result<RequestAndRelatedRecords>> createWithFreshQueue(
+    RequestAndRelatedRecords records, RequestRepository requestRepository) {
+
+    return repositories.getRequestQueueRepository().getLightweightForPositioning(records)
+      .thenApply(r -> r.next(this::repeatDuplicateRequestValidation))
+      .thenApply(r -> r.next(this::refuseWhenQueuePositionsAreNotSequential))
+      .thenApply(r -> r.next(updateUponRequest.updateRequestQueue::prepareForCreate))
+      .thenCompose(r -> r.after(requestRepository::create));
+  }
+
+  private Result<RequestAndRelatedRecords> repeatDuplicateRequestValidation(
+    RequestAndRelatedRecords records) {
+
+    Result<RequestAndRelatedRecords> result = succeeded(records);
+    return result.next(RequestServiceUtility::refuseWhenAlreadyRequested)
+      .mapFailure(error -> errorHandler.handleValidationError(error,
+        ITEM_ALREADY_REQUESTED_BY_SAME_USER, result))
+      .next(errorHandler::failWithValidationErrors);
+  }
+
+  private Result<RequestAndRelatedRecords> refuseWhenQueuePositionsAreNotSequential(
+    RequestAndRelatedRecords records) {
+
+    if (records.getRequestQueue().hasSequentialPositions()) {
+      return succeeded(records);
+    }
+
+    RequestQueueKey key = RequestQueueKey.from(records);
+    String message = "Request queue positions are not sequential for "
+      + key.queueType() + ":" + key.queueId();
+    log.error(message);
+    return failed(new ServerErrorFailure(message));
   }
 
   private Result<RequestAndRelatedRecords> refuseHoldOrRecallTlrWhenPageableItemExists(

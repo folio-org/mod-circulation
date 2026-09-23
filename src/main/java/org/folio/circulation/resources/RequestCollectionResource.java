@@ -30,6 +30,7 @@ import org.folio.circulation.domain.validation.ServicePointPickupLocationValidat
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueLockRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -43,6 +44,7 @@ import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.services.RequestQueueService;
+import org.folio.circulation.services.RequestQueueLockService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -101,7 +103,8 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
       requestLoanValidator, requestNoticeSender, requestBlocksValidators, eventPublisher,
-      errorHandler);
+      errorHandler, new RequestQueueLockService(new RequestQueueLockRepository(clients),
+        routingContext.vertx()));
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       Request.Operation.CREATE, repositories,
@@ -155,7 +158,9 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
       requestLoanValidator, requestNoticeSender, regularRequestBlockValidators(clients),
-      eventPublisher, errorHandler);
+      eventPublisher, errorHandler,
+      new RequestQueueLockService(new RequestQueueLockRepository(clients),
+        routingContext.vertx()));
 
     final var updateRequestService = new UpdateRequestService(requestRepository,
       updateRequestQueue, new ClosedRequestValidator(requestRepository), requestNoticeSender,

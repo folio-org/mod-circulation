@@ -120,16 +120,6 @@ class UpdateRequestQueueTest {
   }
 
   @Test
-  void createShouldFailWhenBatchUpdateFails() throws Exception {
-    RequestAndRelatedRecords createRequestContext = createRequestContext();
-
-    CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
-      updateRequestQueue.onCreate(createRequestContext);
-
-    assertFailedOnFailureResponse(completableFutureResult);
-  }
-
-  @Test
   void checkOutShouldFailWhenBatchUpdateFails() throws Exception {
     UUID itemId = UUID.randomUUID();
     LoanAndRelatedRecords checkOutContext = new LoanAndRelatedRecords(
@@ -265,13 +255,6 @@ class UpdateRequestQueueTest {
 
     return new RequestAndRelatedRecords(request)
       .withRequestQueue(requestQueue);
-  }
-
-  private RequestAndRelatedRecords createRequestContext() {
-    UUID itemId = UUID.randomUUID();
-
-    return new RequestAndRelatedRecords(requestAtPosition(itemId, 0))
-      .withRequestQueue(createRequestQueue(itemId, 3));
   }
 
   private <T> void assertFailedOnFailureResponse(
