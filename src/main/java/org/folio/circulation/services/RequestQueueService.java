@@ -43,6 +43,18 @@ public class RequestQueueService {
     RequestQueue requestQueue) {
 
     log.info("findRequestFulfillableByItem:: parameters itemId: {}", item::getItemId);
+
+    // MCBFF-211 diagnostics: full ordered list of "fulfillable candidate" requests for this
+    // item, in the order they will be evaluated (i.e. current position order). This is the
+    // queue snapshot at the moment checkout/checkin selection happens - compare the order
+    // here against what the Central-tenant ECS sync (mod-tlr RequestBatchUpdateEventHandler)
+    // later computes, to see if/when the two diverge.
+    requestQueue.fulfillableRequests().forEach(r -> log.info(
+      "MCBFF-211 findRequestFulfillableByItem:: candidate -> id: {}, itemId: {}, " +
+        "instanceId: {}, requestLevel: {}, requestType: {}, position: {}, status: {}",
+      r.getId(), r.getItemId(), r.getInstanceId(), r.getRequestLevel(), r.getRequestType(),
+      r.getPosition(), r.getStatus()));
+
     return findRequestFulfillableByItem(item, requestQueue.fulfillableRequests().iterator());
   }
 
@@ -56,7 +68,18 @@ public class RequestQueueService {
     final Request request = iterator.next();
 
     return isRequestFulfillableByItem(item, request)
-      .thenCompose(r -> r.after(whenTrue(ofAsync(request), findRequestFulfillableByItem(item, iterator))));
+      .thenCompose(r -> r.after(whenTrue(logSelectedAndReturn(request), findRequestFulfillableByItem(item, iterator))));
+  }
+
+  // MCBFF-211 diagnostics: log which request actually WON the fulfillability check and got
+  // selected to be closed/fulfilled by this checkout/checkin - this is the "who gets the
+  // item" decision, distinct from queue resequencing/reordering afterwards.
+  private CompletableFuture<Result<Request>> logSelectedAndReturn(Request request) {
+    log.info("MCBFF-211 findRequestFulfillableByItem:: SELECTED request -> id: {}, itemId: {}, " +
+        "instanceId: {}, requestLevel: {}, requestType: {}, position: {}",
+      request.getId(), request.getItemId(), request.getInstanceId(), request.getRequestLevel(),
+      request.getRequestType(), request.getPosition());
+    return ofAsync(request);
   }
 
   public CompletableFuture<Result<Boolean>> isRequestFulfillableByItem(Item item, Request request) {
@@ -90,11 +113,16 @@ public class RequestQueueService {
     if (!StringUtils.equals(request.getItemId(), item.getItemId()) &&
       !StringUtils.equals(request.getInstanceId(), item.getInstanceId())) {
       log.info("isTitleLevelRequestFulfillableByItem:: itemId and instanceId mismatch, not fulfillable");
+      log.info("MCBFF-211 isTitleLevelRequestFulfillableByItem(base):: requestId: {} -> " +
+        "NOT fulfillable (itemId/instanceId mismatch)", request.getId());
       return ofAsync(false);
     }
 
     if (request.isRecall() && request.isNotYetFilled()) {
       log.info("isTitleLevelRequestFulfillableByItem:: recall request not yet filled, checking requestable and loanable");
+      log.info("MCBFF-211 isTitleLevelRequestFulfillableByItem(base):: requestId: {} is a " +
+        "RECALL, using isItemRequestableAndLoanable path (not simple itemId match)",
+        request.getId());
       return isItemRequestableAndLoanable(item, request);
     }
 

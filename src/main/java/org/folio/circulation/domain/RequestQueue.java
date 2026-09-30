@@ -106,16 +106,41 @@ public class RequestQueue {
   }
 
   public void remove(Request request) {
+    // MCBFF-211 diagnostics: queue order BEFORE removal (i.e. before a fulfilled/closed
+    // request is taken out and the rest close ranks). Compare "before" vs "after" ids/order
+    // below to see exactly how the remaining requests get renumbered - if a Hold and Recall
+    // swap order here (as opposed to just shifting up), that would point to a bug in this
+    // in-memory list rather than upstream ECS sync.
+    logQueueSnapshot("remove:: BEFORE removing " + request.getId());
+
     requests = requests.stream()
       .filter(r -> !r.getId().equals(request.getId()))
       .collect(toList());
     request.removePosition();
     reSequenceRequests();
+
+    logQueueSnapshot("remove:: AFTER removing " + request.getId());
+  }
+
+  private void logQueueSnapshot(String label) {
+    log.info("MCBFF-211 {} -> [{}]", label, requests.stream()
+      .map(r -> "id=" + r.getId() + ",type=" + r.getRequestType() + ",level="
+        + r.getRequestLevel() + ",itemId=" + r.getItemId() + ",position=" + r.getPosition())
+      .collect(java.util.stream.Collectors.joining(" | ")));
   }
 
   private void reSequenceRequests() {
     final AtomicInteger position = new AtomicInteger(1);
     requests.forEach(req -> req.changePosition(position.getAndIncrement()));
+
+    // MCBFF-211 diagnostics: this is the confirmed type-blind/level-blind renumbering step -
+    // it just walks the in-memory `requests` list in its CURRENT order and assigns 1..n. It
+    // never looks at requestType/requestLevel. If the list order going INTO this method is
+    // already wrong (e.g. Hold and Recall already swapped before this call), this method
+    // will faithfully preserve that wrong order - it cannot itself be the source of a
+    // Hold/Recall swap, only a passthrough. Logged here to confirm list order at the moment
+    // positions are (re)assigned.
+    logQueueSnapshot("reSequenceRequests:: AFTER renumbering (list order preserved, positions assigned 1..n)");
   }
 
   public Integer size() {
@@ -150,6 +175,14 @@ public class RequestQueue {
 
   // puts request on top of all requests in status "Open - Not yet filled"
   public void updateRequestPositionOnCheckIn(String requestId) {
+    // MCBFF-211 diagnostics: this method moves the request identified by requestId to sit
+    // just above the first "Open - Not yet filled" request found scanning from the top -
+    // i.e. it does NOT look at requestType/requestLevel, only status and current list order.
+    // This is the check-in-time reordering (distinct from checkout's fulfillability
+    // selection and distinct from the cross-tenant ECS sync). Logging list order before/after
+    // to see if a Hold/Recall swap could originate here.
+    logQueueSnapshot("updateRequestPositionOnCheckIn:: BEFORE, moving requestId=" + requestId);
+
     int newIndex = -1;
 
     for (int i = 0; i < requests.size(); i++) {
@@ -159,13 +192,22 @@ public class RequestQueue {
       if (newIndex == -1) {
         if (!isSameRequest && currentRequest.isNotYetFilled()) {
           newIndex = i;
+          log.info("MCBFF-211 updateRequestPositionOnCheckIn:: target insertion index {} " +
+              "found at request id={}, type={}, level={}, status={}", i,
+            currentRequest.getId(), currentRequest.getRequestType(),
+            currentRequest.getRequestLevel(), currentRequest.getStatus());
         }
       } else if (isSameRequest) {
         requests.add(newIndex, requests.remove(i));
         reSequenceRequests();
+        logQueueSnapshot("updateRequestPositionOnCheckIn:: AFTER, moved requestId=" + requestId
+          + " to index=" + newIndex);
         return;
       }
     }
+
+    log.info("MCBFF-211 updateRequestPositionOnCheckIn:: no-op - requestId={} not found or no " +
+      "eligible insertion point (queue unchanged)", requestId);
   }
 
   public void replaceRequest(Request newRequest) {
