@@ -7,7 +7,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -17,17 +20,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.reorder.ReorderRequest;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
+import org.folio.circulation.domain.configuration.RequestQueueLockConfiguration;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.resources.context.RequestQueueType;
 import org.folio.circulation.services.RequestQueueService;
+import org.folio.circulation.services.RequestQueueLockService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ForwardOnFailure;
@@ -58,15 +67,29 @@ class UpdateRequestQueueTest {
     requestRepository = mock(RequestRepository.class);
     requestQueueRepository = spy(new RequestQueueRepository(
       RequestRepository.using(clients, itemRepository, userRepository, loanRepository)));
+    SettingsRepository settingsRepository = mock(SettingsRepository.class);
+    RequestQueueLockService lockService = mock(RequestQueueLockService.class);
+    RequestQueueLockConfiguration lockConfiguration =
+      new RequestQueueLockConfiguration(true, 10_000, 1, 500);
+    lenient().when(settingsRepository.lookupRequestQueueLockSettings())
+      .thenReturn(completedFuture(succeeded(lockConfiguration)));
+    lenient().when(lockService.execute(any(RequestQueueKey.class), eq(lockConfiguration), any()))
+      .thenAnswer(invocation -> {
+        Supplier<CompletableFuture<Result<Object>>> criticalSection = invocation.getArgument(2);
+        return criticalSection.get();
+      });
 
     updateRequestQueue =
-      new UpdateRequestQueue(requestQueueRepository, requestRepository, null, null,
-        RequestQueueService.using(clients), new CalendarRepository(clients));
+      new UpdateRequestQueue(requestQueueRepository, requestRepository, null,
+        settingsRepository, RequestQueueService.using(clients), new CalendarRepository(clients),
+        lockService);
   }
 
   @Test
   void reorderShouldFailWhenBatchUpdateFails() throws Exception {
     ReorderRequestContext reorderContext = createReorderContext();
+    doReturn(completedFuture(succeeded(reorderContext.getRequestQueue())))
+      .when(requestQueueRepository).getLightweightForPositioning(any(RequestQueueKey.class));
 
     CompletableFuture<Result<ReorderRequestContext>> completableFutureResult =
       updateRequestQueue.onReorder(succeeded(reorderContext));
@@ -80,11 +103,13 @@ class UpdateRequestQueueTest {
     RequestQueue requestQueue = createRequestQueue(itemId, 4);
     Request requestToRemove = requestQueue.getRequests().iterator().next();
 
-    when(requestQueueRepository.getByItemId(itemId.toString()))
-      .thenReturn(completedFuture(succeeded(requestQueue)));
+    doReturn(completedFuture(succeeded(requestQueue)))
+      .when(requestQueueRepository).getLightweightForPositioning(any(RequestQueueKey.class));
+    when(requestRepository.delete(requestToRemove))
+      .thenReturn(completedFuture(succeeded(requestToRemove)));
 
     CompletableFuture<Result<Request>> completableFutureResult =
-      updateRequestQueue.onDeletion(requestToRemove);
+      updateRequestQueue.onDeletion(requestToRemove, TlrSettingsConfiguration.defaultSettings());
 
     assertFailedOnFailureResponse(completableFutureResult);
   }
@@ -92,6 +117,8 @@ class UpdateRequestQueueTest {
   @Test
   void moveToShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords moveToRequestContext = createMoveRequestContext();
+    doReturn(completedFuture(succeeded(moveToRequestContext.getRequestQueue())))
+      .when(requestQueueRepository).getLightweightForPositioning(any(RequestQueueKey.class));
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
       updateRequestQueue.onMovedTo(moveToRequestContext);
@@ -102,6 +129,8 @@ class UpdateRequestQueueTest {
   @Test
   void moveFromShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords moveFromRequestContext = createMoveRequestContext();
+    doReturn(completedFuture(succeeded(moveFromRequestContext.getRequestQueue())))
+      .when(requestQueueRepository).getLightweightForPositioning(any(RequestQueueKey.class));
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
       updateRequestQueue.onMovedFrom(moveFromRequestContext);
@@ -112,6 +141,10 @@ class UpdateRequestQueueTest {
   @Test
   void cancellationShouldFailWhenBatchUpdateFails() throws Exception {
     RequestAndRelatedRecords cancellationContext = createCancellationContext();
+    doReturn(completedFuture(succeeded(cancellationContext.getRequestQueue())))
+      .when(requestQueueRepository).getLightweightForPositioning(any(RequestQueueKey.class));
+    when(requestRepository.update(cancellationContext.getRequest()))
+      .thenReturn(completedFuture(succeeded(cancellationContext.getRequest())));
 
     CompletableFuture<Result<RequestAndRelatedRecords>> completableFutureResult =
       updateRequestQueue.onCancellation(cancellationContext);
@@ -129,8 +162,10 @@ class UpdateRequestQueueTest {
     Request fulfillRequest = checkOutContext.getRequestQueue()
       .getHighestPriorityFulfillableRequest();
 
-    when(requestRepository.update(fulfillRequest))
+    when(requestRepository.update(any(Request.class)))
       .thenReturn(completedFuture(succeeded(fulfillRequest)));
+    doReturn(completedFuture(succeeded(checkOutContext.getRequestQueue())))
+      .when(requestQueueRepository).getLightweightForPositioning(any(RequestQueueKey.class));
 
     CompletableFuture<Result<LoanAndRelatedRecords>> completableFutureResult =
       updateRequestQueue.onCheckOut(checkOutContext);
@@ -214,10 +249,10 @@ class UpdateRequestQueueTest {
 
       reorderRequest.setId(request.getId());
       // i.e. reverse positions
-      reorderRequest.setNewPosition(requestCount - request.getPosition());
+      reorderRequest.setNewPosition(requestCount + 1 - request.getPosition());
     }
 
-    return new ReorderRequestContext(null, itemId.toString(), reorderQueueRequest)
+    return new ReorderRequestContext(RequestQueueType.FOR_ITEM, itemId.toString(), reorderQueueRequest)
       .withRequestQueue(requestQueue);
   }
 

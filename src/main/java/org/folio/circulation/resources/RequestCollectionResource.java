@@ -90,7 +90,7 @@ public class RequestCollectionResource extends CollectionResource {
       new RequestQueueService(new RequestPolicyRepository(clients), loanPolicyRepository)),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients, requestRepository,
-        new RequestQueueRepository(requestRepository)));
+        new RequestQueueRepository(requestRepository), routingContext.vertx()));
 
     final var okapiPermissions = OkapiPermissions.from(context.getHeaders());
     final var blockOverrides = BlockOverrides.fromRequest(representation);
@@ -143,7 +143,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestQueueRepository = repositories.getRequestQueueRepository();
 
     final var updateRequestQueue = UpdateRequestQueue.using(clients,
-      requestRepository, requestQueueRepository);
+      requestRepository, requestQueueRepository, routingContext.vertx());
     final var eventPublisher = new EventPublisher(context, clients);
     final var requestNoticeSender = new RequestNoticeSender(clients);
     final var updateItem = new UpdateItem(itemRepository,
@@ -216,15 +216,17 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var requestQueueService = RequestQueueService.using(clients);
-    final var updateRequestQueue = new UpdateRequestQueue(new RequestQueueRepository(
-      requestRepository), requestRepository, new ServicePointRepository(clients),
-      new SettingsRepository(clients), requestQueueService, new CalendarRepository(clients));
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    final var updateRequestQueue = UpdateRequestQueue.using(clients, requestRepository,
+      requestQueueRepository, routingContext.vertx());
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
     UpdateItem updateItem = new UpdateItem(itemRepository, requestQueueService);
 
     fromFutureResult(requestRepository.getById(id))
-      .flatMapFuture(requestRepository::delete)
-      .flatMapFuture(updateRequestQueue::onDeletion)
+      .flatMapFuture(request -> circulationSettingsService.getTlrSettings()
+        .thenCompose(settingsResult -> settingsResult.after(settings ->
+          updateRequestQueue.onDeletion(request, settings))))
       .flatMapFuture(updateItem::onRequestDeletion)
       .map(toFixedValue(NoContentResponse::noContent))
       .onComplete(context::write, context::write);
@@ -286,7 +288,8 @@ public class RequestCollectionResource extends CollectionResource {
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(requestPolicyRepository, loanPolicyRepository)),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-      UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository));
+      UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository,
+        routingContext.vertx()));
 
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
       loanRepository, requestRepository);

@@ -14,20 +14,26 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
+import org.folio.circulation.domain.validation.RequestQueueValidation;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueLockRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.context.ReorderRequestContext;
+import org.folio.circulation.services.RequestQueueLockService;
 import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.results.Result;
+
+import io.vertx.core.Vertx;
 
 public class UpdateRequestQueue {
   private final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
@@ -38,6 +44,7 @@ public class UpdateRequestQueue {
   private final SettingsRepository settingsRepository;
   private final RequestQueueService requestQueueService;
   private final CalendarRepository calendarRepository;
+  private final RequestQueueLockService requestQueueLockService;
   private static final String NOT_DEFINED_INTERVAL = "";
 
   public UpdateRequestQueue(
@@ -46,7 +53,8 @@ public class UpdateRequestQueue {
     ServicePointRepository servicePointRepository,
     SettingsRepository settingsRepository,
     RequestQueueService requestQueueService,
-    CalendarRepository calendarRepository) {
+    CalendarRepository calendarRepository,
+    RequestQueueLockService requestQueueLockService) {
 
     this.requestQueueRepository = requestQueueRepository;
     this.requestRepository = requestRepository;
@@ -54,15 +62,18 @@ public class UpdateRequestQueue {
     this.settingsRepository = settingsRepository;
     this.requestQueueService = requestQueueService;
     this.calendarRepository = calendarRepository;
+    this.requestQueueLockService = requestQueueLockService;
   }
 
   public static UpdateRequestQueue using(Clients clients,
     RequestRepository requestRepository,
-    RequestQueueRepository requestQueueRepository) {
+    RequestQueueRepository requestQueueRepository,
+    Vertx vertx) {
 
     return new UpdateRequestQueue(requestQueueRepository,
       requestRepository, new ServicePointRepository(clients), new SettingsRepository(clients),
-      RequestQueueService.using(clients), new CalendarRepository(clients));
+      RequestQueueService.using(clients), new CalendarRepository(clients),
+      new RequestQueueLockService(new RequestQueueLockRepository(clients), vertx));
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> onCheckIn(
@@ -79,19 +90,22 @@ public class UpdateRequestQueue {
     final Item item = relatedRecords.getLoan().getItem();
     final String checkInServicePointId = relatedRecords.getLoan().getCheckInServicePointId();
 
-    return onCheckIn(requestQueue, item, checkInServicePointId)
+    return onCheckIn(requestQueue, item, checkInServicePointId, relatedRecords.getTlrSettings())
       .thenApply(result -> result.map(relatedRecords::withRequestQueue));
   }
 
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
-    RequestQueue requestQueue, Item item, String checkInServicePointId) {
+    RequestQueue requestQueue, Item item, String checkInServicePointId,
+    org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
 
     log.debug("onCheckIn:: parameters requestQueue: {}, item: {}, checkInServicePointId: {}",
       () -> requestQueue, () -> item, () -> checkInServicePointId);
 
     return requestQueueService.findRequestFulfillableByItem(item, requestQueue)
-      .thenCompose(r -> r.after(request -> updateOutstandingRequestOnCheckIn(
-        request, requestQueue, item, checkInServicePointId)));
+      .thenCompose(r -> r.after(request -> prepareOutstandingRequestOnCheckIn(
+        request, item, checkInServicePointId)))
+      .thenCompose(r -> r.after(request -> persistCheckInQueueUpdate(
+        request, requestQueue, item, tlrSettings)));
   }
 
   public Result<RequestAndRelatedRecords> prepareForCreate(
@@ -102,26 +116,19 @@ public class UpdateRequestQueue {
     return succeeded(relatedRecords);
   }
 
-  private CompletableFuture<Result<RequestQueue>> updateOutstandingRequestOnCheckIn(
-    Request requestBeingFulfilled, RequestQueue requestQueue, Item item, String checkInServicePointId) {
+  private CompletableFuture<Result<Request>> prepareOutstandingRequestOnCheckIn(
+    Request requestBeingFulfilled, Item item, String checkInServicePointId) {
 
     log.info("updateOutstandingRequestOnCheckIn :: checkInServicePointId:{} ",checkInServicePointId);
 
     if (requestBeingFulfilled == null) {
-      return ofAsync(requestQueue);
+      return ofAsync(() -> null);
     }
 
     if (requestBeingFulfilled.getItemId() == null || !requestBeingFulfilled.isFor(item)) {
       requestBeingFulfilled = requestBeingFulfilled.withItem(item);
-      log.info("updateOutstandingRequestOnCheckIn:: replacing request in the queue because " +
-        "another instance of it has been created");
-      // Replacing request in the queue because another instance of it has been created
-      requestQueue.replaceRequest(requestBeingFulfilled);
+      log.info("prepareOutstandingRequestOnCheckIn:: assigning the checked-in item to request");
     }
-
-    requestQueue.updateRequestPositionOnCheckIn(requestBeingFulfilled.getId());
-
-    Request originalRequest = Request.from(requestBeingFulfilled.asJson());
 
     CompletableFuture<Result<Request>> updatedReq;
 
@@ -134,7 +141,7 @@ public class UpdateRequestQueue {
       case HOLD_SHELF:
         if (checkInServicePointId.equalsIgnoreCase(requestBeingFulfilled.getPickupServicePointId())) {
           log.info("updateOutstandingRequestOnCheckIn:: Updating to awaitingPickUp");
-          return awaitPickup(requestBeingFulfilled,requestQueue);
+          return awaitPickup(requestBeingFulfilled);
         } else {
           log.info("updateOutstandingRequestOnCheckIn:: Updating to inTransit");
           updatedReq = putInTransit(requestBeingFulfilled);
@@ -149,20 +156,64 @@ public class UpdateRequestQueue {
           requestBeingFulfilled.getfulfillmentPreference());
     }
 
-    Request updatedRequest = Request.from(requestBeingFulfilled.asJson());
-    requestQueue.update(originalRequest, updatedRequest);
-
-    return updatedReq
-      .thenComposeAsync(r -> r.after(requestRepository::update))
-      .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
+    return updatedReq;
   }
 
-  private CompletableFuture<Result<RequestQueue>> awaitPickup(Request request,
-    RequestQueue requestQueue) {
+  private CompletableFuture<Result<RequestQueue>> persistCheckInQueueUpdate(
+    Request preparedRequest, RequestQueue initialQueue, Item item,
+    org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
 
-    log.debug("awaitPickup:: parameters request: {}, requestQueue: {}",
-      () -> request, () -> requestQueue);
-    Request originalRequest = Request.from(request.asJson());
+    if (preparedRequest == null) {
+      return completedFuture(succeeded(initialQueue));
+    }
+
+    // The request instance is authoritative for TLR queues. This matters for DCB
+    // requests, where the temporary circulation item's instance can differ from
+    // the instance retained on the request.
+    RequestQueueKey key = RequestQueueKey.from(preparedRequest, tlrSettings);
+    return executeWithLock(key, () -> requestQueueRepository
+      .getLightweightForPositioning(key)
+      .thenApply(r -> r.map(queue -> queue.withRelatedRecordsFrom(initialQueue)))
+      .thenCompose(r -> r.after(queue -> persistPreparedCheckInRequest(
+        preparedRequest, queue))));
+  }
+
+  private CompletableFuture<Result<RequestQueue>> persistPreparedCheckInRequest(
+    Request preparedRequest, RequestQueue requestQueue) {
+
+    Request currentRequest = requestQueue.findById(preparedRequest.getId());
+    if (currentRequest == null) {
+      log.info("Request {} left the queue before check-in positioning", preparedRequest.getId());
+      return completedFuture(succeeded(requestQueue));
+    }
+
+    Request originalRequest = Request.from(currentRequest.asJson());
+    var updatedRepresentation = preparedRequest.asJson();
+    if (currentRequest.getPosition() == null) {
+      updatedRepresentation.remove("position");
+    } else {
+      updatedRepresentation.put("position", currentRequest.getPosition());
+    }
+
+    Request updatedRequest = currentRequest.withRequestRepresentation(updatedRepresentation);
+    requestQueue.replaceRequest(updatedRequest);
+    requestQueue.updateRequestPositionOnCheckIn(updatedRequest.getId());
+    updatedRequest = requestQueue.findById(updatedRequest.getId());
+    requestQueue.update(originalRequest, Request.from(updatedRequest.asJson()));
+
+    Request requestToUpdate = updatedRequest;
+    if (requestToUpdate.hasChangedPosition()) {
+      // The batch stores the status and all position changes in one storage transaction.
+      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue);
+    }
+
+    return requestRepository.update(requestToUpdate)
+      .thenApply(r -> r.map(v -> requestQueue));
+  }
+
+  private CompletableFuture<Result<Request>> awaitPickup(Request request) {
+
+    log.debug("awaitPickup:: parameters request: {}", () -> request);
     request.changeStatus(RequestStatus.OPEN_AWAITING_PICKUP);
 
     if (request.getHoldShelfExpirationDate() == null) {
@@ -178,19 +229,14 @@ public class UpdateRequestQueue {
             ).map(calculatedRequest -> new RequestWithTimeZone(calculatedRequest, tenantTimeZone))))
         .thenCompose(r -> r.after(requestWithTimeZone ->
           setHoldShelfExpirationDateWithExpirationDateManagement(
-            requestWithTimeZone.tenantTimeZone, requestWithTimeZone.request, requestQueue, originalRequest)));
+            requestWithTimeZone.tenantTimeZone, requestWithTimeZone.request)));
     } else {
-      Request updatedRequest = Request.from(request.asJson());
-      requestQueue.update(originalRequest, updatedRequest);
-
-      return requestRepository.update(request)
-        .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
+      return completedFuture(succeeded(request));
     }
   }
 
-  private CompletableFuture<Result<RequestQueue>> setHoldShelfExpirationDateWithExpirationDateManagement(
-    ZoneId tenantTimeZone, Request calculatedRequest, RequestQueue requestQueue,
-    Request originalRequest) {
+  private CompletableFuture<Result<Request>> setHoldShelfExpirationDateWithExpirationDateManagement(
+    ZoneId tenantTimeZone, Request calculatedRequest) {
 
     ExpirationDateManagement expirationDateManagement = calculatedRequest.getPickupServicePoint()
       .getHoldShelfClosedLibraryDateManagement();
@@ -220,10 +266,7 @@ public class UpdateRequestQueue {
       .thenCompose(calculatedDateResult -> calculatedDateResult.after(calculatedDate -> {
         log.info("setHoldShelfExpirationDateWithExpirationDateManagement:: calculatedDate after: {}", calculatedDate);
         calculatedRequest.changeHoldShelfExpirationDate(calculatedDate);
-        requestQueue.update(originalRequest, calculatedRequest);
-
-        return requestRepository.update(calculatedRequest)
-          .thenComposeAsync(result -> result.after(v -> requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)));
+        return completedFuture(succeeded(calculatedRequest));
       }));
   }
 
@@ -275,7 +318,28 @@ public class UpdateRequestQueue {
       return completedFuture(succeeded(relatedRecords));
     }
 
+    // Use the selected request to identify a TLR queue. A DCB circulation item can
+    // belong to a different instance from the request it fulfils.
+    RequestQueueKey key = RequestQueueKey.from(firstRequest,
+      relatedRecords.getTlrSettings());
+    return executeWithLock(key, () -> requestQueueRepository
+      .getLightweightForPositioning(key)
+      .thenApply(r -> r.map(queue -> queue.withRelatedRecordsFrom(
+        relatedRecords.getRequestQueue())))
+      .thenCompose(r -> r.after(queue -> closeRequestOnCheckOut(
+        relatedRecords.withRequestQueue(queue), firstRequest.getId()))));
+  }
+
+  private CompletableFuture<Result<LoanAndRelatedRecords>> closeRequestOnCheckOut(
+    LoanAndRelatedRecords relatedRecords, String requestId) {
+
     RequestQueue requestQueue = relatedRecords.getRequestQueue();
+    Request firstRequest = requestQueue.findById(requestId);
+    if (firstRequest == null) {
+      log.info("Request {} left the queue before check-out positioning", requestId);
+      return completedFuture(succeeded(relatedRecords));
+    }
+
     Request originalRequest = Request.from(firstRequest.asJson());
 
     log.info("onCheckOut:: Closing request '{}'", firstRequest.getId());
@@ -302,12 +366,23 @@ public class UpdateRequestQueue {
       () -> requestAndRelatedRecords);
     if(requestAndRelatedRecords.getRequest().isCancelled()) {
       log.info("onCancellation:: request is cancelled");
-      return requestQueueRepository.updateRequestsWithChangedPositions(
-        requestAndRelatedRecords.getRequestQueue())
-        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+      RequestQueueKey key = RequestQueueKey.from(requestAndRelatedRecords);
+      return executeWithLock(key, () -> requestQueueRepository
+        .getLightweightForPositioning(key)
+        .thenApply(r -> r.map(queue -> queue.withRelatedRecordsFrom(
+          requestAndRelatedRecords.getRequestQueue())))
+        .thenCompose(r -> r.after(queue -> {
+          Request request = requestAndRelatedRecords.getRequest();
+          queue.remove(request);
+          return requestRepository.update(request)
+            .thenCompose(updateResult -> updateResult.after(v ->
+              requestQueueRepository.updateRequestsWithChangedPositions(queue)))
+            .thenApply(updateResult -> updateResult.map(
+              requestAndRelatedRecords::withRequestQueue));
+        })));
     }
     else {
-      return completedFuture(succeeded(requestAndRelatedRecords));
+      return requestRepository.update(requestAndRelatedRecords);
     }
   }
 
@@ -321,10 +396,18 @@ public class UpdateRequestQueue {
       !requestAndRelatedRecords.isTlrFeatureEnabled()) {
 
       log.info("onMovedFrom:: removing request from the requestQueue");
-      final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-      requestQueue.remove(request);
-      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
-        .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+      RequestQueueKey key = RequestQueueKey.forItem(
+        requestAndRelatedRecords.getSourceItemId());
+      return executeWithLock(key, () -> requestQueueRepository
+        .getLightweightForPositioning(key)
+        .thenApply(r -> r.map(queue -> queue.withRelatedRecordsFrom(
+          requestAndRelatedRecords.getRequestQueue())))
+        .thenCompose(r -> r.after(requestQueue -> {
+          requestQueue.remove(request);
+          return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+            .thenApply(updateResult -> updateResult.map(
+              requestAndRelatedRecords::withRequestQueue));
+        })));
     }
     else {
       return completedFuture(succeeded(requestAndRelatedRecords));
@@ -338,50 +421,76 @@ public class UpdateRequestQueue {
       () -> requestAndRelatedRecords);
     final Request request = requestAndRelatedRecords.getRequest();
     if (requestAndRelatedRecords.getDestinationItemId().equals(request.getItemId())) {
-      final RequestQueue requestQueue = requestAndRelatedRecords.getRequestQueue();
-      // NOTE: it is important to remove position when moving request from one queue to another
-      if (requestAndRelatedRecords.isTlrFeatureEnabled()) {
-        log.info("onMovedTo:: removing request from the requestQueue");
-        requestQueue.remove(request);
-      }
-      request.removePosition();
-      requestQueue.add(request);
-      return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
-            .thenApply(r -> r.map(requestAndRelatedRecords::withRequestQueue));
+      RequestQueueKey key = requestAndRelatedRecords.isTlrFeatureEnabled()
+        ? RequestQueueKey.forInstance(request.getInstanceId())
+        : RequestQueueKey.forItem(requestAndRelatedRecords.getDestinationItemId());
+      return executeWithLock(key, () -> requestQueueRepository
+        .getLightweightForPositioning(key)
+        .thenApply(r -> r.map(queue -> queue.withRelatedRecordsFrom(
+          requestAndRelatedRecords.getRequestQueue())))
+        .thenCompose(r -> r.after(requestQueue -> {
+          // NOTE: it is important to remove position when moving request from one queue to another
+          if (requestAndRelatedRecords.isTlrFeatureEnabled()) {
+            log.info("onMovedTo:: removing request from the requestQueue");
+            requestQueue.remove(request);
+          }
+          request.removePosition();
+          requestQueue.add(request);
+          return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+            .thenApply(updateResult -> updateResult.map(
+              requestAndRelatedRecords::withRequestQueue));
+        })));
     }
     else {
       return completedFuture(succeeded(requestAndRelatedRecords));
     }
   }
 
-  public CompletableFuture<Result<Request>> onDeletion(Request request) {
+  public CompletableFuture<Result<Request>> onDeletion(Request request,
+    org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
+
     log.debug("onDeletion:: parameters request: {}", () -> request);
 
-    return requestQueueRepository.getByItemId(request.getItemId())
-      .thenApply(r -> r.map(requestQueue -> {
-        requestQueue.remove(request);
-        return requestQueue;
-      }))
-      .thenComposeAsync(r -> r.after(
-        requestQueueRepository::updateRequestsWithChangedPositions))
-      .thenApply(r -> r.map(requestQueue -> request));
+    if (request.getPosition() == null) {
+      return requestRepository.delete(request);
+    }
+
+    RequestQueueKey key = RequestQueueKey.from(request, tlrSettings);
+    return executeWithLock(key, () -> requestQueueRepository
+      .getLightweightForPositioning(key)
+      .thenCompose(r -> r.after(requestQueue -> requestRepository.delete(request)
+        .thenCompose(deleteResult -> deleteResult.after(deletedRequest -> {
+          requestQueue.remove(deletedRequest);
+          return requestQueueRepository.updateRequestsWithChangedPositions(requestQueue)
+            .thenApply(updateResult -> updateResult.map(queue -> deletedRequest));
+        })))));
   }
 
   public CompletableFuture<Result<ReorderRequestContext>> onReorder(
     Result<ReorderRequestContext> result) {
 
-    // 1st: set new positions for the requests in the queue
     return result.after(context -> {
-      context.getReorderRequestToRequestMap().forEach(
-        (reorderRequest, request) -> request.changePosition(reorderRequest.getNewPosition())
-      );
+      RequestQueueKey key = RequestQueueKey.from(context);
+      RequestQueue initialQueue = context.getRequestQueue();
+      return executeWithLock(key, () -> requestQueueRepository
+        .getLightweightForPositioning(key)
+        .thenApply(r -> r.map(queue -> context.withRequestQueue(
+          queue.withRelatedRecordsFrom(initialQueue))))
+        .thenApply(RequestQueueValidation::queueIsFound)
+        .thenApply(RequestQueueValidation::positionsAreSequential)
+        .thenApply(RequestQueueValidation::queueIsConsistent)
+        .thenApply(RequestQueueValidation::pageRequestsPositioning)
+        .thenApply(RequestQueueValidation::fulfillingRequestsPositioning)
+        .thenCompose(r -> r.after(freshContext -> {
+          freshContext.getReorderRequestToRequestMap().forEach(
+            (reorderRequest, request) -> request.changePosition(
+              reorderRequest.getNewPosition()));
 
-      // 2nd: Call storage module to reorder requests.
-      return completedFuture(succeeded(context))
-        .thenApply(r -> r.map(ReorderRequestContext::getRequestQueue))
-        .thenCompose(r -> r.after(requestQueueRepository::updateRequestsWithChangedPositions))
-        .thenApply(r -> r.map(this::orderQueueByRequestPosition))
-        .thenApply(r -> r.map(context::withRequestQueue));
+          return requestQueueRepository.updateRequestsWithChangedPositions(
+              freshContext.getRequestQueue())
+            .thenApply(updateResult -> updateResult.map(this::orderQueueByRequestPosition))
+            .thenApply(updateResult -> updateResult.map(freshContext::withRequestQueue));
+        })));
     });
   }
 
@@ -392,6 +501,14 @@ public class UpdateRequestQueue {
       .toList();
 
     return new RequestQueue(requests);
+  }
+
+  private <T> CompletableFuture<Result<T>> executeWithLock(RequestQueueKey key,
+    Supplier<CompletableFuture<Result<T>>> criticalSection) {
+
+    return settingsRepository.lookupRequestQueueLockSettings()
+      .thenCompose(configurationResult -> configurationResult.after(configuration ->
+        requestQueueLockService.execute(key, configuration, criticalSection)));
   }
 
   private ZonedDateTime calculateHoldShelfExpirationDate(

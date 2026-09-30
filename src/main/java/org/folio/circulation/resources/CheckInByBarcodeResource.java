@@ -68,7 +68,7 @@ public class CheckInByBarcodeResource extends Resource {
     final var checkInValidators = new CheckInValidators(this::errorWhenInIncorrectStatus);
     final CheckInProcessAdapter processAdapter = CheckInProcessAdapter.newInstance(clients,
       itemRepository, userRepository, loanRepository, requestRepository,
-      new RequestQueueRepository(requestRepository));
+      new RequestQueueRepository(requestRepository), routingContext.vertx());
 
     final RequestScheduledNoticeService requestScheduledNoticeService =
       RequestScheduledNoticeService.using(clients);

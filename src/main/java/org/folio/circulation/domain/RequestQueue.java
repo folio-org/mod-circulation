@@ -137,6 +137,32 @@ public class RequestQueue {
         .anyMatch(r -> r.getId().equals(request.getId()));
   }
 
+  public Request findById(String requestId) {
+    return requests.stream()
+      .filter(request -> Objects.equals(request.getId(), requestId))
+      .findFirst()
+      .orElse(null);
+  }
+
+  /**
+   * Copies related-record enrichment from an earlier queue snapshot while retaining the
+   * representations (including positions and statuses) from this queue.
+   */
+  public RequestQueue withRelatedRecordsFrom(RequestQueue enrichedQueue) {
+    if (enrichedQueue == null) {
+      return this;
+    }
+
+    return new RequestQueue(requests.stream()
+      .map(request -> {
+        Request enrichedRequest = enrichedQueue.findById(request.getId());
+        return enrichedRequest == null
+          ? request
+          : enrichedRequest.withRequestRepresentation(request.asJson());
+      })
+      .toList());
+  }
+
   public Collection<Request> getRequestsWithChangedPosition() {
     return requests.stream()
       .filter(Request::hasChangedPosition)

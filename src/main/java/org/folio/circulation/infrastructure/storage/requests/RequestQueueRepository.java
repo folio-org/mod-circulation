@@ -30,6 +30,7 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestAndRelatedRecords;
 import org.folio.circulation.domain.RequestLevel;
 import org.folio.circulation.domain.RequestQueue;
+import org.folio.circulation.domain.RequestQueueKey;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -76,6 +77,15 @@ public class RequestQueueRepository {
     String instanceId, String itemId) {
 
     return getQueue(tlrSettings, instanceId, itemId, true);
+  }
+
+  public CompletableFuture<Result<RequestQueue>> getLightweightForPositioning(
+    RequestQueueKey key) {
+
+    log.debug("getLightweightForPositioning:: parameters key: {}", key);
+    return key.queueType() == RequestQueueKey.QueueType.INSTANCE
+      ? get(null, key.queueId(), EnumSet.of(ITEM, TITLE), false)
+      : get(key.queueId(), null, EnumSet.of(ITEM), false);
   }
 
   private CompletableFuture<Result<RequestQueue>> getQueue(TlrSettingsConfiguration tlrSettings,

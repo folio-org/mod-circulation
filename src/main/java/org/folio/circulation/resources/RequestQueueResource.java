@@ -124,9 +124,8 @@ public class RequestQueueResource extends Resource {
     final var circulationSettingsService = new CirculationSettingsService(clients);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
-    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      settingsRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
+    final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository, routingContext.vertx());
 
     validateTlrFeatureStatus(circulationSettingsService, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->

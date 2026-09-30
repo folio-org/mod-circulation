@@ -46,6 +46,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.services.EventPublisher;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.RequestQueueService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.ValidationErrorFailure;
@@ -83,8 +84,9 @@ public class LoanCollectionResource extends CollectionResource {
       userRepository, loanRepository);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
-      requestRepository, requestQueueRepository);
+      requestRepository, requestQueueRepository, routingContext.vertx());
     final var requestQueueService = RequestQueueService.using(clients);
+    final var circulationSettingsService = new CirculationSettingsService(clients);
     final UpdateItem updateItem = new UpdateItem(itemRepository, requestQueueService);
     final LoanService loanService = new LoanService(clients);
     final LoanPolicyRepository loanPolicyRepository = new LoanPolicyRepository(clients);
@@ -123,7 +125,11 @@ public class LoanCollectionResource extends CollectionResource {
       .thenApply(alreadyCheckedOutValidator::refuseWhenItemIsAlreadyCheckedOut)
       .thenApply(itemStatusValidator::refuseWhenItemIsMissing)
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.getByItemId(loan.getItemId()), this::addRequestQueue)
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
+        LoanAndRelatedRecords::withTlrSettings))
+      .thenComposeAsync(r -> r.combineAfter(
+        records -> getRequestQueue(records, requestQueueRepository),
+        LoanAndRelatedRecords::withRequestQueue))
       .thenCombineAsync(userRepository.getUserFailOnNotFound(loan.getUserId()), this::addUser)
       .thenCompose(requestedByAnotherPatronValidator::refuseWhenRequestedByAnotherPatron)
       .thenComposeAsync(r -> r.after(loanPolicyRepository::lookupLoanPolicy))
@@ -160,8 +166,9 @@ public class LoanCollectionResource extends CollectionResource {
     final ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
 
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
-      requestRepository, requestQueueRepository);
+      requestRepository, requestQueueRepository, routingContext.vertx());
     final UpdateItem updateItem = new UpdateItem(itemRepository, RequestQueueService.using(clients));
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
     final ProxyRelationshipValidator proxyRelationshipValidator = new ProxyRelationshipValidator(
       clients, () -> singleValidationError("proxyUserId is not valid", "proxyUserId",
@@ -198,7 +205,11 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCombineAsync(userRepository.getUser(loan.getUserId()), this::addUser)
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository)))
       .thenComposeAsync(r -> r.after(proxyRelationshipValidator::refuseWhenInvalid))
-      .thenCombineAsync(requestQueueRepository.getByItemId(loan.getItemId()), this::addRequestQueue)
+      .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
+        LoanAndRelatedRecords::withTlrSettings))
+      .thenComposeAsync(r -> r.combineAfter(
+        records -> getRequestQueue(records, requestQueueRepository),
+        LoanAndRelatedRecords::withRequestQueue))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
       .thenComposeAsync(result -> result.after(requestQueueUpdate::onCheckIn))
       .thenComposeAsync(result -> result.after(updateItem::onLoanUpdate))
@@ -212,6 +223,15 @@ public class LoanCollectionResource extends CollectionResource {
       .thenCompose(r -> r.after(loanNoticeSender::sendManualDueDateChangeNotice))
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  private CompletableFuture<Result<RequestQueue>> getRequestQueue(
+    LoanAndRelatedRecords records, RequestQueueRepository requestQueueRepository) {
+
+    Item item = records.getItem();
+    return records.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
+      ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
+      : requestQueueRepository.getByItemId(item.getItemId());
   }
 
   @Override
