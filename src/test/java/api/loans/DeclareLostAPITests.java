@@ -1,10 +1,10 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.APITestContext.TENANT_ID;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.builders.ItemBuilder.CHECKED_OUT;
 import static api.support.builders.ItemBuilder.LOST_AND_PAID;
-import static api.support.fakes.FakePubSub.getPublishedEvents;
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.KafkaPublishedEvents.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.http.CqlQuery.queryFromTemplate;
@@ -44,7 +44,6 @@ import static org.folio.circulation.domain.EventType.ITEM_DECLARED_LOST;
 import static org.folio.circulation.domain.EventType.LOAN_CLOSED;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -65,6 +64,7 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.folio.circulation.domain.EventType;
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.domain.policy.Period;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.CoreMatchers;
@@ -78,12 +78,12 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import api.support.APITests;
+import api.support.KafkaPublishedEvents;
 import api.support.MultipleJsonRecords;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareItemLostRequestBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LostItemFeePolicyBuilder;
-import api.support.fakes.FakePubSub;
 import api.support.fixtures.AgeToLostFixture.AgeToLostResult;
 import api.support.fixtures.policies.PoliciesToActivate;
 import api.support.http.IndividualResource;
@@ -131,21 +131,21 @@ class DeclareLostAPITests extends APITests {
   }
 
   @Test
-  void declareItemLostFailsWhenEventPublishingFailsWithBadRequestError() {
+  void declareItemLostFailsWhenKafkaPublishingFails() throws Exception {
     UUID servicePointId = servicePointsFixture.cd1().getId();
-    final IndividualResource checkOut = checkOutFixture
+    IndividualResource checkOut = checkOutFixture
       .checkOutByBarcode(itemsFixture.basedUponNod(), usersFixture.jessica());
 
-    final DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
-      .forLoanId(checkOut.getId()).on(getZonedDateTime())
+    DeclareItemLostRequestBuilder builder = new DeclareItemLostRequestBuilder()
+      .forLoanId(checkOut.getId())
+      .on(getZonedDateTime())
       .withComment("testing")
       .withServicePointId(servicePointId);
 
-    FakePubSub.setFailPublishingWithBadRequestError(true);
-    Response response = declareLostFixtures.attemptDeclareItemLost(500, builder);
-
-    assertThat(response.getBody(), containsString(
-      "Error during publishing Event Message in PubSub. Status code: 400"));
+    String topic = CirculationKafkaTopic.ITEM_DECLARED_LOST.fullTopicName(TENANT_ID);
+    try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
+      declareLostFixtures.attemptDeclareItemLost(500, builder);
+    }
   }
 
   @Test
@@ -735,7 +735,7 @@ class DeclareLostAPITests extends APITests {
     // and one "log record"
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(4));
 
     final var event = publishedEvents.findFirst(byEventType(EventTypeMatchers.ITEM_DECLARED_LOST));
     final var loan = loanIndividualResource.getJson();
@@ -924,7 +924,7 @@ class DeclareLostAPITests extends APITests {
       .on(declareLostDate)
       .withNoComment();
 
-    FakePubSub.clearPublishedEvents();
+    KafkaPublishedEvents.clearPublishedEvents();
 
     declareLostFixtures.declareItemLost(builder);
 
@@ -1220,7 +1220,7 @@ class DeclareLostAPITests extends APITests {
 
   private static void verifyThatFirstPublishedLoanClosedEventIsValid(JsonObject loan) {
     assertThat(
-      getPublishedEvents().findFirst(byEventType(LOAN_CLOSED.toString())),
+      KafkaPublishedEvents.getPublishedEvents().findFirst(byEventType(LOAN_CLOSED.toString())),
       isValidLoanClosedEvent(loan));
   }
 }

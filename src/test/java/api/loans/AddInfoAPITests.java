@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.LoanMatchers.*;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static org.folio.circulation.domain.representations.LoanProperties.*;

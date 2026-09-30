@@ -1,6 +1,7 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.APITestContext.TENANT_ID;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.matchers.EventMatchers.isValidItemClaimedReturnedEvent;
 import static api.support.matchers.EventTypeMatchers.ITEM_CLAIMED_RETURNED;
@@ -17,7 +18,6 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.CLAIMED_RETURNED_DATE;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
+import org.folio.circulation.domain.events.CirculationKafkaTopic;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.utils.ClockUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -66,15 +67,18 @@ class ClaimItemReturnedAPITests extends APITests {
   }
 
   @Test
-  void claimItemReturnFailsWhenEventPublishingFailsWithBadRequestError() {
-    FakePubSub.setFailPublishingWithBadRequestError(true);
-    final Response response = claimItemReturnedFixture
-      .attemptClaimItemReturned(500, new ClaimItemReturnedRequestBuilder()
-        .forLoan(loanId)
-        .withItemClaimedReturnedDate(getZonedDateTime())
-        .withComment("testing"));
+  void claimItemReturnFailsWhenKafkaPublishingFails() throws Exception {
+    String topic = CirculationKafkaTopic.ITEM_CLAIMED_RETURNED.fullTopicName(TENANT_ID);
 
-    assertThat(response.getBody(), containsString("Error during publishing Event Message in PubSub. Status code: 400"));
+    try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
+      Response response = claimItemReturnedFixture.attemptClaimItemReturned(500,
+        new ClaimItemReturnedRequestBuilder()
+          .forLoan(loanId)
+          .withItemClaimedReturnedDate(getZonedDateTime())
+          .withComment("testing"));
+
+      assertThat(response.getStatusCode(), is(500));
+    }
   }
 
   @Test
@@ -145,7 +149,7 @@ class ClaimItemReturnedAPITests extends APITests {
     // and one for log records
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(4));
 
     final var event = publishedEvents.findFirst(byEventType(ITEM_CLAIMED_RETURNED));
 

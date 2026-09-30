@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonArray;
 class OkapiPermissionsTest {
   private static final String PERMISSIONS_HEADER = "X-Okapi-Permissions";
   private static final String PERMISSION_1 = "users.item.get";
-  private static final String PERMISSION_2 = "pubsub.publish.post";
+  private static final String PERMISSION_2 = "circulation.check-out-by-barcode.post";
   private static final String PERMISSIONS_STRING =
     new JsonArray(List.of(PERMISSION_1, PERMISSION_2)).encode();
   private static final Map<String, String> HEADERS_MAP =

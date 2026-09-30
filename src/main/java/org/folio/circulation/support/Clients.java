@@ -5,7 +5,8 @@ import static org.folio.circulation.support.http.client.NamedQueryParameter.name
 import java.net.MalformedURLException;
 
 import org.folio.circulation.rules.CirculationRulesProcessor;
-import org.folio.circulation.services.PubSubPublishingService;
+import org.folio.circulation.services.EventPublishingService;
+import org.folio.circulation.services.KafkaEventPublishingService;
 import org.folio.circulation.support.http.client.IncludeRoutingServicePoints;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.http.client.QueryParameter;
@@ -68,7 +69,7 @@ public class Clients {
   private final CollectionResourceClient automatedPatronBlocksClient;
   private final CollectionResourceClient notesClient;
   private final CollectionResourceClient noteTypesClient;
-  private final PubSubPublishingService pubSubPublishingService;
+  private final EventPublishingService eventPublishingService;
   private final CirculationRulesProcessor circulationRulesProcessor;
   private final CollectionResourceClient accountsRefundClient;
   private final CollectionResourceClient accountsCancelClient;
@@ -149,7 +150,7 @@ public class Clients {
       automatedPatronBlocksClient = createAutomatedPatronBlocksClient(client, context);
       notesClient = createNotesClient(client, context);
       noteTypesClient = createNoteTypesClient(client, context);
-      pubSubPublishingService = createPubSubPublishingService(context);
+      eventPublishingService = createEventPublishingService(context);
       circulationRulesProcessor = new CirculationRulesProcessor(context.getTenantId(),
         circulationRulesStorageClient, locationsStorageClient);
       accountsRefundClient = createAccountsRefundClient(client, context);
@@ -391,8 +392,8 @@ public class Clients {
     return circulationRulesProcessor;
   }
 
-  public PubSubPublishingService pubSubPublishingService() {
-    return pubSubPublishingService;
+  public EventPublishingService eventPublishingService() {
+    return eventPublishingService;
   }
 
   public CollectionResourceClient accountsRefundClient() {
@@ -868,8 +869,8 @@ public class Clients {
     return getCollectionResourceClient(client, context, "/note-types");
   }
 
-  private PubSubPublishingService createPubSubPublishingService(WebContext context) {
-    return new PubSubPublishingService(context);
+  private EventPublishingService createEventPublishingService(WebContext context) {
+    return new KafkaEventPublishingService(context);
   }
 
   private CollectionResourceClient createAccountsRefundClient(
