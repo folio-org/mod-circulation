@@ -61,13 +61,13 @@ public class RequestQueueResource extends Resource {
 
   @Override
   public void register(Router router) {
-    new RouteRegistration(format("%s/instance/:%s", URI_BASE, INSTANCE_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/instance/:" + INSTANCE_ID_PARAM_NAME, router)
       .getMany(this::getQueueForInstance);
-    new RouteRegistration(format("%s/instance/:%s/reorder", URI_BASE, INSTANCE_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/instance/:" + INSTANCE_ID_PARAM_NAME + "/reorder", router)
       .create(this::reorderQueueForInstance);
-    new RouteRegistration(format("%s/item/:%s", URI_BASE, ITEM_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/item/:" + ITEM_ID_PARAM_NAME, router)
       .getMany(this::getQueueForItem);
-    new RouteRegistration(format("%s/item/:%s/reorder", URI_BASE, ITEM_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/item/:" + ITEM_ID_PARAM_NAME + "/reorder", router)
       .create(this::reorderQueueForItem);
   }
 

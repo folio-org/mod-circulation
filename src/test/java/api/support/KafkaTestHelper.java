@@ -106,7 +106,7 @@ public class KafkaTestHelper {
     System.setProperty("kafka-port", port);
 
     this.kafkaContainer = container;
-    this.kafkaUrl = String.format("%s:%s", host, port);
+    this.kafkaUrl = host + ":" + port;
     this.vertx = Vertx.vertx();
     this.producer = createProducer();
     this.adminClient = createAdminClient();

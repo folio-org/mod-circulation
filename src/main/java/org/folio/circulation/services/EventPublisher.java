@@ -257,7 +257,7 @@ public class EventPublisher {
     return getTenantTimeZone()
       .thenApply(zoneResult -> zoneResult.map(zoneId -> {
         var zonedDateTime = loan.getAgedToLostDateTime().withZoneSameInstant(zoneId);
-        var logDescription = format("Due date: %s", formatDateTimeOptional(zonedDateTime));
+        var logDescription = "Due date: " + formatDateTimeOptional(zonedDateTime);
         return LoanLogContext.from(loan)
           .withDescription(logDescription)
           .asJson();

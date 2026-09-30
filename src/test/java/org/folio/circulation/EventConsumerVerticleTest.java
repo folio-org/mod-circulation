@@ -3,7 +3,6 @@ package org.folio.circulation;
 import static api.support.APITestContext.TENANT_ID;
 import static api.support.Wait.waitForValue;
 import static api.support.matchers.ResponseStatusCodeMatcher.hasStatus;
-import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
@@ -298,7 +297,7 @@ public class EventConsumerVerticleTest extends APITests {
   }
 
   private static String buildTopicName(String module, String topic) {
-    return format("%s.%s.%s.%s", environment(), TENANT_ID, module, topic);
+    return environment() + "." + TENANT_ID + "." + module + "." + topic;
   }
 
   private static String deployVerticle() {

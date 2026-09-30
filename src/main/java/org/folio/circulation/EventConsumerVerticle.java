@@ -50,8 +50,7 @@ import lombok.extern.log4j.Log4j2;
 public class EventConsumerVerticle extends AbstractVerticle {
 
   public static final String MODULE_NAME = "mod-circulation";
-  public static final String RULES_CONSUMER_MODULE_ID = String.format("%s-%s",
-    MODULE_NAME, moduleVersion());
+  public static final String RULES_CONSUMER_MODULE_ID = MODULE_NAME + "-" + moduleVersion();
   private static final int DEFAULT_LOAD_LIMIT = 5;
   private static final String TENANT_ID_PATTERN = "\\w+";
   private static final int DEFAULT_KAFKA_MAX_REQUEST_SIZE = 4000000;
@@ -133,7 +132,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   private Future<KafkaConsumerWrapper<String, String>> createConsumer(String eventType,
-    KafkaTopic kafkaTopic, AsyncRecordHandler<String, String> handler, String moduleId,
+    KafkaTopic kafkaTopic, AsyncRecordHandler<String, String> handler, String consumerGroupSuffix,
     KafkaConfig kafkaConfig) {
 
     KafkaConsumerWrapper<String, String> consumer = KafkaConsumerWrapper.<String, String>builder()
@@ -148,7 +147,7 @@ public class EventConsumerVerticle extends AbstractVerticle {
         eventType, r.topic(), r.partition(), r.offset(), t))
       .build();
 
-    return consumer.start(handler, moduleId)
+    return consumer.start(handler, consumerGroupSuffix, RULES_CONSUMER_MODULE_ID)
       .map(consumer)
       .onSuccess(consumers::add);
   }
@@ -192,8 +191,8 @@ public class EventConsumerVerticle extends AbstractVerticle {
   }
 
   public String buildUniqueRulesConsumerModuleId() {
-    String id = String.format("%s_%s_%s", RULES_CONSUMER_MODULE_ID,
-      generateRandomDigits(10), currentTimeMillis());
+    String id = RULES_CONSUMER_MODULE_ID + "_" + generateRandomDigits(10)
+      + "_" + currentTimeMillis();
     log.info("buildUniqueRulesConsumerModuleId:: using module ID {}", id);
     return id;
   }
