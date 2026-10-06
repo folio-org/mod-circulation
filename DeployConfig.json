@@ -1,0 +1,212 @@
+{
+  "_disclaimer": "Default values are calibrated against the bugfest reference baseline of 3 standalone tenants and 11 consortia tenants. See ADR-0013 (Module configuration management) for the governance model behind this file.",
+  "description": "mod-circulation configuration template",
+  "moduleDefaults": {
+    "resources": [
+      {
+        "name": "cpu",
+        "value": "64",
+        "description": "CPU request/limit for the mod-circulation container"
+      },
+      {
+        "name": "memory",
+        "value": "1024",
+        "description": "Memory hard limit for the mod-circulation container in MiB"
+      },
+      {
+        "name": "memoryReservation",
+        "value": "896",
+        "description": "Memory reservation (soft limit) for the mod-circulation container in MiB"
+      }
+    ],
+    "java": [
+      {
+        "name": "xmx",
+        "value": "768m",
+        "description": "Maximum Java heap size"
+      },
+      {
+        "name": "MaxMetaspaceSize",
+        "value": "128m",
+        "description": "Maximum Java metaspace size"
+      },
+      {
+        "name": "MetaspaceSize",
+        "value": "88m",
+        "description": "Initial Java metaspace size"
+      }
+    ],
+    "deployment": {
+      "isHaSupported": true,
+      "replicasRecommendedCount": 2,
+      "description": "mod-circulation supports horizontal scaling. Kafka consumer groups coordinate shared event processing, while circulation-rules update consumers intentionally run once per module instance."
+    },
+    "kong": {
+      "timeouts": {
+        "connect": "60s",
+        "send": "60s",
+        "read": "60s"
+      },
+      "description": "Default Kong proxy timeouts are sufficient for mod-circulation API requests."
+    },
+    "EnvVars": [
+      {
+        "name": "JAVA_OPTIONS",
+        "value": "-XX:MaxRAMPercentage=66.0",
+        "description": "Additional JVM options applied to the mod-circulation process.",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "SCHEDULED_ANONYMIZATION_NUMBER_OF_LOANS_TO_CHECK",
+        "value": "50000",
+        "description": "Maximum number of loans examined in one scheduled anonymization run.",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "ENABLE_FLOATING_COLLECTIONS",
+        "value": true,
+        "description": "Enables floating collections functionality.",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "ENABLE_FOR_USE_AT_LOCATION",
+        "value": false,
+        "description": "Enables reading-room circulation for items restricted to use at their location.",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "HTTP_MAXPOOLSIZE",
+        "value": "100",
+        "description": "Maximum number of connections in each Vert.x HTTP client pool.",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "ECS_TLR_FEATURE_ENABLED",
+        "value": false,
+        "description": "Enables ECS requests feature. Must be set to `true` for LoC.",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "KAFKA_HOST",
+        "value": null,
+        "description": "Kafka broker host used by the module's event consumers and producers.",
+        "type": "KAFKA",
+        "essential": false
+      },
+      {
+        "name": "KAFKA_PORT",
+        "value": "9092",
+        "description": "Kafka broker port used by the module's event consumers and producers.",
+        "type": "KAFKA",
+        "essential": false
+      },
+      {
+        "name": "REPLICATION_FACTOR",
+        "value": "1",
+        "description": "Kafka topic replication factor used when the module creates topics during tenant activation.",
+        "type": "KAFKA",
+        "essential": false
+      },
+      {
+        "name": "ENV",
+        "value": "folio",
+        "description": "Logical deployment name used as the prefix in Kafka topic names.",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "OKAPI_URL",
+        "value": null,
+        "description": "Okapi base URL used for outbound calls made while processing Kafka events.",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "MAX_REQUEST_SIZE",
+        "value": "4000000",
+        "description": "Maximum Kafka message size in bytes accepted by the module's Kafka clients.",
+        "type": "KAFKA",
+        "essential": false
+      }
+    ]
+  },
+  "sidecarDefaults": {
+    "resources": [
+      {
+        "name": "cpu",
+        "value": "64",
+        "description": "CPU request/limit for the sidecar container"
+      },
+      {
+        "name": "memory",
+        "value": "1024",
+        "description": "Memory hard limit for the sidecar container in MiB"
+      },
+      {
+        "name": "memoryReservation",
+        "value": "512",
+        "description": "Memory reservation (soft limit) for the sidecar container in MiB"
+      }
+    ],
+    "java": [
+      {
+        "name": "xms",
+        "value": "128m",
+        "description": "Initial Java heap size"
+      },
+      {
+        "name": "xmx",
+        "value": "256m",
+        "description": "Maximum Java heap size"
+      },
+      {
+        "name": "MaxMetaspaceSize",
+        "value": "96m",
+        "description": "Maximum Java metaspace size"
+      }
+    ],
+    "EnvVars": [
+      {
+        "name": "ENV",
+        "value": null,
+        "description": "Logical deployment name used by the sidecar.",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "JAVA_OPTS",
+        "value": null,
+        "description": "Additional JVM options applied to the sidecar process.",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_NAME",
+        "value": "mod-circulation",
+        "description": "Name of the backend module fronted by the sidecar.",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_URL",
+        "value": null,
+        "description": "Internal URL where the sidecar can reach the mod-circulation container.",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_VERSION",
+        "value": null,
+        "description": "Version of mod-circulation deployed with the sidecar.",
+        "type": "CONFIG",
+        "essential": true
+      }
+    ]
+  }
+}
