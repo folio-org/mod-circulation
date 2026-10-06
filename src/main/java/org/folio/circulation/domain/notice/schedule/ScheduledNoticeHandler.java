@@ -104,7 +104,7 @@ public abstract class ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::sendNotice))
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
+      .exceptionallyCompose(t -> handleException(t, notice));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -445,10 +445,13 @@ public abstract class ScheduledNoticeHandler {
     return deleteNotice(notice, failure.toString());
   }
 
-  protected Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
-    log.error("handleException:: exception thrown while processing scheduled notice {}: {}", notice.getId(), throwable.getMessage());
+  protected CompletableFuture<Result<ScheduledNotice>> handleException(Throwable throwable,
+    ScheduledNotice notice) {
 
-    return succeeded(notice);
+    log.error("handleException:: exception thrown while processing scheduled notice {}: {}",
+      notice.getId(), throwable.getMessage(), throwable);
+
+    return deleteNotice(notice, throwable.getMessage());
   }
 
 }
