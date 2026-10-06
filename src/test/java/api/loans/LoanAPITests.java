@@ -54,7 +54,7 @@ import api.support.MultipleJsonRecords;
 import api.support.builders.AccountBuilder;
 import api.support.builders.ItemBuilder;
 import api.support.builders.LoanBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import api.support.http.UserResource;
@@ -1971,7 +1971,7 @@ class LoanAPITests extends APITests {
 
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(2));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(2));
 
     final var event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
 
@@ -1997,7 +1997,7 @@ class LoanAPITests extends APITests {
     // and two "log_record"
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(4));
 
     final var event = publishedEvents.findFirst(byEventType("LOAN_DUE_DATE_CHANGED"));
 

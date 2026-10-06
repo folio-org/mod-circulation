@@ -24,13 +24,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.folio.Environment;
-import org.folio.circulation.resources.TenantActivationResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.AddInfoFixture;
 import api.support.fixtures.AddressTypesFixture;
@@ -346,9 +344,7 @@ public abstract class APITests {
     usersFixture.defaultAdmin();
     noteTypeFixture.generalNoteType();
 
-    FakePubSub.clearPublishedEvents();
-    FakePubSub.setFailPublishingWithBadRequestError(false);
-    TenantActivationResource.disableNativeKafkaIntegration();
+    KafkaPublishedEvents.clearPublishedEvents();
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
     FakeStorageModule.cleanUpRequestMappings();
@@ -369,6 +365,10 @@ public abstract class APITests {
   private static void setUpKafka() {
     kafkaHelper = KafkaTestHelper.getInstance();
     kafkaHelper.createCirculationTopics(TENANT_ID);
+    kafkaHelper.createCirculationPublicationTopics(TENANT_ID);
+    kafkaHelper.createAuditTopics(TENANT_ID);
+    kafkaHelper.createFeeFineTopics(TENANT_ID);
+    kafkaHelper.startPublishedEventRecorder(TENANT_ID);
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,

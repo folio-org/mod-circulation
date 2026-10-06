@@ -1,5 +1,6 @@
 package org.folio.circulation.services.events;
 
+import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.util.Map;
@@ -11,9 +12,9 @@ import org.folio.kafka.KafkaProducerManager;
 import org.folio.kafka.SimpleKafkaProducerManager;
 import org.folio.kafka.services.KafkaEnvironmentProperties;
 import org.folio.kafka.services.KafkaProducerRecordBuilder;
-import org.folio.rest.tools.utils.TenantTool;
 
 import io.vertx.core.Context;
+import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import lombok.RequiredArgsConstructor;
@@ -21,30 +22,35 @@ import lombok.extern.log4j.Log4j2;
 
 @RequiredArgsConstructor
 @Log4j2
-public class KafkaEventPublisher<K, T> {
-
+public class KafkaEventPublisher<K> {
   private final String kafkaTopic;
+  private final String tenantId;
   private final KafkaProducerManager producerManager;
 
-  public KafkaEventPublisher(Context vertxContext, String kafkaTopic) {
-    this(kafkaTopic, createProducerManager(vertxContext));
+  public KafkaEventPublisher(Context vertxContext, String kafkaTopic, String tenantId) {
+    this.kafkaTopic = kafkaTopic;
+    this.tenantId = tenantId;
+    this.producerManager = createProducerManager(vertxContext);
   }
 
-  public CompletableFuture<Result<Void>> publish(K key, DomainEvent<T> event, Map<String, String> okapiHeaders) {
-    log.info("publish:: key = {}, eventId = {}, type = {}, topic = {}", key, event.getId(),
-      event.getType(), kafkaTopic);
+  public CompletableFuture<Result<Void>> publish(K key, JsonObject payload,
+    Map<String, String> headers) {
+
+    log.info("publish:: key = {}, topic = {}", key, kafkaTopic);
 
     KafkaProducerRecord<K, String> producerRecord =
-      new KafkaProducerRecordBuilder<K, DomainEvent<T>>(TenantTool.tenantId(okapiHeaders))
+      new KafkaProducerRecordBuilder<K, Object>(tenantId)
         .key(key)
-        .value(event)
+        .value(payload.mapTo(Map.class))
         .topic(kafkaTopic)
-        .propagateOkapiHeaders(okapiHeaders)
+        .propagateOkapiHeaders(headers)
         .build();
 
     KafkaProducer<K, String> producer = null;
     try {
       producer = producerManager.createShared(kafkaTopic);
+      producer.exceptionHandler(cause -> log.error(
+        "publish:: Kafka producer error for event with key {}", key, cause));
       log.debug("publish:: producer created, sending the record...");
 
       return producer.send(producerRecord)
@@ -61,7 +67,7 @@ public class KafkaEventPublisher<K, T> {
         log.debug("publish:: trying to close producer for event {}", key);
         producer.close();
       }
-      return Result.emptyAsync();
+      return failedFuture(e);
     }
   }
 

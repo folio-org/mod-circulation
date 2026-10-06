@@ -119,7 +119,7 @@ public class CreateRequestService {
       .thenComposeAsync(r -> r.after(records -> createWithLockedPosition(records,
         requestRepository, settingsRepository)))
       .thenApplyAsync(r -> {
-        r.after(t -> eventPublisher.publishLogRecord(mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
+        r.after(t -> eventPublisher.publishLogRecord(t.getRequest().getId(), mapToRequestLogEventJson(t.getRequest()), getLogEventType()));
         return r.next(requestNoticeSender::sendNoticeOnRequestCreated);
       }).thenApply(r -> logResult(r, "createRequest"));
   }

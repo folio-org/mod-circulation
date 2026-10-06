@@ -1,6 +1,6 @@
 package api.loans.scenarios;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.fixtures.TemplateContextMatchers.getItemContextMatchers;
 import static api.support.fixtures.TemplateContextMatchers.getLoanAdditionalInfoContextMatchers;
@@ -63,7 +63,7 @@ import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fixtures.ItemExamples;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -95,7 +95,7 @@ class ChangeDueDateAPITests extends APITests {
 
     JsonObject updatedLoan = response.getJson();
 
-    var description = new JsonObject(FakePubSub.getPublishedEvents().stream()
+    var description = new JsonObject(KafkaPublishedEvents.getPublishedEvents().stream()
       .filter(json -> json.getString("eventType").equals("LOG_RECORD")
       && json.getString("eventPayload").contains("LOAN")).collect(toList()).get(0).getString("eventPayload"))
       .getJsonObject("payload").getString("description");
@@ -341,7 +341,7 @@ class ChangeDueDateAPITests extends APITests {
     // and one "log record"
     final var publishedEvents = Awaitility.await()
       .atMost(1, SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(4));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(4));
 
     final var event = publishedEvents.findFirst(byEventType(LOAN_DUE_DATE_CHANGED));
 

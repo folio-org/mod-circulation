@@ -10,10 +10,12 @@ import static org.folio.circulation.support.results.Result.succeeded;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
@@ -59,13 +61,13 @@ public class RequestQueueResource extends Resource {
 
   @Override
   public void register(Router router) {
-    new RouteRegistration(format("%s/instance/:%s", URI_BASE, INSTANCE_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/instance/:" + INSTANCE_ID_PARAM_NAME, router)
       .getMany(this::getQueueForInstance);
-    new RouteRegistration(format("%s/instance/:%s/reorder", URI_BASE, INSTANCE_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/instance/:" + INSTANCE_ID_PARAM_NAME + "/reorder", router)
       .create(this::reorderQueueForInstance);
-    new RouteRegistration(format("%s/item/:%s", URI_BASE, ITEM_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/item/:" + ITEM_ID_PARAM_NAME, router)
       .getMany(this::getQueueForItem);
-    new RouteRegistration(format("%s/item/:%s/reorder", URI_BASE, ITEM_ID_PARAM_NAME), router)
+    new RouteRegistration(URI_BASE + "/item/:" + ITEM_ID_PARAM_NAME + "/reorder", router)
       .create(this::reorderQueueForItem);
   }
 
@@ -166,7 +168,14 @@ public class RequestQueueResource extends Resource {
     reorderRequestContext.after(r -> {
       CompletableFuture.runAsync(() -> {
         List<Request> reordered = r.getReorderRequestToRequestMap().values().stream().filter(Request::hasChangedPosition).toList();
-        eventPublisher.publishLogRecord(mapToRequestLogEventJson(reordered), LogEventType.REQUEST_REORDERED);
+        var eventKey = reordered.stream()
+          .filter(request -> request.getItem() != null)
+          .findFirst().map(Request::getItem).map(Item::getItemId)
+          .or(() -> reordered.stream().map(Request::getId).filter(Objects::nonNull).findFirst())
+          .orElse(null);
+        if (!reordered.isEmpty()) {
+          eventPublisher.publishLogRecord(eventKey, mapToRequestLogEventJson(reordered), LogEventType.REQUEST_REORDERED);
+        }
       });
       return null;
     });

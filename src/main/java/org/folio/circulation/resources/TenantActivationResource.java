@@ -3,12 +3,11 @@ package org.folio.circulation.resources;
 import static org.folio.circulation.support.http.server.JsonHttpResponse.created;
 import static org.folio.circulation.support.http.server.NoContentResponse.noContent;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.folio.circulation.rules.cache.CirculationRulesCache;
-import org.folio.circulation.services.PubSubRegistrationService;
 import org.folio.circulation.services.events.KafkaService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.RouteRegistration;
@@ -25,18 +24,17 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class TenantActivationResource extends Resource {
-
-  // For testing purposes, remove once mod-pubsub deprecation in complete
-  private static boolean ENABLE_NATIVE_KAFKA_INTEGRATION = false;
-  public static void enableNativeKafkaIntegration() {
-    ENABLE_NATIVE_KAFKA_INTEGRATION = true;
-  }
-  public static void disableNativeKafkaIntegration() {
-    ENABLE_NATIVE_KAFKA_INTEGRATION = false;
-  }
+  private final Function<Vertx, KafkaService> kafkaServiceFactory;
 
   public TenantActivationResource(HttpClient client) {
+    this(client, KafkaService::new);
+  }
+
+  TenantActivationResource(HttpClient client,
+    Function<Vertx, KafkaService> kafkaServiceFactory) {
+
     super(client);
+    this.kafkaServiceFactory = kafkaServiceFactory;
   }
 
   public void register(Router router) {
@@ -60,11 +58,8 @@ public class TenantActivationResource extends Resource {
 
   private CompletableFuture<Void> createKafkaTopics(WebContext webContext, Vertx  vertx) {
     String tenantId = webContext.getTenantId();
-    Map<String, String> headers = webContext.getHeaders();
 
-    return ENABLE_NATIVE_KAFKA_INTEGRATION
-      ? new KafkaService(vertx).createCirculationTopics(tenantId)
-      : PubSubRegistrationService.registerModule(headers, vertx);
+    return kafkaServiceFactory.apply(vertx).createCirculationTopics(tenantId);
   }
 
   private void disableModuleForTenant(RoutingContext routingContext) {
@@ -79,8 +74,9 @@ public class TenantActivationResource extends Resource {
   private CompletableFuture<Void> deleteKafkaTopics(RoutingContext routingContext) {
     WebContext webContext = new WebContext(routingContext);
 
-    return ENABLE_NATIVE_KAFKA_INTEGRATION && isPurgeRequested(routingContext)
-      ? new KafkaService(routingContext.vertx()).deleteCirculationTopics(webContext.getTenantId())
+    return isPurgeRequested(routingContext)
+      ? kafkaServiceFactory.apply(routingContext.vertx())
+        .deleteCirculationTopics(webContext.getTenantId())
       : CompletableFuture.completedFuture(null);
   }
 

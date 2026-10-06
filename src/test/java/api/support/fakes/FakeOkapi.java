@@ -384,7 +384,6 @@ public class FakeOkapi extends AbstractVerticle {
 
     router.delete("/_/tenant").handler(this::removeAllData);
 
-    FakePubSub.register(router);
     FakeModNotify.register(router);
 
     new FakeStorageModuleBuilder()
