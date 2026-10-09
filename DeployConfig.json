@@ -10,12 +10,12 @@
       },
       {
         "name": "memory",
-        "value": "1024",
+        "value": "2880",
         "description": "Memory hard limit for the mod-circulation container in MiB"
       },
       {
         "name": "memoryReservation",
-        "value": "896",
+        "value": "2592",
         "description": "Memory reservation (soft limit) for the mod-circulation container in MiB"
       }
     ],
