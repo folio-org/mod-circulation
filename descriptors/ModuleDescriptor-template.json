@@ -2808,6 +2808,14 @@
         "value": "false"
       },
       {
+        "name": "HTTP_MAXPOOLSIZE",
+        "value": "100"
+      },
+      {
+        "name": "ECS_TLR_FEATURE_ENABLED",
+        "value": "false"
+      },
+      {
         "name": "KAFKA_HOST",
         "value": "kafka"
       },
@@ -2820,8 +2828,16 @@
         "value": "1"
       },
       {
+        "name": "MAX_REQUEST_SIZE",
+        "value": "4000000"
+      },
+      {
         "name": "ENV",
         "value": "folio"
+      },
+      {
+        "name": "OKAPI_URL",
+        "value": "http://okapi:9130"
       }
     ]
   }
