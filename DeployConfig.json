@@ -88,7 +88,7 @@
       {
         "name": "ECS_TLR_FEATURE_ENABLED",
         "value": false,
-        "description": "Enables ECS requests feature. Must be set to `true` for LoC.",
+        "description": "Enables ECS requests feature. Must be set to 'true' for clients who use Folio ECS circulation.",
         "type": "FUNCTIONAL",
         "essential": false
       },
