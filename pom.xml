@@ -31,7 +31,7 @@
     <log4j2.version>2.24.3</log4j2.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <lombok.version>1.18.36</lombok.version>
+    <lombok.version>1.18.48</lombok.version>
     <spring.version>6.2.3</spring.version>
     <maven.site.plugin.version>3.9.1</maven.site.plugin.version>
 
@@ -352,7 +352,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.10</version>
+        <version>0.8.15</version>
         <configuration>
           <excludes>
             <exclude>org/drools/compiler/lang/*</exclude>
@@ -377,8 +377,15 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <release>21</release>
+          <release>25</release>
           <encoding>UTF-8</encoding>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>
