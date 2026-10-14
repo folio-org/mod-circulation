@@ -330,12 +330,6 @@ public class LoanCollectionResource extends CollectionResource {
     return loanResult.combine(item, LoanAndRelatedRecords::withItem);
   }
 
-  private Result<LoanAndRelatedRecords> addRequestQueue(Result<LoanAndRelatedRecords> loanResult,
-    Result<RequestQueue> requestQueueResult) {
-
-    return loanResult.combine(requestQueueResult, LoanAndRelatedRecords::withRequestQueue);
-  }
-
   private Result<LoanAndRelatedRecords> addUser(Result<LoanAndRelatedRecords> loanResult,
     Result<User> getUserResult) {
 

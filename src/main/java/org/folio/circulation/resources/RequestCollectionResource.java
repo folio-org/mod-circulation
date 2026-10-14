@@ -27,10 +27,8 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.RequestQueueLockRepository;
+import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
@@ -102,9 +100,10 @@ public class RequestCollectionResource extends CollectionResource {
       clients.holdingsStorage(), itemRepository), loanRepository);
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
-      requestLoanValidator, requestNoticeSender, requestBlocksValidators, eventPublisher,
-      errorHandler, new RequestQueueLockService(new RequestQueueLockRepository(clients),
-        routingContext.vertx()));
+      new CreateRequestService.Dependencies(requestLoanValidator, requestNoticeSender,
+        requestBlocksValidators, eventPublisher, errorHandler,
+        new RequestQueueLockService(new RequestQueueLockRepository(clients),
+          routingContext.vertx())));
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       Request.Operation.CREATE, repositories,
@@ -157,10 +156,10 @@ public class RequestCollectionResource extends CollectionResource {
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository);
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
-      requestLoanValidator, requestNoticeSender, regularRequestBlockValidators(clients),
-      eventPublisher, errorHandler,
-      new RequestQueueLockService(new RequestQueueLockRepository(clients),
-        routingContext.vertx()));
+      new CreateRequestService.Dependencies(requestLoanValidator, requestNoticeSender,
+        regularRequestBlockValidators(clients), eventPublisher, errorHandler,
+        new RequestQueueLockService(new RequestQueueLockRepository(clients),
+          routingContext.vertx())));
 
     final var updateRequestService = new UpdateRequestService(requestRepository,
       updateRequestQueue, new ClosedRequestValidator(requestRepository), requestNoticeSender,
@@ -296,12 +295,11 @@ public class RequestCollectionResource extends CollectionResource {
 
     final var eventPublisher = new EventPublisher(context, clients);
 
-    final var moveRequestService = new MoveRequestService(
-      requestRepository, requestPolicyRepository,
-      updateUponRequest, moveRequestProcessAdapter,
-      new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
-      RequestNoticeSender.using(clients), eventPublisher,
-      requestQueueRepository, settingsRepository, circulationSettingsService);
+    final var moveRequestService = new MoveRequestService(updateUponRequest,
+      moveRequestProcessAdapter, new MoveRequestService.Dependencies(requestPolicyRepository,
+        new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(),
+          itemRepository), loanRepository), RequestNoticeSender.using(clients), eventPublisher,
+        requestQueueRepository, settingsRepository, circulationSettingsService));
 
     fromFutureResult(requestRepository.getById(id))
       .map(request -> request.withOperation(Request.Operation.MOVE))

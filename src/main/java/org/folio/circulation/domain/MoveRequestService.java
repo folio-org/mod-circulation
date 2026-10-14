@@ -12,14 +12,12 @@ import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
-import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.resources.RequestNoticeSender;
 import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.results.Result;
 
 public class MoveRequestService {
-  private final RequestRepository requestRepository;
   private final RequestPolicyRepository requestPolicyRepository;
   private final UpdateUponRequest updateUponRequest;
   private final MoveRequestProcessAdapter moveRequestProcessAdapter;
@@ -31,23 +29,25 @@ public class MoveRequestService {
   private final CirculationSettingsService circulationSettingsService;
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
-  public MoveRequestService(RequestRepository requestRepository, RequestPolicyRepository requestPolicyRepository,
-    UpdateUponRequest updateUponRequest, MoveRequestProcessAdapter moveRequestHelper,
-    RequestLoanValidator requestLoanValidator, RequestNoticeSender requestNoticeSender,
-    EventPublisher eventPublisher, RequestQueueRepository requestQueueRepository,
-    SettingsRepository settingsRepository, CirculationSettingsService circulationSettingsService) {
+  public MoveRequestService(UpdateUponRequest updateUponRequest,
+    MoveRequestProcessAdapter moveRequestHelper, Dependencies dependencies) {
 
-    this.requestRepository = requestRepository;
-    this.requestPolicyRepository = requestPolicyRepository;
+    this.requestPolicyRepository = dependencies.requestPolicyRepository();
     this.updateUponRequest = updateUponRequest;
     this.moveRequestProcessAdapter = moveRequestHelper;
-    this.requestLoanValidator = requestLoanValidator;
-    this.requestNoticeSender = requestNoticeSender;
-    this.eventPublisher = eventPublisher;
-    this.requestQueueRepository = requestQueueRepository;
-    this.settingsRepository = settingsRepository;
-    this.circulationSettingsService = circulationSettingsService;
+    this.requestLoanValidator = dependencies.requestLoanValidator();
+    this.requestNoticeSender = dependencies.requestNoticeSender();
+    this.eventPublisher = dependencies.eventPublisher();
+    this.requestQueueRepository = dependencies.requestQueueRepository();
+    this.settingsRepository = dependencies.settingsRepository();
+    this.circulationSettingsService = dependencies.circulationSettingsService();
   }
+
+  public record Dependencies(RequestPolicyRepository requestPolicyRepository,
+    RequestLoanValidator requestLoanValidator, RequestNoticeSender requestNoticeSender,
+    EventPublisher eventPublisher, RequestQueueRepository requestQueueRepository,
+    SettingsRepository settingsRepository,
+    CirculationSettingsService circulationSettingsService) { }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> moveRequest(
       RequestAndRelatedRecords requestAndRelatedRecords, Request originalRequest) {

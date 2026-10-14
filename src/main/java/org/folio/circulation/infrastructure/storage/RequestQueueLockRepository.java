@@ -49,7 +49,7 @@ public class RequestQueueLockRepository {
   public CompletableFuture<Result<Response>> release(RequestQueueLock lock) {
     log.debug("Releasing request queue lock {}", lock.getId());
     ResponseInterpreter<Response> interpreter = new ResponseInterpreter<Response>()
-      .flatMapOn(204, succeededResponse -> succeeded(succeededResponse))
+      .flatMapOn(204, Result::succeeded)
       .otherwise(forwardOnFailure());
 
     return client.delete(lock.getId()).thenApply(interpreter::flatMap);

@@ -70,20 +70,22 @@ public class CreateRequestService {
   private final RequestQueueLockService requestQueueLockService;
 
   public CreateRequestService(RequestRelatedRepositories repositories,
-    UpdateUponRequest updateUponRequest, RequestLoanValidator requestLoanValidator,
-    RequestNoticeSender requestNoticeSender, RequestBlockValidators requestBlockValidators,
-    EventPublisher eventPublisher, CirculationErrorHandler errorHandler,
-    RequestQueueLockService requestQueueLockService) {
+    UpdateUponRequest updateUponRequest, Dependencies dependencies) {
 
     this.repositories = repositories;
     this.updateUponRequest = updateUponRequest;
-    this.requestLoanValidator = requestLoanValidator;
-    this.requestNoticeSender = requestNoticeSender;
-    this.requestBlockValidators = requestBlockValidators;
-    this.eventPublisher = eventPublisher;
-    this.errorHandler = errorHandler;
-    this.requestQueueLockService = requestQueueLockService;
+    this.requestLoanValidator = dependencies.requestLoanValidator();
+    this.requestNoticeSender = dependencies.requestNoticeSender();
+    this.requestBlockValidators = dependencies.requestBlockValidators();
+    this.eventPublisher = dependencies.eventPublisher();
+    this.errorHandler = dependencies.errorHandler();
+    this.requestQueueLockService = dependencies.requestQueueLockService();
   }
+
+  public record Dependencies(RequestLoanValidator requestLoanValidator,
+    RequestNoticeSender requestNoticeSender, RequestBlockValidators requestBlockValidators,
+    EventPublisher eventPublisher, CirculationErrorHandler errorHandler,
+    RequestQueueLockService requestQueueLockService) { }
 
   public CompletableFuture<Result<RequestAndRelatedRecords>> createRequest(
     RequestAndRelatedRecords requestAndRelatedRecords) {

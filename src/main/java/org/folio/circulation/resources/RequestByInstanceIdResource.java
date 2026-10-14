@@ -301,10 +301,10 @@ public class RequestByInstanceIdResource extends Resource {
           requestQueueRepository, vertx));
 
     final CreateRequestService createRequestService = new CreateRequestService(repositories,
-      updateUponRequest, new RequestLoanValidator(itemFinder, loanRepository),
-      new RequestNoticeSender(clients), regularRequestBlockValidators(clients), eventPublisher,
-      new FailFastErrorHandler(),
-      new RequestQueueLockService(new RequestQueueLockRepository(clients), vertx));
+      updateUponRequest, new CreateRequestService.Dependencies(
+        new RequestLoanValidator(itemFinder, loanRepository), new RequestNoticeSender(clients),
+        regularRequestBlockValidators(clients), eventPublisher, new FailFastErrorHandler(),
+        new RequestQueueLockService(new RequestQueueLockRepository(clients), vertx)));
 
     return placeRequest(requestRepresentations, 0, createRequestService,
       clients, new HashSet<>(), repositories);

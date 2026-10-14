@@ -105,7 +105,7 @@ public class UpdateRequestQueue {
       .thenCompose(r -> r.after(request -> prepareOutstandingRequestOnCheckIn(
         request, item, checkInServicePointId)))
       .thenCompose(r -> r.after(request -> persistCheckInQueueUpdate(
-        request, requestQueue, item, tlrSettings)));
+        request, requestQueue, tlrSettings)));
   }
 
   public Result<RequestAndRelatedRecords> prepareForCreate(
@@ -160,7 +160,7 @@ public class UpdateRequestQueue {
   }
 
   private CompletableFuture<Result<RequestQueue>> persistCheckInQueueUpdate(
-    Request preparedRequest, RequestQueue initialQueue, Item item,
+    Request preparedRequest, RequestQueue initialQueue,
     org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
 
     if (preparedRequest == null) {
