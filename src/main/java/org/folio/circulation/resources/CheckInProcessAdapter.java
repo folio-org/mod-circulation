@@ -51,6 +51,8 @@ import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.server.WebContext;
 import org.folio.circulation.support.results.Result;
 
+import io.vertx.core.Vertx;
+
 class CheckInProcessAdapter {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private final ItemByBarcodeInStorageFinder itemFinder;
@@ -114,7 +116,7 @@ class CheckInProcessAdapter {
   public static CheckInProcessAdapter newInstance(Clients clients,
     ItemRepository itemRepository, UserRepository userRepository,
     LoanRepository loanRepository, RequestRepository requestRepository,
-    RequestQueueRepository requestQueueRepository) {
+    RequestQueueRepository requestQueueRepository, Vertx vertx) {
 
     final var itemFinder = new ItemByBarcodeInStorageFinder(itemRepository);
 
@@ -138,7 +140,7 @@ class CheckInProcessAdapter {
       requestQueueRepository,
       new UpdateItem(itemRepository, requestQueueService),
       UpdateRequestQueue.using(clients, requestRepository,
-        requestQueueRepository),
+        requestQueueRepository, vertx),
       loanRepository,
       new ServicePointRepository(clients),
       LocationRepository.using(clients),
@@ -202,7 +204,8 @@ class CheckInProcessAdapter {
     final Item item = context.getItem();
     final String checkInServicePointId = context.getCheckInServicePointId().toString();
 
-    return requestQueueUpdate.onCheckIn(requestQueue, item, checkInServicePointId);
+    return requestQueueUpdate.onCheckIn(requestQueue, item, checkInServicePointId,
+      context.getTlrSettings());
   }
 
   CompletableFuture<Result<Loan>> updateLoan(CheckInContext context) {
