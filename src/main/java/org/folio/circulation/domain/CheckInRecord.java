@@ -14,6 +14,7 @@ public class CheckInRecord {
   private static final String ITEM_ID = "itemId";
   private static final String SERVICE_POINT_ID = "servicePointId";
   private static final String PERFORMED_BY_USER_ID = "performedByUserId";
+  private static final String IN_HOUSE_USE = "inHouseUse";
 
   private final String id;
   private final ZonedDateTime occurredDateTime;
@@ -23,6 +24,7 @@ public class CheckInRecord {
   private final String itemStatusPriorToCheckIn;
   private final String itemLocationId;
   private final Integer requestQueueSize;
+  private final boolean inHouseUse;
 
   private CheckInRecord(Builder builder) {
     this.id = builder.id;
@@ -33,6 +35,7 @@ public class CheckInRecord {
     this.itemStatusPriorToCheckIn = builder.itemStatusPriorToCheckIn;
     this.itemLocationId = builder.itemLocationId;
     this.requestQueueSize = builder.requestQueueSize;
+    this.inHouseUse = builder.inHouseUse;
   }
 
   public static class Builder {
@@ -44,6 +47,7 @@ public class CheckInRecord {
     private String itemStatusPriorToCheckIn;
     private String itemLocationId;
     private Integer requestQueueSize;
+    private boolean inHouseUse;
 
     public Builder withId(String id) {
       this.id = id;
@@ -85,6 +89,11 @@ public class CheckInRecord {
       return this;
     }
 
+    public Builder withInHouseUse(boolean inHouseUse) {
+      this.inHouseUse = inHouseUse;
+      return this;
+    }
+
     public CheckInRecord build() {
       if (!ObjectUtils.allNotNull(occurredDateTime, itemId,
         checkInServicePointId, performedByUserId)) {
@@ -106,7 +115,8 @@ public class CheckInRecord {
       .put(OCCURRED_DATE_TIME, formatDateTime(occurredDateTime))
       .put(ITEM_ID, itemId)
       .put(SERVICE_POINT_ID, servicePointId)
-      .put(PERFORMED_BY_USER_ID, performedByUserId);
+      .put(PERFORMED_BY_USER_ID, performedByUserId)
+      .put(IN_HOUSE_USE, inHouseUse);
 
     write(json, "id", id);
     write(json, "itemStatusPriorToCheckIn", itemStatusPriorToCheckIn);

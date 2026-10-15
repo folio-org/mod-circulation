@@ -29,6 +29,10 @@
       "description": "Randomly generated UUID which must be the same for all check-in requests issued in scope of the same check-in session ",
       "type": "string",
       "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "inHouseUse": {
+      "description": "Explicitly indicates whether this check-in should be treated as an in-house use, overriding the default inference logic when true",
+      "type": "boolean"
     }
   },
   "additionalProperties": false,
