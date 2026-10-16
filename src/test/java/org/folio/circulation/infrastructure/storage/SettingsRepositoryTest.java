@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.folio.circulation.domain.configuration.RequestQueueLockConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.ServerErrorFailure;
@@ -29,6 +30,46 @@ import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
 class SettingsRepositoryTest {
+
+  @Test
+  void requestQueueLockSettingsAreParsed() throws Exception {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient settingsClient = mock(CollectionResourceClient.class);
+    when(clients.settingsStorageClient()).thenReturn(settingsClient);
+    when(settingsClient.getMany(any(), any()))
+      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(new Response(200,
+        createRequestQueueLockJsonResponse(false, 20_000, 75, 15_000).encode(),
+        "application/json"))));
+
+    RequestQueueLockConfiguration configuration = new SettingsRepository(clients)
+      .lookupRequestQueueLockSettings()
+      .get(5, TimeUnit.SECONDS)
+      .value();
+
+    assertFalse(configuration.isRequestQueueLockFeatureEnabled());
+    assertEquals(20_000, configuration.getRequestQueueLockTtlMs());
+    assertEquals(75, configuration.getRequestQueueLockRetryIntervalMs());
+    assertEquals(15_000, configuration.getRequestQueueLockMaxWaitMs());
+  }
+
+  @Test
+  void requestQueueLockSettingsFallBackToSafeDefaultsWhenLookupFails() throws Exception {
+    Clients clients = mock(Clients.class);
+    CollectionResourceClient settingsClient = mock(CollectionResourceClient.class);
+    when(clients.settingsStorageClient()).thenReturn(settingsClient);
+    when(settingsClient.getMany(any(), any())).thenReturn(CompletableFuture.completedFuture(
+      Result.failed(new ServerErrorFailure("Unable to call mod-settings"))));
+
+    RequestQueueLockConfiguration configuration = new SettingsRepository(clients)
+      .lookupRequestQueueLockSettings()
+      .get(5, TimeUnit.SECONDS)
+      .value();
+
+    assertTrue(configuration.isRequestQueueLockFeatureEnabled());
+    assertEquals(10_000, configuration.getRequestQueueLockTtlMs());
+    assertEquals(50, configuration.getRequestQueueLockRetryIntervalMs());
+    assertEquals(10_000, configuration.getRequestQueueLockMaxWaitMs());
+  }
 
   @Test
   void testFetchSettingsWhenFeatureEnabled() throws ExecutionException, InterruptedException {
@@ -148,5 +189,22 @@ class SettingsRepositoryTest {
     JsonObject result = new JsonObject();
     result.put("items", new JsonArray(List.of(checkoutLockResponseJson)));
     return result;
+  }
+
+  private JsonObject createRequestQueueLockJsonResponse(boolean enabled, int ttlMs,
+    int retryIntervalMs, int maxWaitMs) {
+
+    JsonObject setting = new JsonObject()
+      .put("id", UUID.randomUUID())
+      .put("scope", "mod-circulation")
+      .put("key", "requestQueueLockFeature")
+      .put("value", new JsonObject()
+        .put("requestQueueLockFeatureEnabled", enabled)
+        .put("requestQueueLockTtlMs", ttlMs)
+        .put("requestQueueLockRetryIntervalMs", retryIntervalMs)
+        .put("requestQueueLockMaxWaitMs", maxWaitMs)
+        .encode());
+
+    return new JsonObject().put("items", new JsonArray().add(setting));
   }
 }

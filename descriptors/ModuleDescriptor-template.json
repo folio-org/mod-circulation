@@ -1414,6 +1414,10 @@
       "version": "0.1"
     },
     {
+      "id": "request-queue-lock-storage",
+      "version": "1.0"
+    },
+    {
       "id": "search-inventory",
       "version": "1.0"
     },
@@ -2320,6 +2324,8 @@
         "circulation-storage.loan-policies.item.get",
         "circulation-storage.circulation-rules.get",
         "circulation-storage.requests.item.post",
+        "request-queue-lock-storage.request-queue-locks.item.post",
+        "request-queue-lock-storage.request-queue-locks.item.delete",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.item.put",
@@ -2349,6 +2355,7 @@
         "mod-settings.entries.collection.get",
         "locale.item.get",
         "mod-settings.global.read.circulation",
+        "mod-settings.global.read.mod-circulation",
         "mod-settings.global.read.stripes-core.prefs.manage",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get",
@@ -2410,6 +2417,8 @@
         "circulation-storage.circulation-rules.get",
         "circulation-storage.requests.item.put",
         "circulation-storage.requests.item.post",
+        "request-queue-lock-storage.request-queue-locks.item.post",
+        "request-queue-lock-storage.request-queue-locks.item.delete",
         "circulation-storage.request-batch.item.post",
         "circulation-storage.request-policies.item.get",
         "circulation-storage.requests.collection.get",
@@ -2438,6 +2447,7 @@
         "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
+        "mod-settings.global.read.mod-circulation",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get",
         "circulation-storage.loans-history.collection.get"
@@ -2498,6 +2508,8 @@
         "circulation-storage.loans.collection.get",
         "circulation-storage.circulation-rules.get",
         "circulation-storage.requests.item.post",
+        "request-queue-lock-storage.request-queue-locks.item.post",
+        "request-queue-lock-storage.request-queue-locks.item.delete",
         "circulation-storage.requests.item.put",
         "circulation-storage.requests.collection.get",
         "circulation-storage.requests.item.get",
@@ -2522,6 +2534,9 @@
         "calendar.endpoint.calendars.allOpenings.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
+        "mod-settings.entries.item.get",
+        "mod-settings.entries.collection.get",
+        "mod-settings.global.read.mod-circulation",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",

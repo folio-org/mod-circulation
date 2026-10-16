@@ -101,6 +101,16 @@ public class RequestQueue {
     reSequenceRequests();
   }
 
+  public boolean hasSequentialPositions() {
+    int expectedPosition = 1;
+    for (Request request : requests) {
+      if (!Objects.equals(request.getPosition(), expectedPosition++)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public void update(Request original, Request updated) {
     updatedRequests.add(new UpdatedRequestPair(original, updated));
   }
@@ -125,6 +135,32 @@ public class RequestQueue {
   public Boolean contains(Request request) {
       return requests.stream()
         .anyMatch(r -> r.getId().equals(request.getId()));
+  }
+
+  public Request findById(String requestId) {
+    return requests.stream()
+      .filter(request -> Objects.equals(request.getId(), requestId))
+      .findFirst()
+      .orElse(null);
+  }
+
+  /**
+   * Copies related-record enrichment from an earlier queue snapshot while retaining the
+   * representations (including positions and statuses) from this queue.
+   */
+  public RequestQueue withRelatedRecordsFrom(RequestQueue enrichedQueue) {
+    if (enrichedQueue == null) {
+      return this;
+    }
+
+    return new RequestQueue(requests.stream()
+      .map(request -> {
+        Request enrichedRequest = enrichedQueue.findById(request.getId());
+        return enrichedRequest == null
+          ? request
+          : enrichedRequest.withRequestRepresentation(request.asJson());
+      })
+      .toList());
   }
 
   public Collection<Request> getRequestsWithChangedPosition() {

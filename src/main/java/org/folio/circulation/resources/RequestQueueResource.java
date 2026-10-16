@@ -25,9 +25,6 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.reorder.ReorderQueueRequest;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
-import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestQueueRepository;
@@ -122,13 +119,11 @@ public class RequestQueueResource extends Resource {
     final var loanRepository = new LoanRepository(clients, itemRepository, userRepository);
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
-    final var settingsRepository = new SettingsRepository(clients);
     final var circulationSettingsService = new CirculationSettingsService(clients);
     final var requestQueueRepository = new RequestQueueRepository(requestRepository);
 
-    final UpdateRequestQueue updateRequestQueue = new UpdateRequestQueue(
-      requestQueueRepository, requestRepository, new ServicePointRepository(clients),
-      settingsRepository, RequestQueueService.using(clients), new CalendarRepository(clients));
+    final UpdateRequestQueue updateRequestQueue = UpdateRequestQueue.using(clients,
+      requestRepository, requestQueueRepository, routingContext.vertx());
 
     validateTlrFeatureStatus(circulationSettingsService, requestQueueType, idParamValue)
       .thenCompose(r -> r.after(tlrSettings ->
