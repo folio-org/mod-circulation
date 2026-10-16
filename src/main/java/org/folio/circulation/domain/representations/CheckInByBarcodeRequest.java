@@ -1,6 +1,7 @@
 package org.folio.circulation.domain.representations;
 
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProperty;
@@ -31,6 +32,7 @@ public class CheckInByBarcodeRequest {
   private static final String CHECK_IN_DATE = "checkInDate";
   private static final String SERVICE_POINT_ID = "servicePointId";
   private static final String SESSION_ID = "sessionId";
+  private static final String IN_HOUSE_USE = "inHouseUse";
   public static final String CLAIMED_RETURNED_RESOLUTION = "claimedReturnedResolution";
 
   @ToString.Include
@@ -42,6 +44,8 @@ public class CheckInByBarcodeRequest {
   @ToString.Include
   private final UUID sessionId;
   private final ClaimedReturnedResolution claimedReturnedResolution;
+  @ToString.Include
+  private final boolean inHouseUse;
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
     log.debug("from:: parameters json: {}", json);
@@ -82,9 +86,10 @@ public class CheckInByBarcodeRequest {
     }
 
     final UUID sessionId = getUUIDProperty(json, SESSION_ID);
+    final boolean inHouseUse = getBooleanProperty(json, IN_HOUSE_USE);
 
     return succeeded(new CheckInByBarcodeRequest(itemBarcode, servicePointId,
-      checkInDate, sessionId, claimedReturnedResolution));
+      checkInDate, sessionId, claimedReturnedResolution, inHouseUse));
   }
 
   public enum ClaimedReturnedResolution {

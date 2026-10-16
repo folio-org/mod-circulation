@@ -34,6 +34,7 @@ public class LogCheckInService {
       .withItemStatusPriorToCheckIn(checkInContext.getItem().getStatusName())
       .withItemLocationId(checkInContext.getItem().getEffectiveLocationId())
       .withRequestQueueSize(checkInContext.getRequestQueue().size())
+      .withInHouseUse(checkInContext.isInHouseUse())
       .build();
 
     return checkInStorageRepository.createCheckInLogRecord(checkInRecord)
