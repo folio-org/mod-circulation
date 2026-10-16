@@ -274,6 +274,7 @@ class CheckInProcessAdapter {
         checkInContext.getItem(),
         checkInContext.getRequestQueue(),
         checkInContext.getCheckInRequest());
+    log.info("setInHouseUse:: result: {}", inHouseUse);
 
     return checkInContext.withInHouseUse(inHouseUse);
   }
