@@ -98,7 +98,7 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(when(this::isOpenDay, this::processNotice, this::skip)))
       .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
+      .exceptionallyCompose(t -> handleException(t, notice));
   }
 
   private CompletableFuture<Result<ScheduledNotice>> processNotice(ScheduledNoticeContext context) {
