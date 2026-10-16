@@ -41,6 +41,11 @@
       "type": "string",
       "description": "Id of user that has performed check-in operation",
       "$ref": "uuid.json"
+    },
+    "inHouseUse": {
+      "type": "boolean",
+      "description": "Indicates whether the check-in was an in-house use",
+      "default": false
     }
   },
   "additionalProperties": false,

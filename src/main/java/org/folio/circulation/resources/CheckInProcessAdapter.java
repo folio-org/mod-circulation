@@ -269,11 +269,14 @@ class CheckInProcessAdapter {
   }
 
   CheckInContext setInHouseUse(CheckInContext checkInContext) {
-    return checkInContext
-      .withInHouseUse(loanCheckInService.isInHouseUse(
+    boolean inHouseUse = checkInContext.getCheckInRequest().isInHouseUse()
+      || loanCheckInService.isInHouseUse(
         checkInContext.getItem(),
         checkInContext.getRequestQueue(),
-        checkInContext.getCheckInRequest()));
+        checkInContext.getCheckInRequest());
+    log.info("setInHouseUse:: result: {}", inHouseUse);
+
+    return checkInContext.withInHouseUse(inHouseUse);
   }
 
   CheckInContext markReturnedIfForUseAtLocation(CheckInContext checkInContext) {

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.CheckInByBarcodeResponse;
 import api.support.MultipleJsonRecords;
+import api.support.builders.CheckInByBarcodeRequestBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.http.CqlQuery;
 import api.support.http.IndividualResource;
@@ -39,6 +40,53 @@ class InHouseUseCheckInTest extends APITests {
 
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
     assertThat(checkInResponse.getJson().containsKey("item"), is(true));
+    assertThat(checkInResponse.getInHouseUse(), is(true));
+    verifyLastCheckInWasRecorded(nod.getId(), checkInServicePointId);
+  }
+
+  @Test
+  void explicitInHouseUseTrueIsStoredWithoutConsultingInference() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+    final UUID itemServicePointId = servicePointsFixture.cd2().getId();
+
+    final IndividualResource itemLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(itemServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      item -> item.withTemporaryLocation(itemLocation.getId()));
+
+    requestsFixture.place(new RequestBuilder()
+      .page()
+      .forItem(nod)
+      .withPickupServicePointId(checkInServicePointId)
+      .by(usersFixture.james()));
+
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture
+      .checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId)
+        .withInHouseUse(true));
+
+    assertThat(checkInResponse.getInHouseUse(), is(true));
+    assertThat(getLastCheckInRecord(nod.getId()).getBoolean("inHouseUse"), is(true));
+  }
+
+  @Test
+  void explicitInHouseUseFalseFallsBackToPositiveInference() {
+    final UUID checkInServicePointId = servicePointsFixture.cd1().getId();
+
+    final IndividualResource homeLocation = locationsFixture.basedUponExampleLocation(
+      builder -> builder.withPrimaryServicePoint(checkInServicePointId));
+
+    final IndividualResource nod = itemsFixture.basedUponNod(
+      item -> item.withTemporaryLocation(homeLocation.getId()));
+
+    final CheckInByBarcodeResponse checkInResponse = checkInFixture
+      .checkInByBarcode(new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(checkInServicePointId)
+        .withInHouseUse(false));
+
     assertThat(checkInResponse.getInHouseUse(), is(true));
     verifyLastCheckInWasRecorded(nod.getId(), checkInServicePointId);
   }
@@ -107,6 +155,7 @@ class InHouseUseCheckInTest extends APITests {
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
     assertThat(checkInResponse.getJson().containsKey("item"), is(true));
     assertThat(checkInResponse.getInHouseUse(), is(false));
+    assertThat(getLastCheckInRecord(nod.getId()).getBoolean("inHouseUse"), is(false));
   }
 
   @Test
@@ -126,6 +175,7 @@ class InHouseUseCheckInTest extends APITests {
     assertThat(checkInResponse.getJson().containsKey("loan"), is(false));
     assertThat(checkInResponse.getJson().containsKey("item"), is(true));
     assertThat(checkInResponse.getInHouseUse(), is(false));
+    assertThat(getLastCheckInRecord(nod.getId()).getBoolean("inHouseUse"), is(false));
   }
 
   private void verifyLastCheckInWasRecorded(UUID itemId, UUID servicePoint) {
@@ -147,6 +197,7 @@ class InHouseUseCheckInTest extends APITests {
     assertThat(lastOperation.getString("itemStatusPriorToCheckIn"), is("Available"));
     assertThat(lastOperation.getString("itemLocationId"), is(itemEffectiveLocationId));
     assertThat(lastOperation.getInteger("requestQueueSize"), is(0));
+    assertThat(lastOperation.getBoolean("inHouseUse"), is(true));
     assertTrue(isServedByServicePoint(UUID.fromString(itemEffectiveLocationId), servicePoint));
   }
 
@@ -154,5 +205,14 @@ class InHouseUseCheckInTest extends APITests {
     final JsonObject location = locationsClient.getById(locationId).getJson();
 
     return servicePointId.toString().equals(location.getString("primaryServicePoint"));
+  }
+
+  private JsonObject getLastCheckInRecord(UUID itemId) {
+    final CqlQuery query = queryFromTemplate("itemId=%s", itemId);
+    final MultipleJsonRecords recordedOperations = checkInOperationClient.getMany(query);
+
+    assertThat(recordedOperations.totalRecords(), greaterThan(0));
+
+    return recordedOperations.getFirst();
   }
 }

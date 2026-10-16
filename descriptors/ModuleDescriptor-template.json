@@ -232,7 +232,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.7",
+      "version": "14.8",
       "handlers": [
         {
           "methods": [
@@ -1367,7 +1367,7 @@
     },
     {
       "id": "check-in-storage",
-      "version": "0.2"
+      "version": "0.3"
     },
     {
       "id": "automated-patron-blocks",
