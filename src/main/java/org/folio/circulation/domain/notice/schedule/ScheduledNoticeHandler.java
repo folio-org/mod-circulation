@@ -102,9 +102,23 @@ public abstract class ScheduledNoticeHandler {
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
+      .thenCompose(r -> r.after(this::tempDelay)) // TEMP - DO NOT MERGE
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
       .exceptionally(t -> handleException(t, notice));
+  }
+
+  // TEMP - DO NOT MERGE: pause after the notice is sent so the storage module can be
+  // stopped before the scheduled notice record is updated/deleted (CIRC-2664 repro).
+  // Non-blocking on purpose: Thread.sleep would block the Vert.x event loop.
+  private CompletableFuture<Result<ScheduledNoticeContext>> tempDelay(
+    ScheduledNoticeContext context) {
+
+    log.warn("TEMP-DELAY:: notice {} sent, waiting 60s - stop mod-circulation-storage now",
+      context.getNotice().getId());
+
+    return CompletableFuture.supplyAsync(() -> succeeded(context),
+      CompletableFuture.delayedExecutor(60, java.util.concurrent.TimeUnit.SECONDS));
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
