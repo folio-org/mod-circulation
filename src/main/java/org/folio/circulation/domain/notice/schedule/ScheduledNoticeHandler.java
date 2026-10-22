@@ -114,11 +114,28 @@ public abstract class ScheduledNoticeHandler {
   private CompletableFuture<Result<ScheduledNoticeContext>> tempDelay(
     ScheduledNoticeContext context) {
 
-    log.warn("TEMP-DELAY:: notice {} sent, waiting 60s - stop mod-circulation-storage now",
-      context.getNotice().getId());
+    // Delay is read from env var TEMP_NOTICE_DELAY_SECONDS; unset/0 = no delay, so unit and
+    // API tests (which have ~10s HTTP read timeouts) are not affected.
+    final long delaySeconds = parseDelaySeconds(System.getenv("TEMP_NOTICE_DELAY_SECONDS"));
+
+    if (delaySeconds <= 0) {
+      return completedFuture(succeeded(context));
+    }
+
+    log.warn("TEMP-DELAY:: notice {} sent, waiting {}s - stop mod-circulation-storage now",
+      context.getNotice().getId(), delaySeconds);
 
     return CompletableFuture.supplyAsync(() -> succeeded(context),
-      CompletableFuture.delayedExecutor(60, java.util.concurrent.TimeUnit.SECONDS));
+      CompletableFuture.delayedExecutor(delaySeconds, java.util.concurrent.TimeUnit.SECONDS));
+  }
+
+  // TEMP - DO NOT MERGE
+  private static long parseDelaySeconds(String value) {
+    try {
+      return value == null ? 0 : Long.parseLong(value.trim());
+    } catch (NumberFormatException e) {
+      return 0;
+    }
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
