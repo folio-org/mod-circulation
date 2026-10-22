@@ -463,8 +463,8 @@ public abstract class ScheduledNoticeHandler {
 
     if (!noticeSent) {
       // The notice has not been delivered yet, so keep the record: the next run will retry it.
-      log.error("handleException:: exception thrown before scheduled notice {} was sent, " +
-        "keeping it for the next run: {}", notice.getId(), throwable.getMessage(), throwable);
+      log.error("handleException:: exception thrown after scheduled notice {} was sent",
+        notice.getId(), throwable);
 
       return completedFuture(succeeded(notice));
     }
