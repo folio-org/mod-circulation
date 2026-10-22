@@ -13,6 +13,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -45,6 +46,7 @@ import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -80,22 +82,67 @@ class FeeFineFacadeTest {
   }
 
   @Test
-  void shouldForwardFailureIfAnAccountIsNotCreated() {
+  void shouldForwardFailureIfAnAccountIsNotCreated() throws Exception {
     final String expectedError = "Fee fine account failed to be created";
 
+    when(userClient.get("user-id"))
+      .thenReturn(ofAsync(jsonResponse(200, new JsonObject()
+        .put("id", "user-id")
+        .put("personal", new JsonObject()
+          .put("firstName", "Admin")
+          .put("lastName", "Admin")))));
     when(accountClient.post(any()))
       .thenAnswer(postRespondWithRequestAndFail(expectedError));
 
     final Result<List<FeeFineAction>> result = feeFineFacade.createAccounts(Arrays.asList(
       createCommandBuilder().build(),
       createCommandBuilder().build()))
-      .getNow(null);
+      .get(5, TimeUnit.SECONDS);
 
     assertThat(result, notNullValue());
 
     assertThat(result.failed(), is(true));
     assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
     assertThat(((ServerErrorFailure) result.cause()).getReason(), is(expectedError));
+  }
+
+  @Test
+  void shouldCreateAccountWhenStaffUserIsNotFound() throws Exception {
+    when(accountClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(accountActionsClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(servicePointClient.get("cd1-id"))
+      .thenReturn(ofAsync(jsonResponse(200, new JsonObject().put("id", "cd1-id"))));
+
+    final Result<FeeFineAction> result = feeFineFacade
+      .createAccount(createCommandBuilder().withStaffUserId(null).build())
+      .get(5, TimeUnit.SECONDS);
+
+    assertThat(result, notNullValue());
+    assertThat(result.succeeded(), is(true));
+    verify(accountActionsClient).post(any());
+  }
+
+  @Test
+  void shouldKeepStaffUserIdAsSourceWhenStaffUserIsNotFound() throws Exception {
+    when(accountClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(accountActionsClient.post(any()))
+      .thenAnswer(invocation -> ofAsync(jsonResponse(201, invocation.getArgument(0))));
+    when(userClient.get("user-id"))
+      .thenReturn(ofAsync(jsonResponse(404, new JsonObject())));
+    when(servicePointClient.get("cd1-id"))
+      .thenReturn(ofAsync(jsonResponse(200, new JsonObject().put("id", "cd1-id"))));
+
+    final Result<FeeFineAction> result = feeFineFacade
+      .createAccount(createCommandBuilder().build())
+      .get(5, TimeUnit.SECONDS);
+
+    assertThat(result.succeeded(), is(true));
+    ArgumentCaptor<JsonObject> actionCaptor = ArgumentCaptor.forClass(JsonObject.class);
+    verify(accountActionsClient).post(actionCaptor.capture());
+    assertThat(actionCaptor.getValue().getString("source"), is("user-id"));
   }
 
   @Test
