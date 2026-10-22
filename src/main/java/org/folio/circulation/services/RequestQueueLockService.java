@@ -68,13 +68,14 @@ public class RequestQueueLockService {
         }
 
         long elapsedMs = elapsedMs(startedAt);
-        long delayMs = retryDelay(configuration, attempt);
-        if (elapsedMs + delayMs > configuration.getRequestQueueLockMaxWaitMs()) {
+        long remainingWaitMs = configuration.getRequestQueueLockMaxWaitMs() - elapsedMs;
+        if (remainingWaitMs <= 0) {
           log.warn("Timed out acquiring request queue lock for {}:{} after {} ms",
             key.queueType(), key.queueId(), elapsedMs);
           return completedFuture(failed(new ServiceUnavailableFailure(LOCK_TIMEOUT)));
         }
 
+        long delayMs = Math.min(retryDelay(configuration, attempt), remainingWaitMs);
         CompletableFuture<Result<RequestQueueLock>> retry = new CompletableFuture<>();
         vertx.setTimer(delayMs, ignored -> acquire(key, configuration, startedAt, attempt + 1)
           .whenComplete((retryResult, error) -> complete(retry, retryResult, error)));

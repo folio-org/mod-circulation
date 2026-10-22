@@ -167,7 +167,7 @@ public class CreateRequestService {
     RequestQueueKey key = RequestQueueKey.from(records);
     String message = "Request queue positions are not sequential for "
       + key.queueType() + ":" + key.queueId();
-    log.error(message);
+    log.error("refuseWhenQueuePositionsAreNotSequential:: {}", message);
     return failed(new ServerErrorFailure(message));
   }
 

@@ -78,6 +78,7 @@ import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.RouteRegistration;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ServiceUnavailableFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ServerErrorResponse;
@@ -344,6 +345,10 @@ public class RequestByInstanceIdResource extends Resource {
             return completedFuture(r);
           } else {
             HttpFailure failure = r.cause();
+            if (!shouldTryNextRequest(failure)) {
+              return completedFuture(r);
+            }
+
             errors.addAll(convertToValidationErrors(failure));
 
             log.debug("Failed to create request for item {} with cause: {}",
@@ -548,5 +553,9 @@ public class RequestByInstanceIdResource extends Resource {
     }
 
     return validationErrors;
+  }
+
+  static boolean shouldTryNextRequest(HttpFailure failure) {
+    return !(failure instanceof ServiceUnavailableFailure);
   }
 }

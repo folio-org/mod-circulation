@@ -63,8 +63,8 @@ public class MoveRequestService {
       .thenCompose(r -> r.after(this::validateUpdateRequest))
       .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RequestAndRelatedRecords::withTimeZone))
-      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
       .thenComposeAsync(r -> r.after(this::updateRelatedObjects))
+      .thenCompose(r -> r.after(updateUponRequest.updateRequestQueue::onMovedTo))
       .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestMoved))
       .thenComposeAsync(r -> r.after(moveRequestProcessAdapter::findSourceItem))
       .thenComposeAsync(r -> r.after(requestQueueRepository::get))

@@ -3,6 +3,7 @@ package org.folio.circulation.resources;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.support.utils.DateFormatUtil.formatDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.ZonedDateTime;
@@ -19,6 +20,7 @@ import org.folio.circulation.support.BadRequestFailure;
 import org.folio.circulation.support.ForwardOnFailure;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ServerErrorFailure;
+import org.folio.circulation.support.ServiceUnavailableFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.client.Response;
 import org.folio.circulation.support.http.server.ValidationError;
@@ -117,6 +119,12 @@ public class RequestByInstanceIdResourceTests {
 
     assertEquals(1, errors.size());
     assertEquals("test body", errors.stream().toList().get(0).getMessage());
+  }
+
+  @Test
+  void shouldNotTryAnotherRequestAfterQueueLockTimeout() {
+    assertFalse(RequestByInstanceIdResource.shouldTryNextRequest(
+      new ServiceUnavailableFailure("REQUEST_QUEUE_LOCK_TIMEOUT")));
   }
 
   public static JsonObject getJsonInstanceRequest(UUID pickupServicePointId) {

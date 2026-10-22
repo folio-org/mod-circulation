@@ -2,6 +2,7 @@ package api.requests;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import api.support.http.IndividualResource;
 import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.core.Is;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import api.support.APITests;
@@ -240,9 +240,9 @@ class RequestsAPICreateMultipleRequestsTests extends APITests {
 
     boolean allCreatorsReady = ready.await(5, TimeUnit.SECONDS);
     start.countDown();
-    Assertions.assertTrue(allCreatorsReady);
-    Assertions.assertTrue(completed.await(30, TimeUnit.SECONDS));
-    Assertions.assertTrue(failures.isEmpty(), failures.toString());
+    assertTrue(allCreatorsReady);
+    assertTrue(completed.await(30, TimeUnit.SECONDS));
+    assertTrue(failures.isEmpty(), failures.toString());
 
     return createdRequests;
   }

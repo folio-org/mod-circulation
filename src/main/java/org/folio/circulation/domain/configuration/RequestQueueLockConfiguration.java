@@ -37,7 +37,8 @@ public class RequestQueueLockConfiguration {
         positiveOrDefault(getIntegerProperty(json, "requestQueueLockMaxWaitMs",
           DEFAULT_MAX_WAIT_MS), DEFAULT_MAX_WAIT_MS));
     } catch (Exception exception) {
-      log.error("Failed to parse request queue lock configuration, using defaults", exception);
+      log.error("from:: Failed to parse request queue lock configuration, using defaults",
+        exception);
       return new RequestQueueLockConfiguration(true, DEFAULT_TTL_MS,
         DEFAULT_RETRY_INTERVAL_MS, DEFAULT_MAX_WAIT_MS);
     }

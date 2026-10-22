@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategy;
 import org.folio.circulation.domain.validation.RequestQueueValidation;
@@ -96,7 +97,7 @@ public class UpdateRequestQueue {
 
   public CompletableFuture<Result<RequestQueue>> onCheckIn(
     RequestQueue requestQueue, Item item, String checkInServicePointId,
-    org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
+    TlrSettingsConfiguration tlrSettings) {
 
     log.debug("onCheckIn:: parameters requestQueue: {}, item: {}, checkInServicePointId: {}",
       () -> requestQueue, () -> item, () -> checkInServicePointId);
@@ -161,7 +162,7 @@ public class UpdateRequestQueue {
 
   private CompletableFuture<Result<RequestQueue>> persistCheckInQueueUpdate(
     Request preparedRequest, RequestQueue initialQueue,
-    org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
+    TlrSettingsConfiguration tlrSettings) {
 
     if (preparedRequest == null) {
       return completedFuture(succeeded(initialQueue));
@@ -187,7 +188,7 @@ public class UpdateRequestQueue {
       return completedFuture(succeeded(requestQueue));
     }
 
-    Request originalRequest = Request.from(currentRequest.asJson());
+    Request originalRequest = currentRequest.copy();
     var updatedRepresentation = preparedRequest.asJson();
     if (currentRequest.getPosition() == null) {
       updatedRepresentation.remove("position");
@@ -199,7 +200,7 @@ public class UpdateRequestQueue {
     requestQueue.replaceRequest(updatedRequest);
     requestQueue.updateRequestPositionOnCheckIn(updatedRequest.getId());
     updatedRequest = requestQueue.findById(updatedRequest.getId());
-    requestQueue.update(originalRequest, Request.from(updatedRequest.asJson()));
+    requestQueue.update(originalRequest, updatedRequest.copy());
 
     Request requestToUpdate = updatedRequest;
     if (requestToUpdate.hasChangedPosition()) {
@@ -340,7 +341,7 @@ public class UpdateRequestQueue {
       return completedFuture(succeeded(relatedRecords));
     }
 
-    Request originalRequest = Request.from(firstRequest.asJson());
+    Request originalRequest = firstRequest.copy();
 
     log.info("onCheckOut:: Closing request '{}'", firstRequest.getId());
     firstRequest.changeStatus(RequestStatus.CLOSED_FILLED);
@@ -348,7 +349,7 @@ public class UpdateRequestQueue {
     log.info("onCheckOut:: Removing request '{}' from queue", firstRequest.getId());
     requestQueue.remove(firstRequest);
 
-    Request updatedRequest = Request.from(firstRequest.asJson());
+    Request updatedRequest = firstRequest.copy();
 
     requestQueue.update(originalRequest, updatedRequest);
 
@@ -447,7 +448,7 @@ public class UpdateRequestQueue {
   }
 
   public CompletableFuture<Result<Request>> onDeletion(Request request,
-    org.folio.circulation.domain.configuration.TlrSettingsConfiguration tlrSettings) {
+    TlrSettingsConfiguration tlrSettings) {
 
     log.debug("onDeletion:: parameters request: {}", () -> request);
 
