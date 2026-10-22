@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -98,13 +99,25 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
     log.debug("handleContext:: handling context for notice {}", context.getNotice()::getId);
     final ScheduledNotice notice = context.getNotice();
+    final AtomicBoolean noticeSent = new AtomicBoolean(false);
 
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
+      .thenApply(r -> markNoticeSent(r, noticeSent))
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
-      .exceptionallyCompose(t -> handleException(t, notice));
+      .exceptionallyCompose(t -> handleException(t, notice, noticeSent.get()));
+  }
+
+  protected static Result<ScheduledNoticeContext> markNoticeSent(
+    Result<ScheduledNoticeContext> sendResult, AtomicBoolean noticeSent) {
+
+    if (sendResult.succeeded()) {
+      noticeSent.set(true);
+    }
+
+    return sendResult;
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -446,9 +459,18 @@ public abstract class ScheduledNoticeHandler {
   }
 
   protected CompletableFuture<Result<ScheduledNotice>> handleException(Throwable throwable,
-    ScheduledNotice notice) {
+    ScheduledNotice notice, boolean noticeSent) {
 
-    log.error("handleException:: exception thrown while processing scheduled notice {}: {}",
+    if (!noticeSent) {
+      // The notice has not been delivered yet, so keep the record: the next run will retry it.
+      log.error("handleException:: exception thrown before scheduled notice {} was sent, " +
+        "keeping it for the next run: {}", notice.getId(), throwable.getMessage(), throwable);
+
+      return completedFuture(succeeded(notice));
+    }
+
+    // The notice was already sent: delete the record so that it cannot be sent again.
+    log.error("handleException:: exception thrown after scheduled notice {} was sent: {}",
       notice.getId(), throwable.getMessage(), throwable);
 
     return deleteNotice(notice, throwable.getMessage());

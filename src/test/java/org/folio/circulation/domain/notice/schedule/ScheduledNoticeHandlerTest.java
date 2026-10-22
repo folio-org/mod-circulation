@@ -4,6 +4,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -225,6 +226,27 @@ class ScheduledNoticeHandlerTest {
       handler.getSendNoticeCallCount(), is(1));
   }
 
+  @Test
+  void handleContextKeepsNoticeWhenExceptionIsThrownBeforeNoticeWasSent() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, null,
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    // Fetching the notice data fails with a raw exception before anything was sent.
+    var handler = new FailingUpdateNoticeHandler(clients, true);
+
+    var result = handler.handleContext(new ScheduledNoticeContext(notice)).join();
+
+    // The notice was never delivered, so it must stay in storage for the next run to retry.
+    assertThat(result.succeeded(), is(true));
+    assertThat(handler.getSendNoticeCallCount(), is(0));
+    verify(scheduledNoticesStorageClient, never()).delete(notice.getId());
+  }
+
   private boolean sendByPreference(ScheduledNotice notice, JsonArray loanNotices) {
     return sendByPreference(new ScheduledNoticeContext(notice)
       .withPatronNoticePolicyId(POLICY_ID), loanNotices);
@@ -349,10 +371,16 @@ class ScheduledNoticeHandlerTest {
 
   private static final class FailingUpdateNoticeHandler extends ScheduledNoticeHandler {
     private final AtomicInteger sendNoticeCallCount = new AtomicInteger();
+    private final boolean failFetchWithException;
 
     private FailingUpdateNoticeHandler(Clients clients) {
+      this(clients, false);
+    }
+
+    private FailingUpdateNoticeHandler(Clients clients, boolean failFetchWithException) {
       super(clients, new LoanRepository(clients,
         mock(ItemRepository.class), mock(UserRepository.class)));
+      this.failFetchWithException = failFetchWithException;
     }
 
     private int getSendNoticeCallCount() {
@@ -362,6 +390,12 @@ class ScheduledNoticeHandlerTest {
     @Override
     protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
       ScheduledNoticeContext context) {
+
+      if (failFetchWithException) {
+        var failedFetch = new CompletableFuture<Result<ScheduledNoticeContext>>();
+        failedFetch.completeExceptionally(new RuntimeException("fetch failed"));
+        return failedFetch;
+      }
 
       return completedFuture(Result.succeeded(context));
     }
