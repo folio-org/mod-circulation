@@ -27,8 +27,7 @@ import org.folio.circulation.domain.validation.ClosedRequestValidator;
 import org.folio.circulation.domain.validation.ProxyRelationshipValidator;
 import org.folio.circulation.domain.validation.RequestLoanValidator;
 import org.folio.circulation.domain.validation.ServicePointPickupLocationValidator;
-import org.folio.circulation.infrastructure.storage.CalendarRepository;
-import org.folio.circulation.infrastructure.storage.ServicePointRepository;
+import org.folio.circulation.infrastructure.storage.RequestQueueLockRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
@@ -43,6 +42,7 @@ import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.ItemForTlrService;
 import org.folio.circulation.services.RequestQueueService;
+import org.folio.circulation.services.RequestQueueLockService;
 import org.folio.circulation.storage.ItemByInstanceIdFinder;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -88,7 +88,7 @@ public class RequestCollectionResource extends CollectionResource {
       new RequestQueueService(new RequestPolicyRepository(clients), loanPolicyRepository)),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
       UpdateRequestQueue.using(clients, requestRepository,
-        new RequestQueueRepository(requestRepository)));
+        new RequestQueueRepository(requestRepository), routingContext.vertx()));
 
     final var okapiPermissions = OkapiPermissions.from(context.getHeaders());
     final var blockOverrides = BlockOverrides.fromRequest(representation);
@@ -100,8 +100,10 @@ public class RequestCollectionResource extends CollectionResource {
       clients.holdingsStorage(), itemRepository), loanRepository);
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
-      requestLoanValidator, requestNoticeSender, requestBlocksValidators, eventPublisher,
-      errorHandler);
+      new CreateRequestService.Dependencies(requestLoanValidator, requestNoticeSender,
+        requestBlocksValidators, eventPublisher, errorHandler,
+        new RequestQueueLockService(new RequestQueueLockRepository(clients),
+          routingContext.vertx())));
 
     final var requestFromRepresentationService = new RequestFromRepresentationService(
       Request.Operation.CREATE, repositories,
@@ -140,7 +142,7 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestQueueRepository = repositories.getRequestQueueRepository();
 
     final var updateRequestQueue = UpdateRequestQueue.using(clients,
-      requestRepository, requestQueueRepository);
+      requestRepository, requestQueueRepository, routingContext.vertx());
     final var eventPublisher = new EventPublisher(context, clients);
     final var requestNoticeSender = new RequestNoticeSender(clients);
     final var updateItem = new UpdateItem(itemRepository,
@@ -154,8 +156,10 @@ public class RequestCollectionResource extends CollectionResource {
       new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository);
 
     final var createRequestService = new CreateRequestService(repositories, updateUponRequest,
-      requestLoanValidator, requestNoticeSender, regularRequestBlockValidators(clients),
-      eventPublisher, errorHandler);
+      new CreateRequestService.Dependencies(requestLoanValidator, requestNoticeSender,
+        regularRequestBlockValidators(clients), eventPublisher, errorHandler,
+        new RequestQueueLockService(new RequestQueueLockRepository(clients),
+          routingContext.vertx())));
 
     final var updateRequestService = new UpdateRequestService(requestRepository,
       updateRequestQueue, new ClosedRequestValidator(requestRepository), requestNoticeSender,
@@ -211,15 +215,17 @@ public class RequestCollectionResource extends CollectionResource {
     final var requestRepository = RequestRepository.using(clients,
       itemRepository, userRepository, loanRepository);
     final var requestQueueService = RequestQueueService.using(clients);
-    final var updateRequestQueue = new UpdateRequestQueue(new RequestQueueRepository(
-      requestRepository), requestRepository, new ServicePointRepository(clients),
-      new SettingsRepository(clients), requestQueueService, new CalendarRepository(clients));
+    final var requestQueueRepository = new RequestQueueRepository(requestRepository);
+    final var updateRequestQueue = UpdateRequestQueue.using(clients, requestRepository,
+      requestQueueRepository, routingContext.vertx());
+    final var circulationSettingsService = new CirculationSettingsService(clients);
 
     UpdateItem updateItem = new UpdateItem(itemRepository, requestQueueService);
 
     fromFutureResult(requestRepository.getById(id))
-      .flatMapFuture(requestRepository::delete)
-      .flatMapFuture(updateRequestQueue::onDeletion)
+      .flatMapFuture(request -> circulationSettingsService.getTlrSettings()
+        .thenCompose(settingsResult -> settingsResult.after(settings ->
+          updateRequestQueue.onDeletion(request, settings))))
       .flatMapFuture(updateItem::onRequestDeletion)
       .map(toFixedValue(NoContentResponse::noContent))
       .onComplete(context::write, context::write);
@@ -281,19 +287,19 @@ public class RequestCollectionResource extends CollectionResource {
     final var updateUponRequest = new UpdateUponRequest(new UpdateItem(itemRepository,
       new RequestQueueService(requestPolicyRepository, loanPolicyRepository)),
       new UpdateLoan(clients, loanRepository, loanPolicyRepository),
-      UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository));
+      UpdateRequestQueue.using(clients, requestRepository, requestQueueRepository,
+        routingContext.vertx()));
 
     final var moveRequestProcessAdapter = new MoveRequestProcessAdapter(itemRepository,
       loanRepository, requestRepository);
 
     final var eventPublisher = new EventPublisher(context, clients);
 
-    final var moveRequestService = new MoveRequestService(
-      requestRepository, requestPolicyRepository,
-      updateUponRequest, moveRequestProcessAdapter,
-      new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(), itemRepository), loanRepository),
-      RequestNoticeSender.using(clients), eventPublisher,
-      requestQueueRepository, settingsRepository, circulationSettingsService);
+    final var moveRequestService = new MoveRequestService(updateUponRequest,
+      moveRequestProcessAdapter, new MoveRequestService.Dependencies(requestPolicyRepository,
+        new RequestLoanValidator(new ItemByInstanceIdFinder(clients.holdingsStorage(),
+          itemRepository), loanRepository), RequestNoticeSender.using(clients), eventPublisher,
+        requestQueueRepository, settingsRepository, circulationSettingsService));
 
     fromFutureResult(requestRepository.getById(id))
       .map(request -> request.withOperation(Request.Operation.MOVE))

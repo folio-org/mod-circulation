@@ -105,6 +105,22 @@ class RequestRepresentationTests {
   }
 
   @Test
+  void storedRequestPreservesSearchIndexWhenRelatedObjectsAreNotEnriched() {
+    JsonObject searchIndex = new JsonObject()
+      .put("pickupServicePointName", SERVICE_POINT_NAME_VALUE)
+      .put("shelvingOrder", SHELVING_ORDER_VALUE)
+      .put("callNumberComponents", new JsonObject().put("callNumber", CALL_NUMBER_VALUE));
+    Request request = Request.from(new JsonObject()
+      .put("id", REQUEST_ID.toString())
+      .put("searchIndex", searchIndex));
+
+    JsonObject storedRepresentation = new StoredRequestRepresentation()
+      .storedRequest(request);
+
+    assertEquals(searchIndex, storedRepresentation.getJsonObject("searchIndex"));
+  }
+
+  @Test
   void testExtendedRepresentationForAnonymization() {
     RequestRepresentation requestRepresentation = new RequestRepresentation();
     Request request = createMockRequest();
