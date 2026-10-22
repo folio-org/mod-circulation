@@ -6,6 +6,7 @@
 * Fix loan status in `AnonymizeLoansTests` fixture for closed loans with open fees ([CIRC-2641](https://folio-org.atlassian.net/browse/CIRC-2641))
 * Fix Item check-out for related ECS TLR Page request when ILR exist for different requester ([CIRC-2644](https://folio-org.atlassian.net/browse/CIRC-2644))
 * Add conditions for determining patron notice format([CIRC-2661](https://folio-org.atlassian.net/browse/CIRC-2661))
+* Accept and persist `inHouseUse` in check-in-by-barcode ([CIRC-2685](https://folio-org.atlassian.net/browse/CIRC-2685))
 
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))
