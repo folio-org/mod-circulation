@@ -133,7 +133,7 @@ public class CheckOutByBarcodeResource extends Resource {
     var validators = new CheckOutValidators(request, clients, errorHandler, permissions,
       loanRepository);
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
-      requestRepository, requestQueueRepository);
+      requestRepository, requestQueueRepository, routingContext.vertx());
     final var eventPublisher = new EventPublisher(context, clients);
     final var patronActionSessionService = PatronActionSessionService.using(clients,
       PatronActionSessionRepository.using(clients, loanRepository, userRepository));

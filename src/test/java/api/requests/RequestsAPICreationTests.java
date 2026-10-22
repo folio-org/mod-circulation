@@ -4045,6 +4045,7 @@ public class RequestsAPICreationTests extends APITests {
     // To make sure there are no Available items left
     requestsFixture.place(
       requestBuilder
+        .withId(UUID.randomUUID())
         .withRequesterId(usersFixture.jessica().getId())
         .withItemId(closestItemId)
         .withEcsRequestPhase(ecsRequestPhase));
@@ -4058,7 +4059,7 @@ public class RequestsAPICreationTests extends APITests {
       .withNoHoldingsRecordId()
       .withNoItemId()
       .withRequestDate(ZonedDateTime.now())
-      .withRequesterId(usersFixture.steve().getId())
+      .withRequesterId(usersFixture.rebecca().getId())
       .withPickupServicePointId(pickupServicePointId);
 
     // Request without ECS phase should fail

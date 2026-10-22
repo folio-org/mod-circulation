@@ -1,4 +1,4 @@
-package org.folio.circulation.domain;
+ package org.folio.circulation.domain;
 
 import java.util.Arrays;
 
