@@ -253,6 +253,10 @@ public class Period {
     return duration != null && interval != null;
   }
 
+  public boolean isMonths() {
+    return MONTHS.equals(interval);
+  }
+
   /**
    * Add this period to the given date time.
    * <p>

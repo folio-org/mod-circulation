@@ -18,24 +18,33 @@ import lombok.AllArgsConstructor;
 public class LoanAnonymizationConfiguration {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final String FEEFINE = "feeFine";
+  private static final String USER_SPECIFIC = "userSpecific";
 
   private final ClosingType loanClosingType;
   private final ClosingType feesAndFinesClosingType;
   private final boolean treatLoansWithFeesAndFinesDifferently;
   private final Period loanClosePeriod;
   private final Period feeFineClosePeriod;
+  private final UserSpecificClosingType userSpecificClosingType;
+  private final Period userSpecificClosePeriod;
 
   public static LoanAnonymizationConfiguration from(JsonObject jsonObject) {
     log.debug("from:: parsing loan anonymization configuration");
+
     return new LoanAnonymizationConfiguration(
       ClosingType.from(getNestedStringProperty(jsonObject, "closingType", "loan")),
       ClosingType.from(getNestedStringProperty(jsonObject, "closingType", FEEFINE)),
       getBooleanProperty(jsonObject, "treatEnabled"),
-      Period.from(getNestedIntegerProperty(jsonObject, "loan", "duration"),
-        getNestedStringProperty(jsonObject, "loan", "intervalId")),
-      Period.from(
-        getNestedIntegerProperty(jsonObject, FEEFINE, "duration"),
-        getNestedStringProperty(jsonObject, FEEFINE, "intervalId")));
+      closePeriod(jsonObject, "loan"),
+      closePeriod(jsonObject, FEEFINE),
+      UserSpecificClosingType.from(
+        getNestedStringProperty(jsonObject, "closingType", USER_SPECIFIC)),
+      closePeriod(jsonObject, USER_SPECIFIC));
+  }
+
+  private static Period closePeriod(JsonObject jsonObject, String key) {
+    return Period.from(getNestedIntegerProperty(jsonObject, key, "duration"),
+      getNestedStringProperty(jsonObject, key, "intervalId"));
   }
 
   public ClosingType getLoanClosingType() {
@@ -56,5 +65,34 @@ public class LoanAnonymizationConfiguration {
 
   public ClosingType getFeesAndFinesClosingType() {
     return feesAndFinesClosingType;
+  }
+
+  public UserSpecificClosingType getUserSpecificClosingType() {
+    return userSpecificClosingType;
+  }
+
+  public Period getUserSpecificClosePeriod() {
+    return userSpecificClosePeriod;
+  }
+
+  public boolean isUserSpecificAnonymizationEnabled() {
+    return userSpecificClosingType != UserSpecificClosingType.DISABLED;
+  }
+
+  /**
+   * The policy for users who chose "as early as possible": the user-specific rule replaces the
+   * loan rule, the fee/fine rule is shared. An unknown user-specific rule anonymizes none of
+   * these loans.
+   */
+  public LoanAnonymizationConfiguration forAsEarlyAsPossible() {
+    ClosingType closingType = switch (userSpecificClosingType) {
+      case IMMEDIATELY -> ClosingType.IMMEDIATELY;
+      case INTERVAL -> ClosingType.INTERVAL;
+      default -> ClosingType.UNKNOWN;
+    };
+
+    return new LoanAnonymizationConfiguration(closingType, feesAndFinesClosingType,
+      treatLoansWithFeesAndFinesDifferently, userSpecificClosePeriod, feeFineClosePeriod,
+      userSpecificClosingType, userSpecificClosePeriod);
   }
 }

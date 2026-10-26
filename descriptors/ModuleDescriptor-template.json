@@ -1132,6 +1132,7 @@
             "scheduled-notice-storage.scheduled-notices.item.post",
             "patron-notice.post",
             "anonymize-storage-loans.post",
+            "circulation-storage.anonymization-candidates.collection.get",
             "accounts.collection.get",
             "feefineactions.collection.get",
             "circulation-storage.loans-history.collection.get"
@@ -1275,7 +1276,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "7.3"
+      "version": "7.5"
     },
     {
       "id": "circulation-rules-storage",
