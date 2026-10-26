@@ -30,7 +30,8 @@
           "enum": [
             "patronBlock",
             "itemLimitBlock",
-            "itemNotLoanableBlock"
+            "itemNotLoanableBlock",
+            "checkedOutItemInHouseUseOverride"
           ]
         },
         "missingPermissions": {
