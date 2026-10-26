@@ -9,117 +9,7 @@
     },
     "item": {
       "description": "Additional information about the item",
-      "type": "object",
-      "properties": {
-        "id": {
-          "description": "ID of the item",
-          "type": "string"
-        },
-        "title": {
-          "description": "The title of the item lent to the patron",
-          "type": "string"
-        },
-        "callNumber" : {
-          "description" : "The call number from the holdings record",
-          "type": "string"
-        },
-        "materialType": {
-          "description": "The material type from the item record",
-          "type": "object",
-          "properties": {
-            "name": {
-              "description": "Name of the material type",
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        "contributors": {
-          "description": "Contributors from the instance record",
-          "type": "array",
-          "items" : {
-            "type": "object",
-            "properties" : {
-              "name" : {
-                "description": "Name of the contributor",
-                "type" : "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "holdingsRecordId": {
-          "description": "The ID of the holdings for the item",
-          "type": "string"
-        },
-        "instanceId": {
-          "description": "The ID of the instance for the item",
-          "type": "string"
-        },
-        "barcode": {
-          "description": "The barcode of the item",
-          "type": "string"
-        },
-        "location": {
-          "description": "The effective location of the item",
-          "type": "object",
-          "properties": {
-            "name": {
-              "description": "The name of the location",
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        "status": {
-          "description": "Overall status of the item",
-          "type": "object",
-          "properties": {
-            "name": {
-              "description": "Name of the item status",
-              "type": "string"
-            },
-            "date": {
-              "type": "string",
-              "description": "Date time when status was last changed",
-              "format": "date-time"
-            }
-          },
-          "additionalProperties": false
-        },
-        "enumeration": {
-          "description": "Item`s enumeration",
-          "type": "string"
-        },
-        "chronology": {
-          "description": "Chronology is the descriptive information for the dating scheme of a serial.",
-          "type": "string"
-        },
-        "volume": {
-          "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of George Bernard Shaw in three volumes).",
-          "type": "string"
-        },
-        "displaySummary": {
-          "description": "Display summary about the item",
-          "type": "string"
-        },
-        "inTransitDestinationServicePointId": {
-          "description": "Service point an item is intended to be transited to (should only be present when in transit)",
-          "type": "string",
-          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
-        },
-        "inTransitDestinationServicePoint": {
-          "description": "Service point an item is intended to be transited to (should only be present when in transit)",
-          "type": "object",
-          "properties": {
-            "name": {
-              "description": "Name of the service point",
-              "type": "string"
-            }
-          }
-        }
-      },
-      "additionalProperties": false
+      "$ref": "check-in-by-barcode-response-item.json"
     },
     "staffSlipContext": {
       "description": "Context for staff slip tokens",
@@ -128,6 +18,32 @@
     "inHouseUse": {
       "type": "boolean",
       "description": "Defines whether the current check-in operation considered as in-house use or not."
+    },
+    "subsequentCheckIns": {
+      "description": "Responses of check-ins performed after the top-level one within the same request (e.g. in-house use of a checked out item). Omitted for ordinary check-ins; entries are never recursive",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "loan": {
+            "description": "Loan affected by the check in",
+            "$ref": "loan.json"
+          },
+          "item": {
+            "description": "Additional information about the item",
+            "$ref": "check-in-by-barcode-response-item.json"
+          },
+          "staffSlipContext": {
+            "description": "Context for staff slip tokens",
+            "type": "object"
+          },
+          "inHouseUse": {
+            "description": "Defines whether this check-in operation is considered as in-house use or not",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false

@@ -33,6 +33,11 @@
     "inHouseUse": {
       "description": "Explicitly indicates whether this check-in should be treated as an in-house use, overriding the default inference logic when true",
       "type": "boolean"
+    },
+    "checkedOutItemInHouseUseOverride": {
+      "description": "Confirms that an item that is currently checked out should be checked in and then checked in again as in-house use. Only effective together with inHouseUse set to true; defaults to false",
+      "type": "boolean",
+      "default": false
     }
   },
   "additionalProperties": false,
