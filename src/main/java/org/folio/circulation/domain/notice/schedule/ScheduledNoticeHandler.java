@@ -461,19 +461,48 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNotice>> handleException(Throwable throwable,
     ScheduledNotice notice, boolean noticeSent) {
 
+    publishExceptionToCirculationLog(throwable, notice);
+
     if (!noticeSent) {
       // The notice has not been delivered yet, so keep the record: the next run will retry it.
-      log.error("handleException:: exception thrown after scheduled notice {} was sent",
-        notice.getId(), throwable);
+      log.error("handleException:: exception thrown before scheduled notice {} was sent, " +
+        "keeping it for the next run", notice.getId(), throwable);
 
       return completedFuture(succeeded(notice));
     }
 
-    // The notice was already sent: delete the record so that it cannot be sent again.
-    log.error("handleException:: exception thrown after scheduled notice {} was sent: {}",
-      notice.getId(), throwable.getMessage(), throwable);
+    if (isRecurring(notice)) {
+      // After a send, a recurring notice is supposed to be rescheduled, not deleted. Keep the
+      // record so that its next occurrences are not lost.
+      log.error("handleException:: exception thrown after recurring scheduled notice {} was " +
+        "sent, keeping it so that its next occurrences are not lost", notice.getId(), throwable);
+
+      return completedFuture(succeeded(notice));
+    }
+
+    // A non-recurring notice is deleted after it was sent: do it now so it cannot be sent again.
+    log.error("handleException:: exception thrown after scheduled notice {} was sent, " +
+      "deleting it so that it is not sent again", notice.getId(), throwable);
 
     return deleteNotice(notice, throwable.getMessage());
+  }
+
+  private static boolean isRecurring(ScheduledNotice notice) {
+    return notice.getConfiguration() != null && notice.getConfiguration().isRecurring();
+  }
+
+  private void publishExceptionToCirculationLog(Throwable throwable, ScheduledNotice notice) {
+    try {
+      eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), throwable)
+        .exceptionally(t -> {
+          log.warn("publishExceptionToCirculationLog:: failed to publish error event for " +
+            "notice {}", notice.getId(), t);
+          return null;
+        });
+    } catch (Exception e) {
+      log.warn("publishExceptionToCirculationLog:: failed to publish error event for " +
+        "notice {}", notice.getId(), e);
+    }
   }
 
 }

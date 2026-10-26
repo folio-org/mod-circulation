@@ -247,6 +247,48 @@ class ScheduledNoticeHandlerTest {
     verify(scheduledNoticesStorageClient, never()).delete(notice.getId());
   }
 
+  @Test
+  void handleContextDeletesNonRecurringNoticeWhenUpdateThrowsAfterNoticeWasSent() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, null,
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    when(scheduledNoticesStorageClient.delete(notice.getId()))
+      .thenReturn(completedFuture(Result.succeeded(new Response(204, null, null))));
+
+    var handler = new FailingUpdateNoticeHandler(clients, false, true);
+
+    var result = handler.handleContext(new ScheduledNoticeContext(notice)).join();
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(handler.getSendNoticeCallCount(), is(1));
+    verify(scheduledNoticesStorageClient, times(1)).delete(notice.getId());
+  }
+
+  @Test
+  void handleContextKeepsRecurringNoticeWhenUpdateThrowsAfterNoticeWasSent() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, Period.days(1),
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    var handler = new FailingUpdateNoticeHandler(clients, false, true);
+
+    var result = handler.handleContext(new ScheduledNoticeContext(notice)).join();
+
+    // A recurring notice must not be deleted: its next occurrences would be lost.
+    assertThat(result.succeeded(), is(true));
+    assertThat(handler.getSendNoticeCallCount(), is(1));
+    verify(scheduledNoticesStorageClient, never()).delete(notice.getId());
+  }
+
   private boolean sendByPreference(ScheduledNotice notice, JsonArray loanNotices) {
     return sendByPreference(new ScheduledNoticeContext(notice)
       .withPatronNoticePolicyId(POLICY_ID), loanNotices);
@@ -372,15 +414,23 @@ class ScheduledNoticeHandlerTest {
   private static final class FailingUpdateNoticeHandler extends ScheduledNoticeHandler {
     private final AtomicInteger sendNoticeCallCount = new AtomicInteger();
     private final boolean failFetchWithException;
+    private final boolean updateThrowsException;
 
     private FailingUpdateNoticeHandler(Clients clients) {
-      this(clients, false);
+      this(clients, false, false);
     }
 
     private FailingUpdateNoticeHandler(Clients clients, boolean failFetchWithException) {
+      this(clients, failFetchWithException, false);
+    }
+
+    private FailingUpdateNoticeHandler(Clients clients, boolean failFetchWithException,
+      boolean updateThrowsException) {
+
       super(clients, new LoanRepository(clients,
         mock(ItemRepository.class), mock(UserRepository.class)));
       this.failFetchWithException = failFetchWithException;
+      this.updateThrowsException = updateThrowsException;
     }
 
     private int getSendNoticeCallCount() {
@@ -411,6 +461,12 @@ class ScheduledNoticeHandlerTest {
     @Override
     protected CompletableFuture<Result<ScheduledNotice>> updateNotice(
       ScheduledNoticeContext context) {
+
+      if (updateThrowsException) {
+        var failedUpdate = new CompletableFuture<Result<ScheduledNotice>>();
+        failedUpdate.completeExceptionally(new RuntimeException("update failed with exception"));
+        return failedUpdate;
+      }
 
       return completedFuture(Result.failed(new ServerErrorFailure("update failed")));
     }
