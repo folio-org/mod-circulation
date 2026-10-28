@@ -775,7 +775,7 @@
             "circulation.check-ins.collection.get"
           ],
           "modulePermissions": [
-            "check-in-storage.check-ins.collection.get"
+            "modperms.circulation.check-ins.collection.get"
           ]
         },
         {
@@ -787,7 +787,7 @@
             "circulation.check-ins.item.get"
           ],
           "modulePermissions": [
-            "check-in-storage.check-ins.item.get"
+            "modperms.circulation.check-ins.item.get"
           ]
         }
       ]
@@ -2046,6 +2046,32 @@
         "manualblocks.item.get",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-ins.collection.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "check-in-storage.check-ins.collection.get",
+        "users.collection.get",
+        "users.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-ins.item.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "check-in-storage.check-ins.item.get",
+        "users.collection.get",
+        "users.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get"
       ],
       "visible": false
     },

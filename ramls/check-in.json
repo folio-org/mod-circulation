@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Check-in",
+  "description": "A record of a check-in operation, enriched with display values for the Inventory Circulation history table",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Unique ID (generated UUID) of the check-in operation",
+      "type": "string",
+      "$ref": "uuid.json"
+    },
+    "occurredDateTime": {
+      "description": "Date and time when the check-in occurred",
+      "type": "string",
+      "format": "date-time"
+    },
+    "itemId": {
+      "description": "Id of item that has checked in",
+      "type": "string",
+      "$ref": "uuid.json"
+    },
+    "itemStatusPriorToCheckIn": {
+      "description": "Item status prior to check-in",
+      "type": "string"
+    },
+    "requestQueueSize": {
+      "description": "Request queue size for the item",
+      "type": "integer",
+      "minimum": 0
+    },
+    "itemLocationId": {
+      "description": "Location of the item in check-in time",
+      "type": "string",
+      "$ref": "uuid.json"
+    },
+    "servicePointId": {
+      "description": "Service point where the item was checked in",
+      "type": "string",
+      "$ref": "uuid.json"
+    },
+    "servicePointName": {
+      "description": "Name of the service point where the item was checked in, resolved from servicePointId (read only, defined by the server)",
+      "type": "string",
+      "readonly": true
+    },
+    "performedByUserId": {
+      "description": "Id of user that has performed check-in operation",
+      "type": "string",
+      "$ref": "uuid.json"
+    },
+    "source": {
+      "description": "Display name of the staff user that performed the check-in, resolved from performedByUserId (read only, defined by the server)",
+      "type": "string",
+      "readonly": true
+    },
+    "inHouseUse": {
+      "description": "Indicates whether the check-in was an in-house use",
+      "type": "boolean",
+      "default": false
+    },
+    "object": {
+      "description": "Circulation log style object for the check-in, derived from inHouseUse (read only, defined by the server)",
+      "type": "string",
+      "enum": ["In-house use", "-"],
+      "readonly": true
+    },
+    "action": {
+      "description": "Circulation log style action for the check-in, derived from inHouseUse (read only, defined by the server)",
+      "type": "string",
+      "enum": ["Recorded", "Checked in"],
+      "readonly": true
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "occurredDateTime",
+    "itemId",
+    "servicePointId",
+    "performedByUserId",
+    "object",
+    "action"
+  ]
+}
