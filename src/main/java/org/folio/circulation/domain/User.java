@@ -99,6 +99,10 @@ public class User {
     return getProperty(representation, "patronGroup");
   }
 
+  public String getLoanAnonymizationPreference() {
+    return getProperty(representation, "loanAnonymizationPreference");
+  }
+
   public String getLastName() {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "lastName");
   }

@@ -8,6 +8,7 @@
 * Add conditions for determining patron notice format([CIRC-2661](https://folio-org.atlassian.net/browse/CIRC-2661))
 * Accept and persist `inHouseUse` in check-in-by-barcode ([CIRC-2685](https://folio-org.atlassian.net/browse/CIRC-2685))
 * Apply the users' loan anonymization preferences in the scheduled loan anonymization when enabled in the `loan_history` setting, require `loan-storage` 7.5 ([CIRC-2698](https://folio-org.atlassian.net/browse/CIRC-2698))
+* Resync the users' loan anonymization preferences from mod-users every night, requires `loan-anonymization-preference-storage` 1.0 ([CIRC-2699](https://folio-org.atlassian.net/browse/CIRC-2699))
 
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))
