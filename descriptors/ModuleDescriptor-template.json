@@ -772,7 +772,7 @@
           ],
           "pathPattern": "/circulation/check-ins",
           "permissionsRequired": [
-            "circulation.check-ins.all.get"
+            "circulation.check-ins.collection.get"
           ],
           "modulePermissions": [
             "modperms.circulation.check-ins.collection.get"
@@ -1491,7 +1491,7 @@
       "description": "checkin a loan using barcodes for item and loanee"
     },
     {
-      "permissionName": "circulation.check-ins.all.get",
+      "permissionName": "circulation.check-ins.collection.get",
       "displayName": "circulation - get check-ins",
       "description": "get a collection of check-in records"
     },
