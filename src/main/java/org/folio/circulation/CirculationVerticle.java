@@ -10,6 +10,7 @@ import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
+import org.folio.circulation.resources.CheckInCollectionResource;
 import org.folio.circulation.resources.CheckOutByBarcodeDryRunResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
@@ -98,6 +99,7 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/check-out-by-barcode-dry-run", client, checkOutByBarcodeResource)
       .register(router);
     new CheckInByBarcodeResource(client).register(router);
+    new CheckInCollectionResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);

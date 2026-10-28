@@ -192,6 +192,9 @@ public abstract class APITests {
   protected final ResourceClient circulationSettingsClient =
     ResourceClient.forCirculationSettings();
 
+  protected final ResourceClient checkInsClient =
+    ResourceClient.forCheckIns();
+
   protected final ResourceClient printEventsClient =
     ResourceClient.forPrintEvents();
 
