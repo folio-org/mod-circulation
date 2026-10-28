@@ -13,6 +13,8 @@ types:
   loans: !include loans.json
   request: !include request.json
   requests: !include requests.json
+  check-in: !include check-in.json
+  check-ins: !include check-ins.json
   check-in-by-barcode-response: !include check-in-by-barcode-response.json
   error: !include extended-error.json
   errors: !include extended-errors.json
@@ -127,6 +129,25 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /check-ins:
+    displayName: Check-ins
+    type:
+      collection:
+        exampleCollection: !include examples/check-ins.json
+        exampleItem: !include examples/check-in.json
+        schemaCollection: check-ins
+        schemaItem: check-in
+    get:
+      is: [
+        pageable,
+        searchable: {description: "by using CQL",
+                        example: "itemId=\"cf23adf0-61ba-4887-bf82-956c4aae2260\""}
+        ]
+    /{id}:
+      type:
+        collection-item:
+          exampleItem: !include examples/check-in.json
+          schema: check-in
   /loans:
     displayName: Loans
     type:

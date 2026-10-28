@@ -232,7 +232,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.8",
+      "version": "14.9",
       "handlers": [
         {
           "methods": [
@@ -764,6 +764,30 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.item.get",
             "inventory-storage.instances.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/check-ins",
+          "permissionsRequired": [
+            "circulation.check-ins.collection.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.check-ins.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/check-ins/{id}",
+          "permissionsRequired": [
+            "circulation.check-ins.item.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.check-ins.item.get"
           ]
         }
       ]
@@ -1467,6 +1491,16 @@
       "description": "checkin a loan using barcodes for item and loanee"
     },
     {
+      "permissionName": "circulation.check-ins.collection.get",
+      "displayName": "circulation - get check-ins",
+      "description": "get a collection of check-in records"
+    },
+    {
+      "permissionName": "circulation.check-ins.item.get",
+      "displayName": "circulation - get an individual check-in",
+      "description": "get an individual check-in record by ID"
+    },
+    {
       "permissionName": "circulation.renew-by-barcode.post",
       "displayName": "circulation - renew loan by barcode",
       "description": "renew a loan using barcodes for item and loanee"
@@ -2012,6 +2046,32 @@
         "manualblocks.item.get",
         "manualblocks.collection.get",
         "patron-blocks.automated-patron-blocks.collection.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-ins.collection.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "check-in-storage.check-ins.collection.get",
+        "users.collection.get",
+        "users.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "modperms.circulation.check-ins.item.get",
+      "displayName": "module permissions for one op",
+      "description": "to reduce X-Okapi-Token size",
+      "subPermissions": [
+        "check-in-storage.check-ins.item.get",
+        "users.collection.get",
+        "users.item.get",
+        "inventory-storage.service-points.collection.get",
+        "inventory-storage.service-points.item.get"
       ],
       "visible": false
     },

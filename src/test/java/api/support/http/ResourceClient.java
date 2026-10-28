@@ -285,6 +285,10 @@ public class ResourceClient {
     return new ResourceClient(InterfaceUrls::circulationSettingsUrl, "circulationSettings");
   }
 
+  public static ResourceClient forCheckIns() {
+    return new ResourceClient(InterfaceUrls::checkInsUrl, "checkIns");
+  }
+
   public static ResourceClient forPrintEvents() {
     return new ResourceClient(InterfaceUrls::printEventsUrl, " ");
   }
