@@ -2,7 +2,6 @@ package org.folio.circulation.resources;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.infrastructure.storage.CheckInStorageRepository.RECORDS_PROPERTY_NAME;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -131,6 +130,6 @@ public class CheckInCollectionResource extends Resource {
       .map(checkIn -> getProperty(checkIn, propertyName))
       .filter(Objects::nonNull)
       .distinct()
-      .collect(toList());
+      .toList();
   }
 }
