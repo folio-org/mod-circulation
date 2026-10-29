@@ -105,9 +105,53 @@ public abstract class ScheduledNoticeHandler {
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
       .thenApply(r -> markNoticeSent(r, noticeSent))
+      .thenCompose(r -> r.after(this::tempDelay)) // TEMP - DO NOT MERGE
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
       .exceptionallyCompose(t -> handleException(t, notice, noticeSent.get()));
+  }
+
+  // TEMP - DO NOT MERGE: test hooks for CIRC-2664, both controlled by env variables and
+  // inactive by default (so unit/API tests are not affected):
+  //  - TEMP_FAIL_AFTER_SEND=true: throw once per notice id right after the notice is sent,
+  //    simulating an exceptional storage failure; the next attempt for the same notice id
+  //    proceeds normally, like a transient error that recovered.
+  //  - TEMP_NOTICE_DELAY_SECONDS=<n>: pause n seconds after the send (non-blocking), so that
+  //    storage can be stopped before the notice record is updated or deleted.
+  private static final java.util.Set<String> FAILED_ONCE = ConcurrentHashMap.newKeySet();
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> tempDelay(
+    ScheduledNoticeContext context) {
+
+    if ("true".equalsIgnoreCase(System.getenv("TEMP_FAIL_AFTER_SEND"))
+      && FAILED_ONCE.add(context.getNotice().getId())) {
+
+      log.warn("TEMP-FAIL:: simulating exceptional failure after sending notice {}",
+        context.getNotice().getId());
+
+      return CompletableFuture.failedFuture(
+        new IllegalStateException("TEMP simulated connection error after sendNotice"));
+    }
+
+    final long delaySeconds = parseDelaySeconds(System.getenv("TEMP_NOTICE_DELAY_SECONDS"));
+
+    if (delaySeconds <= 0) {
+      return completedFuture(succeeded(context));
+    }
+
+    log.warn("TEMP-DELAY:: notice {} sent, waiting {}s - stop mod-circulation-storage now",
+      context.getNotice().getId(), delaySeconds);
+
+    return CompletableFuture.supplyAsync(() -> succeeded(context),
+      CompletableFuture.delayedExecutor(delaySeconds, java.util.concurrent.TimeUnit.SECONDS));
+  }
+
+  private static long parseDelaySeconds(String value) {
+    try {
+      return value == null ? 0 : Long.parseLong(value.trim());
+    } catch (NumberFormatException e) {
+      return 0;
+    }
   }
 
   protected static Result<ScheduledNoticeContext> markNoticeSent(
