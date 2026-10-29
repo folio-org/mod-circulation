@@ -128,6 +128,32 @@
     "inHouseUse": {
       "type": "boolean",
       "description": "Defines whether the current check-in operation considered as in-house use or not."
+    },
+    "subsequentCheckIns": {
+      "description": "Responses of check-ins performed after the top-level one within the same request (e.g. in-house use of a checked out item). Omitted for ordinary check-ins; entries are never recursive",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "loan": {
+            "description": "Loan affected by the check in",
+            "$ref": "loan.json"
+          },
+          "item": {
+            "description": "Additional information about the item",
+            "type": "object"
+          },
+          "staffSlipContext": {
+            "description": "Context for staff slip tokens",
+            "type": "object"
+          },
+          "inHouseUse": {
+            "description": "Defines whether this check-in operation is considered as in-house use or not",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false

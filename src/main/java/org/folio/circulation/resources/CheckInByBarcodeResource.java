@@ -5,6 +5,9 @@ import static org.folio.circulation.domain.validation.UserNotFoundValidator.refu
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,14 +84,15 @@ public class CheckInByBarcodeResource extends Resource {
     final SettingsRepository settingsRepository = new SettingsRepository(clients);
     final CirculationSettingsService circulationSettingsService = new CirculationSettingsService(clients);
 
-    refuseWhenLoggedInUserNotPresent(context)
-      .next(notUsed -> checkInRequestResult)
+    final Function<CheckInByBarcodeRequest, CompletableFuture<Result<CheckInContext>>>
+      processCheckIn = request -> Result.succeeded(request)
       .map(CheckInContext::new)
       .combineAfter(processAdapter::findItem, (records, item) -> records
         .withItemAndUpdatedLoan(item)
         .withItemStatusBeforeCheckIn(item.getStatus()))
       .thenApply(checkInValidators::refuseWhenItemIsNotAllowedForCheckIn)
       .thenApply(checkInValidators::refuseWhenClaimedReturnedIsNotResolved)
+      .thenApply(checkInValidators::refuseWhenCheckedOutItemInHouseUseIsNotConfirmed)
       .thenComposeAsync(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         CheckInContext::withTlrSettings))
       .thenComposeAsync(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
@@ -133,10 +137,48 @@ public class CheckInByBarcodeResource extends Resource {
       .thenComposeAsync(r -> r.after(
         records -> processAdapter.createOverdueFineIfNecessary(records, context)))
       .thenComposeAsync(r -> r.after(v -> eventPublisher.publishItemCheckedInEvents(v, userRepository, loanRepository)))
-      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices))
-      .thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords))
+      .thenApply(r -> r.next(requestScheduledNoticeService::rescheduleRequestNotices));
+
+    refuseWhenLoggedInUserNotPresent(context)
+      .next(notUsed -> checkInRequestResult)
+      .after(request -> checkInWithOverride(request, processCheckIn, processAdapter,
+        checkInValidators))
       .thenApply(r -> r.map(CheckInByBarcodeResponse::toHttpResponse))
       .thenAccept(context::writeResultToHttpResponse);
+  }
+
+  /**
+   * Processes a check-in. When in-house use is requested for a checked out item and the
+   * override is confirmed, two complete check-ins are executed sequentially: a regular
+   * one followed by an in-house use one, which sees the state left by the first.
+   */
+  private CompletableFuture<Result<CheckInByBarcodeResponse>> checkInWithOverride(
+    CheckInByBarcodeRequest request,
+    Function<CheckInByBarcodeRequest, CompletableFuture<Result<CheckInContext>>> processCheckIn,
+    CheckInProcessAdapter processAdapter, CheckInValidators checkInValidators) {
+
+    if (!request.isInHouseUse()) {
+      return processCheckIn.apply(request).thenApply(r -> r.map(CheckInByBarcodeResponse::fromRecords));
+    }
+
+    // determines whether the item is checked out before any side effects take place
+    return Result.succeeded(new CheckInContext(request))
+      .combineAfter(processAdapter::findItem, CheckInContext::withItemAndUpdatedLoan)
+      .thenApply(checkInValidators::refuseWhenCheckedOutItemInHouseUseIsNotConfirmed)
+      .thenCompose(r -> r.after(records -> {
+        if (!records.getItem().isCheckedOut()) {
+          return processCheckIn.apply(request)
+            .thenApply(res -> res.map(CheckInByBarcodeResponse::fromRecords));
+        }
+
+        return processCheckIn.apply(request.asRegularCheckIn())
+          .thenCompose(first -> first.after(firstContext ->
+            processCheckIn.apply(request.asSubsequentInHouseUseCheckIn())
+              .thenApply(second -> second.map(secondContext ->
+                CheckInByBarcodeResponse.fromRecords(firstContext)
+                  .withSubsequentCheckIns(List.of(
+                    CheckInByBarcodeResponse.fromRecords(secondContext)))))));
+      }));
   }
 
   private ValidationErrorFailure errorWhenInIncorrectStatus(Item item) {

@@ -1,0 +1,18 @@
+{
+  "errors": [
+    {
+      "message": "Item is checked out. Confirmation is required to check it in and register in-house use",
+      "code": "CHECKED_OUT_ITEM_IN_HOUSE_USE_REQUIRES_CONFIRMATION",
+      "parameters": [
+        {
+          "key": "itemBarcode",
+          "value": "2887532577331"
+        }
+      ],
+      "overridableBlock": {
+        "name": "checkedOutItemInHouseUseOverride",
+        "missingPermissions": []
+      }
+    }
+  ]
+}
