@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.User;
@@ -151,6 +153,130 @@ class ScheduledNoticeHandlerTest {
     assertThat(sendByPreference(context, loanNotices), is(false));
   }
 
+  @Test
+  void handleContextRetriesDeleteWhenCleanupThrowsAfterNoticeWasSent() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, null,
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    // First delete attempt (triggered by handleResult's failure branch) fails with a raw
+    // exception rather than a clean Result.failed - this used to be swallowed by
+    // handleException, leaving the notice undeleted and eligible to be resent.
+    var firstDeleteAttempt = new CompletableFuture<Result<Response>>();
+    firstDeleteAttempt.completeExceptionally(new RuntimeException("connection reset"));
+
+    when(scheduledNoticesStorageClient.delete(notice.getId()))
+      .thenReturn(firstDeleteAttempt)
+      .thenReturn(completedFuture(Result.succeeded(new Response(204, null, null))));
+
+    var handler = new FailingUpdateNoticeHandler(clients);
+    var context = new ScheduledNoticeContext(notice);
+
+    var result = handler.handleContext(context).join();
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(handler.getSendNoticeCallCount(), is(1));
+    verify(scheduledNoticesStorageClient, times(2)).delete(notice.getId());
+  }
+
+  @Test
+  void handleContextDoesNotResendNoticeOnNextPollAfterCleanupFailureIsRetried() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, null,
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    // Only the very first delete attempt fails with a raw exception; later ones succeed.
+    // Tracks whether the notice still exists in storage, i.e. whether the next poll
+    // would find and reprocess it.
+    var deleteAttempts = new AtomicInteger();
+    var noticeStillExistsInStorage = new AtomicBoolean(true);
+
+    when(scheduledNoticesStorageClient.delete(notice.getId())).thenAnswer(invocation -> {
+      if (deleteAttempts.getAndIncrement() == 0) {
+        var failedAttempt = new CompletableFuture<Result<Response>>();
+        failedAttempt.completeExceptionally(new RuntimeException("connection reset"));
+        return failedAttempt;
+      }
+
+      noticeStillExistsInStorage.set(false);
+      return completedFuture(Result.succeeded(new Response(204, null, null)));
+    });
+
+    var handler = new FailingUpdateNoticeHandler(clients);
+    var context = new ScheduledNoticeContext(notice);
+
+    // Poll cycle 1.
+    handler.handleContext(context).join();
+
+    // Poll cycle 2 happens only if cleanup never completed (the pre-fix bug scenario).
+    if (noticeStillExistsInStorage.get()) {
+      handler.handleContext(context).join();
+    }
+
+    assertThat("notice must be sent exactly once across both poll cycles",
+      handler.getSendNoticeCallCount(), is(1));
+  }
+
+  @Test
+  void handleContextKeepsNoticeWhenCleanupThrowsBeforeNoticeWasSent() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, null,
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    // Fetching the notice data fails, so handleResult tries to delete the notice and that
+    // delete throws. The notice was never sent, so handleException must not try to delete it
+    // again: the record stays in storage and the next run retries it.
+    var failedDelete = new CompletableFuture<Result<Response>>();
+    failedDelete.completeExceptionally(new RuntimeException("connection reset"));
+    when(scheduledNoticesStorageClient.delete(notice.getId())).thenReturn(failedDelete);
+
+    var handler = new FailingUpdateNoticeHandler(clients, true);
+
+    var result = handler.handleContext(new ScheduledNoticeContext(notice)).join();
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(handler.getSendNoticeCallCount(), is(0));
+    verify(scheduledNoticesStorageClient, times(1)).delete(notice.getId());
+  }
+
+  @Test
+  void handleContextKeepsRecurringNoticeWhenCleanupThrowsAfterNoticeWasSent() {
+    var clients = mock(Clients.class);
+    var scheduledNoticesStorageClient = mock(CollectionResourceClient.class);
+    when(clients.scheduledNoticesStorageClient())
+      .thenReturn(scheduledNoticesStorageClient);
+
+    var notice = buildNotice(new ScheduledNoticeConfig(NoticeTiming.BEFORE, Period.days(1),
+      UUID.randomUUID().toString(), NoticeFormat.EMAIL, false));
+
+    // The notice is sent, the update fails and the delete done by handleResult throws.
+    // A recurring notice must not be deleted again by handleException, otherwise its next
+    // occurrences would be lost.
+    var failedDelete = new CompletableFuture<Result<Response>>();
+    failedDelete.completeExceptionally(new RuntimeException("connection reset"));
+    when(scheduledNoticesStorageClient.delete(notice.getId())).thenReturn(failedDelete);
+
+    var handler = new FailingUpdateNoticeHandler(clients);
+
+    var result = handler.handleContext(new ScheduledNoticeContext(notice)).join();
+
+    assertThat(result.succeeded(), is(true));
+    assertThat(handler.getSendNoticeCallCount(), is(1));
+    verify(scheduledNoticesStorageClient, times(1)).delete(notice.getId());
+  }
+
   private boolean sendByPreference(ScheduledNotice notice, JsonArray loanNotices) {
     return sendByPreference(new ScheduledNoticeContext(notice)
       .withPatronNoticePolicyId(POLICY_ID), loanNotices);
@@ -250,6 +376,73 @@ class ScheduledNoticeHandlerTest {
       ScheduledNoticeContext context) {
 
       return completedFuture(Result.succeeded(context.getNotice()));
+    }
+
+    @Override
+    protected boolean isNoticeIrrelevant(ScheduledNoticeContext context) {
+      return false;
+    }
+
+    @Override
+    protected NoticeLogContext buildNoticeLogContext(ScheduledNoticeContext context) {
+      return NoticeLogContext.from(context.getNotice());
+    }
+
+    @Override
+    protected NoticeLogContextItem buildNoticeLogContextItem(ScheduledNoticeContext context) {
+      return null;
+    }
+
+    @Override
+    protected JsonObject buildNoticeContextJson(ScheduledNoticeContext context) {
+      return new JsonObject();
+    }
+  }
+
+  private static final class FailingUpdateNoticeHandler extends ScheduledNoticeHandler {
+    private final AtomicInteger sendNoticeCallCount = new AtomicInteger();
+    private final boolean failFetchWithException;
+
+    private FailingUpdateNoticeHandler(Clients clients) {
+      this(clients, false);
+    }
+
+    private FailingUpdateNoticeHandler(Clients clients, boolean failFetchWithException) {
+      super(clients, new LoanRepository(clients,
+        mock(ItemRepository.class), mock(UserRepository.class)));
+      this.failFetchWithException = failFetchWithException;
+    }
+
+    private int getSendNoticeCallCount() {
+      return sendNoticeCallCount.get();
+    }
+
+    @Override
+    protected CompletableFuture<Result<ScheduledNoticeContext>> fetchData(
+      ScheduledNoticeContext context) {
+
+      if (failFetchWithException) {
+        var failedFetch = new CompletableFuture<Result<ScheduledNoticeContext>>();
+        failedFetch.completeExceptionally(new RuntimeException("fetch failed"));
+        return failedFetch;
+      }
+
+      return completedFuture(Result.succeeded(context));
+    }
+
+    @Override
+    protected CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
+      ScheduledNoticeContext context) {
+
+      sendNoticeCallCount.incrementAndGet();
+      return completedFuture(Result.succeeded(context));
+    }
+
+    @Override
+    protected CompletableFuture<Result<ScheduledNotice>> updateNotice(
+      ScheduledNoticeContext context) {
+
+      return completedFuture(Result.failed(new ServerErrorFailure("update failed")));
     }
 
     @Override
