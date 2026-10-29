@@ -5,6 +5,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.ErrorCode.USER_BARCODE_NOT_FOUND;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
+import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -296,6 +297,26 @@ public class UserRepository {
       .withPrintDetailsRequester(userMap
         .getOrDefault(Optional.ofNullable(request.getPrintDetails())
           .map(pd -> pd.getString(REQUESTER_ID)).orElse(null), null));
+  }
+
+  /**
+   * One page of the users with one of the given loan anonymization preferences, sorted by id and
+   * starting after {@code afterId} (null for the first page). Paging by id instead of offset can't
+   * skip a user when another user leaves the result while paging.
+   */
+  public CompletableFuture<Result<List<User>>> findUsersWithLoanAnonymizationPreference(
+    Collection<String> preferences, String afterId, PageLimit pageLimit) {
+
+    Result<CqlQuery> query = CqlQuery.exactMatchAny("loanAnonymizationPreference", preferences);
+    if (afterId != null) {
+      query = query.combine(CqlQuery.greaterThan("id", afterId), CqlQuery::and);
+    }
+
+    return query
+      .map(cqlQuery -> cqlQuery.sortBy(ascending("id")))
+      .after(cqlQuery -> usersStorageClient.getMany(cqlQuery, pageLimit))
+      .thenApply(result -> result.next(this::mapResponseToUsers)
+        .map(users -> List.copyOf(users.getRecords())));
   }
 
   private Result<MultipleRecords<User>> mapResponseToUsers(Response response) {
