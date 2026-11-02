@@ -33,6 +33,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Objects.isNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -94,20 +95,25 @@ public class ScheduledDigitalReminderHandler extends LoanScheduledNoticeHandler 
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
     log.info("handleContext:: handling context for notice {}", context.getNotice().getId());
     final ScheduledNotice notice = context.getNotice();
+    final AtomicBoolean noticeSent = new AtomicBoolean(false);
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
-      .thenCompose(r -> r.after(when(this::isOpenDay, this::processNotice, this::skip)))
+      .thenCompose(r -> r.after(when(this::isOpenDay,
+        (ScheduledNoticeContext c) -> processNotice(c, noticeSent), this::skip)))
       .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
+      .exceptionallyCompose(t -> handleException(t, notice, noticeSent.get()));
   }
 
-  private CompletableFuture<Result<ScheduledNotice>> processNotice(ScheduledNoticeContext context) {
+  private CompletableFuture<Result<ScheduledNotice>> processNotice(ScheduledNoticeContext context,
+    AtomicBoolean noticeSent) {
+
     log.info("processNotice:: processing notice {} for loan {}",
       context.getNotice().getId(), context.getLoan() != null ? context.getLoan().getId() : "null");
     return ofAsync(context)
       .thenCompose(r -> r.after(this::persistAccount))
       .thenCompose(r -> r.after(this::createFeeFineAction))
       .thenCompose(r -> r.after(this::sendNotice))
+      .thenApply(r -> markNoticeSent(r, noticeSent))
       .thenCompose(r -> r.after(this::updateLoan))
       .thenCompose(r -> r.after(this::updateNotice));
   }

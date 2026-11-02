@@ -61,6 +61,7 @@ public class Clients {
   private final CollectionResourceClient feeFineOwnerStorageClient;
   private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
+  private final CollectionResourceClient anonymizationCandidatesStorageClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final GetManyRecordsClient userManualBlocksStorageClient;
@@ -111,6 +112,8 @@ public class Clients {
       lostItemPoliciesStorageClient = createLostItemPoliciesStorageClient(client, context);
       locationsStorageClient = createLocationsStorageClient(client, context);
       anonymizeStorageLoansClient = createAnonymizeStorageLoansClient(client, context);
+      anonymizationCandidatesStorageClient = createAnonymizationCandidatesStorageClient(client,
+        context);
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
@@ -224,6 +227,10 @@ public class Clients {
 
   public CollectionResourceClient anonymizeStorageLoansClient() {
     return anonymizeStorageLoansClient;
+  }
+
+  public CollectionResourceClient anonymizationCandidatesStorageClient() {
+    return anonymizationCandidatesStorageClient;
   }
 
   public CollectionResourceClient locationsStorage() {
@@ -594,6 +601,13 @@ public class Clients {
 
     return getCollectionResourceClient(client, context,
       "/anonymize-storage-loans");
+  }
+
+  private static CollectionResourceClient createAnonymizationCandidatesStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context, "/loan-storage/anonymization-candidates");
   }
 
   private static CollectionResourceClient createLocationsStorageClient(

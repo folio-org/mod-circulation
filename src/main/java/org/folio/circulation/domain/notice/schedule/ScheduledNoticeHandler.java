@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -98,13 +99,25 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
     log.debug("handleContext:: handling context for notice {}", context.getNotice()::getId);
     final ScheduledNotice notice = context.getNotice();
+    final AtomicBoolean noticeSent = new AtomicBoolean(false);
 
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
+      .thenApply(r -> markNoticeSent(r, noticeSent))
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
+      .exceptionallyCompose(t -> handleException(t, notice, noticeSent.get()));
+  }
+
+  protected static Result<ScheduledNoticeContext> markNoticeSent(
+    Result<ScheduledNoticeContext> sendResult, AtomicBoolean noticeSent) {
+
+    if (sendResult.succeeded()) {
+      noticeSent.set(true);
+    }
+
+    return sendResult;
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -445,10 +458,51 @@ public abstract class ScheduledNoticeHandler {
     return deleteNotice(notice, failure.toString());
   }
 
-  protected Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
-    log.error("handleException:: exception thrown while processing scheduled notice {}: {}", notice.getId(), throwable.getMessage());
+  protected CompletableFuture<Result<ScheduledNotice>> handleException(Throwable throwable,
+    ScheduledNotice notice, boolean noticeSent) {
 
-    return succeeded(notice);
+    publishExceptionToCirculationLog(throwable, notice);
+
+    if (!noticeSent) {
+      // The notice has not been delivered yet, so keep the record: the next run will retry it.
+      log.error("handleException:: exception thrown before scheduled notice {} was sent, " +
+        "keeping it for the next run", notice.getId(), throwable);
+
+      return completedFuture(succeeded(notice));
+    }
+
+    if (isRecurring(notice)) {
+      // After a send, a recurring notice is supposed to be rescheduled, not deleted. Keep the
+      // record so that its next occurrences are not lost.
+      log.error("handleException:: exception thrown after recurring scheduled notice {} was " +
+        "sent, keeping it so that its next occurrences are not lost", notice.getId(), throwable);
+
+      return completedFuture(succeeded(notice));
+    }
+
+    // A non-recurring notice is deleted after it was sent: do it now so it cannot be sent again.
+    log.error("handleException:: exception thrown after scheduled notice {} was sent, " +
+      "deleting it so that it is not sent again", notice.getId(), throwable);
+
+    return deleteNotice(notice, throwable.getMessage());
+  }
+
+  private static boolean isRecurring(ScheduledNotice notice) {
+    return notice.getConfiguration() != null && notice.getConfiguration().isRecurring();
+  }
+
+  private void publishExceptionToCirculationLog(Throwable throwable, ScheduledNotice notice) {
+    try {
+      eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), throwable)
+        .exceptionally(t -> {
+          log.warn("publishExceptionToCirculationLog:: failed to publish error event for " +
+            "notice {}", notice.getId(), t);
+          return null;
+        });
+    } catch (Exception e) {
+      log.warn("publishExceptionToCirculationLog:: failed to publish error event for " +
+        "notice {}", notice.getId(), e);
+    }
   }
 
 }

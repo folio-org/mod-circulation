@@ -15,6 +15,7 @@ import static org.folio.circulation.domain.representations.LoanProperties.PATRON
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_ID_AT_CHECKOUT;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.CqlSortBy.descending;
+import static org.folio.circulation.support.StringUtil.urlEncode;
 import static org.folio.circulation.support.fetching.RecordFetching.findWithMultipleCqlIndexValues;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
 import static org.folio.circulation.support.http.ResponseMapping.mapUsingJson;
@@ -36,7 +37,9 @@ import static org.folio.circulation.support.utils.LogUtil.multipleRecordsAsStrin
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,6 +81,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
   public static final String DUE_DATE_CHANGED_BY_HOLD = "dueDateChangedByHold";
 
   private final CollectionResourceClient loansStorageClient;
+  private final CollectionResourceClient anonymizationCandidatesStorageClient;
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private final LoanHistoryRepository loanHistoryRepository;
@@ -94,6 +98,7 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
     UserRepository userRepository) {
 
     loansStorageClient = clients.loansStorage();
+    anonymizationCandidatesStorageClient = clients.anonymizationCandidatesStorageClient();
     this.itemRepository = itemRepository;
     this.userRepository = userRepository;
     this.loanHistoryRepository = new LoanHistoryRepository(clients);
@@ -241,6 +246,27 @@ public class LoanRepository implements GetManyRecordsRepository<Loan> {
       .combine(CqlQuery.hasValue(USER_ID), CqlQuery::and);
 
     return queryLoanStorage(cqlQuery, pageLimit);
+  }
+
+  /**
+   * Closed loans of one preference group for the scheduled anonymization. Without
+   * returnedBefore, no date filter is applied.
+   */
+  public CompletableFuture<Result<MultipleRecords<Loan>>> findAnonymizationCandidates(
+    String preference, ZonedDateTime returnedBefore, int limit) {
+
+    log.debug("findAnonymizationCandidates:: parameters preference: {}, returnedBefore: {}, " +
+      "limit: {}", preference, returnedBefore, limit);
+
+    Map<String, String> queryParameters = new HashMap<>();
+    queryParameters.put("preference", preference);
+    queryParameters.put("limit", String.valueOf(limit));
+    if (returnedBefore != null) {
+      queryParameters.put("returnedBefore", urlEncode(returnedBefore.toInstant().toString()));
+    }
+
+    return anonymizationCandidatesStorageClient.getManyWithQueryStringParameters(queryParameters)
+      .thenApply(flatMapResult(this::mapResponseToLoans));
   }
 
   private CompletableFuture<Result<MultipleRecords<Loan>>> queryLoanStorage(
