@@ -546,7 +546,7 @@
           ],
           "pathPattern": "/circulation/check-ins",
           "permissionsRequired": [
-
+            "circulation.check-ins.collection.get"
           ],
           "modulePermissions": [
             "modperms.circulation.check-ins.collection.get"
@@ -558,7 +558,7 @@
           ],
           "pathPattern": "/circulation/check-ins/{id}",
           "permissionsRequired": [
-
+            "circulation.check-ins.item.get"
           ],
           "modulePermissions": [
             "modperms.circulation.check-ins.item.get"
@@ -1156,7 +1156,6 @@
             "scheduled-notice-storage.scheduled-notices.item.post",
             "patron-notice.post",
             "anonymize-storage-loans.post",
-            "circulation-storage.anonymization-candidates.collection.get",
             "accounts.collection.get",
             "feefineactions.collection.get",
             "circulation-storage.loans-history.collection.get"
@@ -1300,7 +1299,7 @@
   "requires": [
     {
       "id": "loan-storage",
-      "version": "7.5"
+      "version": "7.3"
     },
     {
       "id": "circulation-rules-storage",
