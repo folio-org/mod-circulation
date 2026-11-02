@@ -539,6 +539,30 @@
           "modulePermissions": [
             "modperms.circulation.requests.instances.item.post"
           ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/check-ins",
+          "permissionsRequired": [
+            "circulation.check-ins.collection.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.check-ins.collection.get"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/circulation/check-ins/{id}",
+          "permissionsRequired": [
+            "circulation.check-ins.item.get"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.check-ins.item.get"
+          ]
         }
       ]
     },
@@ -764,30 +788,6 @@
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.item.get",
             "inventory-storage.instances.collection.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/check-ins",
-          "permissionsRequired": [
-            "circulation.check-ins.collection.get"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.check-ins.collection.get"
-          ]
-        },
-        {
-          "methods": [
-            "GET"
-          ],
-          "pathPattern": "/circulation/check-ins/{id}",
-          "permissionsRequired": [
-            "circulation.check-ins.item.get"
-          ],
-          "modulePermissions": [
-            "modperms.circulation.check-ins.item.get"
           ]
         }
       ]
