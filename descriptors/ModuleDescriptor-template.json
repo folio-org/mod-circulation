@@ -546,7 +546,7 @@
           ],
           "pathPattern": "/circulation/check-ins",
           "permissionsRequired": [
-            "circulation.check-ins.collection.get"
+
           ],
           "modulePermissions": [
             "modperms.circulation.check-ins.collection.get"
@@ -558,7 +558,7 @@
           ],
           "pathPattern": "/circulation/check-ins/{id}",
           "permissionsRequired": [
-            "circulation.check-ins.item.get"
+
           ],
           "modulePermissions": [
             "modperms.circulation.check-ins.item.get"
