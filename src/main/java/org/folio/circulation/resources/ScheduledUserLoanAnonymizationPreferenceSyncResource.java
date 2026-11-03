@@ -40,9 +40,12 @@ public class ScheduledUserLoanAnonymizationPreferenceSyncResource extends Resour
     log.debug("syncPreferences:: triggered");
     final WebContext context = new WebContext(routingContext);
     final Clients clients = Clients.create(context, client);
+    final UserRepository userRepository = new UserRepository(clients);
+    final UserLoanAnonymizationPreferenceRepository preferenceRepository =
+      new UserLoanAnonymizationPreferenceRepository(clients);
 
-    new UserLoanAnonymizationPreferenceSyncService(new UserRepository(clients),
-        new UserLoanAnonymizationPreferenceRepository(clients), oneThousand())
+    new UserLoanAnonymizationPreferenceSyncService(userRepository, preferenceRepository,
+        oneThousand())
       .sync()
       .thenApply(r -> r.map(toFixedValue(NoContentResponse::noContent)))
       .thenAccept(context::writeResultToHttpResponse);
