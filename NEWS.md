@@ -1,3 +1,7 @@
+## 24.5.3 2026-11-03
+* Make release fixing America/Vancouver timezone ([CIRC-2707](https://folio-org.atlassian.net/browse/CIRC-2707))
+* Remove leaked eMudhra key from ca-certificates (CVE-2026-114820, CVE-2026-111943, [FOLIO-4585](https://folio-org.atlassian.net/browse/FOLIO-4585))
+
 ## 24.5.2 2026-09-11
 * Improve memory management in ItemRepository ([CIRC-2677](https://folio-org.atlassian.net/browse/CIRC-2677))
 
