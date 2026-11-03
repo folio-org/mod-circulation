@@ -20,8 +20,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * Nightly resync of the users' loan anonymization preferences, runs whether or not user-specific
- * loan anonymization is enabled.
+ * Nightly resync of the users' loan anonymization preferences, runs regardless of whether
+ * user-specific loan anonymization is enabled or not.
  */
 public class ScheduledUserLoanAnonymizationPreferenceSyncResource extends Resource {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
