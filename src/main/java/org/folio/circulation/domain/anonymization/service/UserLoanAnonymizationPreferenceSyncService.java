@@ -66,15 +66,19 @@ public class UserLoanAnonymizationPreferenceSyncService {
 
     return userRepository.findUsersWithLoanAnonymizationPreference(
         PREFERENCES_DEVIATING_FROM_LIBRARY_POLICY, afterId, pageLimit)
-      .thenCompose(r -> r.after(users -> {
-        users.forEach(user -> fetched.add(new UserLoanAnonymizationPreference(
-          user.getId(), user.getLoanAnonymizationPreference())));
+      .thenCompose(r -> r.after(page -> addPageAndFetchRest(page, fetched)));
+  }
 
-        if (users.size() < pageLimit.getLimit()) {
-          return completedFuture(succeeded(fetched));
-        }
-        User lastUser = users.get(users.size() - 1);
-        return fetchAllUserSpecificPreferences(lastUser.getId(), fetched);
-      }));
+  private CompletableFuture<Result<List<UserLoanAnonymizationPreference>>> addPageAndFetchRest(
+    List<User> page, List<UserLoanAnonymizationPreference> fetched) {
+
+    page.forEach(user -> fetched.add(new UserLoanAnonymizationPreference(
+      user.getId(), user.getLoanAnonymizationPreference())));
+
+    boolean isLastPage = page.size() < pageLimit.getLimit();
+    if (isLastPage) {
+      return completedFuture(succeeded(fetched));
+    }
+    return fetchAllUserSpecificPreferences(page.getLast().getId(), fetched);
   }
 }
