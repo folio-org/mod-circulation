@@ -46,20 +46,23 @@ public class UserLoanAnonymizationPreferenceSyncService {
   public CompletableFuture<Result<Void>> sync() {
     long start = System.currentTimeMillis();
 
-    return fetchAllPages(null, new ArrayList<>())
-      .thenCompose(r -> r.after(preferences -> {
-        log.info("sync:: fetched {} users with a loan anonymization preference in {} ms",
-          preferences.size(), System.currentTimeMillis() - start);
-        return preferenceRepository.replaceAll(preferences);
-      }))
-      .thenApply(r -> r.map(ignored -> {
-        log.info("sync:: done in {} ms", System.currentTimeMillis() - start);
-        return null;
-      }));
+    return fetchAllUserSpecificPreferences(null, new ArrayList<>())
+      .thenApply(r -> r.peek(preferences -> logFetched(preferences, start)))
+      .thenCompose(r -> r.after(preferenceRepository::replaceAll))
+      .thenApply(r -> r.peek(ignored -> logSyncDone(start)));
   }
 
-  private CompletableFuture<Result<List<UserLoanAnonymizationPreference>>> fetchAllPages(
-    String afterId, List<UserLoanAnonymizationPreference> fetched) {
+  private void logFetched(List<UserLoanAnonymizationPreference> preferences, long start) {
+    log.info("sync:: fetched {} users with a loan anonymization preference in {} ms",
+      preferences.size(), System.currentTimeMillis() - start);
+  }
+
+  private void logSyncDone(long start) {
+    log.info("sync:: done in {} ms", System.currentTimeMillis() - start);
+  }
+
+  private CompletableFuture<Result<List<UserLoanAnonymizationPreference>>>
+  fetchAllUserSpecificPreferences(String afterId, List<UserLoanAnonymizationPreference> fetched) {
 
     return userRepository.findUsersWithLoanAnonymizationPreference(
         PREFERENCES_DEVIATING_FROM_LIBRARY_POLICY, afterId, pageLimit)
@@ -71,7 +74,7 @@ public class UserLoanAnonymizationPreferenceSyncService {
           return completedFuture(succeeded(fetched));
         }
         User lastUser = users.get(users.size() - 1);
-        return fetchAllPages(lastUser.getId(), fetched);
+        return fetchAllUserSpecificPreferences(lastUser.getId(), fetched);
       }));
   }
 }
