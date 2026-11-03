@@ -31,11 +31,9 @@ public class UserLoanAnonymizationPreferenceRepository {
   public CompletableFuture<Result<Void>> replaceAll(
     List<UserLoanAnonymizationPreference> preferences) {
 
-    JsonArray entries = new JsonArray();
-    preferences.forEach(preference -> entries.add(new JsonObject()
-      .put("userId", preference.userId())
-      .put("preference", preference.preference())));
-
+    JsonArray entries = new JsonArray(preferences.stream()
+      .map(UserLoanAnonymizationPreferenceRepository::toJson)
+      .toList());
     JsonObject body = new JsonObject().put("preferences", entries);
 
     final ResponseInterpreter<Void> interpreter = new ResponseInterpreter<Void>()
@@ -43,5 +41,11 @@ public class UserLoanAnonymizationPreferenceRepository {
       .otherwise(forwardOnFailure());
 
     return preferencesStorageClient.put(body).thenApply(interpreter::flatMap);
+  }
+
+  private static JsonObject toJson(UserLoanAnonymizationPreference preference) {
+    return new JsonObject()
+      .put("userId", preference.userId())
+      .put("preference", preference.preference());
   }
 }
