@@ -89,7 +89,7 @@ class UserLoanAnonymizationPreferenceSyncServiceTest {
   }
 
   @Test
-  void noDeviatingUserEmptiesTheTable() {
+  void noUserDeviatingFromLibraryPolicyEmptiesTheTable() {
     whenPageAfter(null).thenReturn(completedFuture(succeeded(List.of())));
     when(preferenceRepository.replaceAll(any()))
       .thenReturn(completedFuture(succeeded(null)));
