@@ -122,6 +122,12 @@ resourceTypes:
             application/json:
               type: check-in-by-barcode-response
               example: !include examples/check-in-by-barcode-response.json
+        422:
+          description: "Validation error, including CHECKED_OUT_ITEM_IN_HOUSE_USE_REQUIRES_CONFIRMATION when in-house use is requested for a checked out item without checkedOutItemInHouseUseOverride"
+          body:
+            application/json:
+              type: errors
+              example: !include examples/check-in-by-barcode-confirmation-required-error.json
         500:
           description: "Internal server error"
           body:

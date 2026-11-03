@@ -2,18 +2,24 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.domain.ItemStatus.INTELLECTUAL_ITEM;
 import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.CLAIMED_RETURNED_RESOLUTION;
+import static org.folio.circulation.domain.representations.CheckOutByBarcodeRequest.ITEM_BARCODE;
+import static org.folio.circulation.support.ErrorCode.CHECKED_OUT_ITEM_IN_HOUSE_USE_REQUIRES_CONFIRMATION;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.CheckInContext;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.override.OverridableBlockType;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.http.OkapiPermissions;
+import org.folio.circulation.support.http.server.BlockOverrideError;
 import org.folio.circulation.support.results.Result;
 
 public final class CheckInValidators {
@@ -62,6 +68,30 @@ public final class CheckInValidators {
       processRecords -> singleValidationError(
         "Item is claimed returned, a resolution is required to check in",
         CLAIMED_RETURNED_RESOLUTION, null));
+  }
+
+  public Result<CheckInContext> refuseWhenCheckedOutItemInHouseUseIsNotConfirmed(
+    Result<CheckInContext> contextResult) {
+
+    log.debug("refuseWhenCheckedOutItemInHouseUseIsNotConfirmed:: parameters contextResult: {}",
+      () -> resultAsString(contextResult));
+
+    return contextResult.failWhen(
+      context -> succeeded(isCheckedOutItemInHouseUseNotConfirmed(context)),
+      context -> new ValidationErrorFailure(new BlockOverrideError(
+        "Item is checked out. Confirmation is required to check it in and register in-house use",
+        Map.of(ITEM_BARCODE, String.valueOf(context.getCheckInRequestBarcode())),
+        CHECKED_OUT_ITEM_IN_HOUSE_USE_REQUIRES_CONFIRMATION,
+        OverridableBlockType.CHECKED_OUT_ITEM_IN_HOUSE_USE_OVERRIDE,
+        OkapiPermissions.empty())));
+  }
+
+  private boolean isCheckedOutItemInHouseUseNotConfirmed(CheckInContext context) {
+    final var request = context.getCheckInRequest();
+
+    return request.isInHouseUse()
+      && !request.isCheckedOutItemInHouseUseOverride()
+      && context.getItem().isCheckedOut();
   }
 
   private boolean isClaimedReturnedNotResolved(CheckInContext context) {
