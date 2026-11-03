@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import io.vertx.core.json.JsonObject;
+
 import api.support.APITests;
 import api.support.builders.UserBuilder;
 import api.support.http.TimedTaskClient;
@@ -22,11 +24,11 @@ class ScheduledUserLoanAnonymizationPreferenceSyncTests extends APITests {
 
   @Test
   void storesExactlyTheUsersWhoDeviateFromTheLibraryPolicy() {
-    String neverUser = user("never");
-    String earlyUser = user("asEarlyAsPossible");
-    String libraryPolicyUser = user("libraryPolicy");
-    user(null);
-    String missedUpdate = user("never");
+    String neverUser = createUser("never");
+    String earlyUser = createUser("asEarlyAsPossible");
+    String libraryPolicyUser = createUser("libraryPolicy");
+    createUserWithoutPreference();
+    String missedUpdate = createUser("never");
     storePreference(missedUpdate, "asEarlyAsPossible");
     storePreference(libraryPolicyUser, "never");
     storePreference(UUID.randomUUID().toString(), "never");
@@ -38,13 +40,18 @@ class ScheduledUserLoanAnonymizationPreferenceSyncTests extends APITests {
       earlyUser, "asEarlyAsPossible", missedUpdate, "never")));
   }
 
-  private String user(String preference) {
-    var user = new UserBuilder()
+  private String createUser(String preference) {
+    var user = newUser().put("loanAnonymizationPreference", preference);
+    return usersClient.create(user).getId().toString();
+  }
+
+  private void createUserWithoutPreference() {
+    usersClient.create(newUser());
+  }
+
+  private static JsonObject newUser() {
+    return new UserBuilder()
       .withUsername("user-" + UUID.randomUUID())
       .create();
-    if (preference != null) {
-      user.put("loanAnonymizationPreference", preference);
-    }
-    return usersClient.create(user).getId().toString();
   }
 }

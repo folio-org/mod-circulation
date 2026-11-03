@@ -47,9 +47,9 @@ class UserLoanAnonymizationPreferenceSyncServiceTest {
 
   @Test
   void fetchesAllPagesByIdThenReplacesOnce() {
-    User first = user("never");
-    User second = user("asEarlyAsPossible");
-    User third = user("never");
+    User first = userWithPreference("never");
+    User second = userWithPreference("asEarlyAsPossible");
+    User third = userWithPreference("never");
     whenPageAfter(null).thenReturn(completedFuture(succeeded(List.of(first, second))));
     whenPageAfter(second.getId()).thenReturn(completedFuture(succeeded(List.of(third))));
     when(preferenceRepository.replaceAll(any()))
@@ -63,8 +63,8 @@ class UserLoanAnonymizationPreferenceSyncServiceTest {
 
   @Test
   void fullLastPageIsFollowedByAnEmptyPage() {
-    User first = user("never");
-    User second = user("never");
+    User first = userWithPreference("never");
+    User second = userWithPreference("never");
     whenPageAfter(null).thenReturn(completedFuture(succeeded(List.of(first, second))));
     whenPageAfter(second.getId()).thenReturn(completedFuture(succeeded(List.of())));
     when(preferenceRepository.replaceAll(any()))
@@ -77,8 +77,9 @@ class UserLoanAnonymizationPreferenceSyncServiceTest {
 
   @Test
   void failedPageReplacesNothing() {
-    User second = user("never");
-    whenPageAfter(null).thenReturn(completedFuture(succeeded(List.of(user("never"), second))));
+    User second = userWithPreference("never");
+    whenPageAfter(null).thenReturn(
+      completedFuture(succeeded(List.of(userWithPreference("never"), second))));
     whenPageAfter(second.getId())
       .thenReturn(completedFuture(failed(new ServerErrorFailure("mod-users not available"))));
 
@@ -117,7 +118,7 @@ class UserLoanAnonymizationPreferenceSyncServiceTest {
     return captor.getValue();
   }
 
-  private static User user(String preference) {
+  private static User userWithPreference(String preference) {
     return new User(new JsonObject()
       .put("id", UUID.randomUUID().toString())
       .put("loanAnonymizationPreference", preference));
