@@ -72,8 +72,7 @@ public class UserLoanAnonymizationPreferenceSyncService {
   private CompletableFuture<Result<List<UserLoanAnonymizationPreference>>> addPageAndFetchRest(
     List<User> page, List<UserLoanAnonymizationPreference> fetched) {
 
-    page.forEach(user -> fetched.add(new UserLoanAnonymizationPreference(
-      user.getId(), user.getLoanAnonymizationPreference())));
+    page.forEach(user -> fetched.add(UserLoanAnonymizationPreference.from(user)));
 
     boolean isLastPage = page.size() < pageLimit.getLimit();
     if (isLastPage) {
