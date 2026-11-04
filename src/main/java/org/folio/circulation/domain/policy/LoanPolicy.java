@@ -150,6 +150,20 @@ public class LoanPolicy extends Policy {
     return getIntegerProperty(getRenewalsPolicy(), "numberAllowed", 0);
   }
 
+  public boolean isAutomaticRenewalEnabled() {
+    return getBooleanProperty(getRenewalsPolicy(), "automaticRenewal");
+  }
+
+  public Integer getFirstAutomaticRenewalAttemptDaysBeforeDueDate() {
+    return getIntegerProperty(getRenewalsPolicy(),
+      "firstAutomaticRenewalAttemptDaysBeforeDueDate", null);
+  }
+
+  public Integer getAutomaticRenewalRetryPeriodInDays() {
+    return getIntegerProperty(getRenewalsPolicy(),
+      "automaticRenewalRetryPeriodInDays", null);
+  }
+
   public DueDateStrategy determineStrategy(RequestQueue requestQueue, boolean isRenewal,
     boolean isRenewalWithHoldRequest, ZonedDateTime systemDate, String itemId) {
 
