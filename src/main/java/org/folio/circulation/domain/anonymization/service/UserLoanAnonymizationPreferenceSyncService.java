@@ -62,7 +62,7 @@ public class UserLoanAnonymizationPreferenceSyncService {
   }
 
   private CompletableFuture<Result<List<UserLoanAnonymizationPreference>>>
-  fetchAllUserSpecificPreferences(String afterId, List<UserLoanAnonymizationPreference> fetched) {
+    fetchAllUserSpecificPreferences(String afterId, List<UserLoanAnonymizationPreference> fetched) {
 
     return userRepository.findUsersWithLoanAnonymizationPreference(
         PREFERENCES_DEVIATING_FROM_LIBRARY_POLICY, afterId, pageLimit)
