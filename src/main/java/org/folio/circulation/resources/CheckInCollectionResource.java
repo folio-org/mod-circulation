@@ -57,7 +57,8 @@ public class CheckInCollectionResource extends Resource {
 
     checkInStorageRepository.getById(id)
       .thenCompose(r -> r.combineAfter(
-        checkIn -> userRepository.getUser(getProperty(checkIn, PERFORMED_BY_USER_ID)),
+        checkIn -> userRepository.getUserWithoutAddressTypes(
+          getProperty(checkIn, PERFORMED_BY_USER_ID)),
         representation::withSource))
       .thenCompose(r -> r.combineAfter(
         checkIn -> servicePointRepository.getServicePointById(getProperty(checkIn, SERVICE_POINT_ID)),
