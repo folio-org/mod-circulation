@@ -178,6 +178,87 @@ class InHouseUseCheckInTest extends APITests {
     assertThat(getLastCheckInRecord(nod.getId()).getBoolean("inHouseUse"), is(false));
   }
 
+  @Test
+  void checkedOutItemInHouseUseRequiresConfirmation() {
+    final UUID servicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final var response = checkInFixture.attemptCheckInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(servicePointId)
+        .withInHouseUse(true));
+
+    assertThat(response.getStatusCode(), is(422));
+    final JsonObject error = response.getJson().getJsonArray("errors").getJsonObject(0);
+    assertThat(error.getString("code"),
+      is("CHECKED_OUT_ITEM_IN_HOUSE_USE_REQUIRES_CONFIRMATION"));
+    assertThat(error.getJsonObject("overridableBlock").getString("name"),
+      is("checkedOutItemInHouseUseOverride"));
+    assertThat(error.getJsonObject("overridableBlock")
+      .getJsonArray("missingPermissions").size(), is(0));
+
+    // no side effects
+    assertThat(itemsClient.getById(nod.getId()).getJson()
+      .getJsonObject("status").getString("name"), is("Checked out"));
+    assertThat(checkInOperationClient.getMany(queryFromTemplate("itemId=%s", nod.getId()))
+      .totalRecords(), is(0));
+  }
+
+  @Test
+  void confirmedCheckedOutItemInHouseUseProcessesTwoCheckIns() {
+    final UUID servicePointId = servicePointsFixture.cd1().getId();
+    final IndividualResource nod = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(servicePointId)
+        .withInHouseUse(true)
+        .withCheckedOutItemInHouseUseOverride(true));
+
+    final JsonObject json = response.getJson();
+    assertThat(json.containsKey("loan"), is(true));
+    assertThat(json.getBoolean("inHouseUse"), is(false));
+    assertThat(json.getJsonArray("subsequentCheckIns").size(), is(1));
+
+    final JsonObject second = json.getJsonArray("subsequentCheckIns").getJsonObject(0);
+    assertThat(second.getBoolean("inHouseUse"), is(true));
+    assertThat(second.containsKey("loan"), is(false));
+    assertThat(second.containsKey("subsequentCheckIns"), is(false));
+
+    final var records = checkInOperationClient.getMany(
+      queryFromTemplate("itemId=%s", nod.getId()));
+    assertThat(records.totalRecords(), is(2));
+    assertThat(records.stream().filter(r -> r.getBoolean("inHouseUse")).count(), is(1L));
+  }
+
+  @Test
+  void overrideWithoutInHouseUseDoesNotTriggerSecondCheckIn() {
+    final IndividualResource nod = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(
+      new CheckInByBarcodeRequestBuilder()
+        .forItem(nod)
+        .at(servicePointsFixture.cd1().getId())
+        .withCheckedOutItemInHouseUseOverride(true));
+
+    assertThat(response.getJson().containsKey("subsequentCheckIns"), is(false));
+  }
+
+  @Test
+  void ordinaryCheckInOmitsSubsequentCheckIns() {
+    final IndividualResource nod = itemsFixture.basedUponNod();
+    checkOutFixture.checkOutByBarcode(nod, usersFixture.james());
+
+    final CheckInByBarcodeResponse response = checkInFixture.checkInByBarcode(nod);
+
+    assertThat(response.getJson().containsKey("subsequentCheckIns"), is(false));
+  }
+
   private void verifyLastCheckInWasRecorded(UUID itemId, UUID servicePoint) {
     final CqlQuery query = queryFromTemplate("itemId=%s and itemStatusPriorToCheckIn=Available",
       itemId);
