@@ -1,3 +1,6 @@
+## 24.5.4 2026-11-05
+* Add request queue locking ([CIRC-2700](https://folio-org.atlassian.net/browse/CIRC-2700))
+
 ## 24.5.3 2026-11-03
 * Make release fixing America/Vancouver timezone ([CIRC-2707](https://folio-org.atlassian.net/browse/CIRC-2707))
 * Remove leaked eMudhra key from ca-certificates (CVE-2026-114820, CVE-2026-111943, [FOLIO-4585](https://folio-org.atlassian.net/browse/FOLIO-4585))
