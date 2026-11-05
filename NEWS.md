@@ -1,3 +1,8 @@
+## 24.4.22 2026-11-03
+* Enable Maven GitHub workflow ([CIRC-2559](https://folio-org.atlassian.net/browse/CIRC-2559))
+* Make release fixing America/Vancouver timezone ([CIRC-2706](https://folio-org.atlassian.net/browse/CIRC-2706))
+* Remove leaked eMudhra key from ca-certificates (CVE-2026-114820, CVE-2026-111943, [FOLIO-4585](https://folio-org.atlassian.net/browse/FOLIO-4585))
+
 ## 24.4.21 2026-06-12
 * Revert CIRC-2416 changes for pick slips (CIRC-2621)
 
