@@ -1,0 +1,35 @@
+{
+  "checkIns": [
+    {
+      "id": "cf23adf0-61ba-4887-bf82-956c4aae2260",
+      "occurredDateTime": "2026-03-05T14:23:41.000Z",
+      "itemId": "cb20f34f-b773-462f-a091-b233cc96b9e6",
+      "itemStatusPriorToCheckIn": "Checked out",
+      "requestQueueSize": 0,
+      "itemLocationId": "3684a786-6671-4268-8ed0-9db82ebca60b",
+      "servicePointId": "e9af4ba4-6801-4722-bf45-d7a49d54564d",
+      "servicePointName": "Circulation Desk",
+      "performedByUserId": "df7f4993-8c14-4a0f-ab63-93975ab01c76",
+      "source": "Rodriguez, Maria",
+      "inHouseUse": false,
+      "object": "-",
+      "action": "Checked in"
+    },
+    {
+      "id": "346ad017-dac1-417d-9ed8-0ac7eeb886aa",
+      "occurredDateTime": "2026-03-05T15:02:12.000Z",
+      "itemId": "e9af4ba4-6801-4722-be45-d7a49d13564d",
+      "itemStatusPriorToCheckIn": "Available",
+      "requestQueueSize": 0,
+      "itemLocationId": "3684a786-6671-4268-8ed0-9db82ebca60b",
+      "servicePointId": "e9af4ba4-6801-4722-bf45-d7a49d54564d",
+      "servicePointName": "Circulation Desk",
+      "performedByUserId": "b59fe39f-efdc-4a88-993a-04fb405e5ecc",
+      "source": "Smith, John",
+      "inHouseUse": true,
+      "object": "In-house use",
+      "action": "Recorded"
+    }
+  ],
+  "totalRecords": 2
+}

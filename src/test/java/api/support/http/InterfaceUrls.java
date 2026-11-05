@@ -367,6 +367,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/settings" + subPath);
   }
 
+  public static URL checkInsUrl(String subPath) {
+    return circulationModuleUrl("/circulation/check-ins" + subPath);
+  }
+
   public static URL printEventsUrl(String subPath) {
     return circulationModuleUrl("/circulation" + subPath);
   }
