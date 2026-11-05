@@ -33,6 +33,8 @@ import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -129,10 +131,16 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
       ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
-  @Test
-  void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
+  @ParameterizedTest
+  @CsvSource({", , ", "false, , ", "true, 0, 100"})
+  void shouldUseOnlyScheduleAvailableWhenLoanDateFits(Boolean automaticRenewal,
+    Integer firstAttemptDays, Integer retryPeriodDays) {
+
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withAutomaticRenewal(automaticRenewal)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(firstAttemptDays)
+      .withAutomaticRenewalRetryPeriodInDays(retryPeriodDays)
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))

@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
@@ -59,23 +60,38 @@ class RegularRenewalTest {
 
   private static final UUID ITEM_ID = UUID.randomUUID();
 
-  @Test
-  void canRenewLoan() {
+  @ParameterizedTest
+  @CsvSource({", , ", "false, , ", "true, 0, 100"})
+  void canRenewLoan(Boolean automaticRenewal, Integer firstAttemptDays,
+    Integer retryPeriodDays) {
     final var rollingPeriod = days(10);
     final var currentDueDate = getZonedDateTime();
     final var expectedDueDate = rollingPeriod.plusDate(currentDueDate);
 
-    final var loanPolicy = new LoanPolicyBuilder().rolling(rollingPeriod)
-      .renewFromCurrentDueDate().asDomainObject();
+    final var policyBuilder = new LoanPolicyBuilder().rolling(rollingPeriod)
+      .renewFromCurrentDueDate();
+    final var legacyPolicy = policyBuilder.asDomainObject();
+    final var loanPolicy = policyBuilder
+      .withAutomaticRenewal(automaticRenewal)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(firstAttemptDays)
+      .withAutomaticRenewalRetryPeriodInDays(retryPeriodDays)
+      .asDomainObject();
     final var loan = new LoanBuilder()
       .withCheckoutServicePointId(UUID.randomUUID())
       .asDomainObject().changeDueDate(currentDueDate)
       .withLoanPolicy(loanPolicy);
 
+    final var representation = new LoanRepresentation();
+    assertEquals(representation.extendedLoan(loan.withLoanPolicy(legacyPolicy)),
+      representation.extendedLoan(loan));
+
     final var resultCompletableFuture = renew(loan, new OverridingErrorHandler(null));
 
     assertThat(resultCompletableFuture.succeeded(), is(true));
     assertThat(resultCompletableFuture.value().getDueDate(), is(expectedDueDate));
+    final var renewedLoan = resultCompletableFuture.value();
+    assertEquals(representation.extendedLoan(renewedLoan.withLoanPolicy(legacyPolicy)),
+      representation.extendedLoan(renewedLoan));
   }
 
   @Test
@@ -221,10 +237,15 @@ class RegularRenewalTest {
     assertTrue(matchErrorCode(errorHandler, errorCode));
   }
 
-  @Test
-  void cannotRenewLoanThatReachedRenewalLimit() {
+  @ParameterizedTest
+  @CsvSource({", , ", "false, , ", "true, 0, 100"})
+  void cannotRenewLoanThatReachedRenewalLimit(Boolean automaticRenewal,
+    Integer firstAttemptDays, Integer retryPeriodDays) {
     final var renewalLimit = 2;
     final var loanPolicy = new LoanPolicyBuilder()
+      .withAutomaticRenewal(automaticRenewal)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(firstAttemptDays)
+      .withAutomaticRenewalRetryPeriodInDays(retryPeriodDays)
       .withRenewable(true).limitedRenewals(renewalLimit).asDomainObject();
     final var loan = Loan.from(new JsonObject().put("renewalCount", renewalLimit + 1))
       .withLoanPolicy(loanPolicy);
@@ -282,10 +303,19 @@ class RegularRenewalTest {
     assertTrue(matchErrorCode(errorHandler, ErrorCode.ITEM_NOT_LOANABLE));
   }
 
-  @Test
-  void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotRenewable() {
-    final var loanPolicy = spy(new LoanPolicyBuilder()
-      .rolling(days(1)).notRenewable().asDomainObject());
+  @ParameterizedTest
+  @CsvSource({", , ", "false, , ", "true, 0, 100"})
+  void shouldNotAttemptToCalculateDueDateWhenPolicyIsNotRenewable(
+    Boolean automaticRenewal, Integer firstAttemptDays, Integer retryPeriodDays) {
+
+    final var policyJson = new LoanPolicyBuilder()
+      .rolling(days(1))
+      .withAutomaticRenewal(automaticRenewal)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(firstAttemptDays)
+      .withAutomaticRenewalRetryPeriodInDays(retryPeriodDays)
+      .create()
+      .put("renewable", false);
+    final var loanPolicy = spy(LoanPolicy.from(policyJson));
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(null);
     renew(loanPolicy, errorHandler);

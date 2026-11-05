@@ -1,4 +1,5 @@
 ## 24.6.0-SNAPSHOT In progress
+* Adopt automatic-renewal Loan Policy settings and require `loan-policy-storage` 2.5 ([CIRC-2687](https://folio-org.atlassian.net/browse/CIRC-2687))
 * Add DeployConfig.json (ADR-0013 Configuration Management) ([CIRC-2666](https://folio-org.atlassian.net/browse/CIRC-2666))
 * Fix flaky tests ([CIRC-2633](https://folio-org.atlassian.net/browse/CIRC-2633))
 * Refactor item location handling to use locationRepository directly for effective location retrieval ([CIRC-2538](https://folio-org.atlassian.net/browse/CIRC-2538))
