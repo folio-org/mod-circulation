@@ -320,6 +320,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/_/tenant");
   }
 
+  public static URL scheduledLoanAnonymizationPreferenceSyncUrl() {
+    return circulationModuleUrl("/circulation/scheduled-loan-anonymization-preference-sync");
+  }
+
   public static URL scheduledAgeToLostUrl() {
     return circulationModuleUrl("/circulation/scheduled-age-to-lost");
   }

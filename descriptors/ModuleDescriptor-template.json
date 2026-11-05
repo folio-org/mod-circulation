@@ -1153,6 +1153,20 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/circulation/scheduled-loan-anonymization-preference-sync",
+          "modulePermissions": [
+            "users.collection.get",
+            "circulation-storage.loan-anonymization-preferences.collection.put"
+          ],
+          "schedule": {
+            "cron": "0 2 * * *",
+            "zone": "CET"
+          }
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/circulation/scheduled-age-to-lost",
           "modulePermissions": [
             "circulation-storage.loans.item.put",
@@ -1401,6 +1415,10 @@
     {
       "id": "anonymize-storage-loans",
       "version": "0.1"
+    },
+    {
+      "id": "loan-anonymization-preference-storage",
+      "version": "1.0"
     },
     {
       "id": "identifier-types",

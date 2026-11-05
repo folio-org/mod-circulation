@@ -233,6 +233,8 @@ public class FakeOkapi extends AbstractVerticle {
     FakeCalendarOkapi.registerCalendarAllDates(router);
     FakeCalendarOkapi.registerCalendarSurroundingDates(router);
     registerFakeStorageLoansAnonymize(router);
+    router.put("/loan-anonymization-preference-storage/loan-anonymization-preferences")
+      .handler(new FakeUserLoanAnonymizationPreferencesResource());
 
     new FakeSearchModule().register(router);
     new FakeStorageModuleBuilder()
