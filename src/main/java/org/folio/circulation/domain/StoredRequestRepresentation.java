@@ -119,11 +119,12 @@ public class StoredRequestRepresentation {
   private static void addSearchIndexProperties(JsonObject requestJson, Request request) {
     log.debug("addSearchIndexProperties:: parameters requestJson: {}, request: {}",
       () -> requestJson, () -> request);
-    JsonObject searchIndex = new JsonObject();
+    JsonObject searchIndex = requestJson.getJsonObject("searchIndex", new JsonObject()).copy();
 
     if (request.hasItem()) {
       Item item = request.getItem();
       CallNumberComponents callNumberComponents = item.getCallNumberComponents();
+      searchIndex.remove(ItemProperties.CALL_NUMBER_COMPONENTS);
       if (callNumberComponents != null) {
         write(searchIndex, ItemProperties.CALL_NUMBER_COMPONENTS,
           createCallNumberComponents(callNumberComponents));
@@ -132,6 +133,7 @@ public class StoredRequestRepresentation {
           requestJson);
       }
 
+      searchIndex.remove(ItemProperties.SHELVING_ORDER);
       write(searchIndex, ItemProperties.SHELVING_ORDER, item.getShelvingOrder());
     }
 
