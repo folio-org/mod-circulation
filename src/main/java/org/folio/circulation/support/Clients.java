@@ -62,6 +62,7 @@ public class Clients {
   private final CollectionResourceClient feeFineStorageClient;
   private final CollectionResourceClient anonymizeStorageLoansClient;
   private final CollectionResourceClient anonymizationCandidatesStorageClient;
+  private final CollectionResourceClient userLoanAnonymizationPreferencesStorageClient;
   private final CollectionResourceClient patronActionSessionsStorageClient;
   private final CollectionResourceClient patronExpiredSessionsStorageClient;
   private final GetManyRecordsClient userManualBlocksStorageClient;
@@ -114,6 +115,8 @@ public class Clients {
       anonymizeStorageLoansClient = createAnonymizeStorageLoansClient(client, context);
       anonymizationCandidatesStorageClient = createAnonymizationCandidatesStorageClient(client,
         context);
+      userLoanAnonymizationPreferencesStorageClient =
+        createUserLoanAnonymizationPreferencesStorageClient(client, context);
       institutionsStorageClient = createInstitutionsStorageClient(client, context);
       campusesStorageClient = createCampusesStorageClient(client, context);
       librariesStorageClient = createLibrariesStorageClient(client, context);
@@ -231,6 +234,10 @@ public class Clients {
 
   public CollectionResourceClient anonymizationCandidatesStorageClient() {
     return anonymizationCandidatesStorageClient;
+  }
+
+  public CollectionResourceClient userLoanAnonymizationPreferencesStorageClient() {
+    return userLoanAnonymizationPreferencesStorageClient;
   }
 
   public CollectionResourceClient locationsStorage() {
@@ -608,6 +615,14 @@ public class Clients {
     throws MalformedURLException {
 
     return getCollectionResourceClient(client, context, "/loan-storage/anonymization-candidates");
+  }
+
+  private static CollectionResourceClient createUserLoanAnonymizationPreferencesStorageClient(
+    OkapiHttpClient client, WebContext context)
+    throws MalformedURLException {
+
+    return getCollectionResourceClient(client, context,
+      "/loan-anonymization-preference-storage/loan-anonymization-preferences");
   }
 
   private static CollectionResourceClient createLocationsStorageClient(
