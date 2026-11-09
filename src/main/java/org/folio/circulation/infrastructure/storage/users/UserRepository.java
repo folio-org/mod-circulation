@@ -82,8 +82,14 @@ public class UserRepository {
 
   public CompletableFuture<Result<User>> getUser(String userId) {
     log.debug("getUser:: parameters userId: {}", userId);
+    return getUserWithoutAddressTypes(userId)
+      .thenComposeAsync(this::resolveAddressTypeNames);
+  }
+
+  public CompletableFuture<Result<User>> getUserWithoutAddressTypes(String userId) {
+    log.debug("getUserWithoutAddressTypes:: parameters userId: {}", userId);
     if(isNull(userId)) {
-      log.info("getUser:: userId is null");
+      log.info("getUserWithoutAddressTypes:: userId is null");
       return ofAsync(() -> null);
     }
 
@@ -91,8 +97,7 @@ public class UserRepository {
       .using(usersStorageClient)
       .mapTo(User::new)
       .whenNotFound(succeeded(null))
-      .fetch(userId)
-      .thenComposeAsync(this::resolveAddressTypeNames);
+      .fetch(userId);
   }
 
   public CompletableFuture<Result<User>> getUserWithPatronGroup(String userId) {

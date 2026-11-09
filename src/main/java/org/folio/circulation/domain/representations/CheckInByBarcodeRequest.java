@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.With;
 
 @Getter
 @AllArgsConstructor
@@ -33,6 +34,8 @@ public class CheckInByBarcodeRequest {
   private static final String SERVICE_POINT_ID = "servicePointId";
   private static final String SESSION_ID = "sessionId";
   private static final String IN_HOUSE_USE = "inHouseUse";
+  private static final String CHECKED_OUT_ITEM_IN_HOUSE_USE_OVERRIDE =
+    "checkedOutItemInHouseUseOverride";
   public static final String CLAIMED_RETURNED_RESOLUTION = "claimedReturnedResolution";
 
   @ToString.Include
@@ -46,6 +49,9 @@ public class CheckInByBarcodeRequest {
   private final ClaimedReturnedResolution claimedReturnedResolution;
   @ToString.Include
   private final boolean inHouseUse;
+  @ToString.Include
+  @With
+  private final boolean checkedOutItemInHouseUseOverride;
 
   public static Result<CheckInByBarcodeRequest> from(JsonObject json) {
     log.debug("from:: parameters json: {}", json);
@@ -88,8 +94,29 @@ public class CheckInByBarcodeRequest {
     final UUID sessionId = getUUIDProperty(json, SESSION_ID);
     final boolean inHouseUse = getBooleanProperty(json, IN_HOUSE_USE);
 
+    final boolean checkedOutItemInHouseUseOverride =
+      getBooleanProperty(json, CHECKED_OUT_ITEM_IN_HOUSE_USE_OVERRIDE);
+
     return succeeded(new CheckInByBarcodeRequest(itemBarcode, servicePointId,
-      checkInDate, sessionId, claimedReturnedResolution, inHouseUse));
+      checkInDate, sessionId, claimedReturnedResolution, inHouseUse,
+      checkedOutItemInHouseUseOverride));
+  }
+
+  /**
+   * Creates a request for the regular check-in that precedes the in-house use
+   * check-in in the checked out item override flow.
+   */
+  public CheckInByBarcodeRequest asRegularCheckIn() {
+    return new CheckInByBarcodeRequest(itemBarcode, servicePointId, checkInDate,
+      sessionId, claimedReturnedResolution, false, false);
+  }
+
+  /**
+   * Creates a request for the subsequent in-house use check-in.
+   */
+  public CheckInByBarcodeRequest asSubsequentInHouseUseCheckIn() {
+    return new CheckInByBarcodeRequest(itemBarcode, servicePointId, checkInDate,
+      sessionId, null, true, false);
   }
 
   public enum ClaimedReturnedResolution {
