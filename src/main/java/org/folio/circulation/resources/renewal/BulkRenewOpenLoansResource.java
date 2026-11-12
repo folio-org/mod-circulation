@@ -51,7 +51,8 @@ public class BulkRenewOpenLoansResource extends Resource {
     log.info("bulk renewal inbound request headers={}", inboundHeadersAsString(routingContext));
 
     final WebContext context = new WebContext(routingContext);
-    BulkRenewalWebContext detachedContext = new BulkRenewalWebContext(context.getHeaders());
+    BulkRenewalWebContext detachedContext = new BulkRenewalWebContext(
+      context.getHeaders(), context.getVertxContext());
 
     if (!service.trigger(detachedContext)) {
       context.write(new BadRequestFailure("bulk renewal job already running"));
