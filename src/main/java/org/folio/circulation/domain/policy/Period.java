@@ -23,9 +23,11 @@ import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode
 public class Period {
   private static final Period ZERO_DURATION_PERIOD = minutes(0);
 
@@ -249,6 +251,10 @@ public class Period {
 
   public boolean isValid() {
     return duration != null && interval != null;
+  }
+
+  public boolean isMonths() {
+    return MONTHS.equals(interval);
   }
 
   /**

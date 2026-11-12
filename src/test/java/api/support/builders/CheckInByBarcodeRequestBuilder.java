@@ -19,19 +19,24 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
   private final ZonedDateTime checkInDate;
   private final String servicePointId;
   private final String claimedReturnedResolution;
+  private final Boolean inHouseUse;
+  private final Boolean checkedOutItemInHouseUseOverride;
 
   public CheckInByBarcodeRequestBuilder() {
-    this(null, null, ClockUtil.getZonedDateTime(), null, null);
+    this(null, null, ClockUtil.getZonedDateTime(), null, null, null, null);
   }
 
   private CheckInByBarcodeRequestBuilder(String sessionId, String itemBarcode,
-    ZonedDateTime checkInDate, String servicePointId, String claimedReturnedResolution) {
+    ZonedDateTime checkInDate, String servicePointId, String claimedReturnedResolution,
+    Boolean inHouseUse, Boolean checkedOutItemInHouseUseOverride) {
 
     this.sessionId = sessionId;
     this.itemBarcode = itemBarcode;
     this.checkInDate = checkInDate;
     this.servicePointId = servicePointId;
     this.claimedReturnedResolution = claimedReturnedResolution;
+    this.inHouseUse = inHouseUse;
+    this.checkedOutItemInHouseUseOverride = checkedOutItemInHouseUseOverride;
   }
 
   @Override
@@ -43,8 +48,34 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
     put(request, "checkInDate", formatDateTimeOptional(this.checkInDate));
     put(request, "servicePointId", this.servicePointId);
     put(request, "claimedReturnedResolution", this.claimedReturnedResolution);
+    put(request, "inHouseUse", this.inHouseUse);
+    put(request, "checkedOutItemInHouseUseOverride", this.checkedOutItemInHouseUseOverride);
 
     return request;
+  }
+
+  public CheckInByBarcodeRequestBuilder withInHouseUse(Boolean inHouseUse) {
+    return new CheckInByBarcodeRequestBuilder(
+      this.sessionId,
+      this.itemBarcode,
+      this.checkInDate,
+      this.servicePointId,
+      this.claimedReturnedResolution,
+      inHouseUse,
+      this.checkedOutItemInHouseUseOverride);
+  }
+
+  public CheckInByBarcodeRequestBuilder withCheckedOutItemInHouseUseOverride(
+    Boolean checkedOutItemInHouseUseOverride) {
+
+    return new CheckInByBarcodeRequestBuilder(
+      this.sessionId,
+      this.itemBarcode,
+      this.checkInDate,
+      this.servicePointId,
+      this.claimedReturnedResolution,
+      this.inHouseUse,
+      checkedOutItemInHouseUseOverride);
   }
 
   public CheckInByBarcodeRequestBuilder forItem(IndividualResource item) {
@@ -61,7 +92,9 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       this.checkInDate,
       this.servicePointId,
-      this.claimedReturnedResolution);
+      this.claimedReturnedResolution,
+      this.inHouseUse,
+      this.checkedOutItemInHouseUseOverride);
   }
 
   public CheckInByBarcodeRequestBuilder on(ZonedDateTime checkInDate) {
@@ -70,7 +103,9 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       checkInDate,
       this.servicePointId,
-      this.claimedReturnedResolution);
+      this.claimedReturnedResolution,
+      this.inHouseUse,
+      this.checkedOutItemInHouseUseOverride);
   }
 
   public CheckInByBarcodeRequestBuilder onNoOccasion() {
@@ -91,7 +126,9 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       this.checkInDate,
       servicePointId,
-      this.claimedReturnedResolution);
+      this.claimedReturnedResolution,
+      this.inHouseUse,
+      this.checkedOutItemInHouseUseOverride);
   }
 
 
@@ -109,6 +146,8 @@ public class CheckInByBarcodeRequestBuilder extends JsonBuilder implements Build
       this.itemBarcode,
       this.checkInDate,
       this.servicePointId,
-      resolution);
+      resolution,
+      this.inHouseUse,
+      this.checkedOutItemInHouseUseOverride);
   }
 }

@@ -324,6 +324,10 @@ public class InterfaceUrls {
     return APITestContext.viaOkapiModuleUrl("/_/tenant");
   }
 
+  public static URL scheduledLoanAnonymizationPreferenceSyncUrl() {
+    return circulationModuleUrl("/circulation/scheduled-loan-anonymization-preference-sync");
+  }
+
   public static URL scheduledAgeToLostUrl() {
     return circulationModuleUrl("/circulation/scheduled-age-to-lost");
   }
@@ -369,6 +373,10 @@ public class InterfaceUrls {
   }
   public static URL circulationSettingsUrl(String subPath) {
     return circulationModuleUrl("/circulation/settings" + subPath);
+  }
+
+  public static URL checkInsUrl(String subPath) {
+    return circulationModuleUrl("/circulation/check-ins" + subPath);
   }
 
   public static URL printEventsUrl(String subPath) {

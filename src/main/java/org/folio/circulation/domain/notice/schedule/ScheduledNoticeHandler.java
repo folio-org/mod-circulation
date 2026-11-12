@@ -1,5 +1,7 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.AsyncCoordinationUtil.allOf;
 import static org.folio.circulation.support.http.ResponseMapping.forwardOnFailure;
@@ -11,13 +13,25 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.ItemRelatedRecord;
+import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.UserRelatedRecord;
+import org.folio.circulation.domain.notice.NoticeConfiguration;
+import org.folio.circulation.domain.notice.NoticeEventType;
+import org.folio.circulation.domain.notice.PatronNoticeConfigurationResolver;
+import org.folio.circulation.domain.notice.PatronNoticePolicy;
 import org.folio.circulation.domain.notice.ScheduledPatronNoticeService;
 import org.folio.circulation.domain.representations.logs.NoticeLogContext;
 import org.folio.circulation.domain.representations.logs.NoticeLogContextItem;
@@ -25,6 +39,7 @@ import org.folio.circulation.infrastructure.storage.feesandfines.AccountReposito
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRepository;
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
+import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
@@ -46,6 +61,9 @@ public abstract class ScheduledNoticeHandler {
   protected final CollectionResourceClient templateNoticesClient;
   private final ScheduledPatronNoticeService patronNoticeService;
   private final EventPublisher eventPublisher;
+  private final Map<String, PatronNoticePolicy> patronNoticePolicyCache = new ConcurrentHashMap<>();
+  private static final AppliedRuleConditions NO_RULE_CONDITIONS =
+    new AppliedRuleConditions(false, false, false);
 
   protected ScheduledNoticeHandler(Clients clients, LoanRepository loanRepository) {
     this.scheduledNoticesRepository = ScheduledNoticesRepository.using(clients);
@@ -81,13 +99,25 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNotice>> handleContext(ScheduledNoticeContext context) {
     log.debug("handleContext:: handling context for notice {}", context.getNotice()::getId);
     final ScheduledNotice notice = context.getNotice();
+    final AtomicBoolean noticeSent = new AtomicBoolean(false);
 
     return ofAsync(context)
       .thenCompose(r -> r.after(this::fetchNoticeData))
       .thenCompose(r -> r.after(this::sendNotice))
+      .thenApply(r -> markNoticeSent(r, noticeSent))
       .thenCompose(r -> r.after(this::updateNotice))
       .thenCompose(r -> handleResult(r, notice))
-      .exceptionally(t -> handleException(t, notice));
+      .exceptionallyCompose(t -> handleException(t, notice, noticeSent.get()));
+  }
+
+  protected static Result<ScheduledNoticeContext> markNoticeSent(
+    Result<ScheduledNoticeContext> sendResult, AtomicBoolean noticeSent) {
+
+    if (sendResult.succeeded()) {
+      noticeSent.set(true);
+    }
+
+    return sendResult;
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchNoticeData(
@@ -197,12 +227,21 @@ public abstract class ScheduledNoticeHandler {
   protected CompletableFuture<Result<ScheduledNoticeContext>> sendNotice(
     ScheduledNoticeContext context) {
 
-    log.info("sendNotice:: sending notice for scheduled notice {}", context.getNotice().getId());
     if (isNoticeIrrelevant(context)) {
-      log.info("sendNotice:: notice is irrelevant, skipping send");
+      log.info("sendNotice:: notice {} is irrelevant, skipping send", context.getNotice().getId());
       return ofAsync(() -> context);
     }
 
+    return shouldSendByPreference(context)
+      .thenCompose(shouldSend -> FALSE.equals(shouldSend)
+        ? skipDueToPreference(context)
+        : doSendNotice(context));
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> doSendNotice(
+    ScheduledNoticeContext context) {
+
+    log.info("doSendNotice:: sending notice {}", context.getNotice().getId());
     return patronNoticeService.sendNotice(
       context.getNotice().getConfiguration(),
       context.getNotice().getRecipientUserId(),
@@ -214,6 +253,146 @@ public abstract class ScheduledNoticeHandler {
         }
         return r.map(v -> context);
       });
+  }
+
+  private CompletableFuture<Result<ScheduledNoticeContext>> skipDueToPreference(
+    ScheduledNoticeContext context) {
+
+    log.info("skipDueToPreference:: notice {} format {} filtered out by user preference, skipping send",
+      context.getNotice().getId(), context.getNotice().getConfiguration().getFormat());
+
+    return ofAsync(() -> context);
+  }
+
+  protected CompletableFuture<Boolean> shouldSendByPreference(ScheduledNoticeContext context) {
+    var policyId = context.getPatronNoticePolicyId();
+
+    if (StringUtils.isBlank(policyId)) {
+      log.debug("shouldSendByPreference:: no patron notice policy id for notice {}, sending as usual",
+        context.getNotice().getId());
+
+      return completedFuture(TRUE);
+    }
+
+    return lookupPatronNoticePolicy(policyId)
+      .thenApply(policyLookup -> shouldSend(context, policyLookup));
+  }
+
+  private boolean shouldSend(ScheduledNoticeContext context,
+    Result<PatronNoticePolicy> policyLookup) {
+
+    if (policyLookup.failed()) {
+      log.warn("shouldSend:: failed to look up notice policy {} for notice {}: {}",
+        context.getPatronNoticePolicyId(), context.getNotice().getId(), policyLookup.cause());
+
+      return true;
+    }
+
+    return evaluatePreference(context, policyLookup.value());
+  }
+
+  private CompletableFuture<Result<PatronNoticePolicy>> lookupPatronNoticePolicy(String policyId) {
+    var cachedPolicy = patronNoticePolicyCache.get(policyId);
+
+    if (cachedPolicy != null) {
+      log.debug("lookupPatronNoticePolicy:: cache hit for policy {}", policyId);
+      return ofAsync(() -> cachedPolicy);
+    }
+
+    return patronNoticePolicyRepository.lookupPolicy(policyId, NO_RULE_CONDITIONS)
+      .thenApply(result -> cachePolicy(policyId, result));
+  }
+
+  private Result<PatronNoticePolicy> cachePolicy(String policyId,
+    Result<PatronNoticePolicy> result) {
+
+    if (result.succeeded() && result.value() != null) {
+      patronNoticePolicyCache.put(policyId, result.value());
+    }
+
+    return result;
+  }
+
+  private boolean evaluatePreference(ScheduledNoticeContext context, PatronNoticePolicy policy) {
+    var notice = context.getNotice();
+    var noticeConfig = notice.getConfiguration();
+
+    var eventType = validateEventType(notice);
+    if (eventType.isEmpty()) {
+      return true;
+    }
+
+    var matchGroup = findMatchingTemplate(policy, eventType.get(), noticeConfig);
+    if (matchGroup.isEmpty()) {
+      log.info("evaluatePreference:: template {} of notice {} is no longer present in policy {}, " +
+          "sending as scheduled", noticeConfig.getTemplateId(), notice.getId(),
+        context.getPatronNoticePolicyId());
+      return true;
+    }
+
+    return resolveNoticeFormats(context, noticeConfig, matchGroup.get());
+  }
+
+  private static Optional<NoticeEventType> validateEventType(ScheduledNotice notice) {
+    var eventType = NoticeEventType.from(notice.getTriggeringEvent().getRepresentation());
+
+    if (eventType == NoticeEventType.UNKNOWN) {
+      log.debug("validateEventType:: triggering event {} has no patron notice policy " +
+        "counterpart, sending as usual", notice.getTriggeringEvent());
+      return Optional.empty();
+    }
+
+    return Optional.of(eventType);
+  }
+
+  private static Optional<List<NoticeConfiguration>> findMatchingTemplate(
+    PatronNoticePolicy policy, NoticeEventType eventType, ScheduledNoticeConfig noticeConfig) {
+
+    var candidates = policy.lookupNoticeConfigurations(eventType).stream()
+      .filter(candidate -> matchesScheduledConfig(candidate, noticeConfig))
+      .toList();
+
+    return candidates.stream()
+      .filter(candidate -> Objects.equals(candidate.getTemplateId(), noticeConfig.getTemplateId()))
+      .findFirst()
+      .map(anchor -> PatronNoticeConfigurationResolver.matchGroupOf(candidates, anchor));
+  }
+
+  private boolean resolveNoticeFormats(ScheduledNoticeContext context,
+    ScheduledNoticeConfig noticeConfig, List<NoticeConfiguration> matchGroup) {
+
+    if (!PatronNoticeConfigurationResolver.requiresPreference(matchGroup)) {
+      return true;
+    }
+
+    var resolvedFormats = PatronNoticeConfigurationResolver.resolveFormats(matchGroup,
+      extractRecipientUser(context));
+    var shouldSend = resolvedFormats.contains(noticeConfig.getFormat());
+
+    if (!shouldSend) {
+      log.info("resolveNoticeFormats:: notice {} format {} is not among resolved formats {}, skipping",
+        context.getNotice().getId(), noticeConfig.getFormat(), resolvedFormats);
+    }
+
+    return shouldSend;
+  }
+
+  private static boolean matchesScheduledConfig(NoticeConfiguration candidate,
+    ScheduledNoticeConfig config) {
+
+    return Objects.equals(candidate.getTiming(), config.getTiming())
+      && Objects.equals(candidate.isRecurring(), config.isRecurring())
+      && Objects.equals(candidate.sendInRealTime(), config.sendInRealTime())
+      && (!candidate.isRecurring()
+      || Objects.equals(candidate.getRecurringPeriod(), config.getRecurringPeriod()));
+  }
+
+  private static User extractRecipientUser(ScheduledNoticeContext context) {
+    return Optional.ofNullable(context.getLoan())
+      .map(Loan::getUser)
+      .or(() -> Optional.ofNullable(context.getRequest())
+        .map(Request::getUser))
+      .orElse(null);
   }
 
   protected CompletableFuture<Result<ScheduledNoticeContext>> fetchPatronNoticePolicyIdForLoan(
@@ -279,10 +458,51 @@ public abstract class ScheduledNoticeHandler {
     return deleteNotice(notice, failure.toString());
   }
 
-  protected Result<ScheduledNotice> handleException(Throwable throwable, ScheduledNotice notice) {
-    log.error("handleException:: exception thrown while processing scheduled notice {}: {}", notice.getId(), throwable.getMessage());
+  protected CompletableFuture<Result<ScheduledNotice>> handleException(Throwable throwable,
+    ScheduledNotice notice, boolean noticeSent) {
 
-    return succeeded(notice);
+    publishExceptionToCirculationLog(throwable, notice);
+
+    if (!noticeSent) {
+      // The notice has not been delivered yet, so keep the record: the next run will retry it.
+      log.error("handleException:: exception thrown before scheduled notice {} was sent, " +
+        "keeping it for the next run", notice.getId(), throwable);
+
+      return completedFuture(succeeded(notice));
+    }
+
+    if (isRecurring(notice)) {
+      // After a send, a recurring notice is supposed to be rescheduled, not deleted. Keep the
+      // record so that its next occurrences are not lost.
+      log.error("handleException:: exception thrown after recurring scheduled notice {} was " +
+        "sent, keeping it so that its next occurrences are not lost", notice.getId(), throwable);
+
+      return completedFuture(succeeded(notice));
+    }
+
+    // A non-recurring notice is deleted after it was sent: do it now so it cannot be sent again.
+    log.error("handleException:: exception thrown after scheduled notice {} was sent, " +
+      "deleting it so that it is not sent again", notice.getId(), throwable);
+
+    return deleteNotice(notice, throwable.getMessage());
+  }
+
+  private static boolean isRecurring(ScheduledNotice notice) {
+    return notice.getConfiguration() != null && notice.getConfiguration().isRecurring();
+  }
+
+  private void publishExceptionToCirculationLog(Throwable throwable, ScheduledNotice notice) {
+    try {
+      eventPublisher.publishNoticeErrorLogEvent(NoticeLogContext.from(notice), throwable)
+        .exceptionally(t -> {
+          log.warn("publishExceptionToCirculationLog:: failed to publish error event for " +
+            "notice {}", notice.getId(), t);
+          return null;
+        });
+    } catch (Exception e) {
+      log.warn("publishExceptionToCirculationLog:: failed to publish error event for " +
+        "notice {}", notice.getId(), e);
+    }
   }
 
 }

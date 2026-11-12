@@ -2,6 +2,7 @@ package org.folio.circulation.domain.validation;
 
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
+import static org.folio.circulation.support.ErrorCode.USER_NOT_FOUND;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import static org.folio.circulation.support.utils.LogUtil.resultAsString;
 
@@ -23,7 +24,8 @@ public final class UserNotFoundValidator {
     log.debug("refuseWhenUserNotFound:: parameters result: {}", () -> resultAsString(result));
 
     return result.failWhen(loan -> succeeded(loan.getUser() == null),
-      loan -> singleValidationError("user is not found", "userId", loan.getUserId()));
+      loan -> singleValidationError("user is not found", "userId", loan.getUserId(),
+        USER_NOT_FOUND));
   }
 
   public static Result<WebContext> refuseWhenLoggedInUserNotPresent(WebContext webContext) {

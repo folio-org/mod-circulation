@@ -57,7 +57,7 @@ import api.support.APITests;
 import api.support.builders.LoanPolicyBuilder;
 import api.support.builders.MoveRequestBuilder;
 import api.support.builders.RequestBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -1332,7 +1332,7 @@ class MoveRequestTests extends APITests {
     // There should be four events published - for "check out", for "log event", for "hold" and for "move"
     final var publishedEvents = Awaitility.await()
       .atMost(1, TimeUnit.SECONDS)
-      .until(FakePubSub::getPublishedEvents, hasSize(11));
+      .until(KafkaPublishedEvents::getPublishedEvents, hasSize(11));
 
     Map<String, List<JsonObject>> events = publishedEvents.stream().collect(groupingBy(o -> o.getString("eventType")));
 

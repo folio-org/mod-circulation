@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Configuration;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.configuration.CheckoutLockConfiguration;
+import org.folio.circulation.domain.configuration.RequestQueueLockConfiguration;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.GetManyRecordsClient;
@@ -60,6 +61,27 @@ public class SettingsRepository {
     } catch (Exception ex) {
       log.warn("lookUpCheckOutLockSettings:: Unable to retrieve checkoutLockFeature settings ", ex);
       return CompletableFuture.completedFuture(succeeded(CheckoutLockConfiguration.from(new JsonObject())));
+    }
+  }
+
+  public CompletableFuture<Result<RequestQueueLockConfiguration>> lookupRequestQueueLockSettings() {
+    log.debug("lookupRequestQueueLockSettings:: fetching request queue lock settings");
+    try {
+      return fetchSettings("mod-circulation", "requestQueueLockFeature")
+        .thenApply(r -> r.map(records -> records.mapRecords(Configuration::new)))
+        .thenApply(r -> r.map(configurations -> configurations.getRecords().stream().findFirst()
+          .map(Configuration::getValue)
+          .map(JsonObject::new)
+          .orElse(new JsonObject())))
+        .thenApply(r -> r.map(RequestQueueLockConfiguration::from))
+        .thenApply(r -> r.mapFailure(failure -> {
+          log.warn("Failed to fetch request queue lock settings, using defaults: {}", failure);
+          return succeeded(RequestQueueLockConfiguration.from(new JsonObject()));
+        }));
+    } catch (Exception exception) {
+      log.warn("Unable to retrieve request queue lock settings, using defaults", exception);
+      return CompletableFuture.completedFuture(
+        succeeded(RequestQueueLockConfiguration.from(new JsonObject())));
     }
   }
 

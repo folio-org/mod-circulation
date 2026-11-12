@@ -32,6 +32,7 @@ import org.folio.circulation.domain.LoanRepresentation;
 import org.folio.circulation.domain.LoanService;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.UpdateRequestQueue;
+import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.RequestScheduledNoticeService;
@@ -132,7 +133,7 @@ public class CheckOutByBarcodeResource extends Resource {
     var validators = new CheckOutValidators(request, clients, errorHandler, permissions,
       loanRepository);
     final var requestQueueUpdate = UpdateRequestQueue.using(clients,
-      requestRepository, requestQueueRepository);
+      requestRepository, requestQueueRepository, routingContext.vertx());
     final var eventPublisher = new EventPublisher(context, clients);
     final var patronActionSessionService = PatronActionSessionService.using(clients,
       PatronActionSessionRepository.using(clients, loanRepository, userRepository));
@@ -416,9 +417,14 @@ public class CheckOutByBarcodeResource extends Resource {
     LoanAndRelatedRecords loanAndRelatedRecords, RequestQueueRepository requestQueueRepository) {
 
     Item item = loanAndRelatedRecords.getItem();
+    TlrSettingsConfiguration tlrSettings = loanAndRelatedRecords.getTlrSettings();
 
-    return loanAndRelatedRecords.getTlrSettings().isTitleLevelRequestsFeatureEnabled()
+    return (tlrSettings.isTitleLevelRequestsFeatureEnabled()
       ? requestQueueRepository.getByInstanceIdAndItemId(item.getInstanceId(), item.getItemId())
-      : requestQueueRepository.getByItemId(item.getItemId());
+      : requestQueueRepository.getByItemId(item.getItemId()))
+      .thenApply(r -> r.map(queue -> new RequestQueue(
+        queue.getRequests().stream()
+          .map(request -> request.withTlrSettingsConfiguration(tlrSettings))
+          .toList())));
   }
 }

@@ -3,7 +3,7 @@ package api.support.fakes;
 import static api.support.matchers.EventTypeMatchers.LOG_RECORD;
 import static java.util.stream.Collectors.toList;
 
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -13,7 +13,7 @@ import org.folio.circulation.domain.representations.logs.LogEventType;
 
 import io.vertx.core.json.JsonObject;
 
-public class PublishedEvents extends ArrayList<JsonObject> {
+public class PublishedEvents extends CopyOnWriteArrayList<JsonObject> {
   public static Predicate<JsonObject> byEventType(EventType eventType) {
     return byEventType(eventType.name());
   }

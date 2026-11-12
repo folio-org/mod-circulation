@@ -1,6 +1,6 @@
 package api.requests.scenarios;
 
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.KafkaPublishedEvents.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_NEXT_DAY;

@@ -26,6 +26,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.support.ValidationErrorFailure;
+import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.client.OkapiHttpClient;
 import org.folio.circulation.support.results.Result;
 
@@ -39,6 +40,8 @@ import io.vertx.ext.web.RoutingContext;
 
 public class FakeOkapi extends AbstractVerticle {
   private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final HttpFailure REQUEST_QUEUE_LOCK_CONFLICT = response -> response
+    .setStatusCode(409).end("Request queue is already locked");
 
   private static final int PORT_TO_USE = nextFreePort();
   private static final String address =
@@ -230,6 +233,8 @@ public class FakeOkapi extends AbstractVerticle {
     FakeCalendarOkapi.registerCalendarAllDates(router);
     FakeCalendarOkapi.registerCalendarSurroundingDates(router);
     registerFakeStorageLoansAnonymize(router);
+    router.put("/loan-anonymization-preference-storage/loan-anonymization-preferences")
+      .handler(new FakeUserLoanAnonymizationPreferencesResource());
 
     new FakeSearchModule().register(router);
     new FakeStorageModuleBuilder()
@@ -381,7 +386,6 @@ public class FakeOkapi extends AbstractVerticle {
 
     router.delete("/_/tenant").handler(this::removeAllData);
 
-    FakePubSub.register(router);
     FakeModNotify.register(router);
 
     new FakeStorageModuleBuilder()
@@ -410,6 +414,13 @@ public class FakeOkapi extends AbstractVerticle {
       .withCollectionPropertyName("check-out-lock-storage")
       .withChangeMetadata()
       .withRecordConstraint(this::userHasAlreadyAcquiredLock)
+      .create().register(router);
+
+    new FakeStorageModuleBuilder()
+      .withRecordName("request-queue-lock-storage")
+      .withRootPath("/request-queue-lock-storage")
+      .withCollectionPropertyName("request-queue-lock-storage")
+      .withRecordConstraint(this::requestQueueHasAlreadyAcquiredLock)
       .create().register(router);
 
     new FakeStorageModuleBuilder()
@@ -460,6 +471,19 @@ public class FakeOkapi extends AbstractVerticle {
         currentRequest.getString("userId")))
       .findAny()
       .map(r -> ValidationErrorFailure.failedValidation("Unable to acquire lock", "", ""))
+      .orElse(Result.succeeded(null));
+  }
+
+  private Result<Object> requestQueueHasAlreadyAcquiredLock(Collection<JsonObject> existingLocks,
+    JsonObject requestedLock) {
+
+    return existingLocks.stream()
+      .filter(lock -> Objects.equals(lock.getString("queueType"),
+        requestedLock.getString("queueType")))
+      .filter(lock -> Objects.equals(lock.getString("queueId"),
+        requestedLock.getString("queueId")))
+      .findAny()
+      .map(lock -> Result.<Object>failed(REQUEST_QUEUE_LOCK_CONFLICT))
       .orElse(Result.succeeded(null));
   }
 
@@ -539,6 +563,8 @@ public class FakeOkapi extends AbstractVerticle {
   private void registerFakeStorageLoansAnonymize(Router router) {
     router.post("/anonymize-storage-loans")
       .handler(new FakeLoanAnonymizationResource());
+    router.get("/loan-storage/anonymization-candidates")
+      .handler(new FakeAnonymizationCandidatesResource());
   }
 
   private void registerCirculationRulesStorage(Router router) {

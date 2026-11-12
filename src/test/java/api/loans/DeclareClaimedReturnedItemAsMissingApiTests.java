@@ -1,6 +1,7 @@
 package api.loans;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedLoanLogRecordEventsAreValid;
+import static api.support.APITestContext.TENANT_ID;
+import static api.support.KafkaEventAssertions.assertThatPublishedLoanLogRecordEventsAreValid;
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
 import static api.support.matchers.LoanMatchers.hasLoanProperty;
 import static api.support.matchers.LoanMatchers.isClosed;
@@ -11,13 +12,13 @@ import static org.folio.circulation.domain.representations.LoanProperties.ACTION
 import static org.folio.circulation.domain.representations.LoanProperties.ACTION_COMMENT;
 import static org.folio.circulation.support.utils.ClockUtil.getZonedDateTime;
 import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.circulation.domain.events.AuditKafkaTopic;
 import org.folio.circulation.support.http.client.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import api.support.APITests;
 import api.support.builders.ClaimItemReturnedRequestBuilder;
 import api.support.builders.DeclareClaimedReturnedItemAsMissingRequestBuilder;
-import api.support.fakes.FakePubSub;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
 
@@ -62,18 +62,20 @@ class DeclareClaimedReturnedItemAsMissingApiTests extends APITests {
   }
 
   @Test
-  void declareItemMissingFailsWhenEventPublishingFailsWithBadRequestError() {
+  void declareItemMissingFailsWhenKafkaPublishingFails() throws Exception {
     claimItemReturnedFixture.claimItemReturned(new ClaimItemReturnedRequestBuilder()
       .forLoan(loanId)
       .withItemClaimedReturnedDate(getZonedDateTime()));
 
-    FakePubSub.setFailPublishingWithBadRequestError(true);
-    Response response = claimItemReturnedFixture.attemptDeclareClaimedReturnedItemAsMissing(500,
-      new DeclareClaimedReturnedItemAsMissingRequestBuilder()
-        .forLoan(loanId)
-        .withComment(TESTING_COMMENT));
+    String topic = AuditKafkaTopic.LOG_RECORD.fullTopicName(TENANT_ID);
+    try (var ignored = kafkaHelper.rejectMessagesToTopic(topic)) {
+      Response response = claimItemReturnedFixture.attemptDeclareClaimedReturnedItemAsMissing(500,
+        new DeclareClaimedReturnedItemAsMissingRequestBuilder()
+          .forLoan(loanId)
+          .withComment(TESTING_COMMENT));
 
-    assertThat(response.getBody(), containsString("Error during publishing Event Message in PubSub. Status code: 400"));
+      assertThat(response.getStatusCode(), is(500));
+    }
   }
 
   @Test

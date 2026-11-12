@@ -42,6 +42,29 @@ public class NoticeConfigurationBuilder extends JsonBuilder implements Builder {
       this.sendInRealTime);
   }
 
+  public NoticeConfigurationBuilder withEmailFormat() {
+    return withFormat("Email");
+  }
+
+  public NoticeConfigurationBuilder withSmsFormat() {
+    return withFormat("SMS");
+  }
+
+  public NoticeConfigurationBuilder withPrintFormat() {
+    return withFormat("Print");
+  }
+
+  private NoticeConfigurationBuilder withFormat(String format) {
+    return new NoticeConfigurationBuilder(
+      this.templateId,
+      format,
+      this.eventType,
+      this.timing,
+      this.timingPeriod,
+      this.recurringPeriod,
+      this.sendInRealTime);
+  }
+
   public NoticeConfigurationBuilder withEventType(String eventType) {
     return new NoticeConfigurationBuilder(
       this.templateId,

@@ -1,6 +1,6 @@
 package api.support.utl;
 
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.KafkaPublishedEvents.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byLogEventType;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.waitAtMost;
@@ -16,10 +16,13 @@ import org.folio.circulation.domain.notice.session.PatronActionType;
 import org.folio.circulation.domain.representations.logs.LogEventType;
 
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PatronNoticeTestHelper {
 
   private static final ResourceClient scheduledNoticesClient =
@@ -28,8 +31,6 @@ public class PatronNoticeTestHelper {
   private static final ResourceClient patronActionSessionsClient =
     ResourceClient.forPatronSessionRecords();
 
-
-  private PatronNoticeTestHelper() {}
 
   public static List<JsonObject> verifyNumberOfScheduledNotices(int numberOfNotices) {
     return waitForSize(scheduledNoticesClient::getAll, numberOfNotices);
@@ -64,8 +65,8 @@ public class PatronNoticeTestHelper {
       .until(supplier, hasSize(expectedSize));
   }
 
-  public static void clearSentPatronNoticesAndPubsubEvents() {
+  public static void clearSentPatronNoticesAndKafkaEvents() {
     FakeModNotify.clearSentPatronNotices();
-    FakePubSub.clearPublishedEvents();
+    KafkaPublishedEvents.clearPublishedEvents();
   }
 }

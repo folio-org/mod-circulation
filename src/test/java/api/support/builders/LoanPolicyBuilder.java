@@ -42,6 +42,9 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
   private final Period gracePeriod;
   private final boolean forUseAtLocation;
   private final Period holdShelfExpiryPeriodForUseAtLocation;
+  private final Boolean automaticRenewal;
+  private final Integer firstAutomaticRenewalAttemptDaysBeforeDueDate;
+  private final Integer automaticRenewalRetryPeriodInDays;
 
   public LoanPolicyBuilder() {
     this(UUID.randomUUID(),
@@ -69,6 +72,9 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
       null,
       null,
       false,
+      null,
+      null,
+      null,
       null
     );
   }
@@ -132,6 +138,11 @@ public class LoanPolicyBuilder extends JsonBuilder implements Builder {
 
       put(renewalsPolicy, "renewFromId", renewFrom);
       put(renewalsPolicy, "differentPeriod", renewWithDifferentPeriod);
+      put(renewalsPolicy, "automaticRenewal", automaticRenewal);
+      put(renewalsPolicy, "firstAutomaticRenewalAttemptDaysBeforeDueDate",
+        firstAutomaticRenewalAttemptDaysBeforeDueDate);
+      put(renewalsPolicy, "automaticRenewalRetryPeriodInDays",
+        automaticRenewalRetryPeriodInDays);
 
       if(renewWithDifferentPeriod) {
         putIfNotNull(renewalsPolicy, "period", differentRenewalPeriod,

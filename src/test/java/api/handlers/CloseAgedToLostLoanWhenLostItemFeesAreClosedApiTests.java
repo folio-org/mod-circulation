@@ -1,6 +1,7 @@
 package api.handlers;
 
-import static api.support.fakes.FakePubSub.getPublishedEventsAsList;
+import static api.support.Wait.waitForSize;
+import static api.support.KafkaPublishedEvents.getPublishedEventsAsList;
 import static api.support.fakes.PublishedEvents.byEventType;
 import static api.support.http.CqlQuery.exactMatch;
 import static api.support.matchers.EventMatchers.isValidLoanClosedEvent;
@@ -13,9 +14,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getUUIDProp
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.circulation.domain.ItemStatus;
@@ -56,9 +55,10 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
     assertThat(loan.getString("returnDate"), is(returnDate.toString()));
     mockClockManagerToReturnDefaultDateTime();
 
-    List<JsonObject> loanClosedEvents = getPublishedEventsAsList(byEventType(LOAN_CLOSED));
-    assertThat(loanClosedEvents, hasSize(1));
-    assertThat(loanClosedEvents.get(0), isValidLoanClosedEvent(loan));
+    JsonObject loanClosedEvent = waitForSize(
+      () -> getPublishedEventsAsList(byEventType(LOAN_CLOSED)), 1)
+      .iterator().next();
+    assertThat(loanClosedEvent, isValidLoanClosedEvent(loan));
   }
 
   @Test

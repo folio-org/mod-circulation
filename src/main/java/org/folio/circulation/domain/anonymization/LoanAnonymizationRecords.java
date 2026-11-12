@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.folio.circulation.domain.Loan;
 
 public class LoanAnonymizationRecords {
@@ -56,6 +57,16 @@ public class LoanAnonymizationRecords {
     newRecords.loansFound = new ArrayList<>(loansFound);
     newRecords.anonymizedLoans = new ArrayList<>(anonymizedLoans);
     newRecords.notAnonymizedLoans = new HashMap<>(loans);
+    return newRecords;
+  }
+
+  public LoanAnonymizationRecords merge(LoanAnonymizationRecords other) {
+    LoanAnonymizationRecords newRecords = new LoanAnonymizationRecords();
+    newRecords.loansFound = ListUtils.union(loansFound, other.loansFound);
+    newRecords.anonymizedLoans = ListUtils.union(anonymizedLoans, other.anonymizedLoans);
+    newRecords.notAnonymizedLoans = new HashMap<>(notAnonymizedLoans);
+    other.notAnonymizedLoans.forEach((reason, loanIds) -> newRecords.notAnonymizedLoans
+      .merge(reason, loanIds, CollectionUtils::union));
     return newRecords;
   }
 

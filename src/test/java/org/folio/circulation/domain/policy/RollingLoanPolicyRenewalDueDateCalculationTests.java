@@ -20,6 +20,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
@@ -197,6 +198,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertTrue(matchErrorReason(errorHandler,
       "the interval \"Unknown\" in the loan policy is not recognised"));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_INTERVAL_NOT_RECOGNIZED));
   }
 
   @Test
@@ -218,6 +221,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_NOT_RECOGNIZED));
   }
 
   @Test
@@ -239,6 +244,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_NOT_RECOGNIZED));
   }
 
   @Test
@@ -260,6 +267,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, getZonedDateTime(), new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, LOAN_PERIOD_IN_THE_LOAN_POLICY_IS_NOT_RECOGNISED));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_NOT_RECOGNIZED));
   }
 
   @ParameterizedTest
@@ -284,6 +293,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertTrue(matchErrorReason(errorHandler,
       String.format("the duration \"%s\" in the loan policy is invalid", duration)));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.LOAN_POLICY_RENEWAL_PERIOD_DURATION_INVALID));
   }
 
   @Test
@@ -360,6 +371,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -383,6 +396,8 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, getZonedDateTime(), requestQueue, errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -407,6 +422,9 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     assertEquals(2, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OTSIDE_DATE_RANGES));
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_OPEN_RECALL_REQUEST));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_LOAN_POLICY_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_BLOCKED_BY_RECALL));
   }
 
   @Test
@@ -433,6 +451,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
   }
 
   @Test
@@ -459,6 +478,7 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
   }
 
   private Loan loanFor(ZonedDateTime loanDate, ZonedDateTime dueDate, LoanPolicy loanPolicy) {
@@ -497,5 +517,12 @@ class RollingLoanPolicyRenewalDueDateCalculationTests {
     return errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
+  }
+
+  private boolean matchErrorCode(CirculationErrorHandler errorHandler, ErrorCode expectedCode) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .flatMap(httpFailure -> httpFailure.getErrors().stream())
+      .anyMatch(error -> error.getCode() == expectedCode);
   }
 }

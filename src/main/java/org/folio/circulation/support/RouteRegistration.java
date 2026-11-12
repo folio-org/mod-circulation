@@ -35,6 +35,7 @@ public class RouteRegistration {
   }
 
   public void deleteAll(Handler<RoutingContext> handler) {
+    router.delete(rootPath + "*").handler(BodyHandler.create());
     router.delete(rootPath).handler(handler)
       .failureHandler(this::failureResponder);
   }

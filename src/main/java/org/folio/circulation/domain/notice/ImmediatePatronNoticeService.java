@@ -15,7 +15,7 @@ import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.folio.circulation.domain.notice.combiner.NoticeContextCombiner;
@@ -94,33 +94,47 @@ public class ImmediatePatronNoticeService extends PatronNoticeService {
   }
 
   private CompletableFuture<Result<Void>> applyPatronNoticePolicy(EventGroupContext context) {
-    return findMatchingNoticeConfiguration(context)
-      .map(context::withNoticeConfig)
-      .map(this::updateNoticeLogContext)
-      .map(this::sendNotice)
-      .orElseGet(() -> ofAsync(() -> null));
+    var matchGroup = PatronNoticeConfigurationResolver.firstMatchGroup(
+      context.getPatronNoticePolicy().lookupNoticeConfigurations(context.getGroupDefinition().getEventType()));
+
+    if (matchGroup.isEmpty()) {
+      log.debug("applyPatronNoticePolicy:: no notice configuration for event type {}",
+        context.getGroupDefinition().getEventType());
+      return ofAsync(() -> null);
+    }
+    var recipient = context.getEvents().stream()
+      .map(PatronNoticeEvent::getUser)
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+
+    var selected = PatronNoticeConfigurationResolver.select(matchGroup, recipient);
+
+    if (selected.isEmpty()) {
+      log.info("applyPatronNoticePolicy:: no notice configuration selected for recipient {}",
+        context.getGroupDefinition().getRecipientId());
+
+      return ofAsync(() -> null);
+    }
+
+    return allOf(selected, configuration -> sendNotice(context, configuration))
+      .thenApply(mapResult(ignored -> null));
   }
 
-  private Optional<NoticeConfiguration> findMatchingNoticeConfiguration(EventGroupContext context) {
-    return context.getPatronNoticePolicy().lookupNoticeConfiguration(
-      context.getGroupDefinition().getEventType());
-  }
+  private CompletableFuture<Result<Void>> sendNotice(EventGroupContext context,
+    NoticeConfiguration configuration) {
 
-  private EventGroupContext updateNoticeLogContext(EventGroupContext context) {
-    return context.withCombinedNoticeLogContext(
-      context.getCombinedNoticeLogContext()
-        .withNoticePolicyId(context.getGroupDefinition().getNoticePolicyId())
-        .withTemplateId(context.getNoticeConfig().getTemplateId())
-        .withTriggeringEvent(context.getNoticeConfig().getNoticeEventType().getRepresentation()));
-  }
-
-  private CompletableFuture<Result<Void>> sendNotice(EventGroupContext context) {
-    PatronNotice patronNotice = new PatronNotice(
+    var patronNotice = new PatronNotice(
       context.getGroupDefinition().getRecipientId(),
       context.getCombinedNoticeContext(),
-      context.getNoticeConfig());
+      configuration);
 
-    return sendNotice(patronNotice, context.getCombinedNoticeLogContext());
+    var noticeLogContext = context.getCombinedNoticeLogContext()
+      .withNoticePolicyId(context.getGroupDefinition().getNoticePolicyId())
+      .withTemplateId(configuration.getTemplateId())
+      .withTriggeringEvent(configuration.getNoticeEventType().getRepresentation());
+
+    return sendNotice(patronNotice, noticeLogContext);
   }
 
   @With

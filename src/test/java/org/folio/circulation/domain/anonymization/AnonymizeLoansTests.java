@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.anonymization;
 
+import static org.folio.circulation.domain.anonymization.config.UserSpecificClosingType.DISABLED;
 import static org.folio.circulation.support.json.JsonPropertyWriter.write;
 import static org.folio.circulation.support.json.JsonPropertyWriter.writeByPath;
 import static org.hamcrest.CoreMatchers.is;
@@ -59,11 +60,12 @@ class AnonymizeLoansTests {
     }
 
     @Test
-    void doNotAnonymizeClosedLoanWithOpenFees() {
+    void anonymizeClosedLoanWithOpenFees() {
       final var segregatedLoans = checker.segregateLoans(List.of(closedLoanWithOpenFee()));
 
       assertThat(segregatedLoans.size(), is(1));
-      assertThat(loansNotAnonymizedImmediately(segregatedLoans).size(), is(1));
+      // Fees and fines are ignored when loans with fees should not be treated differently
+      assertThat(anonymizedLoans(segregatedLoans).size(), is(1));
     }
 
     @Test
@@ -83,7 +85,7 @@ class AnonymizeLoansTests {
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.IMMEDIATELY, ClosingType.NEVER,
-          false, null, null), ClockUtil::getZonedDateTime);
+          false, null, null, DISABLED, null), ClockUtil::getZonedDateTime);
     }
   }
 
@@ -125,7 +127,7 @@ class AnonymizeLoansTests {
       // loans with fees closing type is definitely used
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.IMMEDIATELY,
-          true, null, null), ClockUtil::getZonedDateTime);
+          true, null, null, DISABLED, null), ClockUtil::getZonedDateTime);
     }
   }
 
@@ -190,7 +192,7 @@ class AnonymizeLoansTests {
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.NEVER, ClosingType.NEVER,
-          true, null, null), ClockUtil::getZonedDateTime);
+          true, null, null, DISABLED, null), ClockUtil::getZonedDateTime);
     }
   }
 
@@ -349,7 +351,7 @@ class AnonymizeLoansTests {
       // loans with fees should not be treated differently
       return new AnonymizationCheckersService(
         new LoanAnonymizationConfiguration(ClosingType.INTERVAL, ClosingType.INTERVAL,
-          true, Period.weeks(1),  Period.weeks(1)),
+          true, Period.weeks(1),  Period.weeks(1), DISABLED, null),
         () -> ZonedDateTime.of(2021, 5, 15, 8, 15, 43, 0, ZoneId.of("UTC")));
     }
   }
@@ -381,7 +383,7 @@ class AnonymizeLoansTests {
   }
 
   private Loan closedLoanWithOpenFee() {
-    return loan("Open", null)
+    return loan("Closed", null)
       .withAccounts(List.of(openFee()));
   }
 

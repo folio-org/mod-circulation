@@ -1,6 +1,6 @@
 package api.loans.anonymization;
 
-import static api.support.PubsubPublisherTestUtils.assertThatPublishedAnonymizeLoanLogRecordEventsAreValid;
+import static api.support.KafkaEventAssertions.assertThatPublishedAnonymizeLoanLogRecordEventsAreValid;
 import static api.support.fakes.PublishedEvents.byLogEventTypeAndAction;
 import static api.support.matchers.LoanMatchers.isAnonymized;
 import static api.support.matchers.LoanMatchers.isOpen;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import api.support.builders.CheckOutByBarcodeRequestBuilder;
 import api.support.builders.LoanHistoryConfigurationBuilder;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.fakes.PublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
@@ -399,18 +399,18 @@ class AnonymizeLoansAfterXIntervalTests extends LoanAnonymizationTests {
     assertThat(loansStorageClient.getById(firstLoan.getId()).getJson(), isAnonymized());
     assertThat(loansStorageClient.getById(secondLoan.getId()).getJson(), isAnonymized());
 
-    final var anonymizedLoanLogEvents = FakePubSub.getPublishedEventsAsList(
+    final var anonymizedLoanLogEvents = KafkaPublishedEvents.getPublishedEventsAsList(
       PublishedEvents.byLogEventTypeAndAction(LOAN.value(), "Anonymize"));
 
     assertThat(anonymizedLoanLogEvents, hasSize(2));
-    FakePubSub.clearPublishedEvents();
+    KafkaPublishedEvents.clearPublishedEvents();
 
     setNextAnonymizationDateTime(ONE_MINUTE_AND_ONE_MILLIS);
 
     LoanAnonymizationAPIResponse secondAnonymization = anonymizeLoansInTenant();
 
     assertThat(secondAnonymization.getAnonymizedLoans().size(), is(0));
-    assertThat(FakePubSub.getPublishedEventsAsList(byLogEventTypeAndAction(LOAN.value(), "Anonymize")), hasSize(0));
+    assertThat(KafkaPublishedEvents.getPublishedEventsAsList(byLogEventTypeAndAction(LOAN.value(), "Anonymize")), hasSize(0));
   }
 
   @Test

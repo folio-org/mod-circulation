@@ -40,6 +40,15 @@ public class PatronNotice {
     return new PatronNotice(recipientId, context, templateId, EMAIL);
   }
 
+  public JsonObject toJson() {
+    return new JsonObject()
+      .put("recipientId", recipientId)
+      .put("templateId", templateId)
+      .put("deliveryChannel", deliveryChannel)
+      .put("outputFormat", outputFormat)
+      .put("context", context);
+  }
+
   @Override
   public String toString() {
     return "PatronNotice{" +

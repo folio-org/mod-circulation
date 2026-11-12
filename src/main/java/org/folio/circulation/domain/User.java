@@ -99,6 +99,10 @@ public class User {
     return getProperty(representation, "patronGroup");
   }
 
+  public String getLoanAnonymizationPreference() {
+    return getProperty(representation, "loanAnonymizationPreference");
+  }
+
   public String getLastName() {
     return getNestedStringProperty(representation, PERSONAL_PROPERTY_NAME, "lastName");
   }
@@ -170,6 +174,18 @@ public class User {
       .stream()
       .map(String.class::cast)
       .collect(Collectors.toList());
+  }
+
+  public List<String> getPreferredContactTypeIds() {
+    return getArrayProperty(getPersonal(), "preferredContactTypeIds")
+      .stream()
+      .filter(String.class::isInstance)
+      .map(String.class::cast)
+      .toList();
+  }
+
+  public String getPreferredContactTypeId() {
+    return getProperty(getPersonal(), "preferredContactTypeId");
   }
 
   public Collection<Department> getDepartments() {

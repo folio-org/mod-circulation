@@ -1,6 +1,7 @@
 package api.support.spring;
 
 import static api.support.APITestContext.getOkapiHeadersFromContext;
+import static api.support.RestAssuredConfiguration.configWithReusableHttpClient;
 import static api.support.http.InterfaceUrls.itemsStorageUrl;
 import static api.support.http.InterfaceUrls.scheduledAgeToLostUrl;
 import static api.support.http.InterfaceUrls.usersUrl;
@@ -58,7 +59,7 @@ public class TestSpringConfiguration {
     final ObjectMapperConfig objectMapperConfig = new ObjectMapperConfig()
       .jackson2ObjectMapperFactory((type, s) -> objectMapper());
 
-    return new RestAssuredConfig().objectMapperConfig(objectMapperConfig);
+    return configWithReusableHttpClient(objectMapperConfig);
   }
 
   @Bean

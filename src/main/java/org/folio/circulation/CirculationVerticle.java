@@ -10,6 +10,7 @@ import org.folio.circulation.resources.AddInfoResource;
 import org.folio.circulation.resources.AllowedServicePointsResource;
 import org.folio.circulation.resources.ChangeDueDateResource;
 import org.folio.circulation.resources.CheckInByBarcodeResource;
+import org.folio.circulation.resources.CheckInCollectionResource;
 import org.folio.circulation.resources.CheckOutByBarcodeDryRunResource;
 import org.folio.circulation.resources.CheckOutByBarcodeResource;
 import org.folio.circulation.resources.CirculationRulesResource;
@@ -46,14 +47,13 @@ import org.folio.circulation.resources.RequestScheduledNoticeProcessingResource;
 import org.folio.circulation.resources.ScheduledAnonymizationProcessingResource;
 import org.folio.circulation.resources.ScheduledRequestAnonymizationProcessingResource;
 import org.folio.circulation.resources.ScheduledDigitalRemindersProcessingResource;
+import org.folio.circulation.resources.ScheduledUserLoanAnonymizationPreferenceSyncResource;
 import org.folio.circulation.resources.SearchSlipsResource;
 import org.folio.circulation.resources.TenantActivationResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostFeeChargingResource;
 import org.folio.circulation.resources.agedtolost.ScheduledAgeToLostResource;
 import org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource;
 import org.folio.circulation.resources.foruseatlocation.PickupByBarcodeResource;
-import org.folio.circulation.resources.handlers.FeeFineBalanceChangedHandlerResource;
-import org.folio.circulation.resources.handlers.LoanRelatedFeeFineClosedHandlerResource;
 import org.folio.circulation.resources.renewal.BulkRenewOpenLoansResource;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.resources.renewal.RenewByIdResource;
@@ -101,6 +101,7 @@ public class CirculationVerticle extends AbstractVerticle {
       "/circulation/check-out-by-barcode-dry-run", client, checkOutByBarcodeResource)
       .register(router);
     new CheckInByBarcodeResource(client).register(router);
+    new CheckInCollectionResource(client).register(router);
 
     new RenewByBarcodeResource(client).register(router);
     new RenewByIdResource(client).register(router);
@@ -160,6 +161,7 @@ public class CirculationVerticle extends AbstractVerticle {
     new LoanAnonymizationResource(client).register(router);
     new DeclareLostResource(client).register(router);
     new ScheduledAnonymizationProcessingResource(client).register(router);
+    new ScheduledUserLoanAnonymizationPreferenceSyncResource(client).register(router);
     new ScheduledRequestAnonymizationProcessingResource(client).register(router);
     new EndPatronActionSessionResource(client).register(router);
     new ClaimItemReturnedResource(client).register(router);
@@ -170,9 +172,6 @@ public class CirculationVerticle extends AbstractVerticle {
     new ScheduledAgeToLostFeeChargingResource(client).register(router);
     new ExpiredActualCostProcessingResource(client).register(router);
 
-    // Handlers
-    new LoanRelatedFeeFineClosedHandlerResource(client).register(router);
-    new FeeFineBalanceChangedHandlerResource(client).register(router);
     new CirculationSettingsResource(client).register(router);
     new PrintEventsResource(client).register(router);
 

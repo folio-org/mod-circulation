@@ -1,6 +1,8 @@
 package org.folio.circulation.resources.renewal;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_REQUEST_ITEM_BARCODE_REQUIRED;
+import static org.folio.circulation.support.ErrorCode.RENEWAL_REQUEST_USER_BARCODE_REQUIRED;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
 import static org.folio.circulation.support.ValidationErrorFailure.failedValidation;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -25,14 +27,14 @@ public class RenewByBarcodeRequest {
 
     if (isBlank(itemBarcode)) {
       return failedValidation("Renewal request must have an item barcode",
-        ITEM_BARCODE, null);
+        ITEM_BARCODE, null, RENEWAL_REQUEST_ITEM_BARCODE_REQUIRED);
     }
 
     final String userBarcode = getProperty(json, USER_BARCODE);
 
     if (isBlank(userBarcode)) {
       return failedValidation("Renewal request must have a user barcode",
-        USER_BARCODE, null);
+        USER_BARCODE, null, RENEWAL_REQUEST_USER_BARCODE_REQUIRED);
     }
 
     return succeeded(new RenewByBarcodeRequest(itemBarcode, userBarcode));

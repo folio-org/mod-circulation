@@ -41,7 +41,7 @@ import api.support.builders.MoveRequestBuilder;
 import api.support.builders.NoticeConfigurationBuilder;
 import api.support.builders.NoticePolicyBuilder;
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
+import api.support.KafkaPublishedEvents;
 import api.support.http.IndividualResource;
 import api.support.http.ItemResource;
 import io.vertx.core.json.JsonObject;
@@ -56,7 +56,7 @@ class MoveRequestPolicyTests extends APITests {
 
   @BeforeAll
   public static void setUpBeforeClass() {
-    FakePubSub.clearPublishedEvents();
+    KafkaPublishedEvents.clearPublishedEvents();
   }
 
   @BeforeEach

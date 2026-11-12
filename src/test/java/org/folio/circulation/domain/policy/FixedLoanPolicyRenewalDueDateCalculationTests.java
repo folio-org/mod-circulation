@@ -28,10 +28,13 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
+import org.folio.circulation.support.ErrorCode;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import api.support.builders.FixedDueDateSchedule;
 import api.support.builders.FixedDueDateSchedulesBuilder;
@@ -72,6 +75,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -97,6 +102,9 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     assertEquals(2, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_OPEN_RECALL_REQUEST));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_BLOCKED_BY_RECALL));
   }
 
   @Test
@@ -119,12 +127,20 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
-  @Test
-  void shouldUseOnlyScheduleAvailableWhenLoanDateFits() {
+  @ParameterizedTest
+  @CsvSource({", , ", "false, , ", "true, 0, 100"})
+  void shouldUseOnlyScheduleAvailableWhenLoanDateFits(Boolean automaticRenewal,
+    Integer firstAttemptDays, Integer retryPeriodDays) {
+
     LoanPolicy loanPolicy = LoanPolicy.from(new LoanPolicyBuilder()
       .fixed(UUID.randomUUID())
+      .withAutomaticRenewal(automaticRenewal)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(firstAttemptDays)
+      .withAutomaticRenewalRetryPeriodInDays(retryPeriodDays)
       .create())
       .withDueDateSchedules(new FixedDueDateSchedulesBuilder()
         .addSchedule(FixedDueDateSchedule.wholeYear(2018))
@@ -328,6 +344,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     assertEquals(1, errorHandler.getErrors().size());
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -353,6 +371,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
   }
 
   @Test
@@ -378,6 +397,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.RENEWAL_WOULD_NOT_CHANGE_DUE_DATE));
   }
 
   @Test
@@ -411,6 +431,9 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
     assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.LOAN_RENEWAL_LIMIT_REACHED));
     assertEquals(2, errorHandler.getErrors().size());
   }
 
@@ -447,6 +470,9 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
     assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
     assertTrue(matchErrorReason(errorHandler, LOAN_AT_MAXIMUM_RENEWAL_NUMBER));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler, ErrorCode.LOAN_RENEWAL_LIMIT_REACHED));
   }
 
   @Test
@@ -469,6 +495,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -490,6 +518,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -509,6 +539,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     renew(loan, renewalDate, new RequestQueue(Collections.emptyList()), errorHandler);
 
     assertTrue(matchErrorReason(errorHandler, EXPECTED_REASON_DATE_FALLS_OUTSIDE_DATE_RANGES));
+    assertTrue(matchErrorCode(errorHandler,
+      ErrorCode.RENEWAL_DATE_OUTSIDE_FIXED_LOAN_POLICY_DATE_RANGES));
   }
 
   @Test
@@ -517,7 +549,8 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
 
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
-        "Example Fixed Schedule Loan Policy", null, renewalDate, ValidationError::new);
+        "Example Fixed Schedule Loan Policy", null, renewalDate,
+        (java.util.function.Function<String, ValidationError>) ValidationError::new);
 
     Loan loan = existingLoan();
 
@@ -534,7 +567,7 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     final FixedScheduleRenewalDueDateStrategy calculator =
       new FixedScheduleRenewalDueDateStrategy(UUID.randomUUID().toString(),
         "Example Fixed Schedule Loan Policy", new NoFixedDueDateSchedules(), renewalDate,
-        ValidationError::new);
+        (java.util.function.Function<String, ValidationError>) ValidationError::new);
 
     Loan loan = existingLoan();
 
@@ -587,5 +620,12 @@ class FixedLoanPolicyRenewalDueDateCalculationTests {
     return errorHandler.getErrors().keySet().stream()
       .map(ValidationErrorFailure.class::cast)
       .anyMatch(httpFailure -> httpFailure.hasErrorWithReason(expectedReason));
+  }
+
+  private boolean matchErrorCode(CirculationErrorHandler errorHandler, ErrorCode expectedCode) {
+    return errorHandler.getErrors().keySet().stream()
+      .map(ValidationErrorFailure.class::cast)
+      .flatMap(httpFailure -> httpFailure.getErrors().stream())
+      .anyMatch(error -> error.getCode() == expectedCode);
   }
 }

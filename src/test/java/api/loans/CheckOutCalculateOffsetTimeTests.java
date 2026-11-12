@@ -14,9 +14,11 @@ import static api.support.fixtures.CalendarExamples.START_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.THURSDAY_DATE;
 import static api.support.fixtures.CalendarExamples.getFirstFakeOpeningDayByServId;
 import static api.support.fixtures.CalendarExamples.getLastFakeOpeningDayByServId;
+import static api.support.matchers.ValidationErrorMatchers.hasCode;
 import static api.support.matchers.ValidationErrorMatchers.hasErrorWith;
 import static api.support.matchers.ValidationErrorMatchers.hasMessage;
 import static java.time.ZoneOffset.UTC;
+import static org.folio.circulation.support.ErrorCode.CALENDAR_TIMETABLE_ABSENT;
 import static org.folio.circulation.support.utils.DateTimeUtil.isAfterMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isBeforeMillis;
 import static org.folio.circulation.support.utils.DateTimeUtil.isSameMillis;
@@ -408,7 +410,8 @@ class CheckOutCalculateOffsetTimeTests extends APITests {
         .at(checkoutServicePointId)).getJson();
 
     assertThat(response, hasErrorWith(allOf(
-      hasMessage(TIMETABLE_IS_ABSENT_ERROR_MESSAGE))));
+      hasMessage(TIMETABLE_IS_ABSENT_ERROR_MESSAGE),
+      hasCode(CALENDAR_TIMETABLE_ABSENT))));
   }
 
   /**

@@ -8,6 +8,8 @@ import static org.folio.circulation.support.http.OkapiHeader.TOKEN;
 import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -21,8 +23,31 @@ import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.json.JsonObject;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 
 public class RestAssuredConfiguration {
+  private static final String CONNECTION_TIMEOUT = "http.connection.timeout";
+  private static final String SOCKET_TIMEOUT = "http.socket.timeout";
+  private static final int MAX_CONNECTIONS = 200;
+
+  private static final PoolingClientConnectionManager CONNECTION_MANAGER =
+    new PoolingClientConnectionManager();
+
+  static {
+    CONNECTION_MANAGER.setMaxTotal(MAX_CONNECTIONS);
+    CONNECTION_MANAGER.setDefaultMaxPerRoute(MAX_CONNECTIONS);
+  }
+
+  private static final HttpClientConfig REUSABLE_HTTP_CLIENT_CONFIG =
+    HttpClientConfig.httpClientConfig()
+      .httpClientFactory(RestAssuredConfiguration::pooledHttpClient)
+      .reuseHttpClientInstance();
+
+  private static final ConcurrentMap<Integer, RestAssuredConfig> TIMEOUT_CONFIGS =
+    new ConcurrentHashMap<>();
+
   public static RequestSpecification standardHeaders(OkapiHeaders okapiHeaders) {
     final HashMap<String, String> headers = new HashMap<>();
 
@@ -51,10 +76,8 @@ public class RestAssuredConfiguration {
 
   public static RequestSpecification timeoutConfig(int timeOutInMilliseconds) {
     return new RequestSpecBuilder()
-      .setConfig(RestAssured.config()
-        .httpClient(HttpClientConfig.httpClientConfig()
-          .setParam("http.connection.timeout", timeOutInMilliseconds)
-          .setParam("http.socket.timeout", timeOutInMilliseconds)))
+      .setConfig(TIMEOUT_CONFIGS.computeIfAbsent(timeOutInMilliseconds,
+        RestAssuredConfiguration::timeoutConfigFor))
       .build();
   }
 
@@ -62,7 +85,27 @@ public class RestAssuredConfiguration {
     final ObjectMapperConfig objectMapperConfig = new ObjectMapperConfig()
       .jackson2ObjectMapperFactory((type, s) -> defaultObjectMapper());
 
-    return new RestAssuredConfig().objectMapperConfig(objectMapperConfig);
+    return configWithReusableHttpClient(objectMapperConfig);
+  }
+
+  public static RestAssuredConfig configWithReusableHttpClient(
+    ObjectMapperConfig objectMapperConfig) {
+
+    return new RestAssuredConfig()
+      .objectMapperConfig(objectMapperConfig)
+      .httpClient(REUSABLE_HTTP_CLIENT_CONFIG);
+  }
+
+  private static RestAssuredConfig timeoutConfigFor(int timeOutInMilliseconds) {
+    return RestAssured.config()
+      .httpClient(REUSABLE_HTTP_CLIENT_CONFIG
+        .setParam(CONNECTION_TIMEOUT, timeOutInMilliseconds)
+        .setParam(SOCKET_TIMEOUT, timeOutInMilliseconds));
+  }
+
+  @SuppressWarnings("deprecation")
+  private static HttpClient pooledHttpClient() {
+    return new DefaultHttpClient(CONNECTION_MANAGER);
   }
 
   /**

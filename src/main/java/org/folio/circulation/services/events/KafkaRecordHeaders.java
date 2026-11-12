@@ -1,0 +1,34 @@
+package org.folio.circulation.services.events;
+
+import static org.folio.circulation.support.http.OkapiHeader.OKAPI_URL;
+import static org.folio.circulation.support.http.OkapiHeader.TENANT;
+import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersToMap;
+import static org.folio.kafka.headers.FolioKafkaHeaders.TENANT_ID;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+class KafkaRecordHeaders {
+  static Map<String, String> headersFrom(KafkaConsumerRecord<String, String> consumerRecord,
+    String defaultGatewayUrl) {
+
+    Map<String, String> headers = new HashMap<>(kafkaHeadersToMap(consumerRecord.headers()));
+
+    putIfAbsentIgnoringCase(headers, OKAPI_URL, defaultGatewayUrl);
+    putIfAbsentIgnoringCase(headers, TENANT, headers.get(TENANT_ID));
+
+    return headers;
+  }
+
+  private static void putIfAbsentIgnoringCase(Map<String, String> headers, String key,
+    String value) {
+
+    if (value != null && headers.keySet().stream().noneMatch(key::equalsIgnoreCase)) {
+      headers.put(key, value);
+    }
+  }
+}

@@ -38,7 +38,8 @@ class FixedScheduleRenewalDueDateStrategyTest {
   void setUp() {
     strategy = new FixedScheduleRenewalDueDateStrategy(
       "testLoanPolicyId", "testLoanPolicyName",
-      fixedDueDateSchedules, SYSTEM_DATE, ValidationError::new);
+      fixedDueDateSchedules, SYSTEM_DATE,
+      (java.util.function.Function<String, ValidationError>) ValidationError::new);
   }
 
   @Test

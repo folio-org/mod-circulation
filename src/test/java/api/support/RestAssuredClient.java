@@ -238,6 +238,15 @@ public class RestAssuredClient {
       .extract().response());
   }
 
+  public Response delete(Object representation, URL location, String requestId) {
+    return toResponse(beginRequest(requestId)
+      .body(representation)
+      .when().delete(location)
+      .then()
+      .log().ifStatusCodeMatches(greaterThan(300))
+      .extract().response());
+  }
+
   private Map<String, String> toMap(Iterable<QueryStringParameter> params) {
     final Map<String, String> paramsMap = new HashMap<>();
     params.forEach(param -> param.collectInto(paramsMap));

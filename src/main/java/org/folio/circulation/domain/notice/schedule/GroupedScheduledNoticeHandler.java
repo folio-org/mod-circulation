@@ -1,5 +1,6 @@
 package org.folio.circulation.domain.notice.schedule;
 
+import static java.lang.Boolean.FALSE;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -141,13 +142,24 @@ public abstract class GroupedScheduledNoticeHandler {
 
     //All the notices have the same properties, so we can get any of them
     ScheduledNoticeContext contextSample = relevantContexts.get(0);
+
+    return singleNoticeHandler.shouldSendByPreference(contextSample)
+      .thenCompose(shouldSend -> FALSE.equals(shouldSend)
+        ? skipGroupedNoticeDueToPreference(contexts, relevantContexts)
+        : doSendGroupedNotice(contexts, relevantContexts, contextSample));
+  }
+
+  private CompletableFuture<Result<List<ScheduledNoticeContext>>> doSendGroupedNotice(
+    List<ScheduledNoticeContext> contexts, List<ScheduledNoticeContext> relevantContexts,
+    ScheduledNoticeContext contextSample) {
+
     User user = contextSample.getLoan().getUser();
 
     List<JsonObject> noticeContexts = relevantContexts.stream()
       .map(ScheduledNoticeContext::getNoticeContext)
       .collect(toList());
 
-    log.info("sendGroupedNotice:: attempting to send a grouped notice for {} scheduled notices",
+    log.info("doSendGroupedNotice:: attempting to send a grouped notice for {} scheduled notices",
       relevantContexts.size());
 
     return patronNoticeService.sendNotice(
@@ -156,6 +168,15 @@ public abstract class GroupedScheduledNoticeHandler {
         createGroupedNoticeContext(user, groupToken, noticeContexts),
         buildNoticeLogContext(relevantContexts, user))
       .thenApply(mapResult(v -> contexts));
+  }
+
+  private CompletableFuture<Result<List<ScheduledNoticeContext>>> skipGroupedNoticeDueToPreference(
+    List<ScheduledNoticeContext> contexts, List<ScheduledNoticeContext> relevantContexts) {
+
+    log.info("skipGroupedNoticeDueToPreference:: skipping group of {} scheduled notices filtered "
+      + "out by user notice format preference", relevantContexts.size());
+
+    return completedFuture(succeeded(contexts));
   }
 
   private static NoticeLogContext buildNoticeLogContext(List<ScheduledNoticeContext> contexts,

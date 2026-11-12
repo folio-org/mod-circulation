@@ -11,6 +11,8 @@ public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Buil
   private String loanCloseIntervalId;
   private Integer feeFineCloseDuration;
   private String feeFineCloseIntervalId;
+  private String userSpecificClosingType;
+  private JsonObject userSpecific;
 
   public LoanHistoryConfigurationBuilder loanCloseAnonymizeImmediately() {
     loanClosingType = "immediately";
@@ -29,6 +31,24 @@ public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Buil
     feeFineCloseDuration = duration;
     feeFineCloseIntervalId = intervalId;
     exceptionForFeesAndFines = true;
+    return this;
+  }
+
+  public LoanHistoryConfigurationBuilder userSpecificAnonymizeImmediately() {
+    userSpecificClosingType = "immediately";
+    return this;
+  }
+
+  public LoanHistoryConfigurationBuilder userSpecificAnonymizeAfterXInterval(Integer duration,
+    String intervalId) {
+
+    userSpecificClosingType = "interval";
+    userSpecific = new JsonObject().put("duration", duration).put("intervalId", intervalId);
+    return this;
+  }
+
+  public LoanHistoryConfigurationBuilder userSpecific(String closingType) {
+    userSpecificClosingType = closingType;
     return this;
   }
 
@@ -57,6 +77,7 @@ public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Buil
 
     put(closingType, "loan", loanClosingType);
     put(closingType, "feeFine", feeFineClosingType);
+    put(closingType, "userSpecific", userSpecificClosingType);
 
     JsonObject feeFine = new JsonObject();
 
@@ -72,6 +93,7 @@ public class LoanHistoryConfigurationBuilder extends JsonBuilder implements Buil
     put(config, "treatEnabled", exceptionForFeesAndFines);
     put(config, "feeFine", feeFine);
     put(config, "loan", loan);
+    put(config, "userSpecific", userSpecific);
 
     return config;
   }

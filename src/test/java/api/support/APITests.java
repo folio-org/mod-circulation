@@ -1,14 +1,12 @@
 package api.support;
 
-import static api.support.APITestContext.createKafkaAdminClient;
-import static api.support.APITestContext.createKafkaProducer;
+import static api.support.APITestContext.TENANT_ID;
 import static api.support.APITestContext.deployVerticles;
 import static api.support.APITestContext.getOkapiHeadersFromContext;
 import static api.support.APITestContext.undeployVerticles;
 import static api.support.fakes.LoanHistoryProcessor.setLoanHistoryEnabled;
 import static api.support.http.ResourceClient.forLoanHistoryStorage;
 import static api.support.http.ResourceClient.forTenantStorage;
-import static java.lang.String.format;
 import static java.time.ZoneOffset.UTC;
 import static org.folio.circulation.domain.representations.LoanProperties.PATRON_GROUP_AT_CHECKOUT;
 import static org.folio.circulation.support.utils.ClockUtil.setClock;
@@ -29,11 +27,8 @@ import org.folio.Environment;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.kafka.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import api.support.fakes.FakeModNotify;
-import api.support.fakes.FakePubSub;
 import api.support.fakes.FakeStorageModule;
 import api.support.fixtures.AddInfoFixture;
 import api.support.fixtures.AddressTypesFixture;
@@ -89,8 +84,6 @@ import api.support.fixtures.policies.PoliciesActivationFixture;
 import api.support.http.IndividualResource;
 import api.support.http.ResourceClient;
 import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.admin.KafkaAdminClient;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import lombok.experimental.Delegate;
 import lombok.extern.log4j.Log4j2;
 
@@ -98,14 +91,10 @@ import lombok.extern.log4j.Log4j2;
 public abstract class APITests {
   private static boolean okapiAlreadyDeployed = false;
 
-  protected static String kafkaUrl;
-  protected static KafkaProducer<String, JsonObject> kafkaProducer;
-  protected static KafkaAdminClient kafkaAdminClient;
-  private static final KafkaContainer kafkaContainer
-    = new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.2.0"));
-
   protected final RestAssuredClient restAssuredClient = new RestAssuredClient(
     getOkapiHeadersFromContext());
+
+  protected static KafkaTestHelper kafkaHelper;
 
   private final boolean initialiseCirculationRules;
 
@@ -202,6 +191,9 @@ public abstract class APITests {
 
   protected final ResourceClient circulationSettingsClient =
     ResourceClient.forCirculationSettings();
+
+  protected final ResourceClient checkInsClient =
+    ResourceClient.forCheckIns();
 
   protected final ResourceClient printEventsClient =
     ResourceClient.forPrintEvents();
@@ -333,8 +325,7 @@ public abstract class APITests {
       return;
     }
 
-    setSystemProperties();
-    runKafka();
+    setUpKafka();
     deployVerticles();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -356,9 +347,7 @@ public abstract class APITests {
     usersFixture.defaultAdmin();
     noteTypeFixture.generalNoteType();
 
-    FakePubSub.clearPublishedEvents();
-    FakePubSub.setFailPublishingWithBadRequestError(false);
-
+    KafkaPublishedEvents.clearPublishedEvents();
     FakeModNotify.clearSentPatronNotices();
     FakeModNotify.setFailPatronNoticesWithBadRequest(false);
     FakeStorageModule.cleanUpRequestMappings();
@@ -376,21 +365,13 @@ public abstract class APITests {
     mockClockManagerToReturnDefaultDateTime();
   }
 
-  private static void runKafka() {
-    log.info("runKafka:: starting Kafka container...");
-    kafkaContainer.start();
-    String host = kafkaContainer.getHost();
-    String port = String.valueOf(kafkaContainer.getFirstMappedPort());
-    log.info("runKafka:: Kafka container started: host={}, port={}", host, port);
-
-    System.setProperty("kafka-host", host);
-    System.setProperty("kafka-port", port);
-
-    kafkaUrl = format("%s:%s", host, port);
-    kafkaProducer = createKafkaProducer(kafkaUrl);
-    kafkaAdminClient = createKafkaAdminClient(kafkaUrl);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(kafkaContainer::stop));
+  private static void setUpKafka() {
+    kafkaHelper = KafkaTestHelper.getInstance();
+    kafkaHelper.createCirculationTopics(TENANT_ID);
+    kafkaHelper.createCirculationPublicationTopics(TENANT_ID);
+    kafkaHelper.createAuditTopics(TENANT_ID);
+    kafkaHelper.createFeeFineTopics(TENANT_ID);
+    kafkaHelper.startPublishedEventRecorder(TENANT_ID);
   }
 
   protected void assertLoanHasFeeFinesProperties(JsonObject loan,
@@ -501,11 +482,5 @@ public abstract class APITests {
 
   public static String randomId() {
     return UUID.randomUUID().toString();
-  }
-
-  private static void setSystemProperties() {
-    // Set Kafka consumer to read messages from the beginning of the topic if no offset is present.
-    // Helps avoid race condition between consumer and producer in tests.
-    System.setProperty("kafka.consumer.auto.offset.reset", "earliest");
   }
 }

@@ -48,11 +48,9 @@ public class UpdateRequestService {
       .thenApply(originalRequest -> refuseWhenPatronCommentChanged(updated, originalRequest))
       .thenCompose(original -> original.after(request ->
         closedRequestValidator.refuseWhenAlreadyClosed(requestAndRelatedRecords)
-        .thenApply(r -> r.next(this::removeRequestQueuePositionWhenCancelled))
-        .thenComposeAsync(r -> r.after(requestRepository::update))
+        .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
         .thenApplyAsync(r -> r.next(records ->
           requestNoticeSender.sendNoticeOnMediatedRequestCreated(request, records)))
-        .thenComposeAsync(r -> r.after(updateRequestQueue::onCancellation))
         .thenComposeAsync(r -> r.after(updateItem::onRequestCreateOrUpdate))
         .thenApplyAsync(r -> r.map(p -> eventPublisher.publishLogRecordAsync(p, request, REQUEST_UPDATED)))
         .thenApply(r -> r.next(requestNoticeSender::sendNoticeOnRequestUpdated))));
@@ -68,17 +66,4 @@ public class UpdateRequestService {
     );
   }
 
-  private Result<RequestAndRelatedRecords> removeRequestQueuePositionWhenCancelled(
-    RequestAndRelatedRecords requestAndRelatedRecords) {
-
-    final Request request = requestAndRelatedRecords.getRequest();
-
-    if(request.isCancelled()) {
-      log.info("removeRequestQueuePositionWhenCancelled:: request {} is cancelled, " +
-        "removing from the request queue", request.getId());
-      requestAndRelatedRecords.getRequestQueue().remove(request);
-    }
-
-    return succeeded(requestAndRelatedRecords);
-  }
 }

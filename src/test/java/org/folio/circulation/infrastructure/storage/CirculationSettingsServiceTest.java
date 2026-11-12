@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.folio.circulation.domain.anonymization.config.ClosingType;
 import org.folio.circulation.domain.anonymization.config.LoanAnonymizationConfiguration;
+import org.folio.circulation.domain.anonymization.config.UserSpecificClosingType;
 import org.folio.circulation.domain.configuration.PrintHoldRequestsConfiguration;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.Period;
@@ -192,7 +193,8 @@ class CirculationSettingsServiceTest {
 
     mockGetCirculationSettingsResponse(mockSettingsResponse);
     LoanAnonymizationConfiguration expected = new LoanAnonymizationConfiguration(
-      ClosingType.INTERVAL, ClosingType.NEVER, true, Period.days(5), Period.weeks(10));
+      ClosingType.INTERVAL, ClosingType.NEVER, true, Period.days(5), Period.weeks(10),
+      UserSpecificClosingType.DISABLED, Period.from((Integer) null, null));
     LoanAnonymizationConfiguration actual = getLoanAnonymizationSettings();
     verifyLoanAnonymizationSettings(actual, expected);
   }
@@ -202,6 +204,7 @@ class CirculationSettingsServiceTest {
     mockEmptyGetCirculationSettingsResponse();
     LoanAnonymizationConfiguration expected = new LoanAnonymizationConfiguration(
       ClosingType.UNKNOWN, ClosingType.UNKNOWN, false, Period.from((Integer) null, null),
+      Period.from((Integer) null, null), UserSpecificClosingType.DISABLED,
       Period.from((Integer) null, null));
     LoanAnonymizationConfiguration actual = getLoanAnonymizationSettings();
     verifyLoanAnonymizationSettings(actual, expected);
@@ -310,6 +313,7 @@ class CirculationSettingsServiceTest {
     assertEquals(expected.getLoanClosePeriod().getInterval(), actual.getLoanClosePeriod().getInterval());
     assertEquals(expected.getFeeFineClosePeriod().getDuration(), actual.getFeeFineClosePeriod().getDuration());
     assertEquals(expected.getFeeFineClosePeriod().getInterval(), actual.getFeeFineClosePeriod().getInterval());
-
+    assertEquals(expected.getUserSpecificClosingType(), actual.getUserSpecificClosingType());
+    assertEquals(expected.getUserSpecificClosePeriod(), actual.getUserSpecificClosePeriod());
   }
 }
