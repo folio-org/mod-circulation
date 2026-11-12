@@ -374,7 +374,8 @@ class BulkRenewOpenLoansServiceTest {
       BulkRenewalWebContext.class);
     constructor.setAccessible(true);
     Object runner = constructor.newInstance(Mockito.mock(HttpClient.class),
-      new BulkRenewalWebContext(Map.of()));
+      new BulkRenewalWebContext(Map.of(),
+        Mockito.mock(io.vertx.core.Context.class)));
     Method applyPatronBlockValidations = runnerClass.getDeclaredMethod(
       "applyPatronBlockValidations", Clients.class, OkapiPermissions.class,
       AutomatedPatronBlocksRepository.class, RenewalContext.class,

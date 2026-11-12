@@ -330,7 +330,8 @@ public class BulkRenewOpenLoansService {
 
     @Override
     public RealJobComponents create(String jobId) {
-      WebContext context = new WebContext(detachedContext.getHeaders());
+      WebContext context = new WebContext(
+        detachedContext.getHeaders(), detachedContext.getVertxContext());
       Clients clients = Clients.create(context, httpClient);
       ItemRepository itemRepository = new ItemRepository(clients);
       UserRepository userRepository = new UserRepository(clients);
