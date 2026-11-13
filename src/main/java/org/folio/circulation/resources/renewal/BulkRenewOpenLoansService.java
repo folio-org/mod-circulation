@@ -359,7 +359,8 @@ public class BulkRenewOpenLoansService {
         (renewalContext, errorHandler) -> renewLoan(clients, renewResource, renewalContext,
           errorHandler, okapiPermissions, automatedPatronBlocksRepository),
         okapiPermissions,
-        renewalRequest);
+        renewalRequest,
+        new EventPublisher(clients));
 
       return new RealJobComponents(loanRepository, loanRepository.createOpenLoanPageQuery(),
         pageProcessor::processPage,

@@ -56,6 +56,8 @@ import api.support.builders.RequestBuilder;
 import api.support.builders.TlrSettingsConfigurationBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
+import org.folio.circulation.services.EventPublisher;
+import org.mockito.Mockito;
 
 class BulkRenewalPageProcessorTest {
 
@@ -727,6 +729,7 @@ class BulkRenewalPageProcessorTest {
       .withId(loanId)
       .withItemId(itemId)
       .withUserId(userId)
+      .withDueDate(ZonedDateTime.now().plusDays(1))
       .asDomainObject()
       .withItem(item(itemId, instanceId));
   }
@@ -736,6 +739,7 @@ class BulkRenewalPageProcessorTest {
       .withId(loanId)
       .withItemId(itemId)
       .withUserId(userId)
+      .withDueDate(ZonedDateTime.now().plusDays(1))
       .asDomainObject();
   }
 
@@ -799,7 +803,11 @@ class BulkRenewalPageProcessorTest {
   }
 
   private LoanPolicy loanPolicy(UUID policyId, AppliedRuleConditions ruleConditions) {
-    return new LoanPolicy(new LoanPolicyBuilder().withId(policyId).create(),
+    return new LoanPolicy(new LoanPolicyBuilder()
+      .withId(policyId)
+      .withAutomaticRenewal(true)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(365)
+      .create(),
       new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(), ruleConditions);
   }
 
@@ -808,6 +816,8 @@ class BulkRenewalPageProcessorTest {
       .withId(policyId)
       .rolling(days(10))
       .renewFromCurrentDueDate()
+      .withAutomaticRenewal(true)
+      .withFirstAutomaticRenewalAttemptDaysBeforeDueDate(365)
       .create(), new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(),
       ruleConditions);
   }
@@ -815,12 +825,20 @@ class BulkRenewalPageProcessorTest {
   private LoanPolicy nonRenewableLoanPolicy(UUID policyId,
     AppliedRuleConditions ruleConditions) {
 
-    return new LoanPolicy(new LoanPolicyBuilder()
+    // Build the JSON manually so that automaticRenewal=true is preserved even when
+    // renewable=false (LoanPolicyBuilder skips the renewalsPolicy block when not renewable).
+    JsonObject policyJson = new LoanPolicyBuilder()
       .withId(policyId)
       .rolling(days(10))
       .renewFromCurrentDueDate()
       .notRenewable()
-      .create(), new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(),
+      .create();
+    JsonObject renewalsPolicy = new JsonObject()
+      .put("automaticRenewal", true)
+      .put("firstAutomaticRenewalAttemptDaysBeforeDueDate", 365);
+    policyJson.put("renewalsPolicy", renewalsPolicy);
+    return new LoanPolicy(policyJson,
+      new NoFixedDueDateSchedules(), new NoFixedDueDateSchedules(),
       ruleConditions);
   }
 
@@ -854,7 +872,15 @@ class BulkRenewalPageProcessorTest {
 
     return new BulkRenewalPageProcessor(dependencies, itemFetcher, userFetcher,
       requestQueueLookup, loanPolicyResolver, renewalCoordinator,
-      OkapiPermissions.empty(), new JsonObject());
+      OkapiPermissions.empty(), new JsonObject(), noOpEventPublisher());
+  }
+
+  private static EventPublisher noOpEventPublisher() {
+    EventPublisher publisher = Mockito.mock(EventPublisher.class);
+    Mockito.when(publisher.publishAutomaticRenewalFailureLogEvent(
+        Mockito.any(), Mockito.any(), Mockito.any()))
+      .thenReturn(completedFuture(succeeded(null)));
+    return publisher;
   }
 
   private BiFunction<RenewalContext, CirculationErrorHandler,

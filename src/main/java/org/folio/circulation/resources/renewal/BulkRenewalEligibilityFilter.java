@@ -66,9 +66,15 @@ public final class BulkRenewalEligibilityFilter {
         continue;
       }
 
+      var dueDate = loan.getDueDate();
+      if (dueDate == null) {
+        log.debug("filter:: loanId={} excluded: due date is null", loan.getId());
+        continue;
+      }
+
       long daysUntilDue = ChronoUnit.DAYS.between(
         LocalDate.now(timeZone),
-        loan.getDueDate().withZoneSameInstant(timeZone).toLocalDate());
+        dueDate.withZoneSameInstant(timeZone).toLocalDate());
 
       if (daysUntilDue > firstAttemptDays) {
         log.debug("filter:: loanId={} excluded: outside eligibility window"
