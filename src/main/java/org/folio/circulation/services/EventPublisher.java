@@ -16,6 +16,7 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.LoanAction.CHECKED_IN;
 import static org.folio.circulation.domain.LoanAction.DUE_DATE_CHANGED;
 import static org.folio.circulation.domain.LoanAction.RECALLREQUESTED;
+import static org.folio.circulation.domain.LoanAction.AUTOMATIC_RENEWAL_FAILED;
 import static org.folio.circulation.domain.representations.LoanProperties.UPDATED_BY_USER_ID;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckInLogEventContent;
 import static org.folio.circulation.domain.representations.logs.CirculationCheckInCheckOutLogEventMapper.mapToCheckOutLogEventContent;
@@ -255,6 +256,18 @@ public class EventPublisher {
     var loanLogContext = LoanLogContext.from(loan)
       .withAction(LogContextActionResolver.resolveAction(loan.getAction()))
       .withDescription(loan.getActionComment())
+      .asJson();
+    return publishLogRecord(loan.getId(), loanLogContext, LOAN);
+  }
+
+  public CompletableFuture<Result<Void>> publishAutomaticRenewalFailureLogEvent(
+      Loan loan, String reason, String updatedByUserId) {
+
+    logger.info("publishAutomaticRenewalFailureLogEvent:: loanId={}", loan::getId);
+    var loanLogContext = LoanLogContext.from(loan)
+      .withAction(LogContextActionResolver.resolveAction(AUTOMATIC_RENEWAL_FAILED.getValue()))
+      .withDescription(reason)
+      .withUpdatedByUserId(updatedByUserId)
       .asJson();
     return publishLogRecord(loan.getId(), loanLogContext, LOAN);
   }

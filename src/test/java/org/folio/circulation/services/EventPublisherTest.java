@@ -159,6 +159,35 @@ class EventPublisherTest {
     assertThat(((ServerErrorFailure) result.cause()).getReason(), is(failure.getMessage()));
   }
 
+  @Test
+  void shouldPublishAutomaticRenewalFailureLogEvent() {
+    String loanId = UUID.randomUUID().toString();
+    String updatingUserId = UUID.randomUUID().toString();
+    String reason = "items cannot be renewed when there is an active recall request";
+
+    Loan loan = Loan.from(new JsonObject()
+      .put("id", loanId)
+      .put("userId", UUID.randomUUID().toString())
+      .put("itemId", UUID.randomUUID().toString())
+      .put("status", new JsonObject().put("name", "Open")));
+
+    eventPublisher.publishAutomaticRenewalFailureLogEvent(loan, reason, updatingUserId).join();
+
+    ArgumentCaptor<JsonObject> payloadCaptor = ArgumentCaptor.forClass(JsonObject.class);
+    verify(eventPublishingService, atLeastOnce())
+      .publishEvent(eq(loanId), eq(LOG_RECORD.name()), payloadCaptor.capture());
+
+    JsonObject payload = payloadCaptor.getAllValues().stream()
+      .filter(json -> "Automatic renewal failed".equals(
+        json.getJsonObject("payload", new JsonObject()).getString("action")))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError(
+        "No 'Automatic renewal failed' LOG_RECORD event was published"));
+
+    assertThat(payload.getJsonObject("payload").getString("description"), is(reason));
+    assertThat(payload.getJsonObject("payload").getString("updatedByUserId"), is(updatingUserId));
+  }
+
   private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {
     ZonedDateTime previousDueDate = ZonedDateTime.now().minusDays(7);
     ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(7);
