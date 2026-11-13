@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,10 +21,10 @@ import org.junit.jupiter.api.Test;
 
 class EndOfCurrentHoursStrategyTest {
 
-  private static final LocalDate THURSDAY = LocalDate.of(2019, 1, 31);
-  private static final LocalDate FRIDAY = LocalDate.of(2019, 2, 1);
-  private static final LocalDate SATURDAY = LocalDate.of(2019, 2, 2);
-  private static final LocalDate MONDAY = LocalDate.of(2019, 2, 4);
+  private static final LocalDate THURSDAY = LocalDate.of(2019, Month.JANUARY, 31);
+  private static final LocalDate FRIDAY = LocalDate.of(2019, Month.FEBRUARY, 1);
+  private static final LocalDate SATURDAY = LocalDate.of(2019, Month.FEBRUARY, 2);
+  private static final LocalDate MONDAY = LocalDate.of(2019, Month.FEBRUARY, 4);
 
   private static final List<OpeningHour> WORKING_HOURS = Arrays.asList(
     new OpeningHour(LocalTime.of(8, 0), LocalTime.of(12, 0)),
