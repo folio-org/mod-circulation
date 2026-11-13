@@ -258,10 +258,9 @@ public class BulkRenewOpenLoansService {
 
     static Function<Loan, CompletableFuture<Result<LoanPolicy>>> loanPolicyResolver(
       BulkRenewalCachedDependencies cachedDependencies,
-      LoanPolicyRepository loanPolicyRepository,
-      RequestRepository requestRepository) {
+      LoanPolicyRepository loanPolicyRepository) {
 
-      return loan -> loanPolicyRepository.lookupPolicyForBulkRenewal(loan, requestRepository)
+      return loan -> loanPolicyRepository.lookupPolicyForBulkRenewal(loan, cachedDependencies)
         .thenCompose(matchResult -> matchResult.after(match -> cachedDependencies.getLoanPolicy(
           match.getPolicyId(),
           match.getAppliedRuleConditions(),
@@ -356,8 +355,7 @@ public class BulkRenewOpenLoansService {
         RealRunnerFactories.itemFetcher(itemRepository),
         RealRunnerFactories.userFetcher(userRepository),
         requestQueueLookup,
-        RealRunnerFactories.loanPolicyResolver(cachedDependencies, loanPolicyRepository,
-          requestRepository),
+        RealRunnerFactories.loanPolicyResolver(cachedDependencies, loanPolicyRepository),
         (renewalContext, errorHandler) -> renewLoan(clients, renewResource, renewalContext,
           errorHandler, okapiPermissions, automatedPatronBlocksRepository),
         okapiPermissions,

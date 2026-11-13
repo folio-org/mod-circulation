@@ -295,7 +295,6 @@ class BulkRenewOpenLoansServiceTest {
   @Test
   void shouldUseFullLoanCompatiblePolicyResolver() {
     LoanPolicyRepository loanPolicyRepository = Mockito.mock(LoanPolicyRepository.class);
-    RequestRepository requestRepository = Mockito.mock(RequestRepository.class);
     BulkRenewalCachedDependencies cachedDependencies = new BulkRenewalCachedDependencies(
       () -> completedFuture(succeeded(TlrSettingsConfiguration.defaultSettings())),
       () -> completedFuture(succeeded(java.time.ZoneId.of("UTC"))));
@@ -304,17 +303,17 @@ class BulkRenewOpenLoansServiceTest {
     CirculationRuleMatch match = new CirculationRuleMatch("policy-1",
       new AppliedRuleConditions(true, true, true));
 
-    when(loanPolicyRepository.lookupPolicyForBulkRenewal(loan, requestRepository))
+    when(loanPolicyRepository.lookupPolicyForBulkRenewal(loan, cachedDependencies))
       .thenReturn(completedFuture(succeeded(match)));
     when(loanPolicyRepository.lookupPolicy("policy-1", match.getAppliedRuleConditions()))
       .thenReturn(completedFuture(succeeded(loanPolicy)));
 
     Result<LoanPolicy> result = BulkRenewOpenLoansService.RealRunnerFactories.loanPolicyResolver(
-      cachedDependencies, loanPolicyRepository, requestRepository).apply(loan).join();
+      cachedDependencies, loanPolicyRepository).apply(loan).join();
 
     assertTrue(result.succeeded());
     assertEquals(loanPolicy, result.value());
-    verify(loanPolicyRepository).lookupPolicyForBulkRenewal(loan, requestRepository);
+    verify(loanPolicyRepository).lookupPolicyForBulkRenewal(loan, cachedDependencies);
     verify(loanPolicyRepository, never()).lookupPolicyId(loan);
   }
 

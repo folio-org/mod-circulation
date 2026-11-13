@@ -16,6 +16,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.rules.AppliedRuleConditions;
+import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.support.results.Result;
 
@@ -25,6 +26,8 @@ public class BulkRenewalCachedDependencies {
   private final ConcurrentHashMap<LoanPolicyCacheKey, CompletableFuture<Result<LoanPolicy>>> loanPolicies =
     new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, CompletableFuture<Result<OverdueFinePolicy>>> overdueFinePolicies =
+    new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<RuleLookupCacheKey, CompletableFuture<Result<CirculationRuleMatch>>> ruleMatches =
     new ConcurrentHashMap<>();
 
   private CompletableFuture<Result<TlrSettingsConfiguration>> tlrSettings;
@@ -81,6 +84,20 @@ public class BulkRenewalCachedDependencies {
     }
 
     return overdueFinePolicies.computeIfAbsent(policyId, policyFetcher);
+  }
+
+  public CompletableFuture<Result<CirculationRuleMatch>> getCirculationRuleMatch(
+      RuleLookupCacheKey key,
+      Supplier<CompletableFuture<Result<CirculationRuleMatch>>> fetcher) {
+
+    return ruleMatches.computeIfAbsent(key, ignored -> fetcher.get());
+  }
+
+  public record RuleLookupCacheKey(
+      String materialTypeId,
+      String loanTypeId,
+      String locationId,
+      String patronGroupId) {
   }
 
   private record LoanPolicyCacheKey(String policyId, AppliedRuleConditions appliedRuleConditions) {

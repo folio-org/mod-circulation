@@ -29,6 +29,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.NoFixedDueDateSchedules;
 import org.folio.circulation.infrastructure.storage.CirculationPolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
+import org.folio.circulation.resources.renewal.BulkRenewalCachedDependencies;
 import org.folio.circulation.rules.AppliedRuleConditions;
 import org.folio.circulation.rules.CirculationRuleMatch;
 import org.folio.circulation.rules.RulesExecutionParameters;
@@ -139,9 +140,18 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> lookupPolicyForBulkRenewal(Loan loan,
-    RequestRepository requestRepository) {
+    BulkRenewalCachedDependencies cachedDependencies) {
 
-    return lookupPolicyId(loan);
+    var item = loan.getItem();
+    var user = loan.getUser();
+
+    var key = new BulkRenewalCachedDependencies.RuleLookupCacheKey(
+      item.getMaterialTypeId(),
+      item.getLoanTypeId(),
+      item.getEffectiveLocationId(),
+      user.getPatronGroupId());
+
+    return cachedDependencies.getCirculationRuleMatch(key, () -> lookupPolicyId(loan));
   }
 
   private CompletableFuture<Result<LoanPolicy>> lookupSchedules(LoanPolicy loanPolicy) {
