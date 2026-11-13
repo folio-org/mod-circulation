@@ -5,11 +5,11 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.domain.override.OverridableBlockType.RENEWAL_BLOCK;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS;
+import static org.folio.circulation.resources.RenewalValidator.ITEMS_CANNOT_BE_RENEWED_RECALL;
 import static org.folio.circulation.resources.RenewalValidator.errorForDueDate;
 import static org.folio.circulation.resources.RenewalValidator.errorForNotMatchingOverrideCases;
 import static org.folio.circulation.resources.RenewalValidator.errorForRecallRequest;
@@ -51,8 +51,10 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -76,12 +78,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.MetadataProperties;
 import org.folio.circulation.domain.representations.RequestProperties;
-import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
-import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
-import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
-import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
-import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
@@ -117,6 +114,7 @@ import org.folio.circulation.support.http.server.HttpResponse;
 import org.folio.circulation.support.http.server.JsonHttpResponse;
 import org.folio.circulation.support.http.server.ValidationError;
 import org.folio.circulation.support.http.server.WebContext;
+import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -198,27 +196,83 @@ public abstract class RenewalResource extends Resource {
     isRenewalBlockOverrideRequested = overrideBlocks.getRenewalBlockOverride().isRequested() ||
       overrideBlocks.getRenewalDueDateRequiredBlockOverride().isRequested();
 
-    findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
-      .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
+    final String performanceAnalysisId = UUID.randomUUID().toString();
+    final AtomicLong lastPerformanceTimestampMillis = new AtomicLong(System.currentTimeMillis());
+    final AtomicReference<String> lastKnownLoanId = new AtomicReference<>();
+    final String endpoint = StringUtils.removeStart(rootPath, "/");
+
+    logPerformanceStep(log, performanceAnalysisId, lastPerformanceTimestampMillis,
+      "request-start", endpoint);
+    logPerformanceStep(log, performanceAnalysisId, lastPerformanceTimestampMillis,
+      "loan-lookup-start", endpoint);
+
+    findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler,
+      performanceAnalysisId, lastPerformanceTimestampMillis)
+      .thenApply(r -> logPerformanceStep(log, r, performanceAnalysisId,
+        lastPerformanceTimestampMillis, lastKnownLoanId, "loan-lookup-complete", endpoint))
+      .thenApply(r -> toRenewalContext(r, bodyAsJson, webContext.getUserId(),
+        performanceAnalysisId, lastPerformanceTimestampMillis))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "renewal-context-created", endpoint))
       .thenComposeAsync(r -> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "inactive-user-validation-complete", endpoint))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "manual-patron-block-validation-complete", endpoint))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         automatedPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_AUTOMATICALLY))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "automated-patron-block-validation-complete", endpoint))
       .thenComposeAsync(r -> refuseIfNoPermissionsForRenewalOverride(
         overrideRenewValidator, r, errorHandler))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "renewal-override-permission-validation-complete", endpoint))
       .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository, errorHandler)))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "overdue-fine-policy-lookup-complete", endpoint))
       .thenComposeAsync(r -> r.after(ctx -> blockRenewalOfItemsWithReminderFees(ctx, errorHandler)))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "reminder-fee-renewal-block-check-complete", endpoint))
       .thenCompose(r -> r.after(ctx -> lookupLoanPolicy(ctx, loanPolicyRepository, requestRepository, errorHandler)))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "loan-policy-lookup-complete", endpoint))
       .thenCompose(r -> r.combineAfter(circulationSettingsService::getTlrSettings,
         RenewalContext::withTlrSettings))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "tlr-settings-lookup-complete", endpoint))
       .thenComposeAsync(r -> r.after(
         ctx -> lookupRequestQueue(ctx, requestQueueRepository, errorHandler)))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "request-queue-lookup-complete", endpoint))
       .thenCompose(r -> r.combineAfter(settingsRepository::lookupTimeZoneSettings,
         RenewalContext::withTimeZone))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "time-zone-lookup-complete", endpoint))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "renewal-logic-start", endpoint))
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "renewal-logic-complete", endpoint))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
+      .thenApply(r -> logAndAdvancePerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis,
+        "due-date-changed-by-recall-cleanup-complete", endpoint))
       .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients,
         itemRepository, userRepository, loanRepository, overdueFinePolicyRepository)))
@@ -227,31 +281,21 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
       .thenApply(r -> r.next(scheduledRemindersService::rescheduleFirstReminder))
       .thenApply(r -> r.next(loanNoticeSender::sendRenewalPatronNotice))
+      .thenApply(r -> synchronizeTimestampReference(r, lastPerformanceTimestampMillis))
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
+      .thenApply(r -> logPerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis, lastKnownLoanId, "response-built", endpoint))
+      .thenApply(r -> logPerformanceStep(r, performanceAnalysisId,
+        lastPerformanceTimestampMillis, lastKnownLoanId, "request-finished", endpoint))
       .thenAccept(webContext::writeResultToHttpResponse);
   }
 
   private RenewalContext unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
     RenewalContext renewalContext) {
 
-    Loan loan = renewalContext.getLoan();
-
-    boolean loanIsRecalled = renewalContext.getRequestQueue()
-      .getRequests()
-      .stream()
-      .filter(Request::isRecall)
-      .filter(Request::isNotYetFilled)
-      .noneMatch(request -> request.isFor(loan));
-
-    if (loan.wasDueDateChangedByRecall() && loanIsRecalled) {
-      log.info("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: unsetting due date changed " +
-        "by recall for loan {}", loan::getId);
-      return renewalContext.withLoan(loan.unsetDueDateChangedByRecall());
-    }
-    else {
-      return renewalContext;
-    }
+    return RenewalPostRenewalProcessor
+      .unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(renewalContext);
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFines(
@@ -307,51 +351,23 @@ public abstract class RenewalResource extends Resource {
     Result<RenewalContext> result, CirculationErrorHandler errorHandler,
     CirculationErrorType errorType) {
 
-    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-      FAILED_TO_FETCH_USER)) {
-
-      return completedFuture(result);
-    }
-
-    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
-
-    final var validator = new BlockValidator<>(USER_IS_INACTIVE,
-      inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
-
-    return result.after(renewalContext -> validator.validate(renewalContext)
-      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
+    return RenewalPreRenewalValidator.refuseWhenPatronIsInactive(result, errorHandler,
+      errorType);
   }
 
   private CompletableFuture<Result<RenewalContext>> blockRenewalOfItemsWithReminderFees(
     RenewalContext context, CirculationErrorHandler errorHandler) {
 
-    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-      FAILED_TO_FETCH_USER)) {
-
-      return Result.ofAsync(context);
-    }
-
-    final var renewalOfItemsWithReminderFeesValidator = new RenewalOfItemsWithReminderFeesValidator();
-
-    final var validator = new BlockValidator<>(RENEWAL_IS_BLOCKED,
-      renewalOfItemsWithReminderFeesValidator::blockRenewalIfReminderFeesExistAndDisallowRenewalWithReminders);
-
-    return validator.validate(context)
-      .thenApply(r -> errorHandler.handleValidationResult(r, CirculationErrorType.RENEWAL_IS_BLOCKED, r));
+    return RenewalPreRenewalValidator.blockRenewalOfItemsWithReminderFees(context,
+      errorHandler);
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
     Validator<RenewalContext> validator, Result<RenewalContext> result,
     CirculationErrorHandler errorHandler, CirculationErrorType errorType) {
 
-    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-      FAILED_TO_FETCH_USER)) {
-
-      return completedFuture(result);
-    }
-
-    return result.after(renewalContext -> validator.validate(renewalContext)
-      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
+    return RenewalPreRenewalValidator.refuseWhenRenewalActionIsBlockedForPatron(
+      validator, result, errorHandler, errorType);
   }
 
   private CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
@@ -483,33 +499,182 @@ public abstract class RenewalResource extends Resource {
 
   protected abstract CompletableFuture<Result<Loan>> findLoan(JsonObject request,
     LoanRepository loanRepository, ItemRepository itemRepository,
-    UserRepository userRepository, CirculationErrorHandler errorHandler);
+    UserRepository userRepository, CirculationErrorHandler errorHandler,
+    String performanceAnalysisId, AtomicLong lastPerformanceTimestampMillis);
+
+  protected Result<RenewalContext> toRenewalContext(Result<Loan> result,
+    JsonObject request, String loggedInUserId, String performanceAnalysisId,
+    AtomicLong lastPerformanceTimestampMillis) {
+
+    return result.map(loan -> RenewalContext.create(loan, request, loggedInUserId,
+      performanceAnalysisId, lastPerformanceTimestampMillis.get()));
+  }
+
+  protected <T> Result<T> logPerformanceStep(Logger logger, Result<T> result,
+    String performanceAnalysisId, AtomicLong lastPerformanceTimestampMillis,
+    String stepName, String endpoint) {
+
+    final long currentMillis = System.currentTimeMillis();
+
+    RenewalPerformanceLogger.log(logger, performanceAnalysisId,
+      lastPerformanceTimestampMillis.get(), currentMillis, loanId(result),
+      "step={} endpoint={} outcome={}", stepName, endpoint,
+      result.succeeded() ? "success" : "failure");
+
+    lastPerformanceTimestampMillis.set(currentMillis);
+
+    return result;
+  }
+
+  protected <T> Result<T> logPerformanceStep(Logger logger, Result<T> result,
+    String performanceAnalysisId, AtomicLong lastPerformanceTimestampMillis,
+    AtomicReference<String> lastKnownLoanId, String stepName, String endpoint) {
+
+    final long currentMillis = System.currentTimeMillis();
+
+    RenewalPerformanceLogger.log(logger, performanceAnalysisId,
+      lastPerformanceTimestampMillis.get(), currentMillis,
+      loanId(result, lastKnownLoanId),
+      "step={} endpoint={} outcome={}", stepName, endpoint,
+      result.succeeded() ? "success" : "failure");
+
+    lastPerformanceTimestampMillis.set(currentMillis);
+
+    return result;
+  }
+
+  protected void logPerformanceStep(Logger logger, String performanceAnalysisId,
+    AtomicLong lastPerformanceTimestampMillis, String stepName, String endpoint) {
+
+    final long currentMillis = System.currentTimeMillis();
+
+    RenewalPerformanceLogger.log(logger, performanceAnalysisId,
+      lastPerformanceTimestampMillis.get(), currentMillis, null,
+      "step={} endpoint={}", stepName, endpoint);
+
+    lastPerformanceTimestampMillis.set(currentMillis);
+  }
+
+  protected <T> Result<T> logPerformanceStep(Result<T> result,
+    String performanceAnalysisId, AtomicLong lastPerformanceTimestampMillis,
+    String stepName, String endpoint) {
+
+    final long currentMillis = System.currentTimeMillis();
+
+    RenewalPerformanceLogger.log(log, performanceAnalysisId,
+      lastPerformanceTimestampMillis.get(), currentMillis, loanId(result),
+      "step={} endpoint={} outcome={}", stepName, endpoint,
+      result.succeeded() ? "success" : "failure");
+
+    lastPerformanceTimestampMillis.set(currentMillis);
+
+    return result;
+  }
+
+  protected <T> Result<T> logPerformanceStep(Result<T> result,
+    String performanceAnalysisId, AtomicLong lastPerformanceTimestampMillis,
+    AtomicReference<String> lastKnownLoanId, String stepName, String endpoint) {
+
+    final long currentMillis = System.currentTimeMillis();
+
+    RenewalPerformanceLogger.log(log, performanceAnalysisId,
+      lastPerformanceTimestampMillis.get(), currentMillis,
+      loanId(result, lastKnownLoanId),
+      "step={} endpoint={} outcome={}", stepName, endpoint,
+      result.succeeded() ? "success" : "failure");
+
+    lastPerformanceTimestampMillis.set(currentMillis);
+
+    return result;
+  }
+
+  protected RenewalContext logPerformanceStep(RenewalContext renewalContext,
+    String stepName, String endpoint) {
+
+    return RenewalPerformanceLogger.logAndAdvance(log, renewalContext,
+      System.currentTimeMillis(), "step={} endpoint={}", stepName, endpoint);
+  }
+
+  protected RenewalContext logPerformanceStep(RenewalContext renewalContext,
+    AtomicLong lastPerformanceTimestampMillis, String stepName, String endpoint) {
+
+    final RenewalContext updatedContext = logPerformanceStep(renewalContext, stepName, endpoint);
+
+    lastPerformanceTimestampMillis.set(updatedContext.getLastPerformanceTimestampMillis());
+
+    return updatedContext;
+  }
+
+  private static String loanId(Result<?> result) {
+    if (result.succeeded()) {
+      return loanId(result.value());
+    }
+
+    return null;
+  }
+
+  private static String loanId(Result<?> result, AtomicReference<String> lastKnownLoanId) {
+    final String currentLoanId = loanId(result);
+
+    if (currentLoanId != null) {
+      lastKnownLoanId.set(currentLoanId);
+      return currentLoanId;
+    }
+
+    return lastKnownLoanId.get();
+  }
+
+  private static String loanId(Object value) {
+    if (value instanceof Loan loan) {
+      return loan.getId();
+    }
+
+    if (value instanceof RenewalContext renewalContext) {
+      final Loan loan = renewalContext.getLoan();
+      return loan != null ? loan.getId() : null;
+    }
+
+    return null;
+  }
+
+  protected Result<RenewalContext> logAndAdvancePerformanceStep(Result<RenewalContext> result,
+    String performanceAnalysisId, AtomicLong lastPerformanceTimestampMillis,
+    String stepName, String endpoint) {
+
+    if (result.succeeded()) {
+      return result.map(ctx -> logPerformanceStep(ctx, lastPerformanceTimestampMillis,
+        stepName, endpoint));
+    }
+
+    return logPerformanceStep(result, performanceAnalysisId,
+      lastPerformanceTimestampMillis, stepName, endpoint);
+  }
+
+  protected Result<RenewalContext> synchronizeTimestampReference(Result<RenewalContext> result,
+    AtomicLong lastPerformanceTimestampMillis) {
+
+    if (result.succeeded()) {
+      lastPerformanceTimestampMillis.set(
+        result.value().getLastPerformanceTimestampMillis());
+    } else {
+      lastPerformanceTimestampMillis.set(System.currentTimeMillis());
+    }
+
+    return result;
+  }
 
   private Validator<RenewalContext> createAutomatedPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
-    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
-      new AutomatedPatronBlocksValidator(
-        automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron;
-
-    final BlockOverrides blockOverrides = getOverrideBlocks(request);
-
-    return blockOverrides.getPatronBlockOverride().isRequested()
-      ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
-      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
+    return RenewalPreRenewalValidator.createAutomatedPatronBlocksValidator(request,
+      permissions, automatedPatronBlocksRepository);
   }
 
   private Validator<RenewalContext> createManualPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, Clients clients) {
 
-    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
-      new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked;
-
-    final BlockOverrides blockOverrides = getOverrideBlocks(request);
-
-    return blockOverrides.getPatronBlockOverride().isRequested()
-      ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
-      : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY, validationFunction);
+    return RenewalPreRenewalValidator.createManualPatronBlocksValidator(request,
+      permissions, clients);
   }
 
   private BlockOverrides getOverrideBlocks(JsonObject request) {
@@ -805,7 +970,7 @@ public abstract class RenewalResource extends Resource {
       .filter(request -> request.isFor(loan))
       .findFirst()
       .ifPresent(recall -> errors.add(errorForRecallRequest(
-        "items cannot be renewed when there is an active recall request", recall.getId())));
+        ITEMS_CANNOT_BE_RENEWED_RECALL, recall.getId())));
 
     if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),

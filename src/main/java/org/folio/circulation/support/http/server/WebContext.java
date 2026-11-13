@@ -11,6 +11,7 @@ import static org.folio.circulation.support.http.OkapiHeader.USER_ID;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.folio.circulation.support.InvalidOkapiLocationException;
@@ -25,6 +26,7 @@ import lombok.Getter;
 
 public class WebContext {
   private final RoutingContext routingContext;
+
   @Getter
   private final Map<String, String> headers;
   @Getter
@@ -67,6 +69,10 @@ public class WebContext {
   }
 
   private String getHeader(String header) {
+    if (routingContext != null) {
+      return routingContext.request().getHeader(header);
+    }
+
     return headers.get(header.toLowerCase());
   }
 
@@ -121,7 +127,7 @@ public class WebContext {
   }
 
   public void write(HttpResponse response) {
-    response.writeTo(routingContext.response());
+    response.writeTo(requireRoutingContext().response());
   }
 
   public void writeResultToHttpResponse(Result<HttpResponse> result) {
@@ -130,7 +136,7 @@ public class WebContext {
 
   private static Map<String, String> normalizeHeaders(Map<String, String> headers) {
     return headers.entrySet().stream()
-      .collect(toMap(entry -> entry.getKey().toLowerCase(), Map.Entry::getValue,
+      .collect(toMap(entry -> entry.getKey().toLowerCase(Locale.ROOT), Map.Entry::getValue,
         (a, b) -> b, HashMap::new));
   }
 
@@ -141,5 +147,13 @@ public class WebContext {
       ? Map.of()
       : requestHeaders.entries().stream()
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b));
+  }
+
+  private RoutingContext requireRoutingContext() {
+    if (routingContext == null) {
+      throw new IllegalStateException("RoutingContext is not available for detached WebContext");
+    }
+
+    return routingContext;
   }
 }

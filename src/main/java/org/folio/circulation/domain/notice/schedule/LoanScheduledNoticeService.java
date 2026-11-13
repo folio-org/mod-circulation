@@ -18,6 +18,7 @@ import org.folio.circulation.infrastructure.storage.notices.PatronNoticePolicyRe
 import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.Result;
 
 public class LoanScheduledNoticeService {
@@ -128,9 +129,14 @@ public class LoanScheduledNoticeService {
   }
 
   public Result<RenewalContext> rescheduleDueDateNotices(RenewalContext renewalContext) {
+    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(log,
+      renewalContext, System.currentTimeMillis(), "step={}", "due-date-notice-reschedule-start");
     log.info("rescheduleDueDateNotices:: rescheduling due date notices for renewal context, loan {}",
-      renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
-    return rescheduleDueDateNotices(renewalContext.getLoan(), renewalContext);
+      updatedContext.getLoan() != null ? updatedContext.getLoan().getId() : "null");
+    // Completion here measures dispatch into async notice rescheduling, not downstream completion.
+    rescheduleDueDateNotices(updatedContext.getLoan(), updatedContext);
+    return succeeded(RenewalPerformanceLogger.logAndAdvance(log, updatedContext,
+      System.currentTimeMillis(), "step={}", "due-date-notice-reschedule-complete"));
   }
 
   private <T> Result<T> rescheduleDueDateNotices(Loan loan, T mapTo) {

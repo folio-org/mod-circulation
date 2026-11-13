@@ -232,7 +232,7 @@
     },
     {
       "id": "circulation",
-      "version": "14.9",
+      "version": "14.10",
       "handlers": [
         {
           "methods": [
@@ -306,6 +306,22 @@
           ],
           "modulePermissions": [
             "circulation.renew-loan.all"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/bulk-renew-open-loans",
+          "permissionsRequired": [
+            "circulation.bulk-renew-open-loans.post"
+          ],
+          "modulePermissions": [
+            "circulation.renew-loan.all"
+          ],
+          "permissionsDesired": [
+            "circulation.override-patron-block.post",
+            "circulation.override-renewal-block.post"
           ]
         },
         {
@@ -1530,6 +1546,11 @@
       "description": "renew a loan using IDs for item and loanee"
     },
     {
+      "permissionName": "circulation.bulk-renew-open-loans.post",
+      "displayName": "circulation - bulk renew open loans",
+      "description": "trigger bulk renewal of currently open loans"
+    },
+    {
       "permissionName": "circulation.pickup-by-barcode-for-use-at-location.post",
       "displayName": "circulation - pick up from hold shelf for use at location",
       "description": "pick up item of an existing loan from hold shelf for use at location (i.e. in reading room)"
@@ -1862,6 +1883,7 @@
         "circulation.check-in-by-barcode.post",
         "circulation.renew-by-barcode.post",
         "circulation.renew-by-id.post",
+        "circulation.bulk-renew-open-loans.post",
         "circulation.hold-by-barcode-for-use-at-location.post",
         "circulation.pickup-by-barcode-for-use-at-location.post",
         "circulation.loans.collection.get",

@@ -19,3 +19,5 @@ nbproject/
 .classpath
 /bin/
 .DS_Store
+.worktrees/
+docs/

@@ -25,7 +25,8 @@ public enum LoanAction {
   RESOLVE_CLAIM_AS_FOUND_BY_LIBRARY("checkedInFoundByLibrary"),
   REMINDER_FEE("reminderFee"),
   HELD_FOR_USE_AT_LOCATION("heldForUseAtLocation"),
-  PICKED_UP_FOR_USE_AT_LOCATION ("pickedUpForUseAtLocation");
+  PICKED_UP_FOR_USE_AT_LOCATION ("pickedUpForUseAtLocation"),
+  AUTOMATIC_RENEWAL_FAILED("automaticRenewalFailed");
   private final String value;
 
   LoanAction(String value) {

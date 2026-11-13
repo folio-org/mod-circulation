@@ -7,6 +7,7 @@ import static org.folio.circulation.domain.EventType.LOG_RECORD;
 import static org.folio.circulation.domain.representations.logs.LogEventType.LOAN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
@@ -109,6 +110,28 @@ class EventPublisherTest {
   }
 
   @Test
+  void shouldPreserveAndAdvanceRenewalPerformanceStateWhenPublishingDueDateChangedEvent()
+    throws Exception {
+
+    String checkoutStaffId = UUID.randomUUID().toString();
+    String renewalStaffId = UUID.randomUUID().toString();
+    long previousTimestamp = 10L;
+    String analysisId = "analysis-id";
+
+    RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId)
+      .withPerformanceAnalysisId(analysisId)
+      .withLastPerformanceTimestampMillis(previousTimestamp);
+
+    RenewalContext updatedContext = eventPublisher.publishDueDateChangedEvent(renewalContext)
+      .get()
+      .value();
+
+    assertThat(updatedContext.getPerformanceAnalysisId(), is(analysisId));
+    assertThat(updatedContext.getLastPerformanceTimestampMillis(),
+      is(greaterThan(previousTimestamp)));
+  }
+
+  @Test
   void publishLogRecordReturnsServerErrorWhenKafkaPublishingFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
     when(eventPublishingService.publishEvent(anyString(), eq(LOG_RECORD.name()), any(JsonObject.class)))
@@ -134,6 +157,35 @@ class EventPublisherTest {
     assertThat(result.failed(), is(true));
     assertThat(result.cause(), instanceOf(ServerErrorFailure.class));
     assertThat(((ServerErrorFailure) result.cause()).getReason(), is(failure.getMessage()));
+  }
+
+  @Test
+  void shouldPublishAutomaticRenewalFailureLogEvent() {
+    String loanId = UUID.randomUUID().toString();
+    String updatingUserId = UUID.randomUUID().toString();
+    String reason = "items cannot be renewed when there is an active recall request";
+
+    Loan loan = Loan.from(new JsonObject()
+      .put("id", loanId)
+      .put("userId", UUID.randomUUID().toString())
+      .put("itemId", UUID.randomUUID().toString())
+      .put("status", new JsonObject().put("name", "Open")));
+
+    eventPublisher.publishAutomaticRenewalFailureLogEvent(loan, reason, updatingUserId).join();
+
+    ArgumentCaptor<JsonObject> payloadCaptor = ArgumentCaptor.forClass(JsonObject.class);
+    verify(eventPublishingService, atLeastOnce())
+      .publishEvent(eq(loanId), eq(LOG_RECORD.name()), payloadCaptor.capture());
+
+    JsonObject payload = payloadCaptor.getAllValues().stream()
+      .filter(json -> "Automatic renewal failed".equals(
+        json.getJsonObject("payload", new JsonObject()).getString("action")))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError(
+        "No 'Automatic renewal failed' LOG_RECORD event was published"));
+
+    assertThat(payload.getJsonObject("payload").getString("description"), is(reason));
+    assertThat(payload.getJsonObject("payload").getString("updatedByUserId"), is(updatingUserId));
   }
 
   private RenewalContext buildRenewalContext(String checkoutStaffId, String renewalStaffId) {

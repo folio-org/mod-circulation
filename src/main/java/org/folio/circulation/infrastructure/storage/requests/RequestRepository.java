@@ -22,6 +22,7 @@ import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -213,13 +214,69 @@ public class RequestRepository {
   public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
     Collection<String> itemIds) {
 
+    return findOpenRequestsByItemIds(itemIds,
+      findWithMultipleCqlIndexValues(requestsStorageClient, REQUESTS_COLLECTION_NAME, Request::from));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
+    Collection<String> itemIds, int maxValuesPerCqlSearchQuery) {
+
+    log.debug("findOpenRequestsByItemIds:: parameters itemIds: {}, maxValuesPerCqlSearchQuery: {}",
+      itemIds.size(), maxValuesPerCqlSearchQuery);
+
+    return findOpenRequestsByItemIds(itemIds, new CqlIndexValuesFinder<>(
+      new CqlQueryFinder<>(requestsStorageClient, REQUESTS_COLLECTION_NAME, Request::from),
+      maxValuesPerCqlSearchQuery));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByInstanceIds(
+    Collection<String> instanceIds) {
+
+    return findOpenRequestsByInstanceIds(instanceIds,
+      findWithMultipleCqlIndexValues(requestsStorageClient, REQUESTS_COLLECTION_NAME, Request::from));
+  }
+
+  public CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByInstanceIds(
+    Collection<String> instanceIds, int maxValuesPerCqlSearchQuery) {
+
+    log.debug("findOpenRequestsByInstanceIds:: parameters instanceIds: {}, maxValuesPerCqlSearchQuery: {}",
+      instanceIds.size(), maxValuesPerCqlSearchQuery);
+
+    return findOpenRequestsByInstanceIds(instanceIds, new CqlIndexValuesFinder<>(
+      new CqlQueryFinder<>(requestsStorageClient, REQUESTS_COLLECTION_NAME, Request::from),
+      maxValuesPerCqlSearchQuery));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByInstanceIds(
+    Collection<String> instanceIds,
+    org.folio.circulation.support.FindWithMultipleCqlIndexValues<Request> fetcher) {
+
+    log.debug("findOpenRequestsByInstanceIds:: parameters instanceIds: {}", instanceIds.size());
+
+    Result<CqlQuery> query = exactMatchAny("status", openStates())
+      .map(q -> q.sortBy(ascending("position")));
+
+    return fetcher.findByIdIndexAndQuery(instanceIds, "instanceId", query)
+      .thenApply(mapResult(this::sortRequestsByPosition));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
+    Collection<String> itemIds, org.folio.circulation.support.FindWithMultipleCqlIndexValues<Request> fetcher) {
+
     log.debug("findOpenRequestsByItemIds:: parameters itemIds: {}", itemIds.size());
 
     Result<CqlQuery> query = exactMatchAny("status", openStates())
       .map(q -> q.sortBy(ascending("position")));
 
-    return findWithMultipleCqlIndexValues(requestsStorageClient, REQUESTS_COLLECTION_NAME, Request::from)
-      .findByIdIndexAndQuery(itemIds, "itemId", query);
+    return fetcher.findByIdIndexAndQuery(itemIds, "itemId", query)
+      .thenApply(mapResult(this::sortRequestsByPosition));
+  }
+
+  private MultipleRecords<Request> sortRequestsByPosition(MultipleRecords<Request> requests) {
+    return new MultipleRecords<>(requests.getRecords().stream()
+      .sorted(Comparator.comparing(Request::getPosition,
+        Comparator.nullsLast(Integer::compareTo)))
+      .toList(), requests.getTotalRecords());
   }
 
   public CompletableFuture<Result<Request>> update(Request request) {

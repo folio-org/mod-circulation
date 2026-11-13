@@ -28,6 +28,8 @@ import org.folio.circulation.support.results.Result;
 
 public final class RenewalValidator {
   public static final String RENEWAL_WOULD_NOT_CHANGE_THE_DUE_DATE = "renewal would not change the due date";
+  public static final String ITEMS_CANNOT_BE_RENEWED_RECALL =
+    "items cannot be renewed when there is an active recall request";
   public static final String CAN_NOT_RENEW_ITEM_ERROR =
     "Items with this loan policy cannot be renewed when there is an active, pending hold request";
 
