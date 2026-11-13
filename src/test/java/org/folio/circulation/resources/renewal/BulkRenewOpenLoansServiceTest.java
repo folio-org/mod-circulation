@@ -42,8 +42,10 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.OverdueFinePolicy;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
+import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
+import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -416,6 +418,56 @@ class BulkRenewOpenLoansServiceTest {
             server.close()
               .onComplete(testContext.succeeding(v -> testContext.completeNow()));
           }))));
+  }
+
+  @Test
+  void shouldCallUpdateLoanAndItemInStorageForEachSuccessfulRenewal()
+      throws InterruptedException {
+
+    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
+    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
+
+    Loan loan1 = minimalLoanWithItem(UUID.randomUUID(), UUID.randomUUID());
+    Loan loan2 = minimalLoanWithItem(UUID.randomUUID(), UUID.randomUUID());
+
+    when(loanRepository.updateLoan(loan1)).thenReturn(completedFuture(succeeded(loan1)));
+    when(loanRepository.updateLoan(loan2)).thenReturn(completedFuture(succeeded(loan2)));
+    when(itemRepository.updateItem(any())).thenReturn(completedFuture(succeeded(loan1.getItem())));
+
+    RenewalContext ctx1 = RenewalContext.create(loan1, new io.vertx.core.json.JsonObject(),
+      "user-1", "perf-1", System.currentTimeMillis());
+    RenewalContext ctx2 = RenewalContext.create(loan2, new io.vertx.core.json.JsonObject(),
+      "user-1", "perf-2", System.currentTimeMillis());
+
+    BulkRenewalPageContext pageContext = new BulkRenewalPageContext(
+      List.of(loan1, loan2), Map.of(), null,
+      "user-1", "job-1", 1,
+      List.of(ctx1, ctx2), Map.of());
+
+    StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+
+    CountDownLatch latch = new CountDownLatch(1);
+    BulkRenewOpenLoansService.PageCompletionHandler handler = pc ->
+      storeLoanAndItem.updateLoanAndItemInStorage(pc.successfulRenewalContexts().get(0).getLoan())
+        .thenCompose(r -> storeLoanAndItem.updateLoanAndItemInStorage(
+          pc.successfulRenewalContexts().get(1).getLoan()))
+        .thenApply(r -> { latch.countDown(); return Result.<Void>succeeded(null); });
+
+    handler.complete(pageContext).join();
+    latch.await(5, SECONDS);
+
+    verify(loanRepository).updateLoan(loan1);
+    verify(loanRepository).updateLoan(loan2);
+  }
+
+  private static Loan minimalLoanWithItem(UUID loanId, UUID itemId) {
+    return new LoanBuilder()
+      .withId(loanId)
+      .withItemId(itemId)
+      .asDomainObject()
+      .withItem(Item.from(new io.vertx.core.json.JsonObject()
+        .put("id", itemId.toString())
+        .put("status", new io.vertx.core.json.JsonObject().put("name", "Checked out"))));
   }
 
   private static final class TrackingBulkRenewalJobGuard extends BulkRenewalJobGuard {
