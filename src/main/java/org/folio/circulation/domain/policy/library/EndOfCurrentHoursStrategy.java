@@ -36,6 +36,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
       libraryTimetable, requestedInterval);
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
+      log.warn("calculateIfClosed:: currentTimeInterval is null");
       return calculateIfCurrentTimeIsOutsideOfTimetable(requestedInterval);
     }
     if (hasLibraryRolloverWorkingDay(libraryTimetable, requestedInterval)) {
