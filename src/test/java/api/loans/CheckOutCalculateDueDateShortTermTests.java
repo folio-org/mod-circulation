@@ -8,6 +8,7 @@ import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_DAY_ALL_SER
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY;
 import static api.support.fixtures.CalendarExamples.END_TIME_FIRST_PERIOD;
+import static api.support.fixtures.CalendarExamples.END_TIME_SECOND_PERIOD;
 import static api.support.fixtures.CalendarExamples.ROLLOVER_SCENARIO_NEXT_DAY_CLOSED_SERVICE_POINT_ID;
 import static api.support.fixtures.CalendarExamples.ROLLOVER_SCENARIO_SERVICE_POINT_ID;
 import static java.time.ZoneOffset.UTC;
@@ -150,6 +151,36 @@ class CheckOutCalculateDueDateShortTermTests extends APITests {
       END_TIME_FIRST_PERIOD, UTC);
 
     checkOffsetTime(loanDate, expectedDueDate, CASE_CURRENT_IS_OPEN, INTERVAL_MINUTES, 90);
+  }
+
+  /**
+   * Loan period: Hours (more than 24)
+   * Checkout day (THU) is not part of the calendar surrounding the projected due date
+   * Test period: THU=checkout, FRI=open, SAT=close (projected due date), MON=open
+   * Expected: due date is the end of the last open hours before the projected due date (FRI)
+   */
+  @Test
+  void testHoursLoanPeriodOfTwoDaysWhenCheckoutDayIsNotInSurroundingCalendar() {
+    ZonedDateTime loanDate = ZonedDateTime.of(
+      CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY.minusDays(1), TEST_TIME_MORNING, UTC);
+    ZonedDateTime expectedDueDate = ZonedDateTime.of(
+      CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, END_TIME_SECOND_PERIOD, UTC);
+
+    checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_SERVICE_POINT_ID, INTERVAL_HOURS, 48);
+  }
+
+  /**
+   * Loan period: Minutes (more than 24 hours)
+   * Same scenario as above, but the loan period is expressed in minutes
+   */
+  @Test
+  void testMinutesLoanPeriodOfTwoDaysWhenCheckoutDayIsNotInSurroundingCalendar() {
+    ZonedDateTime loanDate = ZonedDateTime.of(
+      CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY.minusDays(1), TEST_TIME_MORNING, UTC);
+    ZonedDateTime expectedDueDate = ZonedDateTime.of(
+      CASE_FRI_SAT_MON_SERVICE_POINT_PREV_DAY, END_TIME_SECOND_PERIOD, UTC);
+
+    checkOffsetTime(loanDate, expectedDueDate, CASE_FRI_SAT_MON_SERVICE_POINT_ID, INTERVAL_MINUTES, 2880);
   }
 
   /**
