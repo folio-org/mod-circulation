@@ -3,8 +3,6 @@ package org.folio.circulation.resources.renewal;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
-import static org.folio.circulation.support.http.client.Offset.zeroOffset;
-import static org.folio.circulation.support.http.client.PageLimit.limit;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,10 +30,10 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.folio.circulation.domain.AutomatedPatronBlocks;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
-import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
@@ -50,6 +48,7 @@ import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
+import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
@@ -71,8 +70,11 @@ import org.mockito.Mockito;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverdueFinePolicyWithReminderFeesBuilder;
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -348,26 +350,25 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void shouldSkipAutomatedPatronBlockValidationForBulkRenewal() throws Exception {
-    Clients clients = Mockito.mock(Clients.class);
-    CollectionResourceClient userManualBlocksClient = Mockito.mock(CollectionResourceClient.class);
-    AutomatedPatronBlocksRepository automatedPatronBlocksRepository = Mockito.mock(
-      AutomatedPatronBlocksRepository.class);
-    UUID userId = UUID.randomUUID();
-    RenewalContext context = RenewalContext.create(new LoanBuilder()
-        .withId(UUID.randomUUID())
-        .withUserId(userId)
-        .withItemId(UUID.randomUUID())
-        .asDomainObject(),
-      new io.vertx.core.json.JsonObject(), "trigger-user")
+  void shouldEnforceAutomatedPatronBlockValidationForBulkRenewal() throws Exception {
+    var clients = Mockito.mock(Clients.class);
+    var userManualBlocksClient = Mockito.mock(CollectionResourceClient.class);
+    var automatedPatronBlocksRepository = Mockito.mock(AutomatedPatronBlocksRepository.class);
+    var userId = UUID.randomUUID();
+    var loan = new LoanBuilder()
+      .withId(UUID.randomUUID())
+      .withUserId(userId)
+      .withItemId(UUID.randomUUID())
+      .asDomainObject();
+    var context = RenewalContext.create(loan, new JsonObject(), "trigger-user")
       .withRequestQueue(new RequestQueue(List.of()));
 
     when(clients.userManualBlocksStorageClient()).thenReturn(userManualBlocksClient);
     when(userManualBlocksClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
       .thenReturn(completedFuture(succeeded(emptyResponse("manualblocks"))));
+    // Patron has an active automated block on renewals
     when(automatedPatronBlocksRepository.findByUserId(userId.toString()))
-      .thenReturn(completedFuture(Result.failed(new TestFailure(
-        "automated patron blocks should be skipped"))));
+      .thenReturn(completedFuture(succeeded(new AutomatedPatronBlocks())));
 
     Class<?> runnerClass = Class.forName(
       "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
@@ -375,8 +376,7 @@ class BulkRenewOpenLoansServiceTest {
       BulkRenewalWebContext.class);
     constructor.setAccessible(true);
     Object runner = constructor.newInstance(Mockito.mock(HttpClient.class),
-      new BulkRenewalWebContext(Map.of(),
-        Mockito.mock(io.vertx.core.Context.class)));
+      new BulkRenewalWebContext(Map.of(), Mockito.mock(Context.class)));
     Method applyPatronBlockValidations = runnerClass.getDeclaredMethod(
       "applyPatronBlockValidations", Clients.class, OkapiPermissions.class,
       AutomatedPatronBlocksRepository.class, RenewalContext.class,
@@ -390,7 +390,62 @@ class BulkRenewOpenLoansServiceTest {
 
     assertTrue(validation.join().succeeded());
     verify(userManualBlocksClient).getMany(any(CqlQuery.class), any(PageLimit.class));
-    verify(automatedPatronBlocksRepository, never()).findByUserId(userId.toString());
+    // Automated patron block lookup IS now called (no longer skipped)
+    verify(automatedPatronBlocksRepository).findByUserId(userId.toString());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void shouldFailRenewalWhenPatronHasAutomatedRenewalBlock() throws Exception {
+    var clients = Mockito.mock(Clients.class);
+    var userManualBlocksClient = Mockito.mock(CollectionResourceClient.class);
+    var automatedPatronBlocksRepository = Mockito.mock(AutomatedPatronBlocksRepository.class);
+    var userId = UUID.randomUUID();
+    var loan = new LoanBuilder()
+        .withId(UUID.randomUUID())
+        .withUserId(userId)
+        .withItemId(UUID.randomUUID())
+        .asDomainObject();
+    var context = RenewalContext.create(loan, new JsonObject(), "trigger-user")
+      .withRequestQueue(new RequestQueue(List.of()));
+
+    // No manual blocks
+    when(clients.userManualBlocksStorageClient()).thenReturn(userManualBlocksClient);
+    when(userManualBlocksClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
+      .thenReturn(completedFuture(succeeded(emptyResponse("manualblocks"))));
+    // Patron has an active automated block with blockRenewals=true
+    var blockJson = new JsonObject()
+      .put("blockRenewals", true)
+      .put("message", "Patron has reached max items charged out");
+    var blocksResponse = new JsonObject()
+      .put("automatedPatronBlocks", new JsonArray().add(blockJson))
+      .put("totalRecords", 1);
+    when(automatedPatronBlocksRepository.findByUserId(userId.toString()))
+      .thenReturn(completedFuture(succeeded(AutomatedPatronBlocks.from(blocksResponse))));
+
+    Class<?> runnerClass = Class.forName(
+      "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
+    Constructor<?> constructor = runnerClass.getDeclaredConstructor(HttpClient.class,
+      BulkRenewalWebContext.class);
+    constructor.setAccessible(true);
+    Object runner = constructor.newInstance(Mockito.mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of(),
+        Mockito.mock(Context.class)));
+    Method applyPatronBlockValidations = runnerClass.getDeclaredMethod(
+      "applyPatronBlockValidations", Clients.class, OkapiPermissions.class,
+      AutomatedPatronBlocksRepository.class, RenewalContext.class,
+      CirculationErrorHandler.class);
+    applyPatronBlockValidations.setAccessible(true);
+
+    var errorHandler = new OverridingErrorHandler(null);
+    var validation = (CompletableFuture<Result<RenewalContext>>) applyPatronBlockValidations.invoke(runner,
+        clients, OkapiPermissions.empty(), automatedPatronBlocksRepository, context,
+        errorHandler);
+
+    var result = validation.join();
+    // The error handler captures the block; the result is succeeded but errorHandler has the error
+    assertTrue(errorHandler.hasAny(CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY));
+    verify(automatedPatronBlocksRepository).findByUserId(userId.toString());
   }
 
   @Test
