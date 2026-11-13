@@ -36,8 +36,7 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
       libraryTimetable, requestedInterval);
     LibraryInterval currentTimeInterval = libraryTimetable.findInterval(currentTime);
     if (currentTimeInterval == null) {
-      log.error("calculateIfClosed:: currentTimeInterval is null");
-      return failed(failureForAbsentTimetable());
+      return calculateIfCurrentTimeIsOutsideOfTimetable(requestedInterval);
     }
     if (hasLibraryRolloverWorkingDay(libraryTimetable, requestedInterval)) {
       log.info("calculateIfClosed:: hasLibraryRolloverWorkingDay is true");
@@ -52,6 +51,29 @@ public class EndOfCurrentHoursStrategy extends ShortTermLoansBaseStrategy {
         log.info("calculateIfClosed:: result: {}", dateTime);
         return succeeded(dateTime);
       });
+  }
+
+  /**
+   * The timetable is built from the days surrounding the projected due date only, so for loans
+   * longer than a day (e.g. 48 hours) the checkout time can be earlier than the whole timetable.
+   * Everything in the timetable is then later than the checkout time, so the end of the last
+   * open hours before the projected due date is the end of the service point hours to move to.
+   */
+  private Result<ZonedDateTime> calculateIfCurrentTimeIsOutsideOfTimetable(
+    LibraryInterval requestedInterval) {
+
+    LibraryInterval previousInterval = requestedInterval.getPrevious();
+    if (previousInterval != null && previousInterval.isOpen()
+      && previousInterval.getEndTime().isAfter(currentTime)) {
+
+      log.info("calculateIfCurrentTimeIsOutsideOfTimetable:: moving to the end of the last " +
+        "open hours before requested date: {}", previousInterval.getEndTime());
+      return succeeded(previousInterval.getEndTime());
+    }
+
+    log.error("calculateIfCurrentTimeIsOutsideOfTimetable:: no open hours found for " +
+      "current time {}", currentTime);
+    return failed(failureForAbsentTimetable());
   }
 
   private boolean hasLibraryRolloverWorkingDay(LibraryTimetable libraryTimetable,
