@@ -1,5 +1,7 @@
 package org.folio.circulation.resources.renewal;
 
+import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
+import static org.folio.circulation.resources.RenewalValidator.ITEMS_CANNOT_BE_RENEWED_RECALL;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 
 import java.lang.invoke.MethodHandles;
@@ -14,6 +16,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
+import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.support.HttpFailure;
@@ -22,11 +25,6 @@ public final class BulkRenewalEligibilityFilter {
 
   private static final Logger log =
     LogManager.getLogger(MethodHandles.lookup().lookupClass());
-
-  static final String RECALL_BLOCKS_REASON =
-    "items cannot be renewed when there is an active recall request";
-  static final String HOLD_BLOCKS_REASON =
-    "Items with this loan policy cannot be renewed when there is an active, pending hold request";
 
   private BulkRenewalEligibilityFilter() {
   }
@@ -104,17 +102,17 @@ public final class BulkRenewalEligibilityFilter {
   private static String findBlockingReason(Loan loan, RequestQueue queue, LoanPolicy policy) {
     boolean recallBlocks = queue.getRequests().stream()
       .filter(r -> r.isFor(loan))
-      .anyMatch(org.folio.circulation.domain.Request::isRecall);
+      .anyMatch(Request::isRecall);
 
     if (recallBlocks) {
-      return RECALL_BLOCKS_REASON;
+      return ITEMS_CANNOT_BE_RENEWED_RECALL;
     }
 
     boolean holdBlocks = !policy.isHoldRequestRenewable()
       && firstOpenRequestIsHold(queue, loan);
 
     if (holdBlocks) {
-      return HOLD_BLOCKS_REASON;
+      return CAN_NOT_RENEW_ITEM_ERROR;
     }
 
     return null;
@@ -123,6 +121,6 @@ public final class BulkRenewalEligibilityFilter {
   private static boolean firstOpenRequestIsHold(RequestQueue queue, Loan loan) {
     return queue.getRequests().stream()
       .filter(r -> r.isFor(loan))
-      .anyMatch(org.folio.circulation.domain.Request::isHold);
+      .anyMatch(Request::isHold);
   }
 }

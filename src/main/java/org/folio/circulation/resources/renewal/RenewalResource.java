@@ -5,11 +5,11 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.domain.override.OverridableBlockType.RENEWAL_BLOCK;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS;
+import static org.folio.circulation.resources.RenewalValidator.ITEMS_CANNOT_BE_RENEWED_RECALL;
 import static org.folio.circulation.resources.RenewalValidator.errorForDueDate;
 import static org.folio.circulation.resources.RenewalValidator.errorForNotMatchingOverrideCases;
 import static org.folio.circulation.resources.RenewalValidator.errorForRecallRequest;
@@ -970,7 +970,7 @@ public abstract class RenewalResource extends Resource {
       .filter(request -> request.isFor(loan))
       .findFirst()
       .ifPresent(recall -> errors.add(errorForRecallRequest(
-        "items cannot be renewed when there is an active recall request", recall.getId())));
+        ITEMS_CANNOT_BE_RENEWED_RECALL, recall.getId())));
 
     if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),
