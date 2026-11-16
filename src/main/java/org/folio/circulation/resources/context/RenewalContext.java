@@ -1,7 +1,6 @@
 package org.folio.circulation.resources.context;
 
 import java.time.ZoneId;
-import java.util.UUID;
 
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.ItemStatus;
@@ -28,28 +27,16 @@ public class RenewalContext {
   ItemStatus itemStatusBeforeRenewal;
   String loggedInUserId;
   JsonObject renewalRequest;
-  @EqualsAndHashCode.Exclude
-  String performanceAnalysisId;
-  @EqualsAndHashCode.Exclude
-  Long lastPerformanceTimestampMillis;
   FeeFineAction overdueFeeFineAction;
   TlrSettingsConfiguration tlrSettings;
 
   public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
-    return create(loan, renewalRequest, loggedInUserId, UUID.randomUUID().toString(),
-      System.currentTimeMillis());
-  }
-
-  public static RenewalContext create(Loan loan, JsonObject renewalRequest,
-    String loggedInUserId, String performanceAnalysisId,
-    long lastPerformanceTimestampMillis) {
     final Loan loanBeforeRenewal = loan != null ? loan.copy() : null;
     final ItemStatus itemStatusBeforeRenew = loan != null && loan.getItem() != null
       ? loan.getItem().getStatus() : null;
 
     return new RenewalContext(loan, null, null, loanBeforeRenewal, itemStatusBeforeRenew,
-      loggedInUserId, renewalRequest, performanceAnalysisId,
-      lastPerformanceTimestampMillis, null, null);
+      loggedInUserId, renewalRequest, null, null);
   }
 }

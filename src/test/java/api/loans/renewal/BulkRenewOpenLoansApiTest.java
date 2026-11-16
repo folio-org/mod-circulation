@@ -163,8 +163,7 @@ class BulkRenewOpenLoansApiTest {
 
     BulkRenewOpenLoansService.DetachedContextJobRunner runner = (jobId, detachedContext) -> {
       StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-      RenewalContext ctx = RenewalContext.create(loan, new JsonObject(), "user-1",
-        "perf-" + loanId, System.currentTimeMillis());
+      RenewalContext ctx = RenewalContext.create(loan, new JsonObject(), "user-1");
 
       return storeLoanAndItem.updateLoanAndItemInStorage(ctx)
         .thenApply(r -> {

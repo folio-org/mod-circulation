@@ -247,8 +247,7 @@ public class BulkRenewalPageProcessor {
   private RenewalContext createRenewalContext(FilteredPage filteredPage, Loan loan,
     String triggeringUserId, String jobId, int pageNumber) {
 
-    return RenewalContext.create(loan.copy(), renewalRequest.copy(),
-      triggeringUserId, performanceAnalysisId(jobId, pageNumber, loan), System.currentTimeMillis())
+    return RenewalContext.create(loan.copy(), renewalRequest.copy(), triggeringUserId)
       .withRequestQueue(filteredPage.requestQueuesByLoanId()
         .getOrDefault(loan.getId(), new RequestQueue(List.of())))
       .withTimeZone(filteredPage.timeZone())
@@ -331,14 +330,6 @@ public class BulkRenewalPageProcessor {
 
   private static List<List<String>> partitionsOf(Collection<String> ids) {
     return BulkRenewalChunkedFetchSupport.partition(ids, DEFAULT_ID_CHUNK_SIZE);
-  }
-
-  private static String performanceAnalysisId(String jobId, int pageNumber, Loan loan) {
-    if (jobId == null) {
-      return loan.getId();
-    }
-
-    return "%s:%s:%s".formatted(jobId, pageNumber, loan.getId());
   }
 
   private record PreparedPage(List<Loan> loans,

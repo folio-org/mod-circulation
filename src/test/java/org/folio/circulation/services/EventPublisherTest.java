@@ -110,28 +110,6 @@ class EventPublisherTest {
   }
 
   @Test
-  void shouldPreserveAndAdvanceRenewalPerformanceStateWhenPublishingDueDateChangedEvent()
-    throws Exception {
-
-    String checkoutStaffId = UUID.randomUUID().toString();
-    String renewalStaffId = UUID.randomUUID().toString();
-    long previousTimestamp = 10L;
-    String analysisId = "analysis-id";
-
-    RenewalContext renewalContext = buildRenewalContext(checkoutStaffId, renewalStaffId)
-      .withPerformanceAnalysisId(analysisId)
-      .withLastPerformanceTimestampMillis(previousTimestamp);
-
-    RenewalContext updatedContext = eventPublisher.publishDueDateChangedEvent(renewalContext)
-      .get()
-      .value();
-
-    assertThat(updatedContext.getPerformanceAnalysisId(), is(analysisId));
-    assertThat(updatedContext.getLastPerformanceTimestampMillis(),
-      is(greaterThan(previousTimestamp)));
-  }
-
-  @Test
   void publishLogRecordReturnsServerErrorWhenKafkaPublishingFails() {
     var failure = new IllegalStateException("Kafka is unreachable");
     when(eventPublishingService.publishEvent(anyString(), eq(LOG_RECORD.name()), any(JsonObject.class)))

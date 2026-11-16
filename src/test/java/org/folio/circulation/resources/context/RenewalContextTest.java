@@ -15,51 +15,30 @@ import io.vertx.core.json.JsonObject;
 
 class RenewalContextTest {
   @Test
-  void shouldPreserveProvidedPerformanceStateAndSnapshotLoanValues() {
+  void shouldSnapshotLoanValuesOnCreate() {
     final JsonObject renewalRequest = new JsonObject().put("itemBarcode", "12345");
     final Loan loan = createLoanWithItemStatus("Checked out");
 
-    final RenewalContext context = RenewalContext.create(loan, renewalRequest,
-      "staff-id", "analysis-id", 1234L);
+    final RenewalContext context = RenewalContext.create(loan, renewalRequest, "staff-id");
 
     assertThat(context.getLoan(), is(loan));
     assertThat(context.getRenewalRequest(), is(renewalRequest));
     assertThat(context.getLoggedInUserId(), is("staff-id"));
-    assertThat(context.getPerformanceAnalysisId(), is("analysis-id"));
-    assertThat(context.getLastPerformanceTimestampMillis(), is(1234L));
     assertThat(context.getLoanBeforeRenewal(), notNullValue());
     assertThat(context.getLoanBeforeRenewal(), not(loan));
     assertThat(context.getItemStatusBeforeRenewal(), is(loan.getItemStatus()));
   }
 
   @Test
-  void shouldGeneratePerformanceStateAndSnapshotLoanValuesForConvenienceFactory() {
+  void shouldSnapshotItemStatusOnCreate() {
     final JsonObject renewalRequest = new JsonObject().put("itemBarcode", "12345");
     final Loan loan = createLoanWithItemStatus("Available");
 
     final RenewalContext context = RenewalContext.create(loan, renewalRequest, "staff-id");
 
-    assertThat(context.getPerformanceAnalysisId(), notNullValue());
-    assertThat(context.getLastPerformanceTimestampMillis(), notNullValue());
     assertThat(context.getLoanBeforeRenewal(), notNullValue());
     assertThat(context.getLoanBeforeRenewal(), not(loan));
     assertThat(context.getItemStatusBeforeRenewal(), is(ItemStatus.AVAILABLE));
-  }
-
-  @Test
-  void shouldIgnorePerformanceStateInEqualityAndHashCode() {
-    final JsonObject renewalRequest = new JsonObject().put("itemBarcode", "12345");
-    final Loan loan = createLoanWithItemStatus("Checked out");
-
-    final RenewalContext firstContext = RenewalContext.create(loan, renewalRequest,
-      "staff-id", "analysis-id-1", 1234L);
-
-    final RenewalContext secondContext = firstContext
-      .withPerformanceAnalysisId("analysis-id-2")
-      .withLastPerformanceTimestampMillis(5678L);
-
-    assertThat(firstContext, is(secondContext));
-    assertThat(firstContext.hashCode(), is(secondContext.hashCode()));
   }
 
   private Loan createLoanWithItemStatus(String statusName) {

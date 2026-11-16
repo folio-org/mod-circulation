@@ -37,7 +37,6 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.LostItemFeeRefundContext;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.Result;
 
 public class FeeFineScheduledNoticeService {
@@ -80,15 +79,12 @@ public class FeeFineScheduledNoticeService {
   }
 
   public Result<RenewalContext> scheduleOverdueFineNotices(RenewalContext context) {
-    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(log,
-      context, System.currentTimeMillis(), "step={}", "overdue-fine-notice-scheduling-start");
     log.info("scheduleOverdueFineNotices:: scheduling overdue fine notices for renewal, loan {}",
-      updatedContext.getLoan() != null ? updatedContext.getLoan().getId() : "null");
+      context.getLoan() != null ? context.getLoan().getId() : "null");
     // Completion here measures scheduling dispatch, not downstream notice creation completion.
-    scheduleNotices(updatedContext.getLoan(), updatedContext.getOverdueFeeFineAction(), OVERDUE_FINE_RENEWED);
+    scheduleNotices(context.getLoan(), context.getOverdueFeeFineAction(), OVERDUE_FINE_RENEWED);
 
-    return succeeded(RenewalPerformanceLogger.logAndAdvance(log, updatedContext,
-      System.currentTimeMillis(), "step={}", "overdue-fine-notice-scheduling-complete"));
+    return succeeded(context);
   }
 
   public Result<LostItemFeeRefundContext> scheduleAgedToLostReturnedNotices(

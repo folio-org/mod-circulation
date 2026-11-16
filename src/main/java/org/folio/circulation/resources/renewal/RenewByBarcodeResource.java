@@ -5,7 +5,6 @@ import static org.folio.circulation.resources.renewal.RenewByBarcodeRequest.rene
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,8 +29,7 @@ public class RenewByBarcodeResource extends RenewalResource {
   @Override
   protected CompletableFuture<Result<Loan>> findLoan(JsonObject request,
     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
-    CirculationErrorHandler errorHandler, String performanceAnalysisId,
-    AtomicLong lastPerformanceTimestampMillis) {
+    CirculationErrorHandler errorHandler) {
 
     log.info("findLoan:: itemBarcode={}, userBarcode={}", () -> request.getString(
       RenewByBarcodeRequest.ITEM_BARCODE), () -> request.getString(RenewByBarcodeRequest.USER_BARCODE));
@@ -42,16 +40,9 @@ public class RenewByBarcodeResource extends RenewalResource {
 
     final Result<RenewByBarcodeRequest> requestResult = renewalRequestFrom(request);
 
-    logPerformanceStep(log, requestResult, performanceAnalysisId,
-      lastPerformanceTimestampMillis, "renew-by-barcode-request-validated",
-      "renew-by-barcode");
-
     return requestResult.after(renewal ->
       finder.findLoan(renewal.getItemBarcode(), renewal.getUserBarcode())
         .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-          (Loan) null))
-        .thenApply(r -> logPerformanceStep(log, r, performanceAnalysisId,
-          lastPerformanceTimestampMillis, "renew-by-barcode-open-loan-lookup-complete",
-          "renew-by-barcode")));
+          (Loan) null)));
   }
 }

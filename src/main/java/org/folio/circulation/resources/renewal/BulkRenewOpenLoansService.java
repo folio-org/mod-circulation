@@ -293,21 +293,15 @@ public class BulkRenewOpenLoansService {
 
       return query.after(cqlQuery -> fetcher.processPages(cqlQuery, records -> {
         int pageNumber = pageCounter.incrementAndGet();
-        long pageStart = System.currentTimeMillis();
 
         log.info("bulk renewal page start jobId={} page={} records={}", jobId, pageNumber,
           records.size());
-        BulkRenewalPerformanceLogger.log(log, jobId, pageStart, pageStart, pageNumber,
-          "page-start", records.size());
 
         return pageProcessor.process(records, triggeringUserId, jobId, pageNumber)
           .thenCompose(result -> result.after(pageContext -> pageCompletionHandler.complete(pageContext)
             .thenApply(completion -> completion.map(ignored -> releasePageReferences(pageContext)))
             .thenApply(Result::mapEmpty)))
           .thenApply(result -> {
-            long pageFinish = System.currentTimeMillis();
-            BulkRenewalPerformanceLogger.log(log, jobId, pageStart, pageFinish, pageNumber,
-              "page-finish", records.size());
             log.info("bulk renewal page finish jobId={} page={} records={}", jobId, pageNumber,
               records.size());
             return result;

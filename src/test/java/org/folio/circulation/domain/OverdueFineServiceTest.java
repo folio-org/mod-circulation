@@ -158,25 +158,6 @@ class OverdueFineServiceTest {
   }
 
   @Test
-  void shouldPreserveAndAdvanceRenewalPerformanceStateWhenSkippingOverdueFine()
-    throws ExecutionException, InterruptedException {
-
-    Loan loan = createLoan(1.0, "day", 1.0, "day", 10.0, 10.0, false)
-      .changeDueDate(ClockUtil.getZonedDateTime().plusDays(1));
-    long previousTimestamp = 1L;
-    String analysisId = "analysis-id";
-    RenewalContext context = RenewalContext.create(loan, new JsonObject(), LOGGED_IN_USER_ID,
-      analysisId, previousTimestamp);
-
-    RenewalContext updatedContext = overdueFineService.createOverdueFineIfNecessary(context)
-      .get()
-      .value();
-
-    assertEquals(analysisId, updatedContext.getPerformanceAnalysisId());
-    assertTrue(updatedContext.getLastPerformanceTimestampMillis() > previousTimestamp);
-  }
-
-  @Test
   void shouldNotDeleteOverdueNoticesWhenNoFeeFineActionIsCreated()
     throws ExecutionException, InterruptedException {
 

@@ -223,7 +223,7 @@ class BulkRenewOpenLoansServiceTest {
         "trigger-user",
         "job-1",
         2,
-        List.of(successfulRenewalContext(loan(1), "trigger-user", "job-1", 2)),
+        List.of(successfulRenewalContext(loan(1), "trigger-user")),
         Map.of("loan-1", new TestFailure("failed"))));
 
     assertTrue(releasedContext.loans().isEmpty());
@@ -327,7 +327,7 @@ class BulkRenewOpenLoansServiceTest {
     Loan loan = loanWithItemAndUser(1)
       .withOverdueFinePolicy(disallowRenewalWithReminderFeesPolicy())
       .withRemindersLastFeeBilled(1, now);
-    RenewalContext context = successfulRenewalContext(loan, "trigger-user", "job-reminder", 1);
+    RenewalContext context = successfulRenewalContext(loan, "trigger-user");
     OverridingErrorHandler errorHandler = new OverridingErrorHandler(null);
     AtomicInteger renewalLogicCalls = new AtomicInteger();
 
@@ -490,9 +490,9 @@ class BulkRenewOpenLoansServiceTest {
     when(itemRepository.updateItem(any())).thenReturn(completedFuture(succeeded(loan1.getItem())));
 
     RenewalContext ctx1 = RenewalContext.create(loan1, new io.vertx.core.json.JsonObject(),
-      "user-1", "perf-1", System.currentTimeMillis());
+      "user-1");
     RenewalContext ctx2 = RenewalContext.create(loan2, new io.vertx.core.json.JsonObject(),
-      "user-1", "perf-2", System.currentTimeMillis());
+      "user-1");
 
     BulkRenewalPageContext pageContext = new BulkRenewalPageContext(
       List.of(loan1, loan2), Map.of(), null,
@@ -640,11 +640,8 @@ class BulkRenewOpenLoansServiceTest {
       .asDomainObject();
   }
 
-  private static RenewalContext successfulRenewalContext(Loan loan, String userId, String jobId,
-    int pageNumber) {
-
-    return RenewalContext.create(loan, new io.vertx.core.json.JsonObject(), userId,
-      "%s:%s".formatted(jobId, pageNumber), System.currentTimeMillis())
+  private static RenewalContext successfulRenewalContext(Loan loan, String userId) {
+    return RenewalContext.create(loan, new JsonObject(), userId)
       .withRequestQueue(new RequestQueue(List.of()))
       .withTlrSettings(TlrSettingsConfiguration.defaultSettings());
   }

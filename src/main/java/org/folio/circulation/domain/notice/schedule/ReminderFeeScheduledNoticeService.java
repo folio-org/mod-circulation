@@ -11,7 +11,6 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.Clients;
-import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 
 import java.lang.invoke.MethodHandles;
 import java.time.ZoneId;
@@ -74,14 +73,11 @@ public class ReminderFeeScheduledNoticeService {
    * @return the renewal context back to the renewal process
    */
   public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
-    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(log,
-      renewalContext, System.currentTimeMillis(), "step={}", "first-reminder-reschedule-start");
     log.debug("rescheduleFirstReminder:: rescheduling first reminder after renewal for loan {}",
-      updatedContext.getLoan()::getId);
+      renewalContext.getLoan()::getId);
     // Completion here measures dispatch into async reminder rescheduling, not downstream completion.
-    rescheduleFirstReminder(updatedContext.getLoan(), updatedContext.getTimeZone(), updatedContext);
-    return succeeded(RenewalPerformanceLogger.logAndAdvance(log, updatedContext,
-      System.currentTimeMillis(), "step={}", "first-reminder-reschedule-complete"));
+    rescheduleFirstReminder(renewalContext.getLoan(), renewalContext.getTimeZone(), renewalContext);
+    return succeeded(renewalContext);
   }
 
   private <T> Result<T> rescheduleFirstReminder(Loan loan, ZoneId timeZone, T mapTo) {

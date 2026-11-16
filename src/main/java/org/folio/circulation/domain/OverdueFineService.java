@@ -34,7 +34,6 @@ import org.folio.circulation.infrastructure.storage.notices.ScheduledNoticesRepo
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.services.support.CreateAccountCommand;
-import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.Result;
 import org.folio.circulation.support.utils.ClockUtil;
 
@@ -56,25 +55,18 @@ public class OverdueFineService {
   public CompletableFuture<Result<RenewalContext>> createOverdueFineIfNecessary(
     RenewalContext context) {
 
-    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(log,
-      context, System.currentTimeMillis(), "step={}", "overdue-fine-processing-start");
+    log.debug("createOverdueFineIfNecessary:: parameters context: {}", () -> context);
+    final String loggedInUserId = context.getLoggedInUserId();
+    final Loan loanBeforeRenewal = context.getLoanBeforeRenewal();
 
-    log.debug("createOverdueFineIfNecessary:: parameters context: {}", () -> updatedContext);
-    final String loggedInUserId = updatedContext.getLoggedInUserId();
-    final Loan loanBeforeRenewal = updatedContext.getLoanBeforeRenewal();
-
-    if (!shouldChargeOverdueFineOnRenewal(updatedContext)) {
+    if (!shouldChargeOverdueFineOnRenewal(context)) {
       log.info("createOverdueFineIfNecessary:: loan on renewal should not be charged");
-      return completedFuture(succeeded(RenewalPerformanceLogger.logAndAdvance(log,
-        updatedContext, System.currentTimeMillis(), "step={}",
-        "overdue-fine-processing-complete")));
+      return completedFuture(succeeded(context));
     }
 
     return createOverdueFineIfNecessary(loanBeforeRenewal, RENEWAL, loggedInUserId,
-      updatedContext.getTimeZone())
-      .thenApply(mapResult(updatedContext::withOverdueFeeFineAction))
-      .thenApply(result -> logRenewalCompletion(result, updatedContext,
-        "overdue-fine-processing-complete"));
+      context.getTimeZone())
+      .thenApply(mapResult(context::withOverdueFeeFineAction));
   }
 
   private boolean shouldChargeOverdueFineOnRenewal(RenewalContext renewalContext) {
@@ -293,24 +285,6 @@ public class OverdueFineService {
 
   private boolean itemWasLost(ItemStatus itemStatus) {
     return itemStatus != null && itemStatus.isLostNotResolved();
-  }
-
-  private Result<RenewalContext> logRenewalCompletion(Result<RenewalContext> result,
-    RenewalContext context, String stepName) {
-
-    long currentMillis = System.currentTimeMillis();
-
-    if (result.succeeded()) {
-      return result.map(updatedContext -> RenewalPerformanceLogger.logAndAdvance(log,
-        updatedContext, currentMillis, "step={}", stepName));
-    }
-
-    RenewalPerformanceLogger.log(log, context.getPerformanceAnalysisId(),
-      context.getLastPerformanceTimestampMillis(), currentMillis,
-      context.getLoan() != null ? context.getLoan().getId() : null,
-      "step={} outcome={}", stepName, "failure");
-
-    return result;
   }
 
   @With

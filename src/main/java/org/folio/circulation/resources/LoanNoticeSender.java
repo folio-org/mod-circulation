@@ -27,7 +27,6 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.http.server.ValidationError;
-import org.folio.circulation.support.logging.RenewalPerformanceLogger;
 import org.folio.circulation.support.results.Result;
 
 import lombok.AllArgsConstructor;
@@ -53,13 +52,10 @@ public class LoanNoticeSender {
   }
 
   public Result<RenewalContext> sendRenewalPatronNotice(RenewalContext records) {
-    RenewalContext updatedContext = RenewalPerformanceLogger.logAndAdvance(log,
-      records, System.currentTimeMillis(), "step={}", "renewal-patron-notice-start");
-    log.debug("sendRenewalPatronNotice:: parameters records: {}", updatedContext);
+    log.debug("sendRenewalPatronNotice:: parameters records: {}", records);
     // Completion here measures dispatch into the async notice sender, not downstream completion.
-    sendLoanNotice(updatedContext.getLoan(), NoticeEventType.RENEWED);
-    return succeeded(RenewalPerformanceLogger.logAndAdvance(log, updatedContext,
-      System.currentTimeMillis(), "step={}", "renewal-patron-notice-complete"));
+    sendLoanNotice(records.getLoan(), NoticeEventType.RENEWED);
+    return succeeded(records);
   }
 
   public CompletableFuture<Result<LoanAndRelatedRecords>> sendManualDueDateChangeNotice(
