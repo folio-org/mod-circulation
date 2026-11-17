@@ -45,6 +45,7 @@ import org.folio.circulation.StoreLoanAndItem;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanPolicyRepository;
 import org.folio.circulation.infrastructure.storage.loans.LoanRepository;
+import org.folio.circulation.infrastructure.storage.loans.OverdueFinePolicyRepository;
 import org.folio.circulation.infrastructure.storage.requests.RequestRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.RenewalContext;
@@ -553,6 +554,51 @@ class BulkRenewOpenLoansServiceTest {
 
     verify(loanRepository).updateLoan(loan1);
     verify(loanRepository).updateLoan(loan2);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void processSuccessfulRenewals_emptyPageContext_returnsSucceededWithoutCallingStorage()
+      throws Exception {
+
+    // Arrange — build a RealBackgroundJobRunner via reflection (same pattern as patron-block tests)
+    Class<?> runnerClass = Class.forName(
+      "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
+    Constructor<?> constructor = runnerClass.getDeclaredConstructor(
+      HttpClient.class, BulkRenewalWebContext.class);
+    constructor.setAccessible(true);
+    Object runner = constructor.newInstance(
+      Mockito.mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of(), Mockito.mock(Context.class)));
+
+    Method processSuccessfulRenewals = runnerClass.getDeclaredMethod(
+      "processSuccessfulRenewals",
+      Clients.class, LoanRepository.class, ItemRepository.class,
+      OverdueFinePolicyRepository.class, BulkRenewalPageContext.class);
+    processSuccessfulRenewals.setAccessible(true);
+
+    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
+    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
+    OverdueFinePolicyRepository overdueFinePolicyRepository =
+      Mockito.mock(OverdueFinePolicyRepository.class);
+
+    // Empty page context — no successful renewals
+    BulkRenewalPageContext emptyPageContext = new BulkRenewalPageContext(
+      List.of(), Map.of(), null, "user-1", List.of(), Map.of());
+
+    // Act
+    CompletableFuture<Result<Void>> future =
+      (CompletableFuture<Result<Void>>) processSuccessfulRenewals.invoke(
+        runner,
+        Mockito.mock(Clients.class),
+        loanRepository, itemRepository, overdueFinePolicyRepository,
+        emptyPageContext);
+    Result<Void> result = future.join();
+
+    // Assert — succeeded with no storage interactions
+    assertTrue(result.succeeded());
+    verify(loanRepository, never()).updateLoan(any(Loan.class));
+    verify(itemRepository, never()).updateItem(any());
   }
 
   private static Loan minimalLoanWithItem(UUID loanId, UUID itemId) {
