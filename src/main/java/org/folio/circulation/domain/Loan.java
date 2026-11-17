@@ -241,6 +241,12 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
     return getDateTimeProperty(representation.getJsonObject(FOR_USE_AT_LOCATION),AT_LOCATION_USE_EXPIRY_DATE);
   }
 
+  public ZonedDateTime getHoldDateForUseAtLocation() {
+    return isForUseAtLocation() ?
+        getDateTimeProperty(representation.getJsonObject(FOR_USE_AT_LOCATION), AT_LOCATION_USE_STATUS_DATE)
+        : null;
+  }
+
   private void changeCheckInServicePointId(UUID servicePointId) {
     log.debug("changeCheckInServicePointId:: parameters servicePointId: {}", servicePointId);
     write(representation, "checkinServicePointId", servicePointId);

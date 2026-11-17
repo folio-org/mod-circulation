@@ -160,7 +160,10 @@ public class HoldByBarcodeResource extends Resource {
     if (expiry == null) { // HoldByBarcodeResource checks for this condition before invoking this method.
       return CompletableFuture.completedFuture(null);
     } else {
-      final ZonedDateTime baseExpirationDate = expiry.plusDate(ClockUtil.getZonedDateTime());
+      final var existingHoldDate = loan.getHoldDateForUseAtLocation();
+      // If already held, this invocation is an adjustment to be based on the original date of the hold
+      final ZonedDateTime baseExpirationDate =
+          expiry.plusDate(existingHoldDate != null ? existingHoldDate : ClockUtil.getZonedDateTime());
       TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
       ExpirationDateManagement expirationDateManagement = servicePoint.getHoldShelfClosedLibraryDateManagement();
       ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(

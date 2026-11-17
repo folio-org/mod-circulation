@@ -275,6 +275,9 @@ public class LoansForUseAtLocationTests extends APITests {
     // Expect expiration day to be same as due day.
     ZonedDateTime expectedExpirationDate = atEndOfDay(getDateTimeProperty(loan, "dueDate"),UTC);
 
+    // Advance clock to verify that original hold date is retained when readjusting expiration date after renewal
+    mockClockManagerToReturnFixedDateTime(dateOfHold.plusDays(1));
+
     assertThat("loan, forUseAtLocation, holdShelfExpirationDate",
         loan.getJsonObject("forUseAtLocation").getString("holdShelfExpirationDate")
             .replaceAll("\\.000",""),
