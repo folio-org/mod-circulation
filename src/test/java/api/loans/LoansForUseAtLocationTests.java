@@ -283,18 +283,16 @@ public class LoansForUseAtLocationTests extends APITests {
             .replaceAll("\\.000",""),
         Is.is(expectedExpirationDate.toString()));
 
-    loansFixture.attemptRenewal(200,new RenewByBarcodeRequestBuilder()
+    JsonObject renewedLoan = loansFixture.attemptRenewal(200,new RenewByBarcodeRequestBuilder()
         .forItem(item)
         .forUser(borrower)
-            .withServicePointId(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN));
-
-    IndividualResource renewedLoan = loansFixture.renewLoan(item, borrower);
+            .withServicePointId(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
 
     // Expect expiration day to be hold date (27th) + expiry period (4 days) (= 31st)
     ZonedDateTime newExpectedExpirationDate = atEndOfDay(holdShelfExpiryPeriod.plusDate(dateOfHold));
 
     assertThat("renewed loan, forUseAtLocation, holdShelfExpirationDate",
-        renewedLoan.getJson().getJsonObject("forUseAtLocation")
+        renewedLoan.getJsonObject("forUseAtLocation")
             .getString("holdShelfExpirationDate").replaceAll("\\.000",""),
         Is.is(newExpectedExpirationDate.toString()));
   }
