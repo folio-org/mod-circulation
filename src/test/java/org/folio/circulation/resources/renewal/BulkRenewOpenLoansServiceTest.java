@@ -144,7 +144,8 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldAlwaysReleaseGuardWhenBackgroundJobFinishes() throws InterruptedException {
-    TrackingBulkRenewalJobGuard guard = new TrackingBulkRenewalJobGuard();
+    CountDownLatch finished = new CountDownLatch(1);
+    BulkRenewalJobGuard guard = trackingGuard(finished);
     CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
 
     BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
@@ -155,27 +156,29 @@ class BulkRenewOpenLoansServiceTest {
 
     runningJob.completeExceptionally(new RuntimeException("boom"));
 
-    assertTrue(guard.awaitFinished());
+    assertTrue(finished.await(5, SECONDS));
     assertFalse(guard.isRunning());
   }
 
   @Test
   void shouldLogJobFinishedOnSuccessfulCompletion() throws InterruptedException {
-    TrackingBulkRenewalJobGuard guard = new TrackingBulkRenewalJobGuard();
+    CountDownLatch finished = new CountDownLatch(1);
+    BulkRenewalJobGuard guard = trackingGuard(finished);
 
     BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
       (java.util.function.Function<String, CompletableFuture<Result<Void>>>)
         jobId -> CompletableFuture.completedFuture(Result.succeeded(null)));
 
     assertTrue(service.trigger());
-    assertTrue(guard.awaitFinished());
+    assertTrue(finished.await(5, SECONDS));
     assertTrue(appender.hasMessageContaining("bulk renewal job started"));
     assertTrue(appender.hasMessageContaining("bulk renewal job finished"));
   }
 
   @Test
   void shouldProcessOpenLoansPageByPageSequentially() throws InterruptedException {
-    TrackingBulkRenewalJobGuard guard = new TrackingBulkRenewalJobGuard();
+    CountDownLatch finished = new CountDownLatch(1);
+    BulkRenewalJobGuard guard = trackingGuard(finished);
     RecordingOpenLoanPageRepository repository = new RecordingOpenLoanPageRepository(
       page(loans(500)),
       page(loan(3)));
@@ -203,7 +206,7 @@ class BulkRenewOpenLoansServiceTest {
         new BulkRenewalWebContext(Map.of("x-okapi-user-id", "trigger-user"))));
 
     assertTrue(service.trigger());
-    assertTrue(guard.awaitFinished());
+    assertTrue(finished.await(5, SECONDS));
 
     assertEquals(List.of(1, 2), processedPages);
     assertEquals(List.of(0, 500), repository.offsets().stream()
@@ -236,7 +239,8 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldRejectTriggerWhenJobAlreadyRunningInSameInstance() throws InterruptedException {
-    TrackingBulkRenewalJobGuard guard = new TrackingBulkRenewalJobGuard();
+    CountDownLatch finished = new CountDownLatch(1);
+    BulkRenewalJobGuard guard = trackingGuard(finished);
     CompletableFuture<Result<Void>> completion = new CompletableFuture<>();
 
     BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
@@ -255,7 +259,7 @@ class BulkRenewOpenLoansServiceTest {
 
     completion.complete(succeeded(null));
 
-    assertTrue(guard.awaitFinished());
+    assertTrue(finished.await(5, SECONDS));
   }
 
   @Test
@@ -525,18 +529,8 @@ class BulkRenewOpenLoansServiceTest {
         .put("status", new io.vertx.core.json.JsonObject().put("name", "Checked out"))));
   }
 
-  private static final class TrackingBulkRenewalJobGuard extends BulkRenewalJobGuard {
-    private final CountDownLatch finished = new CountDownLatch(1);
-
-    @Override
-    public void finish() {
-      super.finish();
-      finished.countDown();
-    }
-
-    private boolean awaitFinished() throws InterruptedException {
-      return finished.await(5, SECONDS);
-    }
+  private static BulkRenewalJobGuard trackingGuard(CountDownLatch finished) {
+    return new BulkRenewalJobGuard(finished::countDown);
   }
 
   private static final class StubbedBackgroundJobRunner
