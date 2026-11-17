@@ -220,11 +220,25 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public Loan changeStatusOfUsageAtLocation(String usageStatus) {
     log.info("changeStatusOfUsageAtLocation:: parameters usageStatus: {}", usageStatus);
-    return changeStatusOfUsageAtLocation(usageStatus, null);  }
+    return changeStatusOfUsageAtLocation(usageStatus, null);
+  }
 
+  public void changeHoldShelfExpirationDateForUseAtLocation(ZonedDateTime holdShelfExpirationDate) {
+    writeByPath(representation, holdShelfExpirationDate, FOR_USE_AT_LOCATION, AT_LOCATION_USE_EXPIRY_DATE);
+  }
 
   public boolean isForUseAtLocation() {
     return representation.containsKey(FOR_USE_AT_LOCATION);
+  }
+
+  public boolean isHeldForUseAtLocation() {
+    return isForUseAtLocation()
+        && getNestedStringProperty(representation, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS)
+        .equals(LoanProperties.USAGE_STATUS_HELD);
+  }
+
+  public ZonedDateTime getExpirationDateForUseAtLocation() {
+    return getDateTimeProperty(representation.getJsonObject(FOR_USE_AT_LOCATION),AT_LOCATION_USE_EXPIRY_DATE);
   }
 
   private void changeCheckInServicePointId(UUID servicePointId) {
