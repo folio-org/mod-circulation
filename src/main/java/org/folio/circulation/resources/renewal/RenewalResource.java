@@ -249,7 +249,7 @@ public abstract class RenewalResource extends Resource {
       return servicePoints.getServicePointById(loan.getCheckoutServicePointId())
           .thenCompose(sp -> sp.after(servicePoint ->
               calculateExpirationDateForUseAtLocation(
-                  loan, servicePoint, renewalContext.getTimeZone(), calendars)
+                  loan, loan.getHoldDateForUseAtLocation(), servicePoint, renewalContext.getTimeZone(), calendars)
                   .thenApply(expirationDate -> expirationDate.map(expiration -> {
                     if (!expiration.equals(currentExpiration)) {
                       loan.changeHoldShelfExpirationDateForUseAtLocation(expiration);

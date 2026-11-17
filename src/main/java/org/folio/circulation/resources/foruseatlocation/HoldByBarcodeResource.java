@@ -141,8 +141,9 @@ public class HoldByBarcodeResource extends Resource {
     } else {
       ZoneId tenantTimeZone = request.getTenantTimeZone();
       ServicePoint servicePoint = request.getServicePoint();
+      ZonedDateTime holdDate = ClockUtil.getZonedDateTime();
 
-      return calculateExpirationDateForUseAtLocation(loan, servicePoint, tenantTimeZone, calendars)
+      return calculateExpirationDateForUseAtLocation(loan, holdDate, servicePoint, tenantTimeZone, calendars)
         .thenApply(dateTime -> dateTime.map(request::withHoldShelfExpirationDate));
     }
   }
@@ -155,15 +156,12 @@ public class HoldByBarcodeResource extends Resource {
    * - finally, cap expiration day at the loan's due day (cannot be after that)
    */
   public static CompletableFuture<Result<ZonedDateTime>> calculateExpirationDateForUseAtLocation(
-      Loan loan, ServicePoint servicePoint, ZoneId tenantTimeZone, CalendarRepository calendars) {
+      Loan loan, ZonedDateTime dateHeld, ServicePoint servicePoint, ZoneId tenantTimeZone, CalendarRepository calendars) {
     Period expiry = loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
-    if (expiry == null) { // HoldByBarcodeResource checks for this condition before invoking this method.
+    if (expiry == null) {
       return CompletableFuture.completedFuture(null);
     } else {
-      final var existingHoldDate = loan.getHoldDateForUseAtLocation();
-      // If already held, this invocation is an adjustment to be based on the original date of the hold
-      final ZonedDateTime baseExpirationDate =
-          expiry.plusDate(existingHoldDate != null ? existingHoldDate : ClockUtil.getZonedDateTime());
+      final ZonedDateTime baseExpirationDate = expiry.plusDate(dateHeld);
       TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
       ExpirationDateManagement expirationDateManagement = servicePoint.getHoldShelfClosedLibraryDateManagement();
       ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
