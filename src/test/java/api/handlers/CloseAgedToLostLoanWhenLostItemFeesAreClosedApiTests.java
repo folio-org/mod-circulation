@@ -87,6 +87,27 @@ class CloseAgedToLostLoanWhenLostItemFeesAreClosedApiTests extends CloseLostLoan
   }
 
   @Test
+  void shouldNotCloseLoanWhenOtherFeeIsClosedBeforeLostItemFeesAreBilled() {
+    feeFineTypeFixture.lostItemFee();
+    feeFineTypeFixture.lostItemProcessingFee();
+    feeFineTypeFixture.lostItemActualCostFee();
+    var result = ageToLostFixture.createAgedToLostLoan(
+      lostItemFeePoliciesFixture.ageToLostAfterOneMinutePolicy()
+        .withName("Age to lost policy")
+        .withSetCost(10.0)
+        .chargeProcessingFeeWhenAgedToLost(15.00));
+
+    item = result.getItem();
+    loan = result.getLoan();
+
+    // e.g. a reminder fee for the same loan is closed before lost item fees are billed
+    feeFineAccountFixture.createManualFeeForLoan(loan, 1.00);
+    eventSubscribersFixture.publishLoanRelatedFeeFineClosedEvent(loan.getId());
+
+    assertThatLoanIsOpenAndLost();
+  }
+
+  @Test
   void shouldNotCloseLoanIfSetCostFeeIsNotClosed() {
     createAgeToLostLoanWithSetCostPolicy();
     feeFineAccountFixture.payLostItemProcessingFee(loan.getId());

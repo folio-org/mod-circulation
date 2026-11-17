@@ -109,9 +109,25 @@ public class CloseLoanWithLostItemService {
       .allMatch(Account::isClosed);
   }
 
+  /**
+   * Lost item fees (lost item fee, processing fee or actual cost fee) exist for the loan.
+   * Vacuously "all closed" is not enough to close a loan: when no lost item fees have been
+   * billed yet (for example, an item that aged to lost but has not been billed), closing
+   * the loan because another fee, such as a reminder fee, was closed is incorrect.
+   */
+  private boolean hasLostItemFees(Loan loan) {
+    return loan.getAccounts().stream()
+      .anyMatch(account -> lostItemFeeTypes().contains(account.getFeeFineType()));
+  }
+
   private boolean shouldCloseLoan(Loan loan) {
     if (allLostFeesClosed(loan)) {
       ActualCostRecord actualCostRecord = loan.getActualCostRecord();
+      if (actualCostRecord == null && !hasLostItemFees(loan)) {
+        log.info("shouldCloseLoan:: no lost item fees have been billed for loanId: {}",
+          loan::getId);
+        return false;
+      }
       if (actualCostRecord == null || actualCostRecord.getStatus() == CANCELLED) {
         log.info("shouldCloseLoan:: all lost fees closed and no open actual cost record for loanId: {}",
           loan::getId);
