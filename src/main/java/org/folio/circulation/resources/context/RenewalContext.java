@@ -30,6 +30,7 @@ public class RenewalContext {
 
   public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
+
     final Loan loanBeforeRenewal = loan != null ? loan.copy() : null;
     final ItemStatus itemStatusBeforeRenew = loan != null && loan.getItem() != null
       ? loan.getItem().getStatus() : null;

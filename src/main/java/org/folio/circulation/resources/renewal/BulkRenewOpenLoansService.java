@@ -48,6 +48,7 @@ import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
 import org.folio.circulation.support.Clients;
+import org.folio.circulation.support.utils.ClockUtil;
 import org.folio.circulation.support.fetching.GetManyRecordsRepository;
 import org.folio.circulation.support.fetching.PageableFetcher;
 import org.folio.circulation.support.http.OkapiPermissions;
@@ -358,7 +359,7 @@ public class BulkRenewOpenLoansService {
       RenewByBarcodeResource renewResource, RenewalContext context,
       CirculationErrorHandler errorHandler) {
 
-      ZonedDateTime systemTime = org.folio.circulation.support.utils.ClockUtil.getZonedDateTime();
+      ZonedDateTime systemTime = ClockUtil.getZonedDateTime();
       ClosedLibraryStrategyService strategyService = ClosedLibraryStrategyService.using(clients,
         systemTime, true);
 

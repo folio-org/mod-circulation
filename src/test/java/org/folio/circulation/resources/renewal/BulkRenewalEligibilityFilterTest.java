@@ -3,7 +3,8 @@ package org.folio.circulation.resources.renewal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.LocalDate;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,6 +14,9 @@ import java.util.UUID;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.policy.LoanPolicy;
+import org.folio.circulation.support.utils.ClockUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import api.support.builders.LoanBuilder;
@@ -24,6 +28,16 @@ class BulkRenewalEligibilityFilterTest {
   private static final ZoneId UTC = ZoneId.of("UTC");
 
   // ── Rule 1: automaticRenewal disabled ───────────────────────────────────────
+
+  @BeforeEach
+  void setup() {
+    ClockUtil.setClock(Clock.fixed(Instant.now(), UTC));
+  }
+
+  @AfterEach
+  void afterEach() {
+    ClockUtil.setDefaultClock();
+  }
 
   @Test
   void shouldExcludeLoanWhenAutomaticRenewalIsDisabled() {
@@ -210,7 +224,7 @@ class BulkRenewalEligibilityFilterTest {
   }
 
   private static ZonedDateTime dueInDays(int days) {
-    return LocalDate.now(UTC).plusDays(days).atStartOfDay(UTC);
+    return ClockUtil.getLocalDate().plusDays(days).atStartOfDay(UTC);
   }
 
   private static LoanPolicy policy(boolean autoRenewal, Integer firstAttemptDays,

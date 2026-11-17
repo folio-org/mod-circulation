@@ -311,9 +311,9 @@ public class ItemRepository {
       new CqlIndexValuesFinder<>(createCirculationItemFinder()));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Item>>>
-    lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds,
-      CqlIndexValuesFinder<JsonObject> finder) {
+  private CompletableFuture<Result<MultipleRecords<Item>>> lookupDcbItem(
+    Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds,
+    CqlIndexValuesFinder<JsonObject> finder) {
 
     log.debug("lookupDcbItem:: Looking up for DCB items");
 
