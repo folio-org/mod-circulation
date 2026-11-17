@@ -19,7 +19,6 @@ import io.vertx.ext.web.RoutingContext;
 public class BulkRenewOpenLoansResource extends Resource {
   private static final Logger log = LogManager.getLogger(BulkRenewOpenLoansResource.class);
 
-  // Task 1 establishes the shared guard seam; later tasks will use it for background work.
   private static final BulkRenewalJobGuard DEFAULT_JOB_GUARD = new BulkRenewalJobGuard();
 
   private final BulkRenewalJobGuard jobGuard;
@@ -30,7 +29,7 @@ public class BulkRenewOpenLoansResource extends Resource {
   }
 
   BulkRenewOpenLoansResource(HttpClient client, BulkRenewalJobGuard jobGuard) {
-    this(client, jobGuard, new BulkRenewOpenLoansService(jobGuard, client));
+    this(client, jobGuard, BulkRenewOpenLoansService.forHttpClient(jobGuard, client));
   }
 
   BulkRenewOpenLoansResource(HttpClient client, BulkRenewalJobGuard jobGuard,

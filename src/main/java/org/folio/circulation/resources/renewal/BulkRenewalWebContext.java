@@ -14,22 +14,12 @@ public class BulkRenewalWebContext {
   private final Context vertxContext;
 
   public BulkRenewalWebContext(Map<String, String> headers) {
-    Map<String, String> normalizedHeaders = new HashMap<>();
-
-    headers.forEach((key, value) ->
-      normalizedHeaders.put(key.toLowerCase(Locale.ROOT), value));
-
-    this.headers = unmodifiableMap(normalizedHeaders);
+    this.headers = normalizeHeaders(headers);
     this.vertxContext = null;
   }
 
   public BulkRenewalWebContext(Map<String, String> headers, Context vertxContext) {
-    Map<String, String> normalizedHeaders = new HashMap<>();
-
-    headers.forEach((key, value) ->
-      normalizedHeaders.put(key.toLowerCase(Locale.ROOT), value));
-
-    this.headers = unmodifiableMap(normalizedHeaders);
+    this.headers = normalizeHeaders(headers);
     this.vertxContext = requireNonNull(vertxContext, "Vert.x context is required");
   }
 
@@ -43,5 +33,11 @@ public class BulkRenewalWebContext {
 
   public String getUserId() {
     return headers.get("x-okapi-user-id");
+  }
+
+  private static Map<String, String> normalizeHeaders(Map<String, String> raw) {
+    Map<String, String> result = new HashMap<>();
+    raw.forEach((k, v) -> result.put(k.toLowerCase(Locale.ROOT), v));
+    return unmodifiableMap(result);
   }
 }

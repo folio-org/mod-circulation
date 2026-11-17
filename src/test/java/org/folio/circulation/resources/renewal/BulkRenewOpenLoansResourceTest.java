@@ -210,7 +210,7 @@ class BulkRenewOpenLoansResourceTest {
     }
 
     @Override
-    public boolean trigger() {
+    public boolean trigger(BulkRenewalWebContext detachedContext) {
       return false;
     }
   }

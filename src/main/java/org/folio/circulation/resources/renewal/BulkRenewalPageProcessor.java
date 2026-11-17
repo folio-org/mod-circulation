@@ -1,6 +1,7 @@
 package org.folio.circulation.resources.renewal;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_INACTIVE;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
@@ -32,6 +33,7 @@ import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.HttpFailure;
+import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
 import org.folio.circulation.support.results.Result;
 
@@ -153,8 +155,10 @@ public class BulkRenewalPageProcessor {
       // Publish Circulation log entries for hold/recall exclusions
       List<CompletableFuture<Void>> logEvents = new ArrayList<>();
       for (Map.Entry<String, HttpFailure> entry : eligibility.holdRecallFailures().entrySet()) {
-        String loanId = entry.getKey();
-        String reason = entry.getValue().toString();
+        var loanId = entry.getKey();
+        var reason = entry.getValue() instanceof ValidationErrorFailure vef
+          ? vef.getErrors().stream().map(e -> e.getMessage()).collect(joining("; "))
+          : entry.getValue().toString();
         loans.stream()
           .filter(l -> l.getId().equals(loanId))
           .findFirst()

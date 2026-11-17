@@ -9,13 +9,11 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 
 import io.vertx.core.json.JsonObject;
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import lombok.With;
 
 @Value
-@EqualsAndHashCode
 @With
 @ToString(onlyExplicitlyIncluded = true)
 public class RenewalContext {

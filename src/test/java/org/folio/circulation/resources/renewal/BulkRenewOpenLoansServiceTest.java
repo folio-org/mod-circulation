@@ -113,11 +113,10 @@ class BulkRenewOpenLoansServiceTest {
     CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
     AtomicInteger invocations = new AtomicInteger();
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
-      (java.util.function.Function<String, CompletableFuture<Result<Void>>>) jobId -> {
+    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard, jobId -> {
       invocations.incrementAndGet();
       return runningJob;
-      });
+    });
 
     assertTrue(service.trigger());
     assertFalse(service.trigger());
@@ -148,8 +147,8 @@ class BulkRenewOpenLoansServiceTest {
     BulkRenewalJobGuard guard = trackingGuard(finished);
     CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
-      (java.util.function.Function<String, CompletableFuture<Result<Void>>>) jobId -> runningJob);
+    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+      jobId -> runningJob);
 
     assertTrue(service.trigger());
     assertTrue(guard.isRunning());
@@ -165,9 +164,8 @@ class BulkRenewOpenLoansServiceTest {
     CountDownLatch finished = new CountDownLatch(1);
     BulkRenewalJobGuard guard = trackingGuard(finished);
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
-      (java.util.function.Function<String, CompletableFuture<Result<Void>>>)
-        jobId -> CompletableFuture.completedFuture(Result.succeeded(null)));
+    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+      jobId -> CompletableFuture.completedFuture(Result.succeeded(null)));
 
     assertTrue(service.trigger());
     assertTrue(finished.await(5, SECONDS));
@@ -185,10 +183,10 @@ class BulkRenewOpenLoansServiceTest {
     List<Integer> processedPages = new ArrayList<>();
 
     BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
-      new StubbedBackgroundJobRunner(
+      (jobId, detachedCtx) -> new BulkRenewOpenLoansService.RealJobComponents(
         repository,
         exactMatch("status.name", "Open"),
-        (records, triggeringUserId, jobId, pageNumber) -> {
+        (records, triggeringUserId, jId, pageNumber) -> {
           assertEquals("trigger-user", triggeringUserId);
           processedPages.add(pageNumber);
 
@@ -201,7 +199,8 @@ class BulkRenewOpenLoansServiceTest {
             Map.of())));
         },
         pageContext -> completedFuture(succeeded(null)),
-        new BulkRenewalWebContext(Map.of("x-okapi-user-id", "trigger-user"))));
+        new BulkRenewalWebContext(Map.of("x-okapi-user-id", "trigger-user")))
+        .run(jobId));
 
     assertTrue(service.trigger());
     assertTrue(finished.await(5, SECONDS));
@@ -238,14 +237,15 @@ class BulkRenewOpenLoansServiceTest {
     CompletableFuture<Result<Void>> completion = new CompletableFuture<>();
 
     BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
-      new StubbedBackgroundJobRunner(
+      (jobId, detachedCtx) -> new BulkRenewOpenLoansService.RealJobComponents(
         new RecordingOpenLoanPageRepository(page(loan(1))),
         exactMatch("status.name", "Open"),
-        (records, triggeringUserId, jobId, pageNumber) -> completedFuture(succeeded(
+        (records, triggeringUserId, jId, pageNumber) -> completedFuture(succeeded(
           new BulkRenewalPageContext(List.copyOf(records.getRecords()), Map.of(), null,
             triggeringUserId, List.of(), Map.of()))),
         pageContext -> completion,
-        new BulkRenewalWebContext(Map.of("x-okapi-user-id", "trigger-user"))));
+        new BulkRenewalWebContext(Map.of("x-okapi-user-id", "trigger-user")))
+        .run(jobId));
 
     assertTrue(service.trigger());
     assertFalse(service.trigger());
@@ -525,35 +525,6 @@ class BulkRenewOpenLoansServiceTest {
     return new BulkRenewalJobGuard(finished::countDown);
   }
 
-  private static final class StubbedBackgroundJobRunner
-    implements BulkRenewOpenLoansService.BackgroundJobRunner {
-
-    private final GetManyRecordsRepository<Loan> repository;
-    private final Result<CqlQuery> query;
-    private final BulkRenewOpenLoansService.PageProcessor pageProcessor;
-    private final BulkRenewOpenLoansService.PageCompletionHandler pageCompletionHandler;
-    private final BulkRenewalWebContext detachedContext;
-
-    private StubbedBackgroundJobRunner(GetManyRecordsRepository<Loan> repository,
-      Result<CqlQuery> query,
-      BulkRenewOpenLoansService.PageProcessor pageProcessor,
-      BulkRenewOpenLoansService.PageCompletionHandler pageCompletionHandler,
-      BulkRenewalWebContext detachedContext) {
-
-      this.repository = repository;
-      this.query = query;
-      this.pageProcessor = pageProcessor;
-      this.pageCompletionHandler = pageCompletionHandler;
-      this.detachedContext = detachedContext;
-    }
-
-    @Override
-    public BulkRenewOpenLoansService.RealJobComponents create(String jobId) {
-      return new BulkRenewOpenLoansService.RealJobComponents(repository, query, pageProcessor,
-        pageCompletionHandler, detachedContext);
-    }
-  }
-
   private static final class RecordingOpenLoanPageRepository
     implements GetManyRecordsRepository<Loan> {
 
@@ -589,12 +560,12 @@ class BulkRenewOpenLoansServiceTest {
     private final AtomicBoolean triggered = new AtomicBoolean(false);
 
     private RecordingBulkRenewOpenLoansService(BulkRenewalJobGuard guard) {
-      super(guard, (java.util.function.Function<String, CompletableFuture<Result<Void>>>)
-        jobId -> CompletableFuture.completedFuture(Result.succeeded(null)));
+      super(guard, (jobId, ignored) ->
+        CompletableFuture.completedFuture(Result.succeeded(null)));
     }
 
     @Override
-    public boolean trigger() {
+    public boolean trigger(BulkRenewalWebContext detachedContext) {
       triggered.set(true);
       return true;
     }

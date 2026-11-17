@@ -44,8 +44,6 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.LoanNoticeSender;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
-import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
-import org.folio.circulation.resources.renewal.RenewByBarcodeResource;
 import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.services.FeeFineFacade;
@@ -66,81 +64,52 @@ public class BulkRenewOpenLoansService {
   private static final int REQUEST_CQL_FETCH_CHUNK_SIZE = 50;
 
   private final BulkRenewalJobGuard guard;
-  private final Function<String, CompletableFuture<Result<Void>>> jobRunner;
-  private final BackgroundJobRunner backgroundJobRunner;
-  private final DetachedContextJobRunner detachedContextJobRunner;
-  private final HttpClient httpClient;
+  private final DetachedContextJobRunner jobRunner;
 
   public BulkRenewOpenLoansService(BulkRenewalJobGuard guard,
-    Function<String, CompletableFuture<Result<Void>>> jobRunner) {
+    DetachedContextJobRunner jobRunner) {
 
     this.guard = guard;
     this.jobRunner = jobRunner;
-    this.backgroundJobRunner = null;
-    this.detachedContextJobRunner = null;
-    this.httpClient = null;
   }
 
-  public BulkRenewOpenLoansService(BulkRenewalJobGuard guard,
-    BackgroundJobRunner backgroundJobRunner) {
+  /**
+   * Production factory: wraps the real {@link RealBackgroundJobRunner} so that callers
+   * do not need to know about it.
+   */
+  public static BulkRenewOpenLoansService forHttpClient(BulkRenewalJobGuard guard,
+    HttpClient httpClient) {
 
-    this.guard = guard;
-    this.jobRunner = null;
-    this.backgroundJobRunner = backgroundJobRunner;
-    this.detachedContextJobRunner = null;
-    this.httpClient = null;
+    return new BulkRenewOpenLoansService(guard,
+      (jobId, detachedContext) -> new RealBackgroundJobRunner(httpClient,
+        detachedContext != null ? detachedContext : new BulkRenewalWebContext(Map.of()))
+        .create(jobId)
+        .run(jobId));
   }
 
-  public BulkRenewOpenLoansService(BulkRenewalJobGuard guard,
-    DetachedContextJobRunner detachedContextJobRunner) {
+  /**
+   * Test convenience: adapts a plain {@code jobId -> future} function so that tests which
+   * do not need a {@link BulkRenewalWebContext} do not have to handle it.
+   */
+  static BulkRenewOpenLoansService forJobRunner(BulkRenewalJobGuard guard,
+    Function<String, CompletableFuture<Result<Void>>> runner) {
 
-    this.guard = guard;
-    this.jobRunner = null;
-    this.backgroundJobRunner = null;
-    this.detachedContextJobRunner = detachedContextJobRunner;
-    this.httpClient = null;
-  }
-
-  public BulkRenewOpenLoansService(BulkRenewalJobGuard guard, HttpClient httpClient) {
-
-    this.guard = guard;
-    this.jobRunner = null;
-    this.backgroundJobRunner = null;
-    this.detachedContextJobRunner = null;
-    this.httpClient = httpClient;
+    return new BulkRenewOpenLoansService(guard, (jobId, ignored) -> runner.apply(jobId));
   }
 
   public boolean trigger() {
-    if (backgroundJobRunner == null && detachedContextJobRunner == null && httpClient != null) {
-      return trigger((BulkRenewalWebContext) null);
-    }
-
-    return triggerInternal(resolveLegacyJobRunner());
+    return trigger(null);
   }
 
   public boolean trigger(BulkRenewalWebContext detachedContext) {
-    if (backgroundJobRunner == null && detachedContextJobRunner == null && httpClient == null) {
-      return trigger();
-    }
-
     log.info("bulk renewal detached context headers={}",
       headersAsString(detachedContext == null ? Map.of() : detachedContext.getHeaders()));
-
-    if (backgroundJobRunner != null) {
-      return triggerInternal(jobId -> backgroundJobRunner.create(jobId).run(jobId));
-    }
-
-    if (detachedContextJobRunner != null) {
-      return triggerInternal(jobId -> detachedContextJobRunner.run(jobId, detachedContext));
-    }
-
-    return triggerInternal(jobId -> new RealBackgroundJobRunner(httpClient,
-      detachedContext == null ? new BulkRenewalWebContext(Map.of()) : detachedContext)
-      .create(jobId)
-      .run(jobId));
+    return triggerInternal(jobId -> jobRunner.run(jobId, detachedContext));
   }
 
-  public static CompletableFuture<Result<Void>> noOpRunner(String ignored) {
+  public static CompletableFuture<Result<Void>> noOpRunner(String ignored,
+    BulkRenewalWebContext ignoredContext) {
+
     return completedFuture(Result.succeeded(null));
   }
 
@@ -189,14 +158,6 @@ public class BulkRenewOpenLoansService {
     return true;
   }
 
-  private Function<String, CompletableFuture<Result<Void>>> resolveLegacyJobRunner() {
-    if (jobRunner != null) {
-      return jobRunner;
-    }
-
-    return jobId -> backgroundJobRunner.create(jobId).run(jobId);
-  }
-
   private CompletableFuture<Result<Void>> runJob(String jobId,
     Function<String, CompletableFuture<Result<Void>>> runner) {
 
@@ -207,11 +168,6 @@ public class BulkRenewOpenLoansService {
     catch (Exception e) {
       return completedFuture(failedDueToServerError(e));
     }
-  }
-
-  @FunctionalInterface
-  interface BackgroundJobRunner {
-    RealJobComponents create(String jobId);
   }
 
   @FunctionalInterface
@@ -309,7 +265,7 @@ public class BulkRenewOpenLoansService {
     }
   }
 
-  private static final class RealBackgroundJobRunner implements BackgroundJobRunner {
+  private static final class RealBackgroundJobRunner {
     private final HttpClient httpClient;
     private final BulkRenewalWebContext detachedContext;
 
@@ -320,8 +276,7 @@ public class BulkRenewOpenLoansService {
       this.detachedContext = detachedContext;
     }
 
-    @Override
-    public RealJobComponents create(String jobId) {
+    RealJobComponents create(String jobId) {
       WebContext context = new WebContext(
         detachedContext.getHeaders(), detachedContext.getVertxContext());
       Clients clients = Clients.create(context, httpClient);
