@@ -197,8 +197,6 @@ class BulkRenewOpenLoansServiceTest {
             Map.of(),
             null,
             triggeringUserId,
-            jobId,
-            pageNumber,
             List.of(),
             Map.of())));
         },
@@ -224,8 +222,6 @@ class BulkRenewOpenLoansServiceTest {
         Map.of(),
         null,
         "trigger-user",
-        "job-1",
-        2,
         List.of(successfulRenewalContext(loan(1), "trigger-user")),
         Map.of("loan-1", new TestFailure("failed"))));
 
@@ -233,8 +229,6 @@ class BulkRenewOpenLoansServiceTest {
     assertTrue(releasedContext.successfulRenewalContexts().isEmpty());
     assertTrue(releasedContext.failedRenewalsByLoanId().isEmpty());
     assertEquals("trigger-user", releasedContext.triggeringUserId());
-    assertEquals("job-1", releasedContext.jobId());
-    assertEquals(2, releasedContext.pageNumber());
   }
 
   @Test
@@ -249,8 +243,7 @@ class BulkRenewOpenLoansServiceTest {
         exactMatch("status.name", "Open"),
         (records, triggeringUserId, jobId, pageNumber) -> completedFuture(succeeded(
           new BulkRenewalPageContext(List.copyOf(records.getRecords()), Map.of(), null,
-            triggeringUserId,
-            jobId, pageNumber, List.of(), Map.of()))),
+            triggeringUserId, List.of(), Map.of()))),
         pageContext -> completion,
         new BulkRenewalWebContext(Map.of("x-okapi-user-id", "trigger-user"))));
 
@@ -500,8 +493,7 @@ class BulkRenewOpenLoansServiceTest {
 
     BulkRenewalPageContext pageContext = new BulkRenewalPageContext(
       List.of(loan1, loan2), Map.of(), null,
-      "user-1", "job-1", 1,
-      List.of(ctx1, ctx2), Map.of());
+      "user-1", List.of(ctx1, ctx2), Map.of());
 
     StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 

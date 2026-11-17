@@ -160,8 +160,7 @@ public class BulkRenewOpenLoansService {
 
   static BulkRenewalPageContext releasePageReferences(BulkRenewalPageContext pageContext) {
     return new BulkRenewalPageContext(List.of(), Map.of(), pageContext.timeZone(),
-      pageContext.triggeringUserId(), pageContext.jobId(), pageContext.pageNumber(),
-      List.of(), Map.of());
+      pageContext.triggeringUserId(), List.of(), Map.of());
   }
 
   private boolean triggerInternal(Function<String, CompletableFuture<Result<Void>>> runner) {

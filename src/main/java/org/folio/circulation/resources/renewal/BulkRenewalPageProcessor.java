@@ -88,7 +88,7 @@ public class BulkRenewalPageProcessor {
 
     if (pageLoans.isEmpty()) {
       return completedFuture(succeeded(new BulkRenewalPageContext(
-        List.of(), Map.of(), null, triggeringUserId, jobId, pageNumber,
+        List.of(), Map.of(), null, triggeringUserId,
         List.of(), Map.of())));
     }
 
@@ -163,7 +163,7 @@ public class BulkRenewalPageProcessor {
               .thenApply(r -> null)));
       }
 
-      return CompletableFuture.allOf(logEvents.toArray(new CompletableFuture[0]))
+      return CompletableFuture.allOf(logEvents.toArray(CompletableFuture[]::new))
         .thenApply(v -> succeeded(new FilteredPage(
           eligibility.eligible(),
           eligibility.holdRecallFailures(),
@@ -186,7 +186,7 @@ public class BulkRenewalPageProcessor {
 
     for (Loan loan : filteredPage.loans()) {
       processing = processing.thenCompose(unused -> renewLoan(filteredPage, loan,
-          triggeringUserId, jobId, pageNumber)
+          triggeringUserId)
         .handle((result, error) -> {
           if (error != null) {
             failedRenewalsByLoanId.put(loan.getId(), failedDueToServerError(error).cause());
@@ -205,15 +205,15 @@ public class BulkRenewalPageProcessor {
 
     return processing.thenApply(unused -> succeeded(new BulkRenewalPageContext(
       filteredPage.loans(), filteredPage.requestQueuesByLoanId(), filteredPage.timeZone(),
-      triggeringUserId, jobId, pageNumber, successfulRenewalContexts, failedRenewalsByLoanId)));
+      triggeringUserId, successfulRenewalContexts, failedRenewalsByLoanId)));
   }
 
   private CompletableFuture<Result<RenewalContext>> renewLoan(FilteredPage filteredPage,
-    Loan loan, String triggeringUserId, String jobId, int pageNumber) {
+    Loan loan, String triggeringUserId) {
 
     CirculationErrorHandler errorHandler = new OverridingErrorHandler(okapiPermissions);
     RenewalContext renewalContext = createRenewalContext(filteredPage, loan,
-      triggeringUserId, jobId, pageNumber);
+      triggeringUserId);
 
     // Re-use the already-resolved policy from the eligibility filter phase to avoid
     // a second rules-engine call per loan.
@@ -245,7 +245,7 @@ public class BulkRenewalPageProcessor {
   }
 
   private RenewalContext createRenewalContext(FilteredPage filteredPage, Loan loan,
-    String triggeringUserId, String jobId, int pageNumber) {
+    String triggeringUserId) {
 
     return RenewalContext.create(loan.copy(), renewalRequest.copy(), triggeringUserId)
       .withRequestQueue(filteredPage.requestQueuesByLoanId()

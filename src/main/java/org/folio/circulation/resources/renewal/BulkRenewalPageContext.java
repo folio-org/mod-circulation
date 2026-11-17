@@ -14,8 +14,6 @@ public record BulkRenewalPageContext(
   Map<String, RequestQueue> requestQueuesByLoanId,
   ZoneId timeZone,
   String triggeringUserId,
-  String jobId,
-  int pageNumber,
   List<RenewalContext> successfulRenewalContexts,
   Map<String, HttpFailure> failedRenewalsByLoanId
 ) {

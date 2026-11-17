@@ -439,8 +439,6 @@ class BulkRenewalPageProcessorTest {
     assertEquals(1, loanPolicyLookups.get());
     assertEquals(2, result.value().successfulCount());
     assertEquals("trigger-user", result.value().triggeringUserId());
-    assertEquals("job-1", result.value().jobId());
-    assertEquals(3, result.value().pageNumber());
     assertEquals(timeZone, result.value().timeZone());
   }
 
