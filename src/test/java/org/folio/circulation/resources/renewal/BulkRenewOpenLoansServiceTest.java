@@ -3,6 +3,7 @@ package org.folio.circulation.resources.renewal;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
+import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -157,6 +158,49 @@ class BulkRenewOpenLoansServiceTest {
 
     assertTrue(finished.await(5, SECONDS));
     assertFalse(guard.isRunning());
+  }
+
+  @Test
+  void shouldReleaseGuardAndLogErrorWhenRunnerReturnsSynchronousException()
+      throws InterruptedException {
+
+    // Arrange
+    CountDownLatch finished = new CountDownLatch(1);
+    BulkRenewalJobGuard guard = trackingGuard(finished);
+    RuntimeException thrown = new RuntimeException("sync boom");
+
+    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+      jobId -> { throw thrown; });
+
+    // Act
+    assertTrue(service.trigger());
+    assertTrue(finished.await(5, SECONDS));
+
+    // Assert — guard released, failure logged as a failed Result
+    assertFalse(guard.isRunning());
+    assertTrue(appender.hasMessageContaining("bulk renewal job failed"));
+    assertTrue(appender.hasMessageContaining("bulk renewal job finished"));
+  }
+
+  @Test
+  void shouldReleaseGuardAndLogErrorWhenRunnerReturnsFailedResult()
+      throws InterruptedException {
+
+    // Arrange
+    CountDownLatch finished = new CountDownLatch(1);
+    BulkRenewalJobGuard guard = trackingGuard(finished);
+
+    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+      jobId -> completedFuture(failedDueToServerError("downstream failure")));
+
+    // Act
+    assertTrue(service.trigger());
+    assertTrue(finished.await(5, SECONDS));
+
+    // Assert — guard released, failure cause logged
+    assertFalse(guard.isRunning());
+    assertTrue(appender.hasMessageContaining("bulk renewal job failed"));
+    assertTrue(appender.hasMessageContaining("bulk renewal job finished"));
   }
 
   @Test
