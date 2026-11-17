@@ -102,7 +102,7 @@ public class BulkRenewOpenLoansService {
   }
 
   public boolean trigger(BulkRenewalWebContext detachedContext) {
-    log.info("bulk renewal detached context headers={}",
+    log.debug("bulk renewal detached context headers={}",
       detachedContext == null ? "" : headersAsString(detachedContext.getHeaders()));
     return triggerInternal(jobId -> jobRunner.run(jobId, detachedContext));
   }

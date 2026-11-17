@@ -47,7 +47,7 @@ public class BulkRenewOpenLoansResource extends Resource {
   }
 
   private void bulkRenewOpenLoans(RoutingContext routingContext) {
-    log.info("bulk renewal inbound request headers={}", inboundHeadersAsString(routingContext));
+    log.debug("bulk renewal inbound request headers={}", inboundHeadersAsString(routingContext));
 
     final WebContext context = new WebContext(routingContext);
     BulkRenewalWebContext detachedContext = new BulkRenewalWebContext(

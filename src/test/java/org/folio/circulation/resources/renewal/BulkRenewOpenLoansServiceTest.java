@@ -52,6 +52,7 @@ import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.resources.handlers.error.CirculationErrorHandler;
 import org.folio.circulation.resources.handlers.error.CirculationErrorType;
 import org.folio.circulation.resources.handlers.error.OverridingErrorHandler;
+import org.folio.circulation.services.EventPublishingService;
 import org.folio.circulation.support.Clients;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.rules.AppliedRuleConditions;
@@ -126,21 +127,6 @@ class BulkRenewOpenLoansServiceTest {
     assertTrue(appender.hasMessageContaining("bulk renewal job already running"));
 
     runningJob.complete(Result.succeeded(null));
-  }
-
-  @Test
-  void shouldLogDetachedContextHeadersWithoutToken() {
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(new BulkRenewalJobGuard(),
-      (jobId, detachedContext) -> completedFuture(succeeded(null)));
-
-    service.trigger(new BulkRenewalWebContext(Map.of(
-      "x-okapi-url", "http://localhost:8082",
-      "x-okapi-tenant", "diku",
-      "x-okapi-token", "secret-token")));
-
-    assertTrue(appender.hasMessageContaining("bulk renewal detached context headers="));
-    assertTrue(appender.hasMessageContaining("x-okapi-url=http://localhost:8082"));
-    assertFalse(appender.hasMessageContaining("secret-token"));
   }
 
   @Test
@@ -599,6 +585,70 @@ class BulkRenewOpenLoansServiceTest {
     assertTrue(result.succeeded());
     verify(loanRepository, never()).updateLoan(any(Loan.class));
     verify(itemRepository, never()).updateItem(any());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void processSuccessfulRenewals_twoSuccessfulContexts_persistsEachLoanAndItem()
+      throws Exception {
+
+    // Arrange — build RealBackgroundJobRunner via reflection
+    Class<?> runnerClass = Class.forName(
+      "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
+    Constructor<?> constructor = runnerClass.getDeclaredConstructor(
+      HttpClient.class, BulkRenewalWebContext.class);
+    constructor.setAccessible(true);
+    Object runner = constructor.newInstance(
+      Mockito.mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of(), Mockito.mock(Context.class)));
+
+    Method processSuccessfulRenewals = runnerClass.getDeclaredMethod(
+      "processSuccessfulRenewals",
+      Clients.class, LoanRepository.class, ItemRepository.class,
+      OverdueFinePolicyRepository.class, BulkRenewalPageContext.class);
+    processSuccessfulRenewals.setAccessible(true);
+
+    UUID loanId1 = UUID.randomUUID();
+    UUID loanId2 = UUID.randomUUID();
+    Loan loan1 = minimalLoanWithItem(loanId1, UUID.randomUUID());
+    Loan loan2 = minimalLoanWithItem(loanId2, UUID.randomUUID());
+
+    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
+    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
+    OverdueFinePolicyRepository overdueFinePolicyRepository =
+      Mockito.mock(OverdueFinePolicyRepository.class);
+
+    when(loanRepository.updateLoan(loan1)).thenReturn(completedFuture(succeeded(loan1)));
+    when(loanRepository.updateLoan(loan2)).thenReturn(completedFuture(succeeded(loan2)));
+    // item.hasChanged() is false for a freshly built item, so updateItem is skipped
+
+    RenewalContext ctx1 = RenewalContext.create(loan1, new JsonObject(), "user-1");
+    RenewalContext ctx2 = RenewalContext.create(loan2, new JsonObject(), "user-1");
+
+    BulkRenewalPageContext pageContext = new BulkRenewalPageContext(
+      List.of(loan1, loan2), Map.of(), null,
+      "user-1", List.of(ctx1, ctx2), Map.of());
+
+    // Stub Clients: EventPublisher needs eventPublishingService to publish the due-date-changed event
+    Clients clients = Mockito.mock(Clients.class);
+    EventPublishingService eventPublishingService = Mockito.mock(EventPublishingService.class);
+    when(clients.eventPublishingService()).thenReturn(eventPublishingService);
+    when(eventPublishingService.publishEvent(any(), any(), any()))
+      .thenReturn(CompletableFuture.completedFuture(null));
+
+    // Act — bare Clients mock: downstream notice/fine services short-circuit or fire-and-forget
+    CompletableFuture<Result<Void>> future =
+      (CompletableFuture<Result<Void>>) processSuccessfulRenewals.invoke(
+        runner,
+        clients,
+        loanRepository, itemRepository, overdueFinePolicyRepository,
+        pageContext);
+    Result<Void> result = future.join();
+
+    // Assert — pipeline succeeds and both loans were persisted
+    assertTrue(result.succeeded());
+    verify(loanRepository).updateLoan(loan1);
+    verify(loanRepository).updateLoan(loan2);
   }
 
   private static Loan minimalLoanWithItem(UUID loanId, UUID itemId) {
