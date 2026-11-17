@@ -233,8 +233,8 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean isHeldForUseAtLocation() {
     return isForUseAtLocation()
-        && getNestedStringProperty(representation, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS)
-        .equals(LoanProperties.USAGE_STATUS_HELD);
+        && LoanProperties.USAGE_STATUS_HELD
+        .equals(getNestedStringProperty(representation, FOR_USE_AT_LOCATION, AT_LOCATION_USE_STATUS));
   }
 
   public ZonedDateTime getExpirationDateForUseAtLocation() {

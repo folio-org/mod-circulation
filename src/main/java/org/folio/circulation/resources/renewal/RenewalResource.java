@@ -244,17 +244,18 @@ public abstract class RenewalResource extends Resource {
   private CompletableFuture<Result<RenewalContext>> recalculateExpirationDateForUseAtLocation(
       RenewalContext renewalContext, ServicePointRepository servicePoints, CalendarRepository calendars) {
     Loan loan = renewalContext.getLoan();
-    if (loan.isHeldForUseAtLocation()) {
+    if (loan.isHeldForUseAtLocation() && loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation() != null) {
       ZonedDateTime currentExpiration = loan.getExpirationDateForUseAtLocation();
       return servicePoints.getServicePointById(loan.getCheckoutServicePointId())
-          .thenCompose(sp ->  calculateExpirationDateForUseAtLocation(
-          loan, sp.value(), renewalContext.getTimeZone(), calendars)
-          .thenCompose(expirationDate -> {
-            if (!expirationDate.value().equals(currentExpiration)) {
-              loan.changeHoldShelfExpirationDateForUseAtLocation(expirationDate.value());
-            }
-            return ofAsync(renewalContext);
-          }));
+          .thenCompose(sp -> sp.after(servicePoint ->
+              calculateExpirationDateForUseAtLocation(
+                  loan, servicePoint, renewalContext.getTimeZone(), calendars)
+                  .thenApply(expirationDate -> expirationDate.map(expiration -> {
+                    if (!expiration.equals(currentExpiration)) {
+                      loan.changeHoldShelfExpirationDateForUseAtLocation(expiration);
+                    }
+                    return renewalContext;
+                  }))));
     } else {
       return ofAsync(renewalContext);
     }

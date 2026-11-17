@@ -157,18 +157,23 @@ public class HoldByBarcodeResource extends Resource {
   public static CompletableFuture<Result<ZonedDateTime>> calculateExpirationDateForUseAtLocation(
       Loan loan, ServicePoint servicePoint, ZoneId tenantTimeZone, CalendarRepository calendars) {
     Period expiry = loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
-    final ZonedDateTime baseExpirationDate = expiry.plusDate(ClockUtil.getZonedDateTime());
-    TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
-    ExpirationDateManagement expirationDateManagement = servicePoint.getHoldShelfClosedLibraryDateManagement();
-    ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
-        expirationDateManagement, baseExpirationDate, tenantTimeZone, timePeriod);
-    return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(tenantTimeZone).toLocalDate(),
-            servicePoint.getId())
-        .thenApply(adjacentOpeningDaysResult ->
-            strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
-        .thenCompose(adjustedDate ->
-            ofAsync(loan.getDueDate().isBefore(adjustedDate.value())
-                ? atEndOfDay(loan.getDueDate()) : adjustedDate.value()));
+    if (expiry == null) { // HoldByBarcodeResource checks for this condition before invoking this method.
+      return CompletableFuture.completedFuture(null);
+    } else {
+      final ZonedDateTime baseExpirationDate = expiry.plusDate(ClockUtil.getZonedDateTime());
+      TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
+      ExpirationDateManagement expirationDateManagement = servicePoint.getHoldShelfClosedLibraryDateManagement();
+      ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
+          expirationDateManagement, baseExpirationDate, tenantTimeZone, timePeriod);
+      return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(tenantTimeZone).toLocalDate(),
+              servicePoint.getId())
+          .thenApply(adjacentOpeningDaysResult ->
+              strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
+          .thenApply(adjustedDate -> adjustedDate.map(date -> {
+            ZonedDateTime dueDayEnd = atEndOfDay(loan.getDueDate(), tenantTimeZone);
+            return dueDayEnd.isBefore(date) ? dueDayEnd : date;
+          }));
+    }
   }
 
   private Result<HoldByBarcodeRequest> setStatusToHeldWithExpirationDate(Result<HoldByBarcodeRequest> request) {
