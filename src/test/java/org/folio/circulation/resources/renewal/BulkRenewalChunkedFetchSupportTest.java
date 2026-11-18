@@ -1,8 +1,12 @@
 package org.folio.circulation.resources.renewal;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.folio.circulation.resources.renewal.BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
+import static org.folio.circulation.resources.renewal.BulkRenewalChunkedFetchSupport.partition;
 import static org.folio.circulation.support.CqlSortBy.ascending;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatchAny;
+import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,12 +19,8 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
-import org.folio.circulation.domain.Item;
-import org.folio.circulation.domain.Loan;
-import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestStatus;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
@@ -52,13 +52,13 @@ class BulkRenewalChunkedFetchSupportTest {
   @Test
   void shouldPartitionValuesIntoConfiguredChunks() {
     assertEquals(List.of(List.of("1", "2"), List.of("3")),
-      BulkRenewalChunkedFetchSupport.partition(List.of("1", "2", "3"), 2));
+      partition(List.of("1", "2", "3"), 2));
   }
 
   @Test
   void shouldPreserveInputOrderAcrossChunks() {
     assertEquals(List.of(List.of("c", "a"), List.of("b")),
-      BulkRenewalChunkedFetchSupport.partition(List.of("c", "a", "b"), 2));
+      partition(List.of("c", "a", "b"), 2));
   }
 
   @Test
@@ -71,19 +71,20 @@ class BulkRenewalChunkedFetchSupportTest {
     values.add("2");
 
     assertEquals(List.of(List.of("1", "2")),
-      BulkRenewalChunkedFetchSupport.partition(values, 2));
+      partition(values, 2));
   }
 
   @Test
   void shouldExposeItemIdChunkSizeForBulkRenewalFetches() {
-    assertEquals(80, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE);
+    assertEquals(80, ITEM_ID_CHUNK_SIZE);
   }
 
   @Test
   void shouldCreateSortedOpenLoanPageQuery() {
-    Clients clients = mock(Clients.class);
-    when(clients.loansStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.loansHistoryStorageClient()).thenReturn(mock(CollectionResourceClient.class));
+    var clients = mock(Clients.class);
+    var mockedCollectionResource = mock(CollectionResourceClient.class);
+    when(clients.loansStorage()).thenReturn(mockedCollectionResource);
+    when(clients.loansHistoryStorageClient()).thenReturn(mockedCollectionResource);
 
     LoanRepository repository = new LoanRepository(clients,
       mock(ItemRepository.class), mock(UserRepository.class));
@@ -97,25 +98,25 @@ class BulkRenewalChunkedFetchSupportTest {
 
   @Test
   void shouldFetchOpenLoanPageUsingSortedQueryAndOffset() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient loansStorageClient = mock(CollectionResourceClient.class);
+    var clients = mock(Clients.class);
+    var mockedCollectionResource = mock(CollectionResourceClient.class);
 
-    when(clients.loansStorage()).thenReturn(loansStorageClient);
-    when(clients.loansHistoryStorageClient()).thenReturn(mock(CollectionResourceClient.class));
-    when(loansStorageClient.getMany(any(CqlQuery.class), any(PageLimit.class), any(Offset.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(emptyResponse("loans"))));
+    when(clients.loansStorage()).thenReturn(mockedCollectionResource);
+    when(clients.loansHistoryStorageClient()).thenReturn(mockedCollectionResource);
+    when(mockedCollectionResource.getMany(any(CqlQuery.class), any(PageLimit.class), any(Offset.class)))
+      .thenReturn(completedFuture(succeeded(emptyResponse("loans"))));
 
-    LoanRepository repository = new LoanRepository(clients,
+    var repository = new LoanRepository(clients,
       mock(ItemRepository.class), mock(UserRepository.class));
-    PageLimit pageLimit = PageLimit.limit(5);
-    Offset offset = Offset.offset(10);
+    var pageLimit = PageLimit.limit(5);
+    var offset = Offset.offset(10);
 
-    Result<MultipleRecords<Loan>> result = repository.findOpenLoans(pageLimit, offset).join();
+    var result = repository.findOpenLoans(pageLimit, offset).join();
 
     assertTrue(result.succeeded());
 
-    ArgumentCaptor<CqlQuery> queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
-    verify(loansStorageClient).getMany(queryCaptor.capture(), eq(pageLimit), eq(offset));
+    var queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
+    verify(mockedCollectionResource).getMany(queryCaptor.capture(), eq(pageLimit), eq(offset));
 
     assertEquals(exactMatch("status.name", "Open")
       .map(query -> query.sortBy(ascending("id"))).value(), queryCaptor.getValue());
@@ -123,60 +124,59 @@ class BulkRenewalChunkedFetchSupportTest {
 
   @Test
   void shouldFetchItemsUsingConfiguredChunkSize() {
-    CollectionResourceClient itemsClient = mock(CollectionResourceClient.class);
-    CollectionResourceClient circulationItemClient = mock(CollectionResourceClient.class);
+    var itemsClient = mock(CollectionResourceClient.class);
+    var circulationItemClient = mock(CollectionResourceClient.class);
 
     when(itemsClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(emptyResponse("items"))));
+      .thenReturn(completedFuture(succeeded(emptyResponse("items"))));
     when(circulationItemClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(emptyResponse("items"))));
+      .thenReturn(completedFuture(succeeded(emptyResponse("items"))));
 
-    ItemRepository repository = createItemRepository(itemsClient, circulationItemClient);
-    List<String> itemIds = generateIds(BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE + 1);
+    var repository = createItemRepository(itemsClient, circulationItemClient);
+    var itemIds = generateIds(ITEM_ID_CHUNK_SIZE + 1);
 
-    Result<MultipleRecords<Item>> result = repository.fetchFor(itemIds,
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE).join();
+    var result = repository.fetchFor(itemIds, ITEM_ID_CHUNK_SIZE).join();
 
     assertTrue(result.succeeded());
 
-    ArgumentCaptor<CqlQuery> queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
-    verify(itemsClient, times(2)).getMany(queryCaptor.capture(), any(PageLimit.class));
+    var queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
+    verify(itemsClient, times(2))
+      .getMany(queryCaptor.capture(), any(PageLimit.class));
 
-    List<CqlQuery> actualQueries = queryCaptor.getAllValues();
+    var actualQueries = queryCaptor.getAllValues();
 
     assertEquals(exactMatchAny("id", itemIds.subList(0,
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE)).value(), actualQueries.get(0));
+      ITEM_ID_CHUNK_SIZE)).value(), actualQueries.get(0));
     assertEquals(exactMatchAny("id", itemIds.subList(
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE, itemIds.size())).value(),
+      ITEM_ID_CHUNK_SIZE, itemIds.size())).value(),
       actualQueries.get(1));
   }
 
   @Test
   void shouldNormalizeItemIdsBeforeChunkedFetchCompletenessCheck() {
-    CollectionResourceClient itemsClient = mock(CollectionResourceClient.class);
-    CollectionResourceClient circulationItemClient = mock(CollectionResourceClient.class);
-    String itemId = UUID.randomUUID().toString();
+    var itemsClient = mock(CollectionResourceClient.class);
+    var circulationItemClient = mock(CollectionResourceClient.class);
+    var itemId = UUID.randomUUID().toString();
 
     when(itemsClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(responseWithItems(itemId))));
+      .thenReturn(completedFuture(succeeded(responseWithItems(itemId))));
 
-    ItemRepository repository = createItemRepository(itemsClient, circulationItemClient);
+    var repository = createItemRepository(itemsClient, circulationItemClient);
     List<String> itemIds = new ArrayList<>();
 
-    IntStream.range(0, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE + 1)
+    IntStream.range(0, ITEM_ID_CHUNK_SIZE + 1)
       .forEach(index -> itemIds.add(itemId));
 
     itemIds.add("");
     itemIds.add("   ");
     itemIds.add(null);
 
-    Result<MultipleRecords<Item>> result = repository.fetchFor(itemIds,
-      BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE).join();
+    var result = repository.fetchFor(itemIds, ITEM_ID_CHUNK_SIZE).join();
 
     assertTrue(result.succeeded());
     assertEquals(1, result.value().size());
 
-    ArgumentCaptor<CqlQuery> queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
+    var queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
     verify(itemsClient, times(1)).getMany(queryCaptor.capture(), any(PageLimit.class));
     verify(circulationItemClient, times(0)).getMany(any(CqlQuery.class), any(PageLimit.class));
 
@@ -185,26 +185,28 @@ class BulkRenewalChunkedFetchSupportTest {
 
   @Test
   void shouldFetchUsersUsingConfiguredChunkSize() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient usersStorageClient = mock(CollectionResourceClient.class);
+    var clients = mock(Clients.class);
+    var usersStorageClient = mock(CollectionResourceClient.class);
+    var patronGroupsStorageClient = mock(CollectionResourceClient.class);
+    var addressTypesStorageClient = mock(CollectionResourceClient.class);
 
     when(clients.usersStorage()).thenReturn(usersStorageClient);
-    when(clients.patronGroupsStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.addressTypesStorage()).thenReturn(mock(CollectionResourceClient.class));
+    when(clients.patronGroupsStorage()).thenReturn(patronGroupsStorageClient);
+    when(clients.addressTypesStorage()).thenReturn(addressTypesStorageClient);
     when(usersStorageClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(emptyResponse("users"))));
+      .thenReturn(completedFuture(succeeded(emptyResponse("users"))));
 
-    UserRepository repository = new UserRepository(clients);
-    List<String> userIds = generateIds(3);
+    var repository = new UserRepository(clients);
+    var userIds = generateIds(3);
 
     var result = repository.getUsersForUserIds(userIds, 2).join();
 
     assertTrue(result.succeeded());
 
-    ArgumentCaptor<CqlQuery> queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
+    var queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
     verify(usersStorageClient, times(2)).getMany(queryCaptor.capture(), any(PageLimit.class));
 
-    List<CqlQuery> actualQueries = queryCaptor.getAllValues();
+    var actualQueries = queryCaptor.getAllValues();
 
     assertEquals(exactMatchAny("id", userIds.subList(0, 2)).value(), actualQueries.get(0));
     assertEquals(exactMatchAny("id", userIds.subList(2, userIds.size())).value(),
@@ -213,29 +215,31 @@ class BulkRenewalChunkedFetchSupportTest {
 
   @Test
   void shouldFetchOpenRequestsUsingConfiguredChunkSize() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient requestsStorageClient = mock(CollectionResourceClient.class);
+    var clients = mock(Clients.class);
+    var requestsStorageClient = mock(CollectionResourceClient.class);
+    var requestsBatchStorageClient = mock(CollectionResourceClient.class);
+    var cancellationReasonStorageClient = mock(CollectionResourceClient.class);
 
     when(clients.requestsStorage()).thenReturn(requestsStorageClient);
-    when(clients.requestsBatchStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.cancellationReasonStorage()).thenReturn(mock(CollectionResourceClient.class));
+    when(clients.requestsBatchStorage()).thenReturn(requestsBatchStorageClient);
+    when(clients.cancellationReasonStorage()).thenReturn(cancellationReasonStorageClient);
     when(requestsStorageClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
-      .thenReturn(CompletableFuture.completedFuture(Result.succeeded(emptyResponse("requests"))));
+      .thenReturn(completedFuture(succeeded(emptyResponse("requests"))));
 
-    RequestRepository repository = new RequestRepository(clients);
-    List<String> itemIds = generateIds(3);
+    var repository = new RequestRepository(clients);
+    var itemIds = generateIds(3);
 
-    Result<MultipleRecords<Request>> result = repository.findOpenRequestsByItemIds(itemIds, 2).join();
+    var result = repository.findOpenRequestsByItemIds(itemIds, 2).join();
 
     assertTrue(result.succeeded());
 
-    ArgumentCaptor<CqlQuery> queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
+    var queryCaptor = ArgumentCaptor.forClass(CqlQuery.class);
     verify(requestsStorageClient, times(2)).getMany(queryCaptor.capture(), any(PageLimit.class));
 
-    Result<CqlQuery> openRequestsQuery = exactMatchAny("status", RequestStatus.openStates())
+    var openRequestsQuery = exactMatchAny("status", RequestStatus.openStates())
       .map(query -> query.sortBy(ascending("position")));
 
-    List<CqlQuery> actualQueries = queryCaptor.getAllValues();
+    var actualQueries = queryCaptor.getAllValues();
 
     assertEquals(exactMatchAny("itemId", itemIds.subList(0, 2)).value()
       .and(openRequestsQuery.value()), actualQueries.get(0));
@@ -245,24 +249,26 @@ class BulkRenewalChunkedFetchSupportTest {
 
   @Test
   void shouldKeepMergedOpenRequestsGloballyOrderedByPositionWhenChunked() {
-    Clients clients = mock(Clients.class);
-    CollectionResourceClient requestsStorageClient = mock(CollectionResourceClient.class);
+    var clients = mock(Clients.class);
+    var requestsStorageClient = mock(CollectionResourceClient.class);
+    var requestsBatchStorageClient = mock(CollectionResourceClient.class);
+    var cancellationReasonStorageClient = mock(CollectionResourceClient.class);
 
     when(clients.requestsStorage()).thenReturn(requestsStorageClient);
-    when(clients.requestsBatchStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.cancellationReasonStorage()).thenReturn(mock(CollectionResourceClient.class));
+    when(clients.requestsBatchStorage()).thenReturn(requestsBatchStorageClient);
+    when(clients.cancellationReasonStorage()).thenReturn(cancellationReasonStorageClient);
     when(requestsStorageClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
       .thenReturn(
-        CompletableFuture.completedFuture(Result.succeeded(responseWithRequests(
+        completedFuture(succeeded(responseWithRequests(
           requestJson("request-2", "item-1", 2),
           requestJson("request-4", "item-2", 4)))),
-        CompletableFuture.completedFuture(Result.succeeded(responseWithRequests(
+        completedFuture(succeeded(responseWithRequests(
           requestJson("request-1", "item-3", 1),
           requestJson("request-3", "item-3", 3)))));
 
-    RequestRepository repository = new RequestRepository(clients);
+    var repository = new RequestRepository(clients);
 
-    Result<MultipleRecords<Request>> result = repository.findOpenRequestsByItemIds(
+    var result = repository.findOpenRequestsByItemIds(
       List.of("item-1", "item-2", "item-3"), 2).join();
 
     assertTrue(result.succeeded());
@@ -274,7 +280,7 @@ class BulkRenewalChunkedFetchSupportTest {
   private ItemRepository createItemRepository(CollectionResourceClient itemsClient,
     CollectionResourceClient circulationItemClient) {
 
-    Clients clients = mock(Clients.class);
+    var clients = mock(Clients.class);
 
     when(clients.servicePointsStorage()).thenReturn(mock(CollectionResourceClient.class));
     when(clients.locationsStorage()).thenReturn(mock(CollectionResourceClient.class));
@@ -288,14 +294,13 @@ class BulkRenewalChunkedFetchSupportTest {
     when(clients.materialTypesStorage()).thenReturn(mock(CollectionResourceClient.class));
     when(clients.instancesStorage()).thenReturn(mock(CollectionResourceClient.class));
 
-    ServicePointRepository servicePointRepository = new ServicePointRepository(clients);
-    LocationRepository locationRepository = LocationRepository.using(clients, servicePointRepository);
-    ShadowLocationRepository shadowLocationRepository = ShadowLocationRepository.using(clients,
-      servicePointRepository);
-    MaterialTypeRepository materialTypeRepository = new MaterialTypeRepository(clients);
-    InstanceRepository instanceRepository = new InstanceRepository(clients);
-    HoldingsRepository holdingsRepository = new HoldingsRepository(mock(CollectionResourceClient.class));
-    LoanTypeRepository loanTypeRepository = new LoanTypeRepository(mock(CollectionResourceClient.class));
+    var servicePointRepository = new ServicePointRepository(clients);
+    var locationRepository = LocationRepository.using(clients, servicePointRepository);
+    var shadowLocationRepository = ShadowLocationRepository.using(clients, servicePointRepository);
+    var materialTypeRepository = new MaterialTypeRepository(clients);
+    var instanceRepository = new InstanceRepository(clients);
+    var holdingsRepository = new HoldingsRepository(mock(CollectionResourceClient.class));
+    var loanTypeRepository = new LoanTypeRepository(mock(CollectionResourceClient.class));
 
     return new ItemRepository(itemsClient, locationRepository, shadowLocationRepository,
       materialTypeRepository, instanceRepository, holdingsRepository, loanTypeRepository,

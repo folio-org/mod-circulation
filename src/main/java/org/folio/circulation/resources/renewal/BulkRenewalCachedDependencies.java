@@ -107,12 +107,12 @@ public class BulkRenewalCachedDependencies {
         return true;
       }
 
-      if (!(object instanceof LoanPolicyCacheKey other)) {
+      if (!(object instanceof LoanPolicyCacheKey(var polId, var ruleConditions))) {
         return false;
       }
 
-      return Objects.equals(policyId, other.policyId)
-        && sameConditions(appliedRuleConditions, other.appliedRuleConditions);
+      return Objects.equals(policyId, polId)
+        && sameConditions(appliedRuleConditions, ruleConditions);
     }
 
     @Override

@@ -7,7 +7,6 @@ import static org.folio.circulation.resources.context.RenewalContext.create;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -107,7 +106,7 @@ class OverdueFineServiceTest {
   private ServicePointRepository servicePointRepository;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     overdueFinePolicyRepository = mock(OverdueFinePolicyRepository.class);
     accountRepository = mock(AccountRepository.class);
     itemRepository = mock(ItemRepository.class);

@@ -21,7 +21,6 @@ public class BulkRenewOpenLoansResource extends Resource {
 
   private static final BulkRenewalJobGuard DEFAULT_JOB_GUARD = new BulkRenewalJobGuard();
 
-  private final BulkRenewalJobGuard jobGuard;
   private final BulkRenewOpenLoansService service;
 
   public BulkRenewOpenLoansResource(HttpClient client) {
@@ -29,14 +28,11 @@ public class BulkRenewOpenLoansResource extends Resource {
   }
 
   BulkRenewOpenLoansResource(HttpClient client, BulkRenewalJobGuard jobGuard) {
-    this(client, jobGuard, BulkRenewOpenLoansService.forHttpClient(jobGuard, client));
+    this(client, BulkRenewOpenLoansService.forHttpClient(jobGuard, client));
   }
 
-  BulkRenewOpenLoansResource(HttpClient client, BulkRenewalJobGuard jobGuard,
-    BulkRenewOpenLoansService service) {
-
+  BulkRenewOpenLoansResource(HttpClient client, BulkRenewOpenLoansService service) {
     super(client);
-    this.jobGuard = jobGuard;
     this.service = service;
   }
 
@@ -47,7 +43,8 @@ public class BulkRenewOpenLoansResource extends Resource {
   }
 
   private void bulkRenewOpenLoans(RoutingContext routingContext) {
-    log.info("bulk renewal inbound request headers={}", inboundHeadersAsString(routingContext));
+    var headersAsLogValue = inboundHeadersAsString(routingContext);
+    log.info("bulk renewal inbound request headers={}", headersAsLogValue);
 
     final WebContext context = new WebContext(routingContext);
     BulkRenewalWebContext detachedContext = new BulkRenewalWebContext(

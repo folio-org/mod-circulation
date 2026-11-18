@@ -84,7 +84,7 @@ public class BulkRenewOpenLoansService {
     return new BulkRenewOpenLoansService(guard,
       (jobId, detachedContext) -> new RealBackgroundJobRunner(httpClient,
         detachedContext != null ? detachedContext : new BulkRenewalWebContext(Map.of()))
-        .create(jobId)
+        .create()
         .run(jobId));
   }
 
@@ -108,8 +108,7 @@ public class BulkRenewOpenLoansService {
     return triggerInternal(jobId -> jobRunner.run(jobId, detachedContext));
   }
 
-  public static CompletableFuture<Result<Void>> noOpRunner(String ignored,
-    BulkRenewalWebContext ignoredContext) {
+  public static CompletableFuture<Result<Void>> noOpRunner() {
 
     return completedFuture(Result.succeeded(null));
   }
@@ -277,7 +276,7 @@ public class BulkRenewOpenLoansService {
       this.detachedContext = detachedContext;
     }
 
-    RealJobComponents create(String jobId) {
+    RealJobComponents create() {
       WebContext context = new WebContext(
         detachedContext.getHeaders(), detachedContext.getVertxContext());
       Clients clients = Clients.create(context, httpClient);
@@ -402,7 +401,7 @@ public class BulkRenewOpenLoansService {
             .thenApply(updated -> updated.next(loanScheduledNoticeService::rescheduleDueDateNotices))
             .thenApply(updated -> updated.next(reminderFeeScheduledNoticeService::rescheduleFirstReminder))
             .thenApply(updated -> updated.next(loanNoticeSender::sendRenewalPatronNotice))
-            .thenApply(updated -> updated.mapEmpty())));
+            .thenApply(Result::mapEmpty)));
       }
 
       return processing.thenApply(result -> result.map(ignored -> null));

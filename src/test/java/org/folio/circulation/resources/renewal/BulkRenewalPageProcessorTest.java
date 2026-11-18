@@ -1,15 +1,19 @@
 package org.folio.circulation.resources.renewal;
 
+import static java.util.UUID.randomUUID;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.domain.policy.Period.days;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
+import static org.folio.circulation.resources.renewal.BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
 import static org.folio.circulation.support.ValidationErrorFailure.singleValidationError;
 import static org.folio.circulation.support.results.Result.failed;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.folio.circulation.domain.Item;
@@ -57,21 +62,20 @@ import api.support.builders.TlrSettingsConfigurationBuilder;
 import api.support.builders.UserBuilder;
 import io.vertx.core.json.JsonObject;
 import org.folio.circulation.services.EventPublisher;
-import org.mockito.Mockito;
 
 class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldFetchTimeZoneAndTlrSettingsOnlyOnceAcrossPages() {
-    AtomicInteger tlrLookups = new AtomicInteger();
-    AtomicInteger timeZoneLookups = new AtomicInteger();
-    TlrSettingsConfiguration tlrSettings = TlrSettingsConfiguration.from(
+    var tlrLookups = new AtomicInteger();
+    var timeZoneLookups = new AtomicInteger();
+    var tlrSettings = TlrSettingsConfiguration.from(
       new TlrSettingsConfigurationBuilder()
         .withTitleLevelRequestsFeatureEnabled(true)
         .create());
-    ZoneId timeZone = ZoneId.of("America/Chicago");
+    var timeZone = ZoneId.of("America/Chicago");
 
-    BulkRenewalCachedDependencies dependencies = new BulkRenewalCachedDependencies(
+    var dependencies = new BulkRenewalCachedDependencies(
       () -> {
         tlrLookups.incrementAndGet();
         return completedFuture(succeeded(tlrSettings));
@@ -92,13 +96,13 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldReuseLoanPoliciesAcrossPagesWhenIdsAndAppliedRuleConditionsRepeat() {
-    AtomicInteger loanPolicyLookups = new AtomicInteger();
-    UUID policyId = UUID.randomUUID();
-    AppliedRuleConditions firstPageConditions = new AppliedRuleConditions(true, false, true);
-    AppliedRuleConditions secondPageConditions = new AppliedRuleConditions(true, false, true);
-    LoanPolicy loanPolicy = loanPolicy(policyId, firstPageConditions);
+    var loanPolicyLookups = new AtomicInteger();
+    var policyId = randomUUID();
+    var firstPageConditions = new AppliedRuleConditions(true, false, true);
+    var secondPageConditions = new AppliedRuleConditions(true, false, true);
+    var loanPolicy = loanPolicy(policyId, firstPageConditions);
 
-    BulkRenewalCachedDependencies dependencies = new BulkRenewalCachedDependencies(
+    var dependencies = new BulkRenewalCachedDependencies(
       () -> completedFuture(succeeded(TlrSettingsConfiguration.defaultSettings())),
       () -> completedFuture(succeeded(ZoneId.of("UTC"))));
 
@@ -119,14 +123,14 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldNotCollapseLoanPoliciesWhenAppliedRuleConditionsDiffer() {
-    AtomicInteger loanPolicyLookups = new AtomicInteger();
-    UUID policyId = UUID.randomUUID();
-    AppliedRuleConditions firstConditions = new AppliedRuleConditions(true, false, false);
-    AppliedRuleConditions secondConditions = new AppliedRuleConditions(false, true, false);
-    LoanPolicy firstPolicy = loanPolicy(policyId, firstConditions);
-    LoanPolicy secondPolicy = loanPolicy(policyId, secondConditions);
+    var loanPolicyLookups = new AtomicInteger();
+    var policyId = randomUUID();
+    var firstConditions = new AppliedRuleConditions(true, false, false);
+    var secondConditions = new AppliedRuleConditions(false, true, false);
+    var firstPolicy = loanPolicy(policyId, firstConditions);
+    var secondPolicy = loanPolicy(policyId, secondConditions);
 
-    BulkRenewalCachedDependencies dependencies = new BulkRenewalCachedDependencies(
+    var dependencies = new BulkRenewalCachedDependencies(
       () -> completedFuture(succeeded(TlrSettingsConfiguration.defaultSettings())),
       () -> completedFuture(succeeded(ZoneId.of("UTC"))));
 
@@ -147,11 +151,11 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldReuseOverdueFinePoliciesAcrossPagesWhenIdsRepeat() {
-    AtomicInteger overduePolicyLookups = new AtomicInteger();
-    String policyId = UUID.randomUUID().toString();
-    OverdueFinePolicy overdueFinePolicy = OverdueFinePolicy.unknown(policyId);
+    var overduePolicyLookups = new AtomicInteger();
+    var policyId = randomUUID().toString();
+    var overdueFinePolicy = OverdueFinePolicy.unknown(policyId);
 
-    BulkRenewalCachedDependencies dependencies = new BulkRenewalCachedDependencies(
+    var dependencies = new BulkRenewalCachedDependencies(
       () -> completedFuture(succeeded(TlrSettingsConfiguration.defaultSettings())),
       () -> completedFuture(succeeded(ZoneId.of("UTC"))));
 
@@ -170,23 +174,23 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldBuildRequestQueuesFromBatchedRequestLookupsInsteadOfCallingQueueRepositoryPerLoan() {
-    AtomicInteger itemRequestLookups = new AtomicInteger();
-    AtomicInteger instanceRequestLookups = new AtomicInteger();
+    var itemRequestLookups = new AtomicInteger();
+    var instanceRequestLookups = new AtomicInteger();
 
-    UUID instanceIdOne = UUID.randomUUID();
-    UUID instanceIdTwo = UUID.randomUUID();
-    UUID itemIdOne = UUID.randomUUID();
-    UUID itemIdTwo = UUID.randomUUID();
+    var instanceIdOne = randomUUID();
+    var instanceIdTwo = randomUUID();
+    var itemIdOne = randomUUID();
+    var itemIdTwo = randomUUID();
 
-    Loan firstLoan = loan(UUID.randomUUID(), itemIdOne, instanceIdOne);
-    Loan secondLoan = loan(UUID.randomUUID(), itemIdTwo, instanceIdTwo);
+    var firstLoan = loan(randomUUID(), itemIdOne, instanceIdOne);
+    var secondLoan = loan(randomUUID(), itemIdTwo, instanceIdTwo);
 
-    List<Request> openRequests = List.of(
-      itemLevelRequest(UUID.randomUUID(), itemIdOne, instanceIdOne, 2),
-      itemLevelRequest(UUID.randomUUID(), itemIdOne, instanceIdOne, 1),
-      itemLevelRequest(UUID.randomUUID(), itemIdTwo, instanceIdTwo, 1));
+    var openRequests = List.of(
+      itemLevelRequest(randomUUID(), itemIdOne, instanceIdOne, 2),
+      itemLevelRequest(randomUUID(), itemIdOne, instanceIdOne, 1),
+      itemLevelRequest(randomUUID(), itemIdTwo, instanceIdTwo, 1));
 
-    BulkRenewalRequestQueueLookup lookup = new BulkRenewalRequestQueueLookup(
+    var lookup = new BulkRenewalRequestQueueLookup(
       itemIds -> {
         itemRequestLookups.incrementAndGet();
         assertEquals(Set.of(itemIdOne.toString(), itemIdTwo.toString()), Set.copyOf(itemIds));
@@ -197,7 +201,7 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(List.of()));
       });
 
-    Result<Map<String, RequestQueue>> result = lookup.lookupByLoanId(
+    var result = lookup.lookupByLoanId(
       List.of(firstLoan, secondLoan), TlrSettingsConfiguration.defaultSettings()).join();
 
     assertTrue(result.succeeded());
@@ -209,20 +213,20 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldKeepAwaitingDeliveryRequestsInAssembledQueue() {
-    UUID instanceId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    Loan loan = loan(UUID.randomUUID(), itemId, instanceId);
+    var instanceId = randomUUID();
+    var itemId = randomUUID();
+    var loan = loan(randomUUID(), itemId, instanceId);
 
-    List<Request> openRequests = List.of(
-      itemLevelRequest(UUID.randomUUID(), itemId, instanceId, 1,
+    var openRequests = List.of(
+      itemLevelRequest(randomUUID(), itemId, instanceId, 1,
         RequestBuilder.OPEN_AWAITING_DELIVERY),
-      itemLevelRequest(UUID.randomUUID(), itemId, instanceId, 2));
+      itemLevelRequest(randomUUID(), itemId, instanceId, 2));
 
-    BulkRenewalRequestQueueLookup lookup = new BulkRenewalRequestQueueLookup(
+    var lookup = new BulkRenewalRequestQueueLookup(
       itemIds -> completedFuture(succeeded(openRequests)),
       instanceIds -> completedFuture(succeeded(List.of())));
 
-    Result<Map<String, RequestQueue>> result = lookup.lookupByLoanId(
+    var result = lookup.lookupByLoanId(
       List.of(loan), TlrSettingsConfiguration.defaultSettings()).join();
 
     assertTrue(result.succeeded());
@@ -233,22 +237,22 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldBuildTitleLevelQueuesFromBatchedInstanceRequestLookupsWhenTlrEnabled() {
-    AtomicInteger itemRequestLookups = new AtomicInteger();
-    AtomicInteger instanceRequestLookups = new AtomicInteger();
+    var itemRequestLookups = new AtomicInteger();
+    var instanceRequestLookups = new AtomicInteger();
 
-    UUID sharedInstanceId = UUID.randomUUID();
-    UUID itemIdOne = UUID.randomUUID();
-    UUID itemIdTwo = UUID.randomUUID();
+    var sharedInstanceId = randomUUID();
+    var itemIdOne = randomUUID();
+    var itemIdTwo = randomUUID();
 
-    Loan firstLoan = loan(UUID.randomUUID(), itemIdOne, sharedInstanceId);
-    Loan secondLoan = loan(UUID.randomUUID(), itemIdTwo, sharedInstanceId);
+    var firstLoan = loan(randomUUID(), itemIdOne, sharedInstanceId);
+    var secondLoan = loan(randomUUID(), itemIdTwo, sharedInstanceId);
 
-    List<Request> openRequests = List.of(
-      titleLevelRequest(UUID.randomUUID(), sharedInstanceId, 1),
-      itemLevelRequest(UUID.randomUUID(), itemIdOne, sharedInstanceId, 2),
-      itemLevelRequest(UUID.randomUUID(), itemIdTwo, sharedInstanceId, 3));
+    var openRequests = List.of(
+      titleLevelRequest(randomUUID(), sharedInstanceId, 1),
+      itemLevelRequest(randomUUID(), itemIdOne, sharedInstanceId, 2),
+      itemLevelRequest(randomUUID(), itemIdTwo, sharedInstanceId, 3));
 
-    BulkRenewalRequestQueueLookup lookup = new BulkRenewalRequestQueueLookup(
+    var lookup = new BulkRenewalRequestQueueLookup(
       itemIds -> {
         itemRequestLookups.incrementAndGet();
         return completedFuture(succeeded(List.of()));
@@ -259,12 +263,12 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(openRequests));
       });
 
-    TlrSettingsConfiguration tlrSettings = TlrSettingsConfiguration.from(
+    var tlrSettings = TlrSettingsConfiguration.from(
       new TlrSettingsConfigurationBuilder()
         .withTitleLevelRequestsFeatureEnabled(true)
         .create());
 
-    Result<Map<String, RequestQueue>> result = lookup.lookupByLoanId(
+    var result = lookup.lookupByLoanId(
       List.of(firstLoan, secondLoan), tlrSettings).join();
 
     assertTrue(result.succeeded());
@@ -276,21 +280,21 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldChunkOversizedItemRequestLookups() {
-    int chunkSize = BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
-    int loanCount = chunkSize * 2 + 5;
+    var chunkSize = ITEM_ID_CHUNK_SIZE;
+    var loanCount = chunkSize * 2 + 5;
     List<Loan> loans = new ArrayList<>();
     Set<String> expectedItemIds = new HashSet<>();
     List<Set<String>> seenItemIdBatches = new ArrayList<>();
-    AtomicInteger instanceRequestLookups = new AtomicInteger();
+    var instanceRequestLookups = new AtomicInteger();
 
     for (int index = 0; index < loanCount; index++) {
-      UUID itemId = UUID.randomUUID();
-      UUID instanceId = UUID.randomUUID();
-      loans.add(loan(UUID.randomUUID(), itemId, instanceId));
+      var itemId = randomUUID();
+      var instanceId = randomUUID();
+      loans.add(loan(randomUUID(), itemId, instanceId));
       expectedItemIds.add(itemId.toString());
     }
 
-    BulkRenewalRequestQueueLookup lookup = new BulkRenewalRequestQueueLookup(
+    var lookup = new BulkRenewalRequestQueueLookup(
       itemIds -> {
         seenItemIdBatches.add(Set.copyOf(itemIds));
         return completedFuture(succeeded(List.of()));
@@ -300,7 +304,7 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(List.of()));
       });
 
-    Result<Map<String, RequestQueue>> result = lookup.lookupByLoanId(
+    var result = lookup.lookupByLoanId(
       loans, TlrSettingsConfiguration.defaultSettings()).join();
 
     assertTrue(result.succeeded());
@@ -314,21 +318,21 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldChunkOversizedInstanceRequestLookupsWhenTlrEnabled() {
-    int chunkSize = BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
-    int loanCount = chunkSize * 2 + 5;
+    var chunkSize = ITEM_ID_CHUNK_SIZE;
+    var loanCount = chunkSize * 2 + 5;
     List<Loan> loans = new ArrayList<>();
     Set<String> expectedInstanceIds = new HashSet<>();
     List<Set<String>> seenInstanceIdBatches = new ArrayList<>();
-    AtomicInteger itemRequestLookups = new AtomicInteger();
+    var itemRequestLookups = new AtomicInteger();
 
     for (int index = 0; index < loanCount; index++) {
-      UUID itemId = UUID.randomUUID();
-      UUID instanceId = UUID.randomUUID();
-      loans.add(loan(UUID.randomUUID(), itemId, instanceId));
+      var itemId = randomUUID();
+      var instanceId = randomUUID();
+      loans.add(loan(randomUUID(), itemId, instanceId));
       expectedInstanceIds.add(instanceId.toString());
     }
 
-    BulkRenewalRequestQueueLookup lookup = new BulkRenewalRequestQueueLookup(
+    var lookup = new BulkRenewalRequestQueueLookup(
       itemIds -> {
         itemRequestLookups.incrementAndGet();
         return completedFuture(succeeded(List.of()));
@@ -338,12 +342,12 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(List.of()));
       });
 
-    TlrSettingsConfiguration tlrSettings = TlrSettingsConfiguration.from(
+    var tlrSettings = TlrSettingsConfiguration.from(
       new TlrSettingsConfigurationBuilder()
         .withTitleLevelRequestsFeatureEnabled(true)
         .create());
 
-    Result<Map<String, RequestQueue>> result = lookup.lookupByLoanId(loans, tlrSettings).join();
+    var result = lookup.lookupByLoanId(loans, tlrSettings).join();
 
     assertTrue(result.succeeded());
     assertEquals((loanCount + chunkSize - 1) / chunkSize, seenInstanceIdBatches.size());
@@ -356,31 +360,31 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldEnrichPageUsingCachedSettingsPoliciesAndBatchedReads() {
-    AtomicInteger tlrLookups = new AtomicInteger();
-    AtomicInteger timeZoneLookups = new AtomicInteger();
-    AtomicInteger itemLookups = new AtomicInteger();
-    AtomicInteger userLookups = new AtomicInteger();
-    AtomicInteger itemRequestLookups = new AtomicInteger();
-    AtomicInteger policyResolutionLookups = new AtomicInteger();
-    AtomicInteger loanPolicyLookups = new AtomicInteger();
+    var tlrLookups = new AtomicInteger();
+    var timeZoneLookups = new AtomicInteger();
+    var itemLookups = new AtomicInteger();
+    var userLookups = new AtomicInteger();
+    var itemRequestLookups = new AtomicInteger();
+    var policyResolutionLookups = new AtomicInteger();
+    var loanPolicyLookups = new AtomicInteger();
 
-    UUID policyId = UUID.randomUUID();
-    UUID instanceIdOne = UUID.randomUUID();
-    UUID instanceIdTwo = UUID.randomUUID();
-    UUID itemIdOne = UUID.randomUUID();
-    UUID itemIdTwo = UUID.randomUUID();
-    UUID userIdOne = UUID.randomUUID();
-    UUID userIdTwo = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(true, false, true);
-    LoanPolicy loanPolicy = loanPolicy(policyId, conditions);
-    ZoneId timeZone = ZoneId.of("America/Chicago");
+    var policyId = randomUUID();
+    var instanceIdOne = randomUUID();
+    var instanceIdTwo = randomUUID();
+    var itemIdOne = randomUUID();
+    var itemIdTwo = randomUUID();
+    var userIdOne = randomUUID();
+    var userIdTwo = randomUUID();
+    var conditions = new AppliedRuleConditions(true, false, true);
+    var loanPolicy = loanPolicy(policyId, conditions);
+    var timeZone = ZoneId.of("America/Chicago");
 
-    Loan firstLoan = loan(UUID.randomUUID(), itemIdOne, instanceIdOne, userIdOne);
-    Loan secondLoan = loan(UUID.randomUUID(), itemIdTwo, instanceIdTwo, userIdTwo);
-    User firstUser = user(userIdOne);
-    User secondUser = user(userIdTwo);
+    var firstLoan = loan(randomUUID(), itemIdOne, instanceIdOne, userIdOne);
+    var secondLoan = loan(randomUUID(), itemIdTwo, instanceIdTwo, userIdTwo);
+    var firstUser = user(userIdOne);
+    var secondUser = user(userIdTwo);
 
-    BulkRenewalCachedDependencies dependencies = new BulkRenewalCachedDependencies(
+    var dependencies = new BulkRenewalCachedDependencies(
       () -> {
         tlrLookups.incrementAndGet();
         return completedFuture(succeeded(TlrSettingsConfiguration.defaultSettings()));
@@ -390,7 +394,7 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(timeZone));
       });
 
-    BulkRenewalRequestQueueLookup requestQueueLookup = new BulkRenewalRequestQueueLookup(
+    var requestQueueLookup = new BulkRenewalRequestQueueLookup(
       itemIds -> {
         itemRequestLookups.incrementAndGet();
         assertEquals(Set.of(itemIdOne.toString(), itemIdTwo.toString()), Set.copyOf(itemIds));
@@ -398,7 +402,7 @@ class BulkRenewalPageProcessorTest {
       },
       instanceIds -> completedFuture(succeeded(List.of())));
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       dependencies,
       itemIds -> {
         itemLookups.incrementAndGet();
@@ -426,7 +430,7 @@ class BulkRenewalPageProcessorTest {
       },
       noOpRenewalCoordinator());
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(firstLoan, secondLoan), "trigger-user", "job-1", 3).join();
 
     assertTrue(result.succeeded());
@@ -444,21 +448,21 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldSupplyFetchedItemBeforePolicyResolutionAndRenewalWhenLoanStartsWithoutItem() {
-    UUID loanId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    UUID instanceId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    UUID policyId = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(false, false, false);
-    AtomicInteger policyResolutionLookups = new AtomicInteger();
-    AtomicInteger renewalCoordinatorCalls = new AtomicInteger();
+    var loanId = randomUUID();
+    var itemId = randomUUID();
+    var instanceId = randomUUID();
+    var userId = randomUUID();
+    var policyId = randomUUID();
+    var conditions = new AppliedRuleConditions(false, false, false);
+    var policyResolutionLookups = new AtomicInteger();
+    var renewalCoordinatorCalls = new AtomicInteger();
 
-    Loan loan = loanWithoutItem(loanId, itemId, userId);
-    User user = user(userId);
+    var loan = loanWithoutItem(loanId, itemId, userId);
+    var user = user(userId);
 
-    assertTrue(loan.getItem() == null);
+    assertNull(loan.getItem());
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       defaultDependencies(),
       itemIds -> completedFuture(succeeded(new MultipleRecords<>(
         List.of(item(itemId, instanceId)), 1))),
@@ -479,7 +483,7 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(context));
       });
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(loan), "trigger-user", "job-enrich", 6).join();
 
     assertTrue(result.succeeded());
@@ -490,30 +494,30 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldContinueProcessingOtherLoansWhenOneLoanFailsValidation() {
-    UUID blockedLoanId = UUID.randomUUID();
-    UUID successfulLoanId = UUID.randomUUID();
-    UUID blockedItemId = UUID.randomUUID();
-    UUID successfulItemId = UUID.randomUUID();
-    UUID blockedInstanceId = UUID.randomUUID();
-    UUID successfulInstanceId = UUID.randomUUID();
-    UUID blockedUserId = UUID.randomUUID();
-    UUID successfulUserId = UUID.randomUUID();
-    UUID blockedPolicyId = UUID.randomUUID();
-    UUID successfulPolicyId = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(false, false, false);
-    ZonedDateTime renewDate = ZonedDateTime.now();
+    var blockedLoanId = randomUUID();
+    var successfulLoanId = randomUUID();
+    var blockedItemId = randomUUID();
+    var successfulItemId = randomUUID();
+    var blockedInstanceId = randomUUID();
+    var successfulInstanceId = randomUUID();
+    var blockedUserId = randomUUID();
+    var successfulUserId = randomUUID();
+    var blockedPolicyId = randomUUID();
+    var successfulPolicyId = randomUUID();
+    var conditions = new AppliedRuleConditions(false, false, false);
+    var renewDate = ZonedDateTime.now();
 
-    Loan blockedLoan = loan(blockedLoanId, blockedItemId, blockedInstanceId, blockedUserId)
+    var blockedLoan = loan(blockedLoanId, blockedItemId, blockedInstanceId, blockedUserId)
       .changeDueDate(renewDate.plusDays(3));
-    Loan successfulLoan = loan(successfulLoanId, successfulItemId, successfulInstanceId,
+    var successfulLoan = loan(successfulLoanId, successfulItemId, successfulInstanceId,
       successfulUserId).changeDueDate(renewDate.plusDays(5));
 
-    LoanPolicy blockedPolicy = nonRenewableLoanPolicy(blockedPolicyId, conditions);
-    LoanPolicy successfulPolicy = renewableLoanPolicy(successfulPolicyId, conditions);
-    User blockedUser = user(blockedUserId);
-    User successfulUser = user(successfulUserId);
+    var blockedPolicy = nonRenewableLoanPolicy(blockedPolicyId, conditions);
+    var successfulPolicy = renewableLoanPolicy(successfulPolicyId, conditions);
+    var blockedUser = user(blockedUserId);
+    var successfulUser = user(successfulUserId);
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       defaultDependencies(),
       itemIds -> completedFuture(succeeded(new MultipleRecords<>(List.of(
         item(blockedItemId, blockedInstanceId), item(successfulItemId, successfulInstanceId)), 2))),
@@ -525,7 +529,7 @@ class BulkRenewalPageProcessorTest {
         blockedLoan.getId().equals(loan.getId()) ? blockedPolicy : successfulPolicy)),
       regularRenewalCoordinator(renewDate));
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(blockedLoan, successfulLoan), "trigger-user", "job-2", 4).join();
 
     assertTrue(result.succeeded());
@@ -541,31 +545,31 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldPreserveSuccessfulLoanResultsAndFailureCountsInSamePage() {
-    UUID blockedLoanId = UUID.randomUUID();
-    UUID successfulLoanId = UUID.randomUUID();
-    UUID blockedItemId = UUID.randomUUID();
-    UUID successfulItemId = UUID.randomUUID();
-    UUID blockedInstanceId = UUID.randomUUID();
-    UUID successfulInstanceId = UUID.randomUUID();
-    UUID blockedUserId = UUID.randomUUID();
-    UUID successfulUserId = UUID.randomUUID();
-    UUID blockedPolicyId = UUID.randomUUID();
-    UUID successfulPolicyId = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(false, false, false);
-    ZonedDateTime renewDate = ZonedDateTime.now();
-    ZonedDateTime originalDueDate = renewDate.plusDays(7);
+    var blockedLoanId = randomUUID();
+    var successfulLoanId = randomUUID();
+    var blockedItemId = randomUUID();
+    var successfulItemId = randomUUID();
+    var blockedInstanceId = randomUUID();
+    var successfulInstanceId = randomUUID();
+    var blockedUserId = randomUUID();
+    var successfulUserId = randomUUID();
+    var blockedPolicyId = randomUUID();
+    var successfulPolicyId = randomUUID();
+    var conditions = new AppliedRuleConditions(false, false, false);
+    var renewDate = ZonedDateTime.now();
+    var originalDueDate = renewDate.plusDays(7);
 
-    Loan blockedLoan = loan(blockedLoanId, blockedItemId, blockedInstanceId, blockedUserId)
+    var blockedLoan = loan(blockedLoanId, blockedItemId, blockedInstanceId, blockedUserId)
       .changeDueDate(originalDueDate);
-    Loan successfulLoan = loan(successfulLoanId, successfulItemId, successfulInstanceId,
+    var successfulLoan = loan(successfulLoanId, successfulItemId, successfulInstanceId,
       successfulUserId).changeDueDate(originalDueDate);
 
-    LoanPolicy blockedPolicy = nonRenewableLoanPolicy(blockedPolicyId, conditions);
-    LoanPolicy successfulPolicy = renewableLoanPolicy(successfulPolicyId, conditions);
-    User blockedUser = user(blockedUserId);
-    User successfulUser = user(successfulUserId);
+    var blockedPolicy = nonRenewableLoanPolicy(blockedPolicyId, conditions);
+    var successfulPolicy = renewableLoanPolicy(successfulPolicyId, conditions);
+    var blockedUser = user(blockedUserId);
+    var successfulUser = user(successfulUserId);
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       defaultDependencies(),
       itemIds -> completedFuture(succeeded(new MultipleRecords<>(List.of(
         item(blockedItemId, blockedInstanceId), item(successfulItemId, successfulInstanceId)), 2))),
@@ -577,14 +581,14 @@ class BulkRenewalPageProcessorTest {
         blockedLoan.getId().equals(loan.getId()) ? blockedPolicy : successfulPolicy)),
       regularRenewalCoordinator(renewDate));
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(blockedLoan, successfulLoan), "trigger-user", "job-3", 5).join();
 
     assertTrue(result.succeeded());
     assertEquals(1, result.value().successfulCount());
     assertEquals(1, result.value().failedCount());
 
-    RenewalContext renewedContext = result.value().successfulRenewalContexts().get(0);
+    var renewedContext = result.value().successfulRenewalContexts().get(0);
 
     assertEquals("trigger-user", renewedContext.getLoggedInUserId());
     assertTrue(renewedContext.getLoan().getDueDate().isAfter(originalDueDate));
@@ -593,15 +597,15 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldUseTriggeringUserAsActingUserInRenewalContexts() {
-    UUID loanId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    UUID instanceId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    UUID policyId = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(false, false, false);
-    User user = user(userId);
+    var loanId = randomUUID();
+    var itemId = randomUUID();
+    var instanceId = randomUUID();
+    var userId = randomUUID();
+    var policyId = randomUUID();
+    var conditions = new AppliedRuleConditions(false, false, false);
+    var user = user(userId);
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       defaultDependencies(),
       itemIds -> completedFuture(succeeded(new MultipleRecords<>(
         List.of(item(itemId, instanceId)), 1))),
@@ -610,7 +614,7 @@ class BulkRenewalPageProcessorTest {
       loan -> completedFuture(succeeded(renewableLoanPolicy(policyId, conditions))),
       noOpRenewalCoordinator());
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(loan(loanId, itemId, instanceId, userId)), "triggering-user", "job-4", 1).join();
 
     assertTrue(result.succeeded());
@@ -620,19 +624,19 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldFailInactiveUsersWithoutCountingRenewalSuccessful() {
-    UUID loanId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    UUID instanceId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    UUID policyId = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(false, false, false);
-    AtomicInteger renewalCoordinatorCalls = new AtomicInteger();
-    User inactiveUser = User.from(new UserBuilder()
+    var loanId = randomUUID();
+    var itemId = randomUUID();
+    var instanceId = randomUUID();
+    var userId = randomUUID();
+    var policyId = randomUUID();
+    var conditions = new AppliedRuleConditions(false, false, false);
+    var renewalCoordinatorCalls = new AtomicInteger();
+    var inactiveUser = User.from(new UserBuilder()
       .withId(userId.toString())
       .inactive()
       .create());
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       defaultDependencies(),
       itemIds -> completedFuture(succeeded(new MultipleRecords<>(
         List.of(item(itemId, instanceId)), 1))),
@@ -644,14 +648,14 @@ class BulkRenewalPageProcessorTest {
         return completedFuture(succeeded(context));
       });
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(loan(loanId, itemId, instanceId, userId)), "triggering-user", "job-5", 1).join();
 
     assertTrue(result.succeeded());
     assertEquals(0, result.value().successfulCount());
     assertEquals(1, result.value().failedCount());
     assertEquals(1, renewalCoordinatorCalls.get());
-    ValidationErrorFailure failure = (ValidationErrorFailure) result.value()
+    var failure = (ValidationErrorFailure) result.value()
       .failedRenewalsByLoanId().get(loanId.toString());
     assertEquals("Cannot renew loan when user is inactive or expired",
       failure.getErrors().stream().findFirst().orElseThrow().getMessage());
@@ -659,17 +663,17 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldUnsetDueDateChangedByRecallWhenNoOpenRecallRemains() {
-    UUID loanId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    UUID instanceId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    UUID policyId = UUID.randomUUID();
-    AppliedRuleConditions conditions = new AppliedRuleConditions(false, false, false);
-    User user = user(userId);
-    Loan recalledLoan = loan(loanId, itemId, instanceId, userId)
+    var loanId = randomUUID();
+    var itemId = randomUUID();
+    var instanceId = randomUUID();
+    var userId = randomUUID();
+    var policyId = randomUUID();
+    var conditions = new AppliedRuleConditions(false, false, false);
+    var user = user(userId);
+    var recalledLoan = loan(loanId, itemId, instanceId, userId)
       .setDueDateChangedByRecall();
 
-    BulkRenewalPageProcessor processor = pageProcessor(
+    var processor = pageProcessor(
       defaultDependencies(),
       itemIds -> completedFuture(succeeded(new MultipleRecords<>(
         List.of(item(itemId, instanceId)), 1))),
@@ -678,7 +682,7 @@ class BulkRenewalPageProcessorTest {
       loan -> completedFuture(succeeded(renewableLoanPolicy(policyId, conditions))),
       noOpRenewalCoordinator());
 
-    Result<BulkRenewalPageContext> result = processor.processPage(
+    var result = processor.processPage(
       page(recalledLoan), "triggering-user", "job-6", 1).join();
 
     assertTrue(result.succeeded());
@@ -689,31 +693,31 @@ class BulkRenewalPageProcessorTest {
 
   @Test
   void shouldDeferPreparedPatronBlockValidationErrors() {
-    UUID loanId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
-    UUID instanceId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    User user = user(userId);
-    RenewalContext context = RenewalContext.create(
+    var loanId = randomUUID();
+    var itemId = randomUUID();
+    var instanceId = randomUUID();
+    var userId = randomUUID();
+    var user = user(userId);
+    var context = RenewalContext.create(
         loan(loanId, itemId, instanceId, userId).withUser(user), new JsonObject(),
         "triggering-user")
       .withRequestQueue(new RequestQueue(List.of()));
-    OverridingErrorHandler errorHandler = new OverridingErrorHandler(null);
-    Validator<RenewalContext> validator = new Validator<>(renewalContext ->
+    var errorHandler = new OverridingErrorHandler(null);
+    var validator = new Validator<RenewalContext>(renewalContext ->
       completedFuture(failed(singleValidationError(
         new ValidationError("Patron blocked from renewing")))));
 
-    Result<RenewalContext> result = RenewalPreRenewalValidator
+    var result = RenewalPreRenewalValidator
       .refuseWhenRenewalActionIsBlockedForPatron(validator, succeeded(context),
         errorHandler, USER_IS_BLOCKED_MANUALLY)
       .join();
 
     assertTrue(result.succeeded());
 
-    Result<RenewalContext> finalized = errorHandler.failWithValidationErrors(result.value());
+    var finalized = errorHandler.failWithValidationErrors(result.value());
 
     assertTrue(finalized.failed());
-    ValidationErrorFailure failure = (ValidationErrorFailure) finalized.cause();
+    var failure = (ValidationErrorFailure) finalized.cause();
     assertEquals("Patron blocked from renewing",
       failure.getErrors().stream().findFirst().orElseThrow().getMessage());
   }
@@ -742,7 +746,7 @@ class BulkRenewalPageProcessorTest {
   }
 
   private Item item(UUID itemId, UUID instanceId) {
-    Item item = mock(Item.class);
+    var item = mock(Item.class);
 
     when(item.isFound()).thenReturn(true);
     when(item.getItemId()).thenReturn(itemId.toString());
@@ -825,13 +829,13 @@ class BulkRenewalPageProcessorTest {
 
     // Build the JSON manually so that automaticRenewal=true is preserved even when
     // renewable=false (LoanPolicyBuilder skips the renewalsPolicy block when not renewable).
-    JsonObject policyJson = new LoanPolicyBuilder()
+    var policyJson = new LoanPolicyBuilder()
       .withId(policyId)
       .rolling(days(10))
       .renewFromCurrentDueDate()
       .notRenewable()
       .create();
-    JsonObject renewalsPolicy = new JsonObject()
+    var renewalsPolicy = new JsonObject()
       .put("automaticRenewal", true)
       .put("firstAutomaticRenewalAttemptDaysBeforeDueDate", 365);
     policyJson.put("renewalsPolicy", renewalsPolicy);
@@ -858,13 +862,10 @@ class BulkRenewalPageProcessorTest {
 
   private BulkRenewalPageProcessor pageProcessor(
     BulkRenewalCachedDependencies dependencies,
-    java.util.function.Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>>
-      itemFetcher,
-    java.util.function.Function<Collection<String>, CompletableFuture<Result<Map<String, User>>>>
-      userFetcher,
+    Function<Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>> itemFetcher,
+    Function<Collection<String>, CompletableFuture<Result<Map<String, User>>>> userFetcher,
     BulkRenewalRequestQueueLookup requestQueueLookup,
-    java.util.function.Function<Loan, CompletableFuture<Result<LoanPolicy>>>
-      loanPolicyResolver,
+    Function<Loan, CompletableFuture<Result<LoanPolicy>>> loanPolicyResolver,
     BiFunction<RenewalContext, CirculationErrorHandler,
       CompletableFuture<Result<RenewalContext>>> renewalCoordinator) {
 
@@ -874,9 +875,8 @@ class BulkRenewalPageProcessorTest {
   }
 
   private static EventPublisher noOpEventPublisher() {
-    EventPublisher publisher = Mockito.mock(EventPublisher.class);
-    Mockito.when(publisher.publishAutomaticRenewalFailureLogEvent(
-        Mockito.any(), Mockito.any(), Mockito.any()))
+    var publisher = mock(EventPublisher.class);
+    when(publisher.publishAutomaticRenewalFailureLogEvent(any(), any(), any()))
       .thenReturn(completedFuture(succeeded(null)));
     return publisher;
   }
@@ -891,7 +891,7 @@ class BulkRenewalPageProcessorTest {
     CompletableFuture<Result<RenewalContext>>> regularRenewalCoordinator(
       ZonedDateTime renewDate) {
 
-    RenewByBarcodeResource resource = new RenewByBarcodeResource(null);
+    var resource = new RenewByBarcodeResource(null);
 
     return (context, errorHandler) -> completedFuture(
       resource.regularRenew(context, errorHandler, renewDate));

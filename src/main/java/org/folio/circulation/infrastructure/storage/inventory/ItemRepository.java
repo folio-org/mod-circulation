@@ -304,13 +304,6 @@ public class ItemRepository {
           MultipleRecords::combine));
   }
 
-  private CompletableFuture<Result<MultipleRecords<Item>>>
-    lookupDcbItem(Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds) {
-
-    return lookupDcbItem(inventoryItems, itemIds,
-      new CqlIndexValuesFinder<>(createCirculationItemFinder()));
-  }
-
   private CompletableFuture<Result<MultipleRecords<Item>>> lookupDcbItem(
     Result<MultipleRecords<Item>> inventoryItems, Collection<String> itemIds,
     CqlIndexValuesFinder<JsonObject> finder) {

@@ -1,7 +1,9 @@
 package org.folio.circulation.resources.renewal;
 
+import static java.util.UUID.randomUUID;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.circulation.resources.renewal.BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
 import static org.folio.circulation.support.http.client.CqlQuery.exactMatch;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
 import static org.folio.circulation.support.results.Result.succeeded;
@@ -9,12 +11,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 
 import api.support.builders.LoanBuilder;
 import api.support.builders.OverdueFinePolicyWithReminderFeesBuilder;
@@ -112,11 +112,11 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldRejectStartWhenJobAlreadyRunning() {
-    BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
-    CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
-    AtomicInteger invocations = new AtomicInteger();
+    var guard = new BulkRenewalJobGuard();
+    var runningJob = new CompletableFuture<Result<Void>>();
+    var invocations = new AtomicInteger();
 
-    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard, jobId -> {
+    var service = BulkRenewOpenLoansService.forJobRunner(guard, jobId -> {
       invocations.incrementAndGet();
       return runningJob;
     });
@@ -131,11 +131,11 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldAlwaysReleaseGuardWhenBackgroundJobFinishes() throws InterruptedException {
-    CountDownLatch finished = new CountDownLatch(1);
-    BulkRenewalJobGuard guard = trackingGuard(finished);
-    CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
+    var finished = new CountDownLatch(1);
+    var guard = trackingGuard(finished);
+    var runningJob = new CompletableFuture<Result<Void>>();
 
-    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+    var service = BulkRenewOpenLoansService.forJobRunner(guard,
       jobId -> runningJob);
 
     assertTrue(service.trigger());
@@ -152,11 +152,11 @@ class BulkRenewOpenLoansServiceTest {
       throws InterruptedException {
 
     // Arrange
-    CountDownLatch finished = new CountDownLatch(1);
-    BulkRenewalJobGuard guard = trackingGuard(finished);
-    RuntimeException thrown = new RuntimeException("sync boom");
+    var finished = new CountDownLatch(1);
+    var guard = trackingGuard(finished);
+    var thrown = new RuntimeException("sync boom");
 
-    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+    var service = BulkRenewOpenLoansService.forJobRunner(guard,
       jobId -> { throw thrown; });
 
     // Act
@@ -174,10 +174,10 @@ class BulkRenewOpenLoansServiceTest {
       throws InterruptedException {
 
     // Arrange
-    CountDownLatch finished = new CountDownLatch(1);
-    BulkRenewalJobGuard guard = trackingGuard(finished);
+    var finished = new CountDownLatch(1);
+    var guard = trackingGuard(finished);
 
-    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+    var service = BulkRenewOpenLoansService.forJobRunner(guard,
       jobId -> completedFuture(failedDueToServerError("downstream failure")));
 
     // Act
@@ -192,10 +192,10 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldLogJobFinishedOnSuccessfulCompletion() throws InterruptedException {
-    CountDownLatch finished = new CountDownLatch(1);
-    BulkRenewalJobGuard guard = trackingGuard(finished);
+    var finished = new CountDownLatch(1);
+    var guard = trackingGuard(finished);
 
-    BulkRenewOpenLoansService service = BulkRenewOpenLoansService.forJobRunner(guard,
+    var service = BulkRenewOpenLoansService.forJobRunner(guard,
       jobId -> CompletableFuture.completedFuture(Result.succeeded(null)));
 
     assertTrue(service.trigger());
@@ -206,14 +206,14 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldProcessOpenLoansPageByPageSequentially() throws InterruptedException {
-    CountDownLatch finished = new CountDownLatch(1);
-    BulkRenewalJobGuard guard = trackingGuard(finished);
-    RecordingOpenLoanPageRepository repository = new RecordingOpenLoanPageRepository(
+    var finished = new CountDownLatch(1);
+    var guard = trackingGuard(finished);
+    var repository = new RecordingOpenLoanPageRepository(
       page(loans(500)),
       page(loan(3)));
-    List<Integer> processedPages = new ArrayList<>();
+    var processedPages = new ArrayList<Integer>();
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
+    var service = new BulkRenewOpenLoansService(guard,
       (jobId, detachedCtx) -> new BulkRenewOpenLoansService.RealJobComponents(
         repository,
         exactMatch("status.name", "Open"),
@@ -263,11 +263,11 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldRejectTriggerWhenJobAlreadyRunningInSameInstance() throws InterruptedException {
-    CountDownLatch finished = new CountDownLatch(1);
-    BulkRenewalJobGuard guard = trackingGuard(finished);
-    CompletableFuture<Result<Void>> completion = new CompletableFuture<>();
+    var finished = new CountDownLatch(1);
+    var guard = trackingGuard(finished);
+    var completion = new CompletableFuture<Result<Void>>();
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
+    var service = new BulkRenewOpenLoansService(guard,
       (jobId, detachedCtx) -> new BulkRenewOpenLoansService.RealJobComponents(
         new RecordingOpenLoanPageRepository(page(loan(1))),
         exactMatch("status.name", "Open"),
@@ -288,17 +288,17 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldUseChunkAwareRealRunnerFetchSeams() {
-    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
-    UserRepository userRepository = Mockito.mock(UserRepository.class);
-    RequestRepository requestRepository = Mockito.mock(RequestRepository.class);
-    int requestCqlChunkSize = 50;
-    List<String> ids = List.of("a", "b");
-    Loan loan = loanWithItemAndUser(1);
-    String itemId = loan.getItemId();
+    var itemRepository = mock(ItemRepository.class);
+    var userRepository = mock(UserRepository.class);
+    var requestRepository = mock(RequestRepository.class);
+    var requestCqlChunkSize = 50;
+    var ids = List.of("a", "b");
+    var loan = loanWithItemAndUser(1);
+    var itemId = loan.getItemId();
 
-    when(itemRepository.fetchFor(ids, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE))
+    when(itemRepository.fetchFor(ids, ITEM_ID_CHUNK_SIZE))
       .thenReturn(completedFuture(succeeded(MultipleRecords.empty())));
-    when(userRepository.getUsersForUserIds(ids, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE))
+    when(userRepository.getUsersForUserIds(ids, ITEM_ID_CHUNK_SIZE))
       .thenReturn(completedFuture(succeeded(Map.of())));
     when(requestRepository.findOpenRequestsByItemIds(List.of(itemId), requestCqlChunkSize))
       .thenReturn(completedFuture(succeeded(MultipleRecords.empty())));
@@ -313,9 +313,9 @@ class BulkRenewOpenLoansServiceTest {
     BulkRenewOpenLoansService.RealRunnerFactories.requestQueueLookup(requestRepository)
       .lookupByLoanId(List.of(loan), enabledTlrSettings()).join();
 
-    verify(itemRepository).fetchFor(ids, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE);
+    verify(itemRepository).fetchFor(ids, ITEM_ID_CHUNK_SIZE);
     verify(itemRepository, never()).fetchFor(ids);
-    verify(userRepository).getUsersForUserIds(ids, BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE);
+    verify(userRepository).getUsersForUserIds(ids, ITEM_ID_CHUNK_SIZE);
     verify(userRepository, never()).getUsersForUserIds(ids);
     verify(requestRepository).findOpenRequestsByItemIds(List.of(itemId), requestCqlChunkSize);
     verify(requestRepository, never()).findOpenRequestsByItemIds(List.of(itemId));
@@ -326,13 +326,13 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldUseFullLoanCompatiblePolicyResolver() {
-    LoanPolicyRepository loanPolicyRepository = Mockito.mock(LoanPolicyRepository.class);
-    BulkRenewalCachedDependencies cachedDependencies = new BulkRenewalCachedDependencies(
+    var loanPolicyRepository = mock(LoanPolicyRepository.class);
+    var cachedDependencies = new BulkRenewalCachedDependencies(
       () -> completedFuture(succeeded(TlrSettingsConfiguration.defaultSettings())),
       () -> completedFuture(succeeded(java.time.ZoneId.of("UTC"))));
-    Loan loan = loanWithItemAndUser(1);
-    LoanPolicy loanPolicy = Mockito.mock(LoanPolicy.class);
-    CirculationRuleMatch match = new CirculationRuleMatch("policy-1",
+    var loan = loanWithItemAndUser(1);
+    var loanPolicy = mock(LoanPolicy.class);
+    var match = new CirculationRuleMatch("policy-1",
       new AppliedRuleConditions(true, true, true));
 
     when(loanPolicyRepository.lookupPolicyForBulkRenewal(loan, cachedDependencies))
@@ -340,7 +340,7 @@ class BulkRenewOpenLoansServiceTest {
     when(loanPolicyRepository.lookupPolicy("policy-1", match.getAppliedRuleConditions()))
       .thenReturn(completedFuture(succeeded(loanPolicy)));
 
-    Result<LoanPolicy> result = BulkRenewOpenLoansService.RealRunnerFactories.loanPolicyResolver(
+    var result = BulkRenewOpenLoansService.RealRunnerFactories.loanPolicyResolver(
       cachedDependencies, loanPolicyRepository).apply(loan).join();
 
     assertTrue(result.succeeded());
@@ -351,15 +351,15 @@ class BulkRenewOpenLoansServiceTest {
 
   @Test
   void shouldBlockPreparedRenewalWhenReminderFeesDisallowRenewal() {
-    ZonedDateTime now = ZonedDateTime.now();
-    Loan loan = loanWithItemAndUser(1)
+    var now = ZonedDateTime.now();
+    var loan = loanWithItemAndUser(1)
       .withOverdueFinePolicy(disallowRenewalWithReminderFeesPolicy())
       .withRemindersLastFeeBilled(1, now);
-    RenewalContext context = successfulRenewalContext(loan, "trigger-user");
-    OverridingErrorHandler errorHandler = new OverridingErrorHandler(null);
-    AtomicInteger renewalLogicCalls = new AtomicInteger();
+    var context = successfulRenewalContext(loan, "trigger-user");
+    var errorHandler = new OverridingErrorHandler(null);
+    var renewalLogicCalls = new AtomicInteger();
 
-    Result<RenewalContext> result = BulkRenewOpenLoansService.renewPreparedLoan(
+    var result = BulkRenewOpenLoansService.renewPreparedLoan(
       context,
       errorHandler,
       overdueFineContext -> completedFuture(succeeded(overdueFineContext)),
@@ -371,7 +371,7 @@ class BulkRenewOpenLoansServiceTest {
     assertTrue(result.failed());
     assertEquals(0, renewalLogicCalls.get());
 
-    ValidationErrorFailure failure = (ValidationErrorFailure) result.cause();
+    var failure = (ValidationErrorFailure) result.cause();
     assertEquals("Renewals not allowed for loans with reminders.",
       failure.getErrors().stream().findFirst().orElseThrow().getMessage());
   }
@@ -379,14 +379,14 @@ class BulkRenewOpenLoansServiceTest {
   @Test
   @SuppressWarnings("unchecked")
   void shouldEnforceAutomatedPatronBlockValidationForBulkRenewal() throws Exception {
-    var clients = Mockito.mock(Clients.class);
-    var userManualBlocksClient = Mockito.mock(CollectionResourceClient.class);
-    var automatedPatronBlocksRepository = Mockito.mock(AutomatedPatronBlocksRepository.class);
-    var userId = UUID.randomUUID();
+    var clients = mock(Clients.class);
+    var userManualBlocksClient = mock(CollectionResourceClient.class);
+    var automatedPatronBlocksRepository = mock(AutomatedPatronBlocksRepository.class);
+    var userId = randomUUID();
     var loan = new LoanBuilder()
-      .withId(UUID.randomUUID())
+      .withId(randomUUID())
       .withUserId(userId)
-      .withItemId(UUID.randomUUID())
+      .withItemId(randomUUID())
       .asDomainObject();
     var context = RenewalContext.create(loan, new JsonObject(), "trigger-user")
       .withRequestQueue(new RequestQueue(List.of()));
@@ -398,20 +398,20 @@ class BulkRenewOpenLoansServiceTest {
     when(automatedPatronBlocksRepository.findByUserId(userId.toString()))
       .thenReturn(completedFuture(succeeded(new AutomatedPatronBlocks())));
 
-    Class<?> runnerClass = Class.forName(
+    var runnerClass = Class.forName(
       "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
-    Constructor<?> constructor = runnerClass.getDeclaredConstructor(HttpClient.class,
+    var constructor = runnerClass.getDeclaredConstructor(HttpClient.class,
       BulkRenewalWebContext.class);
     constructor.setAccessible(true);
-    Object runner = constructor.newInstance(Mockito.mock(HttpClient.class),
-      new BulkRenewalWebContext(Map.of(), Mockito.mock(Context.class)));
-    Method applyPatronBlockValidations = runnerClass.getDeclaredMethod(
+    var runner = constructor.newInstance(mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of(), mock(Context.class)));
+    var applyPatronBlockValidations = runnerClass.getDeclaredMethod(
       "applyPatronBlockValidations", Clients.class, OkapiPermissions.class,
       AutomatedPatronBlocksRepository.class, RenewalContext.class,
       CirculationErrorHandler.class);
     applyPatronBlockValidations.setAccessible(true);
 
-    CompletableFuture<Result<RenewalContext>> validation =
+    var validation =
       (CompletableFuture<Result<RenewalContext>>) applyPatronBlockValidations.invoke(runner,
         clients, OkapiPermissions.empty(), automatedPatronBlocksRepository, context,
         new OverridingErrorHandler(null));
@@ -425,14 +425,14 @@ class BulkRenewOpenLoansServiceTest {
   @Test
   @SuppressWarnings("unchecked")
   void shouldFailRenewalWhenPatronHasAutomatedRenewalBlock() throws Exception {
-    var clients = Mockito.mock(Clients.class);
-    var userManualBlocksClient = Mockito.mock(CollectionResourceClient.class);
-    var automatedPatronBlocksRepository = Mockito.mock(AutomatedPatronBlocksRepository.class);
-    var userId = UUID.randomUUID();
+    var clients = mock(Clients.class);
+    var userManualBlocksClient = mock(CollectionResourceClient.class);
+    var automatedPatronBlocksRepository = mock(AutomatedPatronBlocksRepository.class);
+    var userId = randomUUID();
     var loan = new LoanBuilder()
-        .withId(UUID.randomUUID())
+        .withId(randomUUID())
         .withUserId(userId)
-        .withItemId(UUID.randomUUID())
+        .withItemId(randomUUID())
         .asDomainObject();
     var context = RenewalContext.create(loan, new JsonObject(), "trigger-user")
       .withRequestQueue(new RequestQueue(List.of()));
@@ -451,26 +451,26 @@ class BulkRenewOpenLoansServiceTest {
     when(automatedPatronBlocksRepository.findByUserId(userId.toString()))
       .thenReturn(completedFuture(succeeded(AutomatedPatronBlocks.from(blocksResponse))));
 
-    Class<?> runnerClass = Class.forName(
+    var runnerClass = Class.forName(
       "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
-    Constructor<?> constructor = runnerClass.getDeclaredConstructor(HttpClient.class,
+    var constructor = runnerClass.getDeclaredConstructor(HttpClient.class,
       BulkRenewalWebContext.class);
     constructor.setAccessible(true);
-    Object runner = constructor.newInstance(Mockito.mock(HttpClient.class),
+    var runner = constructor.newInstance(mock(HttpClient.class),
       new BulkRenewalWebContext(Map.of(),
-        Mockito.mock(Context.class)));
-    Method applyPatronBlockValidations = runnerClass.getDeclaredMethod(
+        mock(Context.class)));
+    var applyPatronBlockValidations = runnerClass.getDeclaredMethod(
       "applyPatronBlockValidations", Clients.class, OkapiPermissions.class,
       AutomatedPatronBlocksRepository.class, RenewalContext.class,
       CirculationErrorHandler.class);
     applyPatronBlockValidations.setAccessible(true);
 
     var errorHandler = new OverridingErrorHandler(null);
-    var validation = (CompletableFuture<Result<RenewalContext>>) applyPatronBlockValidations.invoke(runner,
-        clients, OkapiPermissions.empty(), automatedPatronBlocksRepository, context,
-        errorHandler);
+    var validation = (CompletableFuture<Result<RenewalContext>>) applyPatronBlockValidations.invoke(
+      runner, clients, OkapiPermissions.empty(),
+      automatedPatronBlocksRepository, context, errorHandler);
+    validation.join();
 
-    var result = validation.join();
     // The error handler captures the block; the result is succeeded but errorHandler has the error
     assertTrue(errorHandler.hasAny(CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY));
     verify(automatedPatronBlocksRepository).findByUserId(userId.toString());
@@ -480,12 +480,12 @@ class BulkRenewOpenLoansServiceTest {
   void shouldTriggerServiceFromResourceAndReturnNoContentImmediately(Vertx vertx,
     VertxTestContext testContext) {
 
-    Router router = Router.router(vertx);
-    HttpClient client = vertx.createHttpClient();
-    BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
-    RecordingBulkRenewOpenLoansService service = new RecordingBulkRenewOpenLoansService(guard);
+    var router = Router.router(vertx);
+    var client = vertx.createHttpClient();
+    var guard = new BulkRenewalJobGuard();
+    var service = new RecordingBulkRenewOpenLoansService(guard);
 
-    new BulkRenewOpenLoansResource(client, guard, service).register(router);
+    new BulkRenewOpenLoansResource(client, service).register(router);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -507,29 +507,27 @@ class BulkRenewOpenLoansServiceTest {
   void shouldCallUpdateLoanAndItemInStorageForEachSuccessfulRenewal()
       throws InterruptedException {
 
-    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
-    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
+    var loanRepository = mock(LoanRepository.class);
+    var itemRepository = mock(ItemRepository.class);
 
-    Loan loan1 = minimalLoanWithItem(UUID.randomUUID(), UUID.randomUUID());
-    Loan loan2 = minimalLoanWithItem(UUID.randomUUID(), UUID.randomUUID());
+    var loan1 = minimalLoanWithItem(randomUUID(), randomUUID());
+    var loan2 = minimalLoanWithItem(randomUUID(), randomUUID());
 
     when(loanRepository.updateLoan(loan1)).thenReturn(completedFuture(succeeded(loan1)));
     when(loanRepository.updateLoan(loan2)).thenReturn(completedFuture(succeeded(loan2)));
     when(itemRepository.updateItem(any())).thenReturn(completedFuture(succeeded(loan1.getItem())));
 
-    RenewalContext ctx1 = RenewalContext.create(loan1, new io.vertx.core.json.JsonObject(),
-      "user-1");
-    RenewalContext ctx2 = RenewalContext.create(loan2, new io.vertx.core.json.JsonObject(),
-      "user-1");
+    var ctx1 = RenewalContext.create(loan1, new io.vertx.core.json.JsonObject(), "user-1");
+    var ctx2 = RenewalContext.create(loan2, new io.vertx.core.json.JsonObject(), "user-1");
 
-    BulkRenewalPageContext pageContext = new BulkRenewalPageContext(
+    var pageContext = new BulkRenewalPageContext(
       List.of(loan1, loan2), Map.of(), null,
       "user-1", List.of(ctx1, ctx2), Map.of());
 
-    StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+    var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
 
-    CountDownLatch latch = new CountDownLatch(1);
-    BulkRenewOpenLoansService.PageCompletionHandler handler = pc ->
+    var latch = new CountDownLatch(1);
+    var handler = (BulkRenewOpenLoansService.PageCompletionHandler) pc ->
       storeLoanAndItem.updateLoanAndItemInStorage(pc.successfulRenewalContexts().get(0).getLoan())
         .thenCompose(r -> storeLoanAndItem.updateLoanAndItemInStorage(
           pc.successfulRenewalContexts().get(1).getLoan()))
@@ -548,38 +546,37 @@ class BulkRenewOpenLoansServiceTest {
       throws Exception {
 
     // Arrange — build a RealBackgroundJobRunner via reflection (same pattern as patron-block tests)
-    Class<?> runnerClass = Class.forName(
+    var runnerClass = Class.forName(
       "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
-    Constructor<?> constructor = runnerClass.getDeclaredConstructor(
+    var constructor = runnerClass.getDeclaredConstructor(
       HttpClient.class, BulkRenewalWebContext.class);
     constructor.setAccessible(true);
-    Object runner = constructor.newInstance(
-      Mockito.mock(HttpClient.class),
-      new BulkRenewalWebContext(Map.of(), Mockito.mock(Context.class)));
+    var runner = constructor.newInstance(
+      mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of(), mock(Context.class)));
 
-    Method processSuccessfulRenewals = runnerClass.getDeclaredMethod(
+    var processSuccessfulRenewals = runnerClass.getDeclaredMethod(
       "processSuccessfulRenewals",
       Clients.class, LoanRepository.class, ItemRepository.class,
       OverdueFinePolicyRepository.class, BulkRenewalPageContext.class);
     processSuccessfulRenewals.setAccessible(true);
 
-    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
-    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
-    OverdueFinePolicyRepository overdueFinePolicyRepository =
-      Mockito.mock(OverdueFinePolicyRepository.class);
+    var loanRepository = mock(LoanRepository.class);
+    var itemRepository = mock(ItemRepository.class);
+    var overdueFinePolicyRepository = mock(OverdueFinePolicyRepository.class);
 
     // Empty page context — no successful renewals
-    BulkRenewalPageContext emptyPageContext = new BulkRenewalPageContext(
+    var emptyPageContext = new BulkRenewalPageContext(
       List.of(), Map.of(), null, "user-1", List.of(), Map.of());
 
     // Act
-    CompletableFuture<Result<Void>> future =
+    var future =
       (CompletableFuture<Result<Void>>) processSuccessfulRenewals.invoke(
         runner,
-        Mockito.mock(Clients.class),
+        mock(Clients.class),
         loanRepository, itemRepository, overdueFinePolicyRepository,
         emptyPageContext);
-    Result<Void> result = future.join();
+    var result = future.join();
 
     // Assert — succeeded with no storage interactions
     assertTrue(result.succeeded());
@@ -593,57 +590,56 @@ class BulkRenewOpenLoansServiceTest {
       throws Exception {
 
     // Arrange — build RealBackgroundJobRunner via reflection
-    Class<?> runnerClass = Class.forName(
+    var runnerClass = Class.forName(
       "org.folio.circulation.resources.renewal.BulkRenewOpenLoansService$RealBackgroundJobRunner");
-    Constructor<?> constructor = runnerClass.getDeclaredConstructor(
+    var constructor = runnerClass.getDeclaredConstructor(
       HttpClient.class, BulkRenewalWebContext.class);
     constructor.setAccessible(true);
-    Object runner = constructor.newInstance(
-      Mockito.mock(HttpClient.class),
-      new BulkRenewalWebContext(Map.of(), Mockito.mock(Context.class)));
+    var runner = constructor.newInstance(
+      mock(HttpClient.class),
+      new BulkRenewalWebContext(Map.of(), mock(Context.class)));
 
-    Method processSuccessfulRenewals = runnerClass.getDeclaredMethod(
+    var processSuccessfulRenewals = runnerClass.getDeclaredMethod(
       "processSuccessfulRenewals",
       Clients.class, LoanRepository.class, ItemRepository.class,
       OverdueFinePolicyRepository.class, BulkRenewalPageContext.class);
     processSuccessfulRenewals.setAccessible(true);
 
-    UUID loanId1 = UUID.randomUUID();
-    UUID loanId2 = UUID.randomUUID();
-    Loan loan1 = minimalLoanWithItem(loanId1, UUID.randomUUID());
-    Loan loan2 = minimalLoanWithItem(loanId2, UUID.randomUUID());
+    var loanId1 = randomUUID();
+    var loanId2 = randomUUID();
+    var loan1 = minimalLoanWithItem(loanId1, randomUUID());
+    var loan2 = minimalLoanWithItem(loanId2, randomUUID());
 
-    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
-    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
-    OverdueFinePolicyRepository overdueFinePolicyRepository =
-      Mockito.mock(OverdueFinePolicyRepository.class);
+    var loanRepository = mock(LoanRepository.class);
+    var itemRepository = mock(ItemRepository.class);
+    var overdueFinePolicyRepository = mock(OverdueFinePolicyRepository.class);
 
     when(loanRepository.updateLoan(loan1)).thenReturn(completedFuture(succeeded(loan1)));
     when(loanRepository.updateLoan(loan2)).thenReturn(completedFuture(succeeded(loan2)));
     // item.hasChanged() is false for a freshly built item, so updateItem is skipped
 
-    RenewalContext ctx1 = RenewalContext.create(loan1, new JsonObject(), "user-1");
-    RenewalContext ctx2 = RenewalContext.create(loan2, new JsonObject(), "user-1");
+    var ctx1 = RenewalContext.create(loan1, new JsonObject(), "user-1");
+    var ctx2 = RenewalContext.create(loan2, new JsonObject(), "user-1");
 
-    BulkRenewalPageContext pageContext = new BulkRenewalPageContext(
+    var pageContext = new BulkRenewalPageContext(
       List.of(loan1, loan2), Map.of(), null,
       "user-1", List.of(ctx1, ctx2), Map.of());
 
     // Stub Clients: EventPublisher needs eventPublishingService to publish the due-date-changed event
-    Clients clients = Mockito.mock(Clients.class);
-    EventPublishingService eventPublishingService = Mockito.mock(EventPublishingService.class);
+    var clients = mock(Clients.class);
+    var eventPublishingService = mock(EventPublishingService.class);
     when(clients.eventPublishingService()).thenReturn(eventPublishingService);
     when(eventPublishingService.publishEvent(any(), any(), any()))
       .thenReturn(CompletableFuture.completedFuture(null));
 
     // Act — bare Clients mock: downstream notice/fine services short-circuit or fire-and-forget
-    CompletableFuture<Result<Void>> future =
+    var future =
       (CompletableFuture<Result<Void>>) processSuccessfulRenewals.invoke(
         runner,
         clients,
         loanRepository, itemRepository, overdueFinePolicyRepository,
         pageContext);
-    Result<Void> result = future.join();
+    var result = future.join();
 
     // Assert — pipeline succeeds and both loans were persisted
     assertTrue(result.succeeded());
@@ -732,8 +728,8 @@ class BulkRenewOpenLoansServiceTest {
   private static Loan loan(int loanNumber) {
     return new LoanBuilder()
       .withId(UUID.fromString("00000000-0000-0000-0000-%012d".formatted(loanNumber)))
-      .withUserId(UUID.randomUUID())
-      .withItemId(UUID.randomUUID())
+      .withUserId(randomUUID())
+      .withItemId(randomUUID())
       .asDomainObject();
   }
 
@@ -777,9 +773,9 @@ class BulkRenewOpenLoansServiceTest {
   }
 
   private static Loan loanWithItemAndUser(int loanNumber) {
-    Loan loan = loan(loanNumber);
-    Item item = Mockito.mock(Item.class);
-    User user = Mockito.mock(User.class);
+    var loan = loan(loanNumber);
+    var item = mock(Item.class);
+    var user = mock(User.class);
 
     when(item.getItemId()).thenReturn("item-" + loanNumber);
     when(item.getInstanceId()).thenReturn("instance-" + loanNumber);
@@ -795,7 +791,7 @@ class BulkRenewOpenLoansServiceTest {
 
   private static OverdueFinePolicy disallowRenewalWithReminderFeesPolicy() {
     return OverdueFinePolicy.from(new OverdueFinePolicyWithReminderFeesBuilder(
-      UUID.randomUUID(), "Reminder policy")
+      randomUUID(), "Reminder policy")
       .withAllowRenewalOfItemsWithReminderFees(false)
       .create());
   }

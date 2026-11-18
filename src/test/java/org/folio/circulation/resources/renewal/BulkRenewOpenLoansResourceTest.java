@@ -2,12 +2,10 @@ package org.folio.circulation.resources.renewal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +77,7 @@ class BulkRenewOpenLoansResourceTest {
     HttpClient client = vertx.createHttpClient();
     BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
 
-    new BulkRenewOpenLoansResource(client, guard, new AcceptingService(guard)).register(router);
+    new BulkRenewOpenLoansResource(client, new AcceptingService(guard)).register(router);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -133,7 +131,7 @@ class BulkRenewOpenLoansResourceTest {
     HttpClient client = vertx.createHttpClient();
     BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
 
-    new BulkRenewOpenLoansResource(client, guard, new RejectingService(guard)).register(router);
+    new BulkRenewOpenLoansResource(client, new RejectingService(guard)).register(router);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -160,8 +158,9 @@ class BulkRenewOpenLoansResourceTest {
     headers.put("x-okapi-user-id", "user-2");
 
     assertEquals("user-1", context.getUserId());
+    var unmodifiableHeaders = context.getHeaders();
     assertThrows(UnsupportedOperationException.class,
-      () -> context.getHeaders().put("another-header", "value"));
+      () -> unmodifiableHeaders.put("another-header", "value"));
   }
 
   @Test
@@ -171,24 +170,6 @@ class BulkRenewOpenLoansResourceTest {
     BulkRenewalWebContext context = new BulkRenewalWebContext(headers);
 
     assertEquals("user-1", context.getUserId());
-  }
-
-  @Test
-  void bulkRenewOpenLoansResourceAllowsInjectingJobGuard() throws Exception {
-    Vertx vertx = Vertx.vertx();
-    HttpClient client = vertx.createHttpClient();
-    BulkRenewalJobGuard jobGuard = new BulkRenewalJobGuard();
-
-    Constructor<BulkRenewOpenLoansResource> constructor =
-      BulkRenewOpenLoansResource.class.getDeclaredConstructor(HttpClient.class,
-        BulkRenewalJobGuard.class);
-    constructor.setAccessible(true);
-
-    BulkRenewOpenLoansResource resource = constructor.newInstance(client, jobGuard);
-    Field guardField = BulkRenewOpenLoansResource.class.getDeclaredField("jobGuard");
-    guardField.setAccessible(true);
-
-    assertSame(jobGuard, guardField.get(resource));
   }
 
   @Test
@@ -206,7 +187,7 @@ class BulkRenewOpenLoansResourceTest {
 
   private static final class RejectingService extends BulkRenewOpenLoansService {
     private RejectingService(BulkRenewalJobGuard guard) {
-      super(guard, BulkRenewOpenLoansService::noOpRunner);
+      super(guard, (jobId, detachedContext) -> BulkRenewOpenLoansService.noOpRunner());
     }
 
     @Override
@@ -217,7 +198,7 @@ class BulkRenewOpenLoansResourceTest {
 
   private static final class AcceptingService extends BulkRenewOpenLoansService {
     private AcceptingService(BulkRenewalJobGuard guard) {
-      super(guard, BulkRenewOpenLoansService::noOpRunner);
+      super(guard,  (jobId, detachedContext) -> BulkRenewOpenLoansService.noOpRunner());
     }
 
     @Override
