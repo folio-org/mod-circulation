@@ -1,14 +1,14 @@
 package api.loans.renewal;
 
+import static java.util.UUID.randomUUID;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Constructor;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,7 +26,6 @@ import org.folio.circulation.resources.renewal.BulkRenewalWebContext;
 import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 
 import api.support.builders.LoanBuilder;
 import io.vertx.core.Vertx;
@@ -44,21 +43,21 @@ class BulkRenewOpenLoansApiTest {
   void shouldReturnImmediatelyAndLaunchDetachedContextBackgroundWork(Vertx vertx,
     VertxTestContext testContext) throws Exception {
 
-    Router router = Router.router(vertx);
-    HttpClient client = vertx.createHttpClient();
-    BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
-    CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
-    AtomicInteger launchCount = new AtomicInteger();
-    AtomicReference<BulkRenewalWebContext> capturedContext = new AtomicReference<>();
+    var router = Router.router(vertx);
+    var client = vertx.createHttpClient();
+    var guard = new BulkRenewalJobGuard();
+    var runningJob = new CompletableFuture<Result<Void>>();
+    var launchCount = new AtomicInteger();
+    var capturedContext = new AtomicReference<BulkRenewalWebContext>();
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
+    var service = new BulkRenewOpenLoansService(guard,
       (jobId, detachedContext) -> {
         launchCount.incrementAndGet();
         capturedContext.set(detachedContext);
         return runningJob;
       });
 
-    resource(client, guard, service).register(router);
+    resource(client, service).register(router);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -89,19 +88,19 @@ class BulkRenewOpenLoansApiTest {
   void shouldRejectRepeatedTriggerWhileJobIsStillRunningThroughRealGuardPath(Vertx vertx,
     VertxTestContext testContext) throws Exception {
 
-    Router router = Router.router(vertx);
-    HttpClient client = vertx.createHttpClient();
-    BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
-    CompletableFuture<Result<Void>> runningJob = new CompletableFuture<>();
-    AtomicInteger launchCount = new AtomicInteger();
+    var router = Router.router(vertx);
+    var client = vertx.createHttpClient();
+    var guard = new BulkRenewalJobGuard();
+    var runningJob = new CompletableFuture<Result<Void>>();
+    var launchCount = new AtomicInteger();
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard,
+    var service = new BulkRenewOpenLoansService(guard,
       (jobId, detachedContext) -> {
         launchCount.incrementAndGet();
         return runningJob;
       });
 
-    resource(client, guard, service).register(router);
+    resource(client, service).register(router);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -136,17 +135,17 @@ class BulkRenewOpenLoansApiTest {
   void shouldPersistLoanAndItemAfterSuccessfulRenewal(Vertx vertx,
     VertxTestContext testContext) throws Exception {
 
-    Router router = Router.router(vertx);
-    HttpClient httpClient = vertx.createHttpClient();
-    BulkRenewalJobGuard guard = new BulkRenewalJobGuard();
+    var router = Router.router(vertx);
+    var httpClient = vertx.createHttpClient();
+    var guard = new BulkRenewalJobGuard();
 
-    LoanRepository loanRepository = Mockito.mock(LoanRepository.class);
-    ItemRepository itemRepository = Mockito.mock(ItemRepository.class);
+    var loanRepository = mock(LoanRepository.class);
+    var itemRepository = mock(ItemRepository.class);
 
-    UUID loanId = UUID.randomUUID();
-    UUID itemId = UUID.randomUUID();
+    var loanId = randomUUID();
+    var itemId = randomUUID();
 
-    Loan loan = new LoanBuilder()
+    var loan = new LoanBuilder()
       .withId(loanId)
       .withItemId(itemId)
       .asDomainObject()
@@ -159,11 +158,11 @@ class BulkRenewOpenLoansApiTest {
     when(itemRepository.updateItem(any())).thenReturn(
       CompletableFuture.completedFuture(Result.succeeded(loan.getItem())));
 
-    CompletableFuture<Void> jobDone = new CompletableFuture<>();
+    var jobDone = new CompletableFuture<Void>();
 
-    BulkRenewOpenLoansService.DetachedContextJobRunner runner = (jobId, detachedContext) -> {
-      StoreLoanAndItem storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
-      RenewalContext ctx = RenewalContext.create(loan, new JsonObject(), "user-1");
+    var runner = (BulkRenewOpenLoansService.DetachedContextJobRunner) (jobId, detachedContext) -> {
+      var storeLoanAndItem = new StoreLoanAndItem(loanRepository, itemRepository);
+      var ctx = RenewalContext.create(loan, new JsonObject(), "user-1");
 
       return storeLoanAndItem.updateLoanAndItemInStorage(ctx)
         .thenApply(r -> {
@@ -172,9 +171,9 @@ class BulkRenewOpenLoansApiTest {
         });
     };
 
-    BulkRenewOpenLoansService service = new BulkRenewOpenLoansService(guard, runner);
+    var service = new BulkRenewOpenLoansService(guard, runner);
 
-    resource(httpClient, guard, service).register(router);
+    resource(httpClient, service).register(router);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -198,13 +197,12 @@ class BulkRenewOpenLoansApiTest {
           })))));
   }
 
-  private BulkRenewOpenLoansResource resource(HttpClient client, BulkRenewalJobGuard guard,
+  private BulkRenewOpenLoansResource resource(HttpClient client,
     BulkRenewOpenLoansService service) throws Exception {
 
-    Constructor<BulkRenewOpenLoansResource> constructor = BulkRenewOpenLoansResource.class
-      .getDeclaredConstructor(HttpClient.class, BulkRenewalJobGuard.class,
-        BulkRenewOpenLoansService.class);
+    var constructor = BulkRenewOpenLoansResource.class
+      .getDeclaredConstructor(HttpClient.class, BulkRenewOpenLoansService.class);
     constructor.setAccessible(true);
-    return constructor.newInstance(client, guard, service);
+    return constructor.newInstance(client, service);
   }
 }
