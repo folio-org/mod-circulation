@@ -1,5 +1,6 @@
 package org.folio.circulation.resources.renewal;
 
+import static java.util.UUID.randomUUID;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.renewal.BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
 import static org.folio.circulation.resources.renewal.BulkRenewalChunkedFetchSupport.partition;
@@ -18,7 +19,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.folio.circulation.domain.Request;
@@ -40,7 +40,6 @@ import org.folio.circulation.support.http.client.CqlQuery;
 import org.folio.circulation.support.http.client.Offset;
 import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.http.client.Response;
-import org.folio.circulation.support.results.Result;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -86,10 +85,10 @@ class BulkRenewalChunkedFetchSupportTest {
     when(clients.loansStorage()).thenReturn(mockedCollectionResource);
     when(clients.loansHistoryStorageClient()).thenReturn(mockedCollectionResource);
 
-    LoanRepository repository = new LoanRepository(clients,
+    var repository = new LoanRepository(clients,
       mock(ItemRepository.class), mock(UserRepository.class));
 
-    Result<CqlQuery> result = repository.createOpenLoanPageQuery();
+    var result = repository.createOpenLoanPageQuery();
 
     assertTrue(result.succeeded());
     assertEquals(exactMatch("status.name", "Open")
@@ -156,13 +155,13 @@ class BulkRenewalChunkedFetchSupportTest {
   void shouldNormalizeItemIdsBeforeChunkedFetchCompletenessCheck() {
     var itemsClient = mock(CollectionResourceClient.class);
     var circulationItemClient = mock(CollectionResourceClient.class);
-    var itemId = UUID.randomUUID().toString();
+    var itemId = randomUUID().toString();
 
     when(itemsClient.getMany(any(CqlQuery.class), any(PageLimit.class)))
       .thenReturn(completedFuture(succeeded(responseWithItems(itemId))));
 
     var repository = createItemRepository(itemsClient, circulationItemClient);
-    List<String> itemIds = new ArrayList<>();
+    var itemIds = new ArrayList<String>();
 
     IntStream.range(0, ITEM_ID_CHUNK_SIZE + 1)
       .forEach(index -> itemIds.add(itemId));
@@ -281,26 +280,29 @@ class BulkRenewalChunkedFetchSupportTest {
     CollectionResourceClient circulationItemClient) {
 
     var clients = mock(Clients.class);
+    var collectionResourceMock = mock(CollectionResourceClient.class);
+    var holdingsStorageClient = mock(CollectionResourceClient.class);
+    var loanTypesStorageClient = mock(CollectionResourceClient.class);
 
-    when(clients.servicePointsStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.locationsStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.institutionsStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.campusesStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.librariesStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.shadowLocationsStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.shadowInstitutionsStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.shadowCampusesStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.shadowLibrariesStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.materialTypesStorage()).thenReturn(mock(CollectionResourceClient.class));
-    when(clients.instancesStorage()).thenReturn(mock(CollectionResourceClient.class));
+    when(clients.servicePointsStorage()).thenReturn(collectionResourceMock);
+    when(clients.locationsStorage()).thenReturn(collectionResourceMock);
+    when(clients.institutionsStorage()).thenReturn(collectionResourceMock);
+    when(clients.campusesStorage()).thenReturn(collectionResourceMock);
+    when(clients.librariesStorage()).thenReturn(collectionResourceMock);
+    when(clients.shadowLocationsStorage()).thenReturn(collectionResourceMock);
+    when(clients.shadowInstitutionsStorage()).thenReturn(collectionResourceMock);
+    when(clients.shadowCampusesStorage()).thenReturn(collectionResourceMock);
+    when(clients.shadowLibrariesStorage()).thenReturn(collectionResourceMock);
+    when(clients.materialTypesStorage()).thenReturn(collectionResourceMock);
+    when(clients.instancesStorage()).thenReturn(collectionResourceMock);
 
     var servicePointRepository = new ServicePointRepository(clients);
     var locationRepository = LocationRepository.using(clients, servicePointRepository);
     var shadowLocationRepository = ShadowLocationRepository.using(clients, servicePointRepository);
     var materialTypeRepository = new MaterialTypeRepository(clients);
     var instanceRepository = new InstanceRepository(clients);
-    var holdingsRepository = new HoldingsRepository(mock(CollectionResourceClient.class));
-    var loanTypeRepository = new LoanTypeRepository(mock(CollectionResourceClient.class));
+    var holdingsRepository = new HoldingsRepository(holdingsStorageClient);
+    var loanTypeRepository = new LoanTypeRepository(loanTypesStorageClient);
 
     return new ItemRepository(itemsClient, locationRepository, shadowLocationRepository,
       materialTypeRepository, instanceRepository, holdingsRepository, loanTypeRepository,
@@ -309,12 +311,12 @@ class BulkRenewalChunkedFetchSupportTest {
 
   private List<String> generateIds(int size) {
     return IntStream.range(0, size)
-      .mapToObj(index -> UUID.randomUUID().toString())
+      .mapToObj(index -> randomUUID().toString())
       .toList();
   }
 
   private Response emptyResponse(String recordsPropertyName) {
-    JsonObject body = new JsonObject()
+    var body = new JsonObject()
       .put(recordsPropertyName, new JsonArray())
       .put("totalRecords", 0);
 
@@ -322,7 +324,7 @@ class BulkRenewalChunkedFetchSupportTest {
   }
 
   private Response responseWithItems(String... itemIds) {
-    JsonArray items = new JsonArray();
+    var items = new JsonArray();
 
     for (String itemId : itemIds) {
       items.add(new JsonObject().put("id", itemId));
@@ -335,7 +337,7 @@ class BulkRenewalChunkedFetchSupportTest {
   }
 
   private Response responseWithRequests(JsonObject... requests) {
-    JsonArray requestArray = new JsonArray();
+    var requestArray = new JsonArray();
 
     for (JsonObject request : requests) {
       requestArray.add(request);
