@@ -13,6 +13,8 @@ import org.folio.circulation.support.http.client.Response;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -62,7 +64,8 @@ public class LoansForUseAtLocationTests extends APITests {
   }
 
   @Test
-  void willSetAtLocationUsageStatusToInUseOnCheckoutIfEnabled() {
+  void willSetAtLocationUsageStatusToInUseOnCheckoutIfEnabledAndAllowRenewal() {
+
     Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     final LoanPolicyBuilder forUseAtLocationPolicyBuilder = new LoanPolicyBuilder()
       .withName("Reading room loans")
@@ -84,6 +87,15 @@ public class LoansForUseAtLocationTests extends APITests {
       forUseAtLocation, notNullValue());
     assertThat("loan.forUseAtLocation.status",
       forUseAtLocation.getString("status"), Is.is("In use"));
+
+    // Assert that item in-use at location can be renewed.
+    JsonObject renewedLoan = loansFixture.attemptRenewal(200,new RenewByBarcodeRequestBuilder()
+        .forItem(item)
+        .forUser(borrower)
+        .withServicePointId(servicePointsFixture.cd1().getId().toString())).getJson();
+
+    assertThat("Renewed loan for item in use has later due date ", getDateTimeProperty(renewedLoan, "dueDate"),
+        Is.is(getDateTimeProperty(loan,"dueDate").plusDays(30)));
   }
 
   @Test
@@ -237,8 +249,10 @@ public class LoansForUseAtLocationTests extends APITests {
       Is.is(expectedExpiryDateTime.toString()));
   }
 
-  @Test
-  void willCapHoldShelfExpirationAtDueDateButReadjustAtRenewal() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void willCapHoldShelfExpirationDateAtEndOfDueDate(
+      boolean checkoutServicePointExists) {
     Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");
     // Check item out and put it on hold at 2020-10-27 (two days before mock calendar starts)
     // 29th open, 30th closed, 31st open
@@ -283,13 +297,18 @@ public class LoansForUseAtLocationTests extends APITests {
             .replaceAll("\\.000",""),
         Is.is(expectedExpirationDate.toString()));
 
+    if (!checkoutServicePointExists) {
+      forServicePoints().delete(UUID.fromString(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN));
+    }
+
     JsonObject renewedLoan = loansFixture.attemptRenewal(200,new RenewByBarcodeRequestBuilder()
         .forItem(item)
         .forUser(borrower)
             .withServicePointId(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN)).getJson();
 
-    // Expect expiration day to be hold date (27th) + expiry period (4 days) (= 31st)
-    ZonedDateTime newExpectedExpirationDate = atEndOfDay(holdShelfExpiryPeriod.plusDate(dateOfHold));
+    ZonedDateTime newExpectedExpirationDate = checkoutServicePointExists
+      ? atEndOfDay(holdShelfExpiryPeriod.plusDate(dateOfHold))
+      : expectedExpirationDate;
 
     assertThat("renewed loan, forUseAtLocation, holdShelfExpirationDate",
         renewedLoan.getJsonObject("forUseAtLocation")

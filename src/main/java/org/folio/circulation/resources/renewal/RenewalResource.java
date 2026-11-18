@@ -223,8 +223,8 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
-        .thenCompose(r -> r.after(context ->
-            recalculateExpirationDateForUseAtLocation(context,servicePointRepository, calendarRepository)))
+        .thenComposeAsync(r -> r.after(context ->
+            recalculateExpirationDateForUseAtLocation(context, servicePointRepository, calendarRepository)))
         .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients,
         itemRepository, userRepository, loanRepository, overdueFinePolicyRepository)))
@@ -247,15 +247,28 @@ public abstract class RenewalResource extends Resource {
     if (loan.isHeldForUseAtLocation() && loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation() != null) {
       ZonedDateTime currentExpiration = loan.getExpirationDateForUseAtLocation();
       return servicePoints.getServicePointById(loan.getCheckoutServicePointId())
-          .thenCompose(sp -> sp.after(servicePoint ->
-              calculateExpirationDateForUseAtLocation(
-                  loan, loan.getHoldDateForUseAtLocation(), servicePoint, renewalContext.getTimeZone(), calendars)
-                  .thenApply(expirationDate -> expirationDate.map(expiration -> {
-                    if (!expiration.equals(currentExpiration)) {
-                      loan.changeHoldShelfExpirationDateForUseAtLocation(expiration);
-                    }
-                    return renewalContext;
-                  }))));
+          .thenCompose(sp -> sp.after(servicePoint -> {
+            if (servicePoint == null) {
+              log.error("recalculateExpirationDateForUseAtLocation:: checkout service point {} "
+                  + "is missing for loan {}. Keeping the stored hold shelf expiration date.",
+                loan.getCheckoutServicePointId(), loan.getId());
+              return ofAsync(renewalContext);
+            }
+            if (loan.getHoldDateForUseAtLocation() == null) {
+              log.error("recalculateExpirationDateForUseAtLocation:: an item held for use at location"
+                      + " is missing a date of the hold in loan {}. Keeping the stored hold shelf expiration date.",
+                  loan.getId());
+              return ofAsync(renewalContext);
+            }
+            return calculateExpirationDateForUseAtLocation(
+                loan, loan.getHoldDateForUseAtLocation(), servicePoint, renewalContext.getTimeZone(), calendars)
+              .thenApply(expirationDate -> expirationDate.map(expiration -> {
+                if (!expiration.equals(currentExpiration)) {
+                  loan.changeHoldShelfExpirationDateForUseAtLocation(expiration);
+                }
+                return renewalContext;
+              }));
+          }));
     } else {
       return ofAsync(renewalContext);
     }

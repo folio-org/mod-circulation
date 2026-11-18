@@ -159,7 +159,7 @@ public class HoldByBarcodeResource extends Resource {
       Loan loan, ZonedDateTime dateHeld, ServicePoint servicePoint, ZoneId tenantTimeZone, CalendarRepository calendars) {
     Period expiry = loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
     if (expiry == null) {
-      return CompletableFuture.completedFuture(null);
+      return ofAsync(() -> null);
     } else {
       final ZonedDateTime baseExpirationDate = expiry.plusDate(dateHeld);
       TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();

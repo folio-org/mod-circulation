@@ -242,7 +242,7 @@ public class Loan implements ItemRelatedRecord, UserRelatedRecord {
   }
 
   public ZonedDateTime getHoldDateForUseAtLocation() {
-    return isForUseAtLocation() ?
+    return isHeldForUseAtLocation() ?
         getDateTimeProperty(representation.getJsonObject(FOR_USE_AT_LOCATION), AT_LOCATION_USE_STATUS_DATE)
         : null;
   }
