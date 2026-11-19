@@ -12,6 +12,7 @@
 * Apply the users' loan anonymization preferences in the scheduled loan anonymization when enabled in the `loan_history` setting, require `loan-storage` 7.5 ([CIRC-2698](https://folio-org.atlassian.net/browse/CIRC-2698))
 * Expose check-in GET endpoints ([CIRC-2684](https://folio-org.atlassian.net/browse/CIRC-2684))
 * Resync the users' loan anonymization preferences from mod-users every night, requires `loan-anonymization-preference-storage` 1.0 ([CIRC-2699](https://folio-org.atlassian.net/browse/CIRC-2699))
+* Cap hold-shelf expiration date at the end of loan's due date for use-at-location loans put on hold ([CIRC-2681](https://folio-org.atlassian.net/browse/CIRC-2681))
 
 ## 24.5.0 2026-04-14
 * Allow HTTP Connection Pool to be Configurable ([CIRC-2279](https://folio-org.atlassian.net/browse/CIRC-2279))

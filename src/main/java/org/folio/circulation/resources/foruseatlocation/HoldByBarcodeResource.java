@@ -6,8 +6,11 @@ import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequ
 import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.loanIsNotForUseAtLocationFailure;
 import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeRequest.noOpenLoanFailure;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
+import static org.folio.circulation.support.results.Result.ofAsync;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
@@ -15,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.LoanAction;
+import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.TimePeriod;
 import org.folio.circulation.domain.policy.ExpirationDateManagement;
 import org.folio.circulation.domain.policy.Period;
@@ -131,21 +135,45 @@ public class HoldByBarcodeResource extends Resource {
   protected CompletableFuture<Result<HoldByBarcodeRequest>> findHoldShelfExpirationDate(HoldByBarcodeRequest request, CalendarRepository calendars) {
     log.debug("findHoldShelfExpirationDate:: parameters: request {} calendar repository {}", request, calendars);
     Loan loan = request.getLoan();
+    if (loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation() == null) {
+      log.warn("No hold shelf expiry period for use at location defined in loan policy {}", loan.getLoanPolicy().getName());
+      return ofAsync(request);
+    } else {
+      ZoneId tenantTimeZone = request.getTenantTimeZone();
+      ServicePoint servicePoint = request.getServicePoint();
+      ZonedDateTime holdDate = ClockUtil.getZonedDateTime();
+
+      return calculateExpirationDateForUseAtLocation(loan, holdDate, servicePoint, tenantTimeZone, calendars)
+        .thenApply(dateTime -> dateTime.map(request::withHoldShelfExpirationDate));
+    }
+  }
+
+  /**
+   * Calculates the expiration date for item held at a location shelf for subsequent use at location, based on:
+   * - the date the item was put on hold shelf
+   * - the configured expiry time period
+   * - adjusted for opening days based on the configured closed library strategy for expiration dates
+   * - finally, cap expiration day at the loan's due day (cannot be after that)
+   */
+  public static CompletableFuture<Result<ZonedDateTime>> calculateExpirationDateForUseAtLocation(
+      Loan loan, ZonedDateTime dateHeld, ServicePoint servicePoint, ZoneId tenantTimeZone, CalendarRepository calendars) {
     Period expiry = loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation();
     if (expiry == null) {
-      log.warn("No hold shelf expiry period for use at location defined in loan policy {}", loan.getLoanPolicy().getName());
-      return Result.ofAsync(request);
+      return ofAsync(() -> null);
     } else {
-      final ZonedDateTime baseExpirationDate = expiry.plusDate(ClockUtil.getZonedDateTime());
+      final ZonedDateTime baseExpirationDate = expiry.plusDate(dateHeld);
       TimePeriod timePeriod = loan.getLoanPolicy().getHoldShelfExpiryTimePeriodForUseAtLocation();
-      ExpirationDateManagement expirationDateManagement = request.getServicePoint().getHoldShelfClosedLibraryDateManagement();
+      ExpirationDateManagement expirationDateManagement = servicePoint.getHoldShelfClosedLibraryDateManagement();
       ClosedLibraryStrategy strategy = determineClosedLibraryStrategyForHoldShelfExpirationDate(
-        expirationDateManagement, baseExpirationDate, request.getTenantTimeZone(), timePeriod);
-
-      return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(request.getTenantTimeZone()).toLocalDate(),
-          request.getServicePoint().getId())
-        .thenApply(adjacentOpeningDaysResult -> strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
-        .thenApply(dateTime -> dateTime.map(request::withHoldShelfExpirationDate));
+          expirationDateManagement, baseExpirationDate, tenantTimeZone, timePeriod);
+      return calendars.lookupOpeningDays(baseExpirationDate.withZoneSameInstant(tenantTimeZone).toLocalDate(),
+              servicePoint.getId())
+          .thenApply(adjacentOpeningDaysResult ->
+              strategy.calculateDueDate(baseExpirationDate, adjacentOpeningDaysResult.value()))
+          .thenApply(adjustedDate -> adjustedDate.map(date -> {
+            ZonedDateTime dueDayEnd = atEndOfDay(loan.getDueDate(), tenantTimeZone);
+            return dueDayEnd.isBefore(date) ? dueDayEnd : date;
+          }));
     }
   }
 

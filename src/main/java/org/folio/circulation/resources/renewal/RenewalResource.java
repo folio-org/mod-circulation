@@ -17,6 +17,7 @@ import static org.folio.circulation.resources.RenewalValidator.errorWhenEarlierO
 import static org.folio.circulation.resources.RenewalValidator.itemByIdValidationError;
 import static org.folio.circulation.resources.RenewalValidator.loanPolicyValidationError;
 import static org.folio.circulation.resources.RenewalValidator.overrideDueDateIsRequiredError;
+import static org.folio.circulation.resources.foruseatlocation.HoldByBarcodeResource.calculateExpirationDateForUseAtLocation;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FETCH_USER;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.FAILED_TO_FIND_SINGLE_OPEN_LOAN;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.INSUFFICIENT_OVERRIDE_PERMISSIONS;
@@ -79,6 +80,7 @@ import org.folio.circulation.domain.validation.Validator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
+import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.SettingsRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineOwnerRepository;
 import org.folio.circulation.infrastructure.storage.feesandfines.FeeFineRepository;
@@ -178,6 +180,8 @@ public abstract class RenewalResource extends Resource {
       new AutomatedPatronBlocksRepository(clients);
     final FeeFineScheduledNoticeService feeFineNoticesService =
       FeeFineScheduledNoticeService.using(clients);
+    final var servicePointRepository = new ServicePointRepository(clients);
+    final var calendarRepository = new CalendarRepository(clients);
 
     //TODO: Validation check for same user should be in the domain service
     JsonObject bodyAsJson = routingContext.body().asJsonObject();
@@ -213,7 +217,9 @@ public abstract class RenewalResource extends Resource {
       .thenComposeAsync(r -> r.after(context -> renew(context, clients, errorHandler)))
       .thenApply(r -> r.next(errorHandler::failWithValidationErrors))
       .thenApply(r -> r.map(this::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue))
-      .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
+        .thenComposeAsync(r -> r.after(context ->
+            recalculateExpirationDateForUseAtLocation(context, servicePointRepository, calendarRepository)))
+        .thenComposeAsync(r -> r.after(storeLoanAndItem::updateLoanAndItemInStorage))
       .thenComposeAsync(r -> r.after(context -> processFeesFines(context, clients,
         itemRepository, userRepository, loanRepository, overdueFinePolicyRepository)))
       .thenApplyAsync(r -> r.next(feeFineNoticesService::scheduleOverdueFineNotices))
@@ -224,6 +230,42 @@ public abstract class RenewalResource extends Resource {
       .thenApply(r -> r.map(loanRepresentation::extendedLoan))
       .thenApply(r -> r.map(this::toResponse))
       .thenAccept(webContext::writeResultToHttpResponse);
+  }
+
+  /**
+   * Potentially extend hold-shelf expiration date following renewal.
+   */
+  private CompletableFuture<Result<RenewalContext>> recalculateExpirationDateForUseAtLocation(
+      RenewalContext renewalContext, ServicePointRepository servicePoints, CalendarRepository calendars) {
+    Loan loan = renewalContext.getLoan();
+    if (loan.isHeldForUseAtLocation() && loan.getLoanPolicy().getHoldShelfExpiryPeriodForUseAtLocation() != null) {
+      ZonedDateTime currentExpiration = loan.getExpirationDateForUseAtLocation();
+      return servicePoints.getServicePointById(loan.getCheckoutServicePointId())
+          .thenCompose(sp -> sp.after(servicePoint -> {
+            if (servicePoint == null) {
+              log.error("recalculateExpirationDateForUseAtLocation:: checkout service point {} "
+                  + "is missing for loan {}. Keeping the stored hold shelf expiration date.",
+                loan.getCheckoutServicePointId(), loan.getId());
+              return ofAsync(renewalContext);
+            }
+            if (loan.getHoldDateForUseAtLocation() == null) {
+              log.error("recalculateExpirationDateForUseAtLocation:: an item held for use at location"
+                      + " is missing a date of the hold in loan {}. Keeping the stored hold shelf expiration date.",
+                  loan.getId());
+              return ofAsync(renewalContext);
+            }
+            return calculateExpirationDateForUseAtLocation(
+                loan, loan.getHoldDateForUseAtLocation(), servicePoint, renewalContext.getTimeZone(), calendars)
+              .thenApply(expirationDate -> expirationDate.map(expiration -> {
+                if (!expiration.equals(currentExpiration)) {
+                  loan.changeHoldShelfExpirationDateForUseAtLocation(expiration);
+                }
+                return renewalContext;
+              }));
+          }));
+    } else {
+      return ofAsync(renewalContext);
+    }
   }
 
   private RenewalContext unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
