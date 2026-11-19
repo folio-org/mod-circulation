@@ -4,7 +4,9 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_AUTOMATICALLY;
 import static org.folio.circulation.resources.handlers.error.CirculationErrorType.USER_IS_BLOCKED_MANUALLY;
 import static org.folio.circulation.support.results.CommonFailures.failedDueToServerError;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
+import static org.folio.circulation.support.results.ResultBinding.mapResult;
 import static org.folio.circulation.support.utils.LogUtil.headersAsString;
 
 import java.time.ZonedDateTime;
@@ -19,10 +21,12 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.circulation.StoreLoanAndItem;
+import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
 import org.folio.circulation.domain.OverdueFineService;
 import org.folio.circulation.domain.OverduePeriodCalculatorService;
+import org.folio.circulation.domain.User;
 import org.folio.circulation.domain.notice.schedule.FeeFineScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.LoanScheduledNoticeService;
 import org.folio.circulation.domain.notice.schedule.ReminderFeeScheduledNoticeService;
@@ -109,19 +113,17 @@ public class BulkRenewOpenLoansService {
   }
 
   public static CompletableFuture<Result<Void>> noOpRunner() {
-
-    return completedFuture(Result.succeeded(null));
+    return emptyAsync();
   }
 
   static CompletableFuture<Result<RenewalContext>> renewPreparedLoan(
-    RenewalContext renewalContext,
-    CirculationErrorHandler errorHandler,
+    RenewalContext renewalContext, CirculationErrorHandler errorHandler,
     Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> overdueFinePolicyLookup,
     BiFunction<RenewalContext, CirculationErrorHandler,
       CompletableFuture<Result<RenewalContext>>> renewalLogic) {
 
-    return completedFuture(succeeded(renewalContext))
-      .thenCompose(result -> result.after(overdueFinePolicyLookup))
+    return succeeded(renewalContext)
+      .after(overdueFinePolicyLookup)
       .thenCompose(result -> result.after(context ->
         RenewalPreRenewalValidator.blockRenewalOfItemsWithReminderFees(context, errorHandler)))
       .thenCompose(result -> result.after(context -> renewalLogic.apply(context, errorHandler)));
@@ -190,13 +192,13 @@ public class BulkRenewOpenLoansService {
     private RealRunnerFactories() {
     }
 
-    static Function<java.util.Collection<String>, CompletableFuture<Result<MultipleRecords<org.folio.circulation.domain.Item>>>>
+    static Function<java.util.Collection<String>, CompletableFuture<Result<MultipleRecords<Item>>>>
       itemFetcher(ItemRepository itemRepository) {
 
       return itemIds -> itemRepository.fetchFor(itemIds, BULK_FETCH_CHUNK_SIZE);
     }
 
-    static Function<java.util.Collection<String>, CompletableFuture<Result<Map<String, org.folio.circulation.domain.User>>>>
+    static Function<java.util.Collection<String>, CompletableFuture<Result<Map<String, User>>>>
       userFetcher(UserRepository userRepository) {
 
       return userIds -> userRepository.getUsersForUserIds(userIds, BULK_FETCH_CHUNK_SIZE);
@@ -205,10 +207,10 @@ public class BulkRenewOpenLoansService {
     static BulkRenewalRequestQueueLookup requestQueueLookup(RequestRepository requestRepository) {
       return new BulkRenewalRequestQueueLookup(
         itemIds -> requestRepository.findOpenRequestsByItemIds(itemIds, REQUEST_CQL_FETCH_CHUNK_SIZE)
-          .thenApply(result -> result.map(MultipleRecords::getRecords)),
+          .thenApply(mapResult(MultipleRecords::getRecords)),
         instanceIds -> requestRepository.findOpenRequestsByInstanceIds(instanceIds,
             REQUEST_CQL_FETCH_CHUNK_SIZE)
-          .thenApply(result -> result.map(MultipleRecords::getRecords)));
+          .thenApply(mapResult(MultipleRecords::getRecords)));
     }
 
     static Function<Loan, CompletableFuture<Result<LoanPolicy>>> loanPolicyResolver(

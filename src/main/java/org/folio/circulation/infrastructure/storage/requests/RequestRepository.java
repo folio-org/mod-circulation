@@ -42,6 +42,7 @@ import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.storage.RequestBatch;
 import org.folio.circulation.support.CollectionResourceClient;
 import org.folio.circulation.support.FetchSingleRecord;
+import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.RecordNotFoundFailure;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.CqlIndexValuesFinder;
@@ -248,27 +249,28 @@ public class RequestRepository {
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByInstanceIds(
-    Collection<String> instanceIds,
-    org.folio.circulation.support.FindWithMultipleCqlIndexValues<Request> fetcher) {
+    Collection<String> instanceIds, FindWithMultipleCqlIndexValues<Request> fetcher) {
 
     log.debug("findOpenRequestsByInstanceIds:: parameters instanceIds: {}", instanceIds.size());
 
-    Result<CqlQuery> query = exactMatchAny("status", openStates())
-      .map(q -> q.sortBy(ascending("position")));
-
-    return fetcher.findByIdIndexAndQuery(instanceIds, "instanceId", query)
-      .thenApply(mapResult(this::sortRequestsByPosition));
+    return findOpenRequestsByIds(instanceIds, "instanceId", fetcher);
   }
 
   private CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByItemIds(
-    Collection<String> itemIds, org.folio.circulation.support.FindWithMultipleCqlIndexValues<Request> fetcher) {
+    Collection<String> itemIds, FindWithMultipleCqlIndexValues<Request> fetcher) {
 
     log.debug("findOpenRequestsByItemIds:: parameters itemIds: {}", itemIds.size());
 
-    Result<CqlQuery> query = exactMatchAny("status", openStates())
+    return findOpenRequestsByIds(itemIds, "itemId", fetcher);
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Request>>> findOpenRequestsByIds(
+    Collection<String> ids, String cqlIndexField, FindWithMultipleCqlIndexValues<Request> fetcher) {
+
+    var query = exactMatchAny("status", openStates())
       .map(q -> q.sortBy(ascending("position")));
 
-    return fetcher.findByIdIndexAndQuery(itemIds, "itemId", query)
+    return fetcher.findByIdIndexAndQuery(ids, cqlIndexField, query)
       .thenApply(mapResult(this::sortRequestsByPosition));
   }
 

@@ -255,7 +255,7 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Void>> publishAutomaticRenewalFailureLogEvent(
-      Loan loan, String reason, String updatedByUserId) {
+    Loan loan, String reason, String updatedByUserId) {
 
     logger.info("publishAutomaticRenewalFailureLogEvent:: loanId={}", loan::getId);
     var loanLogContext = LoanLogContext.from(loan)

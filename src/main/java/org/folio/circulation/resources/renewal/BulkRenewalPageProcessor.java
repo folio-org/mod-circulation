@@ -35,6 +35,7 @@ import org.folio.circulation.services.EventPublisher;
 import org.folio.circulation.support.HttpFailure;
 import org.folio.circulation.support.ValidationErrorFailure;
 import org.folio.circulation.support.http.OkapiPermissions;
+import org.folio.circulation.support.results.CommonFailures;
 import org.folio.circulation.support.results.Result;
 
 import io.vertx.core.json.JsonObject;
@@ -125,7 +126,7 @@ public class BulkRenewalPageProcessor {
   }
 
   private CompletableFuture<Result<FilteredPage>> filterEligibleLoans(
-      PreparedPage preparedPage, String triggeringUserId) {
+    PreparedPage preparedPage, String triggeringUserId) {
 
     List<Loan> loans = preparedPage.loans();
     Map<String, LoanPolicy> policiesByLoanId = new LinkedHashMap<>();
@@ -139,7 +140,7 @@ public class BulkRenewalPageProcessor {
           if (result.succeeded()) {
             policiesByLoanId.put(loan.getId(), result.value());
           } else {
-            log.debug("filterEligibleLoans:: loanId={} policy lookup failed, excluding from batch",
+            log.warn("filterEligibleLoans:: loanId={} policy lookup failed, excluding from batch",
               loan.getId());
           }
         }));
@@ -147,10 +148,7 @@ public class BulkRenewalPageProcessor {
 
     return policyResolution.thenCompose(ignored -> {
       AutomaticRenewalEligibilityResult eligibility = BulkRenewalEligibilityFilter.filter(
-        loans,
-        policiesByLoanId,
-        preparedPage.requestQueuesByLoanId(),
-        preparedPage.timeZone());
+        loans, policiesByLoanId, preparedPage.requestQueuesByLoanId(), preparedPage.timeZone());
 
       // Publish Circulation log entries for hold/recall exclusions
       List<CompletableFuture<Void>> logEvents = new ArrayList<>();
@@ -189,8 +187,7 @@ public class BulkRenewalPageProcessor {
     CompletableFuture<Void> processing = completedFuture(null);
 
     for (Loan loan : filteredPage.loans()) {
-      processing = processing.thenCompose(unused -> renewLoan(filteredPage, loan,
-          triggeringUserId)
+      processing = processing.thenCompose(unused -> renewLoan(filteredPage, loan, triggeringUserId)
         .handle((result, error) -> {
           if (error != null) {
             failedRenewalsByLoanId.put(loan.getId(), failedDueToServerError(error).cause());
@@ -226,7 +223,7 @@ public class BulkRenewalPageProcessor {
     return RenewalPreRenewalValidator.refuseWhenPatronIsInactive(succeeded(renewalContext),
         errorHandler, USER_IS_INACTIVE)
       .thenCompose(result -> renewAfterPreRenewalValidation(result, errorHandler, resolvedPolicy))
-      .exceptionally(org.folio.circulation.support.results.CommonFailures::failedDueToServerError);
+      .exceptionally(CommonFailures::failedDueToServerError);
   }
 
   private CompletableFuture<Result<RenewalContext>> renewAfterPreRenewalValidation(
@@ -261,10 +258,8 @@ public class BulkRenewalPageProcessor {
   private Result<RenewalContext> finalizeRenewal(Result<RenewalContext> result,
     CirculationErrorHandler errorHandler) {
 
-    return result.succeeded()
-      ? errorHandler.failWithValidationErrors(result.value())
-        .map(RenewalPostRenewalProcessor::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue)
-      : result;
+    return result.next(errorHandler::failWithValidationErrors)
+      .map(RenewalPostRenewalProcessor::unsetDueDateChangedByRecallIfNoOpenRecallsInQueue);
   }
 
   private CompletableFuture<Result<MultipleRecords<Item>>> fetchItems(Collection<Loan> loans) {
@@ -273,6 +268,7 @@ public class BulkRenewalPageProcessor {
       .toList());
 
     if (itemIdPartitions.isEmpty()) {
+      log.info("fetchItems:: No Item IDs exist for the loans, skipping fetching Items");
       return completedFuture(succeeded(MultipleRecords.empty()));
     }
 
@@ -336,18 +332,13 @@ public class BulkRenewalPageProcessor {
     return BulkRenewalChunkedFetchSupport.partition(ids, DEFAULT_ID_CHUNK_SIZE);
   }
 
-  private record PreparedPage(List<Loan> loans,
-                              Map<String, RequestQueue> requestQueuesByLoanId,
-                              TlrSettingsConfiguration tlrSettings,
-                              ZoneId timeZone) {
+  private record PreparedPage(List<Loan> loans, Map<String, RequestQueue> requestQueuesByLoanId,
+    TlrSettingsConfiguration tlrSettings, ZoneId timeZone) {
   }
 
-  private record FilteredPage(List<Loan> loans,
-                              Map<String, HttpFailure> holdRecallFailures,
-                              Map<String, RequestQueue> requestQueuesByLoanId,
-                              ZoneId timeZone,
-                              TlrSettingsConfiguration tlrSettings,
-                              Map<String, LoanPolicy> resolvedPolicies) {
+  private record FilteredPage(List<Loan> loans, Map<String, HttpFailure> holdRecallFailures,
+    Map<String, RequestQueue> requestQueuesByLoanId, ZoneId timeZone,
+    TlrSettingsConfiguration tlrSettings, Map<String, LoanPolicy> resolvedPolicies) {
   }
 }
 

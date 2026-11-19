@@ -5,6 +5,7 @@ import static org.folio.circulation.domain.RequestStatus.openStates;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.MultipleRecords;
@@ -23,6 +27,7 @@ import org.folio.circulation.domain.configuration.TlrSettingsConfiguration;
 import org.folio.circulation.support.results.Result;
 
 public class BulkRenewalRequestQueueLookup {
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
   private static final int REQUEST_ID_CHUNK_SIZE = BulkRenewalChunkedFetchSupport.ITEM_ID_CHUNK_SIZE;
 
   private final Function<Collection<String>, CompletableFuture<Result<Collection<Request>>>>
@@ -41,7 +46,8 @@ public class BulkRenewalRequestQueueLookup {
   public CompletableFuture<Result<Map<String, RequestQueue>>> lookupByLoanId(Collection<Loan> loans,
     TlrSettingsConfiguration tlrSettings) {
 
-    if (loans == null || loans.isEmpty()) {
+    if (CollectionUtils.isEmpty(loans)) {
+      log.info("lookupByLoanId:: No Loans are provided, skipping Request Queue Lookup");
       return ofAsync(Map.of());
     }
 
@@ -51,12 +57,14 @@ public class BulkRenewalRequestQueueLookup {
   }
 
   private CompletableFuture<Result<Map<String, RequestQueue>>> lookupByItemId(Collection<Loan> loans) {
-    Collection<String> itemIds = loans.stream()
+    log.info("lookupByItemId:: Looking up Request Queues by Item IDs");
+    var itemIds = loans.stream()
       .map(Loan::getItemId)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
 
     if (itemIds.isEmpty()) {
+      log.info("lookupByItemId:: No Item IDs for {} loans, returning empty Request Queues for the Loans", loans.size());
       return ofAsync(emptyQueuesByLoanId(loans));
     }
 
@@ -65,7 +73,8 @@ public class BulkRenewalRequestQueueLookup {
   }
 
   private CompletableFuture<Result<Map<String, RequestQueue>>> lookupByInstanceId(Collection<Loan> loans) {
-    Collection<String> instanceIds = loans.stream()
+    log.info("lookupByInstanceId:: Looking up Request Queues by Instance IDs");
+    var instanceIds = loans.stream()
       .map(Loan::getItem)
       .filter(Objects::nonNull)
       .map(Item::getInstanceId)
@@ -73,6 +82,7 @@ public class BulkRenewalRequestQueueLookup {
       .collect(Collectors.toSet());
 
     if (instanceIds.isEmpty()) {
+      log.info("lookupByInstanceId:: No Instance IDs for {} loans, returning empty Request Queues for the Loans", loans.size());
       return ofAsync(emptyQueuesByLoanId(loans));
     }
 
