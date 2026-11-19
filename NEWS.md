@@ -1,4 +1,5 @@
 ## 24.6.0-SNAPSHOT In progress
+* Evaluate loan eligibility before bulk auto-renewal: skip loans outside the policy window, block on active holds/recalls, and emit Circulation log entries for blocked loans ([CIRC-2584](https://folio-org.atlassian.net/browse/CIRC-2584))
 * Adopt automatic-renewal Loan Policy settings and require `loan-policy-storage` 2.5 ([CIRC-2687](https://folio-org.atlassian.net/browse/CIRC-2687))
 * Add DeployConfig.json (ADR-0013 Configuration Management) ([CIRC-2666](https://folio-org.atlassian.net/browse/CIRC-2666))
 * Fix flaky tests ([CIRC-2633](https://folio-org.atlassian.net/browse/CIRC-2633))

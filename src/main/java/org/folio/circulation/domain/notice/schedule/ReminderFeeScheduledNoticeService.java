@@ -75,7 +75,9 @@ public class ReminderFeeScheduledNoticeService {
   public Result<RenewalContext> rescheduleFirstReminder(RenewalContext renewalContext) {
     log.debug("rescheduleFirstReminder:: rescheduling first reminder after renewal for loan {}",
       renewalContext.getLoan()::getId);
-    return rescheduleFirstReminder(renewalContext.getLoan(), renewalContext.getTimeZone(), renewalContext);
+    // Completion here measures dispatch into async reminder rescheduling, not downstream completion.
+    rescheduleFirstReminder(renewalContext.getLoan(), renewalContext.getTimeZone(), renewalContext);
+    return succeeded(renewalContext);
   }
 
   private <T> Result<T> rescheduleFirstReminder(Loan loan, ZoneId timeZone, T mapTo) {

@@ -5,11 +5,11 @@ import static org.folio.circulation.domain.ItemStatus.AGED_TO_LOST;
 import static org.folio.circulation.domain.ItemStatus.CHECKED_OUT;
 import static org.folio.circulation.domain.ItemStatus.CLAIMED_RETURNED;
 import static org.folio.circulation.domain.ItemStatus.DECLARED_LOST;
-import static org.folio.circulation.domain.override.OverridableBlockType.PATRON_BLOCK;
 import static org.folio.circulation.domain.override.OverridableBlockType.RENEWAL_BLOCK;
 import static org.folio.circulation.resources.RenewalValidator.CAN_NOT_RENEW_ITEM_ERROR;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD;
 import static org.folio.circulation.resources.RenewalValidator.FIXED_POLICY_HAS_ALTERNATE_RENEWAL_PERIOD_FOR_HOLDS;
+import static org.folio.circulation.resources.RenewalValidator.ITEMS_CANNOT_BE_RENEWED_RECALL;
 import static org.folio.circulation.resources.RenewalValidator.errorForDueDate;
 import static org.folio.circulation.resources.RenewalValidator.errorForNotMatchingOverrideCases;
 import static org.folio.circulation.resources.RenewalValidator.errorForRecallRequest;
@@ -53,7 +53,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -77,12 +76,7 @@ import org.folio.circulation.domain.policy.LoanPolicy;
 import org.folio.circulation.domain.policy.library.ClosedLibraryStrategyService;
 import org.folio.circulation.domain.representations.MetadataProperties;
 import org.folio.circulation.domain.representations.RequestProperties;
-import org.folio.circulation.domain.validation.AutomatedPatronBlocksValidator;
-import org.folio.circulation.domain.validation.InactiveUserRenewalValidator;
-import org.folio.circulation.domain.validation.RenewalOfItemsWithReminderFeesValidator;
-import org.folio.circulation.domain.validation.UserManualBlocksValidator;
 import org.folio.circulation.domain.validation.Validator;
-import org.folio.circulation.domain.validation.overriding.BlockValidator;
 import org.folio.circulation.domain.validation.overriding.OverridingBlockValidator;
 import org.folio.circulation.infrastructure.storage.AutomatedPatronBlocksRepository;
 import org.folio.circulation.infrastructure.storage.CalendarRepository;
@@ -203,7 +197,7 @@ public abstract class RenewalResource extends Resource {
       overrideBlocks.getRenewalDueDateRequiredBlockOverride().isRequested();
 
     findLoan(bodyAsJson, loanRepository, itemRepository, userRepository, errorHandler)
-      .thenApply(r -> r.map(loan -> RenewalContext.create(loan, bodyAsJson, webContext.getUserId())))
+      .thenApply(r -> toRenewalContext(r, bodyAsJson, webContext.getUserId()))
       .thenComposeAsync(r -> refuseWhenPatronIsInactive(r, errorHandler, USER_IS_INACTIVE))
       .thenComposeAsync(r -> refuseWhenRenewalActionIsBlockedForPatron(
         manualPatronBlocksValidator, r, errorHandler, USER_IS_BLOCKED_MANUALLY))
@@ -277,23 +271,8 @@ public abstract class RenewalResource extends Resource {
   private RenewalContext unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(
     RenewalContext renewalContext) {
 
-    Loan loan = renewalContext.getLoan();
-
-    boolean loanIsRecalled = renewalContext.getRequestQueue()
-      .getRequests()
-      .stream()
-      .filter(Request::isRecall)
-      .filter(Request::isNotYetFilled)
-      .noneMatch(request -> request.isFor(loan));
-
-    if (loan.wasDueDateChangedByRecall() && loanIsRecalled) {
-      log.info("unsetDueDateChangedByRecallIfNoOpenRecallsInQueue:: unsetting due date changed " +
-        "by recall for loan {}", loan::getId);
-      return renewalContext.withLoan(loan.unsetDueDateChangedByRecall());
-    }
-    else {
-      return renewalContext;
-    }
+    return RenewalPostRenewalProcessor
+      .unsetDueDateChangedByRecallIfNoOpenRecallsInQueue(renewalContext);
   }
 
   private CompletableFuture<Result<RenewalContext>> processFeesFines(
@@ -349,51 +328,23 @@ public abstract class RenewalResource extends Resource {
     Result<RenewalContext> result, CirculationErrorHandler errorHandler,
     CirculationErrorType errorType) {
 
-    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-      FAILED_TO_FETCH_USER)) {
-
-      return completedFuture(result);
-    }
-
-    final var inactiveUserRenewalValidator = new InactiveUserRenewalValidator();
-
-    final var validator = new BlockValidator<>(USER_IS_INACTIVE,
-      inactiveUserRenewalValidator::refuseWhenPatronIsInactive);
-
-    return result.after(renewalContext -> validator.validate(renewalContext)
-      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
+    return RenewalPreRenewalValidator.refuseWhenPatronIsInactive(result, errorHandler,
+      errorType);
   }
 
   private CompletableFuture<Result<RenewalContext>> blockRenewalOfItemsWithReminderFees(
     RenewalContext context, CirculationErrorHandler errorHandler) {
 
-    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-      FAILED_TO_FETCH_USER)) {
-
-      return Result.ofAsync(context);
-    }
-
-    final var renewalOfItemsWithReminderFeesValidator = new RenewalOfItemsWithReminderFeesValidator();
-
-    final var validator = new BlockValidator<>(RENEWAL_IS_BLOCKED,
-      renewalOfItemsWithReminderFeesValidator::blockRenewalIfReminderFeesExistAndDisallowRenewalWithReminders);
-
-    return validator.validate(context)
-      .thenApply(r -> errorHandler.handleValidationResult(r, CirculationErrorType.RENEWAL_IS_BLOCKED, r));
+    return RenewalPreRenewalValidator.blockRenewalOfItemsWithReminderFees(context,
+      errorHandler);
   }
 
   private CompletableFuture<Result<RenewalContext>> refuseWhenRenewalActionIsBlockedForPatron(
     Validator<RenewalContext> validator, Result<RenewalContext> result,
     CirculationErrorHandler errorHandler, CirculationErrorType errorType) {
 
-    if (errorHandler.hasAny(ITEM_DOES_NOT_EXIST, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
-      FAILED_TO_FETCH_USER)) {
-
-      return completedFuture(result);
-    }
-
-    return result.after(renewalContext -> validator.validate(renewalContext)
-      .thenApply(r -> errorHandler.handleValidationResult(r, errorType, result)));
+    return RenewalPreRenewalValidator.refuseWhenRenewalActionIsBlockedForPatron(
+      validator, result, errorHandler, errorType);
   }
 
   private CompletableFuture<Result<RenewalContext>> lookupLoanPolicy(
@@ -527,31 +478,24 @@ public abstract class RenewalResource extends Resource {
     LoanRepository loanRepository, ItemRepository itemRepository,
     UserRepository userRepository, CirculationErrorHandler errorHandler);
 
+  protected Result<RenewalContext> toRenewalContext(Result<Loan> result,
+    JsonObject request, String loggedInUserId) {
+
+    return result.map(loan -> RenewalContext.create(loan, request, loggedInUserId));
+  }
+
   private Validator<RenewalContext> createAutomatedPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, AutomatedPatronBlocksRepository automatedPatronBlocksRepository) {
 
-    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
-      new AutomatedPatronBlocksValidator(
-        automatedPatronBlocksRepository)::refuseWhenRenewalActionIsBlockedForPatron;
-
-    final BlockOverrides blockOverrides = getOverrideBlocks(request);
-
-    return blockOverrides.getPatronBlockOverride().isRequested()
-      ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
-      : new BlockValidator<>(USER_IS_BLOCKED_AUTOMATICALLY, validationFunction);
+    return RenewalPreRenewalValidator.createAutomatedPatronBlocksValidator(request,
+      permissions, automatedPatronBlocksRepository);
   }
 
   private Validator<RenewalContext> createManualPatronBlocksValidator(JsonObject request,
     OkapiPermissions permissions, Clients clients) {
 
-    Function<RenewalContext, CompletableFuture<Result<RenewalContext>>> validationFunction =
-      new UserManualBlocksValidator(clients)::refuseWhenUserIsBlocked;
-
-    final BlockOverrides blockOverrides = getOverrideBlocks(request);
-
-    return blockOverrides.getPatronBlockOverride().isRequested()
-      ? new OverridingBlockValidator<>(PATRON_BLOCK, blockOverrides, permissions)
-      : new BlockValidator<>(USER_IS_BLOCKED_MANUALLY, validationFunction);
+    return RenewalPreRenewalValidator.createManualPatronBlocksValidator(request,
+      permissions, clients);
   }
 
   private BlockOverrides getOverrideBlocks(JsonObject request) {
@@ -847,7 +791,7 @@ public abstract class RenewalResource extends Resource {
       .filter(request -> request.isFor(loan))
       .findFirst()
       .ifPresent(recall -> errors.add(errorForRecallRequest(
-        "items cannot be renewed when there is an active recall request", recall.getId())));
+        ITEMS_CANNOT_BE_RENEWED_RECALL, recall.getId())));
 
     if (ITEM_STATUSES_DISALLOWED_FOR_RENEW.contains(loan.getItemStatus())) {
       errors.add(itemByIdValidationError("item is " + loan.getItemStatusName(),

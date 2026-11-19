@@ -16,6 +16,7 @@ import static org.folio.circulation.domain.LoanAction.RENEWED;
 import static org.folio.circulation.domain.LoanAction.RENEWED_THROUGH_OVERRIDE;
 import static org.folio.circulation.domain.LoanAction.PATRON_INFO_ADDED;
 import static org.folio.circulation.domain.LoanAction.STAFF_INFO_ADDED;
+import static org.folio.circulation.domain.LoanAction.AUTOMATIC_RENEWAL_FAILED;
 
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ public class LogContextActionResolver {
     loanLogActions.put(STAFF_INFO_ADDED.getValue(), "Staff info added");
     loanLogActions.put(HELD_FOR_USE_AT_LOCATION.getValue(),"Held for use at location");
     loanLogActions.put(PICKED_UP_FOR_USE_AT_LOCATION.getValue(), "Picked up for use at location");
+    loanLogActions.put(AUTOMATIC_RENEWAL_FAILED.getValue(), "Automatic renewal failed");
   }
 
   public static String resolveAction(String action) {

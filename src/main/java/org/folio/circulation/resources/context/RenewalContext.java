@@ -12,7 +12,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.ToString;
 import lombok.Value;
 import lombok.With;
-import lombok.val;
 
 @Value
 @With
@@ -32,8 +31,8 @@ public class RenewalContext {
   public static RenewalContext create(Loan loan, JsonObject renewalRequest,
     String loggedInUserId) {
 
-    val loanBeforeRenewal = loan != null ? loan.copy() : null;
-    val itemStatusBeforeRenew = loan != null && loan.getItem() != null
+    final Loan loanBeforeRenewal = loan != null ? loan.copy() : null;
+    final ItemStatus itemStatusBeforeRenew = loan != null && loan.getItem() != null
       ? loan.getItem().getStatus() : null;
 
     return new RenewalContext(loan, null, null, loanBeforeRenewal, itemStatusBeforeRenew,

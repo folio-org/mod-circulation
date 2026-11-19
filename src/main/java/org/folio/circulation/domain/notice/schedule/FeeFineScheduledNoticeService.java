@@ -81,6 +81,7 @@ public class FeeFineScheduledNoticeService {
   public Result<RenewalContext> scheduleOverdueFineNotices(RenewalContext context) {
     log.info("scheduleOverdueFineNotices:: scheduling overdue fine notices for renewal, loan {}",
       context.getLoan() != null ? context.getLoan().getId() : "null");
+    // Completion here measures scheduling dispatch, not downstream notice creation completion.
     scheduleNotices(context.getLoan(), context.getOverdueFeeFineAction(), OVERDUE_FINE_RENEWED);
 
     return succeeded(context);

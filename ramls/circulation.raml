@@ -107,6 +107,23 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /bulk-renew-open-loans:
+    displayName: Trigger bulk renewal of open loans
+    post:
+      description: Starts background bulk renewal processing for currently open loans
+      responses:
+        204:
+          description: Bulk renewal job accepted
+        400:
+          description: Bad request, e.g. a bulk renewal job is already running
+          body:
+            text/plain:
+              example: "bulk renewal job already running"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
   /check-in-by-barcode:
     displayName: Checkin an existing loan using barcode for item and loanee
     post:

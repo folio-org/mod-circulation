@@ -42,8 +42,7 @@ public class RenewByIdResource extends RenewalResource {
     LoanRepository loanRepository, ItemRepository itemRepository, UserRepository userRepository,
     CirculationErrorHandler errorHandler) {
 
-    final Result<RenewByIdRequest> requestResult
-      = RenewByIdRequest.from(request);
+    final Result<RenewByIdRequest> requestResult = RenewByIdRequest.from(request);
 
     final String itemId = requestResult
       .map(RenewByIdRequest::getItemId)

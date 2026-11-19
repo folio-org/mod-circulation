@@ -53,6 +53,7 @@ public class LoanNoticeSender {
 
   public Result<RenewalContext> sendRenewalPatronNotice(RenewalContext records) {
     log.debug("sendRenewalPatronNotice:: parameters records: {}", records);
+    // Completion here measures dispatch into the async notice sender, not downstream completion.
     sendLoanNotice(records.getLoan(), NoticeEventType.RENEWED);
     return succeeded(records);
   }

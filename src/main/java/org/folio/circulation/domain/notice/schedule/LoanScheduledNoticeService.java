@@ -130,7 +130,9 @@ public class LoanScheduledNoticeService {
   public Result<RenewalContext> rescheduleDueDateNotices(RenewalContext renewalContext) {
     log.info("rescheduleDueDateNotices:: rescheduling due date notices for renewal context, loan {}",
       renewalContext.getLoan() != null ? renewalContext.getLoan().getId() : "null");
-    return rescheduleDueDateNotices(renewalContext.getLoan(), renewalContext);
+    // Completion here measures dispatch into async notice rescheduling, not downstream completion.
+    rescheduleDueDateNotices(renewalContext.getLoan(), renewalContext);
+    return succeeded(renewalContext);
   }
 
   private <T> Result<T> rescheduleDueDateNotices(Loan loan, T mapTo) {

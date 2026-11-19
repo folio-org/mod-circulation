@@ -162,6 +162,10 @@ public class InterfaceUrls {
     return circulationModuleUrl("/circulation/renew-by-id");
   }
 
+  public static URL bulkRenewOpenLoansUrl() {
+    return circulationModuleUrl("/circulation/bulk-renew-open-loans");
+  }
+
   public static URL holdForUseAtLocationUrl() {
     return circulationModuleUrl("/circulation/hold-by-barcode-for-use-at-location");
   }

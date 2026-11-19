@@ -38,7 +38,9 @@ public class RenewByBarcodeResource extends RenewalResource {
       = new SingleOpenLoanByUserAndItemBarcodeFinder(loanRepository,
       itemRepository, userRepository);
 
-    return renewalRequestFrom(request).after(renewal ->
+    final Result<RenewByBarcodeRequest> requestResult = renewalRequestFrom(request);
+
+    return requestResult.after(renewal ->
       finder.findLoan(renewal.getItemBarcode(), renewal.getUserBarcode())
         .thenApply(r -> errorHandler.handleValidationResult(r, FAILED_TO_FIND_SINGLE_OPEN_LOAN,
           (Loan) null)));
