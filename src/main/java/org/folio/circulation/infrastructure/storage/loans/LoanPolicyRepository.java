@@ -142,13 +142,11 @@ public class LoanPolicyRepository extends CirculationPolicyRepository<LoanPolicy
     BulkRenewalCachedDependencies cachedDependencies) {
 
     var item = loan.getItem();
-    var user = loan.getUser();
-
     var key = new BulkRenewalCachedDependencies.RuleLookupCacheKey(
       item.getMaterialTypeId(),
       item.getLoanTypeId(),
       item.getEffectiveLocationId(),
-      user.getPatronGroupId());
+      loan.getUser().getPatronGroupId());
 
     return cachedDependencies.getCirculationRuleMatch(key, () -> lookupPolicyId(loan));
   }

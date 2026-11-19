@@ -23,8 +23,7 @@ import org.folio.circulation.support.HttpFailure;
 
 public final class BulkRenewalEligibilityFilter {
 
-  private static final Logger log =
-    LogManager.getLogger(MethodHandles.lookup().lookupClass());
+  private static final Logger log = LogManager.getLogger(MethodHandles.lookup().lookupClass());
 
   private BulkRenewalEligibilityFilter() {
   }
@@ -38,11 +37,8 @@ public final class BulkRenewalEligibilityFilter {
    * @param timeZone          tenant time zone, used for window boundary calculation
    * @return result splitting loans into eligible and hold/recall-blocked
    */
-  public static AutomaticRenewalEligibilityResult filter(
-      List<Loan> loans,
-      Map<String, LoanPolicy> policiesByLoanId,
-      Map<String, RequestQueue> queuesByLoanId,
-      ZoneId timeZone) {
+  public static AutomaticRenewalEligibilityResult filter(List<Loan> loans,
+    Map<String, LoanPolicy> policiesByLoanId, Map<String, RequestQueue> queuesByLoanId, ZoneId timeZone) {
 
     List<Loan> eligible = new ArrayList<>();
     Map<String, HttpFailure> holdRecallFailures = new LinkedHashMap<>();

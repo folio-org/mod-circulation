@@ -87,17 +87,17 @@ public class BulkRenewalCachedDependencies {
   }
 
   public CompletableFuture<Result<CirculationRuleMatch>> getCirculationRuleMatch(
-      RuleLookupCacheKey key,
-      Supplier<CompletableFuture<Result<CirculationRuleMatch>>> fetcher) {
+    RuleLookupCacheKey key,
+    Supplier<CompletableFuture<Result<CirculationRuleMatch>>> fetcher) {
 
     return ruleMatches.computeIfAbsent(key, ignored -> fetcher.get());
   }
 
   public record RuleLookupCacheKey(
-      String materialTypeId,
-      String loanTypeId,
-      String locationId,
-      String patronGroupId) {
+    String materialTypeId,
+    String loanTypeId,
+    String locationId,
+    String patronGroupId) {
   }
 
   private record LoanPolicyCacheKey(String policyId, AppliedRuleConditions appliedRuleConditions) {

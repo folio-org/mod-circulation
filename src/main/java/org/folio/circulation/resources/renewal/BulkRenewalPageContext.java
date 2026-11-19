@@ -9,12 +9,8 @@ import org.folio.circulation.domain.RequestQueue;
 import org.folio.circulation.resources.context.RenewalContext;
 import org.folio.circulation.support.HttpFailure;
 
-public record BulkRenewalPageContext(
-  List<Loan> loans,
-  Map<String, RequestQueue> requestQueuesByLoanId,
-  ZoneId timeZone,
-  String triggeringUserId,
-  List<RenewalContext> successfulRenewalContexts,
+public record BulkRenewalPageContext(List<Loan> loans, Map<String, RequestQueue> requestQueuesByLoanId,
+  ZoneId timeZone, String triggeringUserId, List<RenewalContext> successfulRenewalContexts,
   Map<String, HttpFailure> failedRenewalsByLoanId
 ) {
   public BulkRenewalPageContext {

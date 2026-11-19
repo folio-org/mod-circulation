@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.BooleanUtils.isFalse;
 import static org.folio.circulation.domain.OverdueFineService.Scenario.CHECKIN;
 import static org.folio.circulation.domain.OverdueFineService.Scenario.RENEWAL;
 import static org.folio.circulation.domain.representations.CheckInByBarcodeRequest.ClaimedReturnedResolution.FOUND_BY_LIBRARY;
+import static org.folio.circulation.support.results.Result.emptyAsync;
 import static org.folio.circulation.support.results.Result.ofAsync;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
@@ -254,10 +255,16 @@ public class OverdueFineService {
       .thenCompose(r -> r.after(this::lookupItemRelatedRecords))
       .thenCompose(r -> r.after(this::lookupFeeFineOwner))
       .thenCompose(r -> r.after(this::createAccount))
-      .thenCompose(r -> r.after(feeFineAction -> feeFineAction == null
-        ? completedFuture(r)
-        : scheduledNoticesRepository.deleteOverdueNotices(loan.getId())
-          .thenApply(rs -> r)));
+      .thenCompose(r -> r.after(feeFineAction -> deleteOverdueNotices(loan, feeFineAction)));
+  }
+
+  private CompletableFuture<Result<FeeFineAction>> deleteOverdueNotices(Loan loan, FeeFineAction feeFineAction) {
+    if (feeFineAction == null) {
+      log.info("deleteOverdueNotices:: no fee/fine action was created, skipping");
+      return emptyAsync();
+    }
+    return scheduledNoticesRepository.deleteOverdueNotices(loan.getId())
+      .thenApply(rs -> succeeded(feeFineAction));
   }
 
   private CompletableFuture<Result<FeeFineAction>> createAccount(CalculationParameters params) {
