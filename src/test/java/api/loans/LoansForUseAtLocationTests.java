@@ -316,6 +316,48 @@ public class LoansForUseAtLocationTests extends APITests {
         Is.is(newExpectedExpirationDate.toString()));
   }
 
+  @ParameterizedTest
+  @ValueSource(ints = {2, 3, 4})
+  void recallCapsHoldShelfExpirationAtEndOfDueDay(int holdShelfExpiryDays) {
+    Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION, "TRUE");
+    ZonedDateTime holdDate = atStartOfDay(FIRST_DAY_OPEN.minusDays(2), UTC)
+      .plusHours(10).plusSeconds(10);
+    mockClockManagerToReturnFixedDateTime(holdDate);
+
+    IndividualResource readingRoom = forServicePoints().create(new ServicePointBuilder(
+      "Reading room", "RR", "Circulation Desk -- Reading room").withPickupLocation(TRUE)
+      .withId(UUID.fromString(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN))
+      .withholdShelfClosedLibraryDateManagement(
+        ExpirationDateManagement.KEEP_THE_CURRENT_DUE_DATE.name()));
+
+    use(new LoanPolicyBuilder()
+      .rolling(Period.days(30))
+      .withRecallsRecallReturnInterval(Period.days(3))
+      .withForUseAtLocation(true)
+      .withHoldShelfExpiryPeriodForUseAtLocation(Period.days(holdShelfExpiryDays)));
+
+    IndividualResource loan = checkOutFixture.checkOutByBarcode(new CheckOutByBarcodeRequestBuilder()
+      .forItem(item)
+      .to(borrower)
+      .at(CASE_FIRST_DAY_OPEN_SECOND_CLOSED_THIRD_OPEN));
+
+    JsonObject heldLoan = holdForUseAtLocationFixture.holdForUseAtLocation(
+      new HoldByBarcodeRequestBuilder(item.getBarcode())).getJson().getJsonObject("loan");
+    assertThat(getDateTimeProperty(heldLoan.getJsonObject("forUseAtLocation"),
+      "holdShelfExpirationDate").toInstant(),
+      Is.is(atEndOfDay(holdDate.plusDays(holdShelfExpiryDays), UTC).toInstant()));
+
+    requestsFixture.placeItemLevelHoldShelfRequest(item, usersFixture.jessica(),
+      holdDate, readingRoom.getId(), "Recall");
+
+    JsonObject recalledLoan = loansStorageClient.getById(loan.getId()).getJson();
+    assertThat(getDateTimeProperty(recalledLoan, "dueDate").toInstant(),
+      Is.is(holdDate.plusDays(3).toInstant()));
+    assertThat(getDateTimeProperty(recalledLoan.getJsonObject("forUseAtLocation"),
+      "holdShelfExpirationDate").toInstant(),
+      Is.is(atEndOfDay(holdDate.plusDays(Math.min(holdShelfExpiryDays, 3)), UTC).toInstant()));
+  }
+
   @Test
   void willSetNoHoldShelfExpirationIfPolicyNotDefined() {
     Environment.MOCK_ENV.put(ENV_VAR_ENABLE_FOR_USE_AT_LOCATION,"TRUE");

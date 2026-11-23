@@ -4,8 +4,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.circulation.support.results.Result.of;
 import static org.folio.circulation.support.results.Result.succeeded;
 import static org.folio.circulation.support.results.ResultBinding.mapResult;
+import static org.folio.circulation.support.utils.DateTimeUtil.atEndOfDay;
 
 import java.lang.invoke.MethodHandles;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -100,12 +103,27 @@ public class UpdateLoan {
           .thenApply(r -> r.next(recallResult -> updateLoanAction(recallResult, request)))
           .thenComposeAsync(r -> r.after(records ->
             closedLibraryStrategyService.applyClosedLibraryDueDateManagement(records, true)))
+          .thenApply(mapResult(this::capForUsAtLocationExpirationAtDueDate))
           .thenCompose(r -> r.after(ctx -> lookupOverdueFinePolicy(ctx, overdueFinePolicyRepository)))
           .thenComposeAsync(r -> r.after(loanRepository::updateLoan))
           .thenApply(r -> r.next(scheduledNoticeService::rescheduleDueDateNotices))
           .thenApply(r -> r.next(reminderFeeScheduledNoticeService::rescheduleFirstReminder))
           .thenApply(r -> r.map(v -> requestAndRelatedRecords.withRequest(request.withLoan(v.getLoan()))));
     }
+  }
+
+  private LoanAndRelatedRecords capForUsAtLocationExpirationAtDueDate(LoanAndRelatedRecords records) {
+    Loan loan = records.getLoan();
+    if (loan.getLoanPolicy().isForUseAtLocation() && loan.isHeldForUseAtLocation()) {
+      ZonedDateTime expiration = loan.getExpirationDateForUseAtLocation();
+      ZoneId timeZone = records.getTimeZone();
+      ZonedDateTime dueDate = loan.getDueDate().withZoneSameInstant(timeZone);
+      if (expiration != null &&
+        expiration.withZoneSameInstant(timeZone).toLocalDate().isAfter(dueDate.toLocalDate())) {
+        loan.changeHoldShelfExpirationDateForUseAtLocation(atEndOfDay(dueDate, timeZone));
+      }
+    }
+    return records;
   }
 
   private CompletableFuture<Result<LoanAndRelatedRecords>> lookupOverdueFinePolicy(
