@@ -114,7 +114,7 @@ public class UpdateLoan {
 
   private LoanAndRelatedRecords capForUsAtLocationExpirationAtDueDate(LoanAndRelatedRecords records) {
     Loan loan = records.getLoan();
-    if (loan.getLoanPolicy().isForUseAtLocation() && loan.isHeldForUseAtLocation()) {
+    if (loan.isHeldForUseAtLocation()) {
       ZonedDateTime expiration = loan.getExpirationDateForUseAtLocation();
       ZoneId timeZone = records.getTimeZone();
       ZonedDateTime dueDate = loan.getDueDate().withZoneSameInstant(timeZone);
